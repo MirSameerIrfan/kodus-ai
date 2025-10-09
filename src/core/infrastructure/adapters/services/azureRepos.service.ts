@@ -103,8 +103,6 @@ export class AzureReposService
         private readonly integrationConfigService: IIntegrationConfigService,
         @Inject(AUTH_INTEGRATION_SERVICE_TOKEN)
         private readonly authIntegrationService: IAuthIntegrationService,
-        @Inject(PARAMETERS_SERVICE_TOKEN)
-        private readonly parameterService: IParametersService,
 
         private readonly logger: PinoLoggerService,
         private readonly azureReposRequestHelper: AzureReposRequestHelper,

@@ -13,7 +13,6 @@ import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-k
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
-import { ProjectManagementService } from '../platformIntegration/projectManagement.service';
 import { CodeManagementService } from '../platformIntegration/codeManagement.service';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 
@@ -25,7 +24,6 @@ export class IntegrationService implements IIntegrationService {
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
         private readonly integrationConfigService: IIntegrationConfigService,
 
-        private readonly projectManagementService: ProjectManagementService,
         private readonly codeManagementService: CodeManagementService,
     ) {}
 

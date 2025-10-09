@@ -8,18 +8,12 @@ import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
 } from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { MSTeamsInstallationApp } from '@/core/domain/integrationConfigs/types/communication/msTeamsInstalationApp.type';
 import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
 } from '@/core/domain/integrations/contracts/integration.service.contracts';
 import { IntegrationEntity } from '@/core/domain/integrations/entities/integration.entity';
 import { IMSTeamsService } from '@/core/domain/msTeams/msTeams.service.contract';
-import { Channel } from '@/core/domain/platformIntegrations/types/communication/channel.type';
-import {
-    ITeamMemberService,
-    TEAM_MEMBERS_SERVICE_TOKEN,
-} from '@/core/domain/teamMembers/contracts/teamMembers.service.contracts';
 import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
 import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
 
@@ -43,9 +37,6 @@ export class MSTeamsService implements IMSTeamsService {
 
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
         private readonly integrationConfigService: IIntegrationConfigService,
-
-        @Inject(forwardRef(() => TEAM_MEMBERS_SERVICE_TOKEN))
-        private readonly teamMembersService: ITeamMemberService,
     ) {
         this.axiosService = new AxiosMSTeamsService();
     }
@@ -168,7 +159,7 @@ export class MSTeamsService implements IMSTeamsService {
                 );
 
             if (integrationId) {
-                let saveData: MSTeamsInstallationApp[] = [
+                let saveData: any[] = [
                     {
                         serviceUrl: params.serviceUrl,
                         conversationType: params.conversationType,
@@ -179,7 +170,7 @@ export class MSTeamsService implements IMSTeamsService {
 
                 const config =
                     await this.integrationConfigService.findIntegrationConfigFormatted<
-                        MSTeamsInstallationApp[]
+                        any[]
                     >(
                         IntegrationConfigKey.MSTEAMS_INSTALLATION_APP,
                         params.organizationAndTeamData,
@@ -208,7 +199,7 @@ export class MSTeamsService implements IMSTeamsService {
         }
     }
 
-    getChannel(params: any): Promise<Channel[]> {
+    getChannel(params: any): Promise<any[]> {
         console.log('getChannel', params);
         return Promise.resolve([]);
     }
@@ -371,20 +362,8 @@ export class MSTeamsService implements IMSTeamsService {
         params: any,
     ): Promise<{ id: string; name: string }[]> {
         try {
-            const leaders = await this.teamMembersService.getLeaderMembers(
-                params.organizationAndTeamData,
-            );
-
-            if (!leaders) {
-                null;
-            }
-
-            return leaders?.map((leader) => {
-                return {
-                    id: leader?.communication?.id,
-                    name: leader?.communication?.name,
-                };
-            });
+            const leaders = [];
+            return leaders;
         } catch (error) {}
     }
 

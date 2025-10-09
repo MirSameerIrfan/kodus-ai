@@ -6,12 +6,10 @@ import { ICodeManagementService } from '@/core/domain/platformIntegrations/inter
 import { PlatformIntegrationFactory } from '@/core/infrastructure/adapters/services/platformIntegration/platformIntegration.factory';
 import { IntegrationModule } from './integration.module';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { ProjectManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/projectManagement.service';
 import { IntegrationConfigModule } from './integrationConfig.module';
 import { AuthIntegrationModule } from './authIntegration.module';
 import { CodeManagementController } from '@/core/infrastructure/http/controllers/platformIntegration/codeManagement.controller';
 import { UseCases } from '@/core/application/use-cases/platformIntegration';
-import { MSTeamsService } from '@/core/infrastructure/adapters/services/msTeams.service';
 import { GitlabService } from '@/core/infrastructure/adapters/services/gitlab.service';
 import { TeamMembersModule } from './teamMembers.module';
 import { TeamsModule } from './team.module';
@@ -23,7 +21,6 @@ import { AgentModule } from './agent.module';
 import { AutomationModule } from './automation.module';
 import { ReceiveWebhookUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/receiveWebhook.use-case';
 import { TeamAutomationModule } from './teamAutomation.module';
-import { FinishProjectConfigUseCase } from '@/core/application/use-cases/platformIntegration/projectManagement/finish-project-config.use-case';
 import { OrganizationParametersModule } from './organizationParameters.module';
 import { CodeReviewFeedbackModule } from './codeReviewFeedback.module';
 import { PullRequestsModule } from './pullRequests.module';
@@ -70,11 +67,8 @@ import { PullRequestMessagesModule } from './pullRequestMessages.module';
         PromptService,
         PlatformIntegrationFactory,
         CodeManagementService,
-        ProjectManagementService,
-        // CommunicationService,
 
         //Integrations tools
-        MSTeamsService,
         GitlabService,
 
         // Webhook handlers
@@ -104,10 +98,7 @@ import { PullRequestMessagesModule } from './pullRequestMessages.module';
     exports: [
         PlatformIntegrationFactory,
         CodeManagementService,
-        ProjectManagementService,
-        // CommunicationService,
         ReceiveWebhookUseCase,
-        FinishProjectConfigUseCase,
     ],
 })
 export class PlatformIntegrationModule implements OnModuleInit {
@@ -137,17 +128,6 @@ export class PlatformIntegrationModule implements OnModuleInit {
                         instance as ICodeManagementService,
                     );
                 }
-                // else if (serviceType === 'projectManagement') {
-                //     this.integrationFactory.registerProjectManagementService(
-                //         type,
-                //         instance as IProjectManagementService,
-                //     );
-                // } else if (serviceType === 'communication') {
-                //     this.integrationFactory.registerCommunicationService(
-                //         type,
-                //         instance as ICommunicationService,
-                //     );
-                // }
             }
         });
     }

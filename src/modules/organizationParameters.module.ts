@@ -9,7 +9,6 @@ import { PromptService } from '@/core/infrastructure/adapters/services/prompt.se
 import { IntegrationModule } from './integration.module';
 import { IntegrationConfigModule } from './integrationConfig.module';
 import { TeamsModule } from './team.module';
-import { ProjectManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/projectManagement.service';
 import { PlatformIntegrationFactory } from '@/core/infrastructure/adapters/services/platformIntegration/platformIntegration.factory';
 import { ParametersModule } from './parameters.module';
 import { OrgnizationParametersController } from '@/core/infrastructure/http/controllers/organizationParameters.controller';
@@ -36,7 +35,6 @@ import { LicenseModule } from '@/ee/license/license.module';
         DeleteByokConfigUseCase,
         OrganizationParametersService,
         PromptService,
-        ProjectManagementService,
         PlatformIntegrationFactory,
         ProviderService,
         {

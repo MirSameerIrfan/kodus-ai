@@ -46,9 +46,9 @@ import { PermissionValidationModule } from '@/ee/shared/permission-validation.mo
         forwardRef(() => CodeReviewFeedbackModule),
         forwardRef(() => PullRequestsModule),
         forwardRef(() => OrganizationParametersModule),
+        forwardRef(() => CodeReviewExecutionModule),
         AuthIntegrationModule,
         LicenseModule,
-        forwardRef(() => CodeReviewExecutionModule),
         PermissionValidationModule,
     ],
     providers: [
