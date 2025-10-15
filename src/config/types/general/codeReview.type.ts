@@ -5,8 +5,10 @@ import { IKodyRule } from '@/core/domain/kodyRules/interfaces/kodyRules.interfac
 import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
 import { ImplementationStatus } from '@/core/domain/pullRequests/enums/implementationStatus.enum';
 import { LLMModelProvider } from '@kodus/kodus-common/llm';
-import { GetImpactAnalysisResponse } from '@kodus/kodus-proto/ast';
-import { TaskStatus } from '@kodus/kodus-proto/task';
+import {
+    GetImpactAnalysisResponse,
+    TaskStatus,
+} from '@/ee/kodyAST/codeASTAnalysis.service';
 import { ISuggestionByPR } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
 import { ConfigLevel } from './pullRequestMessages.type';
 import z from 'zod';

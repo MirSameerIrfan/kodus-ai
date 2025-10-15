@@ -19,7 +19,7 @@ import {
     convertToHunksWithLinesNumbers,
     handlePatchDeletions,
 } from '@/shared/utils/patch';
-import { TaskStatus } from '@kodus/kodus-proto/task';
+import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 
 /**

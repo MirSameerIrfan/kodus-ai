@@ -41,7 +41,7 @@ import {
     KODY_AST_ANALYZE_CONTEXT_PREPARATION_TOKEN,
 } from '@/shared/interfaces/kody-ast-analyze-context-preparation.interface';
 import { CodeAnalysisOrchestrator } from '@/ee/codeBase/codeAnalysisOrchestrator.service';
-import { TaskStatus } from '@kodus/kodus-proto/task';
+import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
 
 @Injectable()
 export class ProcessFilesReview extends BasePipelineStage<CodeReviewPipelineContext> {

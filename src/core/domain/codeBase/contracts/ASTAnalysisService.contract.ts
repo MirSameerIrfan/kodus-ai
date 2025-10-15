@@ -8,8 +8,8 @@ import {
     GetImpactAnalysisResponse,
     InitializeImpactAnalysisResponse,
     InitializeRepositoryResponse,
-} from '@kodus/kodus-proto/ast';
-import { GetTaskInfoResponse } from '@kodus/kodus-proto/task';
+    GetTaskInfoResponse,
+} from '@/ee/kodyAST/codeASTAnalysis.service';
 
 export const AST_ANALYSIS_SERVICE_TOKEN = Symbol('ASTAnalysisService');
 

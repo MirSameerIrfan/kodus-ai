@@ -491,7 +491,7 @@ export class ValidateConfigStage extends BasePipelineStage<CodeReviewPipelineCon
 
             // Log das configurações usadas para gerar o resultValidation
             this.logger.log({
-                message: '🔍 Branch Review Validation',
+                message: 'Branch Review Validation',
                 context: 'ValidateConfigStage',
                 metadata: {
                     originalConfig: config.baseBranches,

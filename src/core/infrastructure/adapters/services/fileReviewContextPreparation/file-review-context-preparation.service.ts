@@ -11,7 +11,7 @@ import {
 import { PinoLoggerService } from '../logger/pino.service';
 import { BaseFileReviewContextPreparation } from './base-file-review-context-preparation.service';
 import { ReviewModeOptions } from '@/shared/interfaces/file-review-context-preparation.interface';
-import { TaskStatus } from '@kodus/kodus-proto/task';
+import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 
 @Injectable()
