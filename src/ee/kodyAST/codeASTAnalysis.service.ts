@@ -20,8 +20,7 @@ import {
     ParserType,
 } from '@kodus/kodus-common/llm';
 import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
+import { AxiosASTService } from '@/config/axios/microservices/ast.axios';
 
 // Novos tipos para substituir os tipos do proto
 export enum TaskStatus {
@@ -110,24 +109,16 @@ export interface GetImpactAnalysisResponse {
 @Injectable()
 export class CodeAstAnalysisService implements IASTAnalysisService {
     private readonly llmResponseProcessor: LLMResponseProcessor;
-    private readonly astServiceUrl: string;
+    private readonly astAxios: AxiosASTService;
 
     constructor(
-        private readonly httpService: HttpService,
         private readonly codeManagementService: CodeManagementService,
         private readonly logger: PinoLoggerService,
         private readonly promptRunnerService: PromptRunnerService,
         private readonly observabilityService: ObservabilityService,
     ) {
         this.llmResponseProcessor = new LLMResponseProcessor(logger);
-        this.astServiceUrl = process.env.API_SERVICE_AST_URL || '';
-
-        if (!this.astServiceUrl) {
-            this.logger.warn({
-                message: 'API_SERVICE_AST_URL not configured',
-                context: CodeAstAnalysisService.name,
-            });
-        }
+        this.astAxios = new AxiosASTService();
     }
 
     async analyzeASTWithAI(
@@ -251,9 +242,9 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
                     platformType,
                 );
 
-            const response = await firstValueFrom(
-                this.httpService.post(
-                    `${this.astServiceUrl}/api/v1/ast/initialize`,
+            const response =
+                await this.astAxios.post<InitializeRepositoryResponse>(
+                    '/api/v1/ast/initialize',
                     {
                         baseRepo: baseDirParams,
                         headRepo: headDirParams,
@@ -262,15 +253,13 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
                     },
                     {
                         headers: {
-                            'Content-Type': 'application/json',
                             'x-task-key':
                                 organizationAndTeamData.organizationId,
                         },
                     },
-                ),
-            );
+                );
 
-            return response.data;
+            return response;
         } catch (error) {
             this.logger.error({
                 message: `Error during AST initialization for PR#${pullRequest.number}`,
@@ -336,9 +325,9 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
                 throw new Error('Head repository parameters are missing');
             }
 
-            const response = await firstValueFrom(
-                this.httpService.post(
-                    `${this.astServiceUrl}/api/v1/ast/impact-analysis/initialize`,
+            const response =
+                await this.astAxios.post<InitializeImpactAnalysisResponse>(
+                    '/api/v1/ast/impact-analysis/initialize',
                     {
                         baseRepo,
                         headRepo,
@@ -348,15 +337,13 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
                     },
                     {
                         headers: {
-                            'Content-Type': 'application/json',
                             'x-task-key':
                                 organizationAndTeamData.organizationId,
                         },
                     },
-                ),
-            );
+                );
 
-            return response.data;
+            return response;
         } catch (error) {
             this.logger.error({
                 message: `Error during AST Impact Analysis initialization for PR#${pullRequest.number}`,
@@ -389,9 +376,9 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
                 throw new Error('Head repository parameters are missing');
             }
 
-            const response = await firstValueFrom(
-                this.httpService.post(
-                    `${this.astServiceUrl}/api/v1/ast/impact-analysis/get`,
+            const response =
+                await this.astAxios.post<GetImpactAnalysisResponse>(
+                    '/api/v1/ast/impact-analysis/get',
                     {
                         baseRepo,
                         headRepo,
@@ -399,15 +386,13 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
                     },
                     {
                         headers: {
-                            'Content-Type': 'application/json',
                             'x-task-key':
                                 organizationAndTeamData.organizationId,
                         },
                     },
-                ),
-            );
+                );
 
-            return response.data;
+            return response;
         } catch (error) {
             this.logger.error({
                 message: `Error during AST Impact Analysis for PR#${pullRequest.number}`,
@@ -450,26 +435,23 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
             platformType,
         );
 
-        const response = await firstValueFrom(
-            this.httpService.post(
-                `${this.astServiceUrl}/api/v1/ast/content-from-diff`,
-                {
-                    baseRepo,
-                    headRepo,
-                    diff,
-                    filePath,
-                    organizationId: organizationAndTeamData.organizationId,
+        const response = await this.astAxios.post<string>(
+            '/api/v1/ast/content-from-diff',
+            {
+                baseRepo,
+                headRepo,
+                diff,
+                filePath,
+                organizationId: organizationAndTeamData.organizationId,
+            },
+            {
+                headers: {
+                    'x-task-key': organizationAndTeamData.organizationId,
                 },
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-task-key': organizationAndTeamData.organizationId,
-                    },
-                },
-            ),
+            },
         );
 
-        return response.data;
+        return response;
     }
 
     private async getRepoParams(
@@ -570,19 +552,15 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
                     metadata: { taskId },
                 });
 
-                const response = await firstValueFrom(
-                    this.httpService.get(
-                        `${this.astServiceUrl}/api/v1/tasks/${taskId}`,
-                        {
-                            headers: {
-                                'x-task-key':
-                                    organizationAndTeamData.organizationId,
-                            },
+                const taskStatus = await this.astAxios.get<GetTaskInfoResponse>(
+                    `/api/v1/tasks/${taskId}`,
+                    {
+                        headers: {
+                            'x-task-key':
+                                organizationAndTeamData.organizationId,
                         },
-                    ),
+                    },
                 );
-
-                const taskStatus: GetTaskInfoResponse = response.data;
 
                 if (!taskStatus || !taskStatus.task) {
                     throw new Error(`Task ${taskId} not found`);
@@ -633,24 +611,16 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
                 throw new Error('Head repository parameters are missing');
             }
 
-            await firstValueFrom(
-                this.httpService.delete(
-                    `${this.astServiceUrl}/api/v1/ast/repository`,
-                    {
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'x-task-key':
-                                organizationAndTeamData.organizationId,
-                        },
-                        data: {
-                            baseRepo,
-                            headRepo,
-                            organizationId:
-                                organizationAndTeamData.organizationId,
-                        },
-                    },
-                ),
-            );
+            await this.astAxios.delete('/api/v1/ast/repository', {
+                headers: {
+                    'x-task-key': organizationAndTeamData.organizationId,
+                },
+                data: {
+                    baseRepo,
+                    headRepo,
+                    organizationId: organizationAndTeamData.organizationId,
+                },
+            });
         } catch (error) {
             this.logger.error({
                 message: `Error during AST analysis deletion for PR#${pullRequest.number}`,
