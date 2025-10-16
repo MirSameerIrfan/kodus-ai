@@ -22,19 +22,31 @@ import {
 import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
 import { AxiosASTService } from '@/config/axios/microservices/ast.axios';
 
-// Novos tipos para substituir os tipos do proto
 export enum TaskStatus {
-    PENDING = 'PENDING',
-    IN_PROGRESS = 'IN_PROGRESS',
-    COMPLETED = 'COMPLETED',
-    FAILED = 'FAILED',
-    CANCELLED = 'CANCELLED',
-    TASK_STATUS_FAILED = 'TASK_STATUS_FAILED',
-    TASK_STATUS_CANCELLED = 'TASK_STATUS_CANCELLED',
-    TASK_STATUS_PENDING = 'TASK_STATUS_PENDING',
-    TASK_STATUS_IN_PROGRESS = 'TASK_STATUS_IN_PROGRESS',
-    TASK_STATUS_COMPLETED = 'TASK_STATUS_COMPLETED',
-    TASK_STATUS_UNSPECIFIED = 'TASK_STATUS_UNSPECIFIED',
+    /* Unspecified status, used for default initialization */
+    TASK_STATUS_UNSPECIFIED = 0,
+    /* Task is pending and waiting to be processed */
+    TASK_STATUS_PENDING = 1,
+    /* Task is currently in progress */
+    TASK_STATUS_IN_PROGRESS = 2,
+    /* Task has been completed successfully */
+    TASK_STATUS_COMPLETED = 3,
+    /* Task has failed, typically due to an error */
+    TASK_STATUS_FAILED = 4,
+    /* Task has been cancelled, either by user request or system intervention */
+    TASK_STATUS_CANCELLED = 5,
+}
+
+/* TaskPriority represents the priority level of a task in the Kodus system. */
+export enum TaskPriority {
+    /* Unspecified priority, used for default initialization */
+    TASK_PRIORITY_UNSPECIFIED = 0,
+    /* Low priority task, typically for non-critical operations */
+    TASK_PRIORITY_LOW = 1,
+    /* Medium priority task, for tasks that are important but not urgent */
+    TASK_PRIORITY_MEDIUM = 2,
+    /* High priority task, for critical operations that need immediate attention */
+    TASK_PRIORITY_HIGH = 3,
 }
 
 export enum ProtoAuthMode {
@@ -244,7 +256,7 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
 
             const response =
                 await this.astAxios.post<InitializeRepositoryResponse>(
-                    '/api/v1/ast/initialize',
+                    '/api/ast/repositories/initialize',
                     {
                         baseRepo: baseDirParams,
                         headRepo: headDirParams,
@@ -327,7 +339,7 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
 
             const response =
                 await this.astAxios.post<InitializeImpactAnalysisResponse>(
-                    '/api/v1/ast/impact-analysis/initialize',
+                    '/api/ast/impact-analysis/initialize',
                     {
                         baseRepo,
                         headRepo,
@@ -378,7 +390,7 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
 
             const response =
                 await this.astAxios.post<GetImpactAnalysisResponse>(
-                    '/api/v1/ast/impact-analysis/get',
+                    '/api/ast/impact-analysis/retrieve',
                     {
                         baseRepo,
                         headRepo,
@@ -436,7 +448,7 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
         );
 
         const response = await this.astAxios.post<string>(
-            '/api/v1/ast/content-from-diff',
+            '/api/ast/diff/content',
             {
                 baseRepo,
                 headRepo,
@@ -535,9 +547,9 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
         const startTime = Date.now();
 
         const endStates = [
-            TaskStatus.COMPLETED,
-            TaskStatus.FAILED,
-            TaskStatus.CANCELLED,
+            TaskStatus.TASK_STATUS_COMPLETED,
+            TaskStatus.TASK_STATUS_FAILED,
+            TaskStatus.TASK_STATUS_CANCELLED,
         ];
 
         while (true) {
@@ -553,7 +565,7 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
                 });
 
                 const taskStatus = await this.astAxios.get<GetTaskInfoResponse>(
-                    `/api/v1/tasks/${taskId}`,
+                    `/api/tasks/${taskId}`,
                     {
                         headers: {
                             'x-task-key':
@@ -611,7 +623,7 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
                 throw new Error('Head repository parameters are missing');
             }
 
-            await this.astAxios.delete('/api/v1/ast/repository', {
+            await this.astAxios.delete('/api/ast/repositories/delete', {
                 headers: {
                     'x-task-key': organizationAndTeamData.organizationId,
                 },

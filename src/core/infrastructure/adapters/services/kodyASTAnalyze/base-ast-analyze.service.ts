@@ -6,7 +6,10 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { IKodyASTAnalyzeContextPreparationService } from '@/shared/interfaces/kody-ast-analyze-context-preparation.interface';
-import { AIAnalysisResult, AnalysisContext, FileChange } from '@/config/types/general/codeReview.type';
+import {
+    AIAnalysisResult,
+    AnalysisContext,
+} from '@/config/types/general/codeReview.type';
 
 /**
  * Abstract base class for Kody AST analysis context preparation
@@ -14,8 +17,10 @@ import { AIAnalysisResult, AnalysisContext, FileChange } from '@/config/types/ge
  * and allow subclasses to customize specific behaviors
  */
 @Injectable()
-export abstract class BaseKodyASTAnalyzeContextPreparation implements IKodyASTAnalyzeContextPreparationService {
-    constructor(protected readonly logger: PinoLoggerService) { }
+export abstract class BaseKodyASTAnalyzeContextPreparation
+    implements IKodyASTAnalyzeContextPreparationService
+{
+    constructor(protected readonly logger: PinoLoggerService) {}
 
     async prepareKodyASTAnalyzeContext(
         context: AnalysisContext,
@@ -23,9 +28,7 @@ export abstract class BaseKodyASTAnalyzeContextPreparation implements IKodyASTAn
         const { organizationAndTeamData, pullRequest } = context;
 
         try {
-            return await this.prepareKodyASTAnalyzeContextInternal(
-                context,
-            );
+            return await this.prepareKodyASTAnalyzeContextInternal(context);
         } catch (error) {
             this.logger.error({
                 message: 'Error while preparing Kody AST analysis context',
@@ -33,7 +36,7 @@ export abstract class BaseKodyASTAnalyzeContextPreparation implements IKodyASTAn
                 context: BaseKodyASTAnalyzeContextPreparation.name,
                 metadata: {
                     organizationAndTeamData,
-                    prNumber: pullRequest?.prNumber
+                    prNumber: pullRequest?.prNumber,
                 },
             });
 
@@ -53,5 +56,5 @@ export abstract class BaseKodyASTAnalyzeContextPreparation implements IKodyASTAn
      */
     protected abstract prepareKodyASTAnalyzeContextInternal(
         context: AnalysisContext,
-    ): Promise<AIAnalysisResult | null>
+    ): Promise<AIAnalysisResult | null>;
 }
