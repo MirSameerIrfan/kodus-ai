@@ -11,7 +11,7 @@ export interface ICodeBaseConfigService {
     getConfig(
         organizationAndTeamData: OrganizationAndTeamData,
         repository: { name: string; id: string },
-        preliminaryFiles?: FileChange[],
+        preliminaryFiles: FileChange[],
     ): Promise<CodeReviewConfig>;
 
     getCodeManagementAuthenticationPlatform(

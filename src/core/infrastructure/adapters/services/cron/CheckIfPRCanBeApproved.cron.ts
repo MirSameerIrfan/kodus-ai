@@ -251,6 +251,7 @@ export class CheckIfPRCanBeApprovedCronProvider {
                                 id: codeReviewConfigFromRepo.id,
                                 name: codeReviewConfigFromRepo.name,
                             },
+                            [],
                         );
 
                     if (resolvedConfig?.pullRequestApprovalActive === false) {
