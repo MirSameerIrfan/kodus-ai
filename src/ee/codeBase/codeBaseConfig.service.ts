@@ -820,7 +820,7 @@ export default class CodeBaseConfigService implements ICodeBaseConfigService {
     }
 
     private extractUniqueDirectoryPaths(
-        files: { filename: string }[],
+        files: { filename: string }[] = [],
     ): string[] {
         const paths = new Set<string>();
 

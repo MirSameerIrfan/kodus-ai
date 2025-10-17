@@ -240,6 +240,10 @@ export class CheckIfPRCanBeApprovedCronProvider {
                                 codeReviewConfigRepo?.id === repository?.id,
                         );
 
+                    if (!codeReviewConfigFromRepo) {
+                        return;
+                    }
+
                     const resolvedConfig =
                         await this.codeBaseConfigService.getConfig(
                             organizationAndTeamData,
