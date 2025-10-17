@@ -11,6 +11,47 @@ export const kodyRulesClassifierSchema = z.object({
     ),
 });
 
+//#region classifier
+export const kodyRulesGeneratorSchema = z.object({
+    codeSuggestions: z.array(
+        z.object({
+            id: z.string(),
+            relevantFile: z.string(),
+            language: z.string(),
+            suggestionContent: z.string(),
+            existingCode: z.string(),
+            improvedCode: z.string(),
+            oneSentenceSummary: z.string(),
+            relevantLinesStart: z.number(),
+            relevantLinesEnd: z.number(),
+            label: z.string(),
+            severity: z.string(),
+            violatedKodyRulesIds: z.array(z.string()).optional(),
+            brokenKodyRulesIds: z.array(z.string()).optional(),
+        }),
+    ),
+});
+
+export const kodyRulesIDEGeneratorSchema = z.object({
+    rules: z.array(
+        z.object({
+            title: z.string(),
+            rule: z.string(),
+            path: z.string(),
+            sourcePath: z.string(),
+            severity: z.enum(['low', 'medium', 'high', 'critical']),
+            scope: z.enum(['file', 'pull-request']).optional(),
+            status: z
+                .enum(['active', 'pending', 'rejected', 'deleted'])
+                .optional(),
+            examples: z.array(
+                z.object({ snippet: z.string(), isCorrect: z.boolean() }),
+            ),
+            sourceSnippet: z.string().optional(),
+        }),
+    ),
+});
+
 export type KodyRulesClassifierSchema = z.infer<
     typeof kodyRulesClassifierSchema
 >;
@@ -38,7 +79,26 @@ If the panel is uncertain about a finding, treat it as non-violating and omit it
 };
 
 export const prompt_kodyrules_classifier_user = (payload: any) => {
-    const { patchWithLinesStr, kodyRules } = payload;
+    const { patchWithLinesStr, kodyRules, externalReferencesMap } = payload;
+
+    let externalReferencesSection = '';
+    if (externalReferencesMap && externalReferencesMap.size > 0) {
+        externalReferencesSection = '\n<externalReferences>';
+        externalReferencesMap.forEach((refs: any[], ruleUuid: string) => {
+            const rule = kodyRules.find((r: any) => r.uuid === ruleUuid);
+            if (rule && refs.length > 0) {
+                externalReferencesSection += `\n\nRule: ${rule.title} (${ruleUuid})`;
+                refs.forEach((ref: any) => {
+                    externalReferencesSection += `\n  File: ${ref.filePath}`;
+                    if (ref.description) {
+                        externalReferencesSection += `\n  Purpose: ${ref.description}`;
+                    }
+                    externalReferencesSection += `\n  Content:\n${ref.content}\n`;
+                });
+            }
+        });
+        externalReferencesSection += '\n</externalReferences>\n';
+    }
 
     return `
 <context>
@@ -51,7 +111,7 @@ ${patchWithLinesStr}
 <kodyRules>
 ${JSON.stringify(kodyRules, null, 2)}
 </kodyRules>
-
+${externalReferencesSection}
 Your output must always be a valid JSON. Under no circumstances should you output anything other than a JSON. Follow the exact format below without any additional text or explanation:
 
 <OUTPUT_FORMAT>
@@ -152,7 +212,30 @@ Data you have access to
 
 export const prompt_kodyrules_updatestdsuggestions_user = (payload: any) => {
     const languageNote = payload?.languageResultPrompt || 'en-US';
-    const { patchWithLinesStr, standardSuggestions, kodyRules } = payload;
+    const {
+        patchWithLinesStr,
+        standardSuggestions,
+        kodyRules,
+        externalReferencesMap,
+    } = payload;
+
+    let externalReferencesSection = '';
+    if (externalReferencesMap && externalReferencesMap.size > 0) {
+        externalReferencesSection = '\n\nExternal Reference Files:\n';
+        externalReferencesMap.forEach((refs: any[], ruleUuid: string) => {
+            const rule = kodyRules.find((r: any) => r.uuid === ruleUuid);
+            if (rule && refs.length > 0) {
+                externalReferencesSection += `\nRule: ${rule.title} (${ruleUuid}):\n`;
+                refs.forEach((ref: any) => {
+                    externalReferencesSection += `  File: ${ref.filePath}\n`;
+                    if (ref.description) {
+                        externalReferencesSection += `  Purpose: ${ref.description}\n`;
+                    }
+                    externalReferencesSection += `  Content:\n${ref.content}\n\n`;
+                });
+            }
+        });
+    }
 
     return `
 Always consider the language parameter (e.g., en-US, pt-BR) when giving suggestions. Language: ${languageNote}
@@ -164,7 +247,7 @@ ${JSON.stringify(standardSuggestions, null, 2)}
 Kody Rules:
 
 ${JSON.stringify(kodyRules, null, 2)}
-
+${externalReferencesSection}
 File diff:
 
 ${patchWithLinesStr}
@@ -226,8 +309,12 @@ Your output must strictly be a valid JSON in the format specified below.`;
 
 export const prompt_kodyrules_suggestiongeneration_user = (payload: any) => {
     const languageNote = payload?.languageResultPrompt || 'en-US';
-    const { patchWithLinesStr, filteredKodyRules, updatedSuggestions } =
-        payload;
+    const {
+        patchWithLinesStr,
+        filteredKodyRules,
+        updatedSuggestions,
+        externalReferencesMap,
+    } = payload;
     const overrides = payload?.v2PromptOverrides || {};
 
     const defaults = getDefaultKodusConfigFile()?.v2PromptOverrides;
@@ -246,6 +333,27 @@ export const prompt_kodyrules_suggestiongeneration_user = (payload: any) => {
         overrides?.generation?.main,
         defaults?.generation?.main,
     );
+
+    let externalReferencesSection = '';
+    if (externalReferencesMap && externalReferencesMap.size > 0) {
+        externalReferencesSection =
+            '\n\nExternal Reference Files (use these for validation):\n';
+        externalReferencesMap.forEach((refs: any[], ruleUuid: string) => {
+            const rule = filteredKodyRules.find(
+                (r: any) => r.uuid === ruleUuid,
+            );
+            if (rule && refs.length > 0) {
+                externalReferencesSection += `\nRule: ${rule.title} (${ruleUuid}):\n`;
+                refs.forEach((ref: any) => {
+                    externalReferencesSection += `  File: ${ref.filePath}\n`;
+                    if (ref.description) {
+                        externalReferencesSection += `  Purpose: ${ref.description}\n`;
+                    }
+                    externalReferencesSection += `  Content:\n${ref.content}\n\n`;
+                });
+            }
+        });
+    }
 
     return `
 Task: Review the code changes in the pull request (PR) for compliance with the established code rules (kodyRules).
@@ -288,6 +396,7 @@ ${patchWithLinesStr}
 kodyRules:
 
 ${JSON.stringify(filteredKodyRules, null, 2)}
+${externalReferencesSection}
 
 ### Panel Review of Code Review Suggestion Object
 
