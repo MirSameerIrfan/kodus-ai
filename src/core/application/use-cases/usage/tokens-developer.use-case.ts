@@ -59,6 +59,10 @@ export class TokensByDeveloperUseCase {
             );
         }
 
+        if (!daily) {
+            return this.groupByDeveloper(mapped);
+        }
+
         return mapped;
     }
 
@@ -74,6 +78,10 @@ export class TokensByDeveloperUseCase {
                     organizationId,
                     number: usage.prNumber,
                 });
+
+                if (!pr) {
+                    continue;
+                }
 
                 const prObj = pr.toObject();
                 pullRequestsMap.set(usage.prNumber, prObj);
@@ -96,5 +104,30 @@ export class TokensByDeveloperUseCase {
                 developer,
             };
         });
+    }
+
+    private groupByDeveloper(
+        usages: UsageByDeveloperResultContract[],
+    ): UsageByDeveloperResultContract[] {
+        const grouped = new Map<string, UsageByDeveloperResultContract>();
+
+        for (const usage of usages) {
+            const { developer, ...rest } = usage;
+
+            if (!grouped.has(developer)) {
+                grouped.set(developer, { developer, ...rest });
+            } else {
+                const existing = grouped.get(developer)!;
+
+                existing.input += rest.input;
+                existing.output += rest.output;
+                existing.total += rest.total;
+                existing.outputReasoning += rest.outputReasoning;
+
+                grouped.set(developer, existing);
+            }
+        }
+
+        return Array.from(grouped.values());
     }
 }

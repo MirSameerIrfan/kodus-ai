@@ -2,6 +2,7 @@ export type TokenUsageQueryContract = {
     organizationId: string;
     start: Date;
     end: Date;
+    model?: string;
     prNumber?: number;
     timezone?: string; // for day bucketing
     developer?: string;
@@ -12,6 +13,7 @@ export interface BaseUsageContract {
     output: number;
     total: number;
     outputReasoning: number;
+    model: string;
 }
 
 export type UsageSummaryContract = BaseUsageContract;

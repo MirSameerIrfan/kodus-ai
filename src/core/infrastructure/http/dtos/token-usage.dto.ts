@@ -11,6 +11,10 @@ export class TokenUsageQueryDto {
     endDate: string; // ISO date string
 
     @IsOptional()
+    @IsString()
+    model?: string;
+
+    @IsOptional()
     @IsNumber()
     prNumber?: number;
 
@@ -21,4 +25,12 @@ export class TokenUsageQueryDto {
     @IsOptional()
     @IsString()
     developer?: string;
+}
+
+export class TokenPricingQueryDto {
+    @IsString()
+    provider: string;
+
+    @IsString()
+    model: string;
 }

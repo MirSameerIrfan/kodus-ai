@@ -1,9 +1,12 @@
-import { Inject } from '@nestjs/common';
+import { Inject, UseInterceptors } from '@nestjs/common';
 import {
     ITokenUsageService,
     TOKEN_USAGE_SERVICE_TOKEN,
 } from '@/core/domain/tokenUsage/contracts/tokenUsage.service.contract';
-import { TokenUsageQueryDto } from '@/core/infrastructure/http/dtos/token-usage.dto';
+import {
+    TokenPricingQueryDto,
+    TokenUsageQueryDto,
+} from '@/core/infrastructure/http/dtos/token-usage.dto';
 import { Query, Controller, Get } from '@nestjs/common';
 import {
     DailyUsageResultContract,
@@ -15,6 +18,8 @@ import {
     UsageByDeveloperResultContract,
 } from '@/core/domain/tokenUsage/types/tokenUsage.types';
 import { TokensByDeveloperUseCase } from '@/core/application/use-cases/usage/tokens-developer.use-case';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
+import { TokenPricingUseCase } from '@/core/application/use-cases/usage/token-pricing.use-case';
 
 @Controller('usage')
 export class TokenUsageController {
@@ -23,6 +28,7 @@ export class TokenUsageController {
         private readonly tokenUsageService: ITokenUsageService,
 
         private readonly tokensByDeveloperUseCase: TokensByDeveloperUseCase,
+        private readonly tokenPricingUseCase: TokenPricingUseCase,
     ) {}
 
     @Get('tokens/summary')
@@ -73,6 +79,11 @@ export class TokenUsageController {
         return this.tokensByDeveloperUseCase.execute(mapped, true);
     }
 
+    @Get('tokens/pricing')
+    async getPricing(@Query() query: TokenPricingQueryDto) {
+        return this.tokenPricingUseCase.execute(query.provider, query.model);
+    }
+
     // debug endpoint removed
 
     private mapDtoToContract(
@@ -102,6 +113,7 @@ export class TokenUsageController {
             end,
             timezone: query.timezone || 'UTC',
             developer: query.developer,
+            model: query.model,
         };
     }
 }

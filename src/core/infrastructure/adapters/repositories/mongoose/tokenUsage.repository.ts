@@ -80,36 +80,92 @@ export class TokenUsageRepository implements ITokenUsageRepository {
 
     private _createUsageAggregationPipeline(params: {
         query: TokenUsageQueryContract;
+        matchStage?: Record<string, any>;
         groupById?: any;
         projectStage?: Record<string, any>;
+        groupStage?: Record<string, any>;
         sortStage?: Record<string, any>;
-        extraMatch?: Record<string, any>;
     }): any[] {
         const {
             query,
-            groupById,
-            projectStage,
-            sortStage,
-            extraMatch = {},
+            matchStage = {},
+            groupById = {},
+            groupStage = {},
+            projectStage = {},
+            sortStage = {},
         } = params;
 
-        const matchStage: Record<string, any> = {
-            'attributes.organizationId': query.organizationId,
-            'timestamp': {
-                $gte: query.start,
-                $lte: query.end,
+        const matchStageFinal: Record<string, any> = {
+            $match: {
+                'attributes.organizationId': query.organizationId,
+                'timestamp': {
+                    $gte: query.start,
+                    $lte: query.end,
+                },
+                'attributes.type': 'byok',
+                ...matchStage,
             },
-            ...extraMatch,
         };
 
-        if (query.prNumber) {
-            matchStage['attributes.prNumber'] = query.prNumber;
-        }
+        const matchPRNumberStage = {
+            $match: query.prNumber
+                ? {
+                      'attributes.prNumber': query.prNumber,
+                  }
+                : {},
+        };
+
+        const matchModelStage = {
+            $match: query.model
+                ? {
+                      $expr: {
+                          $eq: [
+                              {
+                                  $getField: {
+                                      // since the field name itself has dots we have to use this $getField
+                                      // otherwise it would be interpreted as a nested field
+                                      field: 'gen_ai.response.model',
+                                      input: '$attributes',
+                                  },
+                              },
+                              query.model,
+                          ],
+                      },
+                  }
+                : {},
+        };
+
+        const groupStageFinal = {
+            $group: {
+                _id: {
+                    model: {
+                        $getField: {
+                            field: 'gen_ai.response.model',
+                            input: '$attributes',
+                        },
+                    },
+                    ...groupById,
+                },
+                ...groupStage,
+                ...this.GROUP_ACCUMULATORS,
+            },
+        };
+
+        const projectStageFinal = {
+            $project: {
+                ...projectStage,
+                ...this.GROUP_ACCUMULATORS_PROJECT_STAGE,
+                _id: 0,
+                model: '$_id.model',
+            },
+        };
 
         const pipeline: any[] = [
-            { $match: matchStage },
-            { $group: { _id: groupById, ...this.GROUP_ACCUMULATORS } },
-            { $project: projectStage },
+            matchStageFinal,
+            matchPRNumberStage,
+            matchModelStage,
+            groupStageFinal,
+            projectStageFinal,
         ];
 
         if (sortStage) {
@@ -124,10 +180,6 @@ export class TokenUsageRepository implements ITokenUsageRepository {
     ): Promise<UsageSummaryContract> {
         const pipeline = this._createUsageAggregationPipeline({
             query,
-            projectStage: {
-                _id: 0,
-                ...this.GROUP_ACCUMULATORS_PROJECT_STAGE,
-            },
         });
 
         const results = await this.observabilityTelemetryModel
@@ -138,7 +190,7 @@ export class TokenUsageRepository implements ITokenUsageRepository {
             return results[0];
         }
 
-        return { input: 0, output: 0, total: 0, outputReasoning: 0 };
+        return { input: 0, output: 0, total: 0, outputReasoning: 0, model: '' };
     }
 
     async getDailyUsage(
@@ -147,18 +199,18 @@ export class TokenUsageRepository implements ITokenUsageRepository {
         const pipeline = this._createUsageAggregationPipeline({
             query,
             groupById: {
-                $dateToString: {
-                    format: '%Y-%m-%d',
-                    date: '$timestamp',
-                    timezone: query.timezone || 'UTC',
+                date: {
+                    $dateToString: {
+                        format: '%Y-%m-%d',
+                        date: '$timestamp',
+                        timezone: query.timezone || 'UTC',
+                    },
                 },
             },
             projectStage: {
-                _id: 0,
-                date: '$_id',
-                ...this.GROUP_ACCUMULATORS_PROJECT_STAGE,
+                date: '$_id.date',
             },
-            sortStage: { date: 1 },
+            sortStage: { date: 1, model: 1 },
         });
 
         return this.observabilityTelemetryModel
@@ -171,14 +223,14 @@ export class TokenUsageRepository implements ITokenUsageRepository {
     ): Promise<UsageByPrResultContract[]> {
         const pipeline = this._createUsageAggregationPipeline({
             query,
-            groupById: '$attributes.prNumber',
+            groupById: {
+                pr: '$attributes.prNumber',
+            },
             projectStage: {
-                _id: 0,
-                prNumber: '$_id',
-                ...this.GROUP_ACCUMULATORS_PROJECT_STAGE,
+                prNumber: '$_id.pr',
             },
             sortStage: { prNumber: 1 },
-            extraMatch: { 'attributes.prNumber': { $exists: true, $ne: null } },
+            matchStage: { 'attributes.prNumber': { $exists: true, $ne: null } },
         });
 
         return this.observabilityTelemetryModel
@@ -202,13 +254,11 @@ export class TokenUsageRepository implements ITokenUsageRepository {
                 },
             },
             projectStage: {
-                _id: 0,
                 prNumber: '$_id.prNumber',
                 date: '$_id.date',
-                ...this.GROUP_ACCUMULATORS_PROJECT_STAGE,
             },
             sortStage: { prNumber: 1, date: 1 },
-            extraMatch: { 'attributes.prNumber': { $exists: true, $ne: null } },
+            matchStage: { 'attributes.prNumber': { $exists: true, $ne: null } },
         });
 
         return this.observabilityTelemetryModel
