@@ -116,8 +116,17 @@ export function ValidateCodeManagementIntegration(
                 throw error;
             }
 
+            const expectedArgsCount = originalMethod.length;
+            const paddedArgs = [...args];
+
+            while (paddedArgs.length < expectedArgsCount) {
+                paddedArgs.push(undefined);
+            }
+
+            paddedArgs.push(verifyConnection);
+
             // Call the original method with the original arguments
-            return originalMethod.apply(this, [...args, verifyConnection]);
+            return originalMethod.apply(this, paddedArgs);
         };
 
         return descriptor;
