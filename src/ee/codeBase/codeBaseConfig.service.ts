@@ -128,7 +128,7 @@ export default class CodeBaseConfigService implements ICodeBaseConfigService {
                 repository,
                 parameters?.configValue,
                 defaultBranch,
-                preliminaryFiles,
+                preliminaryFiles || [],
             );
 
             const kodyRules = this.kodyRulesValidationService.filterKodyRules(
@@ -241,8 +241,9 @@ export default class CodeBaseConfigService implements ICodeBaseConfigService {
 
         const repoDelta = repoConfig?.configs;
 
-        const affectedPaths =
-            this.extractUniqueDirectoryPaths(preliminaryFiles);
+        const affectedPaths = this.extractUniqueDirectoryPaths(
+            preliminaryFiles || [],
+        );
 
         const directoryConfig = this.resolveConfigByDirectories(
             organizationAndTeamData,
@@ -824,7 +825,7 @@ export default class CodeBaseConfigService implements ICodeBaseConfigService {
     ): string[] {
         const paths = new Set<string>();
 
-        files.forEach((file) => {
+        (files || []).forEach((file) => {
             const lastSlashIndex = file.filename.lastIndexOf('/');
 
             if (lastSlashIndex > 0) {
