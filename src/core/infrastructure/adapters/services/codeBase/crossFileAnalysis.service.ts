@@ -116,7 +116,7 @@ export class CrossFileAnalysisService {
 
         const language =
             context.codeReviewConfig.languageResultPrompt || 'en-US';
-        const provider = LLMModelProvider.OPENAI_GPT_4O_MINI;
+        const provider = LLMModelProvider.GEMINI_2_5_PRO;
 
         try {
             // 1. Executar análise cross-file principal com arquivos preparados
