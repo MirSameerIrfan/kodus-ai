@@ -432,7 +432,7 @@ export class CrossFileAnalysisService {
             v2PromptOverrides: context?.codeReviewConfig?.v2PromptOverrides,
         };
 
-        const fallbackProvider = LLMModelProvider.NOVITA_DEEPSEEK_V3;
+        const fallbackProvider = LLMModelProvider.GEMINI_2_5_FLASH;
         const runName = 'crossFileAnalyzeCodeWithAI';
         const spanName = `${CrossFileAnalysisService.name}::${runName}`;
         const spanAttrs = {
