@@ -41,6 +41,10 @@ import {
     TEAM_AUTOMATION_SERVICE_TOKEN,
     ITeamAutomationService,
 } from '@/core/domain/automation/contracts/team-automation.service';
+import {
+    CODE_BASE_CONFIG_SERVICE_TOKEN,
+    ICodeBaseConfigService,
+} from '@/core/domain/codeBase/contracts/CodeBaseConfigService.contract';
 
 const API_CRON_CHECK_IF_PR_SHOULD_BE_APPROVED =
     process.env.API_CRON_CHECK_IF_PR_SHOULD_BE_APPROVED;
@@ -58,6 +62,9 @@ export class CheckIfPRCanBeApprovedCronProvider {
 
         @Inject(PULL_REQUESTS_SERVICE_TOKEN)
         private readonly pullRequestService: IPullRequestsService,
+
+        @Inject(CODE_BASE_CONFIG_SERVICE_TOKEN)
+        private readonly codeBaseConfigService: ICodeBaseConfigService,
 
         private readonly codeManagementService: CodeManagementService,
 
@@ -233,18 +240,16 @@ export class CheckIfPRCanBeApprovedCronProvider {
                                 codeReviewConfigRepo?.id === repository?.id,
                         );
 
-                    if (
-                        !codeReviewConfig?.configs?.pullRequestApprovalActive &&
-                        !codeReviewConfigFromRepo?.configs
-                            ?.pullRequestApprovalActive
-                    ) {
-                        return;
-                    }
+                    const resolvedConfig =
+                        await this.codeBaseConfigService.getConfig(
+                            organizationAndTeamData,
+                            {
+                                id: codeReviewConfigFromRepo.id,
+                                name: codeReviewConfigFromRepo.name,
+                            },
+                        );
 
-                    if (
-                        codeReviewConfigFromRepo?.configs
-                            ?.pullRequestApprovalActive === false
-                    ) {
+                    if (resolvedConfig?.pullRequestApprovalActive === false) {
                         return;
                     }
 
