@@ -24,7 +24,7 @@ export class TokenPricingUseCase {
         this.axios = new Axios({
             baseURL: 'https://openrouter.ai/api/v1',
             headers: {
-                'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                'Authorization': `Bearer ${process.env.API_OPENROUTER_KEY}`,
                 'Content-Type': 'application/json',
             },
         });
