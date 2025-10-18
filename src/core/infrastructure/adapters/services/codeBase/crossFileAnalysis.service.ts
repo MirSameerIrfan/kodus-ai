@@ -434,13 +434,6 @@ export class CrossFileAnalysisService {
 
         const fallbackProvider = LLMModelProvider.GEMINI_2_5_FLASH;
         const runName = 'crossFileAnalyzeCodeWithAI';
-        const spanName = `${CrossFileAnalysisService.name}::${runName}`;
-        const spanAttrs = {
-            organizationId: organizationAndTeamData?.organizationId,
-            prNumber,
-            analysisType,
-            chunkIndex,
-        };
 
         const promptRunner = new BYOKPromptRunnerService(
             this.promptRunnerService,
@@ -448,6 +441,15 @@ export class CrossFileAnalysisService {
             fallbackProvider,
             context?.codeReviewConfig?.byokConfig,
         );
+
+        const spanName = `${CrossFileAnalysisService.name}::${runName}`;
+        const spanAttrs = {
+            organizationId: organizationAndTeamData?.organizationId,
+            prNumber,
+            analysisType,
+            chunkIndex,
+            type: promptRunner.executeMode,
+        };
 
         try {
             let analysisBuilder = promptRunner

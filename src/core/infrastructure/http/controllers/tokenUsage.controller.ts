@@ -1,37 +1,87 @@
-import { Inject } from '@nestjs/common';
+import { Inject, UseInterceptors } from '@nestjs/common';
 import {
     ITokenUsageService,
     TOKEN_USAGE_SERVICE_TOKEN,
 } from '@/core/domain/tokenUsage/contracts/tokenUsage.service.contract';
 import {
+    TokenPricingQueryDto,
     TokenUsageQueryDto,
-    DailyTokenUsage,
-    TokenUsageSummary,
 } from '@/core/infrastructure/http/dtos/token-usage.dto';
-import { TokenUsageQueryContract } from '@/core/domain/tokenUsage/contracts/tokenUsage.repository.contract';
 import { Query, Controller, Get } from '@nestjs/common';
+import {
+    DailyUsageResultContract,
+    TokenUsageQueryContract,
+    UsageSummaryContract,
+    DailyUsageByPrResultContract,
+    UsageByPrResultContract,
+    DailyUsageByDeveloperResultContract,
+    UsageByDeveloperResultContract,
+} from '@/core/domain/tokenUsage/types/tokenUsage.types';
+import { TokensByDeveloperUseCase } from '@/core/application/use-cases/usage/tokens-developer.use-case';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
+import { TokenPricingUseCase } from '@/core/application/use-cases/usage/token-pricing.use-case';
 
 @Controller('usage')
 export class TokenUsageController {
     constructor(
         @Inject(TOKEN_USAGE_SERVICE_TOKEN)
         private readonly tokenUsageService: ITokenUsageService,
-    ) {}
 
-    @Get('tokens/daily')
-    async getDaily(
-        @Query() query: TokenUsageQueryDto,
-    ): Promise<DailyTokenUsage[]> {
-        const mapped = this.mapDtoToContract(query);
-        return this.tokenUsageService.getDailyUsage(mapped);
-    }
+        private readonly tokensByDeveloperUseCase: TokensByDeveloperUseCase,
+        private readonly tokenPricingUseCase: TokenPricingUseCase,
+    ) {}
 
     @Get('tokens/summary')
     async getSummary(
         @Query() query: TokenUsageQueryDto,
-    ): Promise<TokenUsageSummary> {
+    ): Promise<UsageSummaryContract> {
         const mapped = this.mapDtoToContract(query);
         return this.tokenUsageService.getSummary(mapped);
+    }
+
+    @Get('tokens/daily')
+    async getDaily(
+        @Query() query: TokenUsageQueryDto,
+    ): Promise<DailyUsageResultContract[]> {
+        const mapped = this.mapDtoToContract(query);
+        return this.tokenUsageService.getDailyUsage(mapped);
+    }
+
+    @Get('tokens/by-pr')
+    async getUsageByPr(
+        @Query() query: TokenUsageQueryDto,
+    ): Promise<UsageByPrResultContract[]> {
+        const mapped = this.mapDtoToContract(query);
+        return this.tokenUsageService.getUsageByPr(mapped);
+    }
+
+    @Get('tokens/daily-by-pr')
+    async getDailyUsageByPr(
+        @Query() query: TokenUsageQueryDto,
+    ): Promise<DailyUsageByPrResultContract[]> {
+        const mapped = this.mapDtoToContract(query);
+        return this.tokenUsageService.getDailyUsageByPr(mapped);
+    }
+
+    @Get('tokens/by-developer')
+    async getUsageByDeveloper(
+        @Query() query: TokenUsageQueryDto,
+    ): Promise<UsageByDeveloperResultContract[]> {
+        const mapped = this.mapDtoToContract(query);
+        return this.tokensByDeveloperUseCase.execute(mapped, false);
+    }
+
+    @Get('tokens/daily-by-developer')
+    async getDailyByDeveloper(
+        @Query() query: TokenUsageQueryDto,
+    ): Promise<DailyUsageByDeveloperResultContract[]> {
+        const mapped = this.mapDtoToContract(query);
+        return this.tokensByDeveloperUseCase.execute(mapped, true);
+    }
+
+    @Get('tokens/pricing')
+    async getPricing(@Query() query: TokenPricingQueryDto) {
+        return this.tokenPricingUseCase.execute(query.provider, query.model);
     }
 
     // debug endpoint removed
@@ -62,6 +112,8 @@ export class TokenUsageController {
             start,
             end,
             timezone: query.timezone || 'UTC',
+            developer: query.developer,
+            model: query.model,
         };
     }
 }

@@ -11,26 +11,26 @@ export class TokenUsageQueryDto {
     endDate: string; // ISO date string
 
     @IsOptional()
+    @IsString()
+    model?: string;
+
+    @IsOptional()
     @IsNumber()
     prNumber?: number;
 
     @IsOptional()
     @IsString()
     timezone?: string; // e.g., 'UTC' or 'America/Sao_Paulo'
+
+    @IsOptional()
+    @IsString()
+    developer?: string;
 }
 
-export type DailyTokenUsage = {
-    date: string; // YYYY-MM-DD
-    input: number;
-    output: number;
-    total: number;
-    outputReasoning: number;
-};
+export class TokenPricingQueryDto {
+    @IsString()
+    provider: string;
 
-export type TokenUsageSummary = {
-    input: number;
-    output: number;
-    total: number;
-    outputReasoning: number;
-};
-
+    @IsString()
+    model: string;
+}
