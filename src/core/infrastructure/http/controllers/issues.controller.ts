@@ -20,7 +20,6 @@ import {
 } from '../../adapters/services/permissions/policy.guard';
 import {
     checkPermissions,
-    checkRepoPermissions,
 } from '../../adapters/services/permissions/policy.handlers';
 import {
     Action,

@@ -45,6 +45,9 @@ import { GetDefaultConfigUseCase } from '@/core/application/use-cases/parameters
 import { GetCodeReviewParameterUseCase } from '@/core/application/use-cases/parameters/get-code-review-parameter.use-case';
 import { REQUEST } from '@nestjs/core';
 import { UserRequest } from '@/config/types/http/user-request.type';
+import { UpdateOrCreateIssuesParameterBodyDto } from '../dtos/create-or-update-issues-parameter.dto';
+import { UpdateOrCreateIssuesParameterUseCase } from '@/core/application/use-cases/parameters/update-or-create-issues-parameter-use-case';
+
 @Controller('parameters')
 export class ParametersController {
     constructor(
@@ -54,6 +57,7 @@ export class ParametersController {
         private readonly createOrUpdateParametersUseCase: CreateOrUpdateParametersUseCase,
         private readonly findByKeyParametersUseCase: FindByKeyParametersUseCase,
         private readonly updateOrCreateCodeReviewParameterUseCase: UpdateOrCreateCodeReviewParameterUseCase,
+        private readonly updateOrCreateIssuesParameterUseCase: UpdateOrCreateIssuesParameterUseCase,
         private readonly updateCodeReviewParameterRepositoriesUseCase: UpdateCodeReviewParameterRepositoriesUseCase,
         private readonly generateKodusConfigFileUseCase: GenerateKodusConfigFileUseCase,
         private readonly copyCodeReviewParameterUseCase: CopyCodeReviewParameterUseCase,
@@ -260,5 +264,25 @@ export class ParametersController {
         body: PreviewPrSummaryDto,
     ) {
         return this.previewPrSummaryUseCase.execute(body);
+    }
+
+    // TODO: Remove once all orgs have migrated
+    @Post('/migrate-code-review-parameters')
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(
+        checkPermissions(Action.Manage, ResourceType.CodeReviewSettings),
+    )
+    public async migrateCodeReviewParameters() {
+        return this.migrateCodeReviewParametersUseCase.execute();
+    }
+
+    @Post('/create-or-update-issues-config')
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(checkPermissions(Action.Create, ResourceType.Issues))
+    public async updateOrCreateIssuesParameter(
+        @Body()
+        body: UpdateOrCreateIssuesParameterBodyDto,
+    ) {
+        return await this.updateOrCreateIssuesParameterUseCase.execute(body);
     }
 }

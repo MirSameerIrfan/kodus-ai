@@ -8,8 +8,10 @@ import { CodeManagementTools, KodyRulesTools } from './tools';
 import { MCPManagerService } from './services/mcp-manager.service';
 import { JwtModule } from '@nestjs/jwt';
 import { KodyRulesModule } from '@/modules/kodyRules.module';
-import { LicenseModule } from '@/ee/license/license.module';
+import { KodyIssuesTools } from './tools/kodyIssues.tools';
+import { IssuesModule } from '@/modules/issues.module';
 import { PermissionValidationModule } from '@/ee/shared/permission-validation.module';
+import { PullRequestsModule } from '@/modules/pullRequests.module';
 
 @Module({})
 export class McpModule {
@@ -35,6 +37,8 @@ export class McpModule {
             imports.push(
                 forwardRef(() => PlatformIntegrationModule),
                 forwardRef(() => KodyRulesModule),
+                forwardRef(() => IssuesModule),
+                forwardRef(() => PullRequestsModule),
             );
 
             controllers.push(McpController);
@@ -44,6 +48,7 @@ export class McpModule {
                 McpEnabledGuard,
                 CodeManagementTools,
                 KodyRulesTools,
+                KodyIssuesTools,
             );
 
             exports.push(McpServerService);

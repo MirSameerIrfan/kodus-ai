@@ -633,10 +633,12 @@ export class ChatWithKodyFromGitUseCase {
                 organizationAndTeamData,
             )
         ) {
+            const gitUser = this.getGitUser(params);
+
             const prepareContext = this.prepareContext({
                 comment,
                 originalKodyComment,
-                gitUserName: sender.login,
+                gitUser,
                 othersReplies,
                 pullRequestNumber,
                 repository,
@@ -1335,7 +1337,7 @@ export class ChatWithKodyFromGitUseCase {
     private prepareContext({
         comment,
         originalKodyComment,
-        gitUserName,
+        gitUser,
         othersReplies,
         pullRequestNumber,
         repository,
@@ -1347,7 +1349,7 @@ export class ChatWithKodyFromGitUseCase {
     }: {
         comment?: Comment;
         originalKodyComment?: Comment;
-        gitUserName?: string;
+        gitUser?: { id: number; username: string };
         othersReplies?: Comment[];
         repository?: Repository;
         platformType?: PlatformType;
@@ -1363,7 +1365,7 @@ export class ChatWithKodyFromGitUseCase {
                 : comment.body;
 
         return {
-            gitUserName,
+            gitUser,
             userQuestion,
             repository: {
                 ...repository,
@@ -1555,5 +1557,47 @@ export class ChatWithKodyFromGitUseCase {
             prepareContext: prepareContext,
             thread: thread,
         });
+    }
+
+    private getGitUser(params: WebhookParams): {
+        id: number;
+        username: string;
+    } {
+        let gitUser = {
+            id: null,
+            username: null,
+        };
+
+        switch (params.platformType) {
+            case PlatformType.GITHUB:
+                gitUser.id = params.payload?.comment?.user?.id;
+                gitUser.username = params.payload?.comment?.user?.login;
+                break;
+            case PlatformType.GITLAB:
+                ((gitUser.id = params.payload?.user?.id),
+                    (gitUser.username = params.payload?.user?.username));
+                break;
+            case PlatformType.BITBUCKET:
+                ((gitUser.id = params.payload?.comment?.user?.uuid),
+                    (gitUser.username =
+                        params.payload?.comment?.user?.nickname));
+                break;
+            case PlatformType.AZURE_REPOS:
+                ((gitUser.id = params.payload?.resource?.comment?.author?.id),
+                    (gitUser.username =
+                        params.payload?.resource?.comment?.author?.uniqueName));
+                break;
+            default:
+                break;
+        }
+
+        if (!gitUser.id) {
+            this.logger.warn({
+                message: 'Unhandled platoformtype for manual issue creation',
+                context: ChatWithKodyFromGitUseCase.name,
+                metadata: { params },
+            });
+        }
+        return gitUser;
     }
 }
