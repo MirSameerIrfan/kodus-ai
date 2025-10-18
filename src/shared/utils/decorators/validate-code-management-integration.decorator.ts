@@ -116,7 +116,6 @@ export function ValidateCodeManagementIntegration(
                 throw error;
             }
 
-            // Call the original method with the original arguments
             return originalMethod.apply(this, [...args, verifyConnection]);
         };
 

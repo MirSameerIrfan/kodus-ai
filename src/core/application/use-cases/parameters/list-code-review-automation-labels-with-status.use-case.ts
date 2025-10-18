@@ -42,6 +42,7 @@ export class ListCodeReviewAutomationLabelsWithStatusUseCase {
         const config = await this.codeBaseConfigService.getConfig(
             { organizationId, teamId },
             { name: '', id: repositoryId },
+            [],
         );
 
         try {
