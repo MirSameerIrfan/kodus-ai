@@ -70,4 +70,12 @@ yalc.lock
 # .packages
 #packages/kodus-flow/
 
+# Temporary JSON files
 test.json
+teste2.json
+lista.json
+add.json
+repositorios-novos.json
+todos-repositorios.json
+repositorios-por-prefixo.json
+MIGRATION-GRPC-TO-HTTP.md

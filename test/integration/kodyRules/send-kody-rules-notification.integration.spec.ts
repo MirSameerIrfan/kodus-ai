@@ -2,16 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SendRulesNotificationUseCase } from '@/core/application/use-cases/kodyRules/send-rules-notification.use-case';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { sendKodyRulesNotification } from '@/shared/utils/email/sendMail';
-import {
-    IUsersService,
-    USER_SERVICE_TOKEN,
-} from '@/core/domain/user/contracts/user.service.contract';
-import {
-    IOrganizationService,
-    ORGANIZATION_SERVICE_TOKEN,
-} from '@/core/domain/organization/contracts/organization.service.contract';
+import { USER_SERVICE_TOKEN } from '@/core/domain/user/contracts/user.service.contract';
+import { ORGANIZATION_SERVICE_TOKEN } from '@/core/domain/organization/contracts/organization.service.contract';
 import { STATUS } from '@/config/types/database/status.type';
-import { Role } from '@/core/domain/permissions/enums/permissions.enum';
 import { v4 as uuidv4 } from 'uuid';
 
 describe('SendKodyRulesNotification - Integration Test', () => {

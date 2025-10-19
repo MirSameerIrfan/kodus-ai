@@ -499,7 +499,7 @@ export class ValidateConfigStage extends BasePipelineStage<CodeReviewPipelineCon
             );
 
             this.logger.log({
-                message: '🔍 Branch Review Validation',
+                message: 'Branch Review Validation',
                 context: 'ValidateConfigStage',
                 metadata: {
                     originalConfig: config.baseBranches,

@@ -19,7 +19,7 @@ import { BaseFileReviewContextPreparation } from '@/core/infrastructure/adapters
 import { ReviewModeOptions } from '@/shared/interfaces/file-review-context-preparation.interface';
 import { IAIAnalysisService } from '@/core/domain/codeBase/contracts/AIAnalysisService.contract';
 import { LLM_ANALYSIS_SERVICE_TOKEN } from '@/core/infrastructure/adapters/services/codeBase/llmAnalysis.service';
-import { TaskStatus } from '@kodus/kodus-proto/task';
+import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
 import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';
 
 /**
