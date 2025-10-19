@@ -116,7 +116,7 @@ export class CrossFileAnalysisService {
 
         const language =
             context.codeReviewConfig.languageResultPrompt || 'en-US';
-        const provider = LLMModelProvider.OPENAI_GPT_4O_MINI;
+        const provider = LLMModelProvider.GEMINI_2_5_PRO;
 
         try {
             // 1. Executar análise cross-file principal com arquivos preparados
@@ -432,15 +432,8 @@ export class CrossFileAnalysisService {
             v2PromptOverrides: context?.codeReviewConfig?.v2PromptOverrides,
         };
 
-        const fallbackProvider = LLMModelProvider.NOVITA_DEEPSEEK_V3;
+        const fallbackProvider = LLMModelProvider.GEMINI_2_5_FLASH;
         const runName = 'crossFileAnalyzeCodeWithAI';
-        const spanName = `${CrossFileAnalysisService.name}::${runName}`;
-        const spanAttrs = {
-            organizationId: organizationAndTeamData?.organizationId,
-            prNumber,
-            analysisType,
-            chunkIndex,
-        };
 
         const promptRunner = new BYOKPromptRunnerService(
             this.promptRunnerService,
@@ -448,6 +441,15 @@ export class CrossFileAnalysisService {
             fallbackProvider,
             context?.codeReviewConfig?.byokConfig,
         );
+
+        const spanName = `${CrossFileAnalysisService.name}::${runName}`;
+        const spanAttrs = {
+            organizationId: organizationAndTeamData?.organizationId,
+            prNumber,
+            analysisType,
+            chunkIndex,
+            type: promptRunner.executeMode,
+        };
 
         try {
             let analysisBuilder = promptRunner

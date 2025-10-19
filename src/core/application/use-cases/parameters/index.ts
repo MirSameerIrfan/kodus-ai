@@ -7,6 +7,7 @@ import { ListCodeReviewAutomationLabelsUseCase } from './list-code-review-automa
 import { UpdateCodeReviewParameterRepositoriesUseCase } from './update-code-review-parameter-repositories-use-case';
 import { UpdateOrCreateCodeReviewParameterUseCase } from './update-or-create-code-review-parameter-use-case';
 import { PreviewPrSummaryUseCase } from './preview-pr-summary.use-case';
+import { UpdateOrCreateIssuesParameterUseCase } from './update-or-create-issues-parameter-use-case';
 import { ListCodeReviewV2DefaultsUseCase } from './list-code-review-v2-defaults.use-case';
 import { ListCodeReviewAutomationLabelsWithStatusUseCase } from './list-code-review-automation-labels-with-status.use-case';
 import { MigrateCodeReviewParametersUseCase } from './migrate-code-review-parameters.use-case'; // TODO: Remove once all orgs have migrated
@@ -23,6 +24,7 @@ export const UseCases = [
     CopyCodeReviewParameterUseCase,
     DeleteRepositoryCodeReviewParameterUseCase,
     PreviewPrSummaryUseCase,
+    UpdateOrCreateIssuesParameterUseCase,
     ListCodeReviewV2DefaultsUseCase,
     ListCodeReviewAutomationLabelsWithStatusUseCase,
     GetDefaultConfigUseCase,

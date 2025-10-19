@@ -26,6 +26,8 @@ import { GetIssuesUseCase } from '@/core/application/use-cases/issues/get-issues
 import { LicenseModule } from '@/ee/license/license.module';
 import { OrganizationParametersModule } from './organizationParameters.module';
 import { PermissionValidationModule } from '@/ee/shared/permission-validation.module';
+import { UsersModule } from "./user.module";
+import { OrganizationModule } from "./organization.module";
 
 const UseCases = [
     GetIssuesByFiltersUseCase,
@@ -49,6 +51,8 @@ const UseCases = [
         forwardRef(() => ParametersModule),
         forwardRef(() => CodeReviewFeedbackModule),
         forwardRef(() => CodebaseModule),
+        forwardRef(() => UsersModule),
+        forwardRef(() => OrganizationModule),
         GlobalCacheModule,
         LicenseModule,
         forwardRef(() => OrganizationParametersModule),
@@ -56,6 +60,7 @@ const UseCases = [
     ],
     providers: [
         ...UseCases,
+        
         {
             provide: ISSUES_REPOSITORY_TOKEN,
             useClass: IssuesRepository,

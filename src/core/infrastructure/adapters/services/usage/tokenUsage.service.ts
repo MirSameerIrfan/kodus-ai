@@ -1,14 +1,16 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type {
-    DailyUsageResultContract,
-    TokenUsageQueryContract,
-    UsageSummaryContract,
-} from '@/core/domain/tokenUsage/contracts/tokenUsage.repository.contract';
 import { ITokenUsageService } from '@/core/domain/tokenUsage/contracts/tokenUsage.service.contract';
 import {
     ITokenUsageRepository,
     TOKEN_USAGE_REPOSITORY_TOKEN,
 } from '@/core/domain/tokenUsage/contracts/tokenUsage.repository.contract';
+import {
+    TokenUsageQueryContract,
+    DailyUsageResultContract,
+    UsageSummaryContract,
+    DailyUsageByPrResultContract,
+    UsageByPrResultContract,
+} from '@/core/domain/tokenUsage/types/tokenUsage.types';
 
 @Injectable()
 export class TokenUsageService implements ITokenUsageService {
@@ -17,15 +19,27 @@ export class TokenUsageService implements ITokenUsageService {
         private readonly repository: ITokenUsageRepository,
     ) {}
 
+    async getSummary(
+        query: TokenUsageQueryContract,
+    ): Promise<UsageSummaryContract> {
+        return this.repository.getSummary(query);
+    }
+
     async getDailyUsage(
         query: TokenUsageQueryContract,
     ): Promise<DailyUsageResultContract[]> {
         return this.repository.getDailyUsage(query);
     }
 
-    async getSummary(
+    async getUsageByPr(
         query: TokenUsageQueryContract,
-    ): Promise<UsageSummaryContract> {
-        return this.repository.getSummary(query);
+    ): Promise<UsageByPrResultContract[]> {
+        return this.repository.getUsageByPr(query);
+    }
+
+    async getDailyUsageByPr(
+        query: TokenUsageQueryContract,
+    ): Promise<DailyUsageByPrResultContract[]> {
+        return this.repository.getDailyUsageByPr(query);
     }
 }
