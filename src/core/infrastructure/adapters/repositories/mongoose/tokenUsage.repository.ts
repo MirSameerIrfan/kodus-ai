@@ -11,6 +11,8 @@ import {
     UsageByPrResultContract,
     DailyUsageByPrResultContract,
 } from '@/core/domain/tokenUsage/types/tokenUsage.types';
+import { LLMAnalysisService } from '../../services/codeBase/llmAnalysis.service';
+import { CodeAstAnalysisService } from '@/ee/kodyAST/codeASTAnalysis.service';
 
 @Injectable()
 export class TokenUsageRepository implements ITokenUsageRepository {
@@ -102,9 +104,40 @@ export class TokenUsageRepository implements ITokenUsageRepository {
                     $gte: query.start,
                     $lte: query.end,
                 },
-                'attributes.type': 'byok',
                 ...matchStage,
             },
+        };
+
+        const matchBYOKStage = {
+            $match: query.byok
+                ? {
+                      'attributes.type': 'byok',
+                  }
+                : {
+                      // Get would-be BYOK runs, for simulating in free trial
+                      $expr: {
+                          $not: {
+                              $in: [
+                                  {
+                                      $getField: {
+                                          field: 'gen_ai.run.name',
+                                          input: '$attributes',
+                                      },
+                                  },
+                                  [
+                                      LLMAnalysisService.prototype
+                                          .selectReviewMode.name,
+                                      LLMAnalysisService.prototype
+                                          .validateImplementedSuggestions.name,
+                                      LLMAnalysisService.prototype
+                                          .generateCodeSuggestions.name,
+                                      CodeAstAnalysisService.prototype
+                                          .analyzeASTWithAI.name,
+                                  ], // These runs will never be called with BYOK
+                              ],
+                          },
+                      },
+                  },
         };
 
         const matchPRNumberStage = {
@@ -116,10 +149,10 @@ export class TokenUsageRepository implements ITokenUsageRepository {
         };
 
         const matchModelStage = {
-            $match: query.model
+            $match: query.models
                 ? {
                       $expr: {
-                          $eq: [
+                          $in: [
                               {
                                   $getField: {
                                       // since the field name itself has dots we have to use this $getField
@@ -128,7 +161,7 @@ export class TokenUsageRepository implements ITokenUsageRepository {
                                       input: '$attributes',
                                   },
                               },
-                              query.model,
+                              query.models.split(','),
                           ],
                       },
                   }
@@ -162,6 +195,7 @@ export class TokenUsageRepository implements ITokenUsageRepository {
 
         const pipeline: any[] = [
             matchStageFinal,
+            matchBYOKStage,
             matchPRNumberStage,
             matchModelStage,
             groupStageFinal,

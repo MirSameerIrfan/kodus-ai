@@ -139,7 +139,7 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
     ): Promise<AIAnalysisResult> {
         const provider = LLMModelProvider.NOVITA_DEEPSEEK_V3_0324;
         const fallbackProvider = LLMModelProvider.OPENAI_GPT_4O;
-        const runName = 'CodeASTAnalysisAI';
+        const runName = 'analyzeASTWithAI';
 
         const payload = await this.prepareAnalysisContext(context);
 

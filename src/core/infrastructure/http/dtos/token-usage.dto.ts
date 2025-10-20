@@ -1,4 +1,12 @@
-import { IsISO8601, IsNumber, IsOptional, IsString } from 'class-validator';
+import { BadRequestException } from '@nestjs/common';
+import { Transform } from 'class-transformer';
+import {
+    IsBoolean,
+    IsISO8601,
+    IsNumber,
+    IsOptional,
+    IsString,
+} from 'class-validator';
 
 export class TokenUsageQueryDto {
     @IsString()
@@ -12,7 +20,7 @@ export class TokenUsageQueryDto {
 
     @IsOptional()
     @IsString()
-    model?: string;
+    models?: string;
 
     @IsOptional()
     @IsNumber()
@@ -25,12 +33,16 @@ export class TokenUsageQueryDto {
     @IsOptional()
     @IsString()
     developer?: string;
+
+    @IsString()
+    byok: string;
 }
 
 export class TokenPricingQueryDto {
     @IsString()
-    provider: string;
+    model: string;
 
     @IsString()
-    model: string;
+    @IsOptional()
+    provider?: string;
 }

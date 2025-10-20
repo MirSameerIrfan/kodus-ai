@@ -2,10 +2,11 @@ export type TokenUsageQueryContract = {
     organizationId: string;
     start: Date;
     end: Date;
-    model?: string;
+    models?: string;
     prNumber?: number;
     timezone?: string; // for day bucketing
     developer?: string;
+    byok: boolean;
 };
 
 export interface BaseUsageContract {
