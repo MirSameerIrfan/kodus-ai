@@ -219,6 +219,7 @@ export class GenerateKodyRulesUseCase {
                     await this.commentAnalysisService.generateKodyRules({
                         comments: processedComments,
                         existingRules,
+                        organizationAndTeamData,
                     });
 
                 if (!rules || rules.length === 0) {

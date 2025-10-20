@@ -30,15 +30,16 @@ export class TokenPricingUseCase {
         });
     }
 
-    async execute(provider: string, model: string) {
+    async execute(model: string, provider?: string) {
         try {
-            return this.getModelInfo(provider, model);
+            return this.getModelInfo(model, provider);
         } catch (error) {
             this.logger.error({
                 message: 'Error fetching token pricing',
                 error,
                 context: TokenPricingUseCase.name,
             });
+            return {} as ModelInfo;
         }
     }
 
@@ -91,7 +92,7 @@ export class TokenPricingUseCase {
 
         const allModels = await this.getPricingData();
         const providerModels =
-            mappedProvider === 'all'
+            !mappedProvider || mappedProvider === 'all'
                 ? allModels
                 : allModels.filter((m) =>
                       m.id
@@ -102,7 +103,7 @@ export class TokenPricingUseCase {
         return providerModels;
     }
 
-    private async getModelInfo(provider: string, model: string) {
+    private async getModelInfo(model: string, provider?: string) {
         const providerModels = await this.getProviderModels(
             provider as BYOKProvider,
         );
@@ -111,8 +112,10 @@ export class TokenPricingUseCase {
             throw new Error(`No models found for provider ${provider}`);
         }
 
+        const parsedModel = model.toLowerCase().split('/').pop();
+
         const modelInfo = providerModels.find(
-            (m) => m.id.split('/')[1] === model.toLowerCase(),
+            (m) => m.id.split('/')[1] === parsedModel,
         );
 
         if (!modelInfo) {

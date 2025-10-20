@@ -476,8 +476,16 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
 
         const runName = 'kodyRulesAnalyzeCodeWithAI';
         const spanName = `${KodyRulesAnalysisService.name}::${runName}`;
+
+        const promptRunner = new BYOKPromptRunnerService(
+            this.promptRunnerService,
+            provider,
+            fallbackProvider,
+            context?.codeReviewConfig?.byokConfig,
+        );
+
         const spanAttrs = {
-            type: 'byok',
+            type: promptRunner.executeMode,
             organizationId: organizationAndTeamData?.organizationId,
             prNumber,
             file: { name: fileContext?.file?.filename },
@@ -491,6 +499,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
                 exec: async (callbacks) => {
                     // Builders iguais, apenas sem callbacks fixos.
                     const classifier = this.getClassifier(
+                        promptRunner,
                         provider,
                         fallbackProvider,
                         extendedContext,
@@ -498,6 +507,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
                         callbacks,
                     );
                     const updater = this.getUpdater(
+                        promptRunner,
                         provider,
                         fallbackProvider,
                         extendedContext,
@@ -552,6 +562,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
                     };
 
                     const generator = this.getGenerator(
+                        promptRunner,
                         provider,
                         fallbackProvider,
                         extendedContext,
@@ -624,19 +635,13 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
     }
 
     private getClassifier(
+        promptRunner: BYOKPromptRunnerService,
         provider: LLMModelProvider,
         fallbackProvider: LLMModelProvider,
         context: KodyRulesExtendedContext,
         byokConfig?: BYOKConfig,
         callbacks?: any[],
     ) {
-        const promptRunner = new BYOKPromptRunnerService(
-            this.promptRunnerService,
-            provider,
-            fallbackProvider,
-            byokConfig,
-        );
-
         const builder = promptRunner
             .builder()
             .setParser(ParserType.ZOD, kodyRulesClassifierSchema, {
@@ -680,19 +685,13 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
     }
 
     private getUpdater(
+        promptRunner: BYOKPromptRunnerService,
         provider: LLMModelProvider,
         fallbackProvider: LLMModelProvider,
         context: KodyRulesExtendedContext,
         byokConfig?: BYOKConfig,
         callbacks?: any[],
     ) {
-        const promptRunner = new BYOKPromptRunnerService(
-            this.promptRunnerService,
-            provider,
-            fallbackProvider,
-            byokConfig,
-        );
-
         const builder = promptRunner
             .builder()
             .setParser(ParserType.STRING)
@@ -733,19 +732,13 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
     }
 
     private getGuardian(
+        promptRunner: BYOKPromptRunnerService,
         provider: LLMModelProvider,
         fallbackProvider: LLMModelProvider,
         context: KodyRulesExtendedContext,
         byokConfig?: BYOKConfig,
         callbacks?: any[],
     ) {
-        const promptRunner = new BYOKPromptRunnerService(
-            this.promptRunnerService,
-            provider,
-            fallbackProvider,
-            byokConfig,
-        );
-
         const builder = promptRunner
             .builder()
             .setParser(ParserType.STRING) // mantém a lógica atual
@@ -786,19 +779,13 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
     }
 
     private getGenerator(
+        promptRunner: BYOKPromptRunnerService,
         provider: LLMModelProvider,
         fallbackProvider: LLMModelProvider,
         context: KodyRulesExtendedContext,
         byokConfig?: BYOKConfig,
         callbacks?: any[],
     ) {
-        const promptRunner = new BYOKPromptRunnerService(
-            this.promptRunnerService,
-            provider,
-            fallbackProvider,
-            byokConfig,
-        );
-
         const builder = promptRunner
             .builder()
             .setParser(ParserType.ZOD, kodyRulesGeneratorSchema, {

@@ -1,4 +1,4 @@
-import { Inject, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Inject, UseInterceptors } from '@nestjs/common';
 import {
     ITokenUsageService,
     TOKEN_USAGE_SERVICE_TOKEN,
@@ -20,6 +20,7 @@ import {
 import { TokensByDeveloperUseCase } from '@/core/application/use-cases/usage/tokens-developer.use-case';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { TokenPricingUseCase } from '@/core/application/use-cases/usage/token-pricing.use-case';
+import { PinoLoggerService } from '../../adapters/services/logger/pino.service';
 
 @Controller('usage')
 export class TokenUsageController {
@@ -29,59 +30,114 @@ export class TokenUsageController {
 
         private readonly tokensByDeveloperUseCase: TokensByDeveloperUseCase,
         private readonly tokenPricingUseCase: TokenPricingUseCase,
+        private readonly logger: PinoLoggerService,
     ) {}
 
     @Get('tokens/summary')
     async getSummary(
         @Query() query: TokenUsageQueryDto,
     ): Promise<UsageSummaryContract> {
-        const mapped = this.mapDtoToContract(query);
-        return this.tokenUsageService.getSummary(mapped);
+        try {
+            const mapped = this.mapDtoToContract(query);
+            return this.tokenUsageService.getSummary(mapped);
+        } catch (error) {
+            this.logger.error({
+                message: 'Error fetching token usage summary',
+                error,
+                context: TokenUsageController.name,
+            });
+            return {} as UsageSummaryContract;
+        }
     }
 
     @Get('tokens/daily')
     async getDaily(
         @Query() query: TokenUsageQueryDto,
     ): Promise<DailyUsageResultContract[]> {
-        const mapped = this.mapDtoToContract(query);
-        return this.tokenUsageService.getDailyUsage(mapped);
+        try {
+            const mapped = this.mapDtoToContract(query);
+            return this.tokenUsageService.getDailyUsage(mapped);
+        } catch (error) {
+            this.logger.error({
+                message: 'Error fetching daily token usage',
+                error,
+                context: TokenUsageController.name,
+            });
+            return [];
+        }
     }
 
     @Get('tokens/by-pr')
     async getUsageByPr(
         @Query() query: TokenUsageQueryDto,
     ): Promise<UsageByPrResultContract[]> {
-        const mapped = this.mapDtoToContract(query);
-        return this.tokenUsageService.getUsageByPr(mapped);
+        try {
+            const mapped = this.mapDtoToContract(query);
+            return await this.tokenUsageService.getUsageByPr(mapped);
+        } catch (error) {
+            this.logger.error({
+                message: 'Error fetching token usage by PR',
+                error,
+                context: TokenUsageController.name,
+            });
+            return [];
+        }
     }
 
     @Get('tokens/daily-by-pr')
     async getDailyUsageByPr(
         @Query() query: TokenUsageQueryDto,
     ): Promise<DailyUsageByPrResultContract[]> {
-        const mapped = this.mapDtoToContract(query);
-        return this.tokenUsageService.getDailyUsageByPr(mapped);
+        try {
+            const mapped = this.mapDtoToContract(query);
+            return await this.tokenUsageService.getDailyUsageByPr(mapped);
+        } catch (error) {
+            this.logger.error({
+                message: 'Error fetching daily token usage by PR',
+                error,
+                context: TokenUsageController.name,
+            });
+            return [];
+        }
     }
 
     @Get('tokens/by-developer')
     async getUsageByDeveloper(
         @Query() query: TokenUsageQueryDto,
     ): Promise<UsageByDeveloperResultContract[]> {
-        const mapped = this.mapDtoToContract(query);
-        return this.tokensByDeveloperUseCase.execute(mapped, false);
+        try {
+            const mapped = this.mapDtoToContract(query);
+            return await this.tokensByDeveloperUseCase.execute(mapped, false);
+        } catch (error) {
+            this.logger.error({
+                message: 'Error fetching token usage by developer',
+                error,
+                context: TokenUsageController.name,
+            });
+            return [];
+        }
     }
 
     @Get('tokens/daily-by-developer')
     async getDailyByDeveloper(
         @Query() query: TokenUsageQueryDto,
     ): Promise<DailyUsageByDeveloperResultContract[]> {
-        const mapped = this.mapDtoToContract(query);
-        return this.tokensByDeveloperUseCase.execute(mapped, true);
+        try {
+            const mapped = this.mapDtoToContract(query);
+            return await this.tokensByDeveloperUseCase.execute(mapped, true);
+        } catch (error) {
+            this.logger.error({
+                message: 'Error fetching daily token usage by developer',
+                error,
+                context: TokenUsageController.name,
+            });
+            return [];
+        }
     }
 
     @Get('tokens/pricing')
     async getPricing(@Query() query: TokenPricingQueryDto) {
-        return this.tokenPricingUseCase.execute(query.provider, query.model);
+        return this.tokenPricingUseCase.execute(query.model, query.provider);
     }
 
     // debug endpoint removed
@@ -106,6 +162,14 @@ export class TokenUsageController {
             end.setUTCHours(23, 59, 59, 999);
         }
 
+        const normalized = query.byok.trim().toLowerCase();
+        if (normalized !== 'true' && normalized !== 'false') {
+            throw new BadRequestException(
+                `byok must be a 'true' or 'false' string`,
+            );
+        }
+        const byokBoolean = normalized === 'true';
+
         return {
             organizationId: query.organizationId,
             prNumber: query.prNumber,
@@ -113,7 +177,8 @@ export class TokenUsageController {
             end,
             timezone: query.timezone || 'UTC',
             developer: query.developer,
-            model: query.model,
+            models: query.models,
+            byok: byokBoolean,
         };
     }
 }

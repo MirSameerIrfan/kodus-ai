@@ -52,6 +52,9 @@ import { v4 } from 'uuid';
 import { SUPPORTED_LANGUAGES } from '@/core/domain/codeBase/contracts/SupportedLanguages';
 import { LibraryKodyRule } from '@/config/types/kodyRules.type';
 import { ObservabilityService } from '../logger/observability.service';
+import { BYOKPromptRunnerService } from '@/shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 
 @Injectable()
 export class CommentAnalysisService {
@@ -59,15 +62,20 @@ export class CommentAnalysisService {
         private readonly logger: PinoLoggerService,
         private readonly promptRunnerService: PromptRunnerService,
         private readonly observabilityService: ObservabilityService,
+        private readonly permissionValidationService: PermissionValidationService,
     ) {}
 
     async categorizeComments(params: {
         comments: UncategorizedComment[];
+        organizationAndTeamData: OrganizationAndTeamData;
     }): Promise<CategorizedComment[]> {
-        const { comments } = params;
+        const { comments, organizationAndTeamData } = params;
 
         try {
-            const filteredComments = await this.filterComments({ comments });
+            const filteredComments = await this.filterComments({
+                comments,
+                organizationAndTeamData,
+            });
             if (!filteredComments || filteredComments.length === 0) {
                 this.logger.log({
                     message: 'No comments after filtering',
@@ -79,8 +87,21 @@ export class CommentAnalysisService {
 
             const runName = 'commentCategorizer';
             const spanName = `${CommentAnalysisService.name}::${runName}`;
+
+            const byokConfig =
+                await this.permissionValidationService.getBYOKConfig(
+                    organizationAndTeamData,
+                );
+
+            const promptRunner = new BYOKPromptRunnerService(
+                this.promptRunnerService,
+                LLMModelProvider.GEMINI_2_5_PRO,
+                LLMModelProvider.NOVITA_DEEPSEEK_V3_0324,
+                byokConfig,
+            );
+
             const spanAttrs = {
-                type: 'system',
+                type: promptRunner.executeMode,
                 commentsCount: filteredComments.length,
             };
 
@@ -90,13 +111,8 @@ export class CommentAnalysisService {
                     runName,
                     attrs: spanAttrs,
                     exec: async (callbacks) => {
-                        return this.promptRunnerService
+                        return promptRunner
                             .builder()
-                            .setProviders({
-                                main: LLMModelProvider.GEMINI_2_5_PRO,
-                                fallback:
-                                    LLMModelProvider.NOVITA_DEEPSEEK_V3_0324,
-                            })
                             .setParser(ParserType.ZOD, commentCategorizerSchema)
                             .setLLMJsonMode(true)
                             .setPayload({ comments: filteredComments })
@@ -177,11 +193,15 @@ export class CommentAnalysisService {
     async generateKodyRules(params: {
         comments: UncategorizedComment[];
         existingRules: IKodyRule[];
+        organizationAndTeamData: OrganizationAndTeamData;
     }): Promise<IKodyRule[]> {
-        const { comments, existingRules } = params;
+        const { comments, existingRules, organizationAndTeamData } = params;
 
         try {
-            const filteredComments = await this.filterComments({ comments });
+            const filteredComments = await this.filterComments({
+                comments,
+                organizationAndTeamData,
+            });
             if (!filteredComments || filteredComments.length === 0) {
                 this.logger.log({
                     message:
@@ -192,23 +212,30 @@ export class CommentAnalysisService {
                 return [];
             }
 
+            const byokConfig =
+                await this.permissionValidationService.getBYOKConfig(
+                    organizationAndTeamData,
+                );
+
+            const promptRunner = new BYOKPromptRunnerService(
+                this.promptRunnerService,
+                LLMModelProvider.GEMINI_2_5_PRO,
+                LLMModelProvider.NOVITA_DEEPSEEK_V3_0324,
+                byokConfig,
+            );
+
             const genRun = 'generateKodyRules.generate';
             const { result: generatedRes } =
                 await this.observabilityService.runLLMInSpan({
                     spanName: `${CommentAnalysisService.name}::${genRun}`,
                     runName: genRun,
                     attrs: {
-                        type: 'system',
+                        type: promptRunner.executeMode,
                         commentsCount: filteredComments.length,
                     },
                     exec: async (callbacks) => {
-                        return this.promptRunnerService
+                        return promptRunner
                             .builder()
-                            .setProviders({
-                                main: LLMModelProvider.GEMINI_2_5_PRO,
-                                fallback:
-                                    LLMModelProvider.NOVITA_DEEPSEEK_V3_0324,
-                            })
                             .setParser(ParserType.ZOD, kodyRulesGeneratorSchema)
                             .setLLMJsonMode(true)
                             .setPayload({
@@ -256,6 +283,7 @@ export class CommentAnalysisService {
                     (rule as Partial<LibraryKodyRule>)?.why_is_this_important ||
                     '',
             })) as LibraryKodyRule[];
+
             let deduplicatedRules = generatedWithUuids;
             if (existingRules && existingRules.length > 0) {
                 const dedupeRun = 'generateKodyRules.dedupe';
@@ -264,18 +292,13 @@ export class CommentAnalysisService {
                         spanName: `${CommentAnalysisService.name}::${dedupeRun}`,
                         runName: dedupeRun,
                         attrs: {
-                            type: 'system',
+                            type: promptRunner.executeMode,
                             newRulesCount: generatedWithUuids.length,
                             existingRulesCount: existingRulesAsLibrary.length,
                         },
                         exec: async (callbacks) => {
-                            return this.promptRunnerService
+                            return promptRunner
                                 .builder()
-                                .setProviders({
-                                    main: LLMModelProvider.GEMINI_2_5_PRO,
-                                    fallback:
-                                        LLMModelProvider.NOVITA_DEEPSEEK_V3_0324,
-                                })
                                 .setParser(
                                     ParserType.ZOD,
                                     kodyRulesGeneratorDuplicateFilterSchema,
@@ -330,17 +353,12 @@ export class CommentAnalysisService {
                     spanName: `${CommentAnalysisService.name}::${qualityRun}`,
                     runName: qualityRun,
                     attrs: {
-                        type: 'system',
+                        type: promptRunner.executeMode,
                         candidateRulesCount: deduplicatedRules.length,
                     },
                     exec: async (callbacks) => {
-                        return this.promptRunnerService
+                        return promptRunner
                             .builder()
-                            .setProviders({
-                                main: LLMModelProvider.GEMINI_2_5_PRO,
-                                fallback:
-                                    LLMModelProvider.NOVITA_DEEPSEEK_V3_0324,
-                            })
                             .setParser(
                                 ParserType.ZOD,
                                 kodyRulesGeneratorQualityFilterSchema,
@@ -444,14 +462,28 @@ export class CommentAnalysisService {
 
     private async filterComments(params: {
         comments: UncategorizedComment[];
+        organizationAndTeamData: OrganizationAndTeamData;
     }): Promise<UncategorizedComment[]> {
-        const { comments } = params;
+        const { comments, organizationAndTeamData } = params;
 
         try {
             const runName = 'commentIrrelevanceFilter';
             const spanName = `${CommentAnalysisService.name}::${runName}`;
+
+            const byokConfig =
+                await this.permissionValidationService.getBYOKConfig(
+                    organizationAndTeamData,
+                );
+
+            const promptRunner = new BYOKPromptRunnerService(
+                this.promptRunnerService,
+                LLMModelProvider.GEMINI_2_5_PRO,
+                LLMModelProvider.NOVITA_DEEPSEEK_V3_0324,
+                byokConfig,
+            );
+
             const spanAttrs = {
-                type: 'system',
+                type: promptRunner.executeMode,
                 commentsCount: comments.length,
             };
 
@@ -461,13 +493,8 @@ export class CommentAnalysisService {
                     runName,
                     attrs: spanAttrs,
                     exec: async (callbacks) => {
-                        return this.promptRunnerService
+                        return promptRunner
                             .builder()
-                            .setProviders({
-                                main: LLMModelProvider.GEMINI_2_5_PRO,
-                                fallback:
-                                    LLMModelProvider.NOVITA_DEEPSEEK_V3_0324,
-                            })
                             .setParser(
                                 ParserType.ZOD,
                                 commentIrrelevanceFilterSchema,
