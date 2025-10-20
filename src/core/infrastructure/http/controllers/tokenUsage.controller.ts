@@ -45,6 +45,7 @@ export class TokenUsageController {
                 message: 'Error fetching token usage summary',
                 error,
                 context: TokenUsageController.name,
+                metadata: { query },
             });
             return {} as UsageSummaryContract;
         }
@@ -62,6 +63,7 @@ export class TokenUsageController {
                 message: 'Error fetching daily token usage',
                 error,
                 context: TokenUsageController.name,
+                metadata: { query },
             });
             return [];
         }
@@ -79,6 +81,7 @@ export class TokenUsageController {
                 message: 'Error fetching token usage by PR',
                 error,
                 context: TokenUsageController.name,
+                metadata: { query },
             });
             return [];
         }
@@ -96,6 +99,7 @@ export class TokenUsageController {
                 message: 'Error fetching daily token usage by PR',
                 error,
                 context: TokenUsageController.name,
+                metadata: { query },
             });
             return [];
         }
@@ -113,6 +117,7 @@ export class TokenUsageController {
                 message: 'Error fetching token usage by developer',
                 error,
                 context: TokenUsageController.name,
+                metadata: { query },
             });
             return [];
         }
@@ -130,6 +135,7 @@ export class TokenUsageController {
                 message: 'Error fetching daily token usage by developer',
                 error,
                 context: TokenUsageController.name,
+                metadata: { query },
             });
             return [];
         }
