@@ -42,7 +42,6 @@ import {
     RULE_LIKE_SERVICE_TOKEN,
 } from '@/core/domain/kodyRules/contracts/ruleLike.service.contract';
 import { KodyRulesValidationService } from './kody-rules-validation.service';
-import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
 
 @Injectable()
 export class KodyRulesService implements IKodyRulesService {
@@ -59,7 +58,6 @@ export class KodyRulesService implements IKodyRulesService {
         private readonly logger: PinoLoggerService,
 
         private readonly kodyRulesValidationService: KodyRulesValidationService,
-        private readonly permissionValidationService: PermissionValidationService,
     ) {}
 
     getNativeCollection() {

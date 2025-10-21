@@ -58,11 +58,7 @@ import {
 import { Response as BitbucketResponse } from 'bitbucket/src/request/types';
 import { CreateAuthIntegrationStatus } from '@/shared/domain/enums/create-auth-integration-status.enum';
 import { IRepository } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
-import {
-    KODY_CODE_REVIEW_COMPLETED_MARKER,
-    KODY_CRITICAL_ISSUE_COMMENT_MARKER,
-    KODY_START_COMMAND_MARKER,
-} from '@/shared/utils/codeManagement/codeCommentMarkers';
+import { hasKodyMarker } from '@/shared/utils/codeManagement/codeCommentMarkers';
 import {
     MODEL_STRATEGIES,
     LLMModelProvider,
@@ -2805,7 +2801,7 @@ export class BitbucketService
         organizationAndTeamData: OrganizationAndTeamData;
         configKey: IntegrationConfigKey;
         configValue: any;
-        type?: "replace" | "append";
+        type?: 'replace' | 'append';
     }): Promise<void> {
         try {
             const integration = await this.integrationService.findOne({
@@ -3806,19 +3802,7 @@ export class BitbucketService
                 .then((res) => this.getPaginatedResults(bitbucketAPI, res));
 
             return comments
-                .filter((comment) => {
-                    return (
-                        !comment?.content?.raw.includes(
-                            KODY_CODE_REVIEW_COMPLETED_MARKER,
-                        ) &&
-                        !comment?.content?.raw.includes(
-                            KODY_CRITICAL_ISSUE_COMMENT_MARKER,
-                        ) &&
-                        !comment?.content?.raw.includes(
-                            KODY_START_COMMAND_MARKER,
-                        )
-                    ); // Exclude comments with the specific strings
-                })
+                .filter((comment) => !hasKodyMarker(comment?.content?.raw))
                 .map((comment) => {
                     const mappedComment: PullRequestReviewComment = {
                         id: comment?.id,
@@ -4066,8 +4050,10 @@ export class BitbucketService
                 return false;
             }
 
-            const targetRepo = repositories.find((repo) =>
-                this.sanitizeUUID(repo.id) === this.sanitizeUUID(repositoryId),
+            const targetRepo = repositories.find(
+                (repo) =>
+                    this.sanitizeUUID(repo.id) ===
+                    this.sanitizeUUID(repositoryId),
             );
 
             if (!targetRepo?.workspaceId) {
@@ -4091,7 +4077,8 @@ export class BitbucketService
                 .then((res) => this.getPaginatedResults(bitbucketAPI, res));
 
             return existingHooks.some(
-                (hook: any) => hook?.url === webhookUrl && hook?.active !== false,
+                (hook: any) =>
+                    hook?.url === webhookUrl && hook?.active !== false,
             );
         } catch (error) {
             this.logger.error({

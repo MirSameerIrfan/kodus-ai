@@ -67,7 +67,7 @@ import {
     TranslationsCategory,
 } from '@/shared/utils/translations/translations';
 import { LanguageValue } from '@/shared/domain/enums/language-parameter.enum';
-import { KODY_CRITICAL_ISSUE_COMMENT_MARKER } from '@/shared/utils/codeManagement/codeCommentMarkers';
+import { hasKodyMarker } from '@/shared/utils/codeManagement/codeCommentMarkers';
 import {
     AzurePRStatus,
     AzureRepoPullRequest,
@@ -1530,15 +1530,7 @@ export class AzureReposService
                         },
                     })),
                 )
-                .filter(
-                    (comment) =>
-                        !comment.body.includes(
-                            '## Code Review Completed! ud83dudd25',
-                        ) &&
-                        !comment.body.includes(
-                            KODY_CRITICAL_ISSUE_COMMENT_MARKER,
-                        ),
-                )
+                .filter((comment) => !hasKodyMarker(comment.body))
                 .sort(
                     (a, b) =>
                         new Date(b.createdAt).getTime() -

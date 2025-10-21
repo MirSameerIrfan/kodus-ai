@@ -73,7 +73,7 @@ import { CreateAuthIntegrationStatus } from '@/shared/domain/enums/create-auth-i
 import { ReviewComment } from '@/config/types/general/codeReview.type';
 import { getSeverityLevelShield } from '@/shared/utils/codeManagement/severityLevel';
 import { getCodeReviewBadge } from '@/shared/utils/codeManagement/codeReviewBadge';
-import { KODY_CODE_REVIEW_COMPLETED_MARKER } from '@/shared/utils/codeManagement/codeCommentMarkers';
+import { hasKodyMarker } from '@/shared/utils/codeManagement/codeCommentMarkers';
 import { ConfigService } from '@nestjs/config';
 import { GitCloneParams } from '@/core/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
 import { LLMProviderService, LLMModelProvider } from '@kodus/kodus-common/llm';
@@ -2191,7 +2191,7 @@ export class GitlabService
 
             const originalCommit = comments?.find(
                 (comment) => comment.id === filters.discussionId,
-            )?.notes[0]
+            )?.notes[0];
 
             if (filters?.discussionId === undefined) {
                 return comments;
@@ -2203,13 +2203,15 @@ export class GitlabService
                             id: note.id,
                             body: note.body,
                             createdAt: note.created_at,
-                            originalCommit: { body: originalCommit.body, id: originalCommit.id },
+                            originalCommit: {
+                                body: originalCommit.body,
+                                id: originalCommit.id,
+                            },
                             author: {
                                 id: note.author.id,
                                 username: note.author.username,
                                 name: note.author.name,
                             },
-                            
                         })),
                     )
                     .sort(
@@ -3207,10 +3209,8 @@ export class GitlabService
                     const firstDiscussionComment = discussion.notes[0];
                     return (
                         firstDiscussionComment.resolvable &&
-                        !firstDiscussionComment.body.includes(
-                            KODY_CODE_REVIEW_COMPLETED_MARKER,
-                        )
-                    ); // Exclude comments with the specific string
+                        !hasKodyMarker(firstDiscussionComment.body)
+                    );
                 })
                 .map((discussion) => {
                     // The review comment will always be the first one.

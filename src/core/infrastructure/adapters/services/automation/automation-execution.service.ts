@@ -52,24 +52,31 @@ export class AutomationExecutionService implements IAutomationExecutionService {
     async create(
         automationExecution: Omit<IAutomationExecution, 'uuid'>,
     ): Promise<AutomationExecutionEntity> {
-        const result = await this.automationExecutionRepository.create(automationExecution);
-        
+        const result =
+            await this.automationExecutionRepository.create(
+                automationExecution,
+            );
+
         try {
-            await this.cacheService.deleteByKeyPattern('/pull-requests/executions*');
+            await this.cacheService.deleteByKeyPattern(
+                '/pull-requests/executions*',
+            );
             this.logger.log({
-                message: 'Cache invalidated after automation execution creation',
+                message:
+                    'Cache invalidated after automation execution creation',
                 context: AutomationExecutionService.name,
-                metadata: { executionUuid: result?.uuid }
+                metadata: { executionUuid: result?.uuid },
             });
         } catch (error) {
             this.logger.warn({
-                message: 'Failed to invalidate cache after automation execution creation',
+                message:
+                    'Failed to invalidate cache after automation execution creation',
                 context: AutomationExecutionService.name,
                 error,
-                metadata: { executionUuid: result?.uuid }
+                metadata: { executionUuid: result?.uuid },
             });
         }
-        
+
         return result;
     }
 
@@ -113,11 +120,13 @@ export class AutomationExecutionService implements IAutomationExecutionService {
         startDate: Date,
         endDate: Date,
         teamAutomationId: string,
+        status?: string | string[],
     ): Promise<AutomationExecutionEntity[]> {
         return this.automationExecutionRepository.findByPeriodAndTeamAutomationId(
             startDate,
             endDate,
             teamAutomationId,
+            status,
         );
     }
 

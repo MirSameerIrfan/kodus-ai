@@ -18,6 +18,7 @@ import { KodyRulesModule } from './kodyRules.module';
 import { PullRequestsModule } from './pullRequests.module';
 import { CheckIfPRCanBeApprovedCronProvider } from '@/core/infrastructure/adapters/services/cron/CheckIfPRCanBeApproved.cron';
 import { CodebaseModule } from './codeBase.module';
+import { PullRequestMessagesModule } from './pullRequestMessages.module';
 
 @Module({
     imports: [
@@ -27,6 +28,7 @@ import { CodebaseModule } from './codeBase.module';
         forwardRef(() => KodyRulesModule),
         forwardRef(() => CodebaseModule),
         PullRequestsModule,
+        PullRequestMessagesModule,
         TeamAutomationModule,
         AutomationModule,
         AutomationStrategyModule,

@@ -21,18 +21,15 @@ import {
 import { CodeManagementService } from '../platformIntegration/codeManagement.service';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import {
-    CodeReviewConfig,
-    CodeReviewConfigWithRepositoryInfo,
-} from '@/config/types/general/codeReview.type';
+
 import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
 import { AzureRepoCommentTypeString } from '@/core/domain/azureRepos/entities/azureRepoExtras.type';
 import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
     IAutomationExecutionService,
 } from '@/core/domain/automation/contracts/automation-execution.service';
-import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
 import { AutomationType } from '@/core/domain/automation/enums/automation-type';
+import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
 import {
     AUTOMATION_SERVICE_TOKEN,
     IAutomationService,
@@ -45,12 +42,24 @@ import {
     CODE_BASE_CONFIG_SERVICE_TOKEN,
     ICodeBaseConfigService,
 } from '@/core/domain/codeBase/contracts/CodeBaseConfigService.contract';
+import {
+    IPullRequestMessagesService,
+    PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
+} from '@/core/domain/pullRequestMessages/contracts/pullRequestMessages.service.contract';
+import { IPullRequestMessages } from '@/core/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
+import { CodeReviewConfig } from '@/config/types/general/codeReview.type';
+import { ConfigLevel } from '@/config/types/general/pullRequestMessages.type';
 
 const API_CRON_CHECK_IF_PR_SHOULD_BE_APPROVED =
     process.env.API_CRON_CHECK_IF_PR_SHOULD_BE_APPROVED;
 
 @Injectable()
 export class CheckIfPRCanBeApprovedCronProvider {
+    private pullRequestMessagesCache = new Map<
+        string,
+        IPullRequestMessages | null
+    >();
+
     constructor(
         private readonly logger: PinoLoggerService,
 
@@ -76,6 +85,9 @@ export class CheckIfPRCanBeApprovedCronProvider {
 
         @Inject(TEAM_AUTOMATION_SERVICE_TOKEN)
         private readonly teamAutomationService: ITeamAutomationService,
+
+        @Inject(PULL_REQUEST_MESSAGES_SERVICE_TOKEN)
+        private readonly pullRequestMessagesService: IPullRequestMessagesService,
     ) {}
 
     @Cron(API_CRON_CHECK_IF_PR_SHOULD_BE_APPROVED, {
@@ -83,6 +95,9 @@ export class CheckIfPRCanBeApprovedCronProvider {
         timeZone: 'America/Sao_Paulo',
     })
     async handleCron() {
+        // Clear cache at start of each cron run
+        this.pullRequestMessagesCache.clear();
+
         try {
             this.logger.log({
                 message: 'Check if PR can be approved cron started',
@@ -110,160 +125,203 @@ export class CheckIfPRCanBeApprovedCronProvider {
                 return;
             }
 
-            for (const team of teams) {
-                const organizationId = team.organization?.uuid;
-                const teamId = team.uuid;
+            // Buscar automation UMA VEZ (igual para todos os teams)
+            const codeReviewAutomation = await this.automationService.find({
+                automationType: AutomationType.AUTOMATION_CODE_REVIEW,
+            });
 
-                const organizationAndTeamData: OrganizationAndTeamData = {
-                    organizationId,
-                    teamId,
-                };
-
-                const codeReviewParameter =
-                    await this.parametersService.findByKey(
-                        ParametersKey.CODE_REVIEW_CONFIG,
-                        organizationAndTeamData,
-                    );
-
-                if (!codeReviewParameter || !codeReviewParameter?.configValue) {
-                    this.logger.error({
-                        message: 'Code review parameter configs not found',
-                        context: CheckIfPRCanBeApprovedCronProvider.name,
-                        metadata: {
-                            timestamp: new Date().toISOString(),
-                            organizationAndTeamData,
-                        },
-                    });
-
-                    continue;
-                }
-
-                const codeReviewConfig = codeReviewParameter?.configValue;
-
-                if (
-                    !codeReviewParameter ||
-                    !codeReviewConfig ||
-                    !Array.isArray(codeReviewConfig.repositories) ||
-                    codeReviewConfig.repositories?.length < 1
-                ) {
-                    this.logger.error({
-                        message:
-                            'No repositories were found on the code review parameter config value',
-                        context: CheckIfPRCanBeApprovedCronProvider.name,
-                        metadata: {
-                            organizationAndTeamData,
-                            timestamp: new Date().toISOString(),
-                        },
-                    });
-
-                    continue;
-                }
-
-                const codeReviewAutomation = await this.automationService.find({
-                    automationType: AutomationType.AUTOMATION_CODE_REVIEW,
-                });
-
-                if (
-                    !codeReviewAutomation ||
-                    codeReviewAutomation.length === 0
-                ) {
-                    this.logger.error({
-                        message: 'Code review automation not found',
-                        context: CheckIfPRCanBeApprovedCronProvider.name,
-                        metadata: {
-                            organizationAndTeamData,
-                            timestamp: new Date().toISOString(),
-                        },
-                    });
-                    continue;
-                }
-
-                const teamAutomation = await this.teamAutomationService.find({
-                    team: { uuid: team.uuid },
-                    automation: { uuid: codeReviewAutomation[0].uuid },
-                });
-
-                if (!teamAutomation || teamAutomation.length === 0) {
-                    this.logger.error({
-                        message: 'Team automation for code review not found',
-                        context: CheckIfPRCanBeApprovedCronProvider.name,
-                        metadata: {
-                            organizationAndTeamData,
-                            timestamp: new Date().toISOString(),
-                        },
-                    });
-                    continue;
-                }
-
-                const sevenDaysAgo = new Date();
-                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-                const automationExecutions =
-                    await this.automationExecutionService.findByPeriodAndTeamAutomationId(
-                        sevenDaysAgo,
-                        new Date(),
-                        teamAutomation[0].uuid,
-                    );
-
-                const automationExecutionsPRs = automationExecutions?.map(
-                    (execution) => execution?.dataExecution?.pullRequestNumber,
-                );
-
-                const openPullRequests = await this.pullRequestService.find({
-                    status: PullRequestState.OPENED,
-                    organizationId: organizationId,
-                    number: { $in: automationExecutionsPRs },
-                } as any);
-
-                this.logger.log({
-                    message: 'Open pull requests found',
+            if (!codeReviewAutomation?.[0]) {
+                this.logger.error({
+                    message: 'Code review automation not found',
                     context: CheckIfPRCanBeApprovedCronProvider.name,
-                    metadata: {
-                        openPullRequests: openPullRequests?.length,
-                        organizationAndTeamData: {
-                            organizationId,
-                            teamId,
-                        },
-                    },
                 });
-
-                if (!openPullRequests || openPullRequests?.length === 0) {
-                    continue;
-                }
-
-                openPullRequests?.map(async (pr) => {
-                    const repository = pr?.repository;
-
-                    const codeReviewConfigFromRepo =
-                        codeReviewConfig?.repositories?.find(
-                            (codeReviewConfigRepo) =>
-                                codeReviewConfigRepo?.id === repository?.id,
-                        );
-
-                    if (!codeReviewConfigFromRepo) {
-                        return;
-                    }
-
-                    const resolvedConfig =
-                        await this.codeBaseConfigService.getConfig(
-                            organizationAndTeamData,
-                            {
-                                id: codeReviewConfigFromRepo.id,
-                                name: codeReviewConfigFromRepo.name,
-                            },
-                            [],
-                        );
-
-                    if (resolvedConfig?.pullRequestApprovalActive === false) {
-                        return;
-                    }
-
-                    await this.shouldApprovePR({
-                        organizationAndTeamData,
-                        pr,
-                    });
-                });
+                return;
             }
+
+            const automationUuid = codeReviewAutomation[0].uuid;
+
+            // Calculate once outside loop
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            const now = new Date();
+
+            // Fetch all parameters in parallel (não bloqueia)
+            const parametersPromises = teams.map((team) =>
+                this.parametersService
+                    .findOne({
+                        configKey: ParametersKey.CODE_REVIEW_CONFIG,
+                        team: { uuid: team.uuid },
+                        active: true,
+                    })
+                    .catch((error) => {
+                        this.logger.error({
+                            message: 'Error fetching parameter for team',
+                            context: CheckIfPRCanBeApprovedCronProvider.name,
+                            metadata: { teamId: team.uuid },
+                            error,
+                        });
+                        return null;
+                    }),
+            );
+
+            const allParameters = await Promise.all(parametersPromises);
+
+            // Create lookup map for O(1) access (garantido pelo teamId retornado)
+            const parametersByTeam = new Map(
+                allParameters
+                    .filter((param) => param?.team?.uuid)
+                    .map((param) => [param.team.uuid, param]),
+            );
+
+            // Fetch all teamAutomations in parallel
+            const teamAutomationsPromises = teams.map((team) =>
+                this.teamAutomationService
+                    .find({
+                        team: { uuid: team.uuid },
+                        automation: { uuid: automationUuid },
+                    })
+                    .catch((error) => {
+                        this.logger.error({
+                            message: 'Error fetching team automation',
+                            context: CheckIfPRCanBeApprovedCronProvider.name,
+                            metadata: { teamId: team.uuid },
+                            error,
+                        });
+                        return [];
+                    }),
+            );
+
+            const allTeamAutomations = await Promise.all(
+                teamAutomationsPromises,
+            );
+
+            // Create lookup map using teamId from first automation
+            const teamAutomationsByTeam = new Map(
+                allTeamAutomations
+                    .filter((automations) => automations?.length > 0)
+                    .map((automations) => [
+                        automations[0].team?.uuid,
+                        automations[0],
+                    ]),
+            );
+
+            // Process teams in parallel
+            await Promise.allSettled(
+                teams.map(async (team) => {
+                    const organizationId = team.organization?.uuid;
+                    const teamId = team.uuid;
+
+                    const organizationAndTeamData: OrganizationAndTeamData = {
+                        organizationId,
+                        teamId,
+                    };
+
+                    const codeReviewParameter = parametersByTeam.get(teamId);
+
+                    if (!codeReviewParameter?.configValue) {
+                        return;
+                    }
+
+                    const codeReviewConfig = codeReviewParameter?.configValue;
+
+                    if (
+                        !codeReviewParameter ||
+                        !codeReviewConfig ||
+                        !Array.isArray(codeReviewConfig.repositories) ||
+                        codeReviewConfig.repositories?.length < 1
+                    ) {
+                        return;
+                    }
+
+                    const teamAutomation = teamAutomationsByTeam.get(teamId);
+
+                    if (!teamAutomation) {
+                        return;
+                    }
+
+                    const automationExecutions =
+                        await this.automationExecutionService.findByPeriodAndTeamAutomationId(
+                            sevenDaysAgo,
+                            now,
+                            teamAutomation.uuid,
+                            AutomationStatus.SUCCESS,
+                        );
+
+                    const automationExecutionsPRs = automationExecutions?.map(
+                        (execution) =>
+                            execution?.dataExecution?.pullRequestNumber,
+                    );
+
+                    if (!automationExecutionsPRs?.length) {
+                        return;
+                    }
+
+                    const openPullRequests = await this.pullRequestService.find(
+                        {
+                            status: PullRequestState.OPENED,
+                            organizationId: organizationId,
+                            number: { $in: automationExecutionsPRs },
+                        } as any,
+                    );
+
+                    this.logger.log({
+                        message: 'Open pull requests found',
+                        context: CheckIfPRCanBeApprovedCronProvider.name,
+                        metadata: {
+                            openPullRequests: openPullRequests?.length,
+                            organizationAndTeamData: {
+                                organizationId,
+                                teamId,
+                            },
+                        },
+                    });
+
+                    if (!openPullRequests || openPullRequests?.length === 0) {
+                        return;
+                    }
+
+                    // Process PRs in parallel with proper error handling
+                    await Promise.allSettled(
+                        openPullRequests.map(async (pr) => {
+                            const repository = pr?.repository;
+
+                            const codeReviewConfigFromRepo =
+                                codeReviewConfig?.repositories?.find(
+                                    (codeReviewConfigRepo) =>
+                                        codeReviewConfigRepo?.id ===
+                                        repository?.id,
+                                );
+
+                            if (!codeReviewConfigFromRepo) {
+                                return;
+                            }
+
+                            const resolvedConfig =
+                                await this.codeBaseConfigService.getConfig(
+                                    organizationAndTeamData,
+                                    {
+                                        id: codeReviewConfigFromRepo.id,
+                                        name: codeReviewConfigFromRepo.name,
+                                    },
+                                    [],
+                                );
+
+                            if (
+                                resolvedConfig?.pullRequestApprovalActive ===
+                                false
+                            ) {
+                                return;
+                            }
+
+                            await this.shouldApprovePR({
+                                organizationAndTeamData,
+                                pr,
+                                codeReviewConfig: resolvedConfig,
+                            });
+                        }),
+                    );
+                }),
+            );
         } catch (error) {
             this.logger.error({
                 message: 'Error checking if PR can be approved generator cron',
@@ -279,9 +337,11 @@ export class CheckIfPRCanBeApprovedCronProvider {
     private async shouldApprovePR({
         organizationAndTeamData,
         pr,
+        codeReviewConfig,
     }: {
         organizationAndTeamData: OrganizationAndTeamData;
         pr: PullRequestsEntity;
+        codeReviewConfig?: CodeReviewConfig;
     }): Promise<boolean> {
         const repository = pr?.repository;
         const prNumber = pr?.number;
@@ -296,11 +356,9 @@ export class CheckIfPRCanBeApprovedCronProvider {
             prNumber: prNumber,
         };
         try {
-            let isPlatformTypeGithub: boolean =
-                platformType === PlatformType.GITHUB;
-
             let reviewComments: any[];
-            if (isPlatformTypeGithub) {
+
+            if (platformType === PlatformType.GITHUB) {
                 reviewComments =
                     await this.codeManagementService.getPullRequestReviewThreads(
                         codeManagementRequestData,
@@ -334,6 +392,41 @@ export class CheckIfPRCanBeApprovedCronProvider {
                         comment?.commentType ===
                         AzureRepoCommentTypeString.CODE,
                 );
+            }
+
+            if (!reviewComments || reviewComments?.length < 1) {
+                return false;
+            }
+
+            const pullRequestMessagesConfig =
+                await this.setPullRequestMessagesConfig(
+                    repository,
+                    organizationAndTeamData,
+                    codeReviewConfig,
+                );
+
+            if (pullRequestMessagesConfig) {
+                const startMessageContent =
+                    pullRequestMessagesConfig?.startReviewMessage?.content;
+                const endMessageContent =
+                    pullRequestMessagesConfig?.endReviewMessage?.content;
+
+                if (startMessageContent || endMessageContent) {
+                    reviewComments = reviewComments?.filter((comment) => {
+                        if (!comment?.body) {
+                            return true;
+                        }
+
+                        const isStartMessage =
+                            startMessageContent &&
+                            comment.body === startMessageContent;
+                        const isEndMessage =
+                            endMessageContent &&
+                            comment.body === endMessageContent;
+
+                        return !isStartMessage && !isEndMessage;
+                    });
+                }
             }
 
             if (!reviewComments || reviewComments?.length < 1) {
@@ -390,5 +483,85 @@ export class CheckIfPRCanBeApprovedCronProvider {
 
             return false;
         }
+    }
+
+    private async setPullRequestMessagesConfig(
+        repository: {
+            id: string;
+            name: string;
+        },
+        organizationAndTeamData: OrganizationAndTeamData,
+        codeReviewConfig?: CodeReviewConfig,
+    ): Promise<IPullRequestMessages | null> {
+        if (!repository?.id || !organizationAndTeamData?.organizationId) {
+            this.logger.warn({
+                message:
+                    'Missing required data for pull request messages config',
+                context: CheckIfPRCanBeApprovedCronProvider.name,
+                metadata: {
+                    hasRepositoryId: !!repository?.id,
+                    hasOrganizationId:
+                        !!organizationAndTeamData?.organizationId,
+                },
+            });
+            return null;
+        }
+
+        const repositoryId = repository.id;
+        const organizationId = organizationAndTeamData.organizationId;
+        const directoryId = codeReviewConfig?.directoryId;
+        const configLevel = codeReviewConfig?.configLevel;
+
+        // Generate cache key based on lookup hierarchy
+        const cacheKey = `${organizationId}:${repositoryId}:${directoryId || 'null'}:${configLevel || 'null'}`;
+
+        // Check cache first
+        if (this.pullRequestMessagesCache.has(cacheKey)) {
+            return this.pullRequestMessagesCache.get(cacheKey);
+        }
+
+        let pullRequestMessagesConfig = null;
+
+        // Hierarchical fallback: DIRECTORY → REPOSITORY → GLOBAL
+        if (configLevel === ConfigLevel.DIRECTORY) {
+            if (!directoryId) {
+                this.logger.warn({
+                    message:
+                        'Directory configLevel missing directoryId, skipping DIRECTORY lookup',
+                    context: CheckIfPRCanBeApprovedCronProvider.name,
+                    metadata: { repositoryId, organizationId },
+                });
+            } else {
+                pullRequestMessagesConfig =
+                    await this.pullRequestMessagesService.findOne({
+                        organizationId,
+                        repositoryId,
+                        directoryId,
+                        configLevel: ConfigLevel.DIRECTORY,
+                    });
+            }
+        }
+
+        if (!pullRequestMessagesConfig) {
+            pullRequestMessagesConfig =
+                await this.pullRequestMessagesService.findOne({
+                    organizationId,
+                    repositoryId,
+                    configLevel: ConfigLevel.REPOSITORY,
+                });
+        }
+
+        if (!pullRequestMessagesConfig) {
+            pullRequestMessagesConfig =
+                await this.pullRequestMessagesService.findOne({
+                    organizationId,
+                    configLevel: ConfigLevel.GLOBAL,
+                });
+        }
+
+        // Store in cache (even if null)
+        this.pullRequestMessagesCache.set(cacheKey, pullRequestMessagesConfig);
+
+        return pullRequestMessagesConfig;
     }
 }
