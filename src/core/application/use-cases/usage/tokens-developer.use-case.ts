@@ -60,7 +60,7 @@ export class TokensByDeveloperUseCase {
         }
 
         if (!daily) {
-            return this.groupByDeveloper(mapped);
+            return this.groupByDeveloperAndModel(mapped);
         }
 
         return mapped;
@@ -106,25 +106,26 @@ export class TokensByDeveloperUseCase {
         });
     }
 
-    private groupByDeveloper(
+    private groupByDeveloperAndModel(
         usages: UsageByDeveloperResultContract[],
     ): UsageByDeveloperResultContract[] {
         const grouped = new Map<string, UsageByDeveloperResultContract>();
 
         for (const usage of usages) {
-            const { developer, ...rest } = usage;
+            const { developer, model, ...rest } = usage;
+            const key = `${developer}-${model}`;
 
-            if (!grouped.has(developer)) {
-                grouped.set(developer, { developer, ...rest });
+            if (!grouped.has(key)) {
+                grouped.set(key, { developer, model, ...rest });
             } else {
-                const existing = grouped.get(developer)!;
+                const existing = grouped.get(key)!;
 
                 existing.input += rest.input;
                 existing.output += rest.output;
                 existing.total += rest.total;
                 existing.outputReasoning += rest.outputReasoning;
 
-                grouped.set(developer, existing);
+                grouped.set(key, existing);
             }
         }
 
