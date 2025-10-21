@@ -94,7 +94,7 @@ export class TokenUsageRepository implements ITokenUsageRepository {
             groupById = {},
             groupStage = {},
             projectStage = {},
-            sortStage = {},
+            sortStage,
         } = params;
 
         const matchStageFinal: Record<string, any> = {
