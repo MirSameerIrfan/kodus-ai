@@ -3,6 +3,10 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 export class AddCriticalIndexes1729876543210 implements MigrationInterface {
     name = 'AddCriticalIndexes1729876543210';
 
+    // CRITICAL: Disable transactions for CONCURRENT index creation
+    // Without this, CREATE INDEX CONCURRENTLY will fail
+    transaction = false;
+
     public async up(queryRunner: QueryRunner): Promise<void> {
         // ==========================================
         // PARAMETERS TABLE - Most critical (33 uses)
@@ -10,19 +14,19 @@ export class AddCriticalIndexes1729876543210 implements MigrationInterface {
 
         // Índice composto mais usado: configKey + team_id + active
         await queryRunner.query(`
-            CREATE INDEX "IDX_parameters_key_team_active"
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_parameters_key_team_active"
             ON "parameters" ("configKey", "team_id", "active")
         `);
 
         // Índice GIN para queries JSONB (configValue @> ...)
         await queryRunner.query(`
-            CREATE INDEX "IDX_parameters_config_value_gin"
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_parameters_config_value_gin"
             ON "parameters" USING GIN ("configValue")
         `);
 
         // Índice parcial para registros ativos (otimiza WHERE active = true)
         await queryRunner.query(`
-            CREATE INDEX "IDX_parameters_active_only"
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_parameters_active_only"
             ON "parameters" ("active")
             WHERE "active" = true
         `);
@@ -33,13 +37,13 @@ export class AddCriticalIndexes1729876543210 implements MigrationInterface {
 
         // Índice composto: configKey + organization_id
         await queryRunner.query(`
-            CREATE INDEX "IDX_org_params_key_org"
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_org_params_key_org"
             ON "organization_parameters" ("configKey", "organization_id")
         `);
 
         // Índice GIN para JSONB queries
         await queryRunner.query(`
-            CREATE INDEX "IDX_org_params_config_value_gin"
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_org_params_config_value_gin"
             ON "organization_parameters" USING GIN ("configValue")
         `);
 
@@ -49,13 +53,13 @@ export class AddCriticalIndexes1729876543210 implements MigrationInterface {
 
         // Índice composto: organization_id + status
         await queryRunner.query(`
-            CREATE INDEX "IDX_teams_org_status"
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_teams_org_status"
             ON "teams" ("organization_id", "status")
         `);
 
         // Índice para ordenação por data de criação
         await queryRunner.query(`
-            CREATE INDEX "IDX_teams_org_created"
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_teams_org_created"
             ON "teams" ("organization_id", "createdAt")
         `);
 
@@ -65,19 +69,19 @@ export class AddCriticalIndexes1729876543210 implements MigrationInterface {
 
         // Índice composto: teamAutomation_id + status
         await queryRunner.query(`
-            CREATE INDEX "IDX_automation_exec_team_status"
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_automation_exec_team_status"
             ON "automation_execution" ("team_automation_id", "status")
         `);
 
         // Índice composto: pullRequestNumber + repositoryId
         await queryRunner.query(`
-            CREATE INDEX "IDX_automation_exec_pr_repo"
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_automation_exec_pr_repo"
             ON "automation_execution" ("pullRequestNumber", "repositoryId")
         `);
 
         // Índice para ordenação temporal (queries recentes)
         await queryRunner.query(`
-            CREATE INDEX "IDX_automation_exec_created_desc"
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_automation_exec_created_desc"
             ON "automation_execution" ("createdAt" DESC)
         `);
 
@@ -87,7 +91,7 @@ export class AddCriticalIndexes1729876543210 implements MigrationInterface {
 
         // Índice composto: team_id + integrationCategory + status
         await queryRunner.query(`
-            CREATE INDEX "IDX_integration_team_category_status"
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_integration_team_category_status"
             ON "integrations" ("team_id", "integrationCategory", "status")
         `);
 
@@ -98,49 +102,57 @@ export class AddCriticalIndexes1729876543210 implements MigrationInterface {
         // Email já tem UNIQUE constraint, mas garantir índice explícito
         // (geralmente já existe, mas fica documentado na migration)
         await queryRunner.query(`
-            CREATE INDEX IF NOT EXISTS "IDX_users_email"
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_users_email"
             ON "users" ("email")
         `);
 
         // Índice para listagem por organização
         await queryRunner.query(`
-            CREATE INDEX "IDX_users_org_status"
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_users_org_status"
             ON "users" ("organization_id", "status")
         `);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         // Drop indexes in reverse order
-        await queryRunner.query(`DROP INDEX IF EXISTS "IDX_users_org_status"`);
-        await queryRunner.query(`DROP INDEX IF EXISTS "IDX_users_email"`);
         await queryRunner.query(
-            `DROP INDEX IF EXISTS "IDX_integration_team_category_status"`,
+            `DROP INDEX CONCURRENTLY IF EXISTS "IDX_users_org_status"`,
         );
         await queryRunner.query(
-            `DROP INDEX IF EXISTS "IDX_automation_exec_created_desc"`,
+            `DROP INDEX CONCURRENTLY IF EXISTS "IDX_users_email"`,
         );
         await queryRunner.query(
-            `DROP INDEX IF EXISTS "IDX_automation_exec_pr_repo"`,
+            `DROP INDEX CONCURRENTLY IF EXISTS "IDX_integration_team_category_status"`,
         );
         await queryRunner.query(
-            `DROP INDEX IF EXISTS "IDX_automation_exec_team_status"`,
-        );
-        await queryRunner.query(`DROP INDEX IF EXISTS "IDX_teams_org_created"`);
-        await queryRunner.query(`DROP INDEX IF EXISTS "IDX_teams_org_status"`);
-        await queryRunner.query(
-            `DROP INDEX IF EXISTS "IDX_org_params_config_value_gin"`,
+            `DROP INDEX CONCURRENTLY IF EXISTS "IDX_automation_exec_created_desc"`,
         );
         await queryRunner.query(
-            `DROP INDEX IF EXISTS "IDX_org_params_key_org"`,
+            `DROP INDEX CONCURRENTLY IF EXISTS "IDX_automation_exec_pr_repo"`,
         );
         await queryRunner.query(
-            `DROP INDEX IF EXISTS "IDX_parameters_active_only"`,
+            `DROP INDEX CONCURRENTLY IF EXISTS "IDX_automation_exec_team_status"`,
         );
         await queryRunner.query(
-            `DROP INDEX IF EXISTS "IDX_parameters_config_value_gin"`,
+            `DROP INDEX CONCURRENTLY IF EXISTS "IDX_teams_org_created"`,
         );
         await queryRunner.query(
-            `DROP INDEX IF EXISTS "IDX_parameters_key_team_active"`,
+            `DROP INDEX CONCURRENTLY IF EXISTS "IDX_teams_org_status"`,
+        );
+        await queryRunner.query(
+            `DROP INDEX CONCURRENTLY IF EXISTS "IDX_org_params_config_value_gin"`,
+        );
+        await queryRunner.query(
+            `DROP INDEX CONCURRENTLY IF EXISTS "IDX_org_params_key_org"`,
+        );
+        await queryRunner.query(
+            `DROP INDEX CONCURRENTLY IF EXISTS "IDX_parameters_active_only"`,
+        );
+        await queryRunner.query(
+            `DROP INDEX CONCURRENTLY IF EXISTS "IDX_parameters_config_value_gin"`,
+        );
+        await queryRunner.query(
+            `DROP INDEX CONCURRENTLY IF EXISTS "IDX_parameters_key_team_active"`,
         );
     }
 }
