@@ -78,3 +78,19 @@ export class PullRequestMessagesModel extends CoreDocument {
 export const PullRequestMessagesSchema = SchemaFactory.createForClass(
     PullRequestMessagesModel,
 );
+
+// Composite indexes for common query patterns
+PullRequestMessagesSchema.index(
+    { organizationId: 1, configLevel: 1 },
+    { name: 'idx_org_config_level', background: true },
+);
+
+PullRequestMessagesSchema.index(
+    { organizationId: 1, repositoryId: 1, configLevel: 1 },
+    { name: 'idx_org_repo_config_level', background: true },
+);
+
+PullRequestMessagesSchema.index(
+    { organizationId: 1, repositoryId: 1, directoryId: 1, configLevel: 1 },
+    { name: 'idx_org_repo_dir_config_level', background: true },
+);

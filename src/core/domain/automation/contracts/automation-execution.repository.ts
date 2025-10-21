@@ -39,5 +39,6 @@ export interface IAutomationExecutionRepository {
         startDate: Date,
         endDate: Date,
         teamAutomationId: string,
+        status?: string | string[],
     ): Promise<AutomationExecutionEntity[]>;
 }

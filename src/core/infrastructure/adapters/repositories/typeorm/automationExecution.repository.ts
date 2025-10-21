@@ -284,7 +284,8 @@ export class AutomationExecutionRepository
             return { data: mapped, total };
         } catch (error) {
             this.logger.error({
-                message: 'Failed to find pull request executions by organization',
+                message:
+                    'Failed to find pull request executions by organization',
                 context: AutomationExecutionRepository.name,
                 error,
                 metadata: { params },
@@ -337,6 +338,7 @@ export class AutomationExecutionRepository
         startDate: Date,
         endDate: Date,
         teamAutomationId: string,
+        status?: string | string[],
     ): Promise<AutomationExecutionEntity[]> {
         try {
             const queryBuilder =
@@ -351,14 +353,34 @@ export class AutomationExecutionRepository
                 'automation_execution.team_automation_id = :teamAutomationId',
                 { teamAutomationId },
             );
+
+            if (status) {
+                if (Array.isArray(status)) {
+                    queryBuilder.andWhere(
+                        'automation_execution.status IN (:...statuses)',
+                        {
+                            statuses: status,
+                        },
+                    );
+                } else {
+                    queryBuilder.andWhere(
+                        'automation_execution.status = :status',
+                        {
+                            status,
+                        },
+                    );
+                }
+            }
+
             const result = await queryBuilder.getMany();
             return mapSimpleModelsToEntities(result, AutomationExecutionEntity);
         } catch (error) {
             this.logger.error({
-                message: 'Failed to find automation executions by period and team automation id',
+                message:
+                    'Failed to find automation executions by period and team automation id',
                 context: AutomationExecutionRepository.name,
                 error,
-                metadata: { startDate, endDate, teamAutomationId },
+                metadata: { startDate, endDate, teamAutomationId, status },
             });
         }
     }
