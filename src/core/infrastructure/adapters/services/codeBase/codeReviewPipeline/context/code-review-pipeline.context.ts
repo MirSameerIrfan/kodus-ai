@@ -15,6 +15,7 @@ import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
 import { ISuggestionByPR } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
 import { IPullRequestMessages } from '@/core/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
 import { IClusterizedSuggestion } from '@/core/domain/kodyFineTuning/interfaces/kodyFineTuning.interface';
+import { IExternalPromptContext } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
 
 export interface CodeReviewPipelineContext extends PipelineContext {
     organizationAndTeamData: OrganizationAndTeamData;
@@ -104,6 +105,9 @@ export interface CodeReviewPipelineContext extends PipelineContext {
 
     // Metadados dos arquivos processados (reviewMode, codeReviewModelUsed, etc.)
     fileMetadata?: Map<string, any>;
+
+    // Contexto externo de arquivos referenciados nos prompts
+    externalPromptContext?: IExternalPromptContext;
 
     correlationId: string;
 }

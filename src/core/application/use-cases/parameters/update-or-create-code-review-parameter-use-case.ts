@@ -39,6 +39,9 @@ import { produce } from 'immer';
 import { deepDifference, deepMerge } from '@/shared/utils/deep';
 import { CreateOrUpdateCodeReviewParameterDto } from '@/core/infrastructure/http/dtos/create-or-update-code-review-parameter.dto';
 import { v4 as uuidv4 } from 'uuid';
+import { PromptExternalReferenceManagerService } from '@/core/infrastructure/adapters/services/prompts/promptExternalReferenceManager.service';
+import { PromptSourceType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
+import { GetAdditionalInfoHelper } from '@/shared/utils/helpers/getAdditionalInfo.helper';
 
 @Injectable()
 export class UpdateOrCreateCodeReviewParameterUseCase {
@@ -58,6 +61,10 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
         private readonly logger: PinoLoggerService,
 
         private readonly authorizationService: AuthorizationService,
+
+        private readonly promptReferenceManager: PromptExternalReferenceManagerService,
+
+        private readonly getAdditionalInfoHelper: GetAdditionalInfoHelper,
     ) {}
 
     async execute(
@@ -153,13 +160,34 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
                 }
             }
 
-            return await this.handleConfigUpdate(
+            const result = await this.handleConfigUpdate(
                 organizationAndTeamData,
                 codeReviewConfigs,
                 configValue,
                 repositoryId,
                 directoryId,
             );
+
+            // Process external references in background
+            this.processExternalReferencesAsync(
+                configValue,
+                organizationAndTeamData,
+                repositoryId,
+                directoryId,
+            ).catch((error) => {
+                this.logger.error({
+                    message: 'Background reference processing failed',
+                    context: UpdateOrCreateCodeReviewParameterUseCase.name,
+                    error,
+                    metadata: {
+                        organizationAndTeamData,
+                        repositoryId,
+                        directoryId,
+                    },
+                });
+            });
+
+            return result;
         } catch (error) {
             this.handleError(error, body);
             throw new Error('Error creating or updating parameters');
@@ -384,6 +412,167 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
                 organizationAndTeamData: body.organizationAndTeamData,
             },
         });
+    }
+
+    private async processExternalReferencesAsync(
+        configValue: CreateOrUpdateCodeReviewParameterDto['configValue'],
+        organizationAndTeamData: OrganizationAndTeamData,
+        repositoryId?: string,
+        directoryId?: string,
+    ): Promise<void> {
+        const configKey = this.promptReferenceManager.buildConfigKey(
+            organizationAndTeamData.organizationId,
+            repositoryId || 'global',
+            directoryId,
+        );
+
+        let repositoryName: string;
+        if (repositoryId && repositoryId !== 'global') {
+            try {
+                repositoryName =
+                    await this.getAdditionalInfoHelper.getRepositoryNameByOrganizationAndRepository(
+                        organizationAndTeamData.organizationId,
+                        repositoryId,
+                    );
+            } catch (error) {
+                this.logger.warn({
+                    message: 'Failed to resolve repository name, using ID as fallback',
+                    context: UpdateOrCreateCodeReviewParameterUseCase.name,
+                    error,
+                });
+                repositoryName = repositoryId;
+            }
+        } else {
+            repositoryName = 'global';
+        }
+
+        const prompts = this.extractPromptsFromConfig(configValue);
+
+        for (const promptData of prompts) {
+            await this.promptReferenceManager.createOrUpdatePendingReference({
+                promptText: promptData.text,
+                configKey,
+                sourceType: promptData.sourceType,
+                organizationId: organizationAndTeamData.organizationId,
+                repositoryId: repositoryId || 'global',
+                repositoryName,
+                directoryId,
+            });
+        }
+
+        setImmediate(async () => {
+            try {
+                for (const promptData of prompts) {
+                    await this.promptReferenceManager.processReferencesInBackground({
+                        promptText: promptData.text,
+                        configKey,
+                        sourceType: promptData.sourceType,
+                        organizationId: organizationAndTeamData.organizationId,
+                        repositoryId: repositoryId || 'global',
+                        repositoryName,
+                        directoryId,
+                        organizationAndTeamData,
+                        context: 'instruction',
+                    });
+                }
+
+                this.logger.log({
+                    message: 'Successfully processed external references in background',
+                    context: UpdateOrCreateCodeReviewParameterUseCase.name,
+                    metadata: {
+                        organizationAndTeamData,
+                        repositoryId,
+                        directoryId,
+                        promptsProcessed: prompts.length,
+                    },
+                });
+            } catch (error) {
+                this.logger.error({
+                    message: 'Failed to process external references',
+                    context: UpdateOrCreateCodeReviewParameterUseCase.name,
+                    error,
+                    metadata: {
+                        organizationAndTeamData,
+                        repositoryId,
+                        directoryId,
+                    },
+                });
+            }
+        });
+    }
+
+    private extractPromptsFromConfig(
+        configValue: CreateOrUpdateCodeReviewParameterDto['configValue'],
+    ): Array<{ text: string; sourceType: PromptSourceType }> {
+        const prompts: Array<{ text: string; sourceType: PromptSourceType }> = [];
+
+        if (configValue?.summary?.customInstructions) {
+            prompts.push({
+                text: configValue.summary.customInstructions,
+                sourceType: PromptSourceType.CUSTOM_INSTRUCTION,
+            });
+        }
+
+        if (configValue?.v2PromptOverrides?.categories?.descriptions) {
+            const { bug, performance, security } = configValue.v2PromptOverrides.categories.descriptions;
+            
+            if (bug) {
+                prompts.push({
+                    text: bug,
+                    sourceType: PromptSourceType.CATEGORY_BUG,
+                });
+            }
+            if (performance) {
+                prompts.push({
+                    text: performance,
+                    sourceType: PromptSourceType.CATEGORY_PERFORMANCE,
+                });
+            }
+            if (security) {
+                prompts.push({
+                    text: security,
+                    sourceType: PromptSourceType.CATEGORY_SECURITY,
+                });
+            }
+        }
+
+        if (configValue?.v2PromptOverrides?.severity?.flags) {
+            const { critical, high, medium, low } = configValue.v2PromptOverrides.severity.flags;
+            
+            if (critical) {
+                prompts.push({
+                    text: critical,
+                    sourceType: PromptSourceType.SEVERITY_CRITICAL,
+                });
+            }
+            if (high) {
+                prompts.push({
+                    text: high,
+                    sourceType: PromptSourceType.SEVERITY_HIGH,
+                });
+            }
+            if (medium) {
+                prompts.push({
+                    text: medium,
+                    sourceType: PromptSourceType.SEVERITY_MEDIUM,
+                });
+            }
+            if (low) {
+                prompts.push({
+                    text: low,
+                    sourceType: PromptSourceType.SEVERITY_LOW,
+                });
+            }
+        }
+
+        if (configValue?.v2PromptOverrides?.generation?.main) {
+            prompts.push({
+                text: configValue.v2PromptOverrides.generation.main,
+                sourceType: PromptSourceType.GENERATION_MAIN,
+            });
+        }
+
+        return prompts;
     }
 }
 

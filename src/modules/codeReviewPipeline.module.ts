@@ -37,6 +37,7 @@ import { PullRequestMessagesModule } from './pullRequestMessages.module';
 import { ValidateNewCommitsStage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/validate-new-commits.stage';
 import { ResolveConfigStage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/resolve-config.stage';
 import { KodyFineTuningContextModule } from './kodyFineTuningContext.module';
+import { PromptsModule } from './prompts.module';
 
 @Module({
     imports: [
@@ -53,6 +54,7 @@ import { KodyFineTuningContextModule } from './kodyFineTuningContext.module';
         forwardRef(() => KodyFineTuningContextModule),
         forwardRef(() => KodyASTAnalyzeContextModule),
         forwardRef(() => PullRequestMessagesModule),
+        forwardRef(() => PromptsModule),
     ],
     providers: [
         PipelineExecutor,

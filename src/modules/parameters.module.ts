@@ -16,6 +16,7 @@ import { CodeReviewSettingsLogModule } from './codeReviewSettingsLog.module';
 import { PullRequestMessagesModule } from './pullRequestMessages.module';
 import { KodyRulesModule } from './kodyRules.module';
 import { UpdateOrCreateCodeReviewParameterUseCase } from '@/core/application/use-cases/parameters/update-or-create-code-review-parameter-use-case';
+import { PromptsModule } from './prompts.module';
 
 @Module({
     imports: [
@@ -27,6 +28,7 @@ import { UpdateOrCreateCodeReviewParameterUseCase } from '@/core/application/use
         forwardRef(() => CodeReviewSettingsLogModule),
         forwardRef(() => PullRequestMessagesModule),
         forwardRef(() => KodyRulesModule),
+        forwardRef(() => PromptsModule),
     ],
     providers: [
         ...UseCases,

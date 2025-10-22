@@ -4,6 +4,10 @@ import {
     KodusConfigFile,
 } from './codeReview.type';
 import { ErrorObject } from 'ajv';
+import { 
+    IFileReference, 
+    IPromptReferenceSyncError 
+} from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
 
 export interface GetKodusConfigFileResponse {
     kodusConfigFile: Omit<KodusConfigFile, 'version'> | null;
@@ -57,6 +61,12 @@ export interface IFormattedConfigProperty<T> {
     level: FormattedConfigLevel;
     overriddenValue?: T;
     overriddenLevel?: FormattedConfigLevel;
+    externalReferences?: {
+        references: IFileReference[];
+        syncErrors?: IPromptReferenceSyncError[];
+        processingStatus: 'pending' | 'processing' | 'completed' | 'failed';
+        lastProcessedAt: Date;
+    };
 }
 
 export type FormattedConfig<T> = {

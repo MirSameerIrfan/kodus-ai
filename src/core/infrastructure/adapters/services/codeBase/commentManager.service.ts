@@ -78,6 +78,7 @@ export class CommentManagerService implements ICommentManagerService {
         byokConfig?: BYOKConfig,
         isCommitRun?: boolean,
         prPreview?: boolean,
+        externalPromptContext?: any,
     ): Promise<string> {
         let byokConfigValue: BYOKConfig | null = byokConfig ?? null;
 
@@ -146,7 +147,23 @@ export class CommentManagerService implements ICommentManagerService {
 
                 // Adds custom instructions if provided
                 if (summaryConfig?.customInstructions) {
-                    promptBase += `\n\n**Custom Instructions**:\n${summaryConfig.customInstructions}`;
+                    let customInstructionsText = summaryConfig.customInstructions;
+                    
+                    // Inject external context if available
+                    if (externalPromptContext?.customInstructions?.references?.length > 0) {
+                        const contextSection = externalPromptContext.customInstructions.references
+                            .map((ref) => {
+                                const header = ref.lineRange
+                                    ? `\n--- Content from ${ref.filePath} (lines ${ref.lineRange.start}-${ref.lineRange.end}) ---\n`
+                                    : `\n--- Content from ${ref.filePath} ---\n`;
+                                return `${header}${ref.content}\n--- End of ${ref.filePath} ---`;
+                            })
+                            .join('\n');
+                        
+                        customInstructionsText += `\n\n## External Reference Context\n${contextSection}`;
+                    }
+                    
+                    promptBase += `\n\n**Custom Instructions**:\n${customInstructionsText}`;
                 }
 
                 promptBase += `\n\n**Important**:

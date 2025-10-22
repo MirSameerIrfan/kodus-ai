@@ -143,17 +143,13 @@ export class RequestChangesOrApproveStage extends BasePipelineStage<CodeReviewPi
                 return;
             }
 
-            if (status === PullRequestReviewState.CHANGES_REQUESTED) {
-                this.logger.log({
-                    message: `PR#${prNumber} has changes requested, cannot approve`,
-                    metadata: { currentStatus: status, prNumber, repository },
-                    context: this.stageName,
-                });
-                return;
-            }
+            const message =
+                status === PullRequestReviewState.CHANGES_REQUESTED
+                    ? `Clearing previous requested changes by approving PR#${prNumber}.`
+                    : `Approving PR#${prNumber} as no new issues were found and status is clear.`;
 
             this.logger.log({
-                message: `Approving PR#${prNumber} as no new issues were found and status is clear.`,
+                message,
                 metadata: { currentStatus: status, prNumber, repository },
                 context: this.stageName,
             });

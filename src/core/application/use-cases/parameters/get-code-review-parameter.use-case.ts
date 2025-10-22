@@ -26,6 +26,8 @@ import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
 import { getDefaultKodusConfigFile } from '@/shared/utils/validateCodeReviewConfigFile';
 import { Inject, Injectable } from '@nestjs/common';
 import { DeepPartial } from 'typeorm';
+import { PromptExternalReferenceManagerService } from '@/core/infrastructure/adapters/services/prompts/promptExternalReferenceManager.service';
+import { PromptSourceType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
 
 @Injectable()
 export class GetCodeReviewParameterUseCase {
@@ -37,6 +39,8 @@ export class GetCodeReviewParameterUseCase {
         private readonly codeBaseConfigService: ICodeBaseConfigService,
 
         private readonly authorizationService: AuthorizationService,
+
+        private readonly promptReferenceManager: PromptExternalReferenceManagerService,
 
         private readonly logger: PinoLoggerService,
     ) {}
@@ -151,10 +155,20 @@ export class GetCodeReviewParameterUseCase {
         const defaultConfig = getDefaultKodusConfigFile();
         const formattedDefaultConfig = this.formatDefaultConfig(defaultConfig);
 
-        const formattedGlobalConfig = this.formatLevel(
+        let formattedGlobalConfig = this.formatLevel(
             formattedDefaultConfig,
             configValue.configs,
             FormattedConfigLevel.GLOBAL,
+        );
+
+        // Buscar e adicionar referências externas do nível global
+        const globalConfigKey = this.promptReferenceManager.buildConfigKey(
+            organizationAndTeamData.organizationId,
+            'global',
+        );
+        formattedGlobalConfig = await this.enrichConfigWithExternalReferences(
+            formattedGlobalConfig,
+            globalConfigKey,
         );
 
         const formattedRepositories = [];
@@ -174,16 +188,26 @@ export class GetCodeReviewParameterUseCase {
                         false,
                 });
 
-            const formattedRepoConfig = this.formatLevel(
+            let formattedRepoConfig = this.formatLevel(
                 formattedGlobalConfig,
                 repo.configs,
                 FormattedConfigLevel.REPOSITORY,
             );
 
-            const formattedRepoFileConfig = this.formatLevel(
+            let formattedRepoFileConfig = this.formatLevel(
                 formattedRepoConfig,
                 repoFile,
                 FormattedConfigLevel.REPOSITORY_FILE,
+            );
+
+            // Buscar e adicionar referências externas do nível repositório
+            const repoConfigKey = this.promptReferenceManager.buildConfigKey(
+                organizationAndTeamData.organizationId,
+                repo.id,
+            );
+            formattedRepoFileConfig = await this.enrichConfigWithExternalReferences(
+                formattedRepoFileConfig,
+                repoConfigKey,
             );
 
             const formattedDirectories = [];
@@ -202,16 +226,27 @@ export class GetCodeReviewParameterUseCase {
                             false,
                     });
 
-                const formattedDirConfig = this.formatLevel(
+                let formattedDirConfig = this.formatLevel(
                     formattedRepoFileConfig,
                     dir.configs,
                     FormattedConfigLevel.DIRECTORY,
                 );
 
-                const formattedDirFileConfig = this.formatLevel(
+                let formattedDirFileConfig = this.formatLevel(
                     formattedDirConfig,
                     directoryFile,
                     FormattedConfigLevel.DIRECTORY_FILE,
+                );
+
+                // Buscar e adicionar referências externas do nível diretório
+                const dirConfigKey = this.promptReferenceManager.buildConfigKey(
+                    organizationAndTeamData.organizationId,
+                    repo.id,
+                    dir.id,
+                );
+                formattedDirFileConfig = await this.enrichConfigWithExternalReferences(
+                    formattedDirFileConfig,
+                    dirConfigKey,
                 );
 
                 formattedDirectories.push({
@@ -298,5 +333,103 @@ export class GetCodeReviewParameterUseCase {
             }
         }
         return formattedChild;
+    }
+
+    private async enrichConfigWithExternalReferences(
+        config: FormattedCodeReviewConfig,
+        configKey: string,
+    ): Promise<FormattedCodeReviewConfig> {
+        const enriched = { ...config };
+
+        // Enriquecer summary.customInstructions
+        if (enriched.summary?.customInstructions) {
+            const ref = await this.promptReferenceManager.getReference(
+                configKey,
+                PromptSourceType.CUSTOM_INSTRUCTION,
+            );
+            if (ref) {
+                enriched.summary.customInstructions = {
+                    ...enriched.summary.customInstructions,
+                    externalReferences: {
+                        references: ref.references,
+                        syncErrors: ref.syncErrors || [],
+                        processingStatus: ref.processingStatus,
+                        lastProcessedAt: ref.lastProcessedAt,
+                    },
+                };
+            }
+        }
+
+        // Enriquecer v2PromptOverrides
+        if (enriched.v2PromptOverrides) {
+            // Categories
+            if (enriched.v2PromptOverrides.categories?.descriptions) {
+                for (const category of ['bug', 'performance', 'security']) {
+                    const categoryKey = category as 'bug' | 'performance' | 'security';
+                    if (enriched.v2PromptOverrides.categories.descriptions[categoryKey]) {
+                        const ref = await this.promptReferenceManager.getReference(
+                            configKey,
+                            `category_${category}` as PromptSourceType,
+                        );
+                        if (ref) {
+                            enriched.v2PromptOverrides.categories.descriptions[categoryKey] = {
+                                ...enriched.v2PromptOverrides.categories.descriptions[categoryKey],
+                                externalReferences: {
+                                    references: ref.references,
+                                    syncErrors: ref.syncErrors || [],
+                                    processingStatus: ref.processingStatus,
+                                    lastProcessedAt: ref.lastProcessedAt,
+                                },
+                            };
+                        }
+                    }
+                }
+            }
+
+            // Severity
+            if (enriched.v2PromptOverrides.severity?.flags) {
+                for (const severity of ['critical', 'high', 'medium', 'low']) {
+                    const severityKey = severity as 'critical' | 'high' | 'medium' | 'low';
+                    if (enriched.v2PromptOverrides.severity.flags[severityKey]) {
+                        const ref = await this.promptReferenceManager.getReference(
+                            configKey,
+                            `severity_${severity}` as PromptSourceType,
+                        );
+                        if (ref) {
+                            enriched.v2PromptOverrides.severity.flags[severityKey] = {
+                                ...enriched.v2PromptOverrides.severity.flags[severityKey],
+                                externalReferences: {
+                                    references: ref.references,
+                                    syncErrors: ref.syncErrors || [],
+                                    processingStatus: ref.processingStatus,
+                                    lastProcessedAt: ref.lastProcessedAt,
+                                },
+                            };
+                        }
+                    }
+                }
+            }
+
+            // Generation
+            if (enriched.v2PromptOverrides.generation?.main) {
+                const ref = await this.promptReferenceManager.getReference(
+                    configKey,
+                    PromptSourceType.GENERATION_MAIN,
+                );
+                if (ref) {
+                    enriched.v2PromptOverrides.generation.main = {
+                        ...enriched.v2PromptOverrides.generation.main,
+                        externalReferences: {
+                            references: ref.references,
+                            syncErrors: ref.syncErrors || [],
+                            processingStatus: ref.processingStatus,
+                            lastProcessedAt: ref.lastProcessedAt,
+                        },
+                    };
+                }
+            }
+        }
+
+        return enriched;
     }
 }

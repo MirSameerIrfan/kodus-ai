@@ -1,9 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { 
-    IKodyRuleExternalReference,
-    IKodyRuleReferenceSyncError,
-} from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
@@ -16,23 +12,24 @@ import {
     BYOKConfig,
 } from '@kodus/kodus-common/llm';
 import {
-    prompt_kodyrules_detect_references_system,
-    prompt_kodyrules_detect_references_user,
-    kodyRulesDetectReferencesSchema,
-    KodyRulesDetectReferencesSchema,
-} from '@/shared/utils/langchainCommon/prompts/kodyRulesExternalReferences';
+    prompt_detect_external_references_system,
+    prompt_detect_external_references_user,
+    ExternalReferencesDetectionSchema,
+} from '@/shared/utils/langchainCommon/prompts/externalReferences';
+import {
+    IDetectedReference,
+    IFileReference,
+    PromptReferenceErrorType,
+    IPromptReferenceSyncError,
+    IFileReferenceError,
+} from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
+import { IPromptContextEngineService } from '@/core/domain/prompts/contracts/promptContextEngine.contract';
 import { createHash } from 'crypto';
 
-interface DetectReferencesParams {
-    ruleText: string;
-    repositoryId: string;
-    repositoryName: string;
-    organizationAndTeamData: OrganizationAndTeamData;
-    byokConfig?: BYOKConfig;
-}
-
 @Injectable()
-export class ExternalReferenceDetectorService {
+export class PromptContextEngineService
+    implements IPromptContextEngineService
+{
     constructor(
         private readonly promptRunnerService: PromptRunnerService,
         private readonly observabilityService: ObservabilityService,
@@ -40,31 +37,27 @@ export class ExternalReferenceDetectorService {
         private readonly logger: PinoLoggerService,
     ) {}
 
-    async detectAndResolveReferences(
-        params: DetectReferencesParams,
-    ): Promise<{
-        references: IKodyRuleExternalReference[];
-        syncErrors?: IKodyRuleReferenceSyncError[];
-        ruleHash: string;
+    async detectAndResolveReferences(params: {
+        promptText: string;
+        repositoryId: string;
+        repositoryName: string;
+        organizationAndTeamData: OrganizationAndTeamData;
+        context?: 'rule' | 'instruction' | 'prompt';
+        byokConfig?: BYOKConfig;
+    }): Promise<{
+        references: IFileReference[];
+        syncErrors?: IPromptReferenceSyncError[];
     }> {
         try {
-            // Calcular hash da regra
-            const ruleHash = this.calculateRuleHash(params.ruleText);
-
-            // ✅ Pre-filter: Verificar se tem padrões de referências externas
-            if (!this.hasLikelyExternalReferences(params.ruleText)) {
-                this.logger.log({
-                    message: 'No external reference patterns detected (regex pre-filter)',
-                    context: ExternalReferenceDetectorService.name,
-                    metadata: { ruleHash },
-                });
-                return { references: [], ruleHash };
-            }
-
-            const detectedReferences = await this.detectReferences(params);
+            const detectedReferences = await this.detectReferences({
+                promptText: params.promptText,
+                context: params.context,
+                byokConfig: params.byokConfig,
+                organizationAndTeamData: params.organizationAndTeamData,
+            });
 
             if (!detectedReferences || detectedReferences.length === 0) {
-                return { references: [], ruleHash };
+                return { references: [] };
             }
 
             const { references, notFoundDetails } =
@@ -75,11 +68,13 @@ export class ExternalReferenceDetectorService {
                     params.organizationAndTeamData,
                 );
 
-            return { references, syncErrors: notFoundDetails, ruleHash };
+            const syncErrors: IPromptReferenceSyncError[] = notFoundDetails || [];
+
+            return { references, syncErrors };
         } catch (error) {
             this.logger.error({
                 message: 'Error detecting and resolving external references',
-                context: ExternalReferenceDetectorService.name,
+                context: PromptContextEngineService.name,
                 error,
                 metadata: {
                     repositoryId: params.repositoryId,
@@ -87,47 +82,30 @@ export class ExternalReferenceDetectorService {
                 },
             });
             
-            const ruleHash = this.calculateRuleHash(params.ruleText);
+            const syncErrors: IPromptReferenceSyncError[] = [{
+                type: PromptReferenceErrorType.DETECTION_FAILED,
+                message: `Error during reference detection: ${error.message}`,
+                details: {
+                    timestamp: new Date(),
+                },
+            }];
+
             return {
                 references: [],
-                syncErrors: [
-                    {
-                        fileName: 'unknown',
-                        message: `Error during reference detection: ${error.message}`,
-                        errorType: 'parsing_error',
-                        timestamp: new Date(),
-                    },
-                ],
-                ruleHash,
+                syncErrors,
             };
         }
     }
 
-    private calculateRuleHash(ruleText: string): string {
-        return createHash('sha256').update(ruleText).digest('hex');
-    }
-
-    private hasLikelyExternalReferences(ruleText: string): boolean {
-        const patterns = [
-            /@file[:\s]/i,
-            /\[\[file:/i,
-            /@\w+\.(ts|js|py|md|yml|yaml|json|txt|go|java|cpp|c|h|rs)/i,
-            /refer to.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
-            /check.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
-            /see.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
-            /\b\w+\.\w+\.(ts|js|py|md|yml|yaml|json|txt)\b/i,
-            /\b[A-Z_][A-Z0-9_]*\.(ts|js|py|md|yml|yaml|json|txt)\b/,
-            /\b(readme|contributing|changelog|license|setup|config|package|tsconfig|jest\.config|vite\.config|webpack\.config)\.(md|json|yml|yaml|ts|js)\b/i,
-        ];
-        return patterns.some((pattern) => pattern.test(ruleText));
-    }
-
-    private async detectReferences(
-        params: DetectReferencesParams,
-    ): Promise<KodyRulesDetectReferencesSchema['references']> {
+    async detectReferences(params: {
+        promptText: string;
+        context?: 'rule' | 'instruction' | 'prompt';
+        byokConfig?: BYOKConfig;
+        organizationAndTeamData: OrganizationAndTeamData;
+    }): Promise<IDetectedReference[]> {
         const mainProvider = LLMModelProvider.GEMINI_2_5_FLASH;
         const fallbackProvider = LLMModelProvider.GEMINI_2_5_PRO;
-        const runName = 'kodyRulesDetectExternalReferences';
+        const runName = 'detectExternalReferences';
 
         const promptRunner = new BYOKPromptRunnerService(
             this.promptRunnerService,
@@ -139,29 +117,34 @@ export class ExternalReferenceDetectorService {
         try {
             const { result: raw } =
                 await this.observabilityService.runLLMInSpan({
-                    spanName: `${ExternalReferenceDetectorService.name}::${runName}`,
+                    spanName: `${PromptContextEngineService.name}::${runName}`,
                     runName,
                     attrs: {
-                        repositoryId: params.repositoryId,
                         organizationId:
                             params.organizationAndTeamData.organizationId,
                         type: promptRunner.executeMode,
                         fallback: false,
+                        context: params.context || 'unknown',
                     },
                     exec: async (callbacks) => {
                         return await promptRunner
                             .builder()
                             .setParser(ParserType.STRING)
-                            .setPayload({ rule: params.ruleText })
+                            .setPayload({
+                                text: params.promptText,
+                                context: params.context,
+                            })
                             .addPrompt({
                                 role: PromptRole.SYSTEM,
-                                prompt: prompt_kodyrules_detect_references_system(),
+                                prompt:
+                                    prompt_detect_external_references_system(),
                             })
                             .addPrompt({
                                 role: PromptRole.USER,
-                                prompt: prompt_kodyrules_detect_references_user(
+                                prompt: prompt_detect_external_references_user(
                                     {
-                                        rule: params.ruleText,
+                                        text: params.promptText,
+                                        context: params.context,
                                     },
                                 ),
                             })
@@ -176,17 +159,17 @@ export class ExternalReferenceDetectorService {
                 return [];
             }
 
-            const parsed = this.extractJsonArray(raw);
-            if (!Array.isArray(parsed)) {
+            const parsed = this.extractJsonFromResponse(raw);
+            if (!parsed || !Array.isArray(parsed)) {
                 return [];
             }
 
             this.logger.log({
                 message: 'Successfully detected external references',
-                context: ExternalReferenceDetectorService.name,
+                context: PromptContextEngineService.name,
                 metadata: {
-                    repositoryId: params.repositoryId,
                     referencesCount: parsed.length,
+                    organizationAndTeamData: params.organizationAndTeamData,
                 },
             });
 
@@ -194,10 +177,9 @@ export class ExternalReferenceDetectorService {
         } catch (error) {
             this.logger.error({
                 message: 'Error calling LLM for reference detection',
-                context: ExternalReferenceDetectorService.name,
+                context: PromptContextEngineService.name,
                 error,
                 metadata: {
-                    repositoryId: params.repositoryId,
                     organizationAndTeamData: params.organizationAndTeamData,
                 },
             });
@@ -206,20 +188,21 @@ export class ExternalReferenceDetectorService {
     }
 
     private async searchFilesInRepository(
-        detectedReferences: KodyRulesDetectReferencesSchema['references'],
+        detectedReferences: IDetectedReference[],
         repositoryId: string,
         repositoryName: string,
         organizationAndTeamData: OrganizationAndTeamData,
     ): Promise<{
-        references: IKodyRuleExternalReference[];
-        notFoundDetails: IKodyRuleReferenceSyncError[];
+        references: IFileReference[];
+        notFoundDetails: IPromptReferenceSyncError[];
     }> {
-        const resolvedReferences: IKodyRuleExternalReference[] = [];
-        const notFoundDetails: IKodyRuleReferenceSyncError[] = [];
+        const resolvedReferences: IFileReference[] = [];
+        const notFoundDetails: IPromptReferenceSyncError[] = [];
 
         for (const ref of detectedReferences) {
             try {
-                const { found, attemptedPaths } = await this.findFileWithHybridStrategy(
+                const filePatterns = this.buildSearchPatterns(ref);
+                const found = await this.findFileWithHybridStrategy(
                     ref,
                     repositoryId,
                     repositoryName,
@@ -231,7 +214,7 @@ export class ExternalReferenceDetectorService {
 
                     this.logger.log({
                         message: 'Resolved external reference',
-                        context: ExternalReferenceDetectorService.name,
+                        context: PromptContextEngineService.name,
                         metadata: {
                             fileName: ref.fileName,
                             filesFound: found.length,
@@ -244,23 +227,26 @@ export class ExternalReferenceDetectorService {
                     const fileIdentifier = ref.repositoryName
                         ? `${ref.repositoryName}/${ref.fileName}`
                         : ref.fileName;
-                    
+
                     notFoundDetails.push({
-                        fileName: fileIdentifier,
-                        message: `File not found in repository${ref.repositoryName ? ` (${ref.repositoryName})` : ''}`,
-                        errorType: 'not_found',
-                        attemptedPaths,
-                        timestamp: new Date(),
+                        type: PromptReferenceErrorType.FILE_NOT_FOUND,
+                        message: `File not found: ${fileIdentifier}`,
+                        details: {
+                            fileName: ref.fileName,
+                            repositoryName: ref.repositoryName || repositoryName,
+                            attemptedPaths: filePatterns,
+                            timestamp: new Date(),
+                        },
                     });
 
                     this.logger.warn({
                         message: 'No files found for external reference',
-                        context: ExternalReferenceDetectorService.name,
+                        context: PromptContextEngineService.name,
                         metadata: {
                             fileName: ref.fileName,
                             repositoryName: ref.repositoryName,
-                            attemptedPaths,
                             crossRepo: !!ref.repositoryName,
+                            attemptedPatterns: filePatterns,
                         },
                     });
                 }
@@ -268,17 +254,20 @@ export class ExternalReferenceDetectorService {
                 const fileIdentifier = ref.repositoryName
                     ? `${ref.repositoryName}/${ref.fileName}`
                     : ref.fileName;
-                
+
                 notFoundDetails.push({
-                    fileName: fileIdentifier,
-                    message: `Error during file search: ${error.message}`,
-                    errorType: 'fetch_error',
-                    timestamp: new Date(),
+                    type: PromptReferenceErrorType.FETCH_FAILED,
+                    message: `Error searching file: ${error.message}`,
+                    details: {
+                        fileName: ref.fileName,
+                        repositoryName: ref.repositoryName || repositoryName,
+                        timestamp: new Date(),
+                    },
                 });
 
                 this.logger.error({
                     message: 'Error searching for external reference file',
-                    context: ExternalReferenceDetectorService.name,
+                    context: PromptContextEngineService.name,
                     error,
                     metadata: {
                         reference: ref,
@@ -294,37 +283,50 @@ export class ExternalReferenceDetectorService {
     }
 
     private async findFileWithHybridStrategy(
-        ref: KodyRulesDetectReferencesSchema['references'][0],
+        ref: IDetectedReference,
         repositoryId: string,
         repositoryName: string,
         organizationAndTeamData: OrganizationAndTeamData,
-    ): Promise<{
-        found: IKodyRuleExternalReference[];
-        attemptedPaths: string[];
-    }> {
+    ): Promise<IFileReference[]> {
         const filePatterns = this.buildSearchPatterns(ref);
 
-        const found = await this.searchWithPatterns(
+        return await this.searchWithPatterns(
             filePatterns,
             repositoryId,
             repositoryName,
             organizationAndTeamData,
             ref,
         );
-
-        return { found, attemptedPaths: filePatterns };
     }
 
-    private buildSearchPatterns(
-        ref: KodyRulesDetectReferencesSchema['references'][0],
-    ): string[] {
+    private buildSearchPatterns(ref: IDetectedReference): string[] {
         const patterns: string[] = [];
 
         if (ref.filePattern) {
             patterns.push(ref.filePattern);
         }
 
-        patterns.push(`**/${ref.fileName}`);
+        const fileName = ref.fileName;
+        patterns.push(`**/${fileName}`);
+
+        // Add case-insensitive variations to handle common cases:
+        // - CONTRIBUTING.md vs contributing.md
+        // - README.MD vs readme.md
+        const lowerFileName = fileName.toLowerCase();
+        const upperFileName = fileName.toUpperCase();
+        
+        if (lowerFileName !== fileName) {
+            patterns.push(`**/${lowerFileName}`);
+        }
+        if (upperFileName !== fileName) {
+            patterns.push(`**/${upperFileName}`);
+        }
+
+        // Capitalize first letter (e.g., Contributing.md)
+        const capitalizedFileName = fileName.charAt(0).toUpperCase() + fileName.slice(1).toLowerCase();
+        if (capitalizedFileName !== fileName && capitalizedFileName !== lowerFileName && capitalizedFileName !== upperFileName) {
+            patterns.push(`**/${capitalizedFileName}`);
+        }
 
         return [...new Set(patterns)];
     }
@@ -334,8 +336,8 @@ export class ExternalReferenceDetectorService {
         repositoryId: string,
         repositoryName: string,
         organizationAndTeamData: OrganizationAndTeamData,
-        ref: KodyRulesDetectReferencesSchema['references'][0],
-    ): Promise<IKodyRuleExternalReference[]> {
+        ref: IDetectedReference,
+    ): Promise<IFileReference[]> {
         try {
             const targetRepoName = ref.repositoryName || repositoryName;
             const targetRepo = {
@@ -345,7 +347,7 @@ export class ExternalReferenceDetectorService {
 
             this.logger.log({
                 message: 'Searching for external reference file',
-                context: ExternalReferenceDetectorService.name,
+                context: PromptContextEngineService.name,
                 metadata: {
                     filePatterns,
                     targetRepository: targetRepo,
@@ -364,40 +366,23 @@ export class ExternalReferenceDetectorService {
                 });
 
             if (files && files.length > 0) {
-                return files.map((file) => {
-                    const result: IKodyRuleExternalReference = {
-                        filePath: file.path,
-                        description: ref.description,
-                        lastValidatedAt: new Date(),
-                    };
-
-                    if (ref.originalText) {
-                        result.originalText = ref.originalText;
-                    }
-
-                    // Só adiciona lineRange se tiver start e end válidos
-                    if (
-                        ref.lineRange &&
-                        typeof ref.lineRange.start === 'number' &&
-                        typeof ref.lineRange.end === 'number'
-                    ) {
-                        result.lineRange = {
-                            start: ref.lineRange.start,
-                            end: ref.lineRange.end,
-                        };
-                    }
-
-                    if (ref.repositoryName) {
-                        result.repositoryName = ref.repositoryName;
-                    }
-
-                    return result;
-                });
+                return files.map((file) => ({
+                    filePath: file.path,
+                    description: ref.description,
+                    originalText: ref.originalText,
+                    lineRange: ref.lineRange,
+                    ...(ref.repositoryName && {
+                        repositoryName: ref.repositoryName,
+                    }),
+                    lastContentHash: '',
+                    lastValidatedAt: new Date(),
+                    estimatedTokens: 0,
+                }));
             }
         } catch (error) {
             this.logger.warn({
                 message: 'Pattern search failed for external reference',
-                context: ExternalReferenceDetectorService.name,
+                context: PromptContextEngineService.name,
                 error,
                 metadata: {
                     filePatterns,
@@ -410,19 +395,26 @@ export class ExternalReferenceDetectorService {
         return [];
     }
 
-    private extractJsonArray(text: string | null | undefined): any[] | null {
+    private extractJsonFromResponse(
+        text: string | null | undefined,
+    ): any[] | null {
         if (!text || typeof text !== 'string') return null;
+
         let s = text.trim();
+
         const fenceMatch = s.match(/```(?:json)?\s*([\s\S]*?)```/i);
         if (fenceMatch && fenceMatch[1]) s = fenceMatch[1].trim();
+
         if (s.startsWith('"') && s.endsWith('"')) {
             try {
                 s = JSON.parse(s);
             } catch {}
         }
+
         const start = s.indexOf('[');
         const end = s.lastIndexOf(']');
         if (start >= 0 && end > start) s = s.slice(start, end + 1);
+
         try {
             const parsed = JSON.parse(s);
             return Array.isArray(parsed) ? parsed : null;
@@ -430,4 +422,9 @@ export class ExternalReferenceDetectorService {
             return null;
         }
     }
+
+    calculatePromptHash(promptText: string): string {
+        return createHash('sha256').update(promptText).digest('hex');
+    }
 }
+

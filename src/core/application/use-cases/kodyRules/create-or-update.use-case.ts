@@ -156,7 +156,7 @@ export class CreateOrUpdateKodyRulesUseCase {
                         },
                     });
 
-                    const { references, syncError } =
+                    const { references, syncErrors, ruleHash } =
                         await this.externalReferenceDetectorService.detectAndResolveReferences(
                             {
                                 ruleText,
@@ -172,7 +172,18 @@ export class CreateOrUpdateKodyRulesUseCase {
                             uuid: ruleId,
                             externalReferences:
                                 references.length > 0 ? references : undefined,
-                            syncError,
+                            syncErrors:
+                                syncErrors && syncErrors.length > 0
+                                    ? syncErrors
+                                    : undefined,
+                            referenceProcessingStatus:
+                                syncErrors && syncErrors.length > 0
+                                    ? ('failed' as any)
+                                    : references.length > 0
+                                      ? ('completed' as any)
+                                      : undefined,
+                            lastReferenceProcessedAt: new Date(),
+                            ruleHash,
                         } as any,
                         {
                             userId: 'kody-bg-detector',
@@ -180,13 +191,14 @@ export class CreateOrUpdateKodyRulesUseCase {
                         },
                     );
 
-                    if (syncError) {
+                    if (syncErrors && syncErrors.length > 0) {
                         this.logger.warn({
-                            message: 'Rule updated with sync error',
+                            message: 'Rule updated with sync errors',
                             context: CreateOrUpdateKodyRulesUseCase.name,
                             metadata: {
                                 ruleId,
-                                syncError,
+                                syncErrors,
+                                errorCount: syncErrors.length,
                                 organizationAndTeamData,
                             },
                         });

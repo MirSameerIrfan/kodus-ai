@@ -979,7 +979,7 @@ export class KodyRulesSyncService {
 
             const rulesWithReferences = await Promise.all(
                 result?.rules.map(async (r) => {
-                    const { references, syncError } =
+                    const { references, syncErrors, ruleHash } =
                         await this.externalReferenceDetectorService.detectAndResolveReferences(
                             {
                                 ruleText: r?.rule || '',
@@ -1003,7 +1003,18 @@ export class KodyRulesSyncService {
                         origin: KodyRulesOrigin.USER,
                         externalReferences:
                             references.length > 0 ? references : undefined,
-                        syncError,
+                        syncErrors:
+                            syncErrors && syncErrors.length > 0
+                                ? syncErrors
+                                : undefined,
+                        referenceProcessingStatus:
+                            syncErrors && syncErrors.length > 0
+                                ? ('failed' as any)
+                                : references.length > 0
+                                  ? ('completed' as any)
+                                  : undefined,
+                        lastReferenceProcessedAt: new Date(),
+                        ruleHash,
                     };
                 }),
             );
@@ -1091,7 +1102,7 @@ export class KodyRulesSyncService {
 
                 const rulesWithReferences = await Promise.all(
                     parsed.map(async (r) => {
-                        const { references, syncError } =
+                        const { references, syncErrors, ruleHash } =
                             await this.externalReferenceDetectorService.detectAndResolveReferences(
                                 {
                                     ruleText: r?.rule || '',
@@ -1116,7 +1127,18 @@ export class KodyRulesSyncService {
                             origin: KodyRulesOrigin.USER,
                             externalReferences:
                                 references.length > 0 ? references : undefined,
-                            syncError,
+                            syncErrors:
+                                syncErrors && syncErrors.length > 0
+                                    ? syncErrors
+                                    : undefined,
+                            referenceProcessingStatus:
+                                syncErrors && syncErrors.length > 0
+                                    ? ('failed' as any)
+                                    : references.length > 0
+                                      ? ('completed' as any)
+                                      : undefined,
+                            lastReferenceProcessedAt: new Date(),
+                            ruleHash,
                         };
                     }),
                 );

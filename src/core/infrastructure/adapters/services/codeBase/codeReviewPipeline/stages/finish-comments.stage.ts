@@ -85,6 +85,8 @@ export class UpdateCommentsAndGenerateSummaryStage extends BasePipelineStage<Cod
                     codeReviewConfig.summary,
                     codeReviewConfig?.byokConfig ?? null,
                     isCommitRun,
+                    false,
+                    context.externalPromptContext,
                 );
 
             await this.commentManagerService.updateSummarizationInPR(

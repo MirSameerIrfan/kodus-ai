@@ -82,6 +82,7 @@ export type AnalysisContext = {
             status?: TaskStatus;
         };
     };
+    externalPromptContext?: any;
     correlationId: string;
 };
 
