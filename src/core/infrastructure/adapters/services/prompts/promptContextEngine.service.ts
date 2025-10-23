@@ -221,6 +221,7 @@ export class PromptContextEngineService
                             paths: found.map((r) => r.filePath),
                             repositoryName: ref.repositoryName,
                             crossRepo: !!ref.repositoryName,
+                            organizationAndTeamData,
                         },
                     });
                 } else {
@@ -247,6 +248,7 @@ export class PromptContextEngineService
                             repositoryName: ref.repositoryName,
                             crossRepo: !!ref.repositoryName,
                             attemptedPatterns: filePatterns,
+                            organizationAndTeamData,
                         },
                     });
                 }
@@ -274,6 +276,7 @@ export class PromptContextEngineService
                         repositoryId,
                         repositoryName: ref.repositoryName,
                         crossRepo: !!ref.repositoryName,
+                        organizationAndTeamData,
                     },
                 });
             }
@@ -352,6 +355,7 @@ export class PromptContextEngineService
                     filePatterns,
                     targetRepository: targetRepo,
                     crossRepo: !!ref.repositoryName,
+                    organizationAndTeamData,
                 },
             });
 
@@ -388,6 +392,7 @@ export class PromptContextEngineService
                     filePatterns,
                     repositoryName: ref.repositoryName,
                     crossRepo: !!ref.repositoryName,
+                    organizationAndTeamData,
                 },
             });
         }
