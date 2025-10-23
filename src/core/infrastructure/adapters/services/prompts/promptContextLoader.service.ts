@@ -26,12 +26,15 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
         params: LoadContextParams,
     ): Promise<IExternalPromptContext> {
         const fileContentCache = new Map<string, string>();
-        const updatedReferences: Array<{ entity: PromptExternalReferenceEntity; updated: boolean }> = [];
+        const updatedReferences: Array<{
+            entity: PromptExternalReferenceEntity;
+            updated: boolean;
+        }> = [];
         const successfullyLoadedFiles = new Set<string>();
 
         for (const refDoc of params.allReferences) {
             let hasUpdates = false;
-            
+
             for (const ref of refDoc.references) {
                 const cacheKey = `${ref.repositoryName || params.repository.id}:${ref.filePath}`;
 
@@ -58,6 +61,8 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
                             repositoryName: ref.repositoryName,
                             error: error.message,
                             prNumber: params.pullRequest.number,
+                            organizationAndTeamData:
+                                params.organizationAndTeamData,
                         },
                     });
                 }
@@ -69,19 +74,27 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
             if (refDoc.syncErrors && successfullyLoadedFiles.size > 0) {
                 const beforeCleanup = refDoc.syncErrors.length;
                 const cleanedErrors = refDoc.syncErrors.filter(
-                    (syncError) => !successfullyLoadedFiles.has(syncError.details?.fileName || ''),
+                    (syncError) =>
+                        !successfullyLoadedFiles.has(
+                            syncError.details?.fileName || '',
+                        ),
                 );
                 const afterCleanup = cleanedErrors.length;
-                
+
                 if (beforeCleanup > afterCleanup) {
                     hasUpdates = true;
                     this.logger.log({
-                        message: 'Cleaned syncErrors for successfully loaded files',
+                        message:
+                            'Cleaned syncErrors for successfully loaded files',
                         context: PromptContextLoaderService.name,
                         metadata: {
                             removedErrorsCount: beforeCleanup - afterCleanup,
                             remainingErrorsCount: afterCleanup,
-                            successfulFiles: Array.from(successfullyLoadedFiles),
+                            successfulFiles: Array.from(
+                                successfullyLoadedFiles,
+                            ),
+                            organizationAndTeamData:
+                                params.organizationAndTeamData,
                         },
                     });
                     // Would need to call repository.update() here to persist
@@ -103,9 +116,10 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
                     updatedCount: updatedReferences.length,
                     successfullyLoadedFilesCount: successfullyLoadedFiles.size,
                     prNumber: params.pullRequest.number,
+                    organizationAndTeamData: params.organizationAndTeamData,
                 },
             });
-            
+
             // TODO: Persist updated references to MongoDB to save hash and error cleanup
             // This would involve calling repository.update() for each updated entity
         }
@@ -116,7 +130,11 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
     private async loadFileContent(
         ref: IFileReference,
         repository: { id: string; name: string },
-        pullRequest: { head?: { sha: string }; number: number; [key: string]: any },
+        pullRequest: {
+            head?: { sha: string };
+            number: number;
+            [key: string]: any;
+        },
         organizationAndTeamData: OrganizationAndTeamData,
     ): Promise<string> {
         const fullContent =
@@ -136,17 +154,23 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
         }
 
         if (ref.lineRange) {
-            const extractedContent = this.extractLineRange(content, ref.lineRange);
-            
+            const extractedContent = this.extractLineRange(
+                content,
+                ref.lineRange,
+                organizationAndTeamData,
+            );
+
             // Fallback: Se o range retornou vazio, usa o arquivo completo
             if (!extractedContent || extractedContent.trim().length === 0) {
                 this.logger.warn({
-                    message: 'Line range extraction returned empty content, falling back to full file',
+                    message:
+                        'Line range extraction returned empty content, falling back to full file',
                     context: PromptContextLoaderService.name,
                     metadata: {
                         filePath: ref.filePath,
                         requestedRange: ref.lineRange,
                         totalLines: content.split('\n').length,
+                        organizationAndTeamData: organizationAndTeamData,
                     },
                 });
                 // Mantém conteúdo completo como fallback
@@ -162,11 +186,13 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
         // Clear error if file was successfully loaded
         if (ref.lastFetchError) {
             this.logger.log({
-                message: 'File loaded successfully despite previous fetch error',
+                message:
+                    'File loaded successfully despite previous fetch error',
                 context: PromptContextLoaderService.name,
                 metadata: {
                     filePath: ref.filePath,
                     previousError: ref.lastFetchError.message,
+                    organizationAndTeamData: organizationAndTeamData,
                 },
             });
             // Note: Cannot modify entity directly - would need repository.update() to persist
@@ -187,6 +213,7 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
                 contentHash,
                 tokens: tokenCount,
                 hasLineRange: !!ref.lineRange,
+                organizationAndTeamData: organizationAndTeamData,
             },
         });
 
@@ -196,19 +223,23 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
     private extractLineRange(
         content: string,
         range: { start: number; end: number },
+        organizationAndTeamData: OrganizationAndTeamData,
     ): string {
         const lines = content.split('\n');
-        
+
         // Validação: range válido?
         if (range.start <= 0 || range.end <= 0 || range.start > range.end) {
             this.logger.warn({
                 message: 'Invalid line range provided',
                 context: PromptContextLoaderService.name,
-                metadata: { range },
+                metadata: {
+                    range,
+                    organizationAndTeamData: organizationAndTeamData,
+                },
             });
             return ''; // Retorna vazio para acionar fallback
         }
-        
+
         // Validação: range fora do arquivo?
         if (range.start > lines.length) {
             this.logger.warn({
@@ -217,11 +248,12 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
                 metadata: {
                     range,
                     totalLines: lines.length,
+                    organizationAndTeamData: organizationAndTeamData,
                 },
             });
             return ''; // Retorna vazio para acionar fallback
         }
-        
+
         const start = Math.max(0, range.start - 1);
         const end = Math.min(lines.length, range.end);
         return lines.slice(start, end).join('\n');
@@ -246,22 +278,21 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
         };
 
         for (const refDoc of allReferences) {
-            const loadedReferences: ILoadedFileReference[] =
-                refDoc.references
-                    .map((ref) => {
-                        const cacheKey = `${ref.repositoryName || refDoc.repositoryId}:${ref.filePath}`;
-                        const content = fileContentCache.get(cacheKey);
+            const loadedReferences: ILoadedFileReference[] = refDoc.references
+                .map((ref) => {
+                    const cacheKey = `${ref.repositoryName || refDoc.repositoryId}:${ref.filePath}`;
+                    const content = fileContentCache.get(cacheKey);
 
-                        if (!content) {
-                            return null;
-                        }
+                    if (!content) {
+                        return null;
+                    }
 
-                        return {
-                            ...ref,
-                            content,
-                        };
-                    })
-                    .filter((ref): ref is ILoadedFileReference => ref !== null);
+                    return {
+                        ...ref,
+                        content,
+                    };
+                })
+                .filter((ref): ref is ILoadedFileReference => ref !== null);
 
             const errorMessage =
                 refDoc.syncErrors && refDoc.syncErrors.length > 0
@@ -367,7 +398,11 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
     enrichPromptWithContext(
         originalPrompt: string,
         externalContext: IExternalPromptContext,
-        sourceType: 'customInstructions' | 'category' | 'severity' | 'generation',
+        sourceType:
+            | 'customInstructions'
+            | 'category'
+            | 'severity'
+            | 'generation',
         subType?: string,
     ): string {
         if (!externalContext || !originalPrompt) {
@@ -378,21 +413,25 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
 
         switch (sourceType) {
             case 'customInstructions':
-                references = externalContext.customInstructions?.references || [];
+                references =
+                    externalContext.customInstructions?.references || [];
                 break;
             case 'category':
                 if (subType && externalContext.categories?.[subType]) {
-                    references = externalContext.categories[subType].references || [];
+                    references =
+                        externalContext.categories[subType].references || [];
                 }
                 break;
             case 'severity':
                 if (subType && externalContext.severity?.[subType]) {
-                    references = externalContext.severity[subType].references || [];
+                    references =
+                        externalContext.severity[subType].references || [];
                 }
                 break;
             case 'generation':
                 if (subType === 'main' && externalContext.generation?.main) {
-                    references = externalContext.generation.main.references || [];
+                    references =
+                        externalContext.generation.main.references || [];
                 }
                 break;
         }
@@ -400,4 +439,3 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
         return this.injectContextIntoPrompt(originalPrompt, references);
     }
 }
-
