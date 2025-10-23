@@ -444,9 +444,15 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
                     );
             } catch (error) {
                 this.logger.warn({
-                    message: 'Failed to resolve repository name, using ID as fallback',
+                    message:
+                        'Failed to resolve repository name, using ID as fallback',
                     context: UpdateOrCreateCodeReviewParameterUseCase.name,
                     error,
+                    metadata: {
+                        organizationAndTeamData,
+                        repositoryId,
+                        directoryId,
+                    },
                 });
                 repositoryName = repositoryId;
             }
@@ -457,7 +463,7 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
         const prompts = this.extractPromptsFromConfig(configValue);
 
         await Promise.all(
-            prompts.map(promptData =>
+            prompts.map((promptData) =>
                 this.promptReferenceManager.createOrUpdatePendingReference({
                     promptText: promptData.text,
                     configKey,
@@ -466,30 +472,34 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
                     repositoryId: repositoryId || 'global',
                     repositoryName,
                     directoryId,
-                })
-            )
+                }),
+            ),
         );
 
         setImmediate(async () => {
             try {
                 await Promise.all(
-                    prompts.map(promptData =>
-                        this.promptReferenceManager.processReferencesInBackground({
-                            promptText: promptData.text,
-                            configKey,
-                            sourceType: promptData.sourceType,
-                            organizationId: organizationAndTeamData.organizationId,
-                            repositoryId: repositoryId || 'global',
-                            repositoryName,
-                            directoryId,
-                            organizationAndTeamData,
-                            context: 'instruction',
-                        })
-                    )
+                    prompts.map((promptData) =>
+                        this.promptReferenceManager.processReferencesInBackground(
+                            {
+                                promptText: promptData.text,
+                                configKey,
+                                sourceType: promptData.sourceType,
+                                organizationId:
+                                    organizationAndTeamData.organizationId,
+                                repositoryId: repositoryId || 'global',
+                                repositoryName,
+                                directoryId,
+                                organizationAndTeamData,
+                                context: 'instruction',
+                            },
+                        ),
+                    ),
                 );
 
                 this.logger.log({
-                    message: 'Successfully processed external references in background',
+                    message:
+                        'Successfully processed external references in background',
                     context: UpdateOrCreateCodeReviewParameterUseCase.name,
                     metadata: {
                         organizationAndTeamData,
@@ -516,7 +526,8 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
     private extractPromptsFromConfig(
         configValue: CreateOrUpdateCodeReviewParameterDto['configValue'],
     ): Array<{ text: string; sourceType: PromptSourceType }> {
-        const prompts: Array<{ text: string; sourceType: PromptSourceType }> = [];
+        const prompts: Array<{ text: string; sourceType: PromptSourceType }> =
+            [];
 
         if (configValue?.summary?.customInstructions) {
             prompts.push({
@@ -526,8 +537,9 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
         }
 
         if (configValue?.v2PromptOverrides?.categories?.descriptions) {
-            const { bug, performance, security } = configValue.v2PromptOverrides.categories.descriptions;
-            
+            const { bug, performance, security } =
+                configValue.v2PromptOverrides.categories.descriptions;
+
             if (bug) {
                 prompts.push({
                     text: bug,
@@ -549,8 +561,9 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
         }
 
         if (configValue?.v2PromptOverrides?.severity?.flags) {
-            const { critical, high, medium, low } = configValue.v2PromptOverrides.severity.flags;
-            
+            const { critical, high, medium, low } =
+                configValue.v2PromptOverrides.severity.flags;
+
             if (critical) {
                 prompts.push({
                     text: critical,
