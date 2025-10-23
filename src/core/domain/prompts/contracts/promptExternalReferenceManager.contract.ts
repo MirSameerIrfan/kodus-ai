@@ -54,6 +54,7 @@ export interface IPromptExternalReferenceManagerService {
         organizationId: string;
         repositoryId: string;
         repositoryName: string;
+        organizationAndTeamData: OrganizationAndTeamData;
         directoryId?: string;
         kodyRuleId?: string;
     }): Promise<PromptExternalReferenceEntity | null>;
@@ -82,4 +83,3 @@ export interface IPromptExternalReferenceManagerService {
         sourceTypes: PromptSourceType[],
     ): Promise<Map<PromptSourceType, PromptExternalReferenceEntity>>;
 }
-

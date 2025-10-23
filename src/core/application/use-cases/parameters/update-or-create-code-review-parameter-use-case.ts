@@ -471,6 +471,7 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
                     organizationId: organizationAndTeamData.organizationId,
                     repositoryId: repositoryId || 'global',
                     repositoryName,
+                    organizationAndTeamData,
                     directoryId,
                 }),
             ),

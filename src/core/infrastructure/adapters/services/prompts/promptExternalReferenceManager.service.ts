@@ -7,9 +7,7 @@ import {
     IPromptContextEngineService,
     PROMPT_CONTEXT_ENGINE_SERVICE_TOKEN,
 } from '@/core/domain/prompts/contracts/promptContextEngine.contract';
-import {
-    IPromptExternalReferenceManagerService,
-} from '@/core/domain/prompts/contracts/promptExternalReferenceManager.contract';
+import { IPromptExternalReferenceManagerService } from '@/core/domain/prompts/contracts/promptExternalReferenceManager.contract';
 import { PromptExternalReferenceEntity } from '@/core/domain/prompts/entities/promptExternalReference.entity';
 import {
     PromptSourceType,
@@ -21,7 +19,9 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 
 @Injectable()
-export class PromptExternalReferenceManagerService implements IPromptExternalReferenceManagerService {
+export class PromptExternalReferenceManagerService
+    implements IPromptExternalReferenceManagerService
+{
     constructor(
         @Inject(PROMPT_EXTERNAL_REFERENCE_REPOSITORY_TOKEN)
         private readonly repository: IPromptExternalReferenceRepository,
@@ -47,8 +47,9 @@ export class PromptExternalReferenceManagerService implements IPromptExternalRef
         wasProcessed: boolean;
     }> {
         try {
-            const currentHash =
-                this.contextEngine.calculatePromptHash(params.promptText);
+            const currentHash = this.contextEngine.calculatePromptHash(
+                params.promptText,
+            );
 
             const existing = await this.repository.findByConfigKey(
                 params.configKey,
@@ -57,8 +58,7 @@ export class PromptExternalReferenceManagerService implements IPromptExternalRef
 
             if (existing && existing.promptHash === currentHash) {
                 this.logger.log({
-                    message:
-                        'Prompt hash unchanged, skipping reprocessing',
+                    message: 'Prompt hash unchanged, skipping reprocessing',
                     context: PromptExternalReferenceManagerService.name,
                     metadata: {
                         configKey: params.configKey,
@@ -81,7 +81,10 @@ export class PromptExternalReferenceManagerService implements IPromptExternalRef
 
             // If no references found AND no errors, delete/skip save
             // BUT if there are errors, we MUST save them to inform the user
-            if (references.length === 0 && (!syncErrors || syncErrors.length === 0)) {
+            if (
+                references.length === 0 &&
+                (!syncErrors || syncErrors.length === 0)
+            ) {
                 if (existing?.uuid) {
                     await this.repository.delete(existing.uuid);
                     this.logger.log({
@@ -119,9 +122,14 @@ export class PromptExternalReferenceManagerService implements IPromptExternalRef
                 lastProcessedAt: new Date(),
             });
 
-            if (references.length === 0 && syncErrors && syncErrors.length > 0) {
+            if (
+                references.length === 0 &&
+                syncErrors &&
+                syncErrors.length > 0
+            ) {
                 this.logger.warn({
-                    message: 'Saved error state: references detected but not found',
+                    message:
+                        'Saved error state: references detected but not found',
                     context: PromptExternalReferenceManagerService.name,
                     metadata: {
                         configKey: params.configKey,
@@ -151,6 +159,7 @@ export class PromptExternalReferenceManagerService implements IPromptExternalRef
                 metadata: {
                     configKey: params.configKey,
                     sourceType: params.sourceType,
+                    organizationAndTeamData: params.organizationAndTeamData,
                 },
             });
             return { entity: null, wasProcessed: false };
@@ -211,6 +220,7 @@ export class PromptExternalReferenceManagerService implements IPromptExternalRef
         repositoryName: string;
         directoryId?: string;
         kodyRuleId?: string;
+        organizationAndTeamData: OrganizationAndTeamData;
     }): Promise<PromptExternalReferenceEntity | null> {
         try {
             const existing = await this.repository.findByConfigKey(
@@ -218,25 +228,31 @@ export class PromptExternalReferenceManagerService implements IPromptExternalRef
                 params.sourceType,
             );
 
-            const hasExternalReferences = this.hasLikelyExternalReferences(params.promptText);
+            const hasExternalReferences = this.hasLikelyExternalReferences(
+                params.promptText,
+            );
 
             if (!hasExternalReferences) {
                 if (existing?.uuid) {
                     await this.repository.delete(existing.uuid);
                     this.logger.log({
-                        message: 'No external references pattern detected, deleted existing record',
+                        message:
+                            'No external references pattern detected, deleted existing record',
                         context: PromptExternalReferenceManagerService.name,
                         metadata: {
                             configKey: params.configKey,
                             sourceType: params.sourceType,
+                            organizationAndTeamData:
+                                params.organizationAndTeamData,
                         },
                     });
                 }
                 return null;
             }
 
-            const currentHash =
-                this.contextEngine.calculatePromptHash(params.promptText);
+            const currentHash = this.contextEngine.calculatePromptHash(
+                params.promptText,
+            );
 
             if (existing && existing.promptHash === currentHash) {
                 this.logger.log({
@@ -347,10 +363,14 @@ export class PromptExternalReferenceManagerService implements IPromptExternalRef
                     byokConfig: params.byokConfig,
                 });
 
-            const currentHash =
-                this.contextEngine.calculatePromptHash(params.promptText);
+            const currentHash = this.contextEngine.calculatePromptHash(
+                params.promptText,
+            );
 
-            if (references.length === 0 && (!syncErrors || syncErrors.length === 0)) {
+            if (
+                references.length === 0 &&
+                (!syncErrors || syncErrors.length === 0)
+            ) {
                 const existing = await this.repository.findByConfigKey(
                     params.configKey,
                     params.sourceType,
@@ -489,12 +509,16 @@ export class PromptExternalReferenceManagerService implements IPromptExternalRef
         sourceTypes: PromptSourceType[],
     ): Promise<Map<PromptSourceType, PromptExternalReferenceEntity>> {
         try {
-            const references = await this.repository.findByConfigKeyAndSourceTypes(
-                configKey,
-                sourceTypes,
-            );
+            const references =
+                await this.repository.findByConfigKeyAndSourceTypes(
+                    configKey,
+                    sourceTypes,
+                );
 
-            const resultMap = new Map<PromptSourceType, PromptExternalReferenceEntity>();
+            const resultMap = new Map<
+                PromptSourceType,
+                PromptExternalReferenceEntity
+            >();
             for (const ref of references) {
                 resultMap.set(ref.sourceType, ref);
             }
@@ -511,4 +535,3 @@ export class PromptExternalReferenceManagerService implements IPromptExternalRef
         }
     }
 }
-
