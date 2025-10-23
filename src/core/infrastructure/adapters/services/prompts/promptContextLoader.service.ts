@@ -68,9 +68,6 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
                 }
             }
 
-            // Clean syncErrors for successfully loaded files
-            // Note: Entities are immutable, so we would need to update via repository
-            // TODO: Persist updated references to MongoDB to save hash and error cleanup
             if (refDoc.syncErrors && successfullyLoadedFiles.size > 0) {
                 const beforeCleanup = refDoc.syncErrors.length;
                 const cleanedErrors = refDoc.syncErrors.filter(
