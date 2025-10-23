@@ -400,7 +400,9 @@ export class KodyRulesService implements IKodyRulesService {
         const existing = await this.findByOrganizationId(organizationId);
 
         if (!existing) {
-            throw new NotFoundException('Kody rules not found for organization');
+            throw new NotFoundException(
+                'Kody rules not found for organization',
+            );
         }
 
         const existingRule = existing.rules?.find(
@@ -428,6 +430,16 @@ export class KodyRulesService implements IKodyRulesService {
         );
 
         if (!updatedKodyRules) {
+            this.logger.error({
+                message: 'Could not update rule references',
+                error: new Error('Could not update rule references'),
+                context: KodyRulesService.name,
+                metadata: {
+                    organizationId,
+                    ruleId,
+                    references,
+                },
+            });
             throw new Error('Could not update rule references');
         }
 
