@@ -6,7 +6,10 @@ import {
     IPromptExternalReferenceManagerService,
     PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
 } from '@/core/domain/prompts/contracts/promptExternalReferenceManager.contract';
-import { PromptContextLoaderService } from '@/core/infrastructure/adapters/services/prompts/promptContextLoader.service';
+import {
+    IPromptContextLoaderService,
+    PROMPT_CONTEXT_LOADER_SERVICE_TOKEN,
+} from '@/core/domain/prompts/contracts/promptContextLoader.contract';
 import { ILoadExternalContextStage } from './contracts/loadExternalContextStage.contract';
 
 @Injectable()
@@ -16,7 +19,8 @@ export class LoadExternalContextStage extends BasePipelineStage<CodeReviewPipeli
     constructor(
         @Inject(PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN)
         private readonly promptReferenceManager: IPromptExternalReferenceManagerService,
-        private readonly promptContextLoader: PromptContextLoaderService,
+        @Inject(PROMPT_CONTEXT_LOADER_SERVICE_TOKEN)
+        private readonly promptContextLoader: IPromptContextLoaderService,
         private readonly logger: PinoLoggerService,
     ) {
         super();

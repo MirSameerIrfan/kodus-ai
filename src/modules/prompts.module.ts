@@ -8,6 +8,7 @@ import { PromptExternalReferencesRepository } from '@/core/infrastructure/adapte
 import { PROMPT_EXTERNAL_REFERENCE_REPOSITORY_TOKEN } from '@/core/domain/prompts/contracts/promptExternalReferenceRepository.contract';
 import { PROMPT_CONTEXT_ENGINE_SERVICE_TOKEN } from '@/core/domain/prompts/contracts/promptContextEngine.contract';
 import { PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN } from '@/core/domain/prompts/contracts/promptExternalReferenceManager.contract';
+import { PROMPT_CONTEXT_LOADER_SERVICE_TOKEN } from '@/core/domain/prompts/contracts/promptContextLoader.contract';
 import { PromptContextEngineService } from '@/core/infrastructure/adapters/services/prompts/promptContextEngine.service';
 import { PromptExternalReferenceManagerService } from '@/core/infrastructure/adapters/services/prompts/promptExternalReferenceManager.service';
 import { PromptContextLoaderService } from '@/core/infrastructure/adapters/services/prompts/promptContextLoader.service';
@@ -42,17 +43,20 @@ import { forwardRef } from '@nestjs/common';
             useClass: PromptExternalReferenceManagerService,
         },
         {
+            provide: PROMPT_CONTEXT_LOADER_SERVICE_TOKEN,
+            useClass: PromptContextLoaderService,
+        },
+        {
             provide: LOAD_EXTERNAL_CONTEXT_STAGE_TOKEN,
             useClass: LoadExternalContextStage,
         },
-        PromptContextLoaderService,
     ],
     exports: [
         PROMPT_EXTERNAL_REFERENCE_REPOSITORY_TOKEN,
         PROMPT_CONTEXT_ENGINE_SERVICE_TOKEN,
         PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
+        PROMPT_CONTEXT_LOADER_SERVICE_TOKEN,
         LOAD_EXTERNAL_CONTEXT_STAGE_TOKEN,
-        PromptContextLoaderService,
     ],
 })
 export class PromptsModule {}

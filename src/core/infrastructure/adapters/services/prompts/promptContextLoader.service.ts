@@ -10,25 +10,13 @@ import {
 } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
 import { PromptExternalReferenceEntity } from '@/core/domain/prompts/entities/promptExternalReference.entity';
 import { createHash } from 'crypto';
-
-interface LoadContextParams {
-    organizationAndTeamData: OrganizationAndTeamData;
-    repository: {
-        id: string;
-        name: string;
-    };
-    pullRequest: {
-        head?: {
-            sha: string;
-        };
-        number: number;
-        [key: string]: any;
-    };
-    allReferences: PromptExternalReferenceEntity[];
-}
+import {
+    IPromptContextLoaderService,
+    LoadContextParams,
+} from '@/core/domain/prompts/contracts/promptContextLoader.contract';
 
 @Injectable()
-export class PromptContextLoaderService {
+export class PromptContextLoaderService implements IPromptContextLoaderService {
     constructor(
         private readonly codeManagementService: CodeManagementService,
         private readonly logger: PinoLoggerService,
