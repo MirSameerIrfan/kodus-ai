@@ -8,11 +8,11 @@ export enum KodyRuleProcessingStatus {
 }
 
 export interface IKodyRuleReferenceSyncError {
-    fileName: string;
-    message: string;
-    errorType: 'not_found' | 'invalid_path' | 'fetch_error' | 'file_too_large' | 'parsing_error';
-    attemptedPaths?: string[];
-    timestamp: Date;
+    readonly fileName: string;
+    readonly message: string;
+    readonly errorType: 'not_found' | 'invalid_path' | 'fetch_error' | 'file_too_large' | 'parsing_error';
+    readonly attemptedPaths?: string[];
+    readonly timestamp: Date;
 }
 
 export interface IKodyRules {
@@ -67,21 +67,21 @@ export interface IKodyRulesInheritance {
 }
 
 export interface IKodyRuleExternalReference {
-    filePath: string;
-    originalText?: string; // Texto original da referência (ex: "@file:README.md")
-    lineRange?: {
+    readonly filePath: string;
+    readonly originalText?: string; // Texto original da referência (ex: "@file:README.md")
+    readonly lineRange?: {
         start: number;
         end: number;
     };
-    description?: string;
-    repositoryName?: string;
-    lastContentHash?: string; // Hash do conteúdo do arquivo
-    lastValidatedAt?: Date;
-    estimatedTokens?: number;
-    lastFetchError?: {
-        message: string;
-        errorType: string;
-        timestamp: Date;
+    readonly description?: string;
+    readonly repositoryName?: string;
+    readonly lastContentHash?: string; // Hash do conteúdo do arquivo
+    readonly lastValidatedAt?: Date;
+    readonly estimatedTokens?: number;
+    readonly lastFetchError?: {
+        readonly message: string;
+        readonly errorType: string;
+        readonly timestamp: Date;
     };
 }
 

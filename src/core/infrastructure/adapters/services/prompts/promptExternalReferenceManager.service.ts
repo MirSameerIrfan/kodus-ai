@@ -7,6 +7,9 @@ import {
     IPromptContextEngineService,
     PROMPT_CONTEXT_ENGINE_SERVICE_TOKEN,
 } from '@/core/domain/prompts/contracts/promptContextEngine.contract';
+import {
+    IPromptExternalReferenceManagerService,
+} from '@/core/domain/prompts/contracts/promptExternalReferenceManager.contract';
 import { PromptExternalReferenceEntity } from '@/core/domain/prompts/entities/promptExternalReference.entity';
 import {
     PromptSourceType,
@@ -18,7 +21,7 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 
 @Injectable()
-export class PromptExternalReferenceManagerService {
+export class PromptExternalReferenceManagerService implements IPromptExternalReferenceManagerService {
     constructor(
         @Inject(PROMPT_EXTERNAL_REFERENCE_REPOSITORY_TOKEN)
         private readonly repository: IPromptExternalReferenceRepository,
@@ -449,6 +452,33 @@ export class PromptExternalReferenceManagerService {
                 metadata: { configKey, sourceType },
             });
             return null;
+        }
+    }
+
+    async getMultipleReferences(
+        configKey: string,
+        sourceTypes: PromptSourceType[],
+    ): Promise<Map<PromptSourceType, PromptExternalReferenceEntity>> {
+        try {
+            const references = await this.repository.findByConfigKeyAndSourceTypes(
+                configKey,
+                sourceTypes,
+            );
+
+            const resultMap = new Map<PromptSourceType, PromptExternalReferenceEntity>();
+            for (const ref of references) {
+                resultMap.set(ref.sourceType, ref);
+            }
+
+            return resultMap;
+        } catch (error) {
+            this.logger.error({
+                message: 'Failed to get multiple prompt external references',
+                context: PromptExternalReferenceManagerService.name,
+                error,
+                metadata: { configKey, sourceTypes },
+            });
+            return new Map();
         }
     }
 }

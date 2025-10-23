@@ -28,21 +28,21 @@ export enum PromptReferenceErrorType {
 }
 
 export interface IFileReferenceError {
-    type: PromptReferenceErrorType;
-    message: string;
-    attemptedPatterns: string[];
-    timestamp: Date;
+    readonly type: PromptReferenceErrorType;
+    readonly message: string;
+    readonly attemptedPatterns: string[];
+    readonly timestamp: Date;
 }
 
 export interface IFileReference {
-    filePath: string;
-    lineRange?: {
-        start: number;
-        end: number;
+    readonly filePath: string;
+    readonly lineRange?: {
+        readonly start: number;
+        readonly end: number;
     };
-    repositoryName?: string;
-    description?: string;
-    originalText?: string;
+    readonly repositoryName?: string;
+    readonly description?: string;
+    readonly originalText?: string;
     lastContentHash: string;
     lastValidatedAt: Date;
     estimatedTokens?: number;
@@ -50,36 +50,36 @@ export interface IFileReference {
 }
 
 export interface IPromptReferenceSyncError {
-    type: PromptReferenceErrorType;
-    message: string;
-    details: {
-        fileName?: string;
-        repositoryName?: string;
-        attemptedPaths?: string[];
-        timestamp?: Date;
+    readonly type: PromptReferenceErrorType;
+    readonly message: string;
+    readonly details: {
+        readonly fileName?: string;
+        readonly repositoryName?: string;
+        readonly attemptedPaths?: string[];
+        readonly timestamp?: Date;
     };
 }
 
 export interface IPromptExternalReference {
-    uuid?: string;
-    configKey: string;
-    sourceType: PromptSourceType;
-    organizationId: string;
-    repositoryId: string;
-    directoryId?: string;
-    kodyRuleId?: string;
-    repositoryName: string;
+    readonly uuid?: string;
+    readonly configKey: string;
+    readonly sourceType: PromptSourceType;
+    readonly organizationId: string;
+    readonly repositoryId: string;
+    readonly directoryId?: string;
+    readonly kodyRuleId?: string;
+    readonly repositoryName: string;
     promptHash: string;
-    references: IFileReference[];
+    readonly references: IFileReference[];
     syncErrors?: IPromptReferenceSyncError[];
     processingStatus: PromptProcessingStatus;
     lastProcessedAt: Date;
-    createdAt?: Date;
+    readonly createdAt?: Date;
     updatedAt?: Date;
 }
 
 export interface ILoadedFileReference extends IFileReference {
-    content: string;
+    readonly content: string;
 }
 
 export interface IExternalPromptContext {
@@ -104,14 +104,14 @@ export interface IExternalPromptContext {
 }
 
 export interface IDetectedReference {
-    fileName: string;
-    filePattern?: string;
-    description?: string;
-    repositoryName?: string;
-    originalText?: string;
-    lineRange?: {
-        start: number;
-        end: number;
+    readonly fileName: string;
+    readonly filePattern?: string;
+    readonly description?: string;
+    readonly repositoryName?: string;
+    readonly originalText?: string;
+    readonly lineRange?: {
+        readonly start: number;
+        readonly end: number;
     };
 }
 

@@ -9,21 +9,21 @@ import {
 export class PromptExternalReferenceEntity
     implements IPromptExternalReference
 {
-    private _uuid?: string;
-    private _configKey: string;
-    private _sourceType: PromptSourceType;
-    private _organizationId: string;
-    private _repositoryId: string;
-    private _directoryId?: string;
-    private _kodyRuleId?: string;
-    private _repositoryName: string;
-    private _promptHash: string;
-    private _references: IFileReference[];
-    private _syncErrors?: IPromptReferenceSyncError[];
-    private _processingStatus: PromptProcessingStatus;
-    private _lastProcessedAt: Date;
-    private _createdAt?: Date;
-    private _updatedAt?: Date;
+    private readonly _uuid?: string;
+    private readonly _configKey: string;
+    private readonly _sourceType: PromptSourceType;
+    private readonly _organizationId: string;
+    private readonly _repositoryId: string;
+    private readonly _directoryId?: string;
+    private readonly _kodyRuleId?: string;
+    private readonly _repositoryName: string;
+    private readonly _promptHash: string;
+    private readonly _references: IFileReference[];
+    private readonly _syncErrors?: IPromptReferenceSyncError[];
+    private readonly _processingStatus: PromptProcessingStatus;
+    private readonly _lastProcessedAt: Date;
+    private readonly _createdAt?: Date;
+    private readonly _updatedAt?: Date;
 
     constructor(data: IPromptExternalReference) {
         this._uuid = data.uuid;

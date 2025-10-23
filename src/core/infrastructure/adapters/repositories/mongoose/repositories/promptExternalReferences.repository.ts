@@ -39,6 +39,7 @@ export class PromptExternalReferencesRepository
                 configKey,
                 sourceType,
             })
+            .lean()
             .exec();
 
         if (!doc) {
@@ -55,12 +56,25 @@ export class PromptExternalReferencesRepository
             .find({
                 configKey: { $in: configKeys },
             })
+            .lean()
             .exec();
 
-        return mapSimpleModelsToEntities(
-            docs,
-            PromptExternalReferenceEntity,
-        );
+        return mapSimpleModelsToEntities(docs, PromptExternalReferenceEntity);
+    }
+
+    async findByConfigKeyAndSourceTypes(
+        configKey: string,
+        sourceTypes: PromptSourceType[],
+    ): Promise<PromptExternalReferenceEntity[]> {
+        const docs = await this.model
+            .find({
+                configKey,
+                sourceType: { $in: sourceTypes },
+            })
+            .lean()
+            .exec();
+
+        return mapSimpleModelsToEntities(docs, PromptExternalReferenceEntity);
     }
 
     async upsert(
@@ -85,10 +99,7 @@ export class PromptExternalReferencesRepository
             )
             .exec();
 
-        return mapSimpleModelToEntity(
-            updated,
-            PromptExternalReferenceEntity,
-        );
+        return mapSimpleModelToEntity(updated, PromptExternalReferenceEntity);
     }
 
     async update(
@@ -112,10 +123,7 @@ export class PromptExternalReferencesRepository
             return null;
         }
 
-        return mapSimpleModelToEntity(
-            updated,
-            PromptExternalReferenceEntity,
-        );
+        return mapSimpleModelToEntity(updated, PromptExternalReferenceEntity);
     }
 
     async delete(uuid: string): Promise<boolean> {
@@ -126,11 +134,8 @@ export class PromptExternalReferencesRepository
     async findByOrganizationId(
         organizationId: string,
     ): Promise<PromptExternalReferenceEntity[]> {
-        const docs = await this.model.find({ organizationId }).exec();
-        return mapSimpleModelsToEntities(
-            docs,
-            PromptExternalReferenceEntity,
-        );
+        const docs = await this.model.find({ organizationId }).lean().exec();
+        return mapSimpleModelsToEntities(docs, PromptExternalReferenceEntity);
     }
 
     async updateStatus(
@@ -155,10 +160,6 @@ export class PromptExternalReferencesRepository
             return null;
         }
 
-        return mapSimpleModelToEntity(
-            updated,
-            PromptExternalReferenceEntity,
-        );
+        return mapSimpleModelToEntity(updated, PromptExternalReferenceEntity);
     }
 }
-

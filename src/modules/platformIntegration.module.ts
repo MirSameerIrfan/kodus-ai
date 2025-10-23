@@ -38,6 +38,7 @@ import { IssuesModule } from './issues.module';
 import { CodeReviewSettingsLogModule } from './codeReviewSettingsLog.module';
 import { McpAgentModule } from './mcpAgent.module';
 import { GetAdditionalInfoHelper } from '@/shared/utils/helpers/getAdditionalInfo.helper';
+import { GET_ADDITIONAL_INFO_HELPER_TOKEN } from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
 import { PullRequestMessagesModule } from './pullRequestMessages.module';
 @Module({
     imports: [
@@ -98,7 +99,10 @@ import { PullRequestMessagesModule } from './pullRequestMessages.module';
             provide: 'AZURE_REPOS_WEBHOOK_HANDLER',
             useExisting: AzureReposPullRequestHandler,
         },
-        GetAdditionalInfoHelper,
+        {
+            provide: GET_ADDITIONAL_INFO_HELPER_TOKEN,
+            useClass: GetAdditionalInfoHelper,
+        },
     ],
     controllers: [CodeManagementController],
     exports: [

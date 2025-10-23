@@ -1,16 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 import { PinoLoggerService } from '../../../logger/pino.service';
-import { PromptExternalReferenceManagerService } from '@/core/infrastructure/adapters/services/prompts/promptExternalReferenceManager.service';
+import {
+    IPromptExternalReferenceManagerService,
+    PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
+} from '@/core/domain/prompts/contracts/promptExternalReferenceManager.contract';
 import { PromptContextLoaderService } from '@/core/infrastructure/adapters/services/prompts/promptContextLoader.service';
+import { ILoadExternalContextStage } from './contracts/loadExternalContextStage.contract';
 
 @Injectable()
-export class LoadExternalContextStage extends BasePipelineStage<CodeReviewPipelineContext> {
+export class LoadExternalContextStage extends BasePipelineStage<CodeReviewPipelineContext> implements ILoadExternalContextStage {
     readonly stageName = 'LoadExternalContextStage';
 
     constructor(
-        private readonly promptReferenceManager: PromptExternalReferenceManagerService,
+        @Inject(PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN)
+        private readonly promptReferenceManager: IPromptExternalReferenceManagerService,
         private readonly promptContextLoader: PromptContextLoaderService,
         private readonly logger: PinoLoggerService,
     ) {

@@ -49,8 +49,7 @@ export class ExternalReferenceLoaderService {
                             'utf-8',
                         );
                     }
-
-                    // ✅ NOVO: Suporte a line range com fallback
+                    
                     if (ref.lineRange) {
                         const extractedContent = this.extractLineRange(
                             content,
@@ -61,16 +60,17 @@ export class ExternalReferenceLoaderService {
                             !extractedContent ||
                             extractedContent.trim().length === 0
                         ) {
-                            this.logger.warn({
-                                message:
-                                    'Line range extraction returned empty content, falling back to full file',
-                                context: ExternalReferenceLoaderService.name,
-                                metadata: {
-                                    filePath: ref.filePath,
-                                    requestedRange: ref.lineRange,
-                                    totalLines: content.split('\n').length,
-                                },
-                            });
+                        this.logger.warn({
+                            message:
+                                'Line range extraction returned empty content, falling back to full file',
+                            context: ExternalReferenceLoaderService.name,
+                            metadata: {
+                                filePath: ref.filePath,
+                                requestedRange: ref.lineRange,
+                                totalLines: content.split('\n').length,
+                                organizationAndTeamData: context.organizationAndTeamData,
+                            },
+                        });
                             // Fallback: usa arquivo completo
                         } else {
                             content = extractedContent;
@@ -104,6 +104,8 @@ export class ExternalReferenceLoaderService {
                         metadata: {
                             filePath: ref.filePath,
                             ruleUuid: rule.uuid,
+                            organizationAndTeamData:
+                                context.organizationAndTeamData,
                         },
                     });
                 }

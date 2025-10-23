@@ -8,10 +8,14 @@ import {
     IPromptContextEngineService,
     PROMPT_CONTEXT_ENGINE_SERVICE_TOKEN,
 } from '@/core/domain/prompts/contracts/promptContextEngine.contract';
+import {
+    IPromptExternalReferenceManagerService,
+    PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
+} from '@/core/domain/prompts/contracts/promptExternalReferenceManager.contract';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 
 describe('PromptExternalReferenceManagerService - hasLikelyExternalReferences', () => {
-    let service: PromptExternalReferenceManagerService;
+    let service: IPromptExternalReferenceManagerService;
 
     beforeEach(async () => {
         const mockRepository = {
@@ -40,7 +44,10 @@ describe('PromptExternalReferenceManagerService - hasLikelyExternalReferences', 
 
         const module: TestingModule = await Test.createTestingModule({
             providers: [
-                PromptExternalReferenceManagerService,
+                {
+                    provide: PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
+                    useClass: PromptExternalReferenceManagerService,
+                },
                 {
                     provide: PROMPT_EXTERNAL_REFERENCE_REPOSITORY_TOKEN,
                     useValue: mockRepository,
@@ -56,8 +63,8 @@ describe('PromptExternalReferenceManagerService - hasLikelyExternalReferences', 
             ],
         }).compile();
 
-        service = module.get<PromptExternalReferenceManagerService>(
-            PromptExternalReferenceManagerService,
+        service = module.get<IPromptExternalReferenceManagerService>(
+            PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
         );
     });
 
@@ -504,7 +511,10 @@ describe('PromptExternalReferenceManagerService - hasLikelyExternalReferences', 
 
             const module: TestingModule = await Test.createTestingModule({
                 providers: [
-                    PromptExternalReferenceManagerService,
+                    {
+                        provide: PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
+                        useClass: PromptExternalReferenceManagerService,
+                    },
                     {
                         provide: PROMPT_EXTERNAL_REFERENCE_REPOSITORY_TOKEN,
                         useValue: mockRepository,
@@ -520,8 +530,8 @@ describe('PromptExternalReferenceManagerService - hasLikelyExternalReferences', 
                 ],
             }).compile();
 
-            const testService = module.get<PromptExternalReferenceManagerService>(
-                PromptExternalReferenceManagerService,
+            const testService = module.get<IPromptExternalReferenceManagerService>(
+                PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
             );
 
             const result = await testService.createOrUpdatePendingReference({
@@ -565,7 +575,10 @@ describe('PromptExternalReferenceManagerService - hasLikelyExternalReferences', 
 
             const module: TestingModule = await Test.createTestingModule({
                 providers: [
-                    PromptExternalReferenceManagerService,
+                    {
+                        provide: PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
+                        useClass: PromptExternalReferenceManagerService,
+                    },
                     {
                         provide: PROMPT_EXTERNAL_REFERENCE_REPOSITORY_TOKEN,
                         useValue: mockRepository,
@@ -581,8 +594,8 @@ describe('PromptExternalReferenceManagerService - hasLikelyExternalReferences', 
                 ],
             }).compile();
 
-            const testService = module.get<PromptExternalReferenceManagerService>(
-                PromptExternalReferenceManagerService,
+            const testService = module.get<IPromptExternalReferenceManagerService>(
+                PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
             );
 
             const result = await testService.createOrUpdatePendingReference({

@@ -22,6 +22,11 @@ export interface IPromptExternalReferenceRepository {
         configKeys: string[],
     ): Promise<PromptExternalReferenceEntity[]>;
 
+    findByConfigKeyAndSourceTypes(
+        configKey: string,
+        sourceTypes: PromptSourceType[],
+    ): Promise<PromptExternalReferenceEntity[]>;
+
     upsert(
         data: Partial<IPromptExternalReference>,
     ): Promise<PromptExternalReferenceEntity>;

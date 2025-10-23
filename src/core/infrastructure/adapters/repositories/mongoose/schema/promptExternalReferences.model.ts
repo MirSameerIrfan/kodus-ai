@@ -11,25 +11,25 @@ import {
 @Schema({ collection: 'promptExternalReferences', timestamps: true })
 export class PromptExternalReferencesModel extends CoreDocument {
     @Prop({ required: true, index: true })
-    public configKey: string;
+    public readonly configKey: string;
 
     @Prop({ required: true, enum: Object.values(PromptSourceType), index: true })
-    public sourceType: PromptSourceType;
+    public readonly sourceType: PromptSourceType;
 
     @Prop({ required: true, index: true })
-    public organizationId: string;
+    public readonly organizationId: string;
 
     @Prop({ required: true, index: true })
-    public repositoryId: string;
+    public readonly repositoryId: string;
 
     @Prop({ required: false })
-    public directoryId?: string;
+    public readonly directoryId?: string;
 
     @Prop({ required: false })
-    public kodyRuleId?: string;
+    public readonly kodyRuleId?: string;
 
     @Prop({ required: true })
-    public repositoryName: string;
+    public readonly repositoryName: string;
 
     @Prop({ required: true, index: true })
     public promptHash: string;

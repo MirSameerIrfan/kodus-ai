@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { 
+import {
     IKodyRuleExternalReference,
     IKodyRuleReferenceSyncError,
 } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
@@ -40,9 +40,7 @@ export class ExternalReferenceDetectorService {
         private readonly logger: PinoLoggerService,
     ) {}
 
-    async detectAndResolveReferences(
-        params: DetectReferencesParams,
-    ): Promise<{
+    async detectAndResolveReferences(params: DetectReferencesParams): Promise<{
         references: IKodyRuleExternalReference[];
         syncErrors?: IKodyRuleReferenceSyncError[];
         ruleHash: string;
@@ -54,7 +52,8 @@ export class ExternalReferenceDetectorService {
             // ✅ Pre-filter: Verificar se tem padrões de referências externas
             if (!this.hasLikelyExternalReferences(params.ruleText)) {
                 this.logger.log({
-                    message: 'No external reference patterns detected (regex pre-filter)',
+                    message:
+                        'No external reference patterns detected (regex pre-filter)',
                     context: ExternalReferenceDetectorService.name,
                     metadata: { ruleHash },
                 });
@@ -86,7 +85,7 @@ export class ExternalReferenceDetectorService {
                     organizationAndTeamData: params.organizationAndTeamData,
                 },
             });
-            
+
             const ruleHash = this.calculateRuleHash(params.ruleText);
             return {
                 references: [],
@@ -217,14 +216,21 @@ export class ExternalReferenceDetectorService {
         const resolvedReferences: IKodyRuleExternalReference[] = [];
         const notFoundDetails: IKodyRuleReferenceSyncError[] = [];
 
-        for (const ref of detectedReferences) {
-            try {
-                const { found, attemptedPaths } = await this.findFileWithHybridStrategy(
+        const searchResults = await Promise.allSettled(
+            detectedReferences.map((ref) =>
+                this.findFileWithHybridStrategy(
                     ref,
                     repositoryId,
                     repositoryName,
                     organizationAndTeamData,
-                );
+                ).then((result) => ({ ref, result })),
+            ),
+        );
+
+        for (const settlement of searchResults) {
+            if (settlement.status === 'fulfilled') {
+                const { ref, result } = settlement.value;
+                const { found, attemptedPaths } = result;
 
                 if (found.length > 0) {
                     resolvedReferences.push(...found);
@@ -244,7 +250,7 @@ export class ExternalReferenceDetectorService {
                     const fileIdentifier = ref.repositoryName
                         ? `${ref.repositoryName}/${ref.fileName}`
                         : ref.fileName;
-                    
+
                     notFoundDetails.push({
                         fileName: fileIdentifier,
                         message: `File not found in repository${ref.repositoryName ? ` (${ref.repositoryName})` : ''}`,
@@ -261,14 +267,18 @@ export class ExternalReferenceDetectorService {
                             repositoryName: ref.repositoryName,
                             attemptedPaths,
                             crossRepo: !!ref.repositoryName,
+                            organizationAndTeamData,
                         },
                     });
                 }
-            } catch (error) {
+            } else {
+                const error = settlement.reason;
+                const refIndex = searchResults.indexOf(settlement);
+                const ref = detectedReferences[refIndex];
                 const fileIdentifier = ref.repositoryName
                     ? `${ref.repositoryName}/${ref.fileName}`
                     : ref.fileName;
-                
+
                 notFoundDetails.push({
                     fileName: fileIdentifier,
                     message: `Error during file search: ${error.message}`,
@@ -369,27 +379,21 @@ export class ExternalReferenceDetectorService {
                         filePath: file.path,
                         description: ref.description,
                         lastValidatedAt: new Date(),
+                        ...(ref.originalText && {
+                            originalText: ref.originalText,
+                        }),
+                        ...(ref.lineRange &&
+                            typeof ref.lineRange.start === 'number' &&
+                            typeof ref.lineRange.end === 'number' && {
+                                lineRange: {
+                                    start: ref.lineRange.start,
+                                    end: ref.lineRange.end,
+                                },
+                            }),
+                        ...(ref.repositoryName && {
+                            repositoryName: ref.repositoryName,
+                        }),
                     };
-
-                    if (ref.originalText) {
-                        result.originalText = ref.originalText;
-                    }
-
-                    // Só adiciona lineRange se tiver start e end válidos
-                    if (
-                        ref.lineRange &&
-                        typeof ref.lineRange.start === 'number' &&
-                        typeof ref.lineRange.end === 'number'
-                    ) {
-                        result.lineRange = {
-                            start: ref.lineRange.start,
-                            end: ref.lineRange.end,
-                        };
-                    }
-
-                    if (ref.repositoryName) {
-                        result.repositoryName = ref.repositoryName;
-                    }
 
                     return result;
                 });

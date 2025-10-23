@@ -8,6 +8,7 @@ import {
     KodyRulesOrigin,
     KodyRulesScope,
     KodyRulesStatus,
+    KodyRuleProcessingStatus,
 } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
 import {
     CreateKodyRuleDto,
@@ -35,7 +36,10 @@ import { ObservabilityService } from '../logger/observability.service';
 import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
 import { BYOKPromptRunnerService } from '@/shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
 import { ExternalReferenceDetectorService } from './externalReferenceDetector.service';
-import { GetAdditionalInfoHelper } from '@/shared/utils/helpers/getAdditionalInfo.helper';
+import {
+    IGetAdditionalInfoHelper,
+    GET_ADDITIONAL_INFO_HELPER_TOKEN,
+} from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
 import { kodyRulesIDEGeneratorSchema } from '@/shared/utils/langchainCommon/prompts/kodyRules';
 
 type SyncTarget = {
@@ -64,7 +68,8 @@ export class KodyRulesSyncService {
         private readonly permissionValidationService: PermissionValidationService,
         private readonly observabilityService: ObservabilityService,
         private readonly externalReferenceDetectorService: ExternalReferenceDetectorService,
-        private readonly getAdditionalInfoHelper: GetAdditionalInfoHelper,
+        @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
+        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
     ) {}
 
     /**
@@ -992,14 +997,14 @@ export class KodyRulesSyncService {
                         );
 
                     // ✅ Determina o status final
-                    let finalStatus: any;
+                    let finalStatus: KodyRuleProcessingStatus.FAILED | KodyRuleProcessingStatus.COMPLETED | undefined;
                     
                     if (syncErrors && syncErrors.length > 0) {
                         // Tem erros = FAILED
-                        finalStatus = 'failed';
+                        finalStatus = KodyRuleProcessingStatus.FAILED;
                     } else if (references.length > 0) {
                         // Tem referências = COMPLETED
-                        finalStatus = 'completed';
+                        finalStatus = KodyRuleProcessingStatus.COMPLETED;
                     } else {
                         // Sem referências E sem erros = Remove status (undefined)
                         finalStatus = undefined;

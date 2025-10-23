@@ -18,7 +18,11 @@ import { CreatePrLevelCommentsStage } from '../stages/create-pr-level-comments.s
 import { CreateFileCommentsStage } from '../stages/create-file-comments.stage';
 import { ValidateNewCommitsStage } from '../stages/validate-new-commits.stage';
 import { ResolveConfigStage } from '../stages/resolve-config.stage';
-import { LoadExternalContextStage } from '../stages/load-external-context.stage';
+import {
+    ILoadExternalContextStage,
+    LOAD_EXTERNAL_CONTEXT_STAGE_TOKEN,
+} from '../stages/contracts/loadExternalContextStage.contract';
+import { Inject } from '@nestjs/common';
 
 @Injectable()
 export class CodeReviewPipelineStrategy
@@ -29,7 +33,8 @@ export class CodeReviewPipelineStrategy
         private readonly resolveConfigStage: ResolveConfigStage,
         private readonly validateConfigStage: ValidateConfigStage,
         private readonly fetchChangedFilesStage: FetchChangedFilesStage,
-        private readonly loadExternalContextStage: LoadExternalContextStage,
+        @Inject(LOAD_EXTERNAL_CONTEXT_STAGE_TOKEN)
+        private readonly loadExternalContextStage: ILoadExternalContextStage,
         private readonly initialCommentStage: InitialCommentStage,
         private readonly processFilesPrLevelReviewStage: ProcessFilesPrLevelReviewStage,
         private readonly processFilesReview: ProcessFilesReview,

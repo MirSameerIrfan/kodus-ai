@@ -39,9 +39,15 @@ import { produce } from 'immer';
 import { deepDifference, deepMerge } from '@/shared/utils/deep';
 import { CreateOrUpdateCodeReviewParameterDto } from '@/core/infrastructure/http/dtos/create-or-update-code-review-parameter.dto';
 import { v4 as uuidv4 } from 'uuid';
-import { PromptExternalReferenceManagerService } from '@/core/infrastructure/adapters/services/prompts/promptExternalReferenceManager.service';
+import {
+    IPromptExternalReferenceManagerService,
+    PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
+} from '@/core/domain/prompts/contracts/promptExternalReferenceManager.contract';
 import { PromptSourceType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
-import { GetAdditionalInfoHelper } from '@/shared/utils/helpers/getAdditionalInfo.helper';
+import {
+    IGetAdditionalInfoHelper,
+    GET_ADDITIONAL_INFO_HELPER_TOKEN,
+} from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
 
 @Injectable()
 export class UpdateOrCreateCodeReviewParameterUseCase {
@@ -62,9 +68,11 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
 
         private readonly authorizationService: AuthorizationService,
 
-        private readonly promptReferenceManager: PromptExternalReferenceManagerService,
+        @Inject(PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN)
+        private readonly promptReferenceManager: IPromptExternalReferenceManagerService,
 
-        private readonly getAdditionalInfoHelper: GetAdditionalInfoHelper,
+        @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
+        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
     ) {}
 
     async execute(
@@ -448,33 +456,37 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
 
         const prompts = this.extractPromptsFromConfig(configValue);
 
-        for (const promptData of prompts) {
-            await this.promptReferenceManager.createOrUpdatePendingReference({
-                promptText: promptData.text,
-                configKey,
-                sourceType: promptData.sourceType,
-                organizationId: organizationAndTeamData.organizationId,
-                repositoryId: repositoryId || 'global',
-                repositoryName,
-                directoryId,
-            });
-        }
+        await Promise.all(
+            prompts.map(promptData =>
+                this.promptReferenceManager.createOrUpdatePendingReference({
+                    promptText: promptData.text,
+                    configKey,
+                    sourceType: promptData.sourceType,
+                    organizationId: organizationAndTeamData.organizationId,
+                    repositoryId: repositoryId || 'global',
+                    repositoryName,
+                    directoryId,
+                })
+            )
+        );
 
         setImmediate(async () => {
             try {
-                for (const promptData of prompts) {
-                    await this.promptReferenceManager.processReferencesInBackground({
-                        promptText: promptData.text,
-                        configKey,
-                        sourceType: promptData.sourceType,
-                        organizationId: organizationAndTeamData.organizationId,
-                        repositoryId: repositoryId || 'global',
-                        repositoryName,
-                        directoryId,
-                        organizationAndTeamData,
-                        context: 'instruction',
-                    });
-                }
+                await Promise.all(
+                    prompts.map(promptData =>
+                        this.promptReferenceManager.processReferencesInBackground({
+                            promptText: promptData.text,
+                            configKey,
+                            sourceType: promptData.sourceType,
+                            organizationId: organizationAndTeamData.organizationId,
+                            repositoryId: repositoryId || 'global',
+                            repositoryName,
+                            directoryId,
+                            organizationAndTeamData,
+                            context: 'instruction',
+                        })
+                    )
+                );
 
                 this.logger.log({
                     message: 'Successfully processed external references in background',

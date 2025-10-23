@@ -11,7 +11,10 @@ import { CreateKodyRuleDto } from '@/core/infrastructure/http/dtos/create-kody-r
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { ExternalReferenceDetectorService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceDetector.service';
-import { GetAdditionalInfoHelper } from '@/shared/utils/helpers/getAdditionalInfo.helper';
+import {
+    IGetAdditionalInfoHelper,
+    GET_ADDITIONAL_INFO_HELPER_TOKEN,
+} from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
 import { KodyRuleProcessingStatus } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
 
 @Injectable()
@@ -33,7 +36,8 @@ export class CreateOrUpdateKodyRulesUseCase {
 
         private readonly authorizationService: AuthorizationService,
         private readonly externalReferenceDetectorService: ExternalReferenceDetectorService,
-        private readonly getAdditionalInfoHelper: GetAdditionalInfoHelper,
+        @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
+        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
     ) {}
 
     async execute(

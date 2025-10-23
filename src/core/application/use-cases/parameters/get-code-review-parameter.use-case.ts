@@ -26,7 +26,10 @@ import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
 import { getDefaultKodusConfigFile } from '@/shared/utils/validateCodeReviewConfigFile';
 import { Inject, Injectable } from '@nestjs/common';
 import { DeepPartial } from 'typeorm';
-import { PromptExternalReferenceManagerService } from '@/core/infrastructure/adapters/services/prompts/promptExternalReferenceManager.service';
+import {
+    IPromptExternalReferenceManagerService,
+    PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
+} from '@/core/domain/prompts/contracts/promptExternalReferenceManager.contract';
 import { PromptSourceType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
 
 @Injectable()
@@ -40,7 +43,8 @@ export class GetCodeReviewParameterUseCase {
 
         private readonly authorizationService: AuthorizationService,
 
-        private readonly promptReferenceManager: PromptExternalReferenceManagerService,
+        @Inject(PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN)
+        private readonly promptReferenceManager: IPromptExternalReferenceManagerService,
 
         private readonly logger: PinoLoggerService,
     ) {}
@@ -362,42 +366,43 @@ export class GetCodeReviewParameterUseCase {
 
         // Enriquecer v2PromptOverrides
         if (enriched.v2PromptOverrides) {
-            // Categories
+            const categories = ['bug', 'performance', 'security'] as const;
+            const severities = ['critical', 'high', 'medium', 'low'] as const;
+
+            const sourceTypesToFetch: PromptSourceType[] = [];
+
             if (enriched.v2PromptOverrides.categories?.descriptions) {
-                for (const category of ['bug', 'performance', 'security']) {
-                    const categoryKey = category as 'bug' | 'performance' | 'security';
-                    if (enriched.v2PromptOverrides.categories.descriptions[categoryKey]) {
-                        const ref = await this.promptReferenceManager.getReference(
-                            configKey,
-                            `category_${category}` as PromptSourceType,
-                        );
-                        if (ref) {
-                            enriched.v2PromptOverrides.categories.descriptions[categoryKey] = {
-                                ...enriched.v2PromptOverrides.categories.descriptions[categoryKey],
-                                externalReferences: {
-                                    references: ref.references,
-                                    syncErrors: ref.syncErrors || [],
-                                    processingStatus: ref.processingStatus,
-                                    lastProcessedAt: ref.lastProcessedAt,
-                                },
-                            };
-                        }
-                    }
-                }
+                categories
+                    .filter(category => enriched.v2PromptOverrides.categories.descriptions[category])
+                    .forEach(category => {
+                        sourceTypesToFetch.push(`category_${category}` as PromptSourceType);
+                    });
             }
 
-            // Severity
             if (enriched.v2PromptOverrides.severity?.flags) {
-                for (const severity of ['critical', 'high', 'medium', 'low']) {
-                    const severityKey = severity as 'critical' | 'high' | 'medium' | 'low';
-                    if (enriched.v2PromptOverrides.severity.flags[severityKey]) {
-                        const ref = await this.promptReferenceManager.getReference(
-                            configKey,
-                            `severity_${severity}` as PromptSourceType,
-                        );
+                severities
+                    .filter(severity => enriched.v2PromptOverrides.severity.flags[severity])
+                    .forEach(severity => {
+                        sourceTypesToFetch.push(`severity_${severity}` as PromptSourceType);
+                    });
+            }
+
+            if (enriched.v2PromptOverrides.generation?.main) {
+                sourceTypesToFetch.push(PromptSourceType.GENERATION_MAIN);
+            }
+
+            const referencesMap = await this.promptReferenceManager.getMultipleReferences(
+                configKey,
+                sourceTypesToFetch,
+            );
+
+            if (enriched.v2PromptOverrides.categories?.descriptions) {
+                for (const category of categories) {
+                    if (enriched.v2PromptOverrides.categories.descriptions[category]) {
+                        const ref = referencesMap.get(`category_${category}` as PromptSourceType);
                         if (ref) {
-                            enriched.v2PromptOverrides.severity.flags[severityKey] = {
-                                ...enriched.v2PromptOverrides.severity.flags[severityKey],
+                            enriched.v2PromptOverrides.categories.descriptions[category] = {
+                                ...enriched.v2PromptOverrides.categories.descriptions[category],
                                 externalReferences: {
                                     references: ref.references,
                                     syncErrors: ref.syncErrors || [],
@@ -410,12 +415,27 @@ export class GetCodeReviewParameterUseCase {
                 }
             }
 
-            // Generation
+            if (enriched.v2PromptOverrides.severity?.flags) {
+                for (const severity of severities) {
+                    if (enriched.v2PromptOverrides.severity.flags[severity]) {
+                        const ref = referencesMap.get(`severity_${severity}` as PromptSourceType);
+                        if (ref) {
+                            enriched.v2PromptOverrides.severity.flags[severity] = {
+                                ...enriched.v2PromptOverrides.severity.flags[severity],
+                                externalReferences: {
+                                    references: ref.references,
+                                    syncErrors: ref.syncErrors || [],
+                                    processingStatus: ref.processingStatus,
+                                    lastProcessedAt: ref.lastProcessedAt,
+                                },
+                            };
+                        }
+                    }
+                }
+            }
+
             if (enriched.v2PromptOverrides.generation?.main) {
-                const ref = await this.promptReferenceManager.getReference(
-                    configKey,
-                    PromptSourceType.GENERATION_MAIN,
-                );
+                const ref = referencesMap.get(PromptSourceType.GENERATION_MAIN);
                 if (ref) {
                     enriched.v2PromptOverrides.generation.main = {
                         ...enriched.v2PromptOverrides.generation.main,

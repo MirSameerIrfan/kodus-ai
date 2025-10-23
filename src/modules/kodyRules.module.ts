@@ -37,6 +37,7 @@ import { OrganizationParametersModule } from './organizationParameters.module';
 import { PermissionValidationModule } from '@/ee/shared/permission-validation.module';
 import { ResyncRulesFromIdeUseCase } from '@/core/application/use-cases/kodyRules/resync-rules-from-ide.use-case';
 import { GetAdditionalInfoHelper } from '@/shared/utils/helpers/getAdditionalInfo.helper';
+import { GET_ADDITIONAL_INFO_HELPER_TOKEN } from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
 
 @Module({
     imports: [
@@ -75,7 +76,10 @@ import { GetAdditionalInfoHelper } from '@/shared/utils/helpers/getAdditionalInf
         KodyRulesSyncService,
         ExternalReferenceDetectorService,
         ExternalReferenceLoaderService,
-        GetAdditionalInfoHelper,
+        {
+            provide: GET_ADDITIONAL_INFO_HELPER_TOKEN,
+            useClass: GetAdditionalInfoHelper,
+        },
         LicenseService,
     ],
     controllers: [KodyRulesController],
