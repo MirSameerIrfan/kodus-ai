@@ -79,3 +79,4 @@ repositorios-novos.json
 todos-repositorios.json
 repositorios-por-prefixo.json
 MIGRATION-GRPC-TO-HTTP.md
+scripts/duplicate-prs
