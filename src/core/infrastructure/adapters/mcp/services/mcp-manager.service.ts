@@ -145,7 +145,7 @@ export class MCPManagerService {
                 `mcp/integration/kodusmcp`,
                 {
                     integrationId: KODUS_MCP_INTEGRATION_ID,
-                    mcpUrl: process.env.API_KODUS_MCP_SERVER_URL ?? '',
+                    baseUrl: process.env.API_KODUS_MCP_SERVER_URL ?? '',
                 },
                 {
                     headers: this.getAuthHeaders(organizationAndTeamData),
