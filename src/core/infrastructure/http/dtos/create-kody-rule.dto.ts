@@ -1,6 +1,8 @@
 import {
     IKodyRulesExample,
     IKodyRuleExternalReference,
+    IKodyRuleReferenceSyncError,
+    KodyRuleProcessingStatus,
     KodyRulesOrigin,
     KodyRulesScope,
     KodyRulesStatus,
@@ -125,4 +127,18 @@ export class CreateKodyRuleDto {
     @ValidateNested({ each: true })
     @Type(() => KodyRuleExternalReferenceDto)
     externalReferences?: KodyRuleExternalReferenceDto[];
+
+    @IsOptional()
+    syncErrors?: IKodyRuleReferenceSyncError[];
+
+    @IsOptional()
+    @IsEnum(KodyRuleProcessingStatus)
+    referenceProcessingStatus?: KodyRuleProcessingStatus;
+
+    @IsOptional()
+    lastReferenceProcessedAt?: Date;
+
+    @IsOptional()
+    @IsString()
+    ruleHash?: string;
 }

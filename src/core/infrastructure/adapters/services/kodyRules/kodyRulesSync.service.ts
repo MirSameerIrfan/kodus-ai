@@ -8,6 +8,7 @@ import {
     KodyRulesOrigin,
     KodyRulesScope,
     KodyRulesStatus,
+    KodyRuleProcessingStatus,
 } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
 import {
     CreateKodyRuleDto,
@@ -35,7 +36,10 @@ import { ObservabilityService } from '../logger/observability.service';
 import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
 import { BYOKPromptRunnerService } from '@/shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
 import { ExternalReferenceDetectorService } from './externalReferenceDetector.service';
-import { GetAdditionalInfoHelper } from '@/shared/utils/helpers/getAdditionalInfo.helper';
+import {
+    IGetAdditionalInfoHelper,
+    GET_ADDITIONAL_INFO_HELPER_TOKEN,
+} from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
 import { kodyRulesIDEGeneratorSchema } from '@/shared/utils/langchainCommon/prompts/kodyRules';
 
 type SyncTarget = {
@@ -64,7 +68,8 @@ export class KodyRulesSyncService {
         private readonly permissionValidationService: PermissionValidationService,
         private readonly observabilityService: ObservabilityService,
         private readonly externalReferenceDetectorService: ExternalReferenceDetectorService,
-        private readonly getAdditionalInfoHelper: GetAdditionalInfoHelper,
+        @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
+        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
     ) {}
 
     /**
@@ -979,7 +984,7 @@ export class KodyRulesSyncService {
 
             const rulesWithReferences = await Promise.all(
                 result?.rules.map(async (r) => {
-                    const { references, syncError } =
+                    const { references, syncErrors, ruleHash } =
                         await this.externalReferenceDetectorService.detectAndResolveReferences(
                             {
                                 ruleText: r?.rule || '',
@@ -990,6 +995,20 @@ export class KodyRulesSyncService {
                                 byokConfig: byokConfigValue,
                             },
                         );
+
+                    // ✅ Determina o status final
+                    let finalStatus: KodyRuleProcessingStatus.FAILED | KodyRuleProcessingStatus.COMPLETED | undefined;
+                    
+                    if (syncErrors && syncErrors.length > 0) {
+                        // Tem erros = FAILED
+                        finalStatus = KodyRuleProcessingStatus.FAILED;
+                    } else if (references.length > 0) {
+                        // Tem referências = COMPLETED
+                        finalStatus = KodyRuleProcessingStatus.COMPLETED;
+                    } else {
+                        // Sem referências E sem erros = Remove status (undefined)
+                        finalStatus = undefined;
+                    }
 
                     return {
                         ...r,
@@ -1003,7 +1022,13 @@ export class KodyRulesSyncService {
                         origin: KodyRulesOrigin.USER,
                         externalReferences:
                             references.length > 0 ? references : undefined,
-                        syncError,
+                        syncErrors:
+                            syncErrors && syncErrors.length > 0
+                                ? syncErrors
+                                : undefined,
+                        referenceProcessingStatus: finalStatus,
+                        lastReferenceProcessedAt: finalStatus ? new Date() : undefined,
+                        ruleHash,
                     };
                 }),
             );
@@ -1091,7 +1116,7 @@ export class KodyRulesSyncService {
 
                 const rulesWithReferences = await Promise.all(
                     parsed.map(async (r) => {
-                        const { references, syncError } =
+                        const { references, syncErrors, ruleHash } =
                             await this.externalReferenceDetectorService.detectAndResolveReferences(
                                 {
                                     ruleText: r?.rule || '',
@@ -1116,7 +1141,18 @@ export class KodyRulesSyncService {
                             origin: KodyRulesOrigin.USER,
                             externalReferences:
                                 references.length > 0 ? references : undefined,
-                            syncError,
+                            syncErrors:
+                                syncErrors && syncErrors.length > 0
+                                    ? syncErrors
+                                    : undefined,
+                            referenceProcessingStatus:
+                                syncErrors && syncErrors.length > 0
+                                    ? ('failed' as any)
+                                    : references.length > 0
+                                      ? ('completed' as any)
+                                      : undefined,
+                            lastReferenceProcessedAt: new Date(),
+                            ruleHash,
                         };
                     }),
                 );

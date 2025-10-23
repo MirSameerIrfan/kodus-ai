@@ -4,6 +4,11 @@ export const kodyRulesDetectReferencesSchema = z.object({
     references: z.array(
         z.object({
             fileName: z.string(),
+            originalText: z.string().optional(), // Texto original da referência
+            lineRange: z.object({
+                start: z.number(),
+                end: z.number(),
+            }).optional(), // Range de linhas (ex: #L10-L20)
             filePattern: z.string().optional(),
             description: z.string().optional(),
             repositoryName: z.string().optional(),
@@ -55,9 +60,17 @@ If NO → ignore
 
 For each file requiring content validation:
 - fileName: the file name or path mentioned in the rule
+- originalText: the exact text of the reference as it appears in the rule (e.g., "@file:README.md", "see config.yml#L10-L20")
+- lineRange: if specific line numbers are mentioned (e.g., "#L10-L20"), extract {start: 10, end: 20}
 - filePattern: glob pattern if multiple files are referenced
 - description: what content/data is being validated against
 - repositoryName: repository name if explicitly mentioned
+
+## Line Range Detection
+
+If the rule mentions specific line numbers (common formats):
+- "#L10-L20", "#10-20", "lines 10-20", "line 10 to 20"
+Extract as: {"start": 10, "end": 20}
 
 ## Validation Rules
 
@@ -65,12 +78,15 @@ For each file requiring content validation:
 2. Be language-agnostic (works in any programming language)
 3. If uncertain, do NOT detect (avoid false positives)
 4. Return empty array if no files require content validation
+5. Always capture the original text of the reference when possible
 
 Output format:
 {
   "references": [
     {
       "fileName": "file-name.ext",
+      "originalText": "@file:file-name.ext#L10-L20",
+      "lineRange": {"start": 10, "end": 20},
       "filePattern": "optional-pattern",
       "description": "what is validated",
       "repositoryName": "optional-repo"

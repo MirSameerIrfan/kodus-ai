@@ -83,6 +83,7 @@ export type AnalysisContext = {
             hasRelevantContent?: boolean;
         };
     };
+    externalPromptContext?: any;
     correlationId: string;
 };
 

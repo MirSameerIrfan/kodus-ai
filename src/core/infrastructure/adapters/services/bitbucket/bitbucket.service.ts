@@ -68,7 +68,7 @@ import { ConfigService } from '@nestjs/config';
 import { AuthorContribution } from '@/core/domain/pullRequests/interfaces/authorContributor.interface';
 import { GitCloneParams } from '@/core/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
 import { RepositoryFile } from '@/core/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
-import { isFileMatchingGlob } from '@/shared/utils/glob-utils';
+import { isFileMatchingGlob, isFileMatchingGlobCaseInsensitive } from '@/shared/utils/glob-utils';
 import { MCPManagerService } from '../../mcp/services/mcp-manager.service';
 
 @Injectable()
@@ -4696,7 +4696,7 @@ export class BitbucketService
                 if (
                     filePatterns &&
                     filePatterns.length > 0 &&
-                    !isFileMatchingGlob(file.path, filePatterns)
+                    !isFileMatchingGlobCaseInsensitive(file.path, filePatterns)
                 ) {
                     continue;
                 }

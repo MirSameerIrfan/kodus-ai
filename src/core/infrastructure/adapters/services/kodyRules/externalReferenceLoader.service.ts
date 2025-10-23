@@ -49,6 +49,33 @@ export class ExternalReferenceLoaderService {
                             'utf-8',
                         );
                     }
+                    
+                    if (ref.lineRange) {
+                        const extractedContent = this.extractLineRange(
+                            content,
+                            ref.lineRange,
+                        );
+
+                        if (
+                            !extractedContent ||
+                            extractedContent.trim().length === 0
+                        ) {
+                        this.logger.warn({
+                            message:
+                                'Line range extraction returned empty content, falling back to full file',
+                            context: ExternalReferenceLoaderService.name,
+                            metadata: {
+                                filePath: ref.filePath,
+                                requestedRange: ref.lineRange,
+                                totalLines: content.split('\n').length,
+                                organizationAndTeamData: context.organizationAndTeamData,
+                            },
+                        });
+                            // Fallback: usa arquivo completo
+                        } else {
+                            content = extractedContent;
+                        }
+                    }
 
                     loadedReferences.push({
                         filePath: ref.filePath,
@@ -63,6 +90,8 @@ export class ExternalReferenceLoaderService {
                             filePath: ref.filePath,
                             ruleUuid: rule.uuid,
                             contentLength: content.length,
+                            hasLineRange: !!ref.lineRange,
+                            lineRange: ref.lineRange,
                             organizationAndTeamData:
                                 context.organizationAndTeamData,
                         },
@@ -75,6 +104,8 @@ export class ExternalReferenceLoaderService {
                         metadata: {
                             filePath: ref.filePath,
                             ruleUuid: rule.uuid,
+                            organizationAndTeamData:
+                                context.organizationAndTeamData,
                         },
                     });
                 }
@@ -96,6 +127,40 @@ export class ExternalReferenceLoaderService {
         }
 
         return loadedReferences;
+    }
+
+    private extractLineRange(
+        content: string,
+        range: { start: number; end: number },
+    ): string {
+        const lines = content.split('\n');
+
+        // Validação: range válido?
+        if (range.start <= 0 || range.end <= 0 || range.start > range.end) {
+            this.logger.warn({
+                message: 'Invalid line range provided',
+                context: ExternalReferenceLoaderService.name,
+                metadata: { range },
+            });
+            return ''; // Retorna vazio para acionar fallback
+        }
+
+        // Validação: range fora do arquivo?
+        if (range.start > lines.length) {
+            this.logger.warn({
+                message: 'Line range start exceeds file length',
+                context: ExternalReferenceLoaderService.name,
+                metadata: {
+                    range,
+                    totalLines: lines.length,
+                },
+            });
+            return ''; // Retorna vazio para acionar fallback
+        }
+
+        const start = Math.max(0, range.start - 1);
+        const end = Math.min(lines.length, range.end);
+        return lines.slice(start, end).join('\n');
     }
 
     async loadReferencesForRules(

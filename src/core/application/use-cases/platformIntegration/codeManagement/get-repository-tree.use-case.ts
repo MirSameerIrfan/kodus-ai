@@ -4,8 +4,11 @@ import { GetRepositoryTreeDto } from '@/core/infrastructure/http/dtos/get-reposi
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { CacheService } from '@/shared/utils/cache/cache.service';
 import { RepositoryTreeType } from '@/shared/utils/enums/repositoryTree.enum';
-import { GetAdditionalInfoHelper } from '@/shared/utils/helpers/getAdditionalInfo.helper';
-import { Injectable } from '@nestjs/common';
+import {
+    IGetAdditionalInfoHelper,
+    GET_ADDITIONAL_INFO_HELPER_TOKEN,
+} from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
+import { Inject, Injectable } from '@nestjs/common';
 
 export interface TreeItem {
     path: string;
@@ -34,7 +37,8 @@ export class GetRepositoryTreeUseCase implements IUseCase {
     constructor(
         private readonly codeManagementService: CodeManagementService,
         private readonly logger: PinoLoggerService,
-        private readonly getAdditionalInfoHelper: GetAdditionalInfoHelper,
+        @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
+        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
 
         private readonly cacheService: CacheService,
     ) {}

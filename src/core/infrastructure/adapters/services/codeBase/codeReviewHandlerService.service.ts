@@ -110,6 +110,7 @@ export class CodeReviewHandlerService {
                         status: TaskStatus.TASK_STATUS_UNSPECIFIED,
                     },
                 },
+                externalPromptContext: {},
                 correlationId: executionId,
             };
 

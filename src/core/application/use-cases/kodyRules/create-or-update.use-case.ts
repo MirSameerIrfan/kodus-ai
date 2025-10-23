@@ -11,7 +11,11 @@ import { CreateKodyRuleDto } from '@/core/infrastructure/http/dtos/create-kody-r
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { ExternalReferenceDetectorService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceDetector.service';
-import { GetAdditionalInfoHelper } from '@/shared/utils/helpers/getAdditionalInfo.helper';
+import {
+    IGetAdditionalInfoHelper,
+    GET_ADDITIONAL_INFO_HELPER_TOKEN,
+} from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
+import { KodyRuleProcessingStatus } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
 
 @Injectable()
 export class CreateOrUpdateKodyRulesUseCase {
@@ -32,7 +36,8 @@ export class CreateOrUpdateKodyRulesUseCase {
 
         private readonly authorizationService: AuthorizationService,
         private readonly externalReferenceDetectorService: ExternalReferenceDetectorService,
-        private readonly getAdditionalInfoHelper: GetAdditionalInfoHelper,
+        @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
+        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
     ) {}
 
     async execute(
@@ -76,7 +81,17 @@ export class CreateOrUpdateKodyRulesUseCase {
                 );
             }
 
+            // ✅ Se tem repositoryId e rule text, processa referências
             if (result.uuid && kodyRule.repositoryId && kodyRule.rule) {
+                // ✅ Marca como PENDING antes de processar
+                await this.kodyRulesService.updateRuleReferences(
+                    organizationAndTeamData.organizationId,
+                    result.uuid,
+                    {
+                        referenceProcessingStatus: KodyRuleProcessingStatus.PENDING,
+                    },
+                );
+
                 this.detectAndSaveReferencesAsync(
                     result.uuid,
                     kodyRule.rule,
@@ -156,7 +171,7 @@ export class CreateOrUpdateKodyRulesUseCase {
                         },
                     });
 
-                    const { references, syncError } =
+                    const { references, syncErrors, ruleHash } =
                         await this.externalReferenceDetectorService.detectAndResolveReferences(
                             {
                                 ruleText,
@@ -166,27 +181,45 @@ export class CreateOrUpdateKodyRulesUseCase {
                             },
                         );
 
-                    await this.kodyRulesService.createOrUpdate(
-                        organizationAndTeamData,
+                    // ✅ Determina o status final
+                    let finalStatus: KodyRuleProcessingStatus | undefined;
+                    
+                    if (syncErrors && syncErrors.length > 0) {
+                        // Tem erros = FAILED
+                        finalStatus = KodyRuleProcessingStatus.FAILED;
+                    } else if (references.length > 0) {
+                        // Tem referências = COMPLETED
+                        finalStatus = KodyRuleProcessingStatus.COMPLETED;
+                    } else {
+                        // Sem referências E sem erros = Remove status (undefined)
+                        finalStatus = undefined;
+                    }
+
+                    // ✅ USA O NOVO MÉTODO que só atualiza as referências
+                    await this.kodyRulesService.updateRuleReferences(
+                        organizationAndTeamData.organizationId,
+                        ruleId,
                         {
-                            uuid: ruleId,
                             externalReferences:
                                 references.length > 0 ? references : undefined,
-                            syncError,
-                        } as any,
-                        {
-                            userId: 'kody-bg-detector',
-                            userEmail: 'kody@kodus.io',
+                            syncErrors:
+                                syncErrors && syncErrors.length > 0
+                                    ? syncErrors
+                                    : undefined,
+                            referenceProcessingStatus: finalStatus,
+                            lastReferenceProcessedAt: finalStatus ? new Date() : undefined,
+                            ruleHash,
                         },
                     );
 
-                    if (syncError) {
+                    if (syncErrors && syncErrors.length > 0) {
                         this.logger.warn({
-                            message: 'Rule updated with sync error',
+                            message: 'Rule updated with sync errors',
                             context: CreateOrUpdateKodyRulesUseCase.name,
                             metadata: {
                                 ruleId,
-                                syncError,
+                                syncErrors,
+                                errorCount: syncErrors.length,
                                 organizationAndTeamData,
                             },
                         });

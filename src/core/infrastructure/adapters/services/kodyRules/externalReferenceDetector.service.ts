@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { IKodyRuleExternalReference } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+import {
+    IKodyRuleExternalReference,
+    IKodyRuleReferenceSyncError,
+} from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
@@ -18,6 +21,7 @@ import {
     kodyRulesDetectReferencesSchema,
     KodyRulesDetectReferencesSchema,
 } from '@/shared/utils/langchainCommon/prompts/kodyRulesExternalReferences';
+import { createHash } from 'crypto';
 
 interface DetectReferencesParams {
     ruleText: string;
@@ -36,20 +40,33 @@ export class ExternalReferenceDetectorService {
         private readonly logger: PinoLoggerService,
     ) {}
 
-    async detectAndResolveReferences(
-        params: DetectReferencesParams,
-    ): Promise<{
+    async detectAndResolveReferences(params: DetectReferencesParams): Promise<{
         references: IKodyRuleExternalReference[];
-        syncError?: string;
+        syncErrors?: IKodyRuleReferenceSyncError[];
+        ruleHash: string;
     }> {
         try {
+            // Calcular hash da regra
+            const ruleHash = this.calculateRuleHash(params.ruleText);
+
+            // ✅ Pre-filter: Verificar se tem padrões de referências externas
+            if (!this.hasLikelyExternalReferences(params.ruleText)) {
+                this.logger.log({
+                    message:
+                        'No external reference patterns detected (regex pre-filter)',
+                    context: ExternalReferenceDetectorService.name,
+                    metadata: { ruleHash },
+                });
+                return { references: [], ruleHash };
+            }
+
             const detectedReferences = await this.detectReferences(params);
 
             if (!detectedReferences || detectedReferences.length === 0) {
-                return { references: [] };
+                return { references: [], ruleHash };
             }
 
-            const { references, notFoundFiles } =
+            const { references, notFoundDetails } =
                 await this.searchFilesInRepository(
                     detectedReferences,
                     params.repositoryId,
@@ -57,12 +74,7 @@ export class ExternalReferenceDetectorService {
                     params.organizationAndTeamData,
                 );
 
-            const syncError =
-                notFoundFiles.length > 0
-                    ? `Unable to find referenced files: ${notFoundFiles.join(', ')}`
-                    : undefined;
-
-            return { references, syncError };
+            return { references, syncErrors: notFoundDetails, ruleHash };
         } catch (error) {
             this.logger.error({
                 message: 'Error detecting and resolving external references',
@@ -73,11 +85,46 @@ export class ExternalReferenceDetectorService {
                     organizationAndTeamData: params.organizationAndTeamData,
                 },
             });
+
+            let ruleHash: string;
+            try {
+                ruleHash = this.calculateRuleHash(params.ruleText);
+            } catch {
+                ruleHash = 'hash_calculation_failed';
+            }
+            
             return {
                 references: [],
-                syncError: `Error during reference detection: ${error.message}`,
+                syncErrors: [
+                    {
+                        fileName: 'unknown',
+                        message: `Error during reference detection: ${error.message}`,
+                        errorType: 'parsing_error',
+                        timestamp: new Date(),
+                    },
+                ],
+                ruleHash,
             };
         }
+    }
+
+    private calculateRuleHash(ruleText: string): string {
+        return createHash('sha256').update(ruleText).digest('hex');
+    }
+
+    private hasLikelyExternalReferences(ruleText: string): boolean {
+        const patterns = [
+            /@file[:\s]/i,
+            /\[\[file:/i,
+            /@\w+\.(ts|js|py|md|yml|yaml|json|txt|go|java|cpp|c|h|rs)/i,
+            /refer to.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
+            /check.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
+            /see.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
+            /\b\w+\.\w+\.(ts|js|py|md|yml|yaml|json|txt)\b/i,
+            /\b[A-Z_][A-Z0-9_]*\.(ts|js|py|md|yml|yaml|json|txt)\b/,
+            /\b(readme|contributing|changelog|license|setup|config|package|tsconfig|jest\.config|vite\.config|webpack\.config)\.(md|json|yml|yaml|ts|js)\b/i,
+        ];
+        return patterns.some((pattern) => pattern.test(ruleText));
     }
 
     private async detectReferences(
@@ -170,19 +217,26 @@ export class ExternalReferenceDetectorService {
         organizationAndTeamData: OrganizationAndTeamData,
     ): Promise<{
         references: IKodyRuleExternalReference[];
-        notFoundFiles: string[];
+        notFoundDetails: IKodyRuleReferenceSyncError[];
     }> {
         const resolvedReferences: IKodyRuleExternalReference[] = [];
-        const notFoundFiles: string[] = [];
+        const notFoundDetails: IKodyRuleReferenceSyncError[] = [];
 
-        for (const ref of detectedReferences) {
-            try {
-                const found = await this.findFileWithHybridStrategy(
+        const searchResults = await Promise.allSettled(
+            detectedReferences.map((ref) =>
+                this.findFileWithHybridStrategy(
                     ref,
                     repositoryId,
                     repositoryName,
                     organizationAndTeamData,
-                );
+                ).then((result) => ({ ref, result })),
+            ),
+        );
+
+        for (const settlement of searchResults) {
+            if (settlement.status === 'fulfilled') {
+                const { ref, result } = settlement.value;
+                const { found, attemptedPaths } = result;
 
                 if (found.length > 0) {
                     resolvedReferences.push(...found);
@@ -202,7 +256,14 @@ export class ExternalReferenceDetectorService {
                     const fileIdentifier = ref.repositoryName
                         ? `${ref.repositoryName}/${ref.fileName}`
                         : ref.fileName;
-                    notFoundFiles.push(fileIdentifier);
+
+                    notFoundDetails.push({
+                        fileName: fileIdentifier,
+                        message: `File not found in repository${ref.repositoryName ? ` (${ref.repositoryName})` : ''}`,
+                        errorType: 'not_found',
+                        attemptedPaths,
+                        timestamp: new Date(),
+                    });
 
                     this.logger.warn({
                         message: 'No files found for external reference',
@@ -210,11 +271,27 @@ export class ExternalReferenceDetectorService {
                         metadata: {
                             fileName: ref.fileName,
                             repositoryName: ref.repositoryName,
+                            attemptedPaths,
                             crossRepo: !!ref.repositoryName,
+                            organizationAndTeamData,
                         },
                     });
                 }
-            } catch (error) {
+            } else {
+                const error = settlement.reason;
+                const refIndex = searchResults.indexOf(settlement);
+                const ref = detectedReferences[refIndex];
+                const fileIdentifier = ref.repositoryName
+                    ? `${ref.repositoryName}/${ref.fileName}`
+                    : ref.fileName;
+
+                notFoundDetails.push({
+                    fileName: fileIdentifier,
+                    message: `Error during file search: ${error.message}`,
+                    errorType: 'fetch_error',
+                    timestamp: new Date(),
+                });
+
                 this.logger.error({
                     message: 'Error searching for external reference file',
                     context: ExternalReferenceDetectorService.name,
@@ -229,7 +306,7 @@ export class ExternalReferenceDetectorService {
             }
         }
 
-        return { references: resolvedReferences, notFoundFiles };
+        return { references: resolvedReferences, notFoundDetails };
     }
 
     private async findFileWithHybridStrategy(
@@ -237,16 +314,21 @@ export class ExternalReferenceDetectorService {
         repositoryId: string,
         repositoryName: string,
         organizationAndTeamData: OrganizationAndTeamData,
-    ): Promise<IKodyRuleExternalReference[]> {
+    ): Promise<{
+        found: IKodyRuleExternalReference[];
+        attemptedPaths: string[];
+    }> {
         const filePatterns = this.buildSearchPatterns(ref);
 
-        return await this.searchWithPatterns(
+        const found = await this.searchWithPatterns(
             filePatterns,
             repositoryId,
             repositoryName,
             organizationAndTeamData,
             ref,
         );
+
+        return { found, attemptedPaths: filePatterns };
     }
 
     private buildSearchPatterns(
@@ -298,13 +380,29 @@ export class ExternalReferenceDetectorService {
                 });
 
             if (files && files.length > 0) {
-                return files.map((file) => ({
-                    filePath: file.path,
-                    description: ref.description,
-                    ...(ref.repositoryName && {
-                        repositoryName: ref.repositoryName,
-                    }),
-                }));
+                return files.map((file) => {
+                    const result: IKodyRuleExternalReference = {
+                        filePath: file.path,
+                        description: ref.description,
+                        lastValidatedAt: new Date(),
+                        ...(ref.originalText && {
+                            originalText: ref.originalText,
+                        }),
+                        ...(ref.lineRange &&
+                            typeof ref.lineRange.start === 'number' &&
+                            typeof ref.lineRange.end === 'number' && {
+                                lineRange: {
+                                    start: ref.lineRange.start,
+                                    end: ref.lineRange.end,
+                                },
+                            }),
+                        ...(ref.repositoryName && {
+                            repositoryName: ref.repositoryName,
+                        }),
+                    };
+
+                    return result;
+                });
             }
         } catch (error) {
             this.logger.warn({

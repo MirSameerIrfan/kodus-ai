@@ -395,6 +395,8 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
             prSummary: context?.pullRequest?.body,
             // v2-only prompt customization (categories and severity guidance)
             v2PromptOverrides: context?.codeReviewConfig?.v2PromptOverrides,
+            // External prompt context (referenced files)
+            externalPromptContext: context?.externalPromptContext,
         };
 
         return baseContext;

@@ -88,6 +88,7 @@ export class PreviewPrSummaryUseCase {
             null,
             false,
             true,
+            undefined,
         );
 
         return prSummary;
