@@ -7,6 +7,9 @@ import { KodyRulesEntity } from '@/core/domain/kodyRules/entities/kodyRules.enti
 import {
     IKodyRule,
     IKodyRules,
+    IKodyRuleExternalReference,
+    IKodyRuleReferenceSyncError,
+    KodyRuleProcessingStatus,
     KodyRulesOrigin,
     KodyRulesScope,
     KodyRulesStatus,
@@ -381,6 +384,58 @@ export class KodyRulesService implements IKodyRulesService {
         return updatedKodyRules.rules.find(
             (rule) => rule.uuid === kodyRule.uuid,
         );
+    }
+
+    async updateRuleReferences(
+        organizationId: string,
+        ruleId: string,
+        references: {
+            externalReferences?: IKodyRuleExternalReference[];
+            syncErrors?: IKodyRuleReferenceSyncError[];
+            referenceProcessingStatus?: KodyRuleProcessingStatus;
+            lastReferenceProcessedAt?: Date;
+            ruleHash?: string;
+        },
+    ): Promise<IKodyRule | null> {
+        const existing = await this.findByOrganizationId(organizationId);
+
+        if (!existing) {
+            throw new NotFoundException('Kody rules not found for organization');
+        }
+
+        const existingRule = existing.rules?.find(
+            (rule) => rule.uuid === ruleId,
+        );
+
+        if (!existingRule) {
+            throw new NotFoundException('Rule not found');
+        }
+
+        const updatedRule = {
+            ...existingRule,
+            externalReferences: references.externalReferences,
+            syncErrors: references.syncErrors,
+            referenceProcessingStatus: references.referenceProcessingStatus,
+            lastReferenceProcessedAt: references.lastReferenceProcessedAt,
+            ruleHash: references.ruleHash,
+            updatedAt: new Date(),
+        } as IKodyRule;
+
+        const updatedKodyRules = await this.updateRule(
+            existing.uuid,
+            ruleId,
+            updatedRule,
+        );
+
+        if (!updatedKodyRules) {
+            throw new Error('Could not update rule references');
+        }
+
+        const updatedRuleResult = updatedKodyRules.rules.find(
+            (rule) => rule.uuid === ruleId,
+        );
+
+        return updatedRuleResult ? (updatedRuleResult as IKodyRule) : null;
     }
 
     async updateRuleWithLogging(

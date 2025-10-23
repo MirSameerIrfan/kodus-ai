@@ -184,9 +184,9 @@ export class PromptContextLoaderService {
             // Note: Cannot modify entity directly - would need repository.update() to persist
         }
 
-        if (tokenCount > 2000) {
+        if (tokenCount > 10000) {
             throw new Error(
-                `File too large: ${tokenCount} tokens (max: 2000). ` +
+                `File too large: ${tokenCount} tokens (max: 10000). ` +
                     `Use line ranges (@file:${ref.filePath}#L10-L50) to include only relevant sections.`,
             );
         }

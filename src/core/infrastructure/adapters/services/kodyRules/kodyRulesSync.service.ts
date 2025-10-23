@@ -991,6 +991,20 @@ export class KodyRulesSyncService {
                             },
                         );
 
+                    // ✅ Determina o status final
+                    let finalStatus: any;
+                    
+                    if (syncErrors && syncErrors.length > 0) {
+                        // Tem erros = FAILED
+                        finalStatus = 'failed';
+                    } else if (references.length > 0) {
+                        // Tem referências = COMPLETED
+                        finalStatus = 'completed';
+                    } else {
+                        // Sem referências E sem erros = Remove status (undefined)
+                        finalStatus = undefined;
+                    }
+
                     return {
                         ...r,
                         severity:
@@ -1007,13 +1021,8 @@ export class KodyRulesSyncService {
                             syncErrors && syncErrors.length > 0
                                 ? syncErrors
                                 : undefined,
-                        referenceProcessingStatus:
-                            syncErrors && syncErrors.length > 0
-                                ? ('failed' as any)
-                                : references.length > 0
-                                  ? ('completed' as any)
-                                  : undefined,
-                        lastReferenceProcessedAt: new Date(),
+                        referenceProcessingStatus: finalStatus,
+                        lastReferenceProcessedAt: finalStatus ? new Date() : undefined,
                         ruleHash,
                     };
                 }),

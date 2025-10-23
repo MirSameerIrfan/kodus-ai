@@ -34,6 +34,27 @@ export interface CodeReviewPayload {
             main?: string;
         };
     };
+    // External prompt context (referenced files)
+    externalPromptContext?: {
+        customInstructions?: {
+            references?: any[];
+            error?: string;
+        };
+        categories?: {
+            bug?: { references?: any[]; error?: string };
+            performance?: { references?: any[]; error?: string };
+            security?: { references?: any[]; error?: string };
+        };
+        severity?: {
+            critical?: { references?: any[]; error?: string };
+            high?: { references?: any[]; error?: string };
+            medium?: { references?: any[]; error?: string };
+            low?: { references?: any[]; error?: string };
+        };
+        generation?: {
+            main?: { references?: any[]; error?: string };
+        };
+    };
 }
 
 export const prompt_codereview_system_main = () => {
@@ -496,6 +517,7 @@ export const prompt_codereview_system_gemini_v2 = (
     const languageNote = payload?.languageResultPrompt || 'en-US';
     const overrides = payload?.v2PromptOverrides || {};
     const defaults = getDefaultKodusConfigFile()?.v2PromptOverrides;
+    const externalContext = payload?.externalPromptContext;
 
     // Build dynamic bullet lists with safe fallbacks
     const limitText = (text: string, max = 2000): string =>
@@ -508,23 +530,59 @@ export const prompt_codereview_system_gemini_v2 = (
             ? limitText(text.trim())
             : fallbackText;
 
+    // Helper to inject external context into prompt text
+    const injectExternalContext = (
+        baseText: string,
+        references: any[] | undefined,
+    ): string => {
+        if (!references || references.length === 0) {
+            return baseText;
+        }
+
+        const contextSection = references
+            .map((ref) => {
+                const header = ref.lineRange
+                    ? `\n--- Content from ${ref.filePath} (lines ${ref.lineRange.start}-${ref.lineRange.end}) ---\n`
+                    : `\n--- Content from ${ref.filePath} ---\n`;
+                return `${header}${ref.content}\n--- End of ${ref.filePath} ---`;
+            })
+            .join('\n');
+
+        return `${baseText}\n\n## External Reference Context\n${contextSection}`;
+    };
+
     const defaultCategories = defaults?.categories?.descriptions;
 
     const defaultBug = defaultCategories?.bug;
     const defaultPerf = defaultCategories?.performance;
     const defaultSec = defaultCategories?.security;
 
-    const bugText = getTextOrDefault(
+    // ✅ Get base text and inject external context
+    const bugTextBase = getTextOrDefault(
         overrides?.categories?.descriptions?.bug,
         defaultBug,
     );
-    const perfText = getTextOrDefault(
+    const bugText = injectExternalContext(
+        bugTextBase,
+        externalContext?.categories?.bug?.references,
+    );
+
+    const perfTextBase = getTextOrDefault(
         overrides?.categories?.descriptions?.performance,
         defaultPerf,
     );
-    const secText = getTextOrDefault(
+    const perfText = injectExternalContext(
+        perfTextBase,
+        externalContext?.categories?.performance?.references,
+    );
+
+    const secTextBase = getTextOrDefault(
         overrides?.categories?.descriptions?.security,
         defaultSec,
+    );
+    const secText = injectExternalContext(
+        secTextBase,
+        externalContext?.categories?.security?.references,
     );
 
     const defaultSeverity = defaults?.severity?.flags;
@@ -535,16 +593,42 @@ export const prompt_codereview_system_gemini_v2 = (
     const defaultLow = defaultSeverity?.low;
 
     const sev = overrides?.severity?.flags || {};
-    const criticalText = getTextOrDefault(sev.critical, defaultCritical);
-    const highText = getTextOrDefault(sev.high, defaultHigh);
-    const mediumText = getTextOrDefault(sev.medium, defaultMedium);
-    const lowText = getTextOrDefault(sev.low, defaultLow);
+
+    // ✅ Get base text and inject external context for severity
+    const criticalTextBase = getTextOrDefault(sev.critical, defaultCritical);
+    const criticalText = injectExternalContext(
+        criticalTextBase,
+        externalContext?.severity?.critical?.references,
+    );
+
+    const highTextBase = getTextOrDefault(sev.high, defaultHigh);
+    const highText = injectExternalContext(
+        highTextBase,
+        externalContext?.severity?.high?.references,
+    );
+
+    const mediumTextBase = getTextOrDefault(sev.medium, defaultMedium);
+    const mediumText = injectExternalContext(
+        mediumTextBase,
+        externalContext?.severity?.medium?.references,
+    );
+
+    const lowTextBase = getTextOrDefault(sev.low, defaultLow);
+    const lowText = injectExternalContext(
+        lowTextBase,
+        externalContext?.severity?.low?.references,
+    );
 
     const defaultGeneration = defaults?.generation;
 
-    const mainGenText = getTextOrDefault(
+    // ✅ Get base text and inject external context for generation
+    const mainGenTextBase = getTextOrDefault(
         overrides?.generation?.main,
         defaultGeneration?.main,
+    );
+    const mainGenText = injectExternalContext(
+        mainGenTextBase,
+        externalContext?.generation?.main?.references,
     );
 
     return `You are Kody Bug-Hunter, a senior engineer specialized in identifying verifiable issues through mental code execution. Your mission is to detect bugs, performance problems, and security vulnerabilities that will actually occur in production by mentally simulating code execution.

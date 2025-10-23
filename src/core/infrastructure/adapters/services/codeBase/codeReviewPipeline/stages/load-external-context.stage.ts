@@ -57,8 +57,10 @@ export class LoadExternalContextStage extends BasePipelineStage<CodeReviewPipeli
                         prNumber: context.pullRequest.number,
                     },
                 });
-                context.externalPromptContext = {};
-                return context;
+                return {
+                    ...context,
+                    externalPromptContext: {},
+                };
             }
 
             const externalContext =
@@ -68,8 +70,6 @@ export class LoadExternalContextStage extends BasePipelineStage<CodeReviewPipeli
                     pullRequest: context.pullRequest,
                     allReferences,
                 });
-
-            context.externalPromptContext = externalContext;
 
             const totalReferencesLoaded = this.countLoadedReferences(
                 externalContext,
@@ -87,7 +87,10 @@ export class LoadExternalContextStage extends BasePipelineStage<CodeReviewPipeli
                 },
             });
 
-            return context;
+            return {
+                ...context,
+                externalPromptContext: externalContext,
+            };
         } catch (error) {
             this.logger.error({
                 message: 'Error loading external context',
@@ -99,8 +102,10 @@ export class LoadExternalContextStage extends BasePipelineStage<CodeReviewPipeli
                 },
             });
 
-            context.externalPromptContext = {};
-            return context;
+            return {
+                ...context,
+                externalPromptContext: {},
+            };
         }
     }
 
