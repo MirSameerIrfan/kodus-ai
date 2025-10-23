@@ -17,6 +17,7 @@ import { CreateOrUpdateOrganizationParametersUseCase } from '@/core/application/
 import { FindByKeyOrganizationParametersUseCase } from '@/core/application/use-cases/organizationParameters/find-by-key.use-case';
 import { GetModelsByProviderUseCase } from '@/core/application/use-cases/organizationParameters/get-models-by-provider.use-case';
 import { DeleteByokConfigUseCase } from '@/core/application/use-cases/organizationParameters/delete-byok-config.use-case';
+import { GetCockpitMetricsVisibilityUseCase } from '@/core/application/use-cases/organizationParameters/get-cockpit-metrics-visibility.use-case';
 import { ProviderService } from '@/core/infrastructure/adapters/services/providers/provider.service';
 import { LicenseModule } from '@/ee/license/license.module';
 
@@ -34,6 +35,7 @@ import { LicenseModule } from '@/ee/license/license.module';
         FindByKeyOrganizationParametersUseCase,
         GetModelsByProviderUseCase,
         DeleteByokConfigUseCase,
+        GetCockpitMetricsVisibilityUseCase,
         OrganizationParametersService,
         PromptService,
         ProjectManagementService,
@@ -55,6 +57,7 @@ import { LicenseModule } from '@/ee/license/license.module';
         OrganizationParametersService,
         GetModelsByProviderUseCase,
         DeleteByokConfigUseCase,
+        GetCockpitMetricsVisibilityUseCase,
     ],
 })
 export class OrganizationParametersModule {}
