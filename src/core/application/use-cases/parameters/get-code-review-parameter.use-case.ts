@@ -343,7 +343,7 @@ export class GetCodeReviewParameterUseCase {
         config: FormattedCodeReviewConfig,
         configKey: string,
     ): Promise<FormattedCodeReviewConfig> {
-        const enriched = { ...config };
+        const enriched = structuredClone(config);
 
         // Enriquecer summary.customInstructions
         if (enriched.summary?.customInstructions) {

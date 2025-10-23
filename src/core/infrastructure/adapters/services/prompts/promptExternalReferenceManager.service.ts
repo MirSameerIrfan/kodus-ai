@@ -356,7 +356,7 @@ export class PromptExternalReferenceManagerService implements IPromptExternalRef
                     params.sourceType,
                 );
 
-                if (existing?.uuid) {
+                if (existing?.uuid && existing.promptHash === currentHash) {
                     await this.repository.delete(existing.uuid);
                     this.logger.log({
                         message: 'No references found, deleted record',
@@ -364,6 +364,18 @@ export class PromptExternalReferenceManagerService implements IPromptExternalRef
                         metadata: {
                             configKey: params.configKey,
                             sourceType: params.sourceType,
+                        },
+                    });
+                } else if (existing?.promptHash !== currentHash) {
+                    this.logger.warn({
+                        message:
+                            'Aborting stale background job; record has been updated or deleted.',
+                        context: PromptExternalReferenceManagerService.name,
+                        metadata: {
+                            configKey: params.configKey,
+                            sourceType: params.sourceType,
+                            expectedHash: currentHash,
+                            actualHash: existing?.promptHash,
                         },
                     });
                 }
@@ -375,20 +387,37 @@ export class PromptExternalReferenceManagerService implements IPromptExternalRef
                     ? PromptProcessingStatus.FAILED
                     : PromptProcessingStatus.COMPLETED;
 
-            await this.repository.upsert({
-                configKey: params.configKey,
-                sourceType: params.sourceType,
-                organizationId: params.organizationId,
-                repositoryId: params.repositoryId,
-                directoryId: params.directoryId,
-                kodyRuleId: params.kodyRuleId,
-                repositoryName: params.repositoryName,
-                promptHash: currentHash,
-                references,
-                syncErrors,
-                processingStatus: finalStatus,
-                lastProcessedAt: new Date(),
-            });
+            const upsertResult = await this.repository.upsertConditional(
+                {
+                    configKey: params.configKey,
+                    sourceType: params.sourceType,
+                    organizationId: params.organizationId,
+                    repositoryId: params.repositoryId,
+                    directoryId: params.directoryId,
+                    kodyRuleId: params.kodyRuleId,
+                    repositoryName: params.repositoryName,
+                    promptHash: currentHash,
+                    references,
+                    syncErrors,
+                    processingStatus: finalStatus,
+                    lastProcessedAt: new Date(),
+                },
+                currentHash,
+            );
+
+            if (!upsertResult) {
+                this.logger.warn({
+                    message:
+                        'Aborting stale background job; record has been updated or deleted.',
+                    context: PromptExternalReferenceManagerService.name,
+                    metadata: {
+                        configKey: params.configKey,
+                        sourceType: params.sourceType,
+                        expectedHash: currentHash,
+                    },
+                });
+                return;
+            }
 
             if (finalStatus === PromptProcessingStatus.FAILED) {
                 this.logger.warn({

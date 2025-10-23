@@ -31,6 +31,11 @@ export interface IPromptExternalReferenceRepository {
         data: Partial<IPromptExternalReference>,
     ): Promise<PromptExternalReferenceEntity>;
 
+    upsertConditional(
+        data: Partial<IPromptExternalReference>,
+        expectedHash: string,
+    ): Promise<PromptExternalReferenceEntity | null>;
+
     update(
         uuid: string,
         data: Partial<IPromptExternalReference>,

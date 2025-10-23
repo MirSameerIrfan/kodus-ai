@@ -102,6 +102,61 @@ export class PromptExternalReferencesRepository
         return mapSimpleModelToEntity(updated, PromptExternalReferenceEntity);
     }
 
+    async upsertConditional(
+        data: Partial<IPromptExternalReference>,
+        expectedHash: string,
+    ): Promise<PromptExternalReferenceEntity | null> {
+        const { configKey, sourceType } = data;
+
+        if (!configKey || !sourceType) {
+            throw new Error('configKey and sourceType are required for upsert');
+        }
+
+        const updated = await this.model
+            .findOneAndUpdate(
+                {
+                    configKey,
+                    sourceType,
+                    promptHash: expectedHash,
+                },
+                {
+                    $set: {
+                        ...data,
+                        updatedAt: new Date(),
+                    },
+                },
+                { new: true },
+            )
+            .exec();
+
+        if (updated) {
+            return mapSimpleModelToEntity(
+                updated,
+                PromptExternalReferenceEntity,
+            );
+        }
+
+        const existing = await this.model
+            .findOne({ configKey, sourceType })
+            .lean()
+            .exec();
+
+        if (existing) {
+            return null;
+        }
+
+        const created = await this.model.create({
+            ...data,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        });
+
+        return mapSimpleModelToEntity(
+            created,
+            PromptExternalReferenceEntity,
+        );
+    }
+
     async update(
         uuid: string,
         data: Partial<IPromptExternalReference>,
