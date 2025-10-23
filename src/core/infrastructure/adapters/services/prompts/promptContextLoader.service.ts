@@ -94,7 +94,6 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
                                 params.organizationAndTeamData,
                         },
                     });
-                    // Would need to call repository.update() here to persist
                 }
             }
 
@@ -103,7 +102,6 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
             }
         }
 
-        // Log summary of updates (optional: could persist to MongoDB here)
         if (updatedReferences.length > 0) {
             this.logger.log({
                 message: 'External references loaded with updates',
@@ -116,9 +114,6 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
                     organizationAndTeamData: params.organizationAndTeamData,
                 },
             });
-
-            // TODO: Persist updated references to MongoDB to save hash and error cleanup
-            // This would involve calling repository.update() for each updated entity
         }
 
         return this.buildContextMap(params.allReferences, fileContentCache);
