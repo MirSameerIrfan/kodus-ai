@@ -6,7 +6,7 @@ export class AxiosASTService {
     constructor() {
         this.axiosInstance = axios.create({
             baseURL: process.env.API_SERVICE_AST_URL,
-            timeout: 60000,
+            timeout: 120000,
             headers: {
                 'Content-Type': 'application/json',
             },

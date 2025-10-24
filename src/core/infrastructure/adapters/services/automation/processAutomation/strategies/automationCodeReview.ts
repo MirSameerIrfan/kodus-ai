@@ -13,6 +13,7 @@ import {
 } from '@/core/domain/automation/contracts/team-automation.service';
 import { AutomationType } from '@/core/domain/automation/enums/automation-type';
 import { Inject, Injectable } from '@nestjs/common';
+import { MoreThanOrEqual } from 'typeorm';
 import { IAutomation } from '@/core/domain/automation/interfaces/automation.interface';
 import { ITeamAutomation } from '@/core/domain/automation/interfaces/team-automation.interface';
 import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
@@ -102,6 +103,27 @@ export class AutomationCodeReviewService
                 },
             });
 
+            // Check for existing active execution
+            const existingExecution = await this.getActiveExecution(
+                teamAutomationId,
+                pullRequest?.number,
+                repository?.id,
+            );
+
+            if (existingExecution) {
+                this.logger.warn({
+                    message: `Code review already in progress for PR#${pullRequest?.number}`,
+                    context: AutomationCodeReviewService.name,
+                    metadata: {
+                        existingExecutionId: existingExecution.uuid,
+                        organizationAndTeamData,
+                        repository,
+                        pullRequestNumber: pullRequest?.number,
+                    },
+                });
+                return 'Code review already in progress for this PR';
+            }
+
             const organization = await this.organizationService.findOne({
                 uuid: organizationAndTeamData.organizationId,
                 status: true,
@@ -122,7 +144,7 @@ export class AutomationCodeReviewService
 
             execution = await this.createAutomationExecution(
                 payload,
-                AutomationStatus.IN_PROGRESS, // in the future maybe pending?
+                AutomationStatus.IN_PROGRESS,
                 'Automation started',
             );
 
@@ -164,6 +186,37 @@ export class AutomationCodeReviewService
         }
     }
 
+    private async getActiveExecution(
+        teamAutomationId: string,
+        pullRequestNumber: number,
+        repositoryId: string,
+    ): Promise<IAutomationExecution | null> {
+        try {
+            const cutoffTime = new Date();
+            cutoffTime.setMinutes(cutoffTime.getMinutes() - 30);
+
+            const activeExecutions = await this.automationExecutionService.find(
+                {
+                    teamAutomation: { uuid: teamAutomationId },
+                    pullRequestNumber: pullRequestNumber,
+                    repositoryId: repositoryId,
+                    status: AutomationStatus.IN_PROGRESS,
+                    createdAt: MoreThanOrEqual(cutoffTime),
+                } as any,
+            );
+
+            return activeExecutions?.[0] || null;
+        } catch (error) {
+            this.logger.error({
+                message: 'Error checking for active execution',
+                context: AutomationCodeReviewService.name,
+                error,
+                metadata: { teamAutomationId, pullRequestNumber, repositoryId },
+            });
+            return null;
+        }
+    }
+
     private async createAutomationExecution(
         payload: any,
         status: AutomationStatus,
@@ -196,6 +249,26 @@ export class AutomationCodeReviewService
                 message,
             );
         } catch (error) {
+            // Check for unique constraint violation (PostgreSQL error code 23505)
+            const isDuplicateError =
+                error?.code === '23505' ||
+                error?.constraint?.includes('unique') ||
+                error?.message?.includes('duplicate');
+
+            if (isDuplicateError) {
+                this.logger.warn({
+                    message:
+                        'Duplicate execution detected - another process is already handling this PR',
+                    context: AutomationCodeReviewService.name,
+                    metadata: {
+                        teamAutomationId,
+                        pullRequestNumber: pullRequest?.number,
+                        repositoryId: repository?.id,
+                    },
+                });
+                return null;
+            }
+
             this.logger.error({
                 message: 'Error creating automation execution',
                 context: AutomationCodeReviewService.name,

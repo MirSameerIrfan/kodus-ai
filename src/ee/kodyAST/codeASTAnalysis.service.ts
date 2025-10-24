@@ -325,7 +325,7 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
         organizationAndTeamData: OrganizationAndTeamData,
         codeChunk: string,
         fileName: string,
-        taskId: string,
+        graphsTaskId: string,
     ): Promise<InitializeImpactAnalysisResponse> {
         try {
             const { headRepo, baseRepo } = await this.getRepoParams(
@@ -348,7 +348,7 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
                         codeChunk,
                         fileName,
                         organizationId: organizationAndTeamData.organizationId,
-                        taskId,
+                        graphsTaskId,
                     },
                     {
                         headers: {

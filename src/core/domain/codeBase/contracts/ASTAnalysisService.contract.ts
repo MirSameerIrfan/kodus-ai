@@ -49,7 +49,7 @@ export interface IASTAnalysisService {
         organizationAndTeamData: OrganizationAndTeamData,
         codeChunk: string,
         fileName: string,
-        taskId: string,
+        graphsTaskId: string,
     ): Promise<InitializeImpactAnalysisResponse>;
     getImpactAnalysis(
         repository: any,
