@@ -13,7 +13,6 @@ import { IntegrationCategory } from '@/shared/domain/enums/integration-category.
 import { IntegrationStatusFilter } from '@/core/domain/team/interfaces/team.interface';
 import { STATUS } from '@/config/types/database/status.type';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { PullRequestsEntity } from '@/core/domain/pullRequests/entities/pullRequests.entity';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
@@ -49,6 +48,7 @@ import {
 import { IPullRequestMessages } from '@/core/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
 import { CodeReviewConfig } from '@/config/types/general/codeReview.type';
 import { ConfigLevel } from '@/config/types/general/pullRequestMessages.type';
+import { IPullRequestWithDeliveredSuggestions } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
 
 const API_CRON_CHECK_IF_PR_SHOULD_BE_APPROVED =
     process.env.API_CRON_CHECK_IF_PR_SHOULD_BE_APPROVED;
@@ -256,13 +256,12 @@ export class CheckIfPRCanBeApprovedCronProvider {
                         return;
                     }
 
-                    const openPullRequests = await this.pullRequestService.find(
-                        {
-                            status: PullRequestState.OPENED,
-                            organizationId: organizationId,
-                            number: { $in: automationExecutionsPRs },
-                        } as any,
-                    );
+                    const openPullRequests =
+                        await this.pullRequestService.findPullRequestsWithDeliveredSuggestions(
+                            organizationId,
+                            automationExecutionsPRs,
+                            PullRequestState.OPENED,
+                        );
 
                     this.logger.log({
                         message: 'Open pull requests found',
@@ -340,7 +339,7 @@ export class CheckIfPRCanBeApprovedCronProvider {
         codeReviewConfig,
     }: {
         organizationAndTeamData: OrganizationAndTeamData;
-        pr: PullRequestsEntity;
+        pr: IPullRequestWithDeliveredSuggestions;
         codeReviewConfig?: CodeReviewConfig;
     }): Promise<boolean> {
         const repository = pr?.repository;
@@ -396,6 +395,51 @@ export class CheckIfPRCanBeApprovedCronProvider {
 
             if (!reviewComments || reviewComments?.length < 1) {
                 return false;
+            }
+
+            if (pr?.suggestions && pr?.suggestions?.length > 0) {
+                const deliveredCommentIds = new Set(
+                    pr.suggestions
+                        .filter((s) => s?.comment?.id)
+                        .map((s) => String(s.comment.id)),
+                );
+
+                reviewComments = reviewComments.filter((comment) => {
+                    let commentId;
+
+                    if (platformType === PlatformType.GITHUB) {
+                        commentId = comment?.fullDatabaseId || comment?.id;
+                    } else if (platformType === PlatformType.AZURE_REPOS) {
+                        commentId = comment?.threadId;
+                    } else {
+                        commentId = comment?.id;
+                    }
+
+                    if (!commentId) {
+                        return false;
+                    }
+
+                    return deliveredCommentIds.has(String(commentId));
+                });
+
+                this.logger.log({
+                    message: `Filtered review comments by delivered suggestions for PR#${prNumber}`,
+                    context: CheckIfPRCanBeApprovedCronProvider.name,
+                    metadata: {
+                        totalDeliveredSuggestions: pr?.suggestions?.length,
+                        filteredReviewComments: reviewComments.length,
+                        organizationAndTeamData,
+                        prNumber,
+                        repository: {
+                            name: repository?.name,
+                            id: repository?.id,
+                        },
+                    },
+                });
+
+                if (!reviewComments || reviewComments?.length < 1) {
+                    return false;
+                }
             }
 
             const pullRequestMessagesConfig =

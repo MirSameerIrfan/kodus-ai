@@ -68,7 +68,10 @@ import { ConfigService } from '@nestjs/config';
 import { AuthorContribution } from '@/core/domain/pullRequests/interfaces/authorContributor.interface';
 import { GitCloneParams } from '@/core/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
 import { RepositoryFile } from '@/core/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
-import { isFileMatchingGlob, isFileMatchingGlobCaseInsensitive } from '@/shared/utils/glob-utils';
+import {
+    isFileMatchingGlob,
+    isFileMatchingGlobCaseInsensitive,
+} from '@/shared/utils/glob-utils';
 import { MCPManagerService } from '../../mcp/services/mcp-manager.service';
 
 @Injectable()
@@ -3802,7 +3805,11 @@ export class BitbucketService
                 .then((res) => this.getPaginatedResults(bitbucketAPI, res));
 
             return comments
-                .filter((comment) => !hasKodyMarker(comment?.content?.raw))
+                .filter(
+                    (comment) =>
+                        comment?.deleted !== true &&
+                        !hasKodyMarker(comment?.content?.raw),
+                )
                 .map((comment) => {
                     const mappedComment: PullRequestReviewComment = {
                         id: comment?.id,

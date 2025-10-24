@@ -12,6 +12,7 @@ import {
     IPullRequestUser,
     ICommit,
     ISuggestionByPR,
+    IPullRequestWithDeliveredSuggestions,
 } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
 import { IPullRequestsService } from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
 import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
@@ -107,6 +108,18 @@ export class PullRequestsService implements IPullRequestsService {
             organizationId,
             prNumber,
             deliveryStatus,
+        );
+    }
+
+    async findPullRequestsWithDeliveredSuggestions(
+        organizationId: string,
+        prNumbers: number[],
+        status: string,
+    ): Promise<IPullRequestWithDeliveredSuggestions[]> {
+        return this.pullRequestsRepository.findPullRequestsWithDeliveredSuggestions(
+            organizationId,
+            prNumbers,
+            status,
         );
     }
 

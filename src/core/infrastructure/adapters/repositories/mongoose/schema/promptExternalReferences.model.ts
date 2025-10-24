@@ -13,7 +13,11 @@ export class PromptExternalReferencesModel extends CoreDocument {
     @Prop({ required: true, index: true })
     public readonly configKey: string;
 
-    @Prop({ required: true, enum: Object.values(PromptSourceType), index: true })
+    @Prop({
+        required: true,
+        enum: Object.values(PromptSourceType),
+        index: true,
+    })
     public readonly sourceType: PromptSourceType;
 
     @Prop({ required: true, index: true })
@@ -31,7 +35,7 @@ export class PromptExternalReferencesModel extends CoreDocument {
     @Prop({ required: true })
     public readonly repositoryName: string;
 
-    @Prop({ required: true, index: true })
+    @Prop({ required: true })
     public promptHash: string;
 
     @Prop({ required: true, type: Array, default: [] })
@@ -62,4 +66,3 @@ PromptExternalReferencesSchema.index(
 );
 PromptExternalReferencesSchema.index({ organizationId: 1, repositoryId: 1 });
 PromptExternalReferencesSchema.index({ promptHash: 1 });
-

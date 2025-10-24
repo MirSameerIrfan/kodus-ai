@@ -13,6 +13,7 @@ import {
     ISuggestion,
     IFile,
     IPullRequests,
+    IPullRequestWithDeliveredSuggestions,
 } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
 import { DeliveryStatus } from '@/core/domain/pullRequests/enums/deliveryStatus.enum';
 import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
@@ -220,6 +221,80 @@ export class PullRequestsRepository implements IPullRequestsRepository {
                     {
                         $replaceRoot: {
                             newRoot: '$files.suggestions',
+                        },
+                    },
+                ])
+                .exec();
+
+            return result;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async findPullRequestsWithDeliveredSuggestions(
+        organizationId: string,
+        prNumbers: number[],
+        status: string,
+    ): Promise<IPullRequestWithDeliveredSuggestions[]> {
+        try {
+            const result = await this.pullRequestsModel
+                .aggregate([
+                    {
+                        $match: {
+                            organizationId: organizationId,
+                            number: { $in: prNumbers },
+                            status: status,
+                        },
+                    },
+                    {
+                        $unwind: '$files',
+                    },
+                    {
+                        $unwind: '$files.suggestions',
+                    },
+                    {
+                        $match: {
+                            'files.suggestions.deliveryStatus': {
+                                $in: [true, 'sent', 'implemented'],
+                            },
+                            'files.suggestions.comment.id': {
+                                $exists: true,
+                                $ne: null,
+                            },
+                        },
+                    },
+                    {
+                        $group: {
+                            _id: '$_id',
+                            number: { $first: '$number' },
+                            organizationId: { $first: '$organizationId' },
+                            status: { $first: '$status' },
+                            repositoryId: { $first: '$repository.id' },
+                            repositoryName: { $first: '$repository.name' },
+                            provider: { $first: '$provider' },
+                            suggestions: {
+                                $push: {
+                                    id: '$files.suggestions.id',
+                                    deliveryStatus:
+                                        '$files.suggestions.deliveryStatus',
+                                    comment: '$files.suggestions.comment',
+                                },
+                            },
+                        },
+                    },
+                    {
+                        $project: {
+                            _id: 1,
+                            number: 1,
+                            organizationId: 1,
+                            status: 1,
+                            repository: {
+                                id: '$repositoryId',
+                                name: '$repositoryName',
+                            },
+                            provider: 1,
+                            suggestions: 1,
                         },
                     },
                 ])
