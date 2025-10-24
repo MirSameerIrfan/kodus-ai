@@ -82,7 +82,7 @@ export class GetInheritedRulesKodyRulesUseCase {
         const directoryPath = directoryConfig?.path || null;
 
         const rulesForPath =
-            this.kodyRulesValidationService.getKodyRulesForFile(
+            this.kodyRulesValidationService.getKodyRulesForFolder(
                 directoryPath,
                 allRules,
                 {
