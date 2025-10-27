@@ -969,36 +969,90 @@ export class BitbucketService
                 )
             );
 
+            if (!repositories?.length) {
+                return [];
+            }
+
             const bitbucketAPI = this.instanceBitbucketApi(bitbucketAuthDetail);
 
-            const allPermissions = await Promise.all(
-                repositories.map((repo) =>
-                    bitbucketAPI.repositories
-                        .listUserPermissions({
-                            repo_slug: `{${repo.id}}`,
-                            workspace: `{${repo.workspaceId}}`,
+            const workspaceIdentifiers = Array.from(
+                new Set(
+                    repositories
+                        .map((repo) => {
+                            if (repo.organizationName) {
+                                return repo.organizationName;
+                            }
+
+                            if (repo.workspaceId) {
+                                return `{${repo.workspaceId}}`;
+                            }
+
+                            return null;
+                        })
+                        .filter((workspace): workspace is string => !!workspace),
+                ),
+            );
+
+            if (!workspaceIdentifiers.length) {
+                return [];
+            }
+
+            const allMembers = await Promise.all(
+                workspaceIdentifiers.map((workspace) =>
+                    bitbucketAPI.workspaces
+                        .getMembersForWorkspace({
+                            workspace,
+                            pagelen: 100,
                         })
                         .then((res) =>
-                            this.getPaginatedResults(bitbucketAPI, res),
+                            this.getPaginatedResults<
+                                Schema.WorkspaceMembership
+                            >(bitbucketAPI, res),
                         ),
                 ),
             );
 
-            const uniqueMembers = new Set<{
-                name: string;
-                id: string | number;
-            }>();
+            const uniqueMembers = new Map<string, { name: string; id: string }>();
 
-            allPermissions.forEach((permissions) => {
-                permissions.forEach((permission) => {
-                    uniqueMembers.add({
-                        name: permission.user.display_name,
-                        id: this.sanitizeUUID(permission.user.uuid),
+            allMembers.forEach((memberships) => {
+                memberships.forEach((membership) => {
+                    const memberId = this.sanitizeUUID(
+                        membership?.user?.uuid ?? '',
+                    );
+
+                    if (!memberId || uniqueMembers.has(memberId)) {
+                        return;
+                    }
+
+                    const user =
+                        (membership?.user as
+                            | (Schema.Account & {
+                                  nickname?: string;
+                                  username?: string;
+                              })
+                            | undefined) ?? undefined;
+
+                    const displayName =
+                        typeof user?.display_name === 'string'
+                            ? user.display_name
+                            : undefined;
+                    const nickname =
+                        typeof user?.nickname === 'string'
+                            ? user.nickname
+                            : undefined;
+                    const username =
+                        typeof user?.username === 'string'
+                            ? user.username
+                            : undefined;
+
+                    uniqueMembers.set(memberId, {
+                        name: displayName ?? nickname ?? username ?? memberId,
+                        id: memberId,
                     });
                 });
             });
 
-            return Array.from(uniqueMembers);
+            return Array.from(uniqueMembers.values());
         } catch (error) {
             this.logger.error({
                 message: 'Error to get list members',
