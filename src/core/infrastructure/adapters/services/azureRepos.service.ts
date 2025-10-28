@@ -67,7 +67,7 @@ import {
     TranslationsCategory,
 } from '@/shared/utils/translations/translations';
 import { LanguageValue } from '@/shared/domain/enums/language-parameter.enum';
-import { KODY_CRITICAL_ISSUE_COMMENT_MARKER } from '@/shared/utils/codeManagement/codeCommentMarkers';
+import { hasKodyMarker } from '@/shared/utils/codeManagement/codeCommentMarkers';
 import {
     AzurePRStatus,
     AzureRepoPullRequest,
@@ -75,7 +75,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { GitCloneParams } from '@/core/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
 import { RepositoryFile } from '@/core/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
-import { isFileMatchingGlob } from '@/shared/utils/glob-utils';
+import { isFileMatchingGlob, isFileMatchingGlobCaseInsensitive } from '@/shared/utils/glob-utils';
 import { MCPManagerService } from '../mcp/services/mcp-manager.service';
 
 @IntegrationServiceDecorator(PlatformType.AZURE_REPOS, 'codeManagement')
@@ -85,7 +85,6 @@ export class AzureReposService
             ICodeManagementService,
             | 'getOrganizations'
             | 'getWorkflows'
-            | 'getListMembers'
             | 'getCommitsByReleaseMode'
             | 'getPullRequestsForRTTM'
             | 'getPullRequestReviewThreads'
@@ -199,6 +198,78 @@ export class AzureReposService
                 message: 'Error in getPullRequestAuthors',
                 context: 'AzureService',
                 error: err,
+                metadata: {
+                    organizationAndTeamData: params?.organizationAndTeamData,
+                },
+            });
+            return [];
+        }
+    }
+    async getListMembers(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+    }): Promise<{ name: string; id: string | number }[]> {
+        try {
+            const organizationAndTeamData = params?.organizationAndTeamData;
+
+            if (!organizationAndTeamData?.organizationId) {
+                return [];
+            }
+
+            const authDetails = await this.getAuthDetails(
+                organizationAndTeamData,
+            );
+
+            if (!authDetails?.orgName || !authDetails?.token) {
+                return [];
+            }
+
+            const members =
+                await this.azureReposRequestHelper.listOrganizationUsers({
+                    orgName: authDetails.orgName,
+                    token: authDetails.token,
+                });
+
+            if (!members || members.length === 0) {
+                return [];
+            }
+
+            const normalizedMembers = members
+                .map((member) => {
+                    const id =
+                        member?.descriptor ??
+                        member?.originId ??
+                        member?.principalName ??
+                        member?.mailAddress;
+                    const name =
+                        member?.displayName ??
+                        member?.principalName ??
+                        member?.mailAddress ??
+                        member?.originId ??
+                        id;
+
+                    if (!id || !name) {
+                        return null;
+                    }
+
+                    return {
+                        name,
+                        id,
+                    };
+                })
+                .filter(
+                    (
+                        member,
+                    ): member is { name: string; id: string | number } =>
+                        Boolean(member),
+                );
+
+            return normalizedMembers;
+        } catch (error) {
+            this.logger.error({
+                message: 'Error to get Azure DevOps members',
+                context: AzureReposService.name,
+                serviceName: 'AzureReposService getListMembers',
+                error,
                 metadata: {
                     organizationAndTeamData: params?.organizationAndTeamData,
                 },
@@ -1249,7 +1320,10 @@ export class AzureReposService
                                 organizationAndTeamData,
                                 username: authorName,
                             });
-                            userId = user?.originId ?? null;
+                            userId =
+                                user?.descriptor ??
+                                user?.originId ??
+                                null;
                         } catch {
                             userId = null;
                         }
@@ -1528,15 +1602,7 @@ export class AzureReposService
                         },
                     })),
                 )
-                .filter(
-                    (comment) =>
-                        !comment.body.includes(
-                            '## Code Review Completed! ud83dudd25',
-                        ) &&
-                        !comment.body.includes(
-                            KODY_CRITICAL_ISSUE_COMMENT_MARKER,
-                        ),
-                )
+                .filter((comment) => !hasKodyMarker(comment.body))
                 .sort(
                     (a, b) =>
                         new Date(b.createdAt).getTime() -
@@ -1992,6 +2058,7 @@ export class AzureReposService
                 params.configValue,
                 integration?.uuid,
                 params.organizationAndTeamData,
+                params.type,
             );
 
             this.createWebhook(params.organizationAndTeamData);
@@ -3962,7 +4029,7 @@ export class AzureReposService
                 if (
                     filePatterns &&
                     filePatterns.length > 0 &&
-                    !isFileMatchingGlob(file.path, filePatterns)
+                    !isFileMatchingGlobCaseInsensitive(file.path, filePatterns)
                 ) {
                     continue;
                 }

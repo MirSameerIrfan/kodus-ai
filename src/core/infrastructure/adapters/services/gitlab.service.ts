@@ -73,12 +73,15 @@ import { CreateAuthIntegrationStatus } from '@/shared/domain/enums/create-auth-i
 import { ReviewComment } from '@/config/types/general/codeReview.type';
 import { getSeverityLevelShield } from '@/shared/utils/codeManagement/severityLevel';
 import { getCodeReviewBadge } from '@/shared/utils/codeManagement/codeReviewBadge';
-import { KODY_CODE_REVIEW_COMPLETED_MARKER } from '@/shared/utils/codeManagement/codeCommentMarkers';
+import { hasKodyMarker } from '@/shared/utils/codeManagement/codeCommentMarkers';
 import { ConfigService } from '@nestjs/config';
 import { GitCloneParams } from '@/core/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
 import { LLMProviderService, LLMModelProvider } from '@kodus/kodus-common/llm';
 import { RepositoryFile } from '@/core/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
-import { isFileMatchingGlob } from '@/shared/utils/glob-utils';
+import {
+    isFileMatchingGlob,
+    isFileMatchingGlobCaseInsensitive,
+} from '@/shared/utils/glob-utils';
 import { CacheService } from '@/shared/utils/cache/cache.service';
 import { MCPManagerService } from '../mcp/services/mcp-manager.service';
 
@@ -400,6 +403,7 @@ export class GitlabService
                 params.configValue,
                 integration?.uuid,
                 params.organizationAndTeamData,
+                params.type,
             );
 
             this.createMergeRequestWebhook({
@@ -2190,7 +2194,7 @@ export class GitlabService
 
             const originalCommit = comments?.find(
                 (comment) => comment.id === filters.discussionId,
-            )?.notes[0]?.body;
+            )?.notes[0];
 
             if (filters?.discussionId === undefined) {
                 return comments;
@@ -2202,7 +2206,10 @@ export class GitlabService
                             id: note.id,
                             body: note.body,
                             createdAt: note.created_at,
-                            originalCommit: { body: originalCommit },
+                            originalCommit: {
+                                body: originalCommit.body,
+                                id: originalCommit.id,
+                            },
                             author: {
                                 id: note.author.id,
                                 username: note.author.username,
@@ -2666,7 +2673,8 @@ export class GitlabService
             }
 
             // Construct the full GitLab URL
-            const fullGitlabUrl = `https://gitlab.com/${params?.repository?.fullName}`;
+            const gitlabHost = gitlabAuthDetail.host || 'gitlab.com';
+            const fullGitlabUrl = `https://${gitlabHost}/${params?.repository?.fullName}`;
 
             return {
                 organizationId: params.organizationAndTeamData.organizationId,
@@ -3205,10 +3213,8 @@ export class GitlabService
                     const firstDiscussionComment = discussion.notes[0];
                     return (
                         firstDiscussionComment.resolvable &&
-                        !firstDiscussionComment.body.includes(
-                            KODY_CODE_REVIEW_COMPLETED_MARKER,
-                        )
-                    ); // Exclude comments with the specific string
+                        !hasKodyMarker(firstDiscussionComment.body)
+                    );
                 })
                 .map((discussion) => {
                     // The review comment will always be the first one.
@@ -3624,7 +3630,7 @@ export class GitlabService
                 if (
                     filePatterns &&
                     filePatterns.length > 0 &&
-                    !isFileMatchingGlob(file.path, filePatterns)
+                    !isFileMatchingGlobCaseInsensitive(file.path, filePatterns)
                 ) {
                     continue;
                 }

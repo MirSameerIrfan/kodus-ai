@@ -52,25 +52,30 @@ import { v4 } from 'uuid';
 import { SUPPORTED_LANGUAGES } from '@/core/domain/codeBase/contracts/SupportedLanguages';
 import { LibraryKodyRule } from '@/config/types/kodyRules.type';
 import { ObservabilityService } from '../logger/observability.service';
+import { BYOKPromptRunnerService } from '@/shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 
 @Injectable()
 export class CommentAnalysisService {
     constructor(
-        @Inject(CODE_BASE_CONFIG_SERVICE_TOKEN)
-        private readonly codeBaseConfigService: ICodeBaseConfigService,
-
         private readonly logger: PinoLoggerService,
         private readonly promptRunnerService: PromptRunnerService,
         private readonly observabilityService: ObservabilityService,
+        private readonly permissionValidationService: PermissionValidationService,
     ) {}
 
     async categorizeComments(params: {
         comments: UncategorizedComment[];
+        organizationAndTeamData: OrganizationAndTeamData;
     }): Promise<CategorizedComment[]> {
-        const { comments } = params;
+        const { comments, organizationAndTeamData } = params;
 
         try {
-            const filteredComments = await this.filterComments({ comments });
+            const filteredComments = await this.filterComments({
+                comments,
+                organizationAndTeamData,
+            });
             if (!filteredComments || filteredComments.length === 0) {
                 this.logger.log({
                     message: 'No comments after filtering',
@@ -82,8 +87,21 @@ export class CommentAnalysisService {
 
             const runName = 'commentCategorizer';
             const spanName = `${CommentAnalysisService.name}::${runName}`;
+
+            const byokConfig =
+                await this.permissionValidationService.getBYOKConfig(
+                    organizationAndTeamData,
+                );
+
+            const promptRunner = new BYOKPromptRunnerService(
+                this.promptRunnerService,
+                LLMModelProvider.GEMINI_2_5_PRO,
+                LLMModelProvider.NOVITA_DEEPSEEK_V3_0324,
+                byokConfig,
+            );
+
             const spanAttrs = {
-                type: 'system',
+                type: promptRunner.executeMode,
                 commentsCount: filteredComments.length,
             };
 
@@ -93,13 +111,8 @@ export class CommentAnalysisService {
                     runName,
                     attrs: spanAttrs,
                     exec: async (callbacks) => {
-                        return this.promptRunnerService
+                        return promptRunner
                             .builder()
-                            .setProviders({
-                                main: LLMModelProvider.GEMINI_2_5_PRO,
-                                fallback:
-                                    LLMModelProvider.NOVITA_DEEPSEEK_V3_0324,
-                            })
                             .setParser(ParserType.ZOD, commentCategorizerSchema)
                             .setLLMJsonMode(true)
                             .setPayload({ comments: filteredComments })
@@ -180,11 +193,15 @@ export class CommentAnalysisService {
     async generateKodyRules(params: {
         comments: UncategorizedComment[];
         existingRules: IKodyRule[];
+        organizationAndTeamData: OrganizationAndTeamData;
     }): Promise<IKodyRule[]> {
-        const { comments, existingRules } = params;
+        const { comments, existingRules, organizationAndTeamData } = params;
 
         try {
-            const filteredComments = await this.filterComments({ comments });
+            const filteredComments = await this.filterComments({
+                comments,
+                organizationAndTeamData,
+            });
             if (!filteredComments || filteredComments.length === 0) {
                 this.logger.log({
                     message:
@@ -195,23 +212,30 @@ export class CommentAnalysisService {
                 return [];
             }
 
+            const byokConfig =
+                await this.permissionValidationService.getBYOKConfig(
+                    organizationAndTeamData,
+                );
+
+            const promptRunner = new BYOKPromptRunnerService(
+                this.promptRunnerService,
+                LLMModelProvider.GEMINI_2_5_PRO,
+                LLMModelProvider.NOVITA_DEEPSEEK_V3_0324,
+                byokConfig,
+            );
+
             const genRun = 'generateKodyRules.generate';
             const { result: generatedRes } =
                 await this.observabilityService.runLLMInSpan({
                     spanName: `${CommentAnalysisService.name}::${genRun}`,
                     runName: genRun,
                     attrs: {
-                        type: 'system',
+                        type: promptRunner.executeMode,
                         commentsCount: filteredComments.length,
                     },
                     exec: async (callbacks) => {
-                        return this.promptRunnerService
+                        return promptRunner
                             .builder()
-                            .setProviders({
-                                main: LLMModelProvider.GEMINI_2_5_PRO,
-                                fallback:
-                                    LLMModelProvider.NOVITA_DEEPSEEK_V3_0324,
-                            })
                             .setParser(ParserType.ZOD, kodyRulesGeneratorSchema)
                             .setLLMJsonMode(true)
                             .setPayload({
@@ -259,6 +283,7 @@ export class CommentAnalysisService {
                     (rule as Partial<LibraryKodyRule>)?.why_is_this_important ||
                     '',
             })) as LibraryKodyRule[];
+
             let deduplicatedRules = generatedWithUuids;
             if (existingRules && existingRules.length > 0) {
                 const dedupeRun = 'generateKodyRules.dedupe';
@@ -267,18 +292,13 @@ export class CommentAnalysisService {
                         spanName: `${CommentAnalysisService.name}::${dedupeRun}`,
                         runName: dedupeRun,
                         attrs: {
-                            type: 'system',
+                            type: promptRunner.executeMode,
                             newRulesCount: generatedWithUuids.length,
                             existingRulesCount: existingRulesAsLibrary.length,
                         },
                         exec: async (callbacks) => {
-                            return this.promptRunnerService
+                            return promptRunner
                                 .builder()
-                                .setProviders({
-                                    main: LLMModelProvider.GEMINI_2_5_PRO,
-                                    fallback:
-                                        LLMModelProvider.NOVITA_DEEPSEEK_V3_0324,
-                                })
                                 .setParser(
                                     ParserType.ZOD,
                                     kodyRulesGeneratorDuplicateFilterSchema,
@@ -333,17 +353,12 @@ export class CommentAnalysisService {
                     spanName: `${CommentAnalysisService.name}::${qualityRun}`,
                     runName: qualityRun,
                     attrs: {
-                        type: 'system',
+                        type: promptRunner.executeMode,
                         candidateRulesCount: deduplicatedRules.length,
                     },
                     exec: async (callbacks) => {
-                        return this.promptRunnerService
+                        return promptRunner
                             .builder()
-                            .setProviders({
-                                main: LLMModelProvider.GEMINI_2_5_PRO,
-                                fallback:
-                                    LLMModelProvider.NOVITA_DEEPSEEK_V3_0324,
-                            })
                             .setParser(
                                 ParserType.ZOD,
                                 kodyRulesGeneratorQualityFilterSchema,
@@ -447,14 +462,28 @@ export class CommentAnalysisService {
 
     private async filterComments(params: {
         comments: UncategorizedComment[];
+        organizationAndTeamData: OrganizationAndTeamData;
     }): Promise<UncategorizedComment[]> {
-        const { comments } = params;
+        const { comments, organizationAndTeamData } = params;
 
         try {
             const runName = 'commentIrrelevanceFilter';
             const spanName = `${CommentAnalysisService.name}::${runName}`;
+
+            const byokConfig =
+                await this.permissionValidationService.getBYOKConfig(
+                    organizationAndTeamData,
+                );
+
+            const promptRunner = new BYOKPromptRunnerService(
+                this.promptRunnerService,
+                LLMModelProvider.GEMINI_2_5_PRO,
+                LLMModelProvider.NOVITA_DEEPSEEK_V3_0324,
+                byokConfig,
+            );
+
             const spanAttrs = {
-                type: 'system',
+                type: promptRunner.executeMode,
                 commentsCount: comments.length,
             };
 
@@ -464,13 +493,8 @@ export class CommentAnalysisService {
                     runName,
                     attrs: spanAttrs,
                     exec: async (callbacks) => {
-                        return this.promptRunnerService
+                        return promptRunner
                             .builder()
-                            .setProviders({
-                                main: LLMModelProvider.GEMINI_2_5_PRO,
-                                fallback:
-                                    LLMModelProvider.NOVITA_DEEPSEEK_V3_0324,
-                            })
                             .setParser(
                                 ParserType.ZOD,
                                 commentIrrelevanceFilterSchema,
@@ -512,200 +536,6 @@ export class CommentAnalysisService {
                 error,
                 metadata: params,
             });
-        }
-    }
-
-    async generateCodeReviewParameters(params: {
-        comments: CategorizedComment[];
-        alignmentLevel?: AlignmentLevel;
-    }): Promise<Partial<CodeReviewConfig>> {
-        try {
-            const { comments, alignmentLevel } = params;
-
-            const frequency = this.parameterFrequencyAnalysis(comments);
-
-            let thresholds = this.getThresholds({
-                alignmentLevel,
-                values: Object.values(frequency.categories),
-            });
-            // activate categories that have a frequency inside the threshold
-            const categories = Object.fromEntries(
-                Object.entries(frequency.categories).map(([key, value]) => [
-                    key,
-                    value >= thresholds.lowerThreshold &&
-                        value <= thresholds.upperThreshold,
-                ]),
-            ) as { [key in keyof ReviewOptions]: boolean };
-
-            // Force specific categories to always be true
-            categories.bug = true;
-            categories.cross_file = true;
-            categories.performance = true;
-            categories.kody_rules = true;
-            categories.security = true;
-            categories.breaking_changes = true;
-
-            const severityLevels: SeverityLevel[] = [
-                SeverityLevel.LOW,
-                SeverityLevel.MEDIUM,
-                SeverityLevel.HIGH,
-                SeverityLevel.CRITICAL,
-            ];
-
-            thresholds = this.getThresholds({
-                alignmentLevel,
-                values: Object.values(frequency.severity),
-            });
-            // traverses the severity levels in order of importance and returns the first one that has a frequency inside the threshold
-            const severity =
-                severityLevels.find((level) => {
-                    return (
-                        frequency.severity[level] >=
-                            thresholds.lowerThreshold &&
-                        frequency.severity[level] <= thresholds.upperThreshold
-                    );
-                }) || SeverityLevel.HIGH;
-
-            const defaultConfig =
-                await this.codeBaseConfigService.getDefaultConfigs();
-
-            const generatedConfig: CodeReviewConfig = {
-                ...defaultConfig,
-                reviewOptions: categories,
-                suggestionControl: {
-                    ...defaultConfig.suggestionControl,
-                    severityLevelFilter: SeverityLevel.HIGH,
-                },
-                summary: {
-                    ...defaultConfig.summary,
-                    behaviourForExistingDescription:
-                        BehaviourForExistingDescription.CONCATENATE,
-                },
-                kodyRulesGeneratorEnabled: true,
-            };
-
-            return generatedConfig;
-        } catch (error) {
-            this.logger.error({
-                message: 'Error generating code review parameter',
-                context: CommentAnalysisService.name,
-                error,
-                metadata: params,
-            });
-            return null;
-        }
-    }
-
-    private getThresholds(params: {
-        alignmentLevel?: AlignmentLevel;
-        values: number[];
-    }) {
-        const { alignmentLevel, values } = params;
-
-        if (!values || values.length === 0) {
-            return {
-                lowerThreshold: 0,
-                upperThreshold: 1,
-            };
-        }
-
-        // get the lower and upper bounds of the values with a slight buffer
-        const LOWER = Math.max(0, Math.min(...values) - 0.1);
-        const UPPER = Math.min(1, Math.max(...values) + 0.1);
-
-        // change mid weight to increase/decrease the skew
-        // 0.25 skewed towards lower threshold
-        // 0.5 balanced, aka mean average
-        // 0.75 skewed towards upper threshold
-        const MID = this.interpolation(LOWER, UPPER, 0.25);
-
-        let weight: number;
-        switch (alignmentLevel) {
-            // opposite of reference reviews, skews towards lower threshold
-            case AlignmentLevel.LOW:
-                weight = 0;
-                break;
-            // middle ground, balanced
-            case AlignmentLevel.MEDIUM:
-                weight = 0.5;
-                break;
-            // aligns with reference reviews, skews towards upper threshold
-            case AlignmentLevel.HIGH:
-                weight = 1;
-                break;
-            default:
-                weight = 1;
-        }
-
-        const lowerThreshold = this.interpolation(LOWER, MID, weight);
-
-        // if no alignment level is provided ignore the upper threshold
-        const upperThreshold = alignmentLevel
-            ? this.interpolation(MID, UPPER, weight)
-            : 1;
-
-        return {
-            lowerThreshold,
-            upperThreshold,
-        };
-    }
-
-    private interpolation(low: number, high: number, weight: number) {
-        return low + (high - low) * weight;
-    }
-
-    private parameterFrequencyAnalysis(
-        comments: CategorizedComment[],
-    ): CommentFrequency {
-        try {
-            const total = comments.length;
-
-            const count: CommentFrequency = {
-                categories: {
-                    breaking_changes: 0,
-                    bug: 0,
-                    code_style: 0,
-                    cross_file: 0,
-                    documentation_and_comments: 0,
-                    error_handling: 0,
-                    kody_rules: 0,
-                    maintainability: 0,
-                    performance: 0,
-                    performance_and_optimization: 0,
-                    potential_issues: 0,
-                    refactoring: 0,
-                    security: 0,
-                } as { [key in keyof ReviewOptions]: number },
-                severity: {
-                    critical: 0,
-                    high: 0,
-                    medium: 0,
-                    low: 0,
-                } as { [key in SeverityLevel]: number },
-            };
-
-            comments.forEach((comment) => {
-                const { category, severity } = comment;
-                count.categories[category] =
-                    (count.categories[category] || 0) + 1;
-                count.severity[severity] = (count.severity[severity] || 0) + 1;
-            });
-
-            const categories = this.getPercentages(count.categories, total);
-            const severity = this.getPercentages(count.severity, total);
-
-            return {
-                categories,
-                severity,
-            };
-        } catch (error) {
-            this.logger.error({
-                message: 'Error analyzing frequency',
-                context: CommentAnalysisService.name,
-                error,
-                metadata: comments,
-            });
-            return null;
         }
     }
 

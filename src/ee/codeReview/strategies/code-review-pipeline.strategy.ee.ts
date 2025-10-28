@@ -21,6 +21,11 @@ import { CreateFileCommentsStage } from '@/core/infrastructure/adapters/services
 import { CodeAnalysisASTCleanupStage } from '../stages/code-analysis-ast-cleanup.stage';
 import { ValidateNewCommitsStage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/validate-new-commits.stage';
 import { ResolveConfigStage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/resolve-config.stage';
+import {
+    ILoadExternalContextStage,
+    LOAD_EXTERNAL_CONTEXT_STAGE_TOKEN,
+} from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/contracts/loadExternalContextStage.contract';
+import { Inject } from '@nestjs/common';
 
 @Injectable()
 export class CodeReviewPipelineStrategyEE
@@ -31,6 +36,8 @@ export class CodeReviewPipelineStrategyEE
         private readonly resolveConfigStage: ResolveConfigStage,
         private readonly validateConfigStage: ValidateConfigStage,
         private readonly fetchChangedFilesStage: FetchChangedFilesStage,
+        @Inject(LOAD_EXTERNAL_CONTEXT_STAGE_TOKEN)
+        private readonly loadExternalContextStage: ILoadExternalContextStage,
         private readonly initialCommentStage: InitialCommentStage,
         private readonly kodyFineTuningStage: KodyFineTuningStage,
         private readonly codeAnalysisASTStage: CodeAnalysisASTStage,
@@ -54,6 +61,7 @@ export class CodeReviewPipelineStrategyEE
             this.resolveConfigStage,
             this.validateConfigStage,
             this.fetchChangedFilesStage,
+            this.loadExternalContextStage,
             this.initialCommentStage,
             this.kodyFineTuningStage,
             this.codeAnalysisASTStage,

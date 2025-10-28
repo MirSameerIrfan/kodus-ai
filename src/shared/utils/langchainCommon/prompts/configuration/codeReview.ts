@@ -1,8 +1,5 @@
 import { LimitationType } from '@/config/types/general/codeReview.type';
-import {
-    V2_DEFAULT_CATEGORY_DESCRIPTIONS_TEXT,
-    V2_DEFAULT_SEVERITY_FLAGS_TEXT,
-} from '@/shared/utils/codeReview/v2Defaults';
+import { getDefaultKodusConfigFile } from '@/shared/utils/validateCodeReviewConfigFile';
 
 export interface CodeReviewPayload {
     limitationType?: LimitationType;
@@ -28,6 +25,30 @@ export interface CodeReviewPayload {
                 medium?: string;
                 low?: string;
             };
+        };
+        generation?: {
+            main?: string;
+        };
+    };
+    // External prompt context (referenced files)
+    externalPromptContext?: {
+        customInstructions?: {
+            references?: any[];
+            error?: string;
+        };
+        categories?: {
+            bug?: { references?: any[]; error?: string };
+            performance?: { references?: any[]; error?: string };
+            security?: { references?: any[]; error?: string };
+        };
+        severity?: {
+            critical?: { references?: any[]; error?: string };
+            high?: { references?: any[]; error?: string };
+            medium?: { references?: any[]; error?: string };
+            low?: { references?: any[]; error?: string };
+        };
+        generation?: {
+            main?: { references?: any[]; error?: string };
         };
     };
 }
@@ -163,7 +184,7 @@ export const prompt_codereview_user_deepseek = (payload: CodeReviewPayload) => {
 You are Kody PR-Reviewer, a senior engineer specialized in code review and LLM understanding.
 
 # File Content
-${payload?.fileContent}
+${payload?.relevantContent || payload?.fileContent || ''}
 
 # Code Changes
 ${payload?.patchWithLinesStr}
@@ -491,6 +512,8 @@ export const prompt_codereview_system_gemini_v2 = (
 ) => {
     const languageNote = payload?.languageResultPrompt || 'en-US';
     const overrides = payload?.v2PromptOverrides || {};
+    const defaults = getDefaultKodusConfigFile()?.v2PromptOverrides;
+    const externalContext = payload?.externalPromptContext;
 
     // Build dynamic bullet lists with safe fallbacks
     const limitText = (text: string, max = 2000): string =>
@@ -503,33 +526,106 @@ export const prompt_codereview_system_gemini_v2 = (
             ? limitText(text.trim())
             : fallbackText;
 
-    const defaultBug = V2_DEFAULT_CATEGORY_DESCRIPTIONS_TEXT.bug;
-    const defaultPerf = V2_DEFAULT_CATEGORY_DESCRIPTIONS_TEXT.performance;
-    const defaultSec = V2_DEFAULT_CATEGORY_DESCRIPTIONS_TEXT.security;
+    // Helper to inject external context into prompt text
+    const injectExternalContext = (
+        baseText: string,
+        references: any[] | undefined,
+    ): string => {
+        if (!references || references.length === 0) {
+            return baseText;
+        }
 
-    const bugText = getTextOrDefault(
+        const contextSection = references
+            .map((ref) => {
+                const header = ref.lineRange
+                    ? `\n--- Content from ${ref.filePath} (lines ${ref.lineRange.start}-${ref.lineRange.end}) ---\n`
+                    : `\n--- Content from ${ref.filePath} ---\n`;
+                return `${header}${ref.content}\n--- End of ${ref.filePath} ---`;
+            })
+            .join('\n');
+
+        return `${baseText}\n\n## External Reference Context\n${contextSection}`;
+    };
+
+    const defaultCategories = defaults?.categories?.descriptions;
+
+    const defaultBug = defaultCategories?.bug;
+    const defaultPerf = defaultCategories?.performance;
+    const defaultSec = defaultCategories?.security;
+
+    // ✅ Get base text and inject external context
+    const bugTextBase = getTextOrDefault(
         overrides?.categories?.descriptions?.bug,
         defaultBug,
     );
-    const perfText = getTextOrDefault(
+    const bugText = injectExternalContext(
+        bugTextBase,
+        externalContext?.categories?.bug?.references,
+    );
+
+    const perfTextBase = getTextOrDefault(
         overrides?.categories?.descriptions?.performance,
         defaultPerf,
     );
-    const secText = getTextOrDefault(
+    const perfText = injectExternalContext(
+        perfTextBase,
+        externalContext?.categories?.performance?.references,
+    );
+
+    const secTextBase = getTextOrDefault(
         overrides?.categories?.descriptions?.security,
         defaultSec,
     );
+    const secText = injectExternalContext(
+        secTextBase,
+        externalContext?.categories?.security?.references,
+    );
 
-    const defaultCritical = V2_DEFAULT_SEVERITY_FLAGS_TEXT.critical;
-    const defaultHigh = V2_DEFAULT_SEVERITY_FLAGS_TEXT.high;
-    const defaultMedium = V2_DEFAULT_SEVERITY_FLAGS_TEXT.medium;
-    const defaultLow = V2_DEFAULT_SEVERITY_FLAGS_TEXT.low;
+    const defaultSeverity = defaults?.severity?.flags;
+
+    const defaultCritical = defaultSeverity?.critical;
+    const defaultHigh = defaultSeverity?.high;
+    const defaultMedium = defaultSeverity?.medium;
+    const defaultLow = defaultSeverity?.low;
 
     const sev = overrides?.severity?.flags || {};
-    const criticalText = getTextOrDefault(sev.critical, defaultCritical);
-    const highText = getTextOrDefault(sev.high, defaultHigh);
-    const mediumText = getTextOrDefault(sev.medium, defaultMedium);
-    const lowText = getTextOrDefault(sev.low, defaultLow);
+
+    // ✅ Get base text and inject external context for severity
+    const criticalTextBase = getTextOrDefault(sev.critical, defaultCritical);
+    const criticalText = injectExternalContext(
+        criticalTextBase,
+        externalContext?.severity?.critical?.references,
+    );
+
+    const highTextBase = getTextOrDefault(sev.high, defaultHigh);
+    const highText = injectExternalContext(
+        highTextBase,
+        externalContext?.severity?.high?.references,
+    );
+
+    const mediumTextBase = getTextOrDefault(sev.medium, defaultMedium);
+    const mediumText = injectExternalContext(
+        mediumTextBase,
+        externalContext?.severity?.medium?.references,
+    );
+
+    const lowTextBase = getTextOrDefault(sev.low, defaultLow);
+    const lowText = injectExternalContext(
+        lowTextBase,
+        externalContext?.severity?.low?.references,
+    );
+
+    const defaultGeneration = defaults?.generation;
+
+    // ✅ Get base text and inject external context for generation
+    const mainGenTextBase = getTextOrDefault(
+        overrides?.generation?.main,
+        defaultGeneration?.main,
+    );
+    const mainGenText = injectExternalContext(
+        mainGenTextBase,
+        externalContext?.generation?.main?.references,
+    );
 
     return `You are Kody Bug-Hunter, a senior engineer specialized in identifying verifiable issues through mental code execution. Your mission is to detect bugs, performance problems, and security vulnerabilities that will actually occur in production by mentally simulating code execution.
 
@@ -625,6 +721,7 @@ ${lowText}
 - **NO potential issues** - Only report issues you can reproduce mentally with specific inputs
 - **NO "in production this could..."** - Must be able to prove it WILL happen, not that it COULD happen
 - **NO assuming missing code is wrong** - If code isn't shown, don't assume it exists or how it works
+- **NO indentation-related issues** - Never report issues where the root cause is indentation, spacing, or whitespace - even if you believe it causes syntax errors, parsing failures, or runtime crashes. Indentation problems are NOT bugs.
 - **ONLY report if you can provide**:
   1. Exact input values that trigger the issue
   2. Step-by-step execution trace showing the failure
@@ -644,6 +741,7 @@ ${lowText}
 4. **Test concrete scenarios** on each path with realistic inputs
 5. **Detect verifiable issues** where behavior is definitively problematic
 6. **Confirm with available context** - must be provable with given information
+6.5. **Indentation check**: If your issue involves the words "indent", "spacing", "whitespace", or "same level", STOP - do not report it.
 7. **Assess severity** of confirmed issues based on impact and scope
 
 
@@ -656,7 +754,16 @@ ${lowText}
 - Always respond in ${languageNote} language
 - Return ONLY the JSON object, no additional text
 
-Return only valid JSON, nothing more:
+### Issue description
+
+Custom instructions for 'suggestionContent'
+IMPORTANT none of these instructions should be taken into consideration for any other fields such as 'improvedCode'
+
+${mainGenText}
+
+### Response format
+
+Return only valid JSON, nothing more. Under no circumstances should there be any text of any kind before the \`\`\`json or after the final \`\`\`, use the following JSON format:
 
 \`\`\`json
 {
@@ -664,7 +771,7 @@ Return only valid JSON, nothing more:
         {
             "relevantFile": "path/to/file",
             "language": "programming_language",
-            "suggestionContent": "Detailed and verifiable issue description",
+            "suggestionContent": "The full issue description",
             "existingCode": "Problematic code from PR",
             "improvedCode": "Fixed code proposal",
             "oneSentenceSummary": "Concise issue description",
@@ -692,7 +799,7 @@ ${payload?.prSummary || ''}
 
 Complete File Content:
 \`\`\`
-${payload?.fileContent || ''}
+${payload?.relevantContent || payload?.fileContent || ''}
 \`\`\`
 
 Code Diff (PR Changes):

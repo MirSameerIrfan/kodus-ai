@@ -27,6 +27,12 @@ import { ISuggestion } from '@/core/domain/pullRequests/interfaces/pullRequests.
 import { LabelType } from '@/shared/utils/codeManagement/labels';
 import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
 import { CacheService } from '@/shared/utils/cache/cache.service';
+import {
+    IParametersService,
+    PARAMETERS_SERVICE_TOKEN,
+} from '@/core/domain/parameters/contracts/parameters.service.contract';
+import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+import { IssueCreationConfig } from '@/core/domain/issues/entities/issue-creation-config.entity';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
 
@@ -49,6 +55,9 @@ export class KodyIssuesManagementService
         @Inject(PULL_REQUEST_MANAGER_SERVICE_TOKEN)
         private pullRequestHandlerService: IPullRequestManagerService,
 
+        @Inject(PARAMETERS_SERVICE_TOKEN)
+        private readonly parametersService: IParametersService,
+
         private readonly cacheService: CacheService,
 
         private readonly permissionValidationService: PermissionValidationService,
@@ -70,38 +79,65 @@ export class KodyIssuesManagementService
 
             const byokConfig = validationResult.byokConfig ?? null;
 
-            this.logger.log({
-                message: `Starting issue processing for closed PR#${params.pullRequest.number}`,
-                context: KodyIssuesManagementService.name,
-                metadata: params,
-            });
+            const issuesConfig = await this.parametersService.findByKey(
+                ParametersKey.ISSUE_CREATION_CONFIG,
+                params.organizationAndTeamData,
+            );
 
-            // 1. Buscar suggestions não implementadas do PR
-            const allSuggestions =
-                await this.filterValidSuggestionsFromPrByStatus(params.prFiles);
+            const issuesConfigValue = issuesConfig?.configValue;
 
-            if (allSuggestions.length === 0) {
+            const shouldAutomaticallyCreateIssues = issuesConfigValue !== false;
+
+            if (shouldAutomaticallyCreateIssues) {
                 this.logger.log({
-                    message: `No suggestions found for PR#${params.pullRequest.number}`,
+                    message: `Starting issue processing for closed PR#${params.pullRequest.number}`,
                     context: KodyIssuesManagementService.name,
                     metadata: params,
                 });
-            }
 
-            // 2. Agrupar por arquivo
-            const suggestionsByFile =
-                this.groupSuggestionsByFile(allSuggestions);
+                // 1. Buscar suggestions não implementadas do PR
+                const allSuggestions =
+                    await this.filterValidSuggestionsFromPrByStatus(
+                        params.prFiles,
+                    );
 
-            // 3. Para cada arquivo, fazer merge com issues existentes
-            const changedFiles = Object.keys(suggestionsByFile);
-
-            for (const filePath of changedFiles) {
-                await this.mergeSuggestionsIntoIssues(
-                    params,
-                    filePath,
-                    suggestionsByFile[filePath],
-                    byokConfig,
+                const filteredSuggestions = this.applyIssuesFilters(
+                    issuesConfigValue,
+                    allSuggestions,
                 );
+
+                if (filteredSuggestions.length === 0) {
+                    this.logger.log({
+                        message: `No suggestions found to create issue for PR#${params.pullRequest.number}`,
+                        context: KodyIssuesManagementService.name,
+                        metadata: params,
+                    });
+                }
+
+                // 2. Agrupar por arquivo
+                const suggestionsByFile =
+                    this.groupSuggestionsByFile(filteredSuggestions);
+
+                // 3. Para cada arquivo, fazer merge com issues existentes
+                const changedFiles = Object.keys(suggestionsByFile);
+
+                for (const filePath of changedFiles) {
+                    await this.mergeSuggestionsIntoIssues(
+                        params,
+                        filePath,
+                        suggestionsByFile[filePath],
+                        byokConfig,
+                    );
+                }
+            } else {
+                this.logger.log({
+                    message: 'Automatic Issues creation is disabled',
+                    context: KodyIssuesManagementService.name,
+                    metadata: {
+                        pullRequest: params.pullRequest,
+                        organizationAndTeamData: params.organizationAndTeamData,
+                    },
+                });
             }
 
             // 4. Resolver issues que podem ter sido corrigidas
@@ -248,7 +284,7 @@ export class KodyIssuesManagementService
                             id: suggestion.id,
                             prNumber: context.pullRequest.number,
                             prAuthor: {
-                                id: pullRequest?.user?.id || '',
+                                id: pullRequest?.user?.id.toString() || '',
                                 name: pullRequest?.user?.name || '',
                             },
                         },
@@ -262,6 +298,14 @@ export class KodyIssuesManagementService
                     organizationId:
                         context.organizationAndTeamData.organizationId,
                     status: IssueStatus.OPEN,
+                    owner: {
+                        gitId: pullRequest.user.id,
+                        username: pullRequest.user.username,
+                    },
+                    reporter: {
+                        gitId: 'kodus',
+                        username: 'Kodus',
+                    },
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString(),
                 });
@@ -616,6 +660,48 @@ export class KodyIssuesManagementService
                 },
             });
         }
+    }
+
+    private applyIssuesFilters(
+        issuesConfigValue: IssueCreationConfig,
+        allSuggestions: CodeSuggestion[],
+    ): CodeSuggestion[] {
+        if (!issuesConfigValue) {
+            return allSuggestions;
+        }
+
+        const { severityFilters, sourceFilters } = issuesConfigValue;
+
+        return allSuggestions.filter((suggestion) => {
+            const severity = suggestion?.severity as any;
+
+            if (severityFilters?.minimumSeverity) {
+                const order = Object.values(SeverityLevel);
+                const idx = order.indexOf(severity);
+                const minIdx = order.indexOf(
+                    severityFilters.minimumSeverity as any,
+                );
+
+                if (idx > minIdx) return false;
+            }
+            if (
+                severityFilters?.allowedSeverities?.length &&
+                !severityFilters.allowedSeverities.includes(severity)
+            )
+                return false;
+
+            if (
+                !sourceFilters?.includeCodeReviewEngine &&
+                suggestion?.label !== 'kody_rules'
+            )
+                return false;
+            if (
+                !sourceFilters?.includeKodyRules &&
+                suggestion?.label === 'kody_rules'
+            )
+                return false;
+            return true;
+        });
     }
     //#endregion
 }

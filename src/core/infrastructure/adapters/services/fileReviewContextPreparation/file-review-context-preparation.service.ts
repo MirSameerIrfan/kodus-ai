@@ -11,7 +11,7 @@ import {
 import { PinoLoggerService } from '../logger/pino.service';
 import { BaseFileReviewContextPreparation } from './base-file-review-context-preparation.service';
 import { ReviewModeOptions } from '@/shared/interfaces/file-review-context-preparation.interface';
-import { TaskStatus } from '@kodus/kodus-proto/task';
+import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 
 @Injectable()
@@ -29,11 +29,16 @@ export class FileReviewContextPreparation extends BaseFileReviewContextPreparati
 
     protected getRelevantFileContent(
         file: FileChange,
-    ): Promise<{ relevantContent: string | null; taskStatus?: TaskStatus }> {
+    ): Promise<{
+        relevantContent: string | null;
+        taskStatus?: TaskStatus;
+        hasRelevantContent?: boolean;
+    }> {
         // In the standard version, we return the file content directly
         // without any additional processing
         return Promise.resolve({
             relevantContent: file.content || null,
+            hasRelevantContent: false,
             taskStatus: TaskStatus.TASK_STATUS_FAILED,
         });
     }

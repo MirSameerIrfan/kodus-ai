@@ -5,7 +5,6 @@ import {
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
 } from '@/core/domain/pullRequestMessages/contracts/pullRequestMessages.service.contract';
 import { IPullRequestMessages } from '@/core/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
-import { REQUEST } from '@nestjs/core';
 import { ConfigLevel } from '@/config/types/general/pullRequestMessages.type';
 import { ActionType } from '@/config/types/general/codeReviewSettingsLog.type';
 import {
@@ -13,9 +12,19 @@ import {
     ICodeReviewSettingsLogService,
 } from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
 
-import { GetAdditionalInfoHelper } from '@/shared/utils/helpers/getAdditionalInfo.helper';
+import {
+    IGetAdditionalInfoHelper,
+    GET_ADDITIONAL_INFO_HELPER_TOKEN,
+} from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { PullRequestMessagesLogParams } from '@/ee/codeReviewSettingsLog/services/pullRequestMessageLog.handler';
+import { IUser } from '@/core/domain/user/interfaces/user.interface';
+import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
+import {
+    Action,
+    ResourceType,
+} from '@/core/domain/permissions/enums/permissions.enum';
+import { getDefaultKodusConfigFile } from '@/shared/utils/validateCodeReviewConfigFile';
 
 @Injectable()
 export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
@@ -26,27 +35,30 @@ export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
         @Inject(CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN)
         private readonly codeReviewSettingsLogService: ICodeReviewSettingsLogService,
 
-        private readonly getAdditionalInfoHelper: GetAdditionalInfoHelper,
+        @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
+        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
 
         private readonly logger: PinoLoggerService,
 
-        @Inject(REQUEST)
-        private readonly request: Request & {
-            user: {
-                id: string;
-                email: string;
-                organization: { uuid: string };
-            };
-        },
+        private readonly authorizationService: AuthorizationService,
     ) {}
 
-    async execute(pullRequestMessages: IPullRequestMessages): Promise<void> {
-        if (!this.request.user.organization.uuid) {
-            throw new Error('Organization ID not found');
+    async execute(
+        userInfo: Partial<IUser>,
+        pullRequestMessages: IPullRequestMessages,
+    ): Promise<void> {
+        if (!userInfo?.organization?.uuid) {
+            throw new Error('Organization ID is required in user info');
         }
 
-        pullRequestMessages.organizationId =
-            this.request.user.organization.uuid;
+        this.authorizationService.ensure({
+            user: userInfo,
+            action: Action.Create,
+            resource: ResourceType.CodeReviewSettings,
+            repoIds: [pullRequestMessages.repositoryId || 'global'],
+        });
+
+        pullRequestMessages.organizationId = userInfo?.organization?.uuid;
 
         if (pullRequestMessages?.configLevel === ConfigLevel.GLOBAL) {
             pullRequestMessages.repositoryId = 'global';
@@ -61,6 +73,49 @@ export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
 
         const isUpdate = !!existingPullRequestMessage;
 
+        // For non-global configurations, check if content matches global/parent config
+        // If it does, delete the specific config to inherit instead of creating/updating
+        if (pullRequestMessages.configLevel !== ConfigLevel.GLOBAL) {
+            const shouldInherit = await this.shouldInheritFromParent(pullRequestMessages);
+            
+            if (shouldInherit && existingPullRequestMessage) {
+                // Delete existing configuration to inherit from parent
+                await this.pullRequestMessagesService.deleteByFilter({
+                    organizationId: pullRequestMessages.organizationId,
+                    repositoryId: pullRequestMessages.repositoryId,
+                    directoryId: pullRequestMessages.directoryId,
+                    configLevel: pullRequestMessages.configLevel,
+                });
+                
+                this.logger.log({
+                    message: 'Deleted repository/directory configuration to inherit from parent',
+                    context: CreateOrUpdatePullRequestMessagesUseCase.name,
+                    metadata: {
+                        organizationId: pullRequestMessages.organizationId,
+                        configLevel: pullRequestMessages.configLevel,
+                        repositoryId: pullRequestMessages.repositoryId,
+                        directoryId: pullRequestMessages.directoryId,
+                    },
+                });
+                return;
+            }
+            
+            if (shouldInherit && !existingPullRequestMessage) {
+                // No need to create config if it matches parent - just inherit
+                this.logger.log({
+                    message: 'Configuration matches parent, no action needed - inheriting',
+                    context: CreateOrUpdatePullRequestMessagesUseCase.name,
+                    metadata: {
+                        organizationId: pullRequestMessages.organizationId,
+                        configLevel: pullRequestMessages.configLevel,
+                        repositoryId: pullRequestMessages.repositoryId,
+                        directoryId: pullRequestMessages.directoryId,
+                    },
+                });
+                return;
+            }
+        }
+
         if (isUpdate) {
             await this.pullRequestMessagesService.update(pullRequestMessages);
         } else {
@@ -73,8 +128,8 @@ export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
                     organizationId: pullRequestMessages.organizationId,
                 },
                 userInfo: {
-                    userId: this.request.user.id,
-                    userEmail: this.request.user.email,
+                    userId: userInfo?.uuid,
+                    userEmail: userInfo?.email,
                 },
                 actionType: ActionType.EDIT,
                 configLevel: pullRequestMessages.configLevel,
@@ -139,5 +194,151 @@ export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
         }
 
         return await this.pullRequestMessagesService.findOne(searchCriteria);
+    }
+
+    private async shouldInheritFromParent(
+        pullRequestMessages: IPullRequestMessages,
+    ): Promise<boolean> {
+        try {
+            const parentConfig = await this.getResolvedParentConfig(
+                pullRequestMessages.organizationId,
+                pullRequestMessages.configLevel,
+                pullRequestMessages.repositoryId,
+                pullRequestMessages.directoryId,
+            );
+
+            return this.areConfigurationsEqual(pullRequestMessages, parentConfig);
+        } catch (error) {
+            this.logger.error({
+                message: 'Error checking if should inherit from parent',
+                context: CreateOrUpdatePullRequestMessagesUseCase.name,
+                error,
+                metadata: {
+                    organizationId: pullRequestMessages.organizationId,
+                    configLevel: pullRequestMessages.configLevel,
+                    repositoryId: pullRequestMessages.repositoryId,
+                    directoryId: pullRequestMessages.directoryId,
+                },
+            });
+            return false;
+        }
+    }
+
+    private async getResolvedParentConfig(
+        organizationId: string,
+        configLevel: ConfigLevel,
+        repositoryId?: string,
+        directoryId?: string,
+    ): Promise<IPullRequestMessages> {
+        const { customMessages: defaultConfig } = getDefaultKodusConfigFile();
+
+        // Get global configuration
+        const globalEntity = await this.pullRequestMessagesService.findOne({
+            organizationId,
+            configLevel: ConfigLevel.GLOBAL,
+        });
+        const globalConfig = this.extractConfig(globalEntity);
+
+        if (configLevel === ConfigLevel.REPOSITORY) {
+            // For repository level, parent is global (or default if no global)
+            return this.mergeConfigs(defaultConfig, globalConfig);
+        }
+
+        if (configLevel === ConfigLevel.DIRECTORY) {
+            // For directory level, get repository config and merge hierarchy
+            const repoEntity = await this.pullRequestMessagesService.findOne({
+                organizationId,
+                repositoryId,
+                configLevel: ConfigLevel.REPOSITORY,
+            });
+            const repoConfig = this.extractConfig(repoEntity);
+
+            // Merge: default -> global -> repo
+            const merged = this.mergeConfigs(defaultConfig, globalConfig);
+            return this.mergeConfigs(merged, repoConfig);
+        }
+
+        return this.normalizeConfig(defaultConfig);
+    }
+
+    private mergeConfigs(
+        baseConfig: any,
+        overrideConfig: Partial<IPullRequestMessages>,
+    ): IPullRequestMessages {
+        return {
+            startReviewMessage: overrideConfig.startReviewMessage || baseConfig.startReviewMessage,
+            endReviewMessage: overrideConfig.endReviewMessage || baseConfig.endReviewMessage,
+            globalSettings: {
+                hideComments: overrideConfig.globalSettings?.hideComments ?? baseConfig.globalSettings?.hideComments ?? false,
+            },
+        } as IPullRequestMessages;
+    }
+
+    private normalizeConfig(config: any): IPullRequestMessages {
+        return {
+            startReviewMessage: config.startReviewMessage,
+            endReviewMessage: config.endReviewMessage,
+            globalSettings: config.globalSettings || { hideComments: false },
+        } as IPullRequestMessages;
+    }
+
+    private extractConfig(entity: any): Partial<IPullRequestMessages> {
+        if (!entity) {
+            return {};
+        }
+
+        const json = entity.toJson ? entity.toJson() : entity;
+        return {
+            startReviewMessage: json?.startReviewMessage,
+            endReviewMessage: json?.endReviewMessage,
+            globalSettings: json?.globalSettings,
+        };
+    }
+
+    private areConfigurationsEqual(
+        config1: IPullRequestMessages,
+        config2: IPullRequestMessages,
+    ): boolean {
+        // Compare startReviewMessage
+        if (!this.areMessagesEqual(config1.startReviewMessage, config2.startReviewMessage)) {
+            return false;
+        }
+
+        // Compare endReviewMessage
+        if (!this.areMessagesEqual(config1.endReviewMessage, config2.endReviewMessage)) {
+            return false;
+        }
+
+        // Compare globalSettings
+        if (!this.areGlobalSettingsEqual(config1.globalSettings, config2.globalSettings)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private areMessagesEqual(
+        message1: any,
+        message2: any,
+    ): boolean {
+        // Handle null/undefined cases
+        if (!message1 && !message2) return true;
+        if (!message1 || !message2) return false;
+
+        return (
+            message1.content === message2.content &&
+            message1.status === message2.status
+        );
+    }
+
+    private areGlobalSettingsEqual(
+        settings1: any,
+        settings2: any,
+    ): boolean {
+        // Handle null/undefined cases
+        if (!settings1 && !settings2) return true;
+        if (!settings1 || !settings2) return false;
+
+        return settings1.hideComments === settings2.hideComments;
     }
 }

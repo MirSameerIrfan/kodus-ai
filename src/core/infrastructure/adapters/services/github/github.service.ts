@@ -62,7 +62,10 @@ import { decrypt, encrypt } from '@/shared/utils/crypto';
 import { AuthMode } from '@/core/domain/platformIntegrations/enums/codeManagement/authMode.enum';
 import { CodeManagementConnectionStatus } from '@/shared/utils/decorators/validate-code-management-integration.decorator';
 import { CacheService } from '@/shared/utils/cache/cache.service';
-import { GitHubReaction, GitlabReaction } from '@/core/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
+import {
+    GitHubReaction,
+    GitlabReaction,
+} from '@/core/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
 import {
     getTranslationsForLanguageByCategory,
     TranslationsCategory,
@@ -85,7 +88,10 @@ import {
     RepositoryFile,
     RepositoryFileWithContent,
 } from '@/core/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
-import { isFileMatchingGlob } from '@/shared/utils/glob-utils';
+import {
+    isFileMatchingGlob,
+    isFileMatchingGlobCaseInsensitive,
+} from '@/shared/utils/glob-utils';
 import pLimit from 'p-limit';
 import { MCPManagerService } from '../../mcp/services/mcp-manager.service';
 
@@ -232,6 +238,7 @@ export class GithubService
                 params.configValue,
                 integration?.uuid,
                 params.organizationAndTeamData,
+                params.type,
             );
 
             const githubAuthDetail = await this.getGithubAuthDetails(
@@ -455,12 +462,14 @@ export class GithubService
      * @returns owner correto para usar nas chamadas de API
      */
     private async getCorrectOwner(
-        githubAuthDetail: any,
+        githubAuthDetail: GithubAuthDetail,
         octokit: any,
     ): Promise<string> {
         // Usar cache do accountType se disponível
         if (githubAuthDetail.accountType) {
             if (githubAuthDetail.accountType === 'organization') {
+                return githubAuthDetail.org;
+            } else if (githubAuthDetail.authMode === AuthMode.OAUTH) {
                 return githubAuthDetail.org;
             } else {
                 // Para contas pessoais, usar o nome do usuário autenticado
@@ -4001,7 +4010,7 @@ export class GithubService
                 owner: githubAuthDetail?.org,
                 repo: filters?.repository?.name ?? filters?.repository,
                 pull_number: filters?.pullRequestNumber,
-                per_page: 200, // You can adjust this value as needed
+                per_page: 200,
             },
         );
 
@@ -4360,7 +4369,7 @@ export class GithubService
                 if (
                     filePatterns &&
                     filePatterns.length > 0 &&
-                    !isFileMatchingGlob(file.path, filePatterns)
+                    !isFileMatchingGlobCaseInsensitive(file.path, filePatterns)
                 ) {
                     continue;
                 }

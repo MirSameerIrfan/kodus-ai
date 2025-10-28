@@ -1183,13 +1183,22 @@ export class SpecCompliantMCPClient extends EventEmitter<MCPClientEvents> {
                 }
                 return new StreamableHTTPClientTransport(
                     new URL(transport.url),
+                    {
+                        requestInit: {
+                            headers: transport.headers,
+                        },
+                    },
                 );
 
             case 'sse':
                 if (!transport.url) {
                     throw new Error('URL required for SSE transport');
                 }
-                return new SSEClientTransport(new URL(transport.url));
+                return new SSEClientTransport(new URL(transport.url), {
+                    requestInit: {
+                        headers: transport.headers,
+                    },
+                });
 
             default:
                 throw new Error(`Unsupported transport: ${transport.type}`);

@@ -112,12 +112,18 @@ export class CodeManagementController {
         checkPermissions(Action.Create, ResourceType.CodeReviewSettings),
     )
     public async createRepositories(
-        @Body() body: { repositories: Repository[]; teamId: string },
+        @Body() body: { repositories: Repository[]; teamId: string; type?: "replace" | "append" },
     ) {
         return this.createRepositoriesUseCase.execute(body);
     }
 
-    // TODO: remove, unused
+    @Get('/organization-members')
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(checkPermissions(Action.Read, ResourceType.UserSettings))
+    public async getOrganizationMembers() {
+        return this.getCodeManagementMemberListUseCase.execute();
+    }
+
     @Get('/list-members')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Read, ResourceType.UserSettings))
@@ -125,7 +131,6 @@ export class CodeManagementController {
         return this.getCodeManagementMemberListUseCase.execute();
     }
 
-    // TODO: remove, unused
     @Get('/organizations')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Read, ResourceType.GitSettings))

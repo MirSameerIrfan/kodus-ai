@@ -3,6 +3,7 @@ import {
     IPullRequests,
     IFile,
     ISuggestion,
+    IPullRequestWithDeliveredSuggestions,
 } from '../interfaces/pullRequests.interface';
 import { DeliveryStatus } from '../enums/deliveryStatus.enum';
 import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
@@ -55,6 +56,11 @@ export interface IPullRequestsRepository {
         prNumber: number,
         deliveryStatus: DeliveryStatus,
     ): Promise<ISuggestion[]>;
+    findPullRequestsWithDeliveredSuggestions(
+        organizationId: string,
+        prNumbers: number[],
+        status: string | string[],
+    ): Promise<IPullRequestWithDeliveredSuggestions[]>;
     findByOrganizationAndRepositoryWithStatusAndSyncedFlag(
         organizationId: string,
         repository: Pick<Repository, 'id' | 'fullName'>,

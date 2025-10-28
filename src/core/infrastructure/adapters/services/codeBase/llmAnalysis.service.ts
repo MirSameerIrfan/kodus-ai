@@ -282,7 +282,7 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
 
                         return await promptRunner
                             .builder()
-                            .setParser(ParserType.ZOD, schema as any, {
+                            .setParser(ParserType.ZOD, schema, {
                                 provider: LLMModelProvider.OPENAI_GPT_4O_MINI,
                                 fallbackProvider:
                                     LLMModelProvider.OPENAI_GPT_4O,
@@ -307,6 +307,8 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
                             .setTemperature(0)
                             .addCallbacks(callbacks)
                             .addMetadata({
+                                hasRelevantContent:
+                                    baseContext?.hasRelevantContent,
                                 organizationId:
                                     baseContext?.organizationAndTeamData
                                         ?.organizationId,
@@ -391,9 +393,12 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
                 context?.codeReviewConfig?.suggestionControl?.groupingMode,
             organizationAndTeamData: context?.organizationAndTeamData,
             relevantContent: fileContext?.relevantContent,
+            hasRelevantContent: fileContext?.hasRelevantContent,
             prSummary: context?.pullRequest?.body,
             // v2-only prompt customization (categories and severity guidance)
             v2PromptOverrides: context?.codeReviewConfig?.v2PromptOverrides,
+            // External prompt context (referenced files)
+            externalPromptContext: context?.externalPromptContext,
         };
 
         return baseContext;

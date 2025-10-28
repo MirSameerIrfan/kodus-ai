@@ -5,14 +5,19 @@ import { IKodyRule } from '@/core/domain/kodyRules/interfaces/kodyRules.interfac
 import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
 import { ImplementationStatus } from '@/core/domain/pullRequests/enums/implementationStatus.enum';
 import { LLMModelProvider } from '@kodus/kodus-common/llm';
-import { GetImpactAnalysisResponse } from '@kodus/kodus-proto/ast';
-import { TaskStatus } from '@kodus/kodus-proto/task';
+import {
+    GetImpactAnalysisResponse,
+    TaskStatus,
+} from '@/ee/kodyAST/codeASTAnalysis.service';
 import { ISuggestionByPR } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
 import { ConfigLevel } from './pullRequestMessages.type';
 import z from 'zod';
 import { CodeReviewPipelineContext } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/context/code-review-pipeline.context';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 import { IClusterizedSuggestion } from '@/core/domain/kodyFineTuning/interfaces/kodyFineTuning.interface';
+import { DeepPartial } from 'typeorm';
+import { IPullRequestMessages } from '@/core/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
+
 export interface IFinalAnalysisResult {
     validSuggestionsToAnalyze: Partial<CodeSuggestion>[];
     discardedSuggestionsBySafeGuard: Partial<CodeSuggestion>[];
@@ -75,8 +80,10 @@ export type AnalysisContext = {
         astAnalysis?: {
             taskId: string;
             status?: TaskStatus;
+            hasRelevantContent?: boolean;
         };
     };
+    externalPromptContext?: any;
     correlationId: string;
 };
 
@@ -173,6 +180,7 @@ export type FileChangeContext = {
     file: FileChange;
     relevantContent?: string | null;
     patchWithLinesStr?: string;
+    hasRelevantContent?: boolean;
 };
 
 export type Comment = {
@@ -307,7 +315,6 @@ export type CodeReviewConfig = {
     reviewModeConfig?: ReviewModeConfig;
     ideRulesSyncEnabled?: boolean;
     kodyFineTuningConfig?: KodyFineTuningConfig;
-    isCommitMode?: boolean;
     configLevel?: ConfigLevel;
     directoryId?: string;
     directoryPath?: string;
@@ -342,6 +349,9 @@ export type CodeReviewConfig = {
                 low?: string;
             };
         };
+        generation?: {
+            main?: string;
+        };
     };
     // This is the default branch of the repository, used only during the review process
     // This field is populated dynamically from the API (GitHub/GitLab) and should NOT be saved to the database
@@ -369,15 +379,14 @@ export type CodeReviewConfigWithRepositoryInfo = Omit<
 };
 
 // Omit every configuration that isn't present on the kodus configuration file.
-export type KodusConfigFile = Omit<
-    CodeReviewConfig,
-    | 'llmProvider'
-    | 'languageResultPrompt'
-    | 'kodyRules'
-    | 'kodusConfigFileOverridesWebPreferences'
-    | 'kodyRulesGeneratorEnabled'
+export type KodusConfigFile = DeepPartial<
+    Omit<CodeReviewConfig, 'llmProvider' | 'languageResultPrompt' | 'kodyRules'>
 > & {
     version: string;
+    customMessages?: Pick<
+        IPullRequestMessages,
+        'startReviewMessage' | 'endReviewMessage' | 'globalSettings'
+    >;
 };
 
 export enum ReviewModeResponse {

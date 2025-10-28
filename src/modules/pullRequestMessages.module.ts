@@ -11,6 +11,7 @@ import { CodeReviewSettingsLogModule } from './codeReviewSettingsLog.module';
 import { CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN } from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
 import { CodeReviewSettingsLogService } from '@/ee/codeReviewSettingsLog/services/codeReviewSettingsLog.service';
 import { GetAdditionalInfoHelper } from '@/shared/utils/helpers/getAdditionalInfo.helper';
+import { GET_ADDITIONAL_INFO_HELPER_TOKEN } from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
 import { IntegrationModule } from './integration.module';
 import { IntegrationConfigModule } from './integrationConfig.module';
 import { ParametersModule } from './parameters.module';
@@ -37,7 +38,10 @@ import { DeleteByRepositoryOrDirectoryPullRequestMessagesUseCase } from '@/core/
         //     provide: CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
         //     useClass: CodeReviewSettingsLogService,
         // },
-        GetAdditionalInfoHelper,
+        {
+            provide: GET_ADDITIONAL_INFO_HELPER_TOKEN,
+            useClass: GetAdditionalInfoHelper,
+        },
         ...PullRequestMessagesUseCases,
     ],
     exports: [

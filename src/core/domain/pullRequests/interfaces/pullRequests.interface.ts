@@ -175,3 +175,25 @@ export interface ISuggestionByPR {
     createdAt?: string;
     updatedAt?: string;
 }
+
+export interface IDeliveredSuggestion {
+    id: string;
+    deliveryStatus: DeliveryStatus;
+    comment: {
+        id: number | string;
+        pullRequestReviewId: number | null;
+    };
+}
+
+export interface IPullRequestWithDeliveredSuggestions {
+    _id: string;
+    number: number;
+    organizationId: string;
+    status: string;
+    provider: string;
+    repository: {
+        id: string;
+        name: string;
+    };
+    suggestions: IDeliveredSuggestion[];
+}

@@ -8,7 +8,7 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import { PinoLoggerService } from '../logger/pino.service';
 import { CodeReviewPipelineContext } from './codeReviewPipeline/context/code-review-pipeline.context';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { TaskStatus } from '@kodus/kodus-proto/task';
+import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
 import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
 import { ConfigService } from '@nestjs/config';
 import { DatabaseConnection } from '@/config/types';
@@ -110,6 +110,7 @@ export class CodeReviewHandlerService {
                         status: TaskStatus.TASK_STATUS_UNSPECIFIED,
                     },
                 },
+                externalPromptContext: {},
                 correlationId: executionId,
             };
 

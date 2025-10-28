@@ -58,11 +58,7 @@ import {
 import { Response as BitbucketResponse } from 'bitbucket/src/request/types';
 import { CreateAuthIntegrationStatus } from '@/shared/domain/enums/create-auth-integration-status.enum';
 import { IRepository } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
-import {
-    KODY_CODE_REVIEW_COMPLETED_MARKER,
-    KODY_CRITICAL_ISSUE_COMMENT_MARKER,
-    KODY_START_COMMAND_MARKER,
-} from '@/shared/utils/codeManagement/codeCommentMarkers';
+import { hasKodyMarker } from '@/shared/utils/codeManagement/codeCommentMarkers';
 import {
     MODEL_STRATEGIES,
     LLMModelProvider,
@@ -72,7 +68,10 @@ import { ConfigService } from '@nestjs/config';
 import { AuthorContribution } from '@/core/domain/pullRequests/interfaces/authorContributor.interface';
 import { GitCloneParams } from '@/core/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
 import { RepositoryFile } from '@/core/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
-import { isFileMatchingGlob } from '@/shared/utils/glob-utils';
+import {
+    isFileMatchingGlob,
+    isFileMatchingGlobCaseInsensitive,
+} from '@/shared/utils/glob-utils';
 import { MCPManagerService } from '../../mcp/services/mcp-manager.service';
 
 @Injectable()
@@ -970,36 +969,90 @@ export class BitbucketService
                 )
             );
 
+            if (!repositories?.length) {
+                return [];
+            }
+
             const bitbucketAPI = this.instanceBitbucketApi(bitbucketAuthDetail);
 
-            const allPermissions = await Promise.all(
-                repositories.map((repo) =>
-                    bitbucketAPI.repositories
-                        .listUserPermissions({
-                            repo_slug: `{${repo.id}}`,
-                            workspace: `{${repo.workspaceId}}`,
+            const workspaceIdentifiers = Array.from(
+                new Set(
+                    repositories
+                        .map((repo) => {
+                            if (repo.organizationName) {
+                                return repo.organizationName;
+                            }
+
+                            if (repo.workspaceId) {
+                                return `{${repo.workspaceId}}`;
+                            }
+
+                            return null;
+                        })
+                        .filter((workspace): workspace is string => !!workspace),
+                ),
+            );
+
+            if (!workspaceIdentifiers.length) {
+                return [];
+            }
+
+            const allMembers = await Promise.all(
+                workspaceIdentifiers.map((workspace) =>
+                    bitbucketAPI.workspaces
+                        .getMembersForWorkspace({
+                            workspace,
+                            pagelen: 100,
                         })
                         .then((res) =>
-                            this.getPaginatedResults(bitbucketAPI, res),
+                            this.getPaginatedResults<
+                                Schema.WorkspaceMembership
+                            >(bitbucketAPI, res),
                         ),
                 ),
             );
 
-            const uniqueMembers = new Set<{
-                name: string;
-                id: string | number;
-            }>();
+            const uniqueMembers = new Map<string, { name: string; id: string }>();
 
-            allPermissions.forEach((permissions) => {
-                permissions.forEach((permission) => {
-                    uniqueMembers.add({
-                        name: permission.user.display_name,
-                        id: this.sanitizeUUID(permission.user.uuid),
+            allMembers.forEach((memberships) => {
+                memberships.forEach((membership) => {
+                    const memberId = this.sanitizeUUID(
+                        membership?.user?.uuid ?? '',
+                    );
+
+                    if (!memberId || uniqueMembers.has(memberId)) {
+                        return;
+                    }
+
+                    const user =
+                        (membership?.user as
+                            | (Schema.Account & {
+                                  nickname?: string;
+                                  username?: string;
+                              })
+                            | undefined) ?? undefined;
+
+                    const displayName =
+                        typeof user?.display_name === 'string'
+                            ? user.display_name
+                            : undefined;
+                    const nickname =
+                        typeof user?.nickname === 'string'
+                            ? user.nickname
+                            : undefined;
+                    const username =
+                        typeof user?.username === 'string'
+                            ? user.username
+                            : undefined;
+
+                    uniqueMembers.set(memberId, {
+                        name: displayName ?? nickname ?? username ?? memberId,
+                        id: memberId,
                     });
                 });
             });
 
-            return Array.from(uniqueMembers);
+            return Array.from(uniqueMembers.values());
         } catch (error) {
             this.logger.error({
                 message: 'Error to get list members',
@@ -2805,6 +2858,7 @@ export class BitbucketService
         organizationAndTeamData: OrganizationAndTeamData;
         configKey: IntegrationConfigKey;
         configValue: any;
+        type?: 'replace' | 'append';
     }): Promise<void> {
         try {
             const integration = await this.integrationService.findOne({
@@ -2824,6 +2878,7 @@ export class BitbucketService
                 params.configValue,
                 integration?.uuid,
                 params.organizationAndTeamData,
+                params.type,
             );
 
             this.createWebhook(params.organizationAndTeamData);
@@ -3804,19 +3859,11 @@ export class BitbucketService
                 .then((res) => this.getPaginatedResults(bitbucketAPI, res));
 
             return comments
-                .filter((comment) => {
-                    return (
-                        !comment?.content?.raw.includes(
-                            KODY_CODE_REVIEW_COMPLETED_MARKER,
-                        ) &&
-                        !comment?.content?.raw.includes(
-                            KODY_CRITICAL_ISSUE_COMMENT_MARKER,
-                        ) &&
-                        !comment?.content?.raw.includes(
-                            KODY_START_COMMAND_MARKER,
-                        )
-                    ); // Exclude comments with the specific strings
-                })
+                .filter(
+                    (comment) =>
+                        comment?.deleted !== true &&
+                        !hasKodyMarker(comment?.content?.raw),
+                )
                 .map((comment) => {
                     const mappedComment: PullRequestReviewComment = {
                         id: comment?.id,
@@ -4064,8 +4111,10 @@ export class BitbucketService
                 return false;
             }
 
-            const targetRepo = repositories.find((repo) =>
-                this.sanitizeUUID(repo.id) === this.sanitizeUUID(repositoryId),
+            const targetRepo = repositories.find(
+                (repo) =>
+                    this.sanitizeUUID(repo.id) ===
+                    this.sanitizeUUID(repositoryId),
             );
 
             if (!targetRepo?.workspaceId) {
@@ -4089,7 +4138,8 @@ export class BitbucketService
                 .then((res) => this.getPaginatedResults(bitbucketAPI, res));
 
             return existingHooks.some(
-                (hook: any) => hook?.url === webhookUrl && hook?.active !== false,
+                (hook: any) =>
+                    hook?.url === webhookUrl && hook?.active !== false,
             );
         } catch (error) {
             this.logger.error({
@@ -4707,7 +4757,7 @@ export class BitbucketService
                 if (
                     filePatterns &&
                     filePatterns.length > 0 &&
-                    !isFileMatchingGlob(file.path, filePatterns)
+                    !isFileMatchingGlobCaseInsensitive(file.path, filePatterns)
                 ) {
                     continue;
                 }

@@ -8,83 +8,130 @@ import {
 import { IASTAnalysisService } from '@/core/domain/codeBase/contracts/ASTAnalysisService.contract';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { prompt_detectBreakingChanges } from '@/shared/utils/langchainCommon/prompts/detectBreakingChanges';
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
 import { LLMResponseProcessor } from '@/core/infrastructure/adapters/services/codeBase/utils/transforms/llmResponseProcessor.transform';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { ClientGrpc } from '@nestjs/microservices';
-import { lastValueFrom, reduce, map, retry } from 'rxjs';
-import { concatUint8Arrays } from '@/shared/utils/buffer/arrays';
-import {
-    ASTAnalyzerServiceClient,
-    AST_ANALYZER_SERVICE_NAME,
-    GetImpactAnalysisResponse,
-    InitializeImpactAnalysisResponse,
-    InitializeRepositoryResponse,
-} from '@kodus/kodus-proto/ast';
-import {
-    RepositoryData,
-    ProtoAuthMode,
-    ProtoPlatformType,
-} from '@kodus/kodus-proto/ast/v2';
-import { AuthMode } from '@/core/domain/platformIntegrations/enums/codeManagement/authMode.enum';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import {
-    GetTaskInfoResponse,
-    TASK_MANAGER_SERVICE_NAME,
-    TaskManagerServiceClient,
-    TaskStatus,
-} from '@kodus/kodus-proto/task';
-import {
-    CircuitBreakerOpenError,
-    initCircuitBreaker,
-    circuitBreaker,
-} from '@/shared/utils/rxjs/circuit-breaker';
-import { Metadata } from '@grpc/grpc-js';
+import { calculateBackoffInterval } from '@/shared/utils/polling/exponential-backoff';
 import {
     LLMModelProvider,
     PromptRunnerService,
     PromptRole,
     ParserType,
 } from '@kodus/kodus-common/llm';
-import { status as Status } from '@grpc/grpc-js';
 import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
+import { AxiosASTService } from '@/config/axios/microservices/ast.axios';
+
+export enum TaskStatus {
+    /* Unspecified status, used for default initialization */
+    TASK_STATUS_UNSPECIFIED = 0,
+    /* Task is pending and waiting to be processed */
+    TASK_STATUS_PENDING = 1,
+    /* Task is currently in progress */
+    TASK_STATUS_IN_PROGRESS = 2,
+    /* Task has been completed successfully */
+    TASK_STATUS_COMPLETED = 3,
+    /* Task has failed, typically due to an error */
+    TASK_STATUS_FAILED = 4,
+    /* Task has been cancelled, either by user request or system intervention */
+    TASK_STATUS_CANCELLED = 5,
+}
+
+/* TaskPriority represents the priority level of a task in the Kodus system. */
+export enum TaskPriority {
+    /* Unspecified priority, used for default initialization */
+    TASK_PRIORITY_UNSPECIFIED = 0,
+    /* Low priority task, typically for non-critical operations */
+    TASK_PRIORITY_LOW = 1,
+    /* Medium priority task, for tasks that are important but not urgent */
+    TASK_PRIORITY_MEDIUM = 2,
+    /* High priority task, for critical operations that need immediate attention */
+    TASK_PRIORITY_HIGH = 3,
+}
+
+export enum ProtoAuthMode {
+    OAUTH = 'OAUTH',
+    TOKEN = 'TOKEN',
+}
+
+export enum ProtoPlatformType {
+    GITHUB = 'GITHUB',
+    GITLAB = 'GITLAB',
+    BITBUCKET = 'BITBUCKET',
+    AZURE_REPOS = 'AZURE_REPOS',
+}
+
+export interface RepositoryData {
+    url: string;
+    branch?: string;
+    auth: {
+        type: ProtoAuthMode;
+        token?: string;
+        username?: string;
+        password?: string;
+    };
+    provider: ProtoPlatformType;
+}
+
+export interface InitializeRepositoryResponse {
+    taskId: string;
+    status: TaskStatus;
+    message?: string;
+}
+
+export interface InitializeImpactAnalysisResponse {
+    taskId: string;
+    status: TaskStatus;
+    message?: string;
+}
+
+export interface GetTaskInfoResponse {
+    task: {
+        taskId: string;
+        status: TaskStatus;
+        progress?: number;
+        message?: string;
+        error?: string;
+        result?: any;
+    };
+}
+
+export interface FunctionAffect {
+    functionName: string;
+    filePath: string;
+    impact: string;
+    affectedBy: string[];
+}
+
+export interface FunctionSimilarity {
+    functionName: string;
+    filePath: string;
+    similarTo: Array<{
+        functionName: string;
+        filePath: string;
+        similarity: number;
+    }>;
+}
+
+export interface GetImpactAnalysisResponse {
+    functionsAffect: FunctionAffect[];
+    functionSimilarity: FunctionSimilarity[];
+}
 
 @Injectable()
-export class CodeAstAnalysisService
-    implements IASTAnalysisService, OnModuleInit
-{
+export class CodeAstAnalysisService implements IASTAnalysisService {
     private readonly llmResponseProcessor: LLMResponseProcessor;
-    private astMicroservice: ASTAnalyzerServiceClient;
-    private taskMicroservice: TaskManagerServiceClient;
+    private readonly astAxios: AxiosASTService;
 
     constructor(
-        @Inject('AST_MICROSERVICE')
-        private readonly astMicroserviceClient: ClientGrpc,
-
-        @Inject('TASK_MICROSERVICE')
-        private readonly taskMicroserviceClient: ClientGrpc,
-
         private readonly codeManagementService: CodeManagementService,
         private readonly logger: PinoLoggerService,
-
         private readonly promptRunnerService: PromptRunnerService,
         private readonly observabilityService: ObservabilityService,
     ) {
         this.llmResponseProcessor = new LLMResponseProcessor(logger);
-    }
-
-    onModuleInit() {
-        this.astMicroservice = this.astMicroserviceClient.getService(
-            AST_ANALYZER_SERVICE_NAME,
-        );
-        this.taskMicroservice = this.taskMicroserviceClient.getService(
-            TASK_MANAGER_SERVICE_NAME,
-        );
-
-        initCircuitBreaker(AST_ANALYZER_SERVICE_NAME, { logger: this.logger });
-        initCircuitBreaker(TASK_MANAGER_SERVICE_NAME, { logger: this.logger });
+        this.astAxios = new AxiosASTService();
     }
 
     async analyzeASTWithAI(
@@ -93,7 +140,7 @@ export class CodeAstAnalysisService
     ): Promise<AIAnalysisResult> {
         const provider = LLMModelProvider.NOVITA_DEEPSEEK_V3_0324;
         const fallbackProvider = LLMModelProvider.OPENAI_GPT_4O;
-        const runName = 'CodeASTAnalysisAI';
+        const runName = 'analyzeASTWithAI';
 
         const payload = await this.prepareAnalysisContext(context);
 
@@ -138,7 +185,7 @@ export class CodeAstAnalysisService
                                 runName,
                             })
                             .setTemperature(0)
-                            .addCallbacks(callbacks) // LangChain callbacks para contar tokens
+                            .addCallbacks(callbacks)
                             .setRunName(runName)
                             .execute();
                     },
@@ -158,7 +205,6 @@ export class CodeAstAnalysisService
                 throw new Error(message);
             }
 
-            // pós-processamento igual ao original
             const analysisResult = this.llmResponseProcessor.processResponse(
                 context.organizationAndTeamData,
                 context.pullRequest.number,
@@ -209,33 +255,27 @@ export class CodeAstAnalysisService
                     platformType,
                 );
 
-            const metadata = new Metadata();
-            metadata.add('x-task-key', organizationAndTeamData.organizationId);
-
-            const init = this.astMicroservice
-                .initializeRepository(
+            const response =
+                await this.astAxios.post<InitializeRepositoryResponse>(
+                    '/api/ast/repositories/initialize',
                     {
                         baseRepo: baseDirParams,
                         headRepo: headDirParams,
                         filePaths,
+                        organizationId: organizationAndTeamData.organizationId,
                     },
-                    metadata,
-                )
-                .pipe(
-                    retry({
-                        count: 3,
-                        delay: 1000,
-                        resetOnSuccess: true,
-                    }),
-                    circuitBreaker(AST_ANALYZER_SERVICE_NAME),
+                    {
+                        headers: {
+                            'x-task-key':
+                                organizationAndTeamData.organizationId,
+                        },
+                    },
                 );
 
-            const task = await lastValueFrom(init);
-
-            return task;
+            return response;
         } catch (error) {
             this.logger.error({
-                message: `Error during AST Clone and Generate graph for PR#${pullRequest.number}`,
+                message: `Error during AST initialization for PR#${pullRequest.number}`,
                 context: CodeAstAnalysisService.name,
                 metadata: {
                     organizationAndTeamData: organizationAndTeamData,
@@ -247,21 +287,18 @@ export class CodeAstAnalysisService
         }
     }
 
-    private static readonly AuthModeMap: Record<AuthMode, ProtoAuthMode> = {
-        [AuthMode.OAUTH]: ProtoAuthMode.PROTO_AUTH_MODE_OAUTH,
-        [AuthMode.TOKEN]: ProtoAuthMode.PROTO_AUTH_MODE_TOKEN,
+    private static readonly AuthModeMap: Record<string, ProtoAuthMode> = {
+        OAUTH: ProtoAuthMode.OAUTH,
+        TOKEN: ProtoAuthMode.TOKEN,
     };
 
-    private static readonly PlatformTypeMap: Partial<
-        Record<PlatformType, ProtoPlatformType>
-    > = {
-        [PlatformType.GITHUB]: ProtoPlatformType.PROTO_PLATFORM_TYPE_GITHUB,
-        [PlatformType.GITLAB]: ProtoPlatformType.PROTO_PLATFORM_TYPE_GITLAB,
-        [PlatformType.BITBUCKET]:
-            ProtoPlatformType.PROTO_PLATFORM_TYPE_BITBUCKET,
-        [PlatformType.AZURE_REPOS]:
-            ProtoPlatformType.PROTO_PLATFORM_TYPE_AZURE_REPOS,
-    };
+    private static readonly PlatformTypeMap: Record<string, ProtoPlatformType> =
+        {
+            'github': ProtoPlatformType.GITHUB,
+            'gitlab': ProtoPlatformType.GITLAB,
+            'bitbucket': ProtoPlatformType.BITBUCKET,
+            'azure-devops': ProtoPlatformType.AZURE_REPOS,
+        };
 
     private async getCloneParams(
         repository: Repository,
@@ -288,6 +325,7 @@ export class CodeAstAnalysisService
         organizationAndTeamData: OrganizationAndTeamData,
         codeChunk: string,
         fileName: string,
+        graphsTaskId: string,
     ): Promise<InitializeImpactAnalysisResponse> {
         try {
             const { headRepo, baseRepo } = await this.getRepoParams(
@@ -301,30 +339,26 @@ export class CodeAstAnalysisService
                 throw new Error('Head repository parameters are missing');
             }
 
-            const metadata = this.createMetadata(organizationAndTeamData);
-
-            const init = this.astMicroservice
-                .initializeImpactAnalysis(
+            const response =
+                await this.astAxios.post<InitializeImpactAnalysisResponse>(
+                    '/api/ast/impact-analysis/initialize',
                     {
-                        baseRepo: baseRepo,
-                        headRepo: headRepo,
+                        baseRepo,
+                        headRepo,
                         codeChunk,
                         fileName,
+                        organizationId: organizationAndTeamData.organizationId,
+                        graphsTaskId,
                     },
-                    metadata,
-                )
-                .pipe(
-                    retry({
-                        count: 3,
-                        delay: 1000,
-                        resetOnSuccess: true,
-                    }),
-                    circuitBreaker(AST_ANALYZER_SERVICE_NAME),
+                    {
+                        headers: {
+                            'x-task-key':
+                                organizationAndTeamData.organizationId,
+                        },
+                    },
                 );
 
-            const task = await lastValueFrom(init);
-
-            return task;
+            return response;
         } catch (error) {
             this.logger.error({
                 message: `Error during AST Impact Analysis initialization for PR#${pullRequest.number}`,
@@ -344,6 +378,7 @@ export class CodeAstAnalysisService
         pullRequest: any,
         platformType: string,
         organizationAndTeamData: OrganizationAndTeamData,
+        taskId: string,
     ): Promise<GetImpactAnalysisResponse> {
         try {
             const { headRepo, baseRepo } = await this.getRepoParams(
@@ -357,12 +392,24 @@ export class CodeAstAnalysisService
                 throw new Error('Head repository parameters are missing');
             }
 
-            return await this.collectImpactAnalysis(
-                baseRepo,
-                headRepo,
-                pullRequest,
-                organizationAndTeamData,
-            );
+            const response =
+                await this.astAxios.post<GetImpactAnalysisResponse>(
+                    '/api/ast/impact-analysis/retrieve',
+                    {
+                        baseRepo,
+                        headRepo,
+                        organizationId: organizationAndTeamData.organizationId,
+                        taskId,
+                    },
+                    {
+                        headers: {
+                            'x-task-key':
+                                organizationAndTeamData.organizationId,
+                        },
+                    },
+                );
+
+            return response;
         } catch (error) {
             this.logger.error({
                 message: `Error during AST Impact Analysis for PR#${pullRequest.number}`,
@@ -375,56 +422,6 @@ export class CodeAstAnalysisService
             });
             throw error;
         }
-    }
-
-    private collectImpactAnalysis(
-        baseDirParams: RepositoryData,
-        headDirParams: RepositoryData,
-        pullRequest: any,
-        organizationAndTeamData: OrganizationAndTeamData,
-    ): Promise<GetImpactAnalysisResponse> {
-        return new Promise<GetImpactAnalysisResponse>((resolve, reject) => {
-            const functionsAffect = [];
-            const functionSimilarity = [];
-
-            const metadata = this.createMetadata(organizationAndTeamData);
-
-            this.astMicroservice
-                .getImpactAnalysis(
-                    {
-                        baseRepo: baseDirParams,
-                        headRepo: headDirParams,
-                    },
-                    metadata,
-                )
-                .pipe(
-                    retry({
-                        count: 3,
-                        delay: 1000,
-                        resetOnSuccess: true,
-                    }),
-                    circuitBreaker(AST_ANALYZER_SERVICE_NAME),
-                )
-                .subscribe({
-                    next: (batch) => {
-                        if (batch.functionsAffect) {
-                            functionsAffect.push(...batch.functionsAffect);
-                        }
-                        if (batch.functionSimilarity) {
-                            functionSimilarity.push(
-                                ...batch.functionSimilarity,
-                            );
-                        }
-                    },
-                    error: reject,
-                    complete: () => {
-                        resolve({
-                            functionsAffect,
-                            functionSimilarity,
-                        });
-                    },
-                });
-        });
     }
 
     private async prepareAnalysisContext(context: AnalysisContext) {
@@ -447,7 +444,8 @@ export class CodeAstAnalysisService
         organizationAndTeamData: OrganizationAndTeamData,
         diff: string,
         filePath: string,
-    ): Promise<string> {
+        taskId: string,
+    ): Promise<{ content: string }> {
         const { headRepo, baseRepo } = await this.getRepoParams(
             repository,
             pullRequest,
@@ -455,41 +453,23 @@ export class CodeAstAnalysisService
             platformType,
         );
 
-        const metadata = this.createMetadata(organizationAndTeamData);
-
-        const call = this.astMicroservice
-            .getContentFromDiff(
-                {
-                    baseRepo,
-                    headRepo,
-                    diff,
-                    filePath,
+        const response = await this.astAxios.post<{ content: string }>(
+            '/api/ast/diff/content',
+            {
+                baseRepo,
+                headRepo,
+                diff,
+                filePath,
+                organizationId: organizationAndTeamData.organizationId,
+                taskId,
+            },
+            {
+                headers: {
+                    'x-task-key': organizationAndTeamData.organizationId,
                 },
-                metadata,
-            )
-            .pipe(
-                retry({
-                    count: 3,
-                    delay: 1000,
-                    resetOnSuccess: true,
-                }),
-                circuitBreaker(AST_ANALYZER_SERVICE_NAME),
-                reduce((acc, chunk) => {
-                    return {
-                        ...acc,
-                        data: concatUint8Arrays(acc.data, chunk.data),
-                    };
-                }),
-                map((data) => {
-                    const str = new TextDecoder().decode(data.data);
-                    return str;
-                }),
-            );
-
-        const relatedContent = await lastValueFrom(call);
-
-        // format newlines
-        return JSON.parse(relatedContent);
+            },
+        );
+        return response ?? { content: '' };
     }
 
     private async getRepoParams(
@@ -559,19 +539,25 @@ export class CodeAstAnalysisService
         organizationAndTeamData: OrganizationAndTeamData,
         options: {
             timeout?: number;
-            interval?: number;
+            initialInterval?: number;
+            maxInterval?: number;
+            useExponentialBackoff?: boolean;
         } = {
-            timeout: 60000, // Default timeout of 60 seconds
-            interval: 5000, // Check every 5 seconds
+            timeout: 120000, // Default timeout increased to 2 minutes
+            initialInterval: 1000, // Start with 1 second (faster for quick tasks)
+            maxInterval: 30000, // Cap at 30 seconds
+            useExponentialBackoff: true, // Enable exponential backoff by default
         },
     ): Promise<GetTaskInfoResponse> {
         if (!taskId) {
             throw new Error('Task ID is required to await task completion');
         }
 
-        const { timeout, interval } = options;
+        const { timeout, initialInterval, maxInterval, useExponentialBackoff } =
+            options;
 
         const startTime = Date.now();
+        let attempt = 0;
 
         const endStates = [
             TaskStatus.TASK_STATUS_COMPLETED,
@@ -579,31 +565,42 @@ export class CodeAstAnalysisService
             TaskStatus.TASK_STATUS_CANCELLED,
         ];
 
-        const metadata = this.createMetadata(organizationAndTeamData);
-
         while (true) {
-            if (Date.now() - startTime > timeout) {
+            const elapsedTime = Date.now() - startTime;
+
+            if (elapsedTime > timeout) {
+                this.logger.error({
+                    message: `Task ${taskId} timed out after ${timeout}ms (${Math.floor(timeout / 1000)}s)`,
+                    context: CodeAstAnalysisService.name,
+                    metadata: {
+                        taskId,
+                        timeout,
+                        attempts: attempt,
+                        elapsedTime,
+                    },
+                });
                 throw new Error(`Task ${taskId} timed out after ${timeout}ms`);
             }
 
             try {
                 this.logger.log({
-                    message: `Polling task ${taskId} status`,
+                    message: `Polling task ${taskId} status (attempt ${attempt + 1})`,
                     context: CodeAstAnalysisService.name,
-                    metadata: { taskId },
+                    metadata: {
+                        taskId,
+                        attempt: attempt + 1,
+                        elapsedTime: `${Math.floor(elapsedTime / 1000)}s`,
+                    },
                 });
 
-                const taskStatus = await lastValueFrom(
-                    this.taskMicroservice
-                        .getTaskInfo({ taskId }, metadata)
-                        .pipe(
-                            retry({
-                                count: 3,
-                                delay: 1000,
-                                resetOnSuccess: true,
-                            }),
-                            circuitBreaker(TASK_MANAGER_SERVICE_NAME),
-                        ),
+                const taskStatus = await this.astAxios.get<GetTaskInfoResponse>(
+                    `/api/tasks/${taskId}`,
+                    {
+                        headers: {
+                            'x-task-key':
+                                organizationAndTeamData.organizationId,
+                        },
+                    },
                 );
 
                 if (!taskStatus || !taskStatus.task) {
@@ -611,39 +608,20 @@ export class CodeAstAnalysisService
                 }
 
                 if (endStates.includes(taskStatus.task.status)) {
+                    this.logger.log({
+                        message: `Task ${taskId} completed with status: ${taskStatus.task.status}`,
+                        context: CodeAstAnalysisService.name,
+                        metadata: {
+                            taskId,
+                            status: taskStatus.task.status,
+                            totalAttempts: attempt + 1,
+                            totalTime: `${Math.floor(elapsedTime / 1000)}s`,
+                        },
+                    });
                     return taskStatus;
                 }
             } catch (error) {
-                if (error instanceof CircuitBreakerOpenError) {
-                    this.logger.error({
-                        message: `Circuit breaker is open for task ${taskId}`,
-                        context: CodeAstAnalysisService.name,
-                        metadata: { taskId },
-                    });
-                    throw error;
-                }
-
-                this.logger.error({
-                    message: `Full error inspection for task ${taskId}`,
-                    context: CodeAstAnalysisService.name,
-                    error,
-                    metadata: {
-                        taskId,
-                        errorType: typeof error,
-                        errorConstructor: error?.constructor?.name,
-                        errorProto:
-                            Object.getPrototypeOf(error)?.constructor?.name,
-                        errorKeys: error ? Object.keys(error) : null,
-                        errorCode: error?.code,
-                        errorCodeType: typeof error?.code,
-                        statusNotFoundValue: Status.NOT_FOUND,
-                        statusNotFoundType: typeof Status.NOT_FOUND,
-                        fullErrorString: String(error),
-                        fullErrorJSON: JSON.stringify(error),
-                    },
-                });
-
-                if (error?.code === Status.NOT_FOUND) {
+                if (error?.response?.status === 404) {
                     this.logger.warn({
                         message: `Task ${taskId} not found`,
                         context: CodeAstAnalysisService.name,
@@ -658,11 +636,35 @@ export class CodeAstAnalysisService
                     message: `A transient error occurred while polling for task ${taskId}. Retrying...`,
                     error,
                     context: CodeAstAnalysisService.name,
-                    metadata: { taskId },
+                    metadata: { taskId, attempt: attempt + 1 },
                 });
             }
 
-            await new Promise((resolve) => setTimeout(resolve, interval));
+            // Calculate next wait interval using shared utility
+            const waitInterval = useExponentialBackoff
+                ? calculateBackoffInterval(attempt, {
+                      baseInterval: initialInterval,
+                      maxInterval,
+                  })
+                : calculateBackoffInterval(attempt, {
+                      baseInterval: initialInterval,
+                      maxInterval,
+                      multiplier: 1, // Linear increment
+                  });
+
+            this.logger.debug({
+                message: `Waiting ${waitInterval}ms before next poll`,
+                context: CodeAstAnalysisService.name,
+                metadata: {
+                    taskId,
+                    waitInterval,
+                    attempt: attempt + 1,
+                    useExponentialBackoff,
+                },
+            });
+
+            await new Promise((resolve) => setTimeout(resolve, waitInterval));
+            attempt++;
         }
     }
 
@@ -671,6 +673,7 @@ export class CodeAstAnalysisService
         pullRequest: any,
         platformType: string,
         organizationAndTeamData: OrganizationAndTeamData,
+        taskId: string,
     ): Promise<void> {
         try {
             const { headRepo, baseRepo } = await this.getRepoParams(
@@ -684,25 +687,19 @@ export class CodeAstAnalysisService
                 throw new Error('Head repository parameters are missing');
             }
 
-            const metadata = this.createMetadata(organizationAndTeamData);
-
-            await lastValueFrom(
-                this.astMicroservice
-                    .deleteRepository(
-                        {
-                            baseRepo: baseRepo,
-                            headRepo: headRepo,
-                        },
-                        metadata,
-                    )
-                    .pipe(
-                        retry({
-                            count: 3,
-                            delay: 1000,
-                            resetOnSuccess: true,
-                        }),
-                        circuitBreaker(AST_ANALYZER_SERVICE_NAME),
-                    ),
+            await this.astAxios.post(
+                '/api/ast/repositories/delete',
+                {
+                    baseRepo,
+                    headRepo,
+                    organizationId: organizationAndTeamData.organizationId,
+                    taskId,
+                },
+                {
+                    headers: {
+                        'x-task-key': organizationAndTeamData.organizationId,
+                    },
+                },
             );
         } catch (error) {
             this.logger.error({
@@ -717,23 +714,4 @@ export class CodeAstAnalysisService
             throw error;
         }
     }
-
-    private createMetadata(
-        organizationAndTeamData: OrganizationAndTeamData,
-    ): Metadata {
-        const metadata = new Metadata();
-        metadata.add('x-task-key', organizationAndTeamData.organizationId);
-        return metadata;
-    }
-}
-
-export function logOutgoingMeta(taskId: string) {
-    return function <Req, Res>(options: any, nextCall: any) {
-        return new nextCall(options, (err: any, resp: Res) => {
-            /* noop - just proxy */
-        }).start((metadata) => {
-            console.log('META ENVIADA:', metadata.get('x-task-key'));
-            return metadata;
-        });
-    };
 }

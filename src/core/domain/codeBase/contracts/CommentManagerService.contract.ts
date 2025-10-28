@@ -39,6 +39,7 @@ export interface ICommentManagerService {
         byokConfig?: BYOKConfig,
         isCommitRun?: boolean,
         prPreview?: boolean,
+        externalPromptContext?: any,
     ): Promise<string>;
 
     updateOverallComment(

@@ -9,7 +9,10 @@ import {
     UserInfo,
 } from '@/config/types/general/codeReviewSettingsLog.type';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { GetAdditionalInfoHelper } from '@/shared/utils/helpers/getAdditionalInfo.helper';
+import {
+    IGetAdditionalInfoHelper,
+    GET_ADDITIONAL_INFO_HELPER_TOKEN,
+} from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 
 export interface ChangedDataToExport {
@@ -41,7 +44,8 @@ export class UnifiedLogHandler {
     constructor(
         @Inject(CODE_REVIEW_SETTINGS_LOG_REPOSITORY_TOKEN)
         private readonly codeReviewSettingsLogRepository: ICodeReviewSettingsLogRepository,
-        private readonly getAdditionalInfoHelper: GetAdditionalInfoHelper,
+        @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
+        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
         private readonly logger: PinoLoggerService,
     ) {}
 

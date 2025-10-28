@@ -10,6 +10,12 @@ import { AuthorizationService } from '@/core/infrastructure/adapters/services/pe
 import { CreateKodyRuleDto } from '@/core/infrastructure/http/dtos/create-kody-rule.dto';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
+import { ExternalReferenceDetectorService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceDetector.service';
+import {
+    IGetAdditionalInfoHelper,
+    GET_ADDITIONAL_INFO_HELPER_TOKEN,
+} from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
+import { KodyRuleProcessingStatus } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
 
 @Injectable()
 export class CreateOrUpdateKodyRulesUseCase {
@@ -29,6 +35,9 @@ export class CreateOrUpdateKodyRulesUseCase {
         },
 
         private readonly authorizationService: AuthorizationService,
+        private readonly externalReferenceDetectorService: ExternalReferenceDetectorService,
+        @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
+        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
     ) {}
 
     async execute(
@@ -72,6 +81,37 @@ export class CreateOrUpdateKodyRulesUseCase {
                 );
             }
 
+            // ✅ Se tem repositoryId e rule text, processa referências
+            if (result.uuid && kodyRule.repositoryId && kodyRule.rule) {
+                // ✅ Marca como PENDING antes de processar
+                await this.kodyRulesService.updateRuleReferences(
+                    organizationAndTeamData.organizationId,
+                    result.uuid,
+                    {
+                        referenceProcessingStatus: KodyRuleProcessingStatus.PENDING,
+                    },
+                );
+
+                this.detectAndSaveReferencesAsync(
+                    result.uuid,
+                    kodyRule.rule,
+                    kodyRule.repositoryId,
+                    organizationAndTeamData,
+                ).catch((error) => {
+                    this.logger.error({
+                        message:
+                            'Background reference detection failed completely',
+                        context: CreateOrUpdateKodyRulesUseCase.name,
+                        error,
+                        metadata: {
+                            ruleId: result.uuid,
+                            ruleTitle: kodyRule.title,
+                            organizationAndTeamData,
+                        },
+                    });
+                });
+            }
+
             return result;
         } catch (error) {
             this.logger.error({
@@ -88,5 +128,138 @@ export class CreateOrUpdateKodyRulesUseCase {
             });
             throw error;
         }
+    }
+
+    private async detectAndSaveReferencesAsync(
+        ruleId: string,
+        ruleText: string,
+        repositoryId: string,
+        organizationAndTeamData: OrganizationAndTeamData,
+    ): Promise<void> {
+        return new Promise((resolve) => {
+            setImmediate(async () => {
+                try {
+                    let repositoryName: string;
+                    try {
+                        repositoryName =
+                            await this.getAdditionalInfoHelper.getRepositoryNameByOrganizationAndRepository(
+                                organizationAndTeamData.organizationId,
+                                repositoryId,
+                            );
+                    } catch (error) {
+                        this.logger.warn({
+                            message:
+                                'Failed to resolve repository name, using ID as fallback',
+                            context: CreateOrUpdateKodyRulesUseCase.name,
+                            error,
+                            metadata: {
+                                organizationAndTeamData,
+                            },
+                        });
+                        repositoryName = repositoryId;
+                    }
+
+                    this.logger.log({
+                        message:
+                            'Starting background detection of external references',
+                        context: CreateOrUpdateKodyRulesUseCase.name,
+                        metadata: {
+                            ruleId,
+                            repositoryId,
+                            repositoryName,
+                            organizationAndTeamData,
+                        },
+                    });
+
+                    const { references, syncErrors, ruleHash } =
+                        await this.externalReferenceDetectorService.detectAndResolveReferences(
+                            {
+                                ruleText,
+                                repositoryId,
+                                repositoryName,
+                                organizationAndTeamData,
+                            },
+                        );
+
+                    // ✅ Determina o status final
+                    let finalStatus: KodyRuleProcessingStatus | undefined;
+                    
+                    if (syncErrors && syncErrors.length > 0) {
+                        // Tem erros = FAILED
+                        finalStatus = KodyRuleProcessingStatus.FAILED;
+                    } else if (references.length > 0) {
+                        // Tem referências = COMPLETED
+                        finalStatus = KodyRuleProcessingStatus.COMPLETED;
+                    } else {
+                        // Sem referências E sem erros = Remove status (undefined)
+                        finalStatus = undefined;
+                    }
+
+                    // ✅ USA O NOVO MÉTODO que só atualiza as referências
+                    await this.kodyRulesService.updateRuleReferences(
+                        organizationAndTeamData.organizationId,
+                        ruleId,
+                        {
+                            externalReferences:
+                                references.length > 0 ? references : undefined,
+                            syncErrors:
+                                syncErrors && syncErrors.length > 0
+                                    ? syncErrors
+                                    : undefined,
+                            referenceProcessingStatus: finalStatus,
+                            lastReferenceProcessedAt: finalStatus ? new Date() : undefined,
+                            ruleHash,
+                        },
+                    );
+
+                    if (syncErrors && syncErrors.length > 0) {
+                        this.logger.warn({
+                            message: 'Rule updated with sync errors',
+                            context: CreateOrUpdateKodyRulesUseCase.name,
+                            metadata: {
+                                ruleId,
+                                syncErrors,
+                                errorCount: syncErrors.length,
+                                organizationAndTeamData,
+                            },
+                        });
+                    } else if (references.length > 0) {
+                        this.logger.log({
+                            message:
+                                'Successfully updated rule with detected external references',
+                            context: CreateOrUpdateKodyRulesUseCase.name,
+                            metadata: {
+                                ruleId,
+                                referencesCount: references.length,
+                                paths: references.map((r) => r.filePath),
+                                organizationAndTeamData,
+                            },
+                        });
+                    } else {
+                        this.logger.log({
+                            message: 'No external references detected for rule',
+                            context: CreateOrUpdateKodyRulesUseCase.name,
+                            metadata: {
+                                ruleId,
+                                organizationAndTeamData,
+                            },
+                        });
+                    }
+                } catch (error) {
+                    this.logger.warn({
+                        message:
+                            'Failed to detect external references in background',
+                        context: CreateOrUpdateKodyRulesUseCase.name,
+                        error,
+                        metadata: {
+                            ruleId,
+                            repositoryId,
+                            organizationAndTeamData,
+                        },
+                    });
+                }
+                resolve();
+            });
+        });
     }
 }

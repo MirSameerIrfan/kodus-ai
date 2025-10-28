@@ -12,6 +12,7 @@ import {
     IPullRequestUser,
     ICommit,
     ISuggestionByPR,
+    IPullRequestWithDeliveredSuggestions,
 } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
 import { IPullRequestsService } from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
 import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
@@ -107,6 +108,18 @@ export class PullRequestsService implements IPullRequestsService {
             organizationId,
             prNumber,
             deliveryStatus,
+        );
+    }
+
+    async findPullRequestsWithDeliveredSuggestions(
+        organizationId: string,
+        prNumbers: number[],
+        status: string,
+    ): Promise<IPullRequestWithDeliveredSuggestions[]> {
+        return this.pullRequestsRepository.findPullRequestsWithDeliveredSuggestions(
+            organizationId,
+            prNumbers,
+            status,
         );
     }
 
@@ -659,6 +672,44 @@ export class PullRequestsService implements IPullRequestsService {
 
             return this.create(structure as Omit<IPullRequests, 'uuid'>);
         } catch (error) {
+            // Detectar erro de duplicação do MongoDB (código 11000)
+            const isDuplicateKeyError =
+                error?.code === 11000 || error?.name === 'MongoServerError';
+
+            if (isDuplicateKeyError) {
+                this.logger.warn({
+                    message: `Duplicate key error detected for PR#${pullRequest?.number}. Race condition detected - returning existing PR.`,
+                    context: PullRequestsService.name,
+                    metadata: {
+                        pullRequestNumber: pullRequest?.number,
+                        repositoryName: repository?.name,
+                        errorCode: error?.code,
+                    },
+                });
+
+                // Race condition: webhook chegou quase simultaneamente (< 1 segundo)
+                // O primeiro webhook já está processando/processou tudo
+                // Apenas buscar e retornar o PR existente (não reprocessar)
+                const existingPR =
+                    await this.pullRequestsRepository.findByNumberAndRepositoryName(
+                        pullRequest?.number,
+                        repository.name,
+                        organizationAndTeamData,
+                    );
+
+                if (existingPR) {
+                    this.logger.log({
+                        message: `Returning existing PR#${pullRequest?.number} due to race condition`,
+                        context: PullRequestsService.name,
+                        metadata: {
+                            pullRequestNumber: pullRequest?.number,
+                            existingPRId: existingPR.uuid,
+                        },
+                    });
+                    return existingPR;
+                }
+            }
+
             this.logger.log({
                 message: `Failed to process initial pull request data for PR#${pullRequest?.number}`,
                 context: PullRequestsService.name,
@@ -670,6 +721,7 @@ export class PullRequestsService implements IPullRequestsService {
                     prioritizedSuggestionsCount: prioritizedSuggestions?.length,
                 },
             });
+            throw error;
         }
     }
 

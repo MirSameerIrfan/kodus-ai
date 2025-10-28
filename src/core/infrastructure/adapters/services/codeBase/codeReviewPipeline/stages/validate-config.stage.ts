@@ -13,6 +13,7 @@ import {
     AutomaticReviewStatus,
     ReviewCadenceType,
     ReviewCadenceState,
+    CodeReviewConfig,
 } from '@/config/types/general/codeReview.type';
 import { PinoLoggerService } from '../../../logger/pino.service';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
@@ -27,6 +28,7 @@ import {
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
 } from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 
 @Injectable()
 export class ValidateConfigStage extends BasePipelineStage<CodeReviewPipelineContext> {
@@ -151,6 +153,7 @@ export class ValidateConfigStage extends BasePipelineStage<CodeReviewPipelineCon
             context.pullRequest.isDraft,
             config,
             context.origin || '',
+            context.platformType,
             context.organizationAndTeamData,
             config.baseBranchDefault, // API base branch from repository
         );
@@ -454,8 +457,9 @@ export class ValidateConfigStage extends BasePipelineStage<CodeReviewPipelineCon
         targetBranch: string, // TARGET (base branch - para onde vai o PR)
         sourceBranch: string, // SOURCE (head branch - de onde vem o PR)
         isDraft: boolean,
-        config: any,
+        config: CodeReviewConfig,
         origin: string,
+        platformType: PlatformType,
         organizationAndTeamData: OrganizationAndTeamData,
         apiBaseBranch?: string,
     ): boolean {
@@ -463,60 +467,139 @@ export class ValidateConfigStage extends BasePipelineStage<CodeReviewPipelineCon
             return true;
         }
 
-        if (!config?.automatedReviewActive) {
+        const {
+            automatedReviewActive,
+            ignoredTitleKeywords,
+            baseBranches,
+            runOnDraft,
+        } = config || {};
+
+        if (!automatedReviewActive) {
             return false;
         }
 
+        const lowerTitle = title?.toLowerCase() || '';
         if (
-            config?.ignoredTitleKeywords?.some((keyword: string) =>
-                title?.toLowerCase().includes(keyword.toLowerCase()),
+            ignoredTitleKeywords?.some((keyword) =>
+                lowerTitle.includes(keyword.toLowerCase()),
             )
         ) {
             return false;
         }
 
-        if (config?.baseBranches && Array.isArray(config.baseBranches)) {
-            const mergedBranches = mergeBaseBranches(
-                config.baseBranches,
-                apiBaseBranch || targetBranch,
-            );
-            const expression = mergedBranches.join(', ');
-            const reviewConfig = processExpression(expression);
-
-            const resultValidation = shouldReviewBranches(
+        if (
+            !this._isBranchLogicValid(
                 sourceBranch,
                 targetBranch,
-                reviewConfig,
-            );
-
-            // Log das configurações usadas para gerar o resultValidation
-            this.logger.log({
-                message: '🔍 Branch Review Validation',
-                context: 'ValidateConfigStage',
-                metadata: {
-                    originalConfig: config.baseBranches,
-                    apiBaseBranch,
-                    mergedBranches,
-                    expression,
-                    sourceBranch,
-                    targetBranch,
-                    reviewConfig,
-                    result: resultValidation ? 'REVIEW' : 'NO_REVIEW',
-                    organizationAndTeamData,
-                },
-            });
-
-            return resultValidation;
-        }
-
-        if (!config.baseBranches?.includes(targetBranch)) {
+                baseBranches,
+                apiBaseBranch,
+                platformType,
+                organizationAndTeamData,
+            )
+        ) {
             return false;
         }
 
-        if (isDraft && !config?.runOnDraft) {
+        if (isDraft && !runOnDraft) {
             return false;
         }
 
         return true;
+    }
+
+    private _isBranchLogicValid(
+        sourceBranch: string,
+        targetBranch: string,
+        configBaseBranches: string[] | undefined,
+        apiBaseBranch: string | undefined,
+        platformType: PlatformType,
+        organizationAndTeamData: OrganizationAndTeamData,
+    ): boolean {
+        if (
+            !configBaseBranches ||
+            !Array.isArray(configBaseBranches) ||
+            configBaseBranches.length === 0
+        ) {
+            return true;
+        }
+
+        const mergedBranches = mergeBaseBranches(
+            configBaseBranches,
+            apiBaseBranch || targetBranch,
+        );
+
+        const normalizedBranches = this.normalizeBranchesForPlatform(
+            mergedBranches,
+            platformType,
+        );
+
+        const expression = normalizedBranches.join(', ');
+        const reviewConfig = processExpression(expression);
+
+        const isValid = shouldReviewBranches(
+            sourceBranch,
+            targetBranch,
+            reviewConfig,
+        );
+
+        this.logger.log({
+            message: 'Branch Review Validation',
+            context: 'ValidateConfigStage',
+            metadata: {
+                originalConfig: configBaseBranches,
+                apiBaseBranch,
+                mergedBranches,
+                expression,
+                sourceBranch,
+                targetBranch,
+                reviewConfig,
+                result: isValid ? 'REVIEW' : 'NO_REVIEW',
+                organizationAndTeamData,
+            },
+        });
+
+        return isValid;
+    }
+
+    /**
+     * Normalizes branch patterns for different platforms
+     * Azure DevOps adds refs/heads/ prefix to all branches
+     * This method adds the prefix to user-configured patterns for compatibility
+     */
+    private normalizeBranchesForPlatform(
+        branches: string[],
+        platformType: PlatformType,
+    ): string[] {
+        if (platformType !== PlatformType.AZURE_REPOS) {
+            return branches;
+        }
+
+        return branches.map((branch) => {
+            if (branch.startsWith('refs/heads/')) {
+                return branch;
+            }
+
+            if (branch.startsWith('!')) {
+                const pattern = branch.slice(1);
+                if (pattern.startsWith('refs/heads/')) {
+                    return branch;
+                }
+                return `!refs/heads/${pattern}`;
+            }
+
+            if (branch.startsWith('=')) {
+                const pattern = branch.slice(1);
+                if (pattern.startsWith('refs/heads/')) {
+                    return branch;
+                }
+                return `=refs/heads/${pattern}`;
+            }
+
+            if (branch.startsWith('contains:')) {
+                return branch;
+            }
+
+            return `refs/heads/${branch}`;
+        });
     }
 }

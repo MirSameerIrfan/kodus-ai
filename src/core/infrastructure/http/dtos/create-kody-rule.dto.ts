@@ -1,5 +1,8 @@
 import {
     IKodyRulesExample,
+    IKodyRuleExternalReference,
+    IKodyRuleReferenceSyncError,
+    KodyRuleProcessingStatus,
     KodyRulesOrigin,
     KodyRulesScope,
     KodyRulesStatus,
@@ -43,6 +46,21 @@ export class KodyRulesInheritanceDto {
     @IsString({ each: true })
     @IsOptional()
     include: string[];
+}
+
+export class KodyRuleExternalReferenceDto
+    implements IKodyRuleExternalReference
+{
+    @IsString()
+    filePath: string;
+
+    @IsOptional()
+    @IsString()
+    description?: string;
+
+    @IsOptional()
+    @IsString()
+    repositoryName?: string;
 }
 
 export class CreateKodyRuleDto {
@@ -103,4 +121,24 @@ export class CreateKodyRuleDto {
     @ValidateNested()
     @Type(() => KodyRulesInheritanceDto)
     inheritance?: KodyRulesInheritanceDto;
+
+    @IsOptional()
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => KodyRuleExternalReferenceDto)
+    externalReferences?: KodyRuleExternalReferenceDto[];
+
+    @IsOptional()
+    syncErrors?: IKodyRuleReferenceSyncError[];
+
+    @IsOptional()
+    @IsEnum(KodyRuleProcessingStatus)
+    referenceProcessingStatus?: KodyRuleProcessingStatus;
+
+    @IsOptional()
+    lastReferenceProcessedAt?: Date;
+
+    @IsOptional()
+    @IsString()
+    ruleHash?: string;
 }

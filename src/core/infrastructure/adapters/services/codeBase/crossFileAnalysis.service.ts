@@ -116,7 +116,7 @@ export class CrossFileAnalysisService {
 
         const language =
             context.codeReviewConfig.languageResultPrompt || 'en-US';
-        const provider = LLMModelProvider.OPENAI_GPT_4O_MINI;
+        const provider = LLMModelProvider.GEMINI_2_5_PRO;
 
         try {
             // 1. Executar análise cross-file principal com arquivos preparados
@@ -423,28 +423,17 @@ export class CrossFileAnalysisService {
         prNumber: number,
         organizationAndTeamData: OrganizationAndTeamData,
     ): Promise<CodeSuggestion[] | null> {
-        // Monta o payload exatamente como antes
-        let payload: any;
-        if (analysisType === 'analyzeCodeWithAI') {
-            const fileContexts =
-                this.convertFilesToFileChangeContext(preparedFilesChunk);
-            payload = {
-                files: fileContexts,
-                language,
-            } as CrossFileAnalysisPayload;
-        } else {
-            payload = preparedFilesChunk;
-        }
+        const fileContexts =
+            this.convertFilesToFileChangeContext(preparedFilesChunk);
 
-        const fallbackProvider = LLMModelProvider.NOVITA_DEEPSEEK_V3;
-        const runName = 'crossFileAnalyzeCodeWithAI';
-        const spanName = `${CrossFileAnalysisService.name}::${runName}`;
-        const spanAttrs = {
-            organizationId: organizationAndTeamData?.organizationId,
-            prNumber,
-            analysisType,
-            chunkIndex,
+        const payload = {
+            files: fileContexts,
+            language,
+            v2PromptOverrides: context?.codeReviewConfig?.v2PromptOverrides,
         };
+
+        const fallbackProvider = LLMModelProvider.GEMINI_2_5_FLASH;
+        const runName = 'crossFileAnalyzeCodeWithAI';
 
         const promptRunner = new BYOKPromptRunnerService(
             this.promptRunnerService,
@@ -452,6 +441,15 @@ export class CrossFileAnalysisService {
             fallbackProvider,
             context?.codeReviewConfig?.byokConfig,
         );
+
+        const spanName = `${CrossFileAnalysisService.name}::${runName}`;
+        const spanAttrs = {
+            organizationId: organizationAndTeamData?.organizationId,
+            prNumber,
+            analysisType,
+            chunkIndex,
+            type: promptRunner.executeMode,
+        };
 
         try {
             let analysisBuilder = promptRunner
@@ -631,7 +629,9 @@ export class CrossFileAnalysisService {
     /**
      * Enriquece sugestão com campos padrão se necessário
      */
-    private enrichSuggestion(suggestion: any): CodeSuggestion {
+    private enrichSuggestion(
+        suggestion: CrossFileAnalysisSchemaType['suggestions'][number],
+    ): CodeSuggestion {
         return {
             id: uuidv4(),
             relevantFile: suggestion.relevantFile,
@@ -657,7 +657,7 @@ export class CrossFileAnalysisService {
      */
     private convertFilesToFileChangeContext(
         preparedFiles: PreparedFileData[],
-    ): Partial<any>[] {
+    ): Partial<CrossFileAnalysisPayload['files']> {
         return preparedFiles.map((preparedFile) => ({
             file: {
                 filename: preparedFile.filename,

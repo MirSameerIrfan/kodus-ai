@@ -10,9 +10,10 @@ import {
 } from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
 import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
 import { Inject, Injectable } from '@nestjs/common';
+import { IGetAdditionalInfoHelper } from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
 
 @Injectable()
-export class GetAdditionalInfoHelper {
+export class GetAdditionalInfoHelper implements IGetAdditionalInfoHelper {
     constructor(
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,

@@ -1,37 +1,149 @@
-import { Inject } from '@nestjs/common';
+import { BadRequestException, Inject, UseInterceptors } from '@nestjs/common';
 import {
     ITokenUsageService,
     TOKEN_USAGE_SERVICE_TOKEN,
 } from '@/core/domain/tokenUsage/contracts/tokenUsage.service.contract';
 import {
+    TokenPricingQueryDto,
     TokenUsageQueryDto,
-    DailyTokenUsage,
-    TokenUsageSummary,
 } from '@/core/infrastructure/http/dtos/token-usage.dto';
-import { TokenUsageQueryContract } from '@/core/domain/tokenUsage/contracts/tokenUsage.repository.contract';
 import { Query, Controller, Get } from '@nestjs/common';
+import {
+    DailyUsageResultContract,
+    TokenUsageQueryContract,
+    UsageSummaryContract,
+    DailyUsageByPrResultContract,
+    UsageByPrResultContract,
+    DailyUsageByDeveloperResultContract,
+    UsageByDeveloperResultContract,
+} from '@/core/domain/tokenUsage/types/tokenUsage.types';
+import { TokensByDeveloperUseCase } from '@/core/application/use-cases/usage/tokens-developer.use-case';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
+import { TokenPricingUseCase } from '@/core/application/use-cases/usage/token-pricing.use-case';
+import { PinoLoggerService } from '../../adapters/services/logger/pino.service';
 
 @Controller('usage')
 export class TokenUsageController {
     constructor(
         @Inject(TOKEN_USAGE_SERVICE_TOKEN)
         private readonly tokenUsageService: ITokenUsageService,
-    ) {}
 
-    @Get('tokens/daily')
-    async getDaily(
-        @Query() query: TokenUsageQueryDto,
-    ): Promise<DailyTokenUsage[]> {
-        const mapped = this.mapDtoToContract(query);
-        return this.tokenUsageService.getDailyUsage(mapped);
-    }
+        private readonly tokensByDeveloperUseCase: TokensByDeveloperUseCase,
+        private readonly tokenPricingUseCase: TokenPricingUseCase,
+        private readonly logger: PinoLoggerService,
+    ) {}
 
     @Get('tokens/summary')
     async getSummary(
         @Query() query: TokenUsageQueryDto,
-    ): Promise<TokenUsageSummary> {
-        const mapped = this.mapDtoToContract(query);
-        return this.tokenUsageService.getSummary(mapped);
+    ): Promise<UsageSummaryContract> {
+        try {
+            const mapped = this.mapDtoToContract(query);
+            return this.tokenUsageService.getSummary(mapped);
+        } catch (error) {
+            this.logger.error({
+                message: 'Error fetching token usage summary',
+                error,
+                context: TokenUsageController.name,
+                metadata: { query },
+            });
+            return {} as UsageSummaryContract;
+        }
+    }
+
+    @Get('tokens/daily')
+    async getDaily(
+        @Query() query: TokenUsageQueryDto,
+    ): Promise<DailyUsageResultContract[]> {
+        try {
+            const mapped = this.mapDtoToContract(query);
+            return this.tokenUsageService.getDailyUsage(mapped);
+        } catch (error) {
+            this.logger.error({
+                message: 'Error fetching daily token usage',
+                error,
+                context: TokenUsageController.name,
+                metadata: { query },
+            });
+            return [];
+        }
+    }
+
+    @Get('tokens/by-pr')
+    async getUsageByPr(
+        @Query() query: TokenUsageQueryDto,
+    ): Promise<UsageByPrResultContract[]> {
+        try {
+            const mapped = this.mapDtoToContract(query);
+            return await this.tokenUsageService.getUsageByPr(mapped);
+        } catch (error) {
+            this.logger.error({
+                message: 'Error fetching token usage by PR',
+                error,
+                context: TokenUsageController.name,
+                metadata: { query },
+            });
+            return [];
+        }
+    }
+
+    @Get('tokens/daily-by-pr')
+    async getDailyUsageByPr(
+        @Query() query: TokenUsageQueryDto,
+    ): Promise<DailyUsageByPrResultContract[]> {
+        try {
+            const mapped = this.mapDtoToContract(query);
+            return await this.tokenUsageService.getDailyUsageByPr(mapped);
+        } catch (error) {
+            this.logger.error({
+                message: 'Error fetching daily token usage by PR',
+                error,
+                context: TokenUsageController.name,
+                metadata: { query },
+            });
+            return [];
+        }
+    }
+
+    @Get('tokens/by-developer')
+    async getUsageByDeveloper(
+        @Query() query: TokenUsageQueryDto,
+    ): Promise<UsageByDeveloperResultContract[]> {
+        try {
+            const mapped = this.mapDtoToContract(query);
+            return await this.tokensByDeveloperUseCase.execute(mapped, false);
+        } catch (error) {
+            this.logger.error({
+                message: 'Error fetching token usage by developer',
+                error,
+                context: TokenUsageController.name,
+                metadata: { query },
+            });
+            return [];
+        }
+    }
+
+    @Get('tokens/daily-by-developer')
+    async getDailyByDeveloper(
+        @Query() query: TokenUsageQueryDto,
+    ): Promise<DailyUsageByDeveloperResultContract[]> {
+        try {
+            const mapped = this.mapDtoToContract(query);
+            return await this.tokensByDeveloperUseCase.execute(mapped, true);
+        } catch (error) {
+            this.logger.error({
+                message: 'Error fetching daily token usage by developer',
+                error,
+                context: TokenUsageController.name,
+                metadata: { query },
+            });
+            return [];
+        }
+    }
+
+    @Get('tokens/pricing')
+    async getPricing(@Query() query: TokenPricingQueryDto) {
+        return this.tokenPricingUseCase.execute(query.model, query.provider);
     }
 
     // debug endpoint removed
@@ -56,12 +168,23 @@ export class TokenUsageController {
             end.setUTCHours(23, 59, 59, 999);
         }
 
+        const normalized = query.byok.trim().toLowerCase();
+        if (normalized !== 'true' && normalized !== 'false') {
+            throw new BadRequestException(
+                `byok must be a 'true' or 'false' string`,
+            );
+        }
+        const byokBoolean = normalized === 'true';
+
         return {
             organizationId: query.organizationId,
             prNumber: query.prNumber,
             start,
             end,
             timezone: query.timezone || 'UTC',
+            developer: query.developer,
+            models: query.models,
+            byok: byokBoolean,
         };
     }
 }

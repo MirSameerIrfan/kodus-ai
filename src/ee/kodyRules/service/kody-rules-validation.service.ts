@@ -84,34 +84,55 @@ export class KodyRulesValidationService {
 
     /**
      * Filters and orders Kody Rules.
-     * It selects repository-specific and global active rules, removes duplicates,
+     * It selects directory-specific, repository-specific and global active rules, removes duplicates,
      * orders them by createdAt (oldest first), and if not in cloud mode, limits the result to MAX_KODY_RULES.
      *
      * @param rules Array of KodyRules.
      * @param repositoryId Repository identifier.
+     * @param directoryId Optional directory identifier.
      * @returns Array of filtered, ordered, and possibly limited KodyRules.
      */
     filterKodyRules(
         rules: Partial<IKodyRule>[] = [],
         repositoryId: string,
+        directoryId?: string,
     ): Partial<IKodyRule>[] {
         if (!rules?.length) {
             return [];
         }
 
-        const repositoryRules = rules.filter(
-            (rule) =>
-                rule?.repositoryId === repositoryId &&
-                rule?.status === KodyRulesStatus.ACTIVE,
-        );
+        const repositoryRules: Partial<IKodyRule>[] = [];
+        const directoryRules: Partial<IKodyRule>[] = [];
+        const globalRules: Partial<IKodyRule>[] = [];
 
-        const globalRules = rules.filter(
-            (rule) =>
-                rule?.repositoryId === 'global' &&
-                rule?.status === KodyRulesStatus.ACTIVE,
-        );
+        for (const rule of rules) {
+            if (rule.status !== KodyRulesStatus.ACTIVE) {
+                continue;
+            }
 
-        const mergedRules = [...repositoryRules, ...globalRules];
+            if (rule.repositoryId === 'global') {
+                globalRules.push(rule);
+                continue;
+            }
+
+            if (rule.repositoryId !== repositoryId) {
+                continue;
+            }
+
+            if (directoryId && rule.directoryId) {
+                if (rule.directoryId === directoryId) {
+                    directoryRules.push(rule);
+                }
+            } else {
+                repositoryRules.push(rule);
+            }
+        }
+
+        const mergedRules = [
+            ...repositoryRules,
+            ...directoryRules,
+            ...globalRules,
+        ];
         const mergedRulesWithoutDuplicates =
             this.extractUniqueKodyRules(mergedRules);
 
@@ -147,11 +168,11 @@ export class KodyRulesValidationService {
     }
 
     /**
-     * Retrieves the specific Kody rules for a file based on glob patterns and inheritance settings.
-     * @param filename Name of the file to be checked.
+     * Retrieves the specific Kody rules for a *file* based on glob patterns.
+     * This method only matches rules whose glob patterns directly match the file.
+     * @param fileName Name of the file to be checked.
      * @param kodyRules Array of objects containing the pattern and Kody rules.
-     * @param directoryId Directory identifier to match inheritance rules.
-     * @param repositoryId Repository identifier to match repository-specific rules.
+     * @param filters Filtering options for repository and directory.
      * @returns Array of Kody rules applicable to the file.
      */
     getKodyRulesForFile(
@@ -163,6 +184,59 @@ export class KodyRulesValidationService {
             useInclude?: boolean;
             useExclude?: boolean;
         },
+    ) {
+        return this.getKodyRules(
+            fileName,
+            kodyRules,
+            filters,
+            // Pass the file-specific matching strategy
+            (rule, normalizedFile) =>
+                this.isFilePathMatch(rule, normalizedFile),
+        );
+    }
+
+    /**
+     * Retrieves the specific Kody rules for a *folder* based on glob patterns.
+     * This matches rules that apply to the folder itself or are recursive (e.g., ** /*).
+     * @param folderName Name of the folder to be checked.
+     * @param kodyRules Array of objects containing the pattern and Kody rules.
+     * @param filters Filtering options for repository and directory.
+     * @returns Array of Kody rules applicable to the folder.
+     */
+    getKodyRulesForFolder(
+        folderName: string | null,
+        kodyRules: Partial<IKodyRule>[],
+        filters: {
+            directoryId?: string;
+            repositoryId?: string;
+            useInclude?: boolean;
+            useExclude?: boolean;
+        },
+    ) {
+        return this.getKodyRules(
+            folderName,
+            kodyRules,
+            filters,
+            // Pass the folder-specific matching strategy
+            (rule, normalizedFolder) =>
+                this.isFolderPathMatch(rule, normalizedFolder),
+        );
+    }
+
+    private getKodyRules(
+        path: string | null,
+        kodyRules: Partial<IKodyRule>[],
+        filters: {
+            directoryId?: string;
+            repositoryId?: string;
+            useInclude?: boolean;
+            useExclude?: boolean;
+        },
+        // The path matching strategy is passed as a function
+        pathMatcher: (
+            rule: Partial<IKodyRule>,
+            normalizedPath: string | null,
+        ) => boolean,
     ) {
         const {
             directoryId,
@@ -176,49 +250,12 @@ export class KodyRulesValidationService {
         }
 
         // Normalize the path by replacing backslashes with forward slashes (in case it's on Windows)
-        const normalizedFilename =
-            fileName?.replace(/\\/g, '/')?.replace(/^\//, '') ?? null;
+        const normalizedPath =
+            path?.replace(/\\/g, '/')?.replace(/^\//, '') ?? null;
 
-        const getGlobBasePath = (pattern: string): string => {
-            const globChars = ['*', '?', '{', '}', '[', ']', '!'];
-            const parts = pattern.split('/');
-            const basePathParts: string[] = [];
-
-            for (const part of parts) {
-                // Check if any glob character exists in the current path segment
-                if (globChars.some((char) => part.includes(char))) {
-                    break; // Stop at the first segment with a wildcard
-                }
-                basePathParts.push(part);
-            }
-
-            return basePathParts.join('/');
-        };
-
-        // Check if the rule's path matches the file's path
+        // isPathMatch is a call to the provided strategy function
         const isPathMatch = (rule: Partial<IKodyRule>): boolean => {
-            // If we aren't checking a specific file, all paths match.
-            if (normalizedFilename === null) {
-                return true;
-            }
-
-            // If the rule has no path defined, it matches all files.
-            const rulePath = rule.path?.trim();
-            if (!rulePath) {
-                return true;
-            }
-
-            // Use glob matching to check if the file matches the rule's path pattern.
-            if (isFileMatchingGlob(normalizedFilename, [rulePath])) {
-                return true;
-            }
-
-            // Check if it's the base path (folder) of the file
-            if (getGlobBasePath(rulePath) === normalizedFilename) {
-                return true;
-            }
-
-            return false;
+            return pathMatcher(rule, normalizedPath);
         };
 
         // Check if the rule matches the repository (global or specific)
@@ -252,16 +289,6 @@ export class KodyRulesValidationService {
                 return false;
             }
 
-            // If we are querying at the repository level (no directoryId is provided)
-            // We only allow it if the repositoryId itself is in the 'include' list.
-            if (
-                !directoryId &&
-                include.length &&
-                !include.includes(repositoryId!)
-            ) {
-                return false;
-            }
-
             // Check if the current directory or repository is excluded or included
             const isExcluded =
                 useExclude &&
@@ -288,11 +315,143 @@ export class KodyRulesValidationService {
                 return false;
             }
 
+            const currentLevel = this.resolveContextLevel({
+                directoryId,
+                repositoryId,
+            });
+
+            if (
+                (currentLevel === 'repository' &&
+                    repositoryId === rule.repositoryId) ||
+                (currentLevel === 'directory' &&
+                    directoryId === rule.directoryId)
+            ) {
+                return true;
+            }
+
             return (
                 isPathMatch(rule) &&
                 isRepositoryMatch(rule) &&
                 isInheritanceMatch(rule)
             );
         });
+    }
+
+    /**
+     * Private helper to check if a rule's path matches a specific *file*.
+     */
+    private isFilePathMatch(
+        rule: Partial<IKodyRule>,
+        normalizedFilename: string | null,
+    ): boolean {
+        // If we aren't checking a specific file, all paths match.
+        if (normalizedFilename === null) {
+            return true;
+        }
+
+        // If the rule has no path defined, it matches all files.
+        const rulePath = rule.path?.trim();
+        if (!rulePath) {
+            return true;
+        }
+
+        // Use glob matching to check if the file matches the rule's path pattern.
+        return isFileMatchingGlob(normalizedFilename, [rulePath]);
+    }
+
+    /**
+     * Private helper to check if a rule's path matches a specific *folder*.
+     */
+    private isFolderPathMatch(
+        rule: Partial<IKodyRule>,
+        normalizedFolder: string | null,
+    ): boolean {
+        // If we aren't checking a specific folder, all paths match.
+        if (normalizedFolder === null) {
+            return true;
+        }
+
+        // If the rule has no path defined, it matches all files/folders.
+        const rulePath = rule.path?.trim();
+        if (!rulePath) {
+            return true;
+        }
+
+        if (isFileMatchingGlob(normalizedFolder, [rulePath])) {
+            return true;
+        }
+
+        const ruleBasePath = this.getGlobBasePath(rulePath);
+
+        if (ruleBasePath === '') {
+            return true;
+        }
+
+        if (ruleBasePath === normalizedFolder) {
+            return true;
+        }
+
+        if (ruleBasePath.startsWith(normalizedFolder + '/')) {
+            return true;
+        }
+
+        if (
+            rulePath.startsWith('**') &&
+            normalizedFolder.endsWith('/' + ruleBasePath)
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Gets the non-glob base path from a glob pattern.
+     * e.g., 'src/app/*.ts' -> 'src/app'
+     * e.g., '** /*.ts' -> ''
+     */
+    private getGlobBasePath(pattern: string): string {
+        const globChars = ['*', '?', '{', '}', '[', ']', '!'];
+        const parts = pattern.replace(/^\/|\/$/g, '').split('/');
+        const basePathParts: string[] = [];
+
+        for (const part of parts) {
+            // Check if any glob character exists in the current path segment
+            if (globChars.some((char) => part.includes(char))) {
+                break; // Stop at the first segment with a wildcard
+            }
+            basePathParts.push(part);
+        }
+
+        return basePathParts.join('/');
+    }
+
+    private resolveContextLevel(params: {
+        directoryId?: string;
+        repositoryId?: string;
+    }): 'global' | 'repository' | 'directory' {
+        if (params.directoryId) {
+            return 'directory';
+        }
+
+        if (params.repositoryId) {
+            return 'repository';
+        }
+
+        return 'global';
+    }
+
+    private resolveRuleLevel(
+        rule: Partial<IKodyRule>,
+    ): 'global' | 'repository' | 'directory' {
+        if (rule?.directoryId) {
+            return 'directory';
+        }
+
+        if (rule?.repositoryId && rule.repositoryId !== 'global') {
+            return 'repository';
+        }
+
+        return 'global';
     }
 }

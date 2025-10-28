@@ -1,4 +1,12 @@
-import { IsISO8601, IsNumber, IsOptional, IsString } from 'class-validator';
+import { BadRequestException } from '@nestjs/common';
+import { Transform } from 'class-transformer';
+import {
+    IsBoolean,
+    IsISO8601,
+    IsNumber,
+    IsOptional,
+    IsString,
+} from 'class-validator';
 
 export class TokenUsageQueryDto {
     @IsString()
@@ -11,26 +19,30 @@ export class TokenUsageQueryDto {
     endDate: string; // ISO date string
 
     @IsOptional()
+    @IsString()
+    models?: string;
+
+    @IsOptional()
     @IsNumber()
     prNumber?: number;
 
     @IsOptional()
     @IsString()
     timezone?: string; // e.g., 'UTC' or 'America/Sao_Paulo'
+
+    @IsOptional()
+    @IsString()
+    developer?: string;
+
+    @IsString()
+    byok: string;
 }
 
-export type DailyTokenUsage = {
-    date: string; // YYYY-MM-DD
-    input: number;
-    output: number;
-    total: number;
-    outputReasoning: number;
-};
+export class TokenPricingQueryDto {
+    @IsString()
+    model: string;
 
-export type TokenUsageSummary = {
-    input: number;
-    output: number;
-    total: number;
-    outputReasoning: number;
-};
-
+    @IsString()
+    @IsOptional()
+    provider?: string;
+}

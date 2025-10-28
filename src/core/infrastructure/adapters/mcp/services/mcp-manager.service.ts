@@ -5,6 +5,7 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PinoLoggerService } from '../../services/logger/pino.service';
 import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
+import { TransportType } from '@kodus/flow/dist/core/types/allTypes';
 
 type MCPConnection = {
     id: string;
@@ -37,6 +38,67 @@ type MCPItem = {
 type MCPData = {
     items: MCPItem[];
 };
+
+enum MCPIntegrationAuthType {
+    NONE = 'none',
+    API_KEY = 'api_key',
+    BASIC = 'basic',
+    BEARER_TOKEN = 'bearer_token',
+}
+
+enum MCPIntegrationProtocol {
+    HTTP = 'http',
+    SSE = 'sse',
+}
+
+interface MCPIntegrationEntity {
+    id: string;
+    active: boolean;
+    organizationId: string;
+    protocol: MCPIntegrationProtocol;
+    baseUrl: string;
+    name: string;
+    description?: string;
+    logoUrl?: string;
+    authType: MCPIntegrationAuthType;
+    auth?: string;
+    headers?: string;
+    createdAt: Date;
+    updatedAt: Date;
+    deletedAt: Date | null;
+}
+
+type MCPIntegrationInterface =
+    | MCPIntegrationNone
+    | MCPIntegrationBearerToken
+    | MCPIntegrationApiKey
+    | MCPIntegrationBasic;
+
+interface MCPIntegrationBase
+    extends Omit<MCPIntegrationEntity, 'authType' | 'auth' | 'headers'> {
+    headers?: Record<string, string>;
+}
+
+interface MCPIntegrationNone extends MCPIntegrationBase {
+    authType: MCPIntegrationAuthType.NONE;
+}
+
+interface MCPIntegrationBearerToken extends MCPIntegrationBase {
+    authType: MCPIntegrationAuthType.BEARER_TOKEN;
+    bearerToken: string;
+}
+
+interface MCPIntegrationApiKey extends MCPIntegrationBase {
+    authType: MCPIntegrationAuthType.API_KEY;
+    apiKey: string;
+    apiKeyHeader: string;
+}
+
+interface MCPIntegrationBasic extends MCPIntegrationBase {
+    authType: MCPIntegrationAuthType.BASIC;
+    basicUser: string;
+    basicPassword?: string;
+}
 
 export const KODUS_MCP_INTEGRATION_ID = 'kd_mcp_oTUrzqsaxTg';
 
@@ -116,9 +178,13 @@ export class MCPManagerService {
             const limitedData = limited ? data.items.slice(0, 3) : data.items;
 
             if (format) {
-                return limitedData.map((connection) =>
-                    this.formatConnection(connection),
-                );
+                const formattedConnections: MCPServerConfig[] = [];
+                for (const connection of limitedData) {
+                    const formattedConnection =
+                        await this.formatConnection(connection);
+                    formattedConnections.push(formattedConnection);
+                }
+                return formattedConnections;
             }
 
             return limitedData;
@@ -145,7 +211,7 @@ export class MCPManagerService {
                 `mcp/integration/kodusmcp`,
                 {
                     integrationId: KODUS_MCP_INTEGRATION_ID,
-                    mcpUrl: process.env.API_KODUS_MCP_SERVER_URL ?? '',
+                    baseUrl: process.env.API_KODUS_MCP_SERVER_URL ?? '',
                 },
                 {
                     headers: this.getAuthHeaders(organizationAndTeamData),
@@ -162,18 +228,62 @@ export class MCPManagerService {
         }
     }
 
-    private formatConnection(connection: MCPItem): MCPServerConfig {
+    private async formatConnection(
+        connection: MCPItem,
+    ): Promise<MCPServerConfig> {
+        let headers: Record<string, string> = {};
+        let type: string = 'http';
+        if (connection.provider === 'custom') {
+            const integration: MCPIntegrationInterface =
+                await this.axiosMCPManagerService.get(
+                    `mcp/integration/custom/${connection.integrationId}`,
+                    {
+                        headers: this.getAuthHeaders({
+                            organizationId: connection.organizationId,
+                        }),
+                    },
+                );
+
+            if (!integration) {
+                throw new Error(
+                    `Integration not found: ${connection.integrationId}`,
+                );
+            }
+
+            headers = { ...integration.headers };
+
+            switch (integration.authType) {
+                case MCPIntegrationAuthType.BEARER_TOKEN:
+                    headers['Authorization'] =
+                        `Bearer ${(integration as MCPIntegrationBearerToken).bearerToken}`;
+                    break;
+                case MCPIntegrationAuthType.API_KEY:
+                    const apiKeyIntegration =
+                        integration as MCPIntegrationApiKey;
+                    headers[apiKeyIntegration.apiKeyHeader] =
+                        apiKeyIntegration.apiKey;
+                    break;
+                case MCPIntegrationAuthType.BASIC:
+                    const basicIntegration = integration as MCPIntegrationBasic;
+                    const credentials = Buffer.from(
+                        `${basicIntegration.basicUser}:${basicIntegration.basicPassword ?? ''}`,
+                    ).toString('base64');
+                    headers['Authorization'] = `Basic ${credentials}`;
+                    break;
+                case MCPIntegrationAuthType.NONE:
+                default:
+                    break;
+            }
+
+            type = integration.protocol;
+        }
+
         return {
             name: connection.appName,
             provider: connection.provider,
-            type: 'http',
+            type: type as TransportType,
             url: connection.mcpUrl,
-            headers: {
-                ...this.getAuthHeaders({
-                    organizationId: connection.organizationId,
-                }),
-                'Content-Type': 'application/json',
-            },
+            headers,
             retries: 1,
             timeout: 10_000,
             allowedTools: connection.allowedTools,

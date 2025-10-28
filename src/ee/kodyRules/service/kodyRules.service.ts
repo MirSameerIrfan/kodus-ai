@@ -7,6 +7,9 @@ import { KodyRulesEntity } from '@/core/domain/kodyRules/entities/kodyRules.enti
 import {
     IKodyRule,
     IKodyRules,
+    IKodyRuleExternalReference,
+    IKodyRuleReferenceSyncError,
+    KodyRuleProcessingStatus,
     KodyRulesOrigin,
     KodyRulesScope,
     KodyRulesStatus,
@@ -42,7 +45,6 @@ import {
     RULE_LIKE_SERVICE_TOKEN,
 } from '@/core/domain/kodyRules/contracts/ruleLike.service.contract';
 import { KodyRulesValidationService } from './kody-rules-validation.service';
-import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
 
 @Injectable()
 export class KodyRulesService implements IKodyRulesService {
@@ -59,7 +61,6 @@ export class KodyRulesService implements IKodyRulesService {
         private readonly logger: PinoLoggerService,
 
         private readonly kodyRulesValidationService: KodyRulesValidationService,
-        private readonly permissionValidationService: PermissionValidationService,
     ) {}
 
     getNativeCollection() {
@@ -383,6 +384,70 @@ export class KodyRulesService implements IKodyRulesService {
         return updatedKodyRules.rules.find(
             (rule) => rule.uuid === kodyRule.uuid,
         );
+    }
+
+    async updateRuleReferences(
+        organizationId: string,
+        ruleId: string,
+        references: {
+            externalReferences?: IKodyRuleExternalReference[];
+            syncErrors?: IKodyRuleReferenceSyncError[];
+            referenceProcessingStatus?: KodyRuleProcessingStatus;
+            lastReferenceProcessedAt?: Date;
+            ruleHash?: string;
+        },
+    ): Promise<IKodyRule | null> {
+        const existing = await this.findByOrganizationId(organizationId);
+
+        if (!existing) {
+            throw new NotFoundException(
+                'Kody rules not found for organization',
+            );
+        }
+
+        const existingRule = existing.rules?.find(
+            (rule) => rule.uuid === ruleId,
+        );
+
+        if (!existingRule) {
+            throw new NotFoundException('Rule not found');
+        }
+
+        const updatedRule = {
+            ...existingRule,
+            externalReferences: references.externalReferences,
+            syncErrors: references.syncErrors,
+            referenceProcessingStatus: references.referenceProcessingStatus,
+            lastReferenceProcessedAt: references.lastReferenceProcessedAt,
+            ruleHash: references.ruleHash,
+            updatedAt: new Date(),
+        } as IKodyRule;
+
+        const updatedKodyRules = await this.updateRule(
+            existing.uuid,
+            ruleId,
+            updatedRule,
+        );
+
+        if (!updatedKodyRules) {
+            this.logger.error({
+                message: 'Could not update rule references',
+                error: new Error('Could not update rule references'),
+                context: KodyRulesService.name,
+                metadata: {
+                    organizationId,
+                    ruleId,
+                    references,
+                },
+            });
+            throw new Error('Could not update rule references');
+        }
+
+        const updatedRuleResult = updatedKodyRules.rules.find(
+            (rule) => rule.uuid === ruleId,
+        );
+
+        return updatedRuleResult ? (updatedRuleResult as IKodyRule) : null;
     }
 
     async updateRuleWithLogging(
