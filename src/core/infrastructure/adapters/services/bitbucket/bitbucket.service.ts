@@ -3769,14 +3769,20 @@ export class BitbucketService
                 }created_on <= "${filters.endDate}"`;
             }
 
+            const listParams: any = {
+                repo_slug: `{${repository.id}}`,
+                workspace: `{${workspace}}`,
+                fields: '+values.participants,+values.reviewers,+values.draft',
+            };
+
+            if (queryString) {
+                listParams.q = queryString;
+            } else {
+                listParams.pagelen = 100;
+            }
+
             const pullRequests = await bitbucketAPI.pullrequests
-                .list({
-                    repo_slug: `{${repository.id}}`,
-                    workspace: `{${workspace}}`,
-                    q: queryString,
-                    fields: '+values.participants,+values.reviewers,+values.draft',
-                    pagelen: 100,
-                })
+                .list(listParams)
                 .then((res) => this.getPaginatedResults(bitbucketAPI, res));
 
             return pullRequests.map((pr) =>
