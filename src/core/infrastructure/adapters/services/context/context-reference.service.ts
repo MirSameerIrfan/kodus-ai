@@ -1,82 +1,68 @@
+import { randomUUID } from 'crypto';
+
 import { Inject, Injectable } from '@nestjs/common';
 import {
-    ContextRevisionHistoryQuery,
-    ContextRevisionFilter,
     CONTEXT_REFERENCE_REPOSITORY_TOKEN,
     IContextReferenceRepository,
-} from '@/core/domain/contextReferences/contracts/context-revision.repository';
-import type {
+} from '@/core/domain/contextReferences/contracts/context-reference.repository.contract';
+import { IContextReferenceService } from '@/core/domain/contextReferences/contracts/context-reference.service.contract';
+import { ContextReferenceEntity } from '@/core/domain/contextReferences/entities/context-reference.entity';
+import { IContextReference } from '@/core/domain/contextReferences/interfaces/context-reference.interface';
+import {
+    ContextRevisionScope,
     ContextRequirement,
     ContextRevisionActor,
-    ContextRevisionLogEntry,
-    ContextRevisionScope,
 } from '@context-os-core/interfaces.js';
 import {
     createRevisionEntry,
     computeRequirementsHash,
-} from '@context-os-core/utils/context-requirements.js';
-
-interface CommitRevisionInput {
-    scope: ContextRevisionScope;
-    entityType: string;
-    entityId: string;
-    requirements?: ContextRequirement[];
-    payload?: Record<string, unknown>;
-    parentRevisionId?: string;
-    revisionId?: string;
-    origin?: ContextRevisionActor;
-    metadata?: Record<string, unknown>;
-    knowledgeRefs?: Array<{ itemId: string; version?: string }>;
-}
-
-interface CommitResult {
-    revision: ContextRevisionLogEntry;
-    pointer: {
-        revisionId: string;
-        requirementsHash?: string;
-    };
-}
-
-function generateRevisionId(): string {
-    const iso = new Date().toISOString();
-    return `rev_${iso.replace(/[-:]/g, '').replace('.', '').replace('Z', 'Z')}`;
-}
+} from '../../../../../../packages/context-os-core/src/utils/context-requirements.js';
 
 @Injectable()
-export class ContextReferenceService {
+export class ContextReferenceService implements IContextReferenceService {
     constructor(
         @Inject(CONTEXT_REFERENCE_REPOSITORY_TOKEN)
         private readonly repository: IContextReferenceRepository,
     ) {}
 
-    async commitRevision(input: CommitRevisionInput): Promise<CommitResult> {
-        const revisionId = input.revisionId ?? generateRevisionId();
+    async commitRevision(params: {
+        scope: ContextRevisionScope;
+        entityType: string;
+        entityId: string;
+        payload?: Record<string, unknown>;
+        requirements?: ContextRequirement[];
+        parentReferenceId?: string;
+        uuid?: string;
+        origin?: ContextRevisionActor;
+        metadata?: Record<string, unknown>;
+        knowledgeRefs?: Array<{ itemId: string; version?: string }>;
+    }): Promise<{
+        revision: ContextReferenceEntity;
+        pointer: { uuid: string; requirementsHash?: string };
+    }> {
+        const uuid = params.uuid ?? randomUUID();
         const origin: ContextRevisionActor =
-            input.origin ?? { kind: 'system', id: 'unknown' };
-        const payload = input.payload ?? {
-            requirements: input.requirements ?? [],
+            params.origin ?? { kind: 'system', id: 'unknown' };
+        const payload = params.payload ?? {
+            requirements: params.requirements ?? [],
         };
 
         const entry = createRevisionEntry({
-            revisionId,
-            parentRevisionId: input.parentRevisionId,
-            scope: input.scope,
-            entityType: input.entityType,
-            entityId: input.entityId,
+            revisionId: uuid,
+            parentRevisionId: params.parentReferenceId,
+            scope: params.scope,
+            entityType: params.entityType,
+            entityId: params.entityId,
             origin,
-            requirements: input.requirements,
+            requirements: params.requirements,
             payload,
-            metadata: input.metadata,
-            knowledgeRefs: input.knowledgeRefs,
+            metadata: params.metadata,
+            knowledgeRefs: params.knowledgeRefs,
         });
-        const requirementsHash =
-            entry.requirements && entry.requirements.length > 0
-                ? computeRequirementsHash(entry.requirements)
-                : undefined;
 
-        const persisted = await this.repository.createRevision({
-            revisionId: entry.revisionId,
-            parentRevisionId: entry.parentRevisionId,
+        const contextReference: IContextReference = {
+            uuid: entry.revisionId,
+            parentReferenceId: entry.parentRevisionId,
             scope: entry.scope,
             entityType: entry.entityType,
             entityId: entry.entityId,
@@ -85,54 +71,70 @@ export class ContextReferenceService {
             knowledgeRefs: entry.knowledgeRefs,
             origin: entry.origin,
             metadata: entry.metadata,
-        });
+        };
+
+        const persisted = await this.repository.create(contextReference);
+        if (!persisted) {
+            throw new Error('Failed to persist context reference');
+        }
+
+        const requirementsHash =
+            entry.requirements && entry.requirements.length
+                ? computeRequirementsHash(entry.requirements)
+                : undefined;
 
         return {
             revision: persisted,
-            pointer: {
-                revisionId: persisted.revisionId,
-                requirementsHash,
-            },
+            pointer: { uuid: persisted.uuid, requirementsHash },
         };
     }
 
-    async getRevision(
-        revisionId: string,
-    ): Promise<ContextRevisionLogEntry | null> {
-        return this.repository.getRevision(revisionId);
-    }
-
-    async getRevisionHistory(query: ContextRevisionHistoryQuery): Promise<ContextRevisionLogEntry[]> {
-        return this.repository.getRevisionHistory(query);
+    async getRevisionHistory(
+        entityType: string,
+        entityId: string,
+        limit?: number,
+    ): Promise<ContextReferenceEntity[]> {
+        const results = await this.repository.find({ entityType, entityId });
+        if (typeof limit === 'number' && limit >= 0) {
+            return results.slice(0, limit);
+        }
+        return results;
     }
 
     async getLatestRevision(
-        filter: ContextRevisionFilter,
-    ): Promise<ContextRevisionLogEntry | null> {
-        return this.repository.getLatestRevision(filter);
+        entityType: string,
+        entityId: string,
+    ): Promise<ContextReferenceEntity | undefined> {
+        const [latest] = await this.getRevisionHistory(entityType, entityId, 1);
+        return latest;
     }
 
     async rollbackTo(params: {
-        targetRevisionId: string;
+        targetReferenceId: string;
         origin?: ContextRevisionActor;
-    }): Promise<CommitResult> {
-        const target = await this.repository.getRevision(params.targetRevisionId);
+    }): Promise<{
+        revision: ContextReferenceEntity;
+        pointer: { uuid: string; requirementsHash?: string };
+    }> {
+        const target = await this.repository.findById(params.targetReferenceId);
         if (!target) {
-            throw new Error(`Revision ${params.targetRevisionId} not found`);
+            throw new Error(
+                `Context reference ${params.targetReferenceId} not found`,
+            );
         }
 
-        const latest = await this.repository.getLatestRevision({
-            entityType: target.entityType,
-            entityId: target.entityId,
-        });
+        const latest = await this.getLatestRevision(
+            target.entityType,
+            target.entityId,
+        );
 
         return this.commitRevision({
             scope: target.scope,
             entityType: target.entityType,
             entityId: target.entityId,
-            requirements: target.requirements,
             payload: target.payload,
-            parentRevisionId: latest?.revisionId,
+            requirements: target.requirements,
+            parentReferenceId: latest?.uuid,
             origin:
                 params.origin ??
                 target.origin ??
@@ -142,18 +144,36 @@ export class ContextReferenceService {
         });
     }
 
-    static applyRevisionPointer<T extends { contextRevisionId?: string; contextRequirementsHash?: string }>(
-        config: T,
-        pointer: { revisionId: string; requirementsHash?: string },
-    ): T {
-        return {
-            ...config,
-            contextRevisionId: pointer.revisionId,
-            contextRequirementsHash: pointer.requirementsHash ?? undefined,
-        };
+    async create(
+        contextReference: IContextReference,
+    ): Promise<ContextReferenceEntity | undefined> {
+        return this.repository.create(contextReference);
     }
 
-    static computeHash(requirements: ContextRequirement[]): string {
-        return computeRequirementsHash(requirements);
+    async find(
+        filter?: Partial<IContextReference>,
+    ): Promise<ContextReferenceEntity[]> {
+        return this.repository.find(filter);
+    }
+
+    async findOne(
+        filter: Partial<IContextReference>,
+    ): Promise<ContextReferenceEntity | undefined> {
+        return this.repository.findOne(filter);
+    }
+
+    async findById(uuid: string): Promise<ContextReferenceEntity | undefined> {
+        return this.repository.findById(uuid);
+    }
+
+    async update(
+        filter: Partial<IContextReference>,
+        data: Partial<IContextReference>,
+    ): Promise<ContextReferenceEntity | undefined> {
+        return this.repository.update(filter, data);
+    }
+
+    async delete(uuid: string): Promise<void> {
+        return this.repository.delete(uuid);
     }
 }

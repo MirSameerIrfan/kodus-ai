@@ -1,27 +1,16 @@
-import {
-    ContextRevisionHistoryQuery,
-    ContextRevisionFilter,
-    IContextReferenceRepository,
-    CONTEXT_REFERENCE_REPOSITORY_TOKEN,
-    CreateContextRevisionParams,
-} from '@/core/domain/contextReferences/contracts/context-revision.repository';
-import { ContextReferenceModel } from './schema/contextReference.model';
-import type {
-    ContextRevisionActor,
-    ContextRevisionLogEntry,
-    ContextRequirement,
-} from '@context-os-core/interfaces.js';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, FindManyOptions } from 'typeorm';
+import { Repository, FindOptionsWhere } from 'typeorm';
+import { IContextReferenceRepository } from '@/core/domain/contextReferences/contracts/context-reference.repository.contract';
+import { ContextReferenceEntity } from '@/core/domain/contextReferences/entities/context-reference.entity';
+import { IContextReference } from '@/core/domain/contextReferences/interfaces/context-reference.interface';
+import { ContextReferenceModel } from './schema/contextReference.model';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 
-function modelToLogEntry(
-    model: ContextReferenceModel,
-): ContextRevisionLogEntry {
-    return {
-        revisionId: model.revisionId,
-        parentRevisionId: model.parentRevisionId ?? undefined,
+function modelToEntity(model: ContextReferenceModel): ContextReferenceEntity {
+    return ContextReferenceEntity.create({
+        uuid: model.uuid,
+        parentReferenceId: model.parentReferenceId ?? undefined,
         scope: model.scope,
         entityType: model.entityType,
         entityId: model.entityId,
@@ -29,18 +18,23 @@ function modelToLogEntry(
         requirements: model.requirements ?? undefined,
         knowledgeRefs: model.knowledgeRefs ?? undefined,
         origin: model.origin ?? undefined,
-        createdAt: model.createdAt?.getTime() ?? Date.now(),
+        createdAt: model.createdAt,
+        updatedAt: model.updatedAt,
         metadata: model.metadata ?? undefined,
-    };
+    });
 }
 
 function applyFilter(
-    filter: ContextRevisionFilter,
+    filter: Partial<IContextReference>,
 ): FindOptionsWhere<ContextReferenceModel> {
     const where: FindOptionsWhere<ContextReferenceModel> = {};
 
-    if (filter.revisionId) {
-        where.revisionId = filter.revisionId;
+    if (filter.uuid) {
+        where.uuid = filter.uuid;
+    }
+
+    if (filter.parentReferenceId) {
+        where.parentReferenceId = filter.parentReferenceId;
     }
 
     if (filter.scope) {
@@ -66,80 +60,75 @@ export class ContextReferenceRepository implements IContextReferenceRepository {
         private readonly logger: PinoLoggerService,
     ) {}
 
-    async createRevision(
-        params: CreateContextRevisionParams,
-    ): Promise<ContextRevisionLogEntry> {
+    async create(
+        contextReference: IContextReference,
+    ): Promise<ContextReferenceEntity | undefined> {
         try {
             const model = this.repository.create({
-                revisionId: params.revisionId,
-                parentRevisionId: params.parentRevisionId,
-                scope: params.scope,
-                entityType: params.entityType,
-                entityId: params.entityId,
-            payload: params.payload,
-            requirements: params.requirements as ContextRequirement[] | undefined,
-            knowledgeRefs: params.knowledgeRefs,
-            origin: params.origin as ContextRevisionActor | undefined,
-            metadata: params.metadata,
-        });
+                uuid: contextReference.uuid,
+                parentReferenceId: contextReference.parentReferenceId,
+                scope: contextReference.scope,
+                entityType: contextReference.entityType,
+                entityId: contextReference.entityId,
+                payload: contextReference.payload,
+                requirements: contextReference.requirements,
+                knowledgeRefs: contextReference.knowledgeRefs,
+                origin: contextReference.origin,
+                metadata: contextReference.metadata,
+            });
 
             const saved = await this.repository.save(model);
-            return modelToLogEntry(saved);
+            return modelToEntity(saved);
         } catch (error) {
             this.logger.error({
                 message: 'Failed to create context reference',
                 context: ContextReferenceRepository.name,
                 error,
-                metadata: { entityType: params.entityType, entityId: params.entityId },
+                metadata: {
+                    entityType: contextReference.entityType,
+                    entityId: contextReference.entityId,
+                },
             });
             throw error;
         }
     }
 
-    async getRevision(revisionId: string): Promise<ContextRevisionLogEntry | null> {
-        const result = await this.repository.findOne({
-            where: { revisionId },
-        });
-        return result ? modelToLogEntry(result) : null;
-    }
-
-    async getRevisionHistory(
-        query: ContextRevisionHistoryQuery,
-    ): Promise<ContextRevisionLogEntry[]> {
-        const where: FindOptionsWhere<ContextReferenceModel> = {
-            entityType: query.entityType,
-            entityId: query.entityId,
-        };
-
-        if (query.scope) {
-            where.scope = query.scope as ContextReferenceModel['scope'];
-        }
-
-        const options: FindManyOptions<ContextReferenceModel> = {
+    async find(
+        filter?: Partial<IContextReference>,
+    ): Promise<ContextReferenceEntity[]> {
+        const where = filter ? applyFilter(filter) : {};
+        const results = await this.repository.find({
             where,
             order: { createdAt: 'DESC' },
-            take: query.limit,
-            skip: query.offset,
-        };
-
-        const results = await this.repository.find(options);
-        return results.map(modelToLogEntry);
+        });
+        return results.map(modelToEntity);
     }
 
-    async deleteRevision(revisionId: string): Promise<void> {
-        await this.repository.delete({ revisionId });
-    }
-
-    async getLatestRevision(
-        filter: ContextRevisionFilter,
-    ): Promise<ContextRevisionLogEntry | null> {
+    async findOne(
+        filter: Partial<IContextReference>,
+    ): Promise<ContextReferenceEntity | undefined> {
         const where = applyFilter(filter);
+        const result = await this.repository.findOne({ where });
+        return result ? modelToEntity(result) : undefined;
+    }
 
-        const model = await this.repository.findOne({
-            where,
-            order: { createdAt: 'DESC' },
+    async findById(uuid: string): Promise<ContextReferenceEntity | undefined> {
+        const result = await this.repository.findOne({
+            where: { uuid },
         });
+        return result ? modelToEntity(result) : undefined;
+    }
 
-        return model ? modelToLogEntry(model) : null;
+    async update(
+        filter: Partial<IContextReference>,
+        data: Partial<IContextReference>,
+    ): Promise<ContextReferenceEntity | undefined> {
+        const where = applyFilter(filter);
+        await this.repository.update(where, data as ContextReferenceModel);
+        return this.findOne(filter);
+    }
+
+    async delete(uuid: string): Promise<void> {
+        await this.repository.delete({ uuid });
     }
 }

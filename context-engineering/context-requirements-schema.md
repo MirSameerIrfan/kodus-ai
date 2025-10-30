@@ -46,7 +46,7 @@ interface ContextDependency {
 ## Pointer no JSON de Configuração
 
 O JSONB original continua enxuto: em vez de armazenar a lista completa, cada
-nível armazena somente um ponteiro (`contextRevisionId`) e opcionalmente o hash
+nível armazena somente um ponteiro (`contextReferenceId`) e opcionalmente o hash
 da revisão aplicada. Exemplo no objeto `global`:
 
 ```json
@@ -56,7 +56,7 @@ da revisão aplicada. Exemplo no objeto `global`:
   "configs": {
     "summary": { "behaviourForExistingDescription": "concatenate" },
     "reviewOptions": { "potential_issues": true },
-    "contextRevisionId": "rev_20250310T150000Z",
+    "contextReferenceId": "rev_20250310T150000Z",
     "contextRequirementsHash": "f8af263c91c5cfb6564f5cb1f046f33e737f0a68a653..."
   },
   "repositories": [...]
@@ -74,7 +74,7 @@ arquivo) e resolve as revisões a partir da tabela dedicada.
    query, camadas, dependencies etc.).
 3. Na hora de salvar, o front envia essa lista para a API de commit, que gera
    a revisão e devolve `revisionId`/`hash`. O front então persiste apenas os
-   ponteiros (`contextRevisionId`, `contextRequirementsHash`) no JSON de
+  ponteiros (`contextReferenceId`, `contextRequirementsHash`) no JSON de
    configuração.
 
 ### Entity Type / ID e Scope
@@ -215,7 +215,7 @@ O campo `origin` guarda informações sobre quem/qual sistema gerou aquela revis
 1. A UI de configuração envia (ou edita) o array de `ContextRequirement` e chama
    a API de commit.
 2. O serviço registra a revisão na tabela acima, calcula o hash e atualiza o
-   ponteiro `contextRevisionId`/`contextRequirementsHash` no JSONB correspondente.
+  ponteiro `contextReferenceId`/`contextRequirementsHash` no JSONB correspondente.
 3. O loader (`CodeBaseConfigService`) lê os ponteiros e carrega as revisões em
    cascata, aplicando `mergeContextRequirements` antes de montar o pack.
 

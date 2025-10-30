@@ -363,7 +363,7 @@ class CodeReviewConfigWithoutLLMProviderDto {
 
     @IsOptional()
     @IsString()
-    contextRevisionId?: string;
+    contextReferenceId?: string;
 
     @IsOptional()
     @IsString()

@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ContextReferenceModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/contextReference.model';
 import { ContextReferenceRepository } from '@/core/infrastructure/adapters/repositories/typeorm/contextReference.repository';
-import { CONTEXT_REFERENCE_REPOSITORY_TOKEN } from '@/core/domain/contextReferences/contracts/context-revision.repository';
+import { CONTEXT_REFERENCE_REPOSITORY_TOKEN } from '@/core/domain/contextReferences/contracts/context-reference.repository.contract';
 import { ContextReferenceService } from '@/core/infrastructure/adapters/services/context/context-reference.service';
 
 @Module({

@@ -1,18 +1,16 @@
-import { Column, CreateDateColumn, Entity, PrimaryColumn } from 'typeorm';
+import { Column, Entity } from 'typeorm';
 
 import type {
     ContextRequirement,
     ContextRevisionActor,
     ContextRevisionScope,
 } from '@context-os-core/interfaces.js';
+import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
 
 @Entity('context_references')
-export class ContextReferenceModel {
-    @PrimaryColumn({ type: 'varchar', length: 64 })
-    revisionId: string;
-
+export class ContextReferenceModel extends CoreModel {
     @Column({ type: 'varchar', length: 64, nullable: true })
-    parentRevisionId?: string;
+    parentReferenceId?: string;
 
     @Column({ type: 'jsonb' })
     scope: ContextRevisionScope;
@@ -34,9 +32,6 @@ export class ContextReferenceModel {
 
     @Column({ type: 'jsonb', nullable: true })
     origin?: ContextRevisionActor;
-
-    @CreateDateColumn({ type: 'timestamp with time zone' })
-    createdAt: Date;
 
     @Column({ type: 'jsonb', nullable: true })
     metadata?: Record<string, unknown>;
