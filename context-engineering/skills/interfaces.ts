@@ -1,8 +1,8 @@
 import type {
     ContextActionDescriptor,
+    ContextDependency,
     ContextDomain,
     ContextResourceRef,
-    MCPToolReference,
     PromptRole,
     PromptScope,
 } from '../../packages/context-os-core/src/interfaces.js';
@@ -41,7 +41,7 @@ export interface SkillDefinition {
     id: SkillId;
     metadata: SkillMetadata;
     instructions: SkillInstructionBlock[];
-    requiredTools?: MCPToolReference[];
+    dependencies?: ContextDependency[];
     requiredActions?: SkillAction[];
     resources?: SkillResource[];
     examples?: Array<{

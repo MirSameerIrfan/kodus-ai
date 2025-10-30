@@ -1,0 +1,272 @@
+{
+  "revisions": [
+    {
+      "revisionId": "rev_20250301T120000Z",
+      "scope": {
+        "level": "global"
+      },
+      "entityType": "prompt",
+      "entityId": "code-review-v2",
+      "payload": {
+        "requirements": [
+          {
+            "id": "review-default",
+            "consumer": {
+              "kind": "prompt",
+              "id": "code-review-v2"
+            },
+            "request": {
+              "domain": "code",
+              "taskIntent": "review"
+            },
+            "packProfileId": "code-review-default",
+            "requiredLayerKinds": [
+              "core",
+              "catalog",
+              "active"
+            ],
+            "dependencies": [
+              {
+                "type": "tool",
+                "id": "mcp-x|bugspec-matcher"
+              }
+            ],
+            "version": "1.0.0",
+            "status": "active"
+          }
+        ]
+      },
+      "requirements": [
+        {
+          "id": "review-default",
+          "consumer": {
+            "kind": "prompt",
+            "id": "code-review-v2"
+          },
+          "request": {
+            "domain": "code",
+            "taskIntent": "review"
+          },
+          "packProfileId": "code-review-default",
+          "requiredLayerKinds": [
+            "core",
+            "catalog",
+            "active"
+          ],
+          "dependencies": [
+            {
+              "type": "tool",
+              "id": "mcp-x|bugspec-matcher"
+            }
+          ],
+          "version": "1.0.0",
+          "status": "active"
+        }
+      ],
+      "origin": {
+        "kind": "human",
+        "id": "ops@kodus"
+      },
+      "message": "Seed inicial",
+      "createdAt": 1761851567191,
+      "payloadHash": "c0ddda1070dba7f5955be76fca02161c063e0b59ee79d21aecf2cee2aff35ba7"
+    },
+    {
+      "revisionId": "rev_20250305T090000Z",
+      "parentRevisionId": "rev_20250301T120000Z",
+      "scope": {
+        "level": "global"
+      },
+      "entityType": "prompt",
+      "entityId": "code-review-v2",
+      "payload": {
+        "requirements": [
+          {
+            "id": "review-default",
+            "consumer": {
+              "kind": "prompt",
+              "id": "code-review-v2"
+            },
+            "request": {
+              "domain": "code",
+              "taskIntent": "review"
+            },
+            "packProfileId": "code-review-bug",
+            "requiredLayerKinds": [
+              "core",
+              "catalog",
+              "active"
+            ],
+            "dependencies": [
+              {
+                "type": "tool",
+                "id": "mcp-bug|bugspec-matcher"
+              }
+            ],
+            "version": "1.0.1",
+            "status": "active",
+            "metadata": {
+              "notes": "Bug usa MCP atualizado"
+            }
+          }
+        ]
+      },
+      "requirements": [
+        {
+          "id": "review-default",
+          "consumer": {
+            "kind": "prompt",
+            "id": "code-review-v2"
+          },
+          "request": {
+            "domain": "code",
+            "taskIntent": "review"
+          },
+          "packProfileId": "code-review-bug",
+          "requiredLayerKinds": [
+            "core",
+            "catalog",
+            "active"
+          ],
+          "dependencies": [
+            {
+              "type": "tool",
+              "id": "mcp-bug|bugspec-matcher"
+            }
+          ],
+          "version": "1.0.1",
+          "status": "active",
+          "metadata": {
+            "notes": "Bug usa MCP atualizado"
+          }
+        }
+      ],
+      "origin": {
+        "kind": "automation",
+        "id": "pipeline"
+      },
+      "message": "Atualiza MCP bug",
+      "createdAt": 1761851595127,
+      "payloadHash": "5a41eed12062d268f3a1a07e4a7cf1ec4b547b260e26fce4b86559e73e8fdd06"
+    },
+    {
+      "revisionId": "rev_20250310T150000Z",
+      "parentRevisionId": "rev_20250305T090000Z",
+      "scope": {
+        "level": "global"
+      },
+      "entityType": "prompt",
+      "entityId": "code-review-v2",
+      "payload": {
+        "requirements": [
+          {
+            "id": "review-default",
+            "consumer": {
+              "kind": "prompt",
+              "id": "code-review-v2"
+            },
+            "request": {
+              "domain": "code",
+              "taskIntent": "review"
+            },
+            "packProfileId": "code-review-bug",
+            "requiredLayerKinds": [
+              "core",
+              "catalog",
+              "active"
+            ],
+            "dependencies": [
+              {
+                "type": "tool",
+                "id": "mcp-bug|bugspec-matcher"
+              }
+            ],
+            "version": "1.0.1",
+            "status": "active"
+          },
+          {
+            "id": "review-generation",
+            "consumer": {
+              "kind": "prompt_section",
+              "id": "code-review-v2#generation.main",
+              "name": "Generation Field"
+            },
+            "request": {
+              "domain": "code",
+              "taskIntent": "review"
+            },
+            "dependencies": [
+              {
+                "type": "tool",
+                "id": "kodus|kodus_list_commits"
+              }
+            ],
+            "version": "1.0.0",
+            "status": "active",
+            "metadata": {
+              "notes": "Contexto para generation"
+            }
+          }
+        ]
+      },
+      "requirements": [
+        {
+          "id": "review-default",
+          "consumer": {
+            "kind": "prompt",
+            "id": "code-review-v2"
+          },
+          "request": {
+            "domain": "code",
+            "taskIntent": "review"
+          },
+          "packProfileId": "code-review-bug",
+          "requiredLayerKinds": [
+            "core",
+            "catalog",
+            "active"
+          ],
+          "dependencies": [
+            {
+              "type": "tool",
+              "id": "mcp-bug|bugspec-matcher"
+            }
+          ],
+          "version": "1.0.1",
+          "status": "active"
+        },
+        {
+          "id": "review-generation",
+          "consumer": {
+            "kind": "prompt_section",
+            "id": "code-review-v2#generation.main",
+            "name": "Generation Field"
+          },
+          "request": {
+            "domain": "code",
+            "taskIntent": "review"
+          },
+          "dependencies": [
+            {
+              "type": "tool",
+              "id": "kodus|kodus_list_commits"
+            }
+          ],
+          "version": "1.0.0",
+          "status": "active",
+          "metadata": {
+            "notes": "Contexto para generation"
+          }
+        }
+      ],
+      "origin": {
+        "kind": "human",
+        "id": "qa@kodus",
+        "name": "QA Team"
+      },
+      "message": "Adicionar contexto generation",
+      "createdAt": 1761851620862,
+      "payloadHash": "5a90bb623690e4da284f9b553d6adc56235b1b9f591fc80415debea794779091"
+    }
+  ]
+}

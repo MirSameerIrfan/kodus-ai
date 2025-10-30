@@ -16,12 +16,12 @@ import type { CoreLayerInstruction } from '../../../packages/context-os-core/src
 
 import type {
     Candidate,
+    ContextDependency,
     ContextPackBuilder,
     DomainBundle,
     DomainSnapshot,
     ContextActionDescriptor,
     ContextResourceRef,
-    MCPToolReference,
     RetrievalQuery,
 } from '../../../packages/context-os-core/src/interfaces.js';
 
@@ -87,8 +87,38 @@ export async function createCodeReviewLabBundle(): Promise<DomainBundle> {
     });
 
     const aggregatedActions = new Map<string, ContextActionDescriptor>();
-    const aggregatedTools = new Map<string, MCPToolReference>();
+    const aggregatedDependencies = new Map<string, ContextDependency>();
     const aggregatedResources = new Map<string, ContextResourceRef>();
+
+    const mergeDependency = (
+        dependency: ContextDependency,
+        extraMetadata?: Record<string, unknown>,
+    ) => {
+        const metadata = {
+            ...(dependency.metadata ?? {}),
+            ...(extraMetadata ?? {}),
+        };
+        const key = `${dependency.type ?? 'unknown'}::${dependency.id}`;
+        const existing = aggregatedDependencies.get(key);
+        if (existing) {
+            aggregatedDependencies.set(key, {
+                ...existing,
+                ...dependency,
+                descriptor: dependency.descriptor ?? existing.descriptor,
+                metadata: Object.keys(metadata).length
+                    ? {
+                          ...(existing.metadata ?? {}),
+                          ...metadata,
+                      }
+                    : undefined,
+            });
+            return;
+        }
+        aggregatedDependencies.set(key, {
+            ...dependency,
+            metadata: Object.keys(metadata).length ? metadata : undefined,
+        });
+    };
 
     for (const action of snapshot.actions ?? []) {
         aggregatedActions.set(action.id, action);
@@ -98,8 +128,8 @@ export async function createCodeReviewLabBundle(): Promise<DomainBundle> {
         for (const action of override.requiredActions ?? []) {
             aggregatedActions.set(action.id, action);
         }
-        for (const tool of override.requiredTools ?? []) {
-            aggregatedTools.set(`${tool.mcpId}::${tool.toolName}`, tool);
+        for (const dependency of override.dependencies ?? []) {
+            mergeDependency(dependency);
         }
     }
 
@@ -116,14 +146,8 @@ export async function createCodeReviewLabBundle(): Promise<DomainBundle> {
             aggregatedActions.set(descriptor.id, descriptor);
         }
 
-        for (const tool of skill.requiredTools ?? []) {
-            aggregatedTools.set(`${tool.mcpId}::${tool.toolName}`, {
-                ...tool,
-                metadata: {
-                    ...(tool.metadata ?? {}),
-                    skillId: skill.id,
-                },
-            });
+        for (const dependency of skill.dependencies ?? []) {
+            mergeDependency(dependency, { skillId: skill.id });
         }
 
         for (const resource of skill.resources ?? []) {
@@ -184,16 +208,29 @@ export async function createCodeReviewLabBundle(): Promise<DomainBundle> {
             }
             pack.requiredActions = Array.from(actions.values());
 
-            const tools = new Map(
-                (pack.requiredTools ?? []).map((tool) => [
-                    `${tool.mcpId}::${tool.toolName}`,
-                    tool,
+            const dependencies = new Map(
+                (pack.dependencies ?? []).map((dependency) => [
+                    `${dependency.type ?? 'unknown'}::${dependency.id}`,
+                    dependency,
                 ]),
             );
-            for (const [key, tool] of aggregatedTools.entries()) {
-                tools.set(key, tool);
+            for (const [key, dependency] of aggregatedDependencies.entries()) {
+                const existing = dependencies.get(key);
+                if (existing) {
+                    dependencies.set(key, {
+                        ...existing,
+                        ...dependency,
+                        descriptor: dependency.descriptor ?? existing.descriptor,
+                        metadata: {
+                            ...(existing.metadata ?? {}),
+                            ...(dependency.metadata ?? {}),
+                        },
+                    });
+                } else {
+                    dependencies.set(key, dependency);
+                }
             }
-            pack.requiredTools = Array.from(tools.values());
+            pack.dependencies = Array.from(dependencies.values());
 
             const resources = new Map(
                 (pack.resources ?? []).map((resource) => [resource.id, resource]),

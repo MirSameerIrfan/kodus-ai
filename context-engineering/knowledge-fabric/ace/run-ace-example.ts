@@ -1,9 +1,24 @@
+import { existsSync } from 'node:fs';
 import { createKnowledgeStore } from '../store/index.js';
 import { ACEPipeline } from './pipeline.js';
 import { ActionTelemetryRecorder } from '../../telemetry/action-logger.js';
+import { pathToFileURL } from 'node:url';
 
 async function main(): Promise<void> {
-    const store = await createKnowledgeStore();
+    const weaviateUrl = existsSync('/.dockerenv')
+        ? 'http://weaviate:8080'
+        : 'http://127.0.0.1:8080';
+
+    const storeConfig = {
+        type: 'weaviate' as const,
+        options: {
+            url: weaviateUrl,
+            className: 'KnowledgeItem',
+            grpcPort: 50051,
+        },
+    };
+
+    const store = await createKnowledgeStore({ config: storeConfig });
 
     const pipeline = new ACEPipeline(store, {
         generator: {
@@ -52,7 +67,15 @@ async function main(): Promise<void> {
     await store.close();
 }
 
-if (require.main === module) {
+const isMainModule = (): boolean => {
+    const entry = process.argv[1];
+    if (!entry) {
+        return false;
+    }
+    return import.meta.url === pathToFileURL(entry).href;
+};
+
+if (isMainModule()) {
     main().catch((error) => {
         // eslint-disable-next-line no-console
         console.error(error);

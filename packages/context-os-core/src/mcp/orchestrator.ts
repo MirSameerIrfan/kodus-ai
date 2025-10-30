@@ -1,4 +1,5 @@
 import type {
+    ContextDependency,
     ContextEvent,
     ContextPack,
     ContextTelemetry,
@@ -11,8 +12,8 @@ import type {
     RuntimeContextSnapshot,
 } from '../interfaces.js';
 
-import type { MCPRegistry } from './registry';
-import { sanitizeMCPInput } from './sanitizer';
+import type { MCPRegistry } from './registry.js';
+import { sanitizeMCPInput } from './sanitizer.js';
 
 export interface Logger {
     debug?(message: string, context?: Record<string, unknown>): void;
@@ -87,12 +88,101 @@ export class MCPOrchestrator {
         this.telemetryEventFactory = options.telemetry?.eventFactory;
     }
 
+    private isMCPToolReference(value: unknown): value is MCPToolReference {
+        if (!value || typeof value !== 'object') {
+            return false;
+        }
+        const candidate = value as Record<string, unknown>;
+        return (
+            typeof candidate.mcpId === 'string' &&
+            typeof candidate.toolName === 'string'
+        );
+    }
+
+    private extractToolDependencies(
+        dependencies?: ContextDependency[],
+    ): MCPToolReference[] {
+        if (!dependencies?.length) {
+            return [];
+        }
+
+        const unique = new Map<string, MCPToolReference>();
+
+        for (const dependency of dependencies) {
+            if (!dependency) {
+                continue;
+            }
+
+            if (dependency.type !== 'mcp' && dependency.type !== 'tool') {
+                continue;
+            }
+
+            let reference: MCPToolReference | undefined;
+
+            if (this.isMCPToolReference(dependency.descriptor)) {
+                const descriptor = dependency.descriptor as MCPToolReference;
+                reference = {
+                    ...descriptor,
+                    metadata: {
+                        ...(descriptor.metadata ?? {}),
+                        ...(dependency.metadata ?? {}),
+                    },
+                };
+            } else if (dependency.metadata) {
+                const meta = dependency.metadata as Record<string, unknown>;
+                if (typeof meta.mcpId === 'string' && typeof meta.toolName === 'string') {
+                    reference = {
+                        mcpId: meta.mcpId,
+                        toolName: meta.toolName,
+                        description: meta.description as string | undefined,
+                        metadata: meta,
+                    };
+                }
+            }
+
+            if (!reference && typeof dependency.id === 'string') {
+                const [mcpId, toolName] = dependency.id.split('|', 2);
+                if (mcpId && toolName) {
+                    reference = {
+                        mcpId,
+                        toolName,
+                        metadata: dependency.metadata,
+                    };
+                }
+            }
+
+            if (!reference) {
+                continue;
+            }
+
+            const key = `${reference.mcpId}|${reference.toolName}`;
+            const existing = unique.get(key);
+            if (existing) {
+                const mergedMetadata = {
+                    ...(existing.metadata ?? {}),
+                    ...(reference.metadata ?? {}),
+                };
+                unique.set(key, {
+                    ...existing,
+                    ...reference,
+                    metadata: Object.keys(mergedMetadata).length
+                        ? mergedMetadata
+                        : undefined,
+                });
+            } else {
+                unique.set(key, reference);
+            }
+        }
+
+        return Array.from(unique.values());
+    }
+
     async executeRequiredTools({
         pack,
         input,
         runtime,
     }: MCPExecutionContext): Promise<MCPOrchestratorReport> {
-        const required = pack.requiredTools ?? [];
+        const required = this.extractToolDependencies(pack.dependencies);
         if (!required.length) {
             const now = Date.now();
             return {
@@ -336,14 +426,20 @@ export class MCPOrchestrator {
                     break;
                 }
             } catch (error) {
-                lastError = (error as Error)?.message ?? String(error);
+                const nodeError = error as NodeJS.ErrnoException;
+                lastError = nodeError?.message ?? String(error);
+                const errorCode =
+                    typeof nodeError?.code === 'string'
+                        ? nodeError.code
+                        : undefined;
                 this.logger?.error?.('mcp.tool.exception', {
                     tool: tool.toolName,
                     attempts,
                     error: lastError,
+                    code: errorCode,
                 });
 
-                if (!this.retryableErrorCodes.has(lastError)) {
+                if (!errorCode || !this.retryableErrorCodes.has(errorCode)) {
                     break;
                 }
             }

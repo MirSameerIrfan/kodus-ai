@@ -38,7 +38,7 @@ export class SequentialPackAssemblyPipeline implements PackAssemblyPipeline {
 
     private readonly packIdFactory?: (input: LayerInputContext) => string;
     private readonly versionFactory: () => string;
-    private readonly createdBy?: string;
+    private readonly createdBy: string;
     private readonly telemetryRecorder?: (diagnostics: Record<string, unknown>) => void;
     private readonly telemetryClient?: ContextTelemetry;
     private readonly telemetryEventFactory?: SequentialPipelineTelemetry['eventFactory'];

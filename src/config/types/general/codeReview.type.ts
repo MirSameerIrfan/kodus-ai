@@ -353,6 +353,8 @@ export type CodeReviewConfig = {
             main?: string;
         };
     };
+    contextRevisionId?: string;
+    contextRequirementsHash?: string;
     // This is the default branch of the repository, used only during the review process
     // This field is populated dynamically from the API (GitHub/GitLab) and should NOT be saved to the database
     // It represents the repository's default branch (e.g., 'main', 'develop') that comes from the code management platform

@@ -1,7 +1,6 @@
 import type { LayerInputContext } from '../interfaces.js';
 
 import type {
-    CatalogLayerBuilderConfig,
     CatalogLayerMaterial,
     CatalogLayerMaterializer,
 } from '../builders/catalog-layer-builder.js';
@@ -15,9 +14,9 @@ export class DefaultCatalogMaterializer implements CatalogLayerMaterializer {
     private readonly fallbackEntryLimit: number;
     private readonly highlightThreshold: number;
 
-    constructor(private readonly builderConfig?: CatalogLayerBuilderConfig) {
-        this.fallbackEntryLimit = builderConfig?.fallbackEntryLimit ?? 5;
-        this.highlightThreshold = 0.75;
+    constructor(config: CatalogDefaultConfig = {}) {
+        this.fallbackEntryLimit = config.fallbackEntryLimit ?? 5;
+        this.highlightThreshold = config.highlightThreshold ?? 0.75;
     }
 
     async build(input: LayerInputContext): Promise<CatalogLayerMaterial> {

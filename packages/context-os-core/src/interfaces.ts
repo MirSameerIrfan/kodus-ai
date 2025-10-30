@@ -6,18 +6,18 @@
  * base para implementar um “context OS” independente de domínio.
  */
 
-export type ContextDomain =
-    | 'code'
-    | 'support'
-    | 'finance'
-    | 'legal'
-    | 'hr'
-    | 'operations'
-    | string;
+/**
+ * Domínio lógico ao qual um item de conhecimento ou requisito pertence.
+ * Pode ser qualquer string definida pela aplicação (ex.: 'code', 'support').
+ */
+export type ContextDomain = string;
 
+/** Classificação de sensibilidade/PII associada a um item. */
 export type SensitivityLevel = 'none' | 'low' | 'medium' | 'high';
+/** Classificação de confidencialidade usada para filtragem/controle de acesso. */
 export type ConfidentialityLevel = 'public' | 'internal' | 'restricted';
 
+/** Referência de origem de um item (arquivo, API, MCP, etc.). */
 export interface SourceRef {
     type: string;
     location: string;
@@ -25,6 +25,7 @@ export interface SourceRef {
     metadata?: Record<string, unknown>;
 }
 
+/** Ações de lineage que podem ocorrer durante o ciclo de vida de um item. */
 export type LineageAction =
     | 'created'
     | 'updated'
@@ -33,14 +34,20 @@ export type LineageAction =
     | 'approved'
     | 'rollback';
 
+/** Atores que podem realizar ações de lineage. */
+export type LineageActor = 'ingestion' | 'human' | 'automation';
+
+/** Registro de lineage para rastrear origem/evolução de um item. */
 export interface LineageRecord {
     timestamp: number;
-    actor: 'ingestion' | 'human' | 'automation';
+    actor: LineageActor;
     action: LineageAction;
     notes?: string;
     metadata?: Record<string, unknown>;
 }
 
+/** Estrutura base de um item de conhecimento persistido pelo Context-OS. */
+/** Item de conhecimento normalizado e persistido pelo Context-OS. */
 export interface KnowledgeItem {
     id: string;
     domain: ContextDomain;
@@ -66,6 +73,7 @@ export interface KnowledgeItem {
     };
 }
 
+/** Capacidades suportadas por um conector de ingestão. */
 export type ConnectorCapability =
     | 'poll'
     | 'webhook'
@@ -73,6 +81,7 @@ export type ConnectorCapability =
     | 'snapshot'
     | 'metadata';
 
+/** Alteração capturada por um conector de conhecimento bruto. */
 export interface RawChange<TMeta = unknown> {
     ref: SourceRef;
     changeType: 'added' | 'modified' | 'removed';
@@ -80,6 +89,7 @@ export interface RawChange<TMeta = unknown> {
     cursor?: string | number;
 }
 
+/** Asset bruto retornado por um conector (arquivo, payload JSON, etc.). */
 export interface RawAsset {
     ref: SourceRef;
     content: ArrayBuffer | string | Record<string, unknown>;
@@ -87,38 +97,48 @@ export interface RawAsset {
     metadata?: Record<string, unknown>;
 }
 
+/** Interface genérica para conectores de ingestão. */
 export interface Connector<TMeta = unknown> {
     id: string;
     capabilities: ConnectorCapability[];
     schema?: unknown;
-    listChanges(params: Record<string, unknown>): AsyncIterable<RawChange<TMeta>>;
+    listChanges(
+        params: Record<string, unknown>,
+    ): AsyncIterable<RawChange<TMeta>>;
     fetchItem(ref: SourceRef): Promise<RawAsset>;
     close?(): Promise<void>;
 }
 
+/** Problema encontrado durante validação de itens. */
 export interface ValidationIssue {
     level: 'info' | 'warning' | 'error';
     message: string;
     itemId?: string;
 }
 
+/** Resultado de validação de uma coleção de itens. */
 export interface ValidationReport {
     issues: ValidationIssue[];
     isValid: boolean;
 }
 
+/** Pipeline de ingestão (normalização → validação → persistência). */
 export interface IngestionPipeline {
     normalize(change: RawChange): Promise<KnowledgeItem[]>;
     validate(items: KnowledgeItem[]): Promise<ValidationReport>;
     persist(items: KnowledgeItem[]): Promise<void>;
 }
 
+/** Pacote de sinais (mensagem do usuário, contexto da conversa, etc.). */
 export interface SignalPacket {
     userMessage?: string;
     conversationId?: string;
     metadata?: Record<string, unknown>;
 }
 
+/**
+ * Consulta de recuperação (quem precisa de contexto, com quais constraints).
+ */
 export interface RetrievalQuery {
     domain: ContextDomain;
     taskIntent: string;
@@ -140,6 +160,7 @@ export interface ContentSlice {
     metadata?: Record<string, unknown>;
 }
 
+/** Candidato retornado por um selector/indexer ao montar contexto. */
 export interface Candidate {
     item: KnowledgeItem;
     score: number;
@@ -148,20 +169,24 @@ export interface Candidate {
     metadata?: Record<string, unknown>;
 }
 
+/** Resultado completo de uma consulta de recuperação. */
 export interface RetrievalResult {
     candidates: Candidate[];
     durationMs?: number;
     diagnostics?: Record<string, unknown>;
 }
 
+/** Interface para indexadores (vector, lexical, híbrido...). */
 export interface Indexer {
     upsert(items: KnowledgeItem[]): Promise<void>;
     delete(itemIds: string[]): Promise<void>;
     query(request: RetrievalQuery): Promise<RetrievalResult>;
 }
 
+/** Indica onde a camada deve residir (sempre presente, on-demand, cache). */
 export type LayerResidence = 'resident' | 'on_demand' | 'cached';
 
+/** Enum simbólico dos principais tipos de camada aceitos pelo pack. */
 export type ContextLayerKind =
     | 'core'
     | 'catalog'
@@ -174,12 +199,14 @@ export type ContextLayerKind =
     | 'metadata'
     | string;
 
+/** Informações de orçamento de tokens para um pack/contexto. */
 export interface TokenBudget {
     limit: number;
     usage: number;
     breakdown: Record<string, number>;
 }
 
+/** Camada de contexto (core, catalog, active...) entregue ao LLM. */
 export interface ContextLayer {
     id?: string;
     kind: ContextLayerKind;
@@ -191,6 +218,7 @@ export interface ContextLayer {
     metadata?: Record<string, unknown>;
 }
 
+/** Referência a recursos adicionais que acompanham o pack (scripts, arquivos...). */
 export interface ContextResourceRef {
     id: string;
     type: 'file' | 'script' | 'template' | 'binary' | string;
@@ -199,6 +227,7 @@ export interface ContextResourceRef {
     metadata?: Record<string, unknown>;
 }
 
+/** Tipo de ação que pode ser vinculada a um pack/contexto. */
 export type ContextActionType =
     | 'mcp'
     | 'workflow'
@@ -206,6 +235,7 @@ export type ContextActionType =
     | 'http'
     | string;
 
+/** Momento em que a ação deve disparar durante o lifecycle do pack. */
 export type ContextActionTrigger =
     | 'pre_core'
     | 'pre_delivery'
@@ -213,6 +243,7 @@ export type ContextActionTrigger =
     | 'async'
     | 'background';
 
+/** Descrição de uma ação obrigatória/opcional associada ao contexto. */
 export interface ContextActionDescriptor {
     id: string;
     type: ContextActionType;
@@ -227,6 +258,124 @@ export interface ContextActionDescriptor {
     endpoint?: string;
 }
 
+export type ContextConsumerKind =
+    | 'prompt'
+    | 'workflow'
+    | 'action'
+    | 'tool'
+    | 'agent'
+    | string;
+
+export interface ContextConsumerRef {
+    id: string;
+    kind: ContextConsumerKind;
+    name?: string;
+    metadata?: Record<string, unknown>;
+}
+
+/**
+ * Requisito de contexto versionado. Define quem consome, qual consulta deve ser
+ * executada e quais ferramentas/camadas devem estar presentes antes da execução.
+ */
+export interface ContextRequirement {
+    /** Identificador único do requisito no escopo atual. */
+    id: string;
+    /** Consumidor do contexto (prompt, workflow, etc.). */
+    consumer: ContextConsumerRef;
+    /** Consulta de recuperação (domínio, intento, constraints, hints...). */
+    request: RetrievalQuery;
+    /** (Opcional) Perfil/pipeline de pack a ser usado. */
+    packProfileId?: string;
+    /** (Opcional) Camadas que devem existir no pack resultante. */
+    requiredLayerKinds?: ContextLayerKind[];
+    /** Dependências adicionais (tool, workflow, outro prompt, knowledge etc.). */
+    dependencies?: ContextDependency[];
+    /** Se false, o contexto é obrigatório e não pode falhar. */
+    optional?: boolean;
+    /** Metadados específicos do domínio. */
+    metadata?: Record<string, unknown>;
+    /** Versionamento do requisito (semantic version, hash etc.). */
+    version?: string;
+    /** Última revisão que tocou este requisito. */
+    revisionId?: string;
+    /** Revisão anterior (ajuda a rastrear diffs locais). */
+    parentRevisionId?: string;
+    /** Auditoria básica. */
+    createdBy?: string;
+    createdAt?: number;
+    updatedBy?: string;
+    updatedAt?: number;
+    /** Estado atual do requisito. */
+    status?: 'active' | 'deprecated' | 'draft';
+}
+
+/** Representa uma dependência externa que precisa estar disponível no contexto. */
+export interface ContextDependency {
+    /** Categoria da dependência (tool, workflow, prompt, knowledge, etc.). */
+    type: 'tool' | 'mcp' | 'workflow' | 'prompt' | 'action' | 'knowledge' | string;
+    /** Identificador ou slug da dependência. */
+    id: string;
+    /** Definição/descriptor bruto da dependência (ex.: MCPToolReference). */
+    descriptor?: unknown;
+    /** Metadados específicos (ex.: parâmetros de execução, versão, notas). */
+    metadata?: Record<string, unknown>;
+}
+
+/**
+ * Escopo agnóstico de uma revisão. `level` descreve o nível principal (global,
+ * tenant, prompt, workflow, etc). `identifiers` e `path` permitem estruturar
+ * hierarquias arbitrárias sem acoplar ao domínio específico.
+ */
+export interface ContextRevisionScope {
+    /** Nome principal do escopo (ex.: 'global', 'tenant', 'prompt'). */
+    level: string;
+    /** Mapa de identificadores relevantes (ex.: { repositoryId, directoryId }). */
+    identifiers?: Record<string, string>;
+    /** Caminho hierárquico opcional (tenant → projeto → prompt, etc.). */
+    path?: Array<{ level: string; id: string }>;
+    /** Metadados adicionais para o domínio. */
+    metadata?: Record<string, unknown>;
+}
+
+/** Identifica a origem/autoria de uma revisão (humano, automação, serviço). */
+export interface ContextRevisionActor {
+    kind: 'human' | 'automation' | 'system' | string;
+    id?: string;
+    name?: string;
+    contact?: string;
+    metadata?: Record<string, unknown>;
+}
+
+/**
+ * Resultado de uma revisão persistida. Pode ser usado diretamente como "commit"
+ * para preencher históricos, diff/rollback e telemetria.
+ */
+export interface ContextRevisionLogEntry {
+    /** Identificador do commit. */
+    revisionId: string;
+    /** Commit pai (para histórico e merges). */
+    parentRevisionId?: string;
+    /** Escopo (domínio) no qual o commit se aplica. */
+    scope: ContextRevisionScope;
+    /** Tipo da entidade versionada (prompt, workflow, knowledge...). */
+    entityType: string;
+    /** Identificador estável do item versionado. */
+    entityId: string;
+    /** Payload armazenado (estrutura livre, geralmente contendo requirements). */
+    payload: Record<string, unknown>;
+    /** Lista opcional de requisitos de contexto serializados. */
+    requirements?: ContextRequirement[];
+    /** Itens de conhecimento referenciados pelo commit. */
+    knowledgeRefs?: Array<{ itemId: string; version?: string }>;
+    /** Origem/autoria desse commit. */
+    origin?: ContextRevisionActor;
+    /** Timestamp em epoch millis. */
+    createdAt: number;
+    /** Metadados adicionais. */
+    metadata?: Record<string, unknown>;
+}
+
+/** Pacote final entregue ao LLM com camadas, recursos e requisitos. */
 export interface ContextPack {
     id: string;
     domain: ContextDomain;
@@ -239,10 +388,11 @@ export interface ContextPack {
     constraints?: RetrievalQuery['constraints'];
     resources?: ContextResourceRef[];
     requiredActions?: ContextActionDescriptor[];
-    requiredTools?: MCPToolReference[];
+    dependencies?: ContextDependency[];
     metadata?: Record<string, unknown>;
 }
 
+/** Builder responsável por transformar candidatos + query em um ContextPack. */
 export interface ContextPackBuilder {
     buildPack(input: {
         query: RetrievalQuery;
@@ -251,11 +401,13 @@ export interface ContextPackBuilder {
     }): Promise<ContextPack>;
 }
 
+/** Estrutura auxiliar para mensagens que não são plain-text. */
 export interface StructuredContent {
     type: string;
     data: unknown;
 }
 
+/** Mensagem armazenada no runtime (histórico da sessão). */
 export interface SessionMessage {
     id: string;
     role: 'user' | 'assistant' | 'tool' | 'system';
@@ -264,6 +416,7 @@ export interface SessionMessage {
     metadata?: Record<string, unknown>;
 }
 
+/** Estado de execução do agente/conversação. */
 export interface ExecutionState {
     phase: 'planning' | 'execution' | 'responded' | 'error' | 'idle';
     lastUserIntent?: string;
@@ -274,6 +427,7 @@ export interface ExecutionState {
     metadata?: Record<string, unknown>;
 }
 
+/** Entidade mencionada no contexto (usuário, equipe, sistema externo...). */
 export interface Entity {
     id: string;
     type: string;
@@ -282,6 +436,7 @@ export interface Entity {
     metadata?: Record<string, unknown>;
 }
 
+/** Snapshot completo do runtime/conversa armazenado pelo Context-OS. */
 export interface RuntimeContextSnapshot {
     sessionId: string;
     threadId: string;
@@ -290,11 +445,16 @@ export interface RuntimeContextSnapshot {
     updatedAt: number;
     state: ExecutionState;
     messages: SessionMessage[];
-    knowledgeRefs: Array<{ packId: string; layer: ContextLayerKind; itemRefs: string[] }>;
+    knowledgeRefs: Array<{
+        packId: string;
+        layer: ContextLayerKind;
+        itemRefs: string[];
+    }>;
     entities: Record<string, Entity[]>;
     metadata?: Record<string, unknown>;
 }
 
+/** Parâmetros para iniciar uma sessão de runtime. */
 export interface SessionInit {
     tenantId: string;
     userId?: string;
@@ -303,6 +463,7 @@ export interface SessionInit {
     metadata?: Record<string, unknown>;
 }
 
+/** Patch para atualizar uma sessão existente (estado, mensagens, entidades...). */
 export interface ContextUpdatePatch {
     state?: Partial<ExecutionState>;
     messagesAppend?: SessionMessage[];
@@ -317,6 +478,7 @@ export interface ContextUpdatePatch {
     metadata?: Record<string, unknown>;
 }
 
+/** Repositório/serviço responsável por persistir snapshots de runtime. */
 export interface RuntimeContextStore {
     initSession(params: SessionInit): Promise<RuntimeContextSnapshot>;
     getSession(sessionId: string): Promise<RuntimeContextSnapshot>;
@@ -324,6 +486,7 @@ export interface RuntimeContextStore {
     archiveSession(sessionId: string): Promise<void>;
 }
 
+/** Esquema de uma ferramenta (MCP, HTTP, interna...) utilizada pelo contexto. */
 export interface ToolSchema {
     name: string;
     description?: string;
@@ -333,6 +496,7 @@ export interface ToolSchema {
     metadata?: Record<string, unknown>;
 }
 
+/** Descriptor reutilizável de ferramentas disponível para o agente. */
 export interface ToolDescriptor {
     id: string;
     description: string;
@@ -340,6 +504,7 @@ export interface ToolDescriptor {
     metadata?: Record<string, unknown>;
 }
 
+/** Resultado da execução de uma ação de contexto. */
 export interface ContextActionExecutionResult {
     success: boolean;
     output?: unknown;
@@ -348,6 +513,7 @@ export interface ContextActionExecutionResult {
     telemetry?: Record<string, unknown>;
 }
 
+/** Contexto fornecido para executar uma ação específica. */
 export interface ContextActionExecutionContext {
     action: ContextActionDescriptor;
     pack: ContextPack;
@@ -355,6 +521,7 @@ export interface ContextActionExecutionContext {
     runtime?: RuntimeContextSnapshot;
 }
 
+/** Executor responsável por rodar ações adicionais ligadas ao pack. */
 export interface ContextActionExecutor {
     supports(action: ContextActionDescriptor): boolean;
     execute(
@@ -368,6 +535,7 @@ export interface ContextActionExecutor {
  * ---------------------------------------------------------------------------
  */
 
+/** Referência a uma ferramenta registrada num servidor MCP. */
 export interface MCPToolReference {
     mcpId: string;
     toolName: string;
@@ -377,8 +545,10 @@ export interface MCPToolReference {
     lastValidatedAt?: number;
 }
 
+/** Estado de saúde de um servidor MCP. */
 export type MCPStatus = 'available' | 'degraded' | 'unavailable';
 
+/** Registro completo de um servidor MCP e suas ferramentas. */
 export interface MCPRegistration {
     id: string;
     title?: string;
@@ -395,6 +565,7 @@ export interface MCPRegistration {
     metadata?: Record<string, unknown>;
 }
 
+/** Solicitação de invocação de uma ferramenta MCP. */
 export interface MCPInvocationRequest {
     registry: MCPRegistration;
     tool: MCPToolReference;
@@ -402,6 +573,7 @@ export interface MCPInvocationRequest {
     runtimeMetadata?: Record<string, unknown>;
 }
 
+/** Resultado da invocação de uma ferramenta MCP. */
 export interface MCPInvocationResult {
     success: boolean;
     output?: Record<string, unknown> | string | null;
@@ -414,11 +586,13 @@ export interface MCPInvocationResult {
     metadata?: Record<string, unknown>;
 }
 
+/** Cliente responsável por orquestrar chamadas MCP. */
 export interface MCPClient {
     invoke(request: MCPInvocationRequest): Promise<MCPInvocationResult>;
     healthCheck?(mcpId: string): Promise<MCPStatus>;
 }
 
+/** Identidade do agente responsável por executar a entrega. */
 export interface AgentIdentity {
     name: string;
     description?: string;
@@ -429,6 +603,7 @@ export interface AgentIdentity {
     metadata?: Record<string, unknown>;
 }
 
+/** Solicitação de entrega de contexto/ação para um agente. */
 export interface DeliveryRequest {
     userIntent: string;
     agentIdentity: AgentIdentity;
@@ -438,6 +613,7 @@ export interface DeliveryRequest {
     metadata?: Record<string, unknown>;
 }
 
+/** Payload final enviado ao modelo ou sistema de entrega. */
 export interface DeliveryPayload {
     systemMessage: string;
     userMessage: string;
@@ -447,6 +623,7 @@ export interface DeliveryPayload {
     diagnostics?: Record<string, unknown>;
 }
 
+/** Adaptador que transforma o ContextPack em payload entregável e executa a entrega. */
 export interface DeliveryAdapter<TOutput = unknown> {
     buildPayload(
         pack: ContextPack,
@@ -456,6 +633,8 @@ export interface DeliveryAdapter<TOutput = unknown> {
     deliver(payload: DeliveryPayload): Promise<TOutput>;
 }
 
+/** Evento de telemetria registrado pelo Context-OS. */
+/** Evento emitido para telemetria/observabilidade do contexto. */
 export interface ContextEvent {
     type:
         | 'SELECTION'
@@ -477,6 +656,7 @@ export interface ContextEvent {
     timestamp: number;
 }
 
+/** Alerta de drift de contexto (quando uso/resultado sai do esperado). */
 export interface DriftAlert {
     domain: ContextDomain;
     severity: 'low' | 'medium' | 'high';
@@ -486,6 +666,7 @@ export interface DriftAlert {
     metadata?: Record<string, unknown>;
 }
 
+/** Métricas agregadas produzidas pela telemetria. */
 export interface ContextMetrics {
     usageByDomain: Record<ContextDomain, number>;
     avgTokensPerLayer: Record<ContextLayerKind, number>;
@@ -494,6 +675,7 @@ export interface ContextMetrics {
     metadata?: Record<string, unknown>;
 }
 
+/** Interface de telemetria utilizada pelo Context-OS. */
 export interface ContextTelemetry {
     record(event: ContextEvent): Promise<void>;
     report(params?: Record<string, unknown>): Promise<ContextMetrics>;
@@ -505,6 +687,7 @@ export interface ContextTelemetry {
  * ---------------------------------------------------------------------------
  */
 
+/** Entrada padrão para builders de camada (domínio, intent, candidatos...). */
 export interface LayerInputContext {
     domain: ContextDomain;
     taskIntent: string;
@@ -514,6 +697,7 @@ export interface LayerInputContext {
     metadata?: Record<string, unknown>;
 }
 
+/** Opções comuns para construção de camadas (limite de tokens, prioridade, etc.). */
 export interface LayerBuildOptions {
     maxTokens?: number;
     priority?: number;
@@ -521,6 +705,7 @@ export interface LayerBuildOptions {
     includeDiagnostics?: boolean;
 }
 
+/** Diagnósticos retornados após a construção de uma camada. */
 export interface LayerBuildDiagnostics {
     tokensBefore?: number;
     tokensAfter?: number;
@@ -528,12 +713,14 @@ export interface LayerBuildDiagnostics {
     notes?: string;
 }
 
+/** Resultado ao construir uma camada individual. */
 export interface LayerBuildResult {
     layer: ContextLayer;
     resources?: ContextResourceRef[];
     diagnostics?: LayerBuildDiagnostics;
 }
 
+/** Builder de camada (core, catalog, active). */
 export interface ContextLayerBuilder {
     stage: Extract<ContextLayerKind, 'core' | 'catalog' | 'active'>;
     build(
@@ -542,11 +729,13 @@ export interface ContextLayerBuilder {
     ): Promise<LayerBuildResult>;
 }
 
+/** Passo de pipeline responsável por montar uma camada específica. */
 export interface PackAssemblyStep {
     builder: ContextLayerBuilder;
     description?: string;
 }
 
+/** Pipeline completo que monta o ContextPack (sequência de steps). */
 export interface PackAssemblyPipeline {
     steps: PackAssemblyStep[];
     execute(
@@ -565,8 +754,10 @@ export interface PackAssemblyPipeline {
  * ---------------------------------------------------------------------------
  */
 
+/** Papel da mensagem num prompt (system, user, assistant, etc.). */
 export type PromptRole = 'system' | 'user' | 'assistant' | 'tool' | string;
 
+/** Escopo em que um override de prompt será aplicado. */
 export type PromptScope =
     | 'core'
     | 'catalog'
@@ -574,7 +765,7 @@ export type PromptScope =
     | 'fallback'
     | 'meta'
     | string;
-
+/** Override de prompt aplicado a um domínio/contexto específico. */
 export interface PromptOverride {
     id: string;
     role: PromptRole;
@@ -582,9 +773,10 @@ export interface PromptOverride {
     content: string;
     metadata?: Record<string, unknown>;
     requiredActions?: ContextActionDescriptor[];
-    requiredTools?: MCPToolReference[];
+    dependencies?: ContextDependency[];
 }
 
+/** Snapshot versionado de um domínio (configuração + prompts + recursos). */
 export interface DomainSnapshot<TConfig = Record<string, unknown>> {
     id: string;
     domain: ContextDomain;
@@ -597,6 +789,7 @@ export interface DomainSnapshot<TConfig = Record<string, unknown>> {
     metadata?: Record<string, unknown>;
 }
 
+/** Conjunto de builders usados para montar contexto de um domínio. */
 export interface DomainBundleBuilders {
     core: ContextLayerBuilder;
     catalog?: ContextLayerBuilder;
@@ -604,16 +797,18 @@ export interface DomainBundleBuilders {
     extras?: ContextLayerBuilder[];
 }
 
+/** Componentes que compõem um bundle de domínio (pipeline, ações, delivery). */
 export interface DomainBundleComponents<TDelivery = unknown> {
     builders: DomainBundleBuilders;
     pipeline: PackAssemblyPipeline;
     packBuilder: ContextPackBuilder;
     actions?: ContextActionDescriptor[];
-    requiredTools?: MCPToolReference[];
+    dependencies?: ContextDependency[];
     deliveryAdapter?: DeliveryAdapter<TDelivery>;
     metadata?: Record<string, unknown>;
 }
 
+/** Estrutura final agregando snapshot + componentes + metadados de domínio. */
 export interface DomainBundle<
     TSnapshot extends DomainSnapshot = DomainSnapshot,
     TDelivery = unknown,

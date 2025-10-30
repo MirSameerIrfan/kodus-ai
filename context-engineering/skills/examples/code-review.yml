@@ -13,9 +13,12 @@ skills:
         scope: "active"
         content: |
           Sempre retorne um checklist de testes acionáveis (unit, integração, regressão) baseado no diff atual.
-    requiredTools:
-      - mcpId: "bugspec"
-        toolName: "fetch-bugspec"
+    dependencies:
+      - type: "mcp"
+        id: "bugspec|fetch-bugspec"
+        descriptor:
+          mcpId: "bugspec"
+          toolName: "fetch-bugspec"
     requiredActions:
       - description: "Garantir BugSpec carregada"
         action:

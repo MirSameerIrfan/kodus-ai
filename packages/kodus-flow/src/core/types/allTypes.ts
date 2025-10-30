@@ -238,9 +238,9 @@ export interface AgentDefinition<
 
     config?: AgentConfig;
 
-    requiredTools?: string[];
+    dependencies?: string[];
 
-    optionalTools?: string[];
+    optionalDependencies?: string[];
 }
 
 export interface AgentContext {

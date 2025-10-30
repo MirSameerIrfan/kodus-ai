@@ -73,19 +73,31 @@ deve ser versionado no Git para acompanhar evolução das memórias.
 ### Ambiente local com Docker Compose
 
 1. Rode `docker compose -f context-engineering/docker-compose.weaviate.yml up -d`.
-2. O serviço ficará disponível em `http://localhost:8080` (sem API key). Configure o
-   store com:
+2. Ajuste os envs quando for rodar scripts/localmente:
+
+   ```bash
+   export WEAVIATE_URL=http://127.0.0.1:8080
+   export WEAVIATE_API_KEY=local-dev-key
+   ```
+
+3. O serviço ficará disponível em `http://localhost:8080`. Por padrão usamos a API key
+   `local-dev-key` (definida no compose). Se precisar expor uma porta gRPC diferente,
+   ajuste `grpcPort` nas opções do store. Configure o store com:
 
    ```ts
    const store = await createKnowledgeStore({
      config: {
        type: 'weaviate',
-       options: { url: 'http://127.0.0.1:8080' },
+       options: {
+         url: process.env.WEAVIATE_URL ?? 'http://127.0.0.1:8080',
+         apiKey: process.env.WEAVIATE_API_KEY ?? 'local-dev-key',
+         grpcPort: 50051,
+       },
      },
    });
    ```
 
-3. Para desligar: `docker compose -f context-engineering/docker-compose.weaviate.yml down`.
+4. Para desligar: `docker compose -f context-engineering/docker-compose.weaviate.yml down`.
 
 ## Próximos passos (fora do escopo imediato)
 

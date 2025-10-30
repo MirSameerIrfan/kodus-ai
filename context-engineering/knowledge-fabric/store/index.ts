@@ -28,6 +28,7 @@ export async function createKnowledgeStore(
                 url: config.options.url,
                 apiKey: config.options.apiKey,
                 className: config.options.className,
+                grpcPort: config.options.grpcPort,
             });
             await store.init();
             return store;

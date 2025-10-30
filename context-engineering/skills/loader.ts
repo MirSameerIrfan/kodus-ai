@@ -16,7 +16,7 @@ function parseContent(filePath: string, content: string): SkillSet {
 function normalizeSkill(skill: SkillDefinition): SkillDefinition {
     return {
         ...skill,
-        requiredTools: skill.requiredTools ?? [],
+        dependencies: skill.dependencies ?? [],
         requiredActions: skill.requiredActions ?? [],
         resources: skill.resources ?? [],
         instructions: skill.instructions ?? [],

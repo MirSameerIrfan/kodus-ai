@@ -42,6 +42,7 @@ export type KnowledgeStoreConfig =
               url: string;
               apiKey?: string;
               className?: string;
+              grpcPort?: number;
           };
       }
     | {

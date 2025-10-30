@@ -13,12 +13,14 @@ import {
 
 import type {
     Candidate,
-    ContextTelemetry,
+    ContextDependency,
     ContextMetrics,
+    ContextTelemetry,
     LayerInputContext,
     MCPClient,
     MCPInvocationRequest,
     MCPInvocationResult,
+    MCPToolReference,
     RetrievalQuery,
     RuntimeContextSnapshot,
 } from '../src/interfaces.js';
@@ -154,13 +156,34 @@ async function runExample(): Promise<void> {
         candidates,
     });
 
-    pack.requiredTools = [
-        {
+    const checklistDependency: ContextDependency = {
+        type: 'mcp',
+        id: 'demo|generate-checklist',
+        descriptor: {
             mcpId: 'demo',
             toolName: 'generate-checklist',
             description: 'Gera checklist de testes sugeridos baseado no contexto.',
         },
-    ];
+    };
+
+    pack.dependencies = [checklistDependency];
+
+    const toToolReferences = (
+        dependencies?: ContextDependency[],
+    ): MCPToolReference[] =>
+        (dependencies ?? [])
+            .map((dependency) => dependency.descriptor)
+            .filter((descriptor): descriptor is MCPToolReference => {
+                if (!descriptor || typeof descriptor !== 'object') {
+                    return false;
+                }
+                const record = descriptor as Record<string, unknown>;
+                return (
+                    typeof record.mcpId === 'string' &&
+                    typeof record.toolName === 'string'
+                );
+            })
+            .map((descriptor) => descriptor);
 
     const registry = new InMemoryMCPRegistry();
     registry.register({
@@ -168,7 +191,7 @@ async function runExample(): Promise<void> {
         title: 'Demo MCP',
         endpoint: 'http://localhost:3333/mcp',
         status: 'available',
-        tools: pack.requiredTools ?? [],
+        tools: toToolReferences(pack.dependencies),
     });
 
     const orchestrator = new MCPOrchestrator(

@@ -1,0 +1,46 @@
+{
+  "events": [
+    {
+      "type": "ACTION_COMPLETED",
+      "sessionId": "ace-demo",
+      "tenantId": "lab",
+      "timestamp": 1761839278770,
+      "latencyMs": 43,
+      "metadata": {
+        "actionId": "ace::pipeline-run",
+        "skills": [
+          "ACE • review",
+          "ACE • review"
+        ]
+      }
+    },
+    {
+      "type": "ACTION_COMPLETED",
+      "sessionId": "ace-demo",
+      "tenantId": "lab",
+      "timestamp": 1761839398724,
+      "latencyMs": 15,
+      "metadata": {
+        "actionId": "ace::pipeline-run",
+        "skills": [
+          "ACE • review",
+          "ACE • review"
+        ]
+      }
+    },
+    {
+      "type": "ACTION_COMPLETED",
+      "sessionId": "ace-demo",
+      "tenantId": "lab",
+      "timestamp": 1761839457775,
+      "latencyMs": 10,
+      "metadata": {
+        "actionId": "ace::pipeline-run",
+        "skills": [
+          "ACE • review",
+          "ACE • review"
+        ]
+      }
+    }
+  ]
+}

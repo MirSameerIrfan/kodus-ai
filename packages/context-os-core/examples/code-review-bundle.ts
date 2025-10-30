@@ -12,6 +12,7 @@ import {
 import type {
     Candidate,
     ContextActionDescriptor,
+    ContextDependency,
     ContextPack,
     ContextPackBuilder,
     DeliveryRequest,
@@ -48,9 +49,20 @@ const promptOverrides: PromptOverride[] = [
         role: 'system',
         scope: 'core',
         content: basePrompt,
-        requiredTools: [
-            { mcpId: 'bugspec', toolName: 'fetch-bugspec' },
-            { mcpId: 'repo-insights', toolName: 'pull-pr-metadata' },
+        dependencies: [
+            {
+                type: 'mcp',
+                id: 'bugspec|fetch-bugspec',
+                descriptor: { mcpId: 'bugspec', toolName: 'fetch-bugspec' },
+            },
+            {
+                type: 'mcp',
+                id: 'repo-insights|pull-pr-metadata',
+                descriptor: {
+                    mcpId: 'repo-insights',
+                    toolName: 'pull-pr-metadata',
+                },
+            },
         ],
         requiredActions: [
             {
@@ -156,7 +168,25 @@ function createCodeReviewBundle(
     });
 
     const aggregatedActions = new Map<string, ContextActionDescriptor>();
-    const aggregatedTools = new Map<string, MCPToolReference>();
+    const aggregatedDependencies = new Map<string, ContextDependency>();
+
+    const upsertDependency = (dependency: ContextDependency) => {
+        const key = `${dependency.type ?? 'unknown'}::${dependency.id}`;
+        const existing = aggregatedDependencies.get(key);
+        if (existing) {
+            aggregatedDependencies.set(key, {
+                ...existing,
+                ...dependency,
+                descriptor: dependency.descriptor ?? existing.descriptor,
+                metadata: {
+                    ...(existing.metadata ?? {}),
+                    ...(dependency.metadata ?? {}),
+                },
+            });
+            return;
+        }
+        aggregatedDependencies.set(key, dependency);
+    };
 
     for (const action of snapshot.actions ?? []) {
         aggregatedActions.set(action.id, action);
@@ -166,13 +196,18 @@ function createCodeReviewBundle(
         for (const action of override.requiredActions ?? []) {
             aggregatedActions.set(action.id, action);
         }
-        for (const tool of override.requiredTools ?? []) {
-            aggregatedTools.set(`${tool.mcpId}::${tool.toolName}`, tool);
+        for (const dependency of override.dependencies ?? []) {
+            upsertDependency(dependency);
         }
     }
 
     for (const tool of snapshot.config.requiredTools) {
-        aggregatedTools.set(`${tool.mcpId}::${tool.toolName}`, tool);
+        upsertDependency({
+            type: 'mcp',
+            id: `${tool.mcpId}|${tool.toolName}`,
+            descriptor: tool,
+            metadata: tool.metadata,
+        });
     }
 
     const enrichedPackBuilder: ContextPackBuilder = {
@@ -191,19 +226,32 @@ function createCodeReviewBundle(
                 pack.requiredActions = Array.from(existing.values());
             }
 
-            if (aggregatedTools.size) {
+            if (aggregatedDependencies.size) {
                 const existing = new Map(
-                    (pack.requiredTools ?? []).map((tool) => [
-                        `${tool.mcpId}::${tool.toolName}`,
-                        tool,
+                    (pack.dependencies ?? []).map((dependency) => [
+                        `${dependency.type ?? 'unknown'}::${dependency.id}`,
+                        dependency,
                     ]),
                 );
 
-                for (const [key, tool] of aggregatedTools.entries()) {
-                    existing.set(key, tool);
+                for (const [key, dependency] of aggregatedDependencies.entries()) {
+                    const current = existing.get(key);
+                    if (current) {
+                        existing.set(key, {
+                            ...current,
+                            ...dependency,
+                            descriptor: dependency.descriptor ?? current.descriptor,
+                            metadata: {
+                                ...(current.metadata ?? {}),
+                                ...(dependency.metadata ?? {}),
+                            },
+                        });
+                    } else {
+                        existing.set(key, dependency);
+                    }
                 }
 
-                pack.requiredTools = Array.from(existing.values());
+                pack.dependencies = Array.from(existing.values());
             }
 
             pack.metadata = {
@@ -229,7 +277,7 @@ function createCodeReviewBundle(
             pipeline,
             packBuilder: enrichedPackBuilder,
             actions: Array.from(aggregatedActions.values()),
-            requiredTools: Array.from(aggregatedTools.values()),
+            dependencies: Array.from(aggregatedDependencies.values()),
             deliveryAdapter: {
                 buildPayload(
                     pack: ContextPack,
@@ -255,9 +303,9 @@ function createCodeReviewBundle(
                         attachments: [],
                         onDemandResources: pack.resources ?? [],
                         diagnostics: {
-                            requiredTools: pack.requiredTools?.map(
-                                (tool) => `${tool.mcpId}/${tool.toolName}`,
-                            ),
+                            dependencies: pack.dependencies
+                                ?.filter((dependency) => dependency.type === 'mcp')
+                                ?.map((dependency) => dependency.id),
                         },
                     };
                 },
@@ -325,7 +373,10 @@ async function runBundleExample(): Promise<void> {
     // eslint-disable-next-line no-console
     console.log('ContextPack layers:', pack.layers.map((layer) => layer.kind));
     // eslint-disable-next-line no-console
-    console.log('Required MCP tools:', pack.requiredTools);
+    console.log(
+        'Declared dependencies:',
+        pack.dependencies?.map((dependency) => dependency.id),
+    );
 
     const runtime: RuntimeContextSnapshot = {
         sessionId: 'session-1',

@@ -1,7 +1,8 @@
-#!/usr/bin/env node
 import { promises as fs } from 'node:fs';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { pathToFileURL } from 'node:url';
 
 import type { KnowledgeItem } from '../../packages/context-os-core/src/interfaces.js';
 import { createKnowledgeStore } from './store/index.js';
@@ -38,8 +39,21 @@ async function ingestRule(filePath: string): Promise<void> {
         },
     };
 
+    const weaviateUrl = existsSync('/.dockerenv')
+        ? 'http://weaviate:8080'
+        : 'http://127.0.0.1:8080';
+
+    const storeConfig = {
+        type: 'weaviate' as const,
+        options: {
+            url: weaviateUrl,
+            className: 'KnowledgeItem',
+            grpcPort: 50051,
+        },
+    };
+
     const store = await createKnowledgeStore({
-        config: { type: 'filesystem' },
+        config: storeConfig,
     });
     await store.upsert(item);
     await store.close();
@@ -62,10 +76,29 @@ async function main(): Promise<void> {
     } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Falha ao ingerir regra:', error);
+        if (error && typeof error === 'object') {
+            const maybeAny = error as Record<string, unknown>;
+            if (maybeAny.response) {
+                // eslint-disable-next-line no-console
+                console.error('response:', maybeAny.response);
+            }
+            if (maybeAny.body) {
+                // eslint-disable-next-line no-console
+                console.error('body:', maybeAny.body);
+            }
+        }
         process.exitCode = 1;
     }
 }
 
-if (require.main === module) {
+const isMainModule = (): boolean => {
+    const entry = process.argv[1];
+    if (!entry) {
+        return false;
+    }
+    return import.meta.url === pathToFileURL(entry).href;
+};
+
+if (isMainModule()) {
     main();
 }

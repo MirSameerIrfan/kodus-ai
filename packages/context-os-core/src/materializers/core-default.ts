@@ -17,6 +17,7 @@ export interface DefaultCoreMaterializerConfig {
     baseConstraints?: CoreLayerConstraint[];
     defaultNotes?: string[];
     defaultToolset?: ToolDescriptor[];
+    defaultChecklists?: string[];
 }
 
 export class DefaultCoreMaterializer implements CoreLayerMaterializer {
@@ -60,7 +61,10 @@ export class DefaultCoreMaterializer implements CoreLayerMaterializer {
             persona: this.config.persona ?? input.deliveryRequest?.agentIdentity,
             instructions,
             constraints,
-            checklists: this.config.defaultNotes,
+            checklists:
+                this.config.defaultChecklists ??
+                this.config.defaultNotes ??
+                [],
             notes: Array.from(notes),
             toolset:
                 this.config.defaultToolset ??

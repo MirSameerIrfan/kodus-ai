@@ -29,7 +29,8 @@
         "disableSourceOfProjectReferenceRedirect": true,
 
         "paths": {
-            "@/*": ["src/*"]
+            "@/*": ["src/*"],
+            "@context-os-core/*": ["packages/context-os-core/src/*"]
         }
     },
     "watchOptions": {
