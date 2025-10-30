@@ -100,6 +100,7 @@ class SecurityManager {
 // =============================================================================
 
 class MetricsCollector {
+    private static readonly maxDurationSamples = 100;
     private metrics: MCPMetrics;
 
     constructor(private tenantId: string) {
@@ -135,6 +136,16 @@ class MetricsCollector {
     recordRequest(type: string, duration: number, success: boolean): void {
         this.metrics.requestsTotal++;
         this.metrics.requestDuration.push(duration);
+        if (
+            this.metrics.requestDuration.length >
+            MetricsCollector.maxDurationSamples
+        ) {
+            this.metrics.requestDuration.splice(
+                0,
+                this.metrics.requestDuration.length -
+                    MetricsCollector.maxDurationSamples,
+            );
+        }
 
         if (success) {
             this.metrics.requestsSuccessful++;
@@ -203,6 +214,7 @@ class MetricsCollector {
 // =============================================================================
 
 class AuditLogger {
+    private static readonly maxEvents = 100;
     private events: AuditEvent[] = [];
 
     constructor(private tenantId: string) {}
@@ -214,6 +226,9 @@ class AuditLogger {
             ...event,
         };
 
+        if (this.events.length >= AuditLogger.maxEvents) {
+            this.events.shift();
+        }
         this.events.push(auditEvent);
     }
 
@@ -249,6 +264,7 @@ export class SpecCompliantMCPClient extends EventEmitter<MCPClientEvents> {
     private resourcesCache: Resource[] | null = null;
     private promptsCache: Prompt[] | null = null;
     private rootsCache: Root[] | null = null;
+    private metricsIntervalId?: ReturnType<typeof setInterval>;
 
     // Logger for internal use
     private logger?: {
@@ -786,10 +802,11 @@ export class SpecCompliantMCPClient extends EventEmitter<MCPClientEvents> {
         name: string,
         args?: Record<string, unknown>,
     ): Promise<CallToolResult> {
-        const maxRetries = this.config.transport.retries || 1;
+        const maxRetries = Math.max(1, this.config.transport.retries ?? 1);
         const timeout = this.config.transport.timeout || 60000; // ✅ UNIFIED: 60s timeout
         let lastError: Error = new Error('Unknown error');
         const startTime = Date.now();
+        let lastErrorMessage: string | undefined;
 
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
@@ -842,6 +859,8 @@ export class SpecCompliantMCPClient extends EventEmitter<MCPClientEvents> {
                     duration,
                     false,
                 );
+                lastErrorMessage =
+                    error instanceof Error ? error.message : String(error);
 
                 // Log error with context
                 this.logger?.warn('MCP tool execution failed', {
@@ -868,6 +887,7 @@ export class SpecCompliantMCPClient extends EventEmitter<MCPClientEvents> {
             lastError,
             {
                 toolName: name,
+                lastErrorMessage,
                 maxRetries,
             },
         );
@@ -1213,9 +1233,12 @@ export class SpecCompliantMCPClient extends EventEmitter<MCPClientEvents> {
 
     private setupMetricsCollection(): void {
         if (this.config.observability?.enableMetrics) {
+            if (this.metricsIntervalId) {
+                return;
+            }
             const interval = this.config.observability.metricsInterval || 60000;
 
-            setInterval(() => {
+            this.metricsIntervalId = setInterval(() => {
                 this.emit('metricsUpdated', this.getMetrics());
             }, interval);
         }
@@ -1253,6 +1276,11 @@ export class SpecCompliantMCPClient extends EventEmitter<MCPClientEvents> {
         this.connected = false;
         this.serverCapabilities = null;
         this.transport = null;
+
+        if (this.metricsIntervalId) {
+            clearInterval(this.metricsIntervalId);
+            this.metricsIntervalId = undefined;
+        }
 
         // Clear caches
         this.resourcesCache = null;

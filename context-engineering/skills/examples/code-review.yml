@@ -1,0 +1,52 @@
+version: "2025.10"
+skills:
+  - id: "checklist-testes"
+    metadata:
+      title: "Checklist de Testes"
+      description: "Gera checklist mínimo antes de aprovar PR crítico."
+      version: "1.0.0"
+      domain: "code"
+      tags: ["review", "quality"]
+    instructions:
+      - id: "skill-checklist-system"
+        role: "system"
+        scope: "active"
+        content: |
+          Sempre retorne um checklist de testes acionáveis (unit, integração, regressão) baseado no diff atual.
+    requiredTools:
+      - mcpId: "bugspec"
+        toolName: "fetch-bugspec"
+    requiredActions:
+      - description: "Garantir BugSpec carregada"
+        action:
+          id: "load-bugspec-skill"
+          type: "mcp"
+          trigger: "pre_delivery"
+          mcpId: "bugspec"
+          toolName: "fetch-bugspec"
+    resources:
+  - ref:
+      id: "policy-testing"
+      type: "document"
+      location: "https://intranet/policies/testing"
+  - id: "security-scan-async"
+    metadata:
+      title: "Escaneamento assíncrono de segurança"
+      description: "Dispara sub-agent que roda scan enquanto a revisão continua."
+      version: "0.9.0"
+      domain: "code"
+      tags: ["security", "sub-agent"]
+    instructions:
+      - id: "security-scan-tip"
+        role: "assistant"
+        scope: "catalog"
+        content: |
+          Se o PR tocar endpoints críticos, informe que um scan de segurança foi iniciado e aguarde o resultado.
+    requiredActions:
+      - description: "Rodar scan de segurança em background"
+        action:
+          id: "security-scan-background"
+          type: "workflow"
+          trigger: "async"
+          metadata:
+            workflowId: "security-scan"

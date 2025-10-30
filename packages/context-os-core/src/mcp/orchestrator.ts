@@ -1,0 +1,367 @@
+import type {
+    ContextEvent,
+    ContextPack,
+    ContextTelemetry,
+    LayerInputContext,
+    MCPClient,
+    MCPInvocationRequest,
+    MCPInvocationResult,
+    MCPRegistration,
+    MCPToolReference,
+    RuntimeContextSnapshot,
+} from '../interfaces.js';
+
+import type { MCPRegistry } from './registry';
+import { sanitizeMCPInput } from './sanitizer';
+
+export interface Logger {
+    debug?(message: string, context?: Record<string, unknown>): void;
+    info?(message: string, context?: Record<string, unknown>): void;
+    warn?(message: string, context?: Record<string, unknown>): void;
+    error?(message: string, context?: Record<string, unknown>): void;
+}
+
+export interface MCPOrchestratorOptions {
+    concurrency?: number;
+    maxAttempts?: number;
+    retryableErrorCodes?: string[];
+    logger?: Logger;
+    telemetry?: {
+        client?: ContextTelemetry;
+        eventFactory?: (params: {
+            context: MCPExecutionContext;
+            report: MCPOrchestratorReport;
+        }) => Partial<ContextEvent>;
+    };
+}
+
+export interface MCPExecutionContext {
+    pack: ContextPack;
+    input: LayerInputContext;
+    runtime?: RuntimeContextSnapshot;
+}
+
+export interface MCPToolExecutionRecord {
+    request: MCPInvocationRequest;
+    result?: MCPInvocationResult;
+    error?: string;
+    attempts: number;
+    registration?: MCPRegistration;
+    tool: MCPToolReference;
+}
+
+export interface MCPOrchestratorReport {
+    startedAt: number;
+    finishedAt: number;
+    results: MCPToolExecutionRecord[];
+    metrics: {
+        successCount: number;
+        failureCount: number;
+        totalAttempts: number;
+        totalLatencyMs: number;
+    };
+}
+
+export class MCPOrchestrator {
+    private readonly concurrency: number;
+    private readonly maxAttempts: number;
+    private readonly retryableErrorCodes: Set<string>;
+    private readonly logger?: Logger;
+    private readonly telemetryClient?: ContextTelemetry;
+    private readonly telemetryEventFactory?: NonNullable<
+        MCPOrchestratorOptions['telemetry']
+    >['eventFactory'];
+
+    constructor(
+        private readonly registry: MCPRegistry,
+        private readonly client: MCPClient,
+        options: MCPOrchestratorOptions = {},
+    ) {
+        this.concurrency = Math.max(1, options.concurrency ?? 1);
+        this.maxAttempts = Math.max(1, options.maxAttempts ?? 1);
+        this.retryableErrorCodes = new Set(
+            options.retryableErrorCodes ?? ['ECONNRESET', 'ETIMEDOUT'],
+        );
+        this.logger = options.logger;
+        this.telemetryClient = options.telemetry?.client;
+        this.telemetryEventFactory = options.telemetry?.eventFactory;
+    }
+
+    async executeRequiredTools({
+        pack,
+        input,
+        runtime,
+    }: MCPExecutionContext): Promise<MCPOrchestratorReport> {
+        const required = pack.requiredTools ?? [];
+        if (!required.length) {
+            const now = Date.now();
+            return {
+                startedAt: now,
+                finishedAt: now,
+                results: [],
+                metrics: {
+                    successCount: 0,
+                    failureCount: 0,
+                    totalAttempts: 0,
+                    totalLatencyMs: 0,
+                },
+            };
+        }
+
+        const results: Array<MCPToolExecutionRecord | undefined> = new Array(
+            required.length,
+        );
+        let index = 0;
+        const startedAt = Date.now();
+
+        const runWorker = async (): Promise<void> => {
+            // eslint-disable-next-line no-constant-condition
+            while (true) {
+                const currentIndex = index++;
+                if (currentIndex >= required.length) {
+                    break;
+                }
+
+                const toolRef = required[currentIndex];
+                const registration = this.registry.get(toolRef.mcpId);
+                if (!registration) {
+                    const error = `MCP ${toolRef.mcpId} not registered`;
+                    this.logger?.warn?.('mcp.tool.missing', {
+                        tool: toolRef.toolName,
+                        mcpId: toolRef.mcpId,
+                    });
+                    results[currentIndex] = {
+                        request: {
+                            registry: {
+                                id: toolRef.mcpId,
+                                endpoint: '',
+                                status: 'unavailable',
+                                tools: [],
+                            } as MCPRegistration,
+                            tool: toolRef,
+                            input: {},
+                        },
+                        tool: toolRef,
+                        attempts: 0,
+                        error,
+                    };
+                    continue;
+                }
+
+                const record = await this.invokeWithRetry(
+                    registration,
+                    toolRef,
+                    pack,
+                    input,
+                    runtime,
+                );
+                results[currentIndex] = record;
+            }
+        };
+
+        const workers = Array.from({ length: this.concurrency }, runWorker);
+        await Promise.all(workers);
+
+        const finishedAt = Date.now();
+        const completedResults = results.map((record, index) => {
+            if (record) {
+                return record;
+            }
+
+            const tool = required[index];
+            return {
+                request: {
+                    registry: {
+                        id: tool.mcpId,
+                        endpoint: '',
+                        status: 'unavailable',
+                        tools: [],
+                    } as MCPRegistration,
+                    tool,
+                    input: {},
+                },
+                error: 'MCP invocation not executed',
+                attempts: 0,
+                tool,
+            } as MCPToolExecutionRecord;
+        });
+
+        const metrics = completedResults.reduce(
+            (acc, record) => {
+                acc.totalAttempts += record.attempts;
+                if (record.result?.success) {
+                    acc.successCount += 1;
+                    acc.totalLatencyMs += record.result.latencyMs;
+                } else {
+                    acc.failureCount += 1;
+                    acc.totalLatencyMs += record.result?.latencyMs ?? 0;
+                }
+                return acc;
+            },
+            {
+                successCount: 0,
+                failureCount: 0,
+                totalAttempts: 0,
+                totalLatencyMs: 0,
+            },
+        );
+
+        const report = {
+            startedAt,
+            finishedAt,
+            results: completedResults,
+            metrics,
+        };
+
+        if (this.telemetryClient) {
+            const hasFailure = metrics.failureCount > 0;
+            const runtimeUserId =
+                runtime?.metadata && typeof runtime.metadata.userId === 'string'
+                    ? (runtime.metadata.userId as string)
+                    : undefined;
+            const contextUserId =
+                input.runtimeContext?.metadata &&
+                typeof input.runtimeContext.metadata.userId === 'string'
+                    ? (input.runtimeContext.metadata.userId as string)
+                    : undefined;
+
+            const baseEvent: ContextEvent = {
+                type: hasFailure ? 'ERROR' : 'DELIVERY',
+                sessionId:
+                    runtime?.sessionId ??
+                    input.runtimeContext?.sessionId ??
+                    'unknown-session',
+                tenantId:
+                    runtime?.tenantId ??
+                    input.runtimeContext?.tenantId ??
+                    'unknown-tenant',
+                packId: pack.id,
+                userId: runtimeUserId ?? contextUserId,
+                budget: pack.budget,
+                tokensUsed: pack.budget.usage,
+                latencyMs: metrics.totalLatencyMs,
+                metadata: {
+                    toolResults: completedResults.map((result) => ({
+                        tool: result.tool.toolName,
+                        success: result.result?.success ?? false,
+                        error: result.error,
+                        latencyMs: result.result?.latencyMs,
+                    })),
+                },
+                timestamp: Date.now(),
+            };
+
+            const mergedEvent = {
+                ...baseEvent,
+                ...(this.telemetryEventFactory?.({
+                    context: { pack, input, runtime },
+                    report,
+                }) ?? {}),
+            };
+
+            await this.telemetryClient.record(mergedEvent);
+        }
+
+        return report;
+    }
+
+    private async invokeWithRetry(
+        registration: MCPRegistration,
+        tool: MCPToolReference,
+        pack: ContextPack,
+        input: LayerInputContext,
+        runtime?: RuntimeContextSnapshot,
+    ): Promise<MCPToolExecutionRecord> {
+        let attempts = 0;
+        let lastError: string | undefined;
+        let lastResult: MCPInvocationResult | undefined;
+        let lastRequest: MCPInvocationRequest | undefined;
+
+        while (attempts < this.maxAttempts) {
+            attempts += 1;
+
+            try {
+                const request: MCPInvocationRequest = {
+                    registry: registration,
+                    tool,
+                    input: sanitizeMCPInput({
+                        taskIntent: input.taskIntent,
+                        domain: input.domain,
+                        packId: pack.id,
+                        agent:
+                            (pack.metadata?.agentIdentity as unknown) ??
+                            input.deliveryRequest?.agentIdentity,
+                    }),
+                    runtimeMetadata: {
+                        packLayers: pack.layers.map((layer) => layer.kind),
+                        sessionId: runtime?.sessionId,
+                        tenantId: runtime?.tenantId,
+                        threadId: runtime?.threadId,
+                    },
+                };
+
+                lastRequest = request;
+
+                const result = await this.client.invoke(request);
+                lastResult = result;
+
+                if (result.success) {
+                    this.logger?.info?.('mcp.tool.success', {
+                        tool: tool.toolName,
+                        latencyMs: result.latencyMs,
+                    });
+                    return {
+                        request,
+                        result,
+                        attempts,
+                        registration,
+                        tool,
+                    };
+                }
+
+                lastError =
+                    result.error?.message ??
+                    `Tool ${tool.toolName} returned failure`;
+
+                this.logger?.warn?.('mcp.tool.failure', {
+                    tool: tool.toolName,
+                    attempts,
+                    error: lastError,
+                });
+
+                if (
+                    !result.error?.code ||
+                    !this.retryableErrorCodes.has(result.error.code)
+                ) {
+                    break;
+                }
+            } catch (error) {
+                lastError = (error as Error)?.message ?? String(error);
+                this.logger?.error?.('mcp.tool.exception', {
+                    tool: tool.toolName,
+                    attempts,
+                    error: lastError,
+                });
+
+                if (!this.retryableErrorCodes.has(lastError)) {
+                    break;
+                }
+            }
+        }
+
+        return {
+            request:
+                lastRequest ??
+                ({
+                    registry: registration,
+                    tool,
+                    input: {},
+                } as MCPInvocationRequest),
+            result: lastResult,
+            error: lastError,
+            attempts,
+            registration,
+            tool,
+        };
+    }
+}

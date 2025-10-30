@@ -2848,6 +2848,8 @@ export interface MCPRegistryOptions {
     defaultTimeout?: number;
 
     maxRetries?: number;
+
+    onToolsChanged?: (serverName: string) => void;
 }
 
 export interface MCPRequestMethod {

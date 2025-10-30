@@ -58,11 +58,19 @@ export function createMCPAdapter(config: MCPAdapterConfig): MCPAdapter {
     const registry = new MCPRegistry({
         defaultTimeout: config.defaultTimeout,
         maxRetries: config.maxRetries,
+        onToolsChanged: (serverName) => {
+            toolIndexDirty = true;
+            logger.debug('Tool index marked dirty due to change', {
+                serverName,
+            });
+        },
     });
 
     const logger = createLogger('createMCPAdapter');
 
     let isConnected = false;
+    let ensurePromise: Promise<void> | null = null;
+    let toolIndexDirty = true;
 
     const adapter: MCPAdapter = {
         /**
@@ -254,17 +262,50 @@ export function createMCPAdapter(config: MCPAdapterConfig): MCPAdapter {
          * Ensure connection is fresh and working
          */
         async ensureConnection(): Promise<void> {
-            if (!isConnected) {
-                await this.connect();
+            if (ensurePromise) {
+                await ensurePromise;
                 return;
             }
 
-            try {
-                await registry.listAllTools();
-            } catch {
-                await this.disconnect();
-                await this.connect();
-            }
+            ensurePromise = (async () => {
+                try {
+                    if (!isConnected) {
+                        await this.connect();
+                        await registry.listAllTools();
+                        toolIndexDirty = false;
+                        return;
+                    }
+
+                    if (toolIndexDirty) {
+                        await registry.listAllTools();
+                        toolIndexDirty = false;
+                        return;
+                    }
+
+                    try {
+                        await registry.listAllTools();
+                        toolIndexDirty = false;
+                    } catch (error) {
+                        logger.warn(
+                            'Failed to refresh tool list, reconnecting',
+                            {
+                                error:
+                                    error instanceof Error
+                                        ? error.message
+                                        : String(error),
+                            },
+                        );
+                        await this.disconnect();
+                        await this.connect();
+                        await registry.listAllTools();
+                        toolIndexDirty = false;
+                    }
+                } finally {
+                    ensurePromise = null;
+                }
+            })();
+
+            await ensurePromise;
         },
 
         getMetrics(): Record<string, unknown> {
