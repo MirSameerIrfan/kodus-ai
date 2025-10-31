@@ -19,6 +19,8 @@ import {
 } from '@/core/domain/parameters/contracts/parameters.service.contract';
 import { ActiveCodeReviewAutomationUseCase } from '../../teamAutomation/active-code-review-automation.use-case';
 import { SyncSelectedRepositoriesKodyRulesUseCase } from '../../kodyRules/sync-selected-repositories.use-case';
+import { BackfillHistoricalPRsUseCase } from '../../pullRequests/backfill-historical-prs.use-case';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 
 @Injectable()
 export class CreateRepositoriesUseCase implements IUseCase {
@@ -38,6 +40,10 @@ export class CreateRepositoriesUseCase implements IUseCase {
         private readonly createOrUpdateParametersUseCase: CreateOrUpdateParametersUseCase,
 
         private readonly syncSelectedRepositoriesKodyRulesUseCase: SyncSelectedRepositoriesKodyRulesUseCase,
+
+        private readonly backfillHistoricalPRsUseCase: BackfillHistoricalPRsUseCase,
+
+        private readonly logger: PinoLoggerService,
 
         @Inject(REQUEST)
         private readonly request: Request & {
@@ -97,6 +103,38 @@ export class CreateRepositoriesUseCase implements IUseCase {
 
             if (teams && teams?.length > 1) {
                 this.savePlatformConfig(teamId, organizationId);
+            }
+
+            const selectedRepositories = params.repositories?.filter(
+                (repo: any) => repo.selected === true || repo.isSelected === true,
+            ) || [];
+
+            if (selectedRepositories.length > 0) {
+                setImmediate(() => {
+                    this.backfillHistoricalPRsUseCase
+                        .execute({
+                            organizationAndTeamData: {
+                                organizationId,
+                                teamId,
+                            },
+                            repositories: selectedRepositories.map((r: any) => ({
+                                id: String(r.id),
+                                name: r.name,
+                                fullName: r.fullName || r.full_name || `${r.organizationName || ''}/${r.name}`,
+                            })),
+                        })
+                        .catch((error) => {
+                            this.logger.error({
+                                message: 'Error during automatic PR backfill',
+                                context: CreateRepositoriesUseCase.name,
+                                error: error.message,
+                                metadata: {
+                                    organizationId,
+                                    teamId,
+                                },
+                            });
+                        });
+                });
             }
 
             return {
