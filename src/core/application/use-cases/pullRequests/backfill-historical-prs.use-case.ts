@@ -31,12 +31,8 @@ export class BackfillHistoricalPRsUseCase {
     ) {}
 
     public async execute(params: BackfillParams): Promise<void> {
-        const {
-            organizationAndTeamData,
-            repositories,
-            startDate,
-            endDate,
-        } = params;
+        const { organizationAndTeamData, repositories, startDate, endDate } =
+            params;
 
         const defaultStartDate =
             startDate ||
@@ -57,28 +53,31 @@ export class BackfillHistoricalPRsUseCase {
             },
         });
 
-        for (const repository of repositories) {
-            try {
-                await this.backfillRepositoryPRs(
-                    organizationAndTeamData,
-                    repository,
-                    defaultStartDate,
-                    defaultEndDate,
-                );
-            } catch (error) {
-                this.logger.error({
-                    message: `Error during backfill for repository ${repository.name}`,
-                    context: BackfillHistoricalPRsUseCase.name,
-                    error: error.message,
-                    metadata: {
-                        organizationId: organizationAndTeamData.organizationId,
-                        teamId: organizationAndTeamData.teamId,
-                        repositoryId: repository.id,
-                        repositoryName: repository.name,
-                    },
-                });
-            }
-        }
+        await Promise.all(
+            repositories.map(async (repository) => {
+                try {
+                    await this.backfillRepositoryPRs(
+                        organizationAndTeamData,
+                        repository,
+                        defaultStartDate,
+                        defaultEndDate,
+                    );
+                } catch (error) {
+                    this.logger.error({
+                        message: `Error during backfill for repository ${repository.name}`,
+                        context: BackfillHistoricalPRsUseCase.name,
+                        error: error.message,
+                        metadata: {
+                            organizationId:
+                                organizationAndTeamData.organizationId,
+                            teamId: organizationAndTeamData.teamId,
+                            repositoryId: repository.id,
+                            repositoryName: repository.name,
+                        },
+                    });
+                }
+            }),
+        );
 
         this.logger.log({
             message: 'Completed PR historical backfill',
@@ -160,7 +159,11 @@ export class BackfillHistoricalPRsUseCase {
                     continue;
                 }
 
-                let fileStats = { totalAdded: 0, totalDeleted: 0, totalChanges: 0 };
+                let fileStats = {
+                    totalAdded: 0,
+                    totalDeleted: 0,
+                    totalChanges: 0,
+                };
                 let commits = [];
 
                 try {
@@ -173,21 +176,32 @@ export class BackfillHistoricalPRsUseCase {
                             },
                             prNumber: pr.number,
                         }),
-                        this.codeManagementService.getCommitsForPullRequestForCodeReview({
-                            organizationAndTeamData,
-                            repository: {
-                                id: repository.id,
-                                name: repository.name,
+                        this.codeManagementService.getCommitsForPullRequestForCodeReview(
+                            {
+                                organizationAndTeamData,
+                                repository: {
+                                    id: repository.id,
+                                    name: repository.name,
+                                },
+                                prNumber: pr.number,
                             },
-                            prNumber: pr.number,
-                        }),
+                        ),
                     ]);
 
                     if (files && files.length > 0) {
                         fileStats = {
-                            totalAdded: files.reduce((sum, file) => sum + (file.additions || 0), 0),
-                            totalDeleted: files.reduce((sum, file) => sum + (file.deletions || 0), 0),
-                            totalChanges: files.reduce((sum, file) => sum + (file.changes || 0), 0),
+                            totalAdded: files.reduce(
+                                (sum, file) => sum + (file.additions || 0),
+                                0,
+                            ),
+                            totalDeleted: files.reduce(
+                                (sum, file) => sum + (file.deletions || 0),
+                                0,
+                            ),
+                            totalChanges: files.reduce(
+                                (sum, file) => sum + (file.changes || 0),
+                                0,
+                            ),
                         };
                     }
 
@@ -197,12 +211,21 @@ export class BackfillHistoricalPRsUseCase {
                             message: commit.message || '',
                             author: {
                                 id: commit.author?.id || '',
-                                username: commit.author?.username || commit.author?.name || '',
+                                username:
+                                    commit.author?.username ||
+                                    commit.author?.name ||
+                                    '',
                                 name: commit.author?.name || '',
                                 email: commit.author?.email || '',
-                                date: commit.created_at || commit.author?.date || new Date().toISOString(),
+                                date:
+                                    commit.created_at ||
+                                    commit.author?.date ||
+                                    new Date().toISOString(),
                             },
-                            createdAt: commit.created_at || commit.author?.date || new Date().toISOString(),
+                            createdAt:
+                                commit.created_at ||
+                                commit.author?.date ||
+                                new Date().toISOString(),
                         }));
                     }
                 } catch (dataError) {
@@ -255,12 +278,16 @@ export class BackfillHistoricalPRsUseCase {
     private transformPullRequestToDocument(
         pr: PullRequest,
         organizationId: string,
-        fileStats: { totalAdded: number; totalDeleted: number; totalChanges: number },
+        fileStats: {
+            totalAdded: number;
+            totalDeleted: number;
+            totalChanges: number;
+        },
         commits: any[],
     ): Omit<IPullRequests, 'uuid'> {
         const isMerged = !!pr.merged_at;
         const repoData = pr.head?.repo || pr.base?.repo;
-        
+
         return {
             title: pr.title || '',
             status: pr.state || 'unknown',
@@ -270,7 +297,11 @@ export class BackfillHistoricalPRsUseCase {
             baseBranchRef: pr.base?.ref || pr.targetRefName || '',
             headBranchRef: pr.head?.ref || pr.sourceRefName || '',
             repository: {
-                id: repoData?.id || pr.repositoryData?.id || pr.repositoryId || '',
+                id:
+                    repoData?.id ||
+                    pr.repositoryData?.id ||
+                    pr.repositoryId ||
+                    '',
                 name: repoData?.name || pr.repositoryData?.name || '',
                 fullName: repoData?.fullName || '',
                 language: '',
@@ -291,14 +322,16 @@ export class BackfillHistoricalPRsUseCase {
                 id: pr.user?.id || '',
                 username: pr.user?.login || pr.user?.name || '',
             },
-            reviewers: pr.reviewers?.map((reviewer) => ({
-                id: String(reviewer.id) || '',
-                username: '',
-            })) || [],
-            assignees: pr.participants?.map((participant) => ({
-                id: String(participant.id) || '',
-                username: '',
-            })) || [],
+            reviewers:
+                pr.reviewers?.map((reviewer) => ({
+                    id: String(reviewer.id) || '',
+                    username: '',
+                })) || [],
+            assignees:
+                pr.participants?.map((participant) => ({
+                    id: String(participant.id) || '',
+                    username: '',
+                })) || [],
             organizationId,
             commits,
             syncedEmbeddedSuggestions: false,
@@ -307,4 +340,3 @@ export class BackfillHistoricalPRsUseCase {
         };
     }
 }
-

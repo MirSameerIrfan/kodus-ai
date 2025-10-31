@@ -221,7 +221,7 @@ export class BitbucketService
                 .listActivitiesForRepo({
                     repo_slug: `{${repository.id}}`,
                     workspace: `{${workspace}}`,
-                    pagelen: 100,
+                    pagelen: 50,
                 })
                 .then((res) => this.getPaginatedResults(bitbucketAPI, res));
 
@@ -792,7 +792,7 @@ export class BitbucketService
             const bitbucketAPI = this.instanceBitbucketApi(bitbucketAuthDetail);
 
             const workspaces = await bitbucketAPI.workspaces
-                .getWorkspaces({ pagelen: 100 })
+                .getWorkspaces({ pagelen: 50 })
                 .then((res) => this.getPaginatedResults(bitbucketAPI, res));
 
             const workspacesWithRepos = await Promise.all(
@@ -800,7 +800,7 @@ export class BitbucketService
                     bitbucketAPI.repositories
                         .list({
                             workspace: `${workspace.uuid}`,
-                            pagelen: 100,
+                            pagelen: 50,
                         })
                         .then((res) =>
                             this.getPaginatedResults(bitbucketAPI, res),
@@ -893,7 +893,7 @@ export class BitbucketService
                         .list({
                             repo_slug: `{${repo.id}}`,
                             workspace: `{${repo.workspaceId}}`,
-                            pagelen: 100,
+                            pagelen: 50,
                         })
                         .then((res) =>
                             this.getPaginatedResults(bitbucketAPI, res),
@@ -1011,7 +1011,7 @@ export class BitbucketService
                     bitbucketAPI.workspaces
                         .getMembersForWorkspace({
                             workspace,
-                            pagelen: 100,
+                            pagelen: 50,
                         })
                         .then((res) =>
                             this.getPaginatedResults<Schema.WorkspaceMembership>(
@@ -1221,7 +1221,7 @@ export class BitbucketService
                         .list({
                             repo_slug: `{${repo.id}}`,
                             workspace: `{${repo.workspaceId}}`,
-                            pagelen: 100,
+                            pagelen: 50,
                         })
                         .then((res) =>
                             this.getPaginatedResults(bitbucketAPI, res),
@@ -1353,7 +1353,7 @@ export class BitbucketService
                             repo_slug: `{${repo.id}}`,
                             workspace: `{${repo.workspaceId}}`,
                             state: normalizedStatus,
-                            pagelen: 100,
+                            pagelen: 50,
                         })
                         .then((res) =>
                             this.getPaginatedResults(bitbucketAPI, res),
@@ -1477,7 +1477,7 @@ export class BitbucketService
                             repo_slug: `{${repo.id}}`,
                             workspace: `{${repo.workspaceId}}`,
                             q: `(state = 'MERGED' OR state = 'DECLINED')${query}`,
-                            pagelen: 100,
+                            pagelen: 50,
                         })
                         .then((res) =>
                             this.getPaginatedResults(bitbucketAPI, res),
@@ -2574,7 +2574,7 @@ export class BitbucketService
                     pull_request_id: filters.pullRequestNumber,
                     repo_slug: `{${filters.repository.id}}`,
                     workspace: `{${workspace}}`,
-                    pagelen: 100,
+                    pagelen: 50,
                 })
                 .then((res) => this.getPaginatedResults(bitbucketAPI, res));
 
@@ -2941,7 +2941,7 @@ export class BitbucketService
                     .listForRepo({
                         repo_slug: `{${repo.id}}`,
                         workspace: `{${repo.workspaceId}}`,
-                        pagelen: 100,
+                        pagelen: 50,
                     })
                     .then((res) => this.getPaginatedResults(bitbucketAPI, res));
 
@@ -3492,7 +3492,7 @@ export class BitbucketService
                     repo_slug: `{${repository.id}}`,
                     workspace: `{${workspace}}`,
                     pull_request_id: prNumber,
-                    pagelen: 100,
+                    pagelen: 50,
                 })
                 .then((res) => this.getPaginatedResults(bitbucketAPI, res));
 
@@ -3706,7 +3706,7 @@ export class BitbucketService
                     pull_request_id: prNumber,
                     repo_slug: `{${repository.id}}`,
                     workspace: `{${workspace}}`,
-                    pagelen: 100,
+                    pagelen: 50,
                 })
                 .then((res) => this.getPaginatedResults(bitbucketAPI, res));
 
@@ -3773,17 +3773,22 @@ export class BitbucketService
                 repo_slug: `{${repository.id}}`,
                 workspace: `{${workspace}}`,
                 fields: '+values.participants,+values.reviewers,+values.draft',
+                pagelen: 50,
             };
 
             if (queryString) {
                 listParams.q = queryString;
-            } else {
-                listParams.pagelen = 100;
             }
 
             const pullRequests = await bitbucketAPI.pullrequests
                 .list(listParams)
-                .then((res) => this.getPaginatedResults(bitbucketAPI, res));
+                .then((res) => {
+                    return this.getPaginatedResultsWithLimit(
+                        bitbucketAPI,
+                        res,
+                        100,
+                    );
+                });
 
             return pullRequests.map((pr) =>
                 this.transformPullRequest(pr, organizationAndTeamData),
@@ -3916,7 +3921,7 @@ export class BitbucketService
                     workspace: `{${workspace}}`,
                     pull_request_id: prNumber,
                     fields: '+values.resolution.type,+values.resolution.+values.id,+values.pullrequest',
-                    pagelen: 100,
+                    pagelen: 50,
                 })
                 .then((res) => this.getPaginatedResults(bitbucketAPI, res));
 
@@ -4208,7 +4213,7 @@ export class BitbucketService
                 .listForRepo({
                     repo_slug: `{${this.sanitizeUUID(targetRepo.id)}}`,
                     workspace: `{${this.sanitizeUUID(targetRepo.workspaceId)}}`,
-                    pagelen: 100,
+                    pagelen: 50,
                 })
                 .then((res) => this.getPaginatedResults(bitbucketAPI, res));
 
@@ -4266,7 +4271,7 @@ export class BitbucketService
                         .listForRepo({
                             repo_slug: `{${repo.id}}`,
                             workspace: `{${repo.workspaceId}}`,
-                            pagelen: 100,
+                            pagelen: 50,
                         })
                         .then((res) =>
                             this.getPaginatedResults(bitbucketAPI, res),
@@ -4462,7 +4467,7 @@ export class BitbucketService
                     // Primeira requisição - usar request direto com query params
                     const queryParams = new URLSearchParams({
                         max_depth: maxDepth.toString(),
-                        pagelen: '100',
+                        pagelen: '50',
                         page: pageNum.toString(),
                     });
 
@@ -4620,7 +4625,7 @@ export class BitbucketService
                         workspace: `{${workspace}}`,
                         commit: commitHash, // ADICIONADO: resolver o erro "parameter required: 'commit'"
                         path: currentPath,
-                        pagelen: 100,
+                        pagelen: 50,
                     });
             } else {
                 // Para raiz - usar source.readRoot
@@ -4628,7 +4633,7 @@ export class BitbucketService
                     bitbucketAPI.source.readRoot({
                         repo_slug: `{${repositoryId}}`,
                         workspace: `{${workspace}}`,
-                        pagelen: 100,
+                        pagelen: 50,
                     });
             }
 
