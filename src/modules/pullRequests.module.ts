@@ -47,6 +47,7 @@ import { CodeReviewExecutionModule } from './codeReviewExecution.module';
         PULL_REQUESTS_REPOSITORY_TOKEN,
         PULL_REQUESTS_SERVICE_TOKEN,
         SavePullRequestUseCase,
+        ...UseCases,
     ],
 })
 export class PullRequestsModule {}
