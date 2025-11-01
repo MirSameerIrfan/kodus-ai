@@ -16,6 +16,7 @@ import { SyncSelectedRepositoriesKodyRulesUseCase } from './sync-selected-reposi
 import { GetInheritedRulesKodyRulesUseCase } from './get-inherited-kody-rules.use-case';
 import { GetRulesLimitStatusUseCase } from './get-rules-limit-status.use-case';
 import { ResyncRulesFromIdeUseCase } from './resync-rules-from-ide.use-case';
+import { FindSuggestionsByRuleUseCase } from './find-suggestions-by-rule.use-case';
 
 export const UseCases = [
     CreateOrUpdateKodyRulesUseCase,
@@ -36,4 +37,5 @@ export const UseCases = [
     GetInheritedRulesKodyRulesUseCase,
     GetRulesLimitStatusUseCase,
     ResyncRulesFromIdeUseCase,
+    FindSuggestionsByRuleUseCase,
 ];
