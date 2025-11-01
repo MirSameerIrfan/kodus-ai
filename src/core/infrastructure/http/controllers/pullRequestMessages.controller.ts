@@ -28,6 +28,7 @@ import {
     ResourceType,
 } from '@/core/domain/permissions/enums/permissions.enum';
 import { FindByRepositoryOrDirectoryIdPullRequestMessagesUseCase } from '@/core/application/use-cases/pullRequestMessages/find-by-repo-or-directory.use-case';
+import { MigratePullRequestMessagesStatusUseCase } from '@/core/application/use-cases/pullRequestMessages/migrate-pull-request-messages-status.use-case';
 
 @Controller('pull-request-messages')
 export class PullRequestMessagesController {
@@ -35,6 +36,7 @@ export class PullRequestMessagesController {
         private readonly createOrUpdatePullRequestMessagesUseCase: CreateOrUpdatePullRequestMessagesUseCase,
         private readonly findByIdPullRequestMessagesUseCase: FindByIdPullRequestMessagesUseCase,
         private readonly findByRepositoryOrDirectoryIdPullRequestMessagesUseCase: FindByRepositoryOrDirectoryIdPullRequestMessagesUseCase,
+        private readonly migratePullRequestMessagesStatusUseCase: MigratePullRequestMessagesStatusUseCase,
 
         @Inject(REQUEST)
         private readonly request: UserRequest,
@@ -78,5 +80,14 @@ export class PullRequestMessagesController {
     @Get('/:id')
     public async findById(@Param('id') id: string) {
         return await this.findByIdPullRequestMessagesUseCase.execute(id);
+    }
+
+    @Post('/migrate-status')
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(
+        checkPermissions(Action.Update, ResourceType.CodeReviewSettings),
+    )
+    public async migrateStatus() {
+        return await this.migratePullRequestMessagesStatusUseCase.execute();
     }
 }

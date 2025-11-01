@@ -68,7 +68,7 @@ customMessages:
         hideComments: false # github only
 
     startReviewMessage:
-        status: 'active' # active | inactive
+        status: 'every_push' # every_push | only_when_opened | off
         content: |
             # PR Summary (Comment created by [Kody](https://kodus.io) 🤖)
 
@@ -81,7 +81,7 @@ customMessages:
             @changeSummary
 
     endReviewMessage:
-        status: 'active' # active | inactive
+        status: 'every_push' # every_push | only_when_opened | off
         content: |
             ## Code Review Completed! 🔥
 
