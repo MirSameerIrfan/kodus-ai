@@ -45,6 +45,8 @@ import { GetInheritedRulesKodyRulesUseCase } from '@/core/application/use-cases/
 import { GetRulesLimitStatusUseCase } from '@/core/application/use-cases/kodyRules/get-rules-limit-status.use-case';
 import { UserRequest } from '@/config/types/http/user-request.type';
 import { ResyncRulesFromIdeUseCase } from '@/core/application/use-cases/kodyRules/resync-rules-from-ide.use-case';
+import { FindSuggestionsByRuleUseCase } from '@/core/application/use-cases/kodyRules/find-suggestions-by-rule.use-case';
+import { FindSuggestionsByRuleDto } from '../dtos/find-suggestions-by-rule.dto';
 
 @Controller('kody-rules')
 export class KodyRulesController {
@@ -67,6 +69,7 @@ export class KodyRulesController {
         private readonly getInheritedRulesKodyRulesUseCase: GetInheritedRulesKodyRulesUseCase,
         private readonly getRulesLimitStatusUseCase: GetRulesLimitStatusUseCase,
         private readonly resyncRulesFromIdeUseCase: ResyncRulesFromIdeUseCase,
+        private readonly findSuggestionsByRuleUseCase: FindSuggestionsByRuleUseCase,
         @Inject(REQUEST)
         private readonly request: UserRequest,
     ) {}
@@ -99,6 +102,13 @@ export class KodyRulesController {
     @CheckPolicies(checkPermissions(Action.Read, ResourceType.KodyRules))
     public async getRulesLimitStatus() {
         return this.getRulesLimitStatusUseCase.execute();
+    }
+
+    @Get('/suggestions')
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(checkPermissions(Action.Read, ResourceType.KodyRules))
+    public async findSuggestionsByRule(@Query() query: FindSuggestionsByRuleDto) {
+        return this.findSuggestionsByRuleUseCase.execute(query.ruleId);
     }
 
     @Get('/find-rule-in-organization-by-id')

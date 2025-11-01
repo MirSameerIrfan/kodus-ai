@@ -56,6 +56,10 @@ export interface IPullRequestsRepository {
         prNumber: number,
         deliveryStatus: DeliveryStatus,
     ): Promise<ISuggestion[]>;
+    findSuggestionsByRuleId(
+        ruleId: string,
+        organizationId: string,
+    ): Promise<ISuggestion[]>;
     findPullRequestsWithDeliveredSuggestions(
         organizationId: string,
         prNumbers: number[],

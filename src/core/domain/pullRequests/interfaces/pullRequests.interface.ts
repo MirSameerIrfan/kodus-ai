@@ -94,6 +94,11 @@ export interface ISuggestion {
     type?: SuggestionType;
     createdAt: string;
     updatedAt: string;
+    prNumber?: number;
+    prTitle?: string;
+    prUrl?: string;
+    repositoryId?: string;
+    repositoryFullName?: string;
 }
 
 export interface ISuggestionToEmbed {

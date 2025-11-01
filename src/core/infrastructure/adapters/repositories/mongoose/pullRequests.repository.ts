@@ -232,6 +232,88 @@ export class PullRequestsRepository implements IPullRequestsRepository {
         }
     }
 
+    async findSuggestionsByRuleId(
+        ruleId: string,
+        organizationId: string,
+    ): Promise<ISuggestion[]> {
+        try {
+            const fileSuggestions = await this.pullRequestsModel
+                .aggregate([
+                    {
+                        $match: {
+                            organizationId: organizationId,
+                        },
+                    },
+                    {
+                        $unwind: '$files',
+                    },
+                    {
+                        $unwind: '$files.suggestions',
+                    },
+                    {
+                        $match: {
+                            'files.suggestions.deliveryStatus': DeliveryStatus.SENT,
+                            'files.suggestions.brokenKodyRulesIds': ruleId,
+                        },
+                    },
+                    {
+                        $addFields: {
+                            'files.suggestions.prNumber': '$number',
+                            'files.suggestions.prTitle': '$title',
+                            'files.suggestions.prUrl': '$url',
+                            'files.suggestions.repositoryId': '$repository.id',
+                            'files.suggestions.repositoryFullName':
+                                '$repository.fullName',
+                        },
+                    },
+                    {
+                        $replaceRoot: {
+                            newRoot: '$files.suggestions',
+                        },
+                    },
+                ])
+                .exec();
+
+            const prLevelSuggestions = await this.pullRequestsModel
+                .aggregate([
+                    {
+                        $match: {
+                            organizationId: organizationId,
+                        },
+                    },
+                    {
+                        $unwind: '$prLevelSuggestions',
+                    },
+                    {
+                        $match: {
+                            'prLevelSuggestions.deliveryStatus': DeliveryStatus.SENT,
+                            'prLevelSuggestions.brokenKodyRulesIds': ruleId,
+                        },
+                    },
+                    {
+                        $addFields: {
+                            'prLevelSuggestions.prNumber': '$number',
+                            'prLevelSuggestions.prTitle': '$title',
+                            'prLevelSuggestions.prUrl': '$url',
+                            'prLevelSuggestions.repositoryId': '$repository.id',
+                            'prLevelSuggestions.repositoryFullName':
+                                '$repository.fullName',
+                        },
+                    },
+                    {
+                        $replaceRoot: {
+                            newRoot: '$prLevelSuggestions',
+                        },
+                    },
+                ])
+                .exec();
+
+            return [...fileSuggestions, ...prLevelSuggestions];
+        } catch (error) {
+            throw error;
+        }
+    }
+
     async findPullRequestsWithDeliveredSuggestions(
         organizationId: string,
         prNumbers: number[],
