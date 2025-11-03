@@ -8,6 +8,7 @@ import {
     ActionType,
     ConfigLevel,
 } from '@/config/types/general/codeReviewSettingsLog.type';
+import { PullRequestMessageStatus } from '@/config/types/general/pullRequestMessages.type';
 
 // Default messages constants - to be filled with actual content
 const DEFAULT_START_MESSAGE = '';
@@ -15,7 +16,7 @@ const DEFAULT_END_MESSAGE = '';
 
 export interface PullRequestMessage {
     content: string;
-    status: 'active' | 'inactive';
+    status: PullRequestMessageStatus;
 }
 
 export interface PullRequestMessagesLogParams extends BaseLogParams {

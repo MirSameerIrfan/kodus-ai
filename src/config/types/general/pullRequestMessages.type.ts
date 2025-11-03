@@ -4,6 +4,9 @@ export enum PullRequestMessageType {
 }
 
 export enum PullRequestMessageStatus {
+    EVERY_PUSH = 'every_push',
+    ONLY_WHEN_OPENED = 'only_when_opened',
+    OFF = 'off',
     ACTIVE = 'active',
     INACTIVE = 'inactive',
 }
