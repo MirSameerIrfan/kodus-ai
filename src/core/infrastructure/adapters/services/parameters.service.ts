@@ -81,30 +81,20 @@ export class ParametersService implements IParametersService {
                 active: true,
             });
 
-            if (!parameters) {
-                const uuid = uuidv4();
+            const version = parameters ? parameters.version + 1 : 1;
 
-                return await this.create({
-                    uuid: uuid,
-                    configKey: parametersKey,
-                    configValue: configValue,
-                    team: { uuid: organizationAndTeamData.teamId },
-                    active: true,
-                });
-            } else {
-                await this.update(
-                    {
-                        uuid: parameters?.uuid,
-                        team: { uuid: organizationAndTeamData.teamId },
-                    },
-                    {
-                        configKey: parametersKey,
-                        configValue: configValue,
-                        team: { uuid: organizationAndTeamData.teamId },
-                    },
-                );
-                return true;
+            if (parameters) {
+                await this.update({ uuid: parameters.uuid }, { active: false });
             }
+
+            return await this.create({
+                uuid: uuidv4(),
+                configKey: parametersKey,
+                configValue,
+                team: { uuid: organizationAndTeamData.teamId },
+                active: true,
+                version,
+            });
         } catch (err) {
             throw new BadRequestException(err);
         }

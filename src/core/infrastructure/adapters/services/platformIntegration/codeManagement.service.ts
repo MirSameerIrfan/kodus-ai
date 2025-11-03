@@ -19,6 +19,7 @@ import { Commit } from '@/config/types/general/commit.type';
 import { extractOrganizationAndTeamData } from '@/shared/utils/helpers';
 import { CodeManagementConnectionStatus } from '@/shared/utils/decorators/validate-code-management-integration.decorator';
 import {
+    CodeSuggestion,
     CommentResult,
     Repository,
     ReviewComment,
@@ -32,6 +33,8 @@ import {
     GitHubReaction,
     GitlabReaction,
 } from '@/core/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
+import { CodeReviewPipelineContext } from '../codeBase/codeReviewPipeline/context/code-review-pipeline.context';
+import { ISuggestionByPR } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
 
 @Injectable()
 export class CodeManagementService implements ICodeManagementService {
@@ -426,6 +429,7 @@ export class CodeManagementService implements ICodeManagementService {
             lineComment: any;
             commit: any;
             language: string;
+            dryRun?: CodeReviewPipelineContext['dryRun'];
         },
         type?: PlatformType,
     ) {
@@ -469,6 +473,8 @@ export class CodeManagementService implements ICodeManagementService {
             repository: { name: string; id: string };
             prNumber: number;
             body: string;
+            dryRun?: CodeReviewPipelineContext['dryRun'];
+            suggestion?: ISuggestionByPR;
         },
         type?: PlatformType,
     ) {
@@ -517,6 +523,7 @@ export class CodeManagementService implements ICodeManagementService {
             commentId: number;
             noteId?: number;
             threadId?: number;
+            dryRun?: CodeReviewPipelineContext['dryRun'];
         },
         type?: PlatformType,
     ) {
@@ -615,6 +622,7 @@ export class CodeManagementService implements ICodeManagementService {
             repository: { name: string; id: string };
             prNumber: number;
             summary: string;
+            dryRun?: CodeReviewPipelineContext['dryRun'];
         },
         type?: PlatformType,
     ) {
@@ -1079,17 +1087,22 @@ export class CodeManagementService implements ICodeManagementService {
         return codeManagementService.isWebhookActive(params);
     }
 
-    async formatReviewCommentBody(params: {
-        suggestion: any;
-        repository: { name: string; language: string };
-        includeHeader?: boolean;
-        includeFooter?: boolean;
-        language?: string;
-        organizationAndTeamData: OrganizationAndTeamData;
-    }): Promise<string> {
-        const type = await this.getTypeIntegration(
-            params.organizationAndTeamData,
-        );
+    async formatReviewCommentBody(
+        params: {
+            suggestion: any;
+            repository: { name: string; language: string };
+            includeHeader?: boolean;
+            includeFooter?: boolean;
+            language?: string;
+            organizationAndTeamData: OrganizationAndTeamData;
+        },
+        type?: PlatformType,
+    ): Promise<string> {
+        if (!type) {
+            type = await this.getTypeIntegration(
+                params.organizationAndTeamData,
+            );
+        }
 
         const codeManagementService =
             this.platformIntegrationFactory.getCodeManagementService(type);

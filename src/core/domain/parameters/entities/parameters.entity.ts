@@ -13,6 +13,8 @@ export class ParametersEntity<K extends ParametersKey>
     private _team?: Partial<ITeam>;
     private _createdAt?: Date;
     private _updatedAt?: Date;
+    private _description?: string;
+    private _version: number;
 
     constructor(parameters: IParameters<K> | Partial<IParameters<K>>) {
         this._uuid = parameters.uuid;
@@ -39,6 +41,8 @@ export class ParametersEntity<K extends ParametersKey>
             createdAt: this.createdAt,
             updatedAt: this.updatedAt,
             active: this.active,
+            description: this.description,
+            version: this.version,
         };
     }
 
@@ -72,5 +76,13 @@ export class ParametersEntity<K extends ParametersKey>
 
     public get active() {
         return this._active;
+    }
+
+    public get description() {
+        return this._description;
+    }
+
+    public get version() {
+        return this._version;
     }
 }

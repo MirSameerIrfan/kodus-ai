@@ -14,6 +14,16 @@ import {
     AutomationMessage,
     AutomationStatus,
 } from '@/core/domain/automation/enums/automation-status';
+import {
+    DRY_RUN_SERVICE_TOKEN,
+    IDryRunService,
+} from '@/core/domain/dryRun/contracts/dryRun.service.contract';
+import { IPullRequestMessages } from '@/core/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
+import { ConfigLevel } from '@/config/types/general/pullRequestMessages.type';
+import {
+    IPullRequestMessagesService,
+    PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
+} from '@/core/domain/pullRequestMessages/contracts/pullRequestMessages.service.contract';
 
 @Injectable()
 export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineContext> {
@@ -24,6 +34,11 @@ export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineCont
         private readonly codeBaseConfigService: ICodeBaseConfigService,
         @Inject(PULL_REQUEST_MANAGER_SERVICE_TOKEN)
         private readonly pullRequestHandlerService: IPullRequestManagerService,
+        @Inject(PULL_REQUEST_MESSAGES_SERVICE_TOKEN)
+        private readonly pullRequestMessagesService: IPullRequestMessagesService,
+
+        @Inject(DRY_RUN_SERVICE_TOKEN)
+        private readonly dryRunService: IDryRunService,
         private readonly logger: PinoLoggerService,
     ) {
         super();
@@ -68,8 +83,32 @@ export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineCont
                 preliminaryFiles,
             );
 
+            const pullRequestMessagesConfig =
+                await this.setPullRequestMessagesConfig(context);
+
+            let dryRunHash = undefined;
+            if (context.dryRun?.enabled) {
+                const dryRun = await this.dryRunService.addDryRun({
+                    organizationAndTeamData: context.organizationAndTeamData,
+                    provider: context.platformType,
+                    prNumber: context.pullRequest.number,
+                    repositoryId: context.repository.id,
+                    repositoryName: context.repository.name,
+                    directoryId: config?.directoryId,
+                    config,
+                    pullRequestMessagesConfig,
+                });
+
+                dryRunHash = dryRun.hash;
+            }
+
             return this.updateContext(context, (draft) => {
                 draft.codeReviewConfig = config;
+                draft.pullRequestMessagesConfig = pullRequestMessagesConfig;
+                draft.dryRun = {
+                    ...draft.dryRun,
+                    hash: dryRunHash,
+                };
             });
         } catch (error) {
             this.logger.error({
@@ -90,5 +129,43 @@ export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineCont
                 };
             });
         }
+    }
+
+    private async setPullRequestMessagesConfig(
+        context: CodeReviewPipelineContext,
+    ): Promise<IPullRequestMessages | null> {
+        const repositoryId = context.repository.id;
+        const organizationId = context.organizationAndTeamData.organizationId;
+
+        let pullRequestMessagesConfig = null;
+
+        if (context.codeReviewConfig?.configLevel === ConfigLevel.DIRECTORY) {
+            pullRequestMessagesConfig =
+                await this.pullRequestMessagesService.findOne({
+                    organizationId,
+                    repositoryId,
+                    directoryId: context.codeReviewConfig?.directoryId,
+                    configLevel: ConfigLevel.DIRECTORY,
+                });
+        }
+
+        if (!pullRequestMessagesConfig) {
+            pullRequestMessagesConfig =
+                await this.pullRequestMessagesService.findOne({
+                    organizationId,
+                    repositoryId,
+                    configLevel: ConfigLevel.REPOSITORY,
+                });
+        }
+
+        if (!pullRequestMessagesConfig) {
+            pullRequestMessagesConfig =
+                await this.pullRequestMessagesService.findOne({
+                    organizationId,
+                    configLevel: ConfigLevel.GLOBAL,
+                });
+        }
+
+        return pullRequestMessagesConfig;
     }
 }

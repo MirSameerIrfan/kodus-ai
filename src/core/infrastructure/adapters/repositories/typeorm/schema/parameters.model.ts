@@ -1,5 +1,5 @@
 import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, Generated, JoinColumn, ManyToOne } from 'typeorm';
 import { TeamModel } from './team.model';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
 
@@ -18,9 +18,12 @@ export class ParametersModel extends CoreModel {
     @JoinColumn({ name: 'team_id', referencedColumnName: 'uuid' })
     team: TeamModel;
 
-    @Column({ nullable: true })
+    @Column({ type: 'text', nullable: true })
     description: string;
 
     @Column({ type: 'boolean', default: true })
     active: boolean;
+
+    @Column({ type: 'integer', default: 1 })
+    version: number;
 }

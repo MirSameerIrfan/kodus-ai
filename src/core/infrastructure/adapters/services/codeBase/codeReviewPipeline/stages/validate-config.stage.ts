@@ -173,20 +173,11 @@ export class ValidateConfigStage extends BasePipelineStage<CodeReviewPipelineCon
         if (context.origin === 'command') {
             const currentStatus = await this.getCurrentPRStatus(context);
 
-            let automaticReviewStatus: AutomaticReviewStatus;
-            if (currentStatus === ReviewCadenceState.PAUSED) {
-                automaticReviewStatus = {
-                    previousStatus: ReviewCadenceState.PAUSED,
-                    currentStatus: ReviewCadenceState.COMMAND,
-                    reasonForChange: 'Review triggered by start-review command',
-                };
-            } else {
-                automaticReviewStatus = {
-                    previousStatus: currentStatus,
-                    currentStatus: ReviewCadenceState.COMMAND,
-                    reasonForChange: 'Review triggered by start-review command',
-                };
-            }
+            const automaticReviewStatus: AutomaticReviewStatus = {
+                previousStatus: currentStatus,
+                currentStatus: ReviewCadenceState.COMMAND,
+                reasonForChange: 'Review triggered by start-review command',
+            };
 
             return {
                 shouldProcess: true,
@@ -385,7 +376,10 @@ export class ValidateConfigStage extends BasePipelineStage<CodeReviewPipelineCon
             timeWindowStart,
         );
 
-        return recentExecutions.length >= pushesToTrigger;
+        return (
+            !context.dryRun.enabled &&
+            recentExecutions.length >= pushesToTrigger
+        );
     }
 
     private async getRecentSuccessfulExecutions(

@@ -51,7 +51,10 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
                 this.logger.error({
                     message: 'Missing pullRequest data in context',
                     context: this.stageName,
-                    metadata: { organizationAndTeamData: context.organizationAndTeamData },
+                    metadata: {
+                        organizationAndTeamData:
+                            context.organizationAndTeamData,
+                    },
                 });
                 return context;
             }
@@ -61,7 +64,8 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
                     message: 'Missing repository data in context',
                     context: this.stageName,
                     metadata: {
-                        organizationAndTeamData: context.organizationAndTeamData,
+                        organizationAndTeamData:
+                            context.organizationAndTeamData,
                         prNumber: context.pullRequest.number,
                     },
                 });
@@ -76,12 +80,12 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
                     message: `No PR-level suggestions to process for PR#${context.pullRequest.number}`,
                     context: this.stageName,
                     metadata: {
-                        organizationAndTeamData: context.organizationAndTeamData,
+                        organizationAndTeamData:
+                            context.organizationAndTeamData,
                         prNumber: context.pullRequest.number,
                     },
                 });
-                return this.updateContext(context, (draft) => {
-                });
+                return this.updateContext(context, (draft) => {});
             }
 
             try {
@@ -90,7 +94,8 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
                     context: this.stageName,
                     metadata: {
                         suggestionsCount: prLevelSuggestions.length,
-                        organizationAndTeamData: context.organizationAndTeamData,
+                        organizationAndTeamData:
+                            context.organizationAndTeamData,
                         prNumber: context.pullRequest.number,
                     },
                 });
@@ -99,17 +104,19 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
 
                 try {
                     // Criar comentários para cada sugestão de nível de PR usando o commentManagerService
-                    const result = await this.commentManagerService.createPrLevelReviewComments(
-                        context.organizationAndTeamData,
-                        context.pullRequest.number,
-                        {
-                            name: context.repository.name,
-                            id: context.repository.id,
-                            language: context.repository.language || '',
-                        },
-                        prLevelSuggestions,
-                        context.codeReviewConfig?.languageResultPrompt,
-                    );
+                    const result =
+                        await this.commentManagerService.createPrLevelReviewComments(
+                            context.organizationAndTeamData,
+                            context.pullRequest.number,
+                            {
+                                name: context.repository.name,
+                                id: context.repository.id,
+                                language: context.repository.language || '',
+                            },
+                            prLevelSuggestions,
+                            context.codeReviewConfig?.languageResultPrompt,
+                            context.dryRun,
+                        );
 
                     commentResults = result?.commentResults || [];
 
@@ -118,7 +125,8 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
                         context: this.stageName,
                         metadata: {
                             prNumber: context.pullRequest.number,
-                            organizationAndTeamData: context.organizationAndTeamData,
+                            organizationAndTeamData:
+                                context.organizationAndTeamData,
                             suggestionsCount: prLevelSuggestions.length,
                             commentsCreated: commentResults.length,
                         },
@@ -130,7 +138,8 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
                         error,
                         metadata: {
                             prNumber: context.pullRequest.number,
-                            organizationAndTeamData: context.organizationAndTeamData,
+                            organizationAndTeamData:
+                                context.organizationAndTeamData,
                             suggestionsCount: prLevelSuggestions.length,
                         },
                     });
@@ -139,7 +148,11 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
                 }
 
                 // Transformar commentResults em ISuggestionByPR e salvar no banco
-                if (commentResults && commentResults.length > 0) {
+                if (
+                    commentResults &&
+                    commentResults.length > 0 &&
+                    !context.dryRun?.enabled
+                ) {
                     try {
                         const transformedPrLevelSuggestions =
                             this.suggestionService.transformCommentResultsToPrLevelSuggestions(
@@ -161,7 +174,8 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
                                     metadata: {
                                         prNumber: context.pullRequest.number,
                                         repositoryName: context.repository.name,
-                                        suggestionsCount: transformedPrLevelSuggestions.length,
+                                        suggestionsCount:
+                                            transformedPrLevelSuggestions.length,
                                         organizationAndTeamData:
                                             context.organizationAndTeamData,
                                     },
@@ -188,7 +202,8 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
                             error,
                             metadata: {
                                 prNumber: context.pullRequest.number,
-                                organizationAndTeamData: context.organizationAndTeamData,
+                                organizationAndTeamData:
+                                    context.organizationAndTeamData,
                                 commentResultsCount: commentResults.length,
                             },
                         });
@@ -209,21 +224,20 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
                 });
 
                 return finalContext;
-
             } catch (error) {
                 this.logger.error({
                     message: `Error during PR-level comments creation for PR#${context.pullRequest.number}`,
                     context: this.stageName,
                     error,
                     metadata: {
-                        organizationAndTeamData: context.organizationAndTeamData,
+                        organizationAndTeamData:
+                            context.organizationAndTeamData,
                         suggestionsCount: prLevelSuggestions.length,
                     },
                 });
 
                 return context;
             }
-
         } catch (error) {
             this.logger.error({
                 message: `Error during PR-level comments creation for PR#${context.pullRequest.number}`,

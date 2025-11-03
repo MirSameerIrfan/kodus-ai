@@ -71,3 +71,22 @@ export function deepDifference<T extends object>(
     }
     return result;
 }
+
+export function deepSort<T>(obj: T): T {
+    if (Array.isArray(obj)) {
+        return obj
+            .filter((item) => item !== undefined)
+            .map(deepSort) as unknown as T;
+    } else if (isObject(obj)) {
+        const sortedKeys = Object.keys(obj).sort();
+        const result: any = {};
+        for (const key of sortedKeys) {
+            const value = (obj as any)[key];
+            if (value !== undefined) {
+                result[key] = deepSort(value);
+            }
+        }
+        return result;
+    }
+    return obj;
+}

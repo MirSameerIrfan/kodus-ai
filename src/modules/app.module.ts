@@ -53,6 +53,7 @@ import { PermissionsModule } from './permissions.module';
 import { WebhookLogModule } from './webhookLog.module';
 import { PermissionValidationModule } from '@/ee/shared/permission-validation.module';
 import { UsageModule } from './usage.module';
+import { DryRunModule } from './dryRun.module';
 
 @Module({
     imports: [
@@ -110,6 +111,7 @@ import { UsageModule } from './usage.module';
         WebhookLogModule,
         PermissionValidationModule,
         UsageModule,
+        DryRunModule,
     ],
     providers: [
         {
