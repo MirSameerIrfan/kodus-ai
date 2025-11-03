@@ -93,5 +93,13 @@
             "p75": "P75 (Confiante)",
             "p95": "P95 (Pessimista)"
         }
+    },
+    "reviewCadenceInfo": {
+        "automaticTitle": "Review Automático",
+        "automaticDesc": "Kody revisa esta PR automaticamente em cada push.",
+        "autoPauseTitle": "Modo Auto-Pause",
+        "autoPauseDesc": "Kody revisa automaticamente mas pausa após mudanças rápidas ({pushes}+ pushes em {timeWindow} minutos). Use @kody resume para continuar.",
+        "manualTitle": "Review Manual",
+        "manualDesc": "Kody revisa o primeiro push automaticamente, depois apenas quando você solicita com @kody start-review."
     }
 }

@@ -120,14 +120,30 @@ export class UpdateCommentsAndGenerateSummaryStage extends BasePipelineStage<Cod
             return context;
         }
 
-        if (endReviewMessage.status === PullRequestMessageStatus.INACTIVE) {
+        if (
+            endReviewMessage.status === PullRequestMessageStatus.OFF ||
+            endReviewMessage.status === PullRequestMessageStatus.INACTIVE
+        ) {
             return context;
         }
 
         if (
-            endReviewMessage.status === PullRequestMessageStatus.ACTIVE &&
+            endReviewMessage.status === PullRequestMessageStatus.ONLY_WHEN_OPENED &&
+            context.lastExecution
+        ) {
+            return context;
+        }
+
+        if (
+            (endReviewMessage.status === PullRequestMessageStatus.ACTIVE ||
+                endReviewMessage.status === PullRequestMessageStatus.EVERY_PUSH ||
+                (endReviewMessage.status === PullRequestMessageStatus.ONLY_WHEN_OPENED &&
+                    !context.lastExecution)) &&
             startReviewMessage &&
-            startReviewMessage.status === PullRequestMessageStatus.ACTIVE
+            (startReviewMessage.status === PullRequestMessageStatus.ACTIVE ||
+                startReviewMessage.status === PullRequestMessageStatus.EVERY_PUSH ||
+                (startReviewMessage.status === PullRequestMessageStatus.ONLY_WHEN_OPENED &&
+                    !context.lastExecution))
         ) {
             const finalCommentBody = endReviewMessage.content;
 
@@ -148,9 +164,15 @@ export class UpdateCommentsAndGenerateSummaryStage extends BasePipelineStage<Cod
         }
 
         if (
-            endReviewMessage.status === PullRequestMessageStatus.ACTIVE &&
+            (endReviewMessage.status === PullRequestMessageStatus.ACTIVE ||
+                endReviewMessage.status === PullRequestMessageStatus.EVERY_PUSH ||
+                (endReviewMessage.status === PullRequestMessageStatus.ONLY_WHEN_OPENED &&
+                    !context.lastExecution)) &&
             (!startReviewMessage ||
-                startReviewMessage.status === PullRequestMessageStatus.INACTIVE)
+                startReviewMessage.status === PullRequestMessageStatus.INACTIVE ||
+                startReviewMessage.status === PullRequestMessageStatus.OFF ||
+                (startReviewMessage.status === PullRequestMessageStatus.ONLY_WHEN_OPENED &&
+                    context.lastExecution))
         ) {
             const finalCommentBody = endReviewMessage.content;
 

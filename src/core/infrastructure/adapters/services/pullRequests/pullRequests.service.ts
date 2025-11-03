@@ -111,6 +111,16 @@ export class PullRequestsService implements IPullRequestsService {
         );
     }
 
+    async findSuggestionsByRuleId(
+        ruleId: string,
+        organizationId: string,
+    ): Promise<ISuggestion[]> {
+        return this.pullRequestsRepository.findSuggestionsByRuleId(
+            ruleId,
+            organizationId,
+        );
+    }
+
     async findPullRequestsWithDeliveredSuggestions(
         organizationId: string,
         prNumbers: number[],
