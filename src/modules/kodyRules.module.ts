@@ -38,6 +38,7 @@ import { PermissionValidationModule } from '@/ee/shared/permission-validation.mo
 import { ResyncRulesFromIdeUseCase } from '@/core/application/use-cases/kodyRules/resync-rules-from-ide.use-case';
 import { GetAdditionalInfoHelper } from '@/shared/utils/helpers/getAdditionalInfo.helper';
 import { GET_ADDITIONAL_INFO_HELPER_TOKEN } from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
+import { PullRequestsModule } from './pullRequests.module';
 
 @Module({
     imports: [
@@ -58,6 +59,7 @@ import { GET_ADDITIONAL_INFO_HELPER_TOKEN } from '@/shared/domain/contracts/getA
         forwardRef(() => RuleLikeModule),
         forwardRef(() => LicenseModule),
         forwardRef(() => OrganizationParametersModule),
+        forwardRef(() => PullRequestsModule),
         KodyRulesValidationModule,
         GlobalCacheModule,
         PermissionValidationModule,
