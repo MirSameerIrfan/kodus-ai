@@ -2,7 +2,7 @@ import type {
     ContextRequirement,
     ContextRevisionActor,
     ContextRevisionScope,
-} from '@context-os-core/interfaces.js';
+} from '@context-os-core/interfaces';
 import { ContextReferenceEntity } from '../entities/context-reference.entity';
 import { IContextReferenceRepository } from './context-reference.repository.contract';
 
@@ -15,7 +15,6 @@ export interface IContextReferenceService extends IContextReferenceRepository {
         scope: ContextRevisionScope;
         entityType: string;
         entityId: string;
-        payload?: Record<string, unknown>;
         requirements?: ContextRequirement[];
         parentReferenceId?: string;
         uuid?: string;

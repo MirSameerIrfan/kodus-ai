@@ -18,6 +18,8 @@ export class PromptExternalReferenceEntity
     private readonly _kodyRuleId?: string;
     private readonly _repositoryName: string;
     private readonly _promptHash: string;
+    private readonly _contextReferenceId?: string;
+    private readonly _contextRequirementsHash?: string;
     private readonly _references: IFileReference[];
     private readonly _syncErrors?: IPromptReferenceSyncError[];
     private readonly _processingStatus: PromptProcessingStatus;
@@ -35,6 +37,8 @@ export class PromptExternalReferenceEntity
         this._kodyRuleId = data.kodyRuleId;
         this._repositoryName = data.repositoryName;
         this._promptHash = data.promptHash;
+        this._contextReferenceId = data.contextReferenceId;
+        this._contextRequirementsHash = data.contextRequirementsHash;
         this._references = data.references || [];
         this._syncErrors = data.syncErrors;
         this._processingStatus = data.processingStatus;
@@ -83,6 +87,14 @@ export class PromptExternalReferenceEntity
         return this._promptHash;
     }
 
+    get contextReferenceId(): string | undefined {
+        return this._contextReferenceId;
+    }
+
+    get contextRequirementsHash(): string | undefined {
+        return this._contextRequirementsHash;
+    }
+
     get references(): IFileReference[] {
         return this._references;
     }
@@ -118,6 +130,8 @@ export class PromptExternalReferenceEntity
             kodyRuleId: this._kodyRuleId,
             repositoryName: this._repositoryName,
             promptHash: this._promptHash,
+            contextReferenceId: this._contextReferenceId,
+            contextRequirementsHash: this._contextRequirementsHash,
             references: this._references,
             syncErrors: this._syncErrors,
             processingStatus: this._processingStatus,
@@ -131,4 +145,3 @@ export class PromptExternalReferenceEntity
         return this.toJson();
     }
 }
-

@@ -10,9 +10,9 @@ import {
     DefaultCoreMaterializer,
     SequentialPackAssemblyPipeline,
     TriLayerPackBuilder,
-} from '../../../packages/context-os-core/src/index.js';
+} from '../../../src/shared/utils/context-os-core/index.js';
 
-import type { CoreLayerInstruction } from '../../../packages/context-os-core/src/builders/core-layer-builder.js';
+import type { CoreLayerInstruction } from '../../../src/shared/utils/context-os-core/builders/core-layer-builder.js';
 
 import type {
     Candidate,
@@ -23,7 +23,7 @@ import type {
     ContextActionDescriptor,
     ContextResourceRef,
     RetrievalQuery,
-} from '../../../packages/context-os-core/src/interfaces.js';
+} from '../../../src/shared/utils/context-os-core/interfaces.js';
 
 import { loadRulesForIntent } from '../../knowledge-fabric/selector.js';
 import { loadSkillsFromDirectory } from '../../skills/loader.js';

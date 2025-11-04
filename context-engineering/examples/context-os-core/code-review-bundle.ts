@@ -7,7 +7,7 @@ import {
     DefaultCoreMaterializer,
     SequentialPackAssemblyPipeline,
     TriLayerPackBuilder,
-} from '../src/index.js';
+} from '../../../src/shared/utils/context-os-core/index.js';
 
 import type {
     Candidate,
@@ -23,7 +23,7 @@ import type {
     PromptOverride,
     RetrievalQuery,
     RuntimeContextSnapshot,
-} from '../src/interfaces.js';
+} from '../../../src/shared/utils/context-os-core/interfaces.js';
 
 interface CodeReviewSnapshotConfig {
     persona: {

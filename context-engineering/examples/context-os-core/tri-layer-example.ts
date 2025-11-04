@@ -9,7 +9,7 @@ import {
     TriLayerPackBuilder,
     InMemoryMCPRegistry,
     MCPOrchestrator,
-} from '../src/index.js';
+} from '../../../src/shared/utils/context-os-core/index.js';
 
 import type {
     Candidate,
@@ -23,7 +23,7 @@ import type {
     MCPToolReference,
     RetrievalQuery,
     RuntimeContextSnapshot,
-} from '../src/interfaces.js';
+} from '../../../src/shared/utils/context-os-core/interfaces.js';
 
 class ConsoleTelemetry implements ContextTelemetry {
     async record(event: Parameters<ContextTelemetry['record']>[0]): Promise<void> {

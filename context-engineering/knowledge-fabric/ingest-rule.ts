@@ -4,7 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 
-import type { KnowledgeItem } from '../../packages/context-os-core/src/interfaces.js';
+import type { KnowledgeItem } from '../../src/shared/utils/context-os-core/interfaces.js';
 import { createKnowledgeStore } from './store/index.js';
 import type { KnowledgeRecord } from './store/index.js';
 

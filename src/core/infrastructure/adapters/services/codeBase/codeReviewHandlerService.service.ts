@@ -111,6 +111,7 @@ export class CodeReviewHandlerService {
                     },
                 },
                 externalPromptContext: {},
+                externalPromptLayers: undefined,
                 correlationId: executionId,
             };
 

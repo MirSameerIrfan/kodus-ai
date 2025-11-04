@@ -1,6 +1,6 @@
-# @kodus/context-os-core
+# Context OS Core Utilities
 
-Agnostic building blocks for the Kodus Context OS. This package contains the
+Agnostic building blocks for the Kodus Context OS. This module contains the
 interfaces, pipelines and utilities required to assemble context packs (core /
 catalog / active layers), orchestrate MCP tools, and hook into observability.
 
@@ -23,7 +23,7 @@ import {
   buildDefaultCoreLayer,
   buildDefaultCatalogLayer,
   buildDefaultActiveLayer,
-} from '@kodus/context-os-core';
+} from '@context-os-core';
 
 // create builders/materializers/selectors according to your domain
 // (see examples folder for a tri-layer walkthrough)

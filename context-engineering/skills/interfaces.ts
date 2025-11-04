@@ -5,7 +5,7 @@ import type {
     ContextResourceRef,
     PromptRole,
     PromptScope,
-} from '../../packages/context-os-core/src/interfaces.js';
+} from '../../src/shared/utils/context-os-core/interfaces.js';
 
 export type SkillId = string;
 

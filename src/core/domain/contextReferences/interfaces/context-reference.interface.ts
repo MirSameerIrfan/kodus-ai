@@ -2,7 +2,7 @@ import type {
     ContextRequirement,
     ContextRevisionActor,
     ContextRevisionScope,
-} from '@context-os-core/interfaces.js';
+} from '@context-os-core/interfaces';
 
 export interface IContextReference {
     uuid: string;
@@ -10,7 +10,6 @@ export interface IContextReference {
     scope: ContextRevisionScope;
     entityType: string;
     entityId: string;
-    payload: Record<string, unknown>;
     requirements?: ContextRequirement[];
     knowledgeRefs?: Array<{ itemId: string; version?: string }>;
     origin?: ContextRevisionActor;

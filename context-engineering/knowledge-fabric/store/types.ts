@@ -1,4 +1,4 @@
-import type { KnowledgeItem, LineageRecord } from '../../../packages/context-os-core/src/interfaces.js';
+import type { KnowledgeItem, LineageRecord } from '../../../src/shared/utils/context-os-core/interfaces.js';
 
 export interface KnowledgeFeedbackCounters {
     helpful: number;

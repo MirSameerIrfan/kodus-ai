@@ -1,7 +1,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
-import type { ContextEvent } from '../../packages/context-os-core/src/interfaces.js';
+import type { ContextEvent } from '../../src/shared/utils/context-os-core/interfaces.js';
 
 interface TelemetrySnapshot {
     events: ContextEvent[];

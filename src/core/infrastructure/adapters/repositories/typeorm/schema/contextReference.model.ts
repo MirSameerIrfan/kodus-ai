@@ -4,7 +4,7 @@ import type {
     ContextRequirement,
     ContextRevisionActor,
     ContextRevisionScope,
-} from '@context-os-core/interfaces.js';
+} from '@context-os-core/interfaces';
 import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
 
 @Entity('context_references')
@@ -20,9 +20,6 @@ export class ContextReferenceModel extends CoreModel {
 
     @Column({ type: 'varchar', length: 256 })
     entityId: string;
-
-    @Column({ type: 'jsonb' })
-    payload: Record<string, unknown>;
 
     @Column({ type: 'jsonb', nullable: true })
     requirements?: ContextRequirement[];

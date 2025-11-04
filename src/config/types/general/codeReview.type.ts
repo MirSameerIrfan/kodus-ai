@@ -17,6 +17,8 @@ import { BYOKConfig } from '@kodus/kodus-common/llm';
 import { IClusterizedSuggestion } from '@/core/domain/kodyFineTuning/interfaces/kodyFineTuning.interface';
 import { DeepPartial } from 'typeorm';
 import { IPullRequestMessages } from '@/core/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
+import type { ContextLayer, ContextPack } from '@context-os-core/interfaces';
+import type { ContextAugmentationsMap } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
 
 export interface IFinalAnalysisResult {
     validSuggestionsToAnalyze: Partial<CodeSuggestion>[];
@@ -83,8 +85,17 @@ export type AnalysisContext = {
             hasRelevantContent?: boolean;
         };
     };
+    /** Conteúdo de arquivos externos e metadados carregados pelo PromptContextLoader. */
     externalPromptContext?: any;
+    /** Conjunto de camadas prontas para composição do ContextPack (arquivos, instruções). */
+    externalPromptLayers?: ContextLayer[];
     correlationId: string;
+    /** ContextPack compartilhado com instruções e camadas externas para as etapas de análise. */
+    sharedContextPack?: ContextPack;
+    /** Resultados das execuções MCP organizados por requirement/path para reutilização. */
+    sharedContextAugmentations?: ContextAugmentationsMap;
+    /** Overrides de prompt sanitizados (sem marcadores) usados por todas as requisições. */
+    sharedSanitizedOverrides?: CodeReviewConfig['v2PromptOverrides'];
 };
 
 export type ASTAnalysisResult = {

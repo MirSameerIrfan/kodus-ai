@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 
 import { Inject, Injectable } from '@nestjs/common';
 import {
@@ -12,11 +12,11 @@ import {
     ContextRevisionScope,
     ContextRequirement,
     ContextRevisionActor,
-} from '@context-os-core/interfaces.js';
+} from '@context-os-core/interfaces';
 import {
     createRevisionEntry,
     computeRequirementsHash,
-} from '../../../../../../packages/context-os-core/src/utils/context-requirements.js';
+} from '@context-os-core/utils/context-requirements';
 
 @Injectable()
 export class ContextReferenceService implements IContextReferenceService {
@@ -29,7 +29,6 @@ export class ContextReferenceService implements IContextReferenceService {
         scope: ContextRevisionScope;
         entityType: string;
         entityId: string;
-        payload?: Record<string, unknown>;
         requirements?: ContextRequirement[];
         parentReferenceId?: string;
         uuid?: string;
@@ -40,13 +39,11 @@ export class ContextReferenceService implements IContextReferenceService {
         revision: ContextReferenceEntity;
         pointer: { uuid: string; requirementsHash?: string };
     }> {
-        const uuid = params.uuid ?? randomUUID();
-        const origin: ContextRevisionActor =
-            params.origin ?? { kind: 'system', id: 'unknown' };
-        const payload = params.payload ?? {
-            requirements: params.requirements ?? [],
+        const uuid = params.uuid ?? uuidv4();
+        const origin: ContextRevisionActor = params.origin ?? {
+            kind: 'system',
+            id: 'unknown',
         };
-
         const entry = createRevisionEntry({
             revisionId: uuid,
             parentRevisionId: params.parentReferenceId,
@@ -55,7 +52,6 @@ export class ContextReferenceService implements IContextReferenceService {
             entityId: params.entityId,
             origin,
             requirements: params.requirements,
-            payload,
             metadata: params.metadata,
             knowledgeRefs: params.knowledgeRefs,
         });
@@ -66,7 +62,6 @@ export class ContextReferenceService implements IContextReferenceService {
             scope: entry.scope,
             entityType: entry.entityType,
             entityId: entry.entityId,
-            payload: entry.payload,
             requirements: entry.requirements,
             knowledgeRefs: entry.knowledgeRefs,
             origin: entry.origin,
@@ -132,7 +127,6 @@ export class ContextReferenceService implements IContextReferenceService {
             scope: target.scope,
             entityType: target.entityType,
             entityId: target.entityId,
-            payload: target.payload,
             requirements: target.requirements,
             parentReferenceId: latest?.uuid,
             origin:

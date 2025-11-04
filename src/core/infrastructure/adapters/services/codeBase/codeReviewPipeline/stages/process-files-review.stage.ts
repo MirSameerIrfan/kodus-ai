@@ -955,7 +955,11 @@ export class ProcessFilesReview extends BasePipelineStage<CodeReviewPipelineCont
                 context.prAnalysisResults?.validCrossFileSuggestions || [],
             tasks: context.tasks,
             externalPromptContext: context.externalPromptContext,
+            externalPromptLayers: context.externalPromptLayers,
             correlationId: context.correlationId,
+            sharedContextPack: context.sharedContextPack,
+            sharedContextAugmentations: context.sharedContextAugmentations,
+            sharedSanitizedOverrides: context.sharedSanitizedOverrides,
         };
     }
 }

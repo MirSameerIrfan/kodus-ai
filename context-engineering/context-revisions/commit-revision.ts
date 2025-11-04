@@ -7,7 +7,7 @@ import {
     type ContextRequirement,
     type ContextRevisionLogEntry,
     type ContextRevisionScope,
-} from '../../packages/context-os-core/src/index.js';
+} from '../../src/shared/utils/context-os-core/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

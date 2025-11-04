@@ -1,7 +1,7 @@
 import type {
     Candidate,
     RetrievalQuery,
-} from '../../packages/context-os-core/src/interfaces.js';
+} from '../../src/shared/utils/context-os-core/interfaces.js';
 import { createKnowledgeStore, type KnowledgeStore } from './store/index.js';
 
 interface RuleSelectorOptions {

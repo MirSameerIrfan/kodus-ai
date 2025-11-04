@@ -81,8 +81,8 @@
         "@gitbeaker/rest": "^43.7.0",
         "@golevelup/nestjs-rabbitmq": "^6.0.2",
         "@google/generative-ai": "^0.24.1",
-        "@kodus/flow": "0.1.24",
-        "@kodus/kodus-common": "1.2.16",
+        "@kodus/flow": "file:.yalc/@kodus/flow",
+        "@kodus/kodus-common": "file:.yalc/@kodus/kodus-common",
         "@langchain/anthropic": "^0.3.30",
         "@langchain/cohere": "^0.3.4",
         "@langchain/community": "0.3.57",
@@ -233,6 +233,7 @@
     "jest": {
         "moduleNameMapper": {
             "^@/(.*)$": "<rootDir>/src/$1",
+            "^@context-os-core/(.*)$": "<rootDir>/src/shared/utils/context-os-core/$1",
             "^test/mocks/(.*)$": "<rootDir>/test/mocks/$1"
         },
         "moduleFileExtensions": [

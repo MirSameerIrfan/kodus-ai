@@ -331,9 +331,6 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@kodus/context-os-core@file:../context-os-core":
-  version "0.1.0"
-
 "@modelcontextprotocol/sdk@^1.20.2":
   version "1.20.2"
   resolved "https://registry.npmjs.org/@modelcontextprotocol/sdk/-/sdk-1.20.2.tgz#7c448a073164841814d34ec9c76bcc37f2d6ffdc"

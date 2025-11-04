@@ -21,6 +21,8 @@ import {
     ParserType,
 } from '@kodus/kodus-common/llm';
 import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
+import type { ContextAugmentationsMap } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
+import type { ContextPack } from '@context-os-core/interfaces';
 import { AxiosASTService } from '@/config/axios/microservices/ast.axios';
 
 export enum TaskStatus {
@@ -432,6 +434,15 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
             impactASTAnalysis: context?.impactASTAnalysis?.functionsAffect
                 ? Object.values(context?.impactASTAnalysis?.functionsAffect)
                 : [],
+            v2PromptOverrides:
+                context?.sharedSanitizedOverrides ??
+                context?.codeReviewConfig?.v2PromptOverrides,
+            externalPromptLayers: context?.externalPromptLayers,
+            contextAugmentations:
+                context?.sharedContextAugmentations as
+                    | ContextAugmentationsMap
+                    | undefined,
+            contextPack: context?.sharedContextPack as ContextPack | undefined,
         };
 
         return baseContext;

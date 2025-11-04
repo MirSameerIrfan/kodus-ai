@@ -54,6 +54,7 @@ import { LicenseModule } from '@/ee/license/license.module';
 import { LicenseService } from '@/ee/license/license.service';
 import { PermissionValidationModule } from '@/ee/shared/permission-validation.module';
 import { KodyFineTuningContextModule } from './kodyFineTuningContext.module';
+import { ContextReferenceModule } from './contextReference.module';
 
 @Module({
     imports: [
@@ -77,6 +78,7 @@ import { KodyFineTuningContextModule } from './kodyFineTuningContext.module';
         forwardRef(() => GlobalParametersModule),
         forwardRef(() => TokenChunkingModule),
         forwardRef(() => LicenseModule),
+        forwardRef(() => ContextReferenceModule),
         PermissionValidationModule,
     ],
     providers: [

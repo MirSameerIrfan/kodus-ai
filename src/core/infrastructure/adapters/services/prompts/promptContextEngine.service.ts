@@ -1,5 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { createHash } from 'crypto';
+import type {
+    ContextDependency,
+    ContextRequirement,
+} from '@context-os-core/interfaces';
+import {
+    PromptSourceType,
+    IDetectedReference,
+    IFileReference,
+    IPromptReferenceSyncError,
+    PromptReferenceErrorType,
+} from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
+import type { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
@@ -14,22 +26,34 @@ import {
 import {
     prompt_detect_external_references_system,
     prompt_detect_external_references_user,
-    ExternalReferencesDetectionSchema,
 } from '@/shared/utils/langchainCommon/prompts/externalReferences';
-import {
-    IDetectedReference,
-    IFileReference,
-    PromptReferenceErrorType,
-    IPromptReferenceSyncError,
-    IFileReferenceError,
-} from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
 import { IPromptContextEngineService } from '@/core/domain/prompts/contracts/promptContextEngine.contract';
-import { createHash } from 'crypto';
+
+interface DetectReferencesParams {
+    requirementId: string;
+    promptText: string;
+    path: string[];
+    sourceType: PromptSourceType;
+    repositoryId: string;
+    repositoryName: string;
+    organizationAndTeamData: OrganizationAndTeamData;
+    context?: 'rule' | 'instruction' | 'prompt';
+    byokConfig?: BYOKConfig;
+}
+
+interface DetectionResult {
+    references: IFileReference[];
+    syncErrors: IPromptReferenceSyncError[];
+    detectedMarkers: string[];
+    requirements: ContextRequirement[];
+    promptHash: string;
+}
+
+const DEFAULT_DOMAIN = 'code';
+const DEFAULT_INTENT = 'review';
 
 @Injectable()
-export class PromptContextEngineService
-    implements IPromptContextEngineService
-{
+export class PromptContextEngineService implements IPromptContextEngineService {
     constructor(
         private readonly promptRunnerService: PromptRunnerService,
         private readonly observabilityService: ObservabilityService,
@@ -37,72 +61,170 @@ export class PromptContextEngineService
         private readonly logger: PinoLoggerService,
     ) {}
 
-    async detectAndResolveReferences(params: {
-        promptText: string;
-        repositoryId: string;
-        repositoryName: string;
-        organizationAndTeamData: OrganizationAndTeamData;
-        context?: 'rule' | 'instruction' | 'prompt';
-        byokConfig?: BYOKConfig;
-    }): Promise<{
+    async detectAndResolveReferences(
+        params: DetectReferencesParams,
+    ): Promise<{
         references: IFileReference[];
         syncErrors?: IPromptReferenceSyncError[];
+        promptHash: string;
+        requirements: ContextRequirement[];
+        markers: string[];
     }> {
-        try {
-            const detectedReferences = await this.detectReferences({
-                promptText: params.promptText,
-                context: params.context,
-                byokConfig: params.byokConfig,
-                organizationAndTeamData: params.organizationAndTeamData,
+        const detection = await this.runDetection(params);
+
+        return {
+            references: detection.references,
+            syncErrors: detection.syncErrors,
+            promptHash: detection.promptHash,
+            requirements: detection.requirements,
+            markers: detection.detectedMarkers,
+        };
+    }
+
+    calculatePromptHash(promptText: string): string {
+        return createHash('sha256').update(promptText).digest('hex');
+    }
+
+    private async runDetection(params: DetectReferencesParams): Promise<DetectionResult> {
+        const promptHash = this.calculatePromptHash(params.promptText);
+
+        if (!this.hasLikelyExternalReferences(params.promptText)) {
+            this.logger.debug({
+                message:
+                    'No external reference patterns detected (regex pre-filter)',
+                context: PromptContextEngineService.name,
+                metadata: {
+                    promptHash,
+                    requirementId: params.requirementId,
+                    sourceType: params.sourceType,
+                },
             });
 
-            if (!detectedReferences || detectedReferences.length === 0) {
-                return { references: [] };
+            const requirement = this.buildRequirement({
+                params,
+                references: [],
+                syncErrors: [],
+                markers: [],
+                promptHash,
+            });
+
+            return {
+                references: [],
+                syncErrors: [],
+                detectedMarkers: [],
+                promptHash,
+                requirements: requirement ? [requirement] : [],
+            };
+        }
+
+        try {
+            const detectedReferences = await this.detectReferences(params);
+
+            if (!detectedReferences.length) {
+                const requirement = this.buildRequirement({
+                    params,
+                    references: [],
+                    syncErrors: [],
+                    markers: [],
+                    promptHash,
+                });
+
+                return {
+                    references: [],
+                    syncErrors: [],
+                    detectedMarkers: [],
+                    promptHash,
+                    requirements: requirement ? [requirement] : [],
+                };
             }
 
             const { references, notFoundDetails } =
                 await this.searchFilesInRepository(
                     detectedReferences,
-                    params.repositoryId,
-                    params.repositoryName,
-                    params.organizationAndTeamData,
+                    params,
                 );
 
-            const syncErrors: IPromptReferenceSyncError[] = notFoundDetails || [];
+            const markers = this.extractMarkers(params.promptText, references);
 
-            return { references, syncErrors };
+            const requirement = this.buildRequirement({
+                params,
+                references,
+                syncErrors: notFoundDetails,
+                markers,
+                promptHash,
+            });
+
+            return {
+                references,
+                syncErrors: notFoundDetails,
+                detectedMarkers: markers,
+                promptHash,
+                requirements: requirement ? [requirement] : [],
+            };
         } catch (error) {
             this.logger.error({
-                message: 'Error detecting and resolving external references',
+                message:
+                    'Error detecting and resolving external references',
                 context: PromptContextEngineService.name,
                 error,
                 metadata: {
+                        requirementId: params.requirementId,
                     repositoryId: params.repositoryId,
-                    organizationAndTeamData: params.organizationAndTeamData,
+                    organizationId:
+                        params.organizationAndTeamData.organizationId,
+                    sourceType: params.sourceType,
                 },
             });
-            
-            const syncErrors: IPromptReferenceSyncError[] = [{
-                type: PromptReferenceErrorType.DETECTION_FAILED,
-                message: `Error during reference detection: ${error.message}`,
-                details: {
-                    timestamp: new Date(),
+
+            const syncErrors: IPromptReferenceSyncError[] = [
+                {
+                    type: PromptReferenceErrorType.DETECTION_FAILED,
+                    message: `Error during reference detection: ${
+                        error instanceof Error ? error.message : String(error)
+                    }`,
+                    details: {
+                        timestamp: new Date(),
+                    },
                 },
-            }];
+            ];
+
+            const requirement = this.buildRequirement({
+                params,
+                references: [],
+                syncErrors,
+                markers: [],
+                promptHash,
+            });
 
             return {
                 references: [],
                 syncErrors,
+                detectedMarkers: [],
+                promptHash,
+                requirements: requirement ? [requirement] : [],
             };
         }
     }
 
-    async detectReferences(params: {
-        promptText: string;
-        context?: 'rule' | 'instruction' | 'prompt';
-        byokConfig?: BYOKConfig;
-        organizationAndTeamData: OrganizationAndTeamData;
-    }): Promise<IDetectedReference[]> {
+    private hasLikelyExternalReferences(promptText: string): boolean {
+        const patterns = [
+            /@file[:\s]/i,
+            /\[\[file:/i,
+            /@\w+\.(ts|js|py|md|yml|yaml|json|txt|go|java|cpp|c|h|rs)/i,
+            /refer to.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
+            /check.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
+            /see.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
+            /\b\w+\.\w+\.(ts|js|py|md|yml|yaml|json|txt)\b/i,
+            /\b[A-Z_][A-Z0-9_]*\.(ts|js|py|md|yml|yaml|json|txt)\b/,
+            /\b(readme|contributing|changelog|license|setup|config|package|tsconfig|jest\.config|vite\.config|webpack\.config)\.(md|json|yml|yaml|ts|js)\b/i,
+        ];
+
+        return patterns.some((pattern) => pattern.test(promptText));
+    }
+
+    private async detectReferences(
+        params: DetectReferencesParams,
+    ): Promise<IDetectedReference[]> {
         const mainProvider = LLMModelProvider.GEMINI_2_5_FLASH;
         const fallbackProvider = LLMModelProvider.GEMINI_2_5_PRO;
         const runName = 'detectExternalReferences';
@@ -114,84 +236,69 @@ export class PromptContextEngineService
             params.byokConfig,
         );
 
-        try {
-            const { result: raw } =
-                await this.observabilityService.runLLMInSpan({
-                    spanName: `${PromptContextEngineService.name}::${runName}`,
-                    runName,
-                    attrs: {
-                        organizationId:
-                            params.organizationAndTeamData.organizationId,
-                        type: promptRunner.executeMode,
-                        fallback: false,
-                        context: params.context || 'unknown',
-                    },
-                    exec: async (callbacks) => {
-                        return await promptRunner
-                            .builder()
-                            .setParser(ParserType.STRING)
-                            .setPayload({
+        const { organizationAndTeamData } = params;
+
+        const { result: raw } =
+            await this.observabilityService.runLLMInSpan({
+                spanName: `${PromptContextEngineService.name}::${runName}`,
+                runName,
+                attrs: {
+                    organizationId: organizationAndTeamData.organizationId,
+                    type: promptRunner.executeMode,
+                    fallback: false,
+                    context: params.context || 'unknown',
+                },
+                exec: async (callbacks) => {
+                    return await promptRunner
+                        .builder()
+                        .setParser(ParserType.STRING)
+                        .setPayload({
+                            text: params.promptText,
+                            context: params.context,
+                        })
+                        .addPrompt({
+                            role: PromptRole.SYSTEM,
+                            prompt: prompt_detect_external_references_system(),
+                        })
+                        .addPrompt({
+                            role: PromptRole.USER,
+                            prompt: prompt_detect_external_references_user({
                                 text: params.promptText,
                                 context: params.context,
-                            })
-                            .addPrompt({
-                                role: PromptRole.SYSTEM,
-                                prompt:
-                                    prompt_detect_external_references_system(),
-                            })
-                            .addPrompt({
-                                role: PromptRole.USER,
-                                prompt: prompt_detect_external_references_user(
-                                    {
-                                        text: params.promptText,
-                                        context: params.context,
-                                    },
-                                ),
-                            })
-                            .addCallbacks(callbacks)
-                            .addMetadata({ runName })
-                            .setRunName(runName)
-                            .execute();
-                    },
-                });
-
-            if (!raw) {
-                return [];
-            }
-
-            const parsed = this.extractJsonFromResponse(raw);
-            if (!parsed || !Array.isArray(parsed)) {
-                return [];
-            }
-
-            this.logger.log({
-                message: 'Successfully detected external references',
-                context: PromptContextEngineService.name,
-                metadata: {
-                    referencesCount: parsed.length,
-                    organizationAndTeamData: params.organizationAndTeamData,
+                            }),
+                        })
+                        .addCallbacks(callbacks)
+                        .addMetadata({ runName })
+                        .setRunName(runName)
+                        .execute();
                 },
             });
 
-            return parsed;
-        } catch (error) {
-            this.logger.error({
-                message: 'Error calling LLM for reference detection',
-                context: PromptContextEngineService.name,
-                error,
-                metadata: {
-                    organizationAndTeamData: params.organizationAndTeamData,
-                },
-            });
+        if (!raw) {
             return [];
         }
+
+        const parsed = this.extractJsonFromResponse(raw);
+        if (!parsed || !Array.isArray(parsed)) {
+            return [];
+        }
+
+        this.logger.debug({
+            message: 'Detected external references',
+            context: PromptContextEngineService.name,
+            metadata: {
+                referencesCount: parsed.length,
+                organizationAndTeamData,
+                        requirementId: params.requirementId,
+            },
+        });
+
+        return parsed as IDetectedReference[];
     }
 
     private async searchFilesInRepository(
         detectedReferences: IDetectedReference[],
-        repositoryId: string,
-        repositoryName: string,
-        organizationAndTeamData: OrganizationAndTeamData,
+        params: DetectReferencesParams,
     ): Promise<{
         references: IFileReference[];
         notFoundDetails: IPromptReferenceSyncError[];
@@ -201,18 +308,16 @@ export class PromptContextEngineService
 
         for (const ref of detectedReferences) {
             try {
-                const filePatterns = this.buildSearchPatterns(ref);
                 const found = await this.findFileWithHybridStrategy(
                     ref,
-                    repositoryId,
-                    repositoryName,
-                    organizationAndTeamData,
+                    params.repositoryId,
+                    params.repositoryName,
+                    params.organizationAndTeamData,
                 );
 
                 if (found.length > 0) {
                     resolvedReferences.push(...found);
-
-                    this.logger.log({
+                    this.logger.debug({
                         message: 'Resolved external reference',
                         context: PromptContextEngineService.name,
                         metadata: {
@@ -221,7 +326,8 @@ export class PromptContextEngineService
                             paths: found.map((r) => r.filePath),
                             repositoryName: ref.repositoryName,
                             crossRepo: !!ref.repositoryName,
-                            organizationAndTeamData,
+                            organizationAndTeamData:
+                                params.organizationAndTeamData,
                         },
                     });
                 } else {
@@ -234,35 +340,22 @@ export class PromptContextEngineService
                         message: `File not found: ${fileIdentifier}`,
                         details: {
                             fileName: ref.fileName,
-                            repositoryName: ref.repositoryName || repositoryName,
-                            attemptedPaths: filePatterns,
+                            repositoryName:
+                                ref.repositoryName || params.repositoryName,
+                            attemptedPaths: this.buildSearchPatterns(ref),
                             timestamp: new Date(),
-                        },
-                    });
-
-                    this.logger.warn({
-                        message: 'No files found for external reference',
-                        context: PromptContextEngineService.name,
-                        metadata: {
-                            fileName: ref.fileName,
-                            repositoryName: ref.repositoryName,
-                            crossRepo: !!ref.repositoryName,
-                            attemptedPatterns: filePatterns,
-                            organizationAndTeamData,
                         },
                     });
                 }
             } catch (error) {
-                const fileIdentifier = ref.repositoryName
-                    ? `${ref.repositoryName}/${ref.fileName}`
-                    : ref.fileName;
-
                 notFoundDetails.push({
                     type: PromptReferenceErrorType.FETCH_FAILED,
-                    message: `Error searching file: ${error.message}`,
+                    message: `Error searching file: ${
+                        error instanceof Error ? error.message : String(error)
+                    }`,
                     details: {
                         fileName: ref.fileName,
-                        repositoryName: ref.repositoryName || repositoryName,
+                        repositoryName: ref.repositoryName || params.repositoryName,
                         timestamp: new Date(),
                     },
                 });
@@ -273,10 +366,11 @@ export class PromptContextEngineService
                     error,
                     metadata: {
                         reference: ref,
-                        repositoryId,
+                        repositoryId: params.repositoryId,
                         repositoryName: ref.repositoryName,
                         crossRepo: !!ref.repositoryName,
-                        organizationAndTeamData,
+                        organizationAndTeamData:
+                            params.organizationAndTeamData,
                     },
                 });
             }
@@ -312,12 +406,9 @@ export class PromptContextEngineService
         const fileName = ref.fileName;
         patterns.push(`**/${fileName}`);
 
-        // Add case-insensitive variations to handle common cases:
-        // - CONTRIBUTING.md vs contributing.md
-        // - README.MD vs readme.md
         const lowerFileName = fileName.toLowerCase();
         const upperFileName = fileName.toUpperCase();
-        
+
         if (lowerFileName !== fileName) {
             patterns.push(`**/${lowerFileName}`);
         }
@@ -325,9 +416,13 @@ export class PromptContextEngineService
             patterns.push(`**/${upperFileName}`);
         }
 
-        // Capitalize first letter (e.g., Contributing.md)
-        const capitalizedFileName = fileName.charAt(0).toUpperCase() + fileName.slice(1).toLowerCase();
-        if (capitalizedFileName !== fileName && capitalizedFileName !== lowerFileName && capitalizedFileName !== upperFileName) {
+        const capitalizedFileName =
+            fileName.charAt(0).toUpperCase() + fileName.slice(1).toLowerCase();
+        if (
+            capitalizedFileName !== fileName &&
+            capitalizedFileName !== lowerFileName &&
+            capitalizedFileName !== upperFileName
+        ) {
             patterns.push(`**/${capitalizedFileName}`);
         }
 
@@ -344,11 +439,11 @@ export class PromptContextEngineService
         try {
             const targetRepoName = ref.repositoryName || repositoryName;
             const targetRepo = {
-                id: repositoryId,
+                id: ref.repositoryName ? repositoryId : repositoryId,
                 name: targetRepoName,
             };
 
-            this.logger.log({
+            this.logger.debug({
                 message: 'Searching for external reference file',
                 context: PromptContextEngineService.name,
                 metadata: {
@@ -400,6 +495,87 @@ export class PromptContextEngineService
         return [];
     }
 
+    private buildRequirement(input: {
+        params: DetectReferencesParams;
+        references: IFileReference[];
+        syncErrors: IPromptReferenceSyncError[];
+        markers: string[];
+        promptHash: string;
+    }): ContextRequirement | null {
+        const { params, references, syncErrors, markers, promptHash } = input;
+
+        const dependencies: ContextDependency[] = references.map(
+            (reference, index) => ({
+                type: 'knowledge',
+                id: `${reference.repositoryName ?? params.repositoryName}|${
+                    reference.filePath
+                }|${index}`,
+                metadata: {
+                    repositoryId: params.repositoryId,
+                    repositoryName: reference.repositoryName ?? params.repositoryName,
+                    filePath: reference.filePath,
+                    lineRange: reference.lineRange ?? null,
+                    description: reference.description,
+                    originalText: reference.originalText,
+                    detectedAt: new Date().toISOString(),
+                },
+            }),
+        );
+
+        return {
+            id: params.requirementId,
+            consumer: {
+                id: params.requirementId,
+                kind: 'prompt_section',
+                name: params.sourceType,
+                metadata: {
+                    path: params.path,
+                    sourceType: params.sourceType,
+                },
+            },
+            request: {
+                domain: DEFAULT_DOMAIN,
+                taskIntent: DEFAULT_INTENT,
+                signal: {
+                    metadata: {
+                        path: params.path,
+                        sourceType: params.sourceType,
+                    },
+                },
+            },
+            dependencies,
+            metadata: {
+                path: params.path,
+                sourceType: params.sourceType,
+                inlineMarkers: markers,
+                syncErrors,
+                promptHash,
+            },
+            status: syncErrors.length ? 'draft' : 'active',
+        };
+    }
+
+    private extractMarkers(
+        promptText: string,
+        references: IFileReference[],
+    ): string[] {
+        const markers = new Set<string>();
+
+        for (const reference of references) {
+            if (reference.originalText) {
+                markers.add(reference.originalText);
+            }
+        }
+
+        const regex = /@[A-Za-z0-9/_\-.]+/g;
+        const matches = promptText.match(regex);
+        if (matches) {
+            matches.forEach((match) => markers.add(match));
+        }
+
+        return Array.from(markers.values());
+    }
+
     private extractJsonFromResponse(
         text: string | null | undefined,
     ): any[] | null {
@@ -413,7 +589,9 @@ export class PromptContextEngineService
         if (s.startsWith('"') && s.endsWith('"')) {
             try {
                 s = JSON.parse(s);
-            } catch {}
+            } catch {
+                /* ignore */
+            }
         }
 
         const start = s.indexOf('[');
@@ -427,9 +605,4 @@ export class PromptContextEngineService
             return null;
         }
     }
-
-    calculatePromptHash(promptText: string): string {
-        return createHash('sha256').update(promptText).digest('hex');
-    }
 }
-

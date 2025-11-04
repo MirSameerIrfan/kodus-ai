@@ -1,7 +1,7 @@
 # Kodus Context OS
 
 This folder reúne as notas de arquitetura e o **core agnóstico** exportado via
-`@kodus/context-os-core`. O objetivo é permitir que qualquer domínio (code
+`@context-os-core`. O objetivo é permitir que qualquer domínio (code
 review, suporte, bot de manicure, central de conhecimento etc.) construa packs
 tri-layer, execute ações (MCP/workflows) e monitore telemetria de forma
 padronizada.
@@ -9,25 +9,26 @@ padronizada.
 ## Pacotes
 
 ```
+src/
+└─ shared/utils/context-os-core/  # primitives agnósticas reutilizáveis
+    interfaces/                   # ContextPack, builders, ações
+    builders/                     # Core/Catalog/Active layer helpers
+    pipeline/                     # SequentialPackAssemblyPipeline
+    mcp/                          # Registry + Orchestrator + Sanitizer
+    utils/                        # Token budgeting utilitário
+    index.ts                      # exports públicos
+
 packages/
-├─ context-os-core/           # primitives agnósticas
-│   └─ src/
-│        interfaces/          # ContextPack, builders, actions
-│        builders/            # Core/Catalog/Active layer helpers
-│        pipeline/            # SequentialPackAssemblyPipeline
-│        mcp/                 # Registry + Orchestrator + Sanitizer
-│        utils/               # Token budgeting utilitário
-│        index.ts             # exports públicos
-│   └─ examples/              # exemplos de uso (code review, manicure, knowledge)
-└─ kodus-flow/                # SDK leve (LLM, MCP adapter, utils)
+└─ context-engineering/examples/context-os-core/  # exemplos de uso (code review, manicure, knowledge)
 ```
 
 ## Como usar o core
 
-1. Instale o pacote (no monorepo basta usar `yarn dev:yalc:init`, fora dele
-   publique o `context-os-core`).
+1. No monorepo, importe via alias `@context-os-core` (arquivos em
+   `src/shared/utils/context-os-core`). Caso precise publicar separado, gere um
+   pacote a partir desse diretório.
 2. Construa um **snapshot** do domínio (metaprompt, categorias, contexto
-   externo). Exemplo completo em `packages/context-os-core/examples/code-review-basic.ts`.
+   externo). Exemplo completo em `context-engineering/examples/context-os-core/code-review-basic.ts`.
 3. Crie um **bundle** com os builders necessários:
    - `CoreLayerBuilder` para instruções/persona/políticas.
    - `CatalogLayerBuilder` para sumários e entidades.
@@ -41,7 +42,7 @@ packages/
 
 ## Exemplos prontos
 
-Dentro de `packages/context-os-core/examples/` há três cenários práticos:
+Dentro de `context-engineering/examples/context-os-core/` há três cenários práticos:
 
 - **tri-layer-example.ts** – demonstração completa com MCP, telemetria console e
   pipeline tri-layer.
@@ -55,8 +56,8 @@ Dentro de `packages/context-os-core/examples/` há três cenários práticos:
 Para executar qualquer exemplo dentro do monorepo:
 
 ```bash
-cd packages/context-os-core
-node --loader ts-node/esm examples/code-review-basic.ts
+cd context-engineering/examples/context-os-core
+node --loader ts-node/esm code-review-basic.ts
 ```
 
 > Observação: os exemplos retornam as camadas montadas. Cabe à aplicação
@@ -79,7 +80,7 @@ node --loader ts-node/esm examples/code-review-basic.ts
 
 ## DomainBundle, herança de configs e MCP
 
-Com a introdução dos tipos `DomainSnapshot` e `DomainBundle` (`packages/context-os-core/src/interfaces.ts`), o fluxo fica formalizado em três camadas:
+Com a introdução dos tipos `DomainSnapshot` e `DomainBundle` (`src/shared/utils/context-os-core/interfaces.ts`), o fluxo fica formalizado em três camadas:
 
 1. **Snapshot** – documento persistido (Mongo/SQL/JSON) com:
    - `config`: dados brutos do domínio (ex.: `v2PromptOverrides`, políticas, TTL).
@@ -89,7 +90,7 @@ Com a introdução dos tipos `DomainSnapshot` e `DomainBundle` (`packages/contex
    - `pipeline` (`SequentialPackAssemblyPipeline`) + `TriLayerPackBuilder`.
    - Unificação de ações/required tools (dedupe por `id` e `mcpId::toolName`).
    - `deliveryAdapter` opcional já alinhado com o meta prompt.
-   - Exemplo completo em `packages/context-os-core/examples/code-review-bundle.ts`.
+  - Exemplo completo em `context-engineering/examples/context-os-core/code-review-bundle.ts`.
 3. **Runtime** – pack produzido passa pelo `MCPOrchestrator` e pelo `DeliveryAdapter`.
 
 ### Como salvar a escolha de MCP para um prompt
@@ -145,7 +146,7 @@ Esse JSON pode continuar obedecendo o esquema de herança atual (global → repo
 - `pre_delivery`: garante que recursos do MCP estejam no pack antes de enviar ao LLM.
 - `post_delivery`: registra telemetria ou workflows assíncronos.
 
-O `MCPOrchestrator` (ver `packages/context-os-core/src/mcp/orchestrator.ts`) percorre `pack.requiredTools`; o bundle se encarrega de sincronizar `promptOverrides.requiredTools` + `actions` com esse campo, evitando múltiplas execuções da mesma tool.
+O `MCPOrchestrator` (ver `src/shared/utils/context-os-core/mcp/orchestrator.ts`) percorre `pack.requiredTools`; o bundle se encarrega de sincronizar `promptOverrides.requiredTools` + `actions` com esse campo, evitando múltiplas execuções da mesma tool.
 
 ## Serviços auxiliares
 

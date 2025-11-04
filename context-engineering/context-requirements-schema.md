@@ -224,4 +224,4 @@ rollback antes de implementar o back-end definitivo.
 
 Com isso, qualquer consumer marcado no front terá um contrato unificado para a
 orquestração do Context‑OS, reutilizando diretamente o tipo exportado pelo SDK
-(`@kodus/context-os-core`).***
+(`@context-os-core`).***

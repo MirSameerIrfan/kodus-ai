@@ -1,11 +1,4 @@
-import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import {
-    PromptExternalReferencesModel,
-    PromptExternalReferencesSchema,
-} from '@/core/infrastructure/adapters/repositories/mongoose/schema/promptExternalReferences.model';
-import { PromptExternalReferencesRepository } from '@/core/infrastructure/adapters/repositories/mongoose/repositories/promptExternalReferences.repository';
-import { PROMPT_EXTERNAL_REFERENCE_REPOSITORY_TOKEN } from '@/core/domain/prompts/contracts/promptExternalReferenceRepository.contract';
+import { Module, forwardRef } from '@nestjs/common';
 import { PROMPT_CONTEXT_ENGINE_SERVICE_TOKEN } from '@/core/domain/prompts/contracts/promptContextEngine.contract';
 import { PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN } from '@/core/domain/prompts/contracts/promptExternalReferenceManager.contract';
 import { PROMPT_CONTEXT_LOADER_SERVICE_TOKEN } from '@/core/domain/prompts/contracts/promptContextLoader.contract';
@@ -16,24 +9,15 @@ import { LoadExternalContextStage } from '@/core/infrastructure/adapters/service
 import { LOAD_EXTERNAL_CONTEXT_STAGE_TOKEN } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/contracts/loadExternalContextStage.contract';
 import { LogModule } from './log.module';
 import { PlatformIntegrationModule } from './platformIntegration.module';
-import { forwardRef } from '@nestjs/common';
+import { ContextReferenceModule } from './contextReference.module';
 
 @Module({
     imports: [
-        MongooseModule.forFeature([
-            {
-                name: PromptExternalReferencesModel.name,
-                schema: PromptExternalReferencesSchema,
-            },
-        ]),
         LogModule,
         forwardRef(() => PlatformIntegrationModule),
+        ContextReferenceModule,
     ],
     providers: [
-        {
-            provide: PROMPT_EXTERNAL_REFERENCE_REPOSITORY_TOKEN,
-            useClass: PromptExternalReferencesRepository,
-        },
         {
             provide: PROMPT_CONTEXT_ENGINE_SERVICE_TOKEN,
             useClass: PromptContextEngineService,
@@ -52,7 +36,6 @@ import { forwardRef } from '@nestjs/common';
         },
     ],
     exports: [
-        PROMPT_EXTERNAL_REFERENCE_REPOSITORY_TOKEN,
         PROMPT_CONTEXT_ENGINE_SERVICE_TOKEN,
         PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
         PROMPT_CONTEXT_LOADER_SERVICE_TOKEN,
@@ -60,4 +43,3 @@ import { forwardRef } from '@nestjs/common';
     ],
 })
 export class PromptsModule {}
-

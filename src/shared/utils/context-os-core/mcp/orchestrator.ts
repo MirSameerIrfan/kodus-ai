@@ -130,7 +130,10 @@ export class MCPOrchestrator {
                 };
             } else if (dependency.metadata) {
                 const meta = dependency.metadata as Record<string, unknown>;
-                if (typeof meta.mcpId === 'string' && typeof meta.toolName === 'string') {
+                if (
+                    typeof meta.mcpId === 'string' &&
+                    typeof meta.toolName === 'string'
+                ) {
                     reference = {
                         mcpId: meta.mcpId,
                         toolName: meta.toolName,
@@ -183,6 +186,7 @@ export class MCPOrchestrator {
         runtime,
     }: MCPExecutionContext): Promise<MCPOrchestratorReport> {
         const required = this.extractToolDependencies(pack.dependencies);
+
         if (!required.length) {
             const now = Date.now();
             return {
@@ -214,12 +218,14 @@ export class MCPOrchestrator {
 
                 const toolRef = required[currentIndex];
                 const registration = this.registry.get(toolRef.mcpId);
+
                 if (!registration) {
                     const error = `MCP ${toolRef.mcpId} not registered`;
                     this.logger?.warn?.('mcp.tool.missing', {
                         tool: toolRef.toolName,
                         mcpId: toolRef.mcpId,
                     });
+
                     results[currentIndex] = {
                         request: {
                             registry: {

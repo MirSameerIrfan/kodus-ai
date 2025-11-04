@@ -53,6 +53,8 @@ import { ObservabilityService } from '@/core/infrastructure/adapters/services/lo
 import { BYOKPromptRunnerService } from '@/shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
 import { ConfigLevel } from '@/config/types/general/pullRequestMessages.type';
 import { ExternalReferenceLoaderService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceLoader.service';
+import type { ContextAugmentationsMap } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
+import type { ContextPack } from '@context-os-core/interfaces';
 
 // Interface for extended context used in Kody Rules analysis
 interface KodyRulesExtendedContext {
@@ -70,6 +72,8 @@ interface KodyRulesExtendedContext {
     organizationAndTeamData: OrganizationAndTeamData;
     kodyRules: Array<Partial<IKodyRule>>;
     v2PromptOverrides?: CodeReviewConfig['v2PromptOverrides'];
+    contextAugmentations?: ContextAugmentationsMap;
+    contextPack?: ContextPack;
 
     // Extended properties added during analysis
     standardSuggestions?: AIAnalysisResult;
@@ -928,7 +932,15 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
                 : undefined,
             organizationAndTeamData: context?.organizationAndTeamData,
             kodyRules: kodyRulesFiltered,
-            v2PromptOverrides: context?.codeReviewConfig?.v2PromptOverrides,
+            v2PromptOverrides:
+                context?.sharedSanitizedOverrides ??
+                context?.codeReviewConfig?.v2PromptOverrides,
+            externalPromptLayers: context?.externalPromptLayers,
+            contextAugmentations:
+                context?.sharedContextAugmentations as
+                    | ContextAugmentationsMap
+                    | undefined,
+            contextPack: context?.sharedContextPack as ContextPack | undefined,
         };
 
         return baseContext;

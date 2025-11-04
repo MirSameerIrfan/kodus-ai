@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 import { PinoLoggerService } from '../../../logger/pino.service';
+import type { ContextLayer } from '@context-os-core/interfaces';
 import {
     IPromptExternalReferenceManagerService,
     PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
@@ -11,6 +12,7 @@ import {
     PROMPT_CONTEXT_LOADER_SERVICE_TOKEN,
 } from '@/core/domain/prompts/contracts/promptContextLoader.contract';
 import { ILoadExternalContextStage } from './contracts/loadExternalContextStage.contract';
+import { CodeReviewContextPackService } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
 
 @Injectable()
 export class LoadExternalContextStage extends BasePipelineStage<CodeReviewPipelineContext> implements ILoadExternalContextStage {
@@ -21,6 +23,7 @@ export class LoadExternalContextStage extends BasePipelineStage<CodeReviewPipeli
         private readonly promptReferenceManager: IPromptExternalReferenceManagerService,
         @Inject(PROMPT_CONTEXT_LOADER_SERVICE_TOKEN)
         private readonly promptContextLoader: IPromptContextLoaderService,
+        private readonly contextPackService: CodeReviewContextPackService,
         private readonly logger: PinoLoggerService,
     ) {
         super();
@@ -56,7 +59,52 @@ export class LoadExternalContextStage extends BasePipelineStage<CodeReviewPipeli
             const allReferences =
                 await this.promptReferenceManager.findByConfigKeys(configKeys);
 
-            if (!allReferences || allReferences.length === 0) {
+            const priorityMap = new Map(
+                configKeys.map((key, index) => [key, index]),
+            );
+
+            const sortedReferences = [...(allReferences ?? [])].sort((a, b) => {
+                const aPriority =
+                    priorityMap.get(a.configKey) ?? Number.MAX_SAFE_INTEGER;
+                const bPriority =
+                    priorityMap.get(b.configKey) ?? Number.MAX_SAFE_INTEGER;
+                return aPriority - bPriority;
+            });
+
+            let externalContext = {};
+            let contextLayers: ContextLayer[] | undefined;
+
+            if (sortedReferences.length > 0) {
+                const loadResult = await this.promptContextLoader.loadExternalContext(
+                    {
+                        organizationAndTeamData:
+                            context.organizationAndTeamData,
+                        repository: context.repository,
+                        pullRequest: context.pullRequest,
+                        allReferences: sortedReferences,
+                    },
+                    { buildLayers: true },
+                );
+
+                externalContext = loadResult.externalContext;
+                contextLayers = loadResult.contextLayers;
+
+                const totalReferencesLoaded = this.countLoadedReferences(
+                    externalContext,
+                );
+
+                this.logger.log({
+                    message: 'Successfully loaded external prompt context',
+                    context: this.stageName,
+                    metadata: {
+                        organizationId,
+                        repositoryId,
+                        prNumber: context.pullRequest.number,
+                        totalReferences: sortedReferences.length,
+                        totalReferencesLoaded,
+                    },
+                });
+            } else {
                 this.logger.log({
                     message: 'No external references found for this config',
                     context: this.stageName,
@@ -66,51 +114,63 @@ export class LoadExternalContextStage extends BasePipelineStage<CodeReviewPipeli
                         prNumber: context.pullRequest.number,
                     },
                 });
-                return {
-                    ...context,
-                    externalPromptContext: {},
-                };
             }
 
-            const priorityMap = new Map(
-                configKeys.map((key, index) => [key, index]),
-            );
+            let sharedContextPack = context.sharedContextPack;
+            let sharedContextAugmentations =
+                context.sharedContextAugmentations;
+            let sharedSanitizedOverrides =
+                context.sharedSanitizedOverrides ??
+                context.codeReviewConfig?.v2PromptOverrides;
+            let updatedCodeReviewConfig = context.codeReviewConfig;
 
-            const sortedReferences = [...allReferences].sort((a, b) => {
-                const aPriority =
-                    priorityMap.get(a.configKey) ?? Number.MAX_SAFE_INTEGER;
-                const bPriority =
-                    priorityMap.get(b.configKey) ?? Number.MAX_SAFE_INTEGER;
-                return aPriority - bPriority;
-            });
+            if (context.codeReviewConfig?.contextReferenceId) {
+                try {
+                    const resolved = await this.contextPackService.buildContextPack({
+                        organizationAndTeamData: context.organizationAndTeamData,
+                        overrides: context.codeReviewConfig?.v2PromptOverrides,
+                        contextReferenceId:
+                            context.codeReviewConfig.contextReferenceId,
+                        externalLayers: contextLayers,
+                    });
 
-            const externalContext =
-                await this.promptContextLoader.loadExternalContext({
-                    organizationAndTeamData: context.organizationAndTeamData,
-                    repository: context.repository,
-                    pullRequest: context.pullRequest,
-                    allReferences: sortedReferences,
-                });
+                    if (resolved.sanitizedOverrides) {
+                        sharedSanitizedOverrides = resolved.sanitizedOverrides;
+                        updatedCodeReviewConfig = {
+                            ...context.codeReviewConfig,
+                            v2PromptOverrides: resolved.sanitizedOverrides,
+                        };
+                    }
 
-            const totalReferencesLoaded = this.countLoadedReferences(
-                externalContext,
-            );
+                    if (resolved.augmentations) {
+                        sharedContextAugmentations = resolved.augmentations;
+                    }
 
-            this.logger.log({
-                message: 'Successfully loaded external prompt context',
-                context: this.stageName,
-                metadata: {
-                    organizationId,
-                    repositoryId,
-                    prNumber: context.pullRequest.number,
-                    totalReferences: sortedReferences.length,
-                    totalReferencesLoaded,
-                },
-            });
+                    if (resolved.pack) {
+                        sharedContextPack = resolved.pack;
+                    }
+                } catch (error) {
+                    this.logger.warn({
+                        message: 'Failed to build context pack',
+                        context: this.stageName,
+                        error,
+                        metadata: {
+                            organizationId,
+                            contextReferenceId:
+                                context.codeReviewConfig?.contextReferenceId,
+                        },
+                    });
+                }
+            }
 
             return {
                 ...context,
+                codeReviewConfig: updatedCodeReviewConfig,
                 externalPromptContext: externalContext,
+                externalPromptLayers: contextLayers,
+                sharedContextPack,
+                sharedContextAugmentations,
+                sharedSanitizedOverrides,
             };
         } catch (error) {
             this.logger.error({
@@ -126,10 +186,19 @@ export class LoadExternalContextStage extends BasePipelineStage<CodeReviewPipeli
             return {
                 ...context,
                 externalPromptContext: {},
+                externalPromptLayers: undefined,
+                sharedContextPack: undefined,
+                sharedContextAugmentations: undefined,
+                sharedSanitizedOverrides:
+                    context.codeReviewConfig?.v2PromptOverrides,
             };
         }
     }
 
+    /**
+     * Conta quantas referências externas foram efetivamente carregadas
+     * (útil apenas para logging/observabilidade do stage).
+     */
     private countLoadedReferences(context: any): number {
         let count = 0;
 

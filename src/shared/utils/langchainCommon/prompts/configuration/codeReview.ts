@@ -1,5 +1,11 @@
 import { LimitationType } from '@/config/types/general/codeReview.type';
+import type { ContextPack } from '@context-os-core/interfaces';
 import { getDefaultKodusConfigFile } from '@/shared/utils/validateCodeReviewConfigFile';
+import { convertTiptapJSONToText } from '@/core/utils/tiptap-json-to-text';
+import {
+    CODE_REVIEW_CONTEXT_PATTERNS,
+    stripMarkersFromText,
+} from '@/core/infrastructure/adapters/services/context/code-review-context.utils';
 
 export interface CodeReviewPayload {
     limitationType?: LimitationType;
@@ -51,6 +57,21 @@ export interface CodeReviewPayload {
             main?: { references?: any[]; error?: string };
         };
     };
+    contextAugmentations?: Record<
+        string,
+        {
+            path: string[];
+            requirementId?: string;
+            outputs: Array<{
+                provider?: string;
+                toolName: string;
+                success: boolean;
+                output?: string;
+                error?: string;
+            }>;
+        }
+    >;
+    contextPack?: ContextPack;
 }
 
 export const prompt_codereview_system_main = () => {
@@ -514,25 +535,101 @@ export const prompt_codereview_system_gemini_v2 = (
     const overrides = payload?.v2PromptOverrides || {};
     const defaults = getDefaultKodusConfigFile()?.v2PromptOverrides;
     const externalContext = payload?.externalPromptContext;
+    const contextLayers = payload?.contextPack?.layers || [];
+
+    const PATH_SOURCE_TYPE_MAP: Record<string, string> = {
+        'summary.customInstructions': 'custom_instruction',
+        'categories.descriptions.bug': 'category_bug',
+        'categories.descriptions.performance': 'category_performance',
+        'categories.descriptions.security': 'category_security',
+        'severity.flags.critical': 'severity_critical',
+        'severity.flags.high': 'severity_high',
+        'severity.flags.medium': 'severity_medium',
+        'severity.flags.low': 'severity_low',
+        'generation.main': 'generation_main',
+    };
+
+    const layerContextData = new Map<
+        string,
+        { references?: any[]; syncErrors?: any[] }
+    >();
+
+    for (const layer of contextLayers) {
+        const metadata = layer.metadata as Record<string, unknown> | undefined;
+        const sourceType =
+            typeof metadata?.sourceType === 'string'
+                ? (metadata.sourceType as string)
+                : undefined;
+        if (!sourceType) {
+            continue;
+        }
+
+        const content = layer.content as Record<string, unknown> | undefined;
+        const references = Array.isArray(content?.references)
+            ? (content?.references as any[])
+            : undefined;
+        const syncErrors = Array.isArray(content?.syncErrors)
+            ? (content?.syncErrors as any[])
+            : undefined;
+
+        if (references || syncErrors) {
+            layerContextData.set(sourceType, { references, syncErrors });
+        }
+    }
 
     // Build dynamic bullet lists with safe fallbacks
     const limitText = (text: string, max = 2000): string =>
         text.length > max ? text.slice(0, max) : text;
-    const getTextOrDefault = (
-        text: string | undefined,
-        fallbackText: string,
-    ): string =>
-        text && typeof text === 'string' && text.trim().length
-            ? limitText(text.trim())
-            : fallbackText;
+    const extractRawValue = (value: any): string | Record<string, unknown> | undefined => {
+        if (value === null || value === undefined) {
+            return undefined;
+        }
+        if (typeof value === 'string') {
+            return value;
+        }
+        if (typeof value === 'object' && typeof value.value !== 'undefined') {
+            return value.value as string | Record<string, unknown>;
+        }
+        return value as Record<string, unknown>;
+    };
+
+    const sanitizePromptText = (raw?: string): string => {
+        if (!raw) {
+            return '';
+        }
+        return stripMarkersFromText(raw, CODE_REVIEW_CONTEXT_PATTERNS).trim();
+    };
+
+    const getTextOrDefault = (text: any, fallbackText?: any): string => {
+        const primaryRaw = convertTiptapJSONToText(
+            extractRawValue(text),
+        ).trim();
+        const primary = sanitizePromptText(primaryRaw);
+        if (primary.length) {
+            return limitText(primary);
+        }
+
+        const fallbackRaw = convertTiptapJSONToText(
+            extractRawValue(fallbackText),
+        ).trim();
+        const fallback = sanitizePromptText(fallbackRaw);
+
+        return fallback.length ? limitText(fallback) : '';
+    };
 
     // Helper to inject external context into prompt text
     const injectExternalContext = (
         baseText: string,
         references: any[] | undefined,
+        syncErrors?: any[] | string | undefined,
     ): string => {
+        const sanitizedBase = sanitizePromptText(baseText);
+
         if (!references || references.length === 0) {
-            return baseText;
+            const errorSection = formatSyncErrors(syncErrors);
+            return errorSection
+                ? `${sanitizedBase}${errorSection}`
+                : sanitizedBase;
         }
 
         const contextSection = references
@@ -544,7 +641,82 @@ export const prompt_codereview_system_gemini_v2 = (
             })
             .join('\n');
 
-        return `${baseText}\n\n## External Reference Context\n${contextSection}`;
+        const errorSection = formatSyncErrors(syncErrors);
+
+        return `${sanitizedBase}\n\n## External Reference Context\n${contextSection}${errorSection}`;
+    };
+
+    const formatSyncErrors = (
+        errors: any[] | string | undefined,
+    ): string => {
+        if (!errors) {
+            return '';
+        }
+
+        const normalized = Array.isArray(errors) ? errors : [errors];
+        const formatted = normalized
+            .map((error) => {
+                if (!error) {
+                    return null;
+                }
+                if (typeof error === 'string') {
+                    return `- ${error}`;
+                }
+                if (typeof error === 'object') {
+                    const message =
+                        typeof error.message === 'string'
+                            ? error.message
+                            : 'Unknown reference error';
+                    return `- ${message}`;
+                }
+                return null;
+            })
+            .filter((line): line is string => Boolean(line));
+
+        if (!formatted.length) {
+            return '';
+        }
+
+        return `\n\n⚠ Reference issues\n${formatted.join('\n')}`;
+    };
+
+    const resolveContextData = (
+        pathKey: string,
+        fallbackRefs: any[] | undefined,
+        fallbackError?: any,
+    ): { references?: any[]; syncErrors?: any[] | string } => {
+        const sourceType = PATH_SOURCE_TYPE_MAP[pathKey];
+        const layerData = sourceType
+            ? layerContextData.get(sourceType)
+            : undefined;
+
+        return {
+            references: layerData?.references ?? fallbackRefs,
+            syncErrors: layerData?.syncErrors ?? fallbackError,
+        };
+    };
+
+    const formatAugmentations = (pathKey: string): string => {
+        const entry = payload?.contextAugmentations?.[pathKey];
+        if (!entry?.outputs?.length) {
+            return '';
+        }
+
+        const lines = entry.outputs.map((output) => {
+            const parts = [output.toolName];
+            if (output.provider) {
+                parts.push(`(${output.provider})`);
+            }
+            const label = parts.filter(Boolean).join(' ');
+
+            if (output.success) {
+                return `- ${label}: ${output.output ?? 'No output returned.'}`;
+            }
+
+            return `- ${label}: FAILED ${output.error ?? 'Unknown error'}`;
+        });
+
+        return `\n\n### Context Insights (${pathKey})\n${lines.join('\n')}`;
     };
 
     const defaultCategories = defaults?.categories?.descriptions;
@@ -558,27 +730,54 @@ export const prompt_codereview_system_gemini_v2 = (
         overrides?.categories?.descriptions?.bug,
         defaultBug,
     );
-    const bugText = injectExternalContext(
-        bugTextBase,
+    const {
+        references: bugReferences,
+        syncErrors: bugErrors,
+    } = resolveContextData(
+        'categories.descriptions.bug',
         externalContext?.categories?.bug?.references,
+        externalContext?.categories?.bug?.error,
+    );
+    const bugText = injectExternalContext(
+        `${bugTextBase}${formatAugmentations('categories.descriptions.bug')}`,
+        bugReferences,
+        bugErrors,
     );
 
     const perfTextBase = getTextOrDefault(
         overrides?.categories?.descriptions?.performance,
         defaultPerf,
     );
-    const perfText = injectExternalContext(
-        perfTextBase,
+    const {
+        references: perfReferences,
+        syncErrors: perfErrors,
+    } = resolveContextData(
+        'categories.descriptions.performance',
         externalContext?.categories?.performance?.references,
+        externalContext?.categories?.performance?.error,
+    );
+    const perfText = injectExternalContext(
+        `${perfTextBase}${formatAugmentations('categories.descriptions.performance')}`,
+        perfReferences,
+        perfErrors,
     );
 
     const secTextBase = getTextOrDefault(
         overrides?.categories?.descriptions?.security,
         defaultSec,
     );
-    const secText = injectExternalContext(
-        secTextBase,
+    const {
+        references: secReferences,
+        syncErrors: secErrors,
+    } = resolveContextData(
+        'categories.descriptions.security',
         externalContext?.categories?.security?.references,
+        externalContext?.categories?.security?.error,
+    );
+    const secText = injectExternalContext(
+        `${secTextBase}${formatAugmentations('categories.descriptions.security')}`,
+        secReferences,
+        secErrors,
     );
 
     const defaultSeverity = defaults?.severity?.flags;
@@ -592,27 +791,63 @@ export const prompt_codereview_system_gemini_v2 = (
 
     // ✅ Get base text and inject external context for severity
     const criticalTextBase = getTextOrDefault(sev.critical, defaultCritical);
-    const criticalText = injectExternalContext(
-        criticalTextBase,
+    const {
+        references: criticalReferences,
+        syncErrors: criticalErrors,
+    } = resolveContextData(
+        'severity.flags.critical',
         externalContext?.severity?.critical?.references,
+        externalContext?.severity?.critical?.error,
+    );
+    const criticalText = injectExternalContext(
+        `${criticalTextBase}${formatAugmentations('severity.flags.critical')}`,
+        criticalReferences,
+        criticalErrors,
     );
 
     const highTextBase = getTextOrDefault(sev.high, defaultHigh);
-    const highText = injectExternalContext(
-        highTextBase,
+    const {
+        references: highReferences,
+        syncErrors: highErrors,
+    } = resolveContextData(
+        'severity.flags.high',
         externalContext?.severity?.high?.references,
+        externalContext?.severity?.high?.error,
+    );
+    const highText = injectExternalContext(
+        `${highTextBase}${formatAugmentations('severity.flags.high')}`,
+        highReferences,
+        highErrors,
     );
 
     const mediumTextBase = getTextOrDefault(sev.medium, defaultMedium);
-    const mediumText = injectExternalContext(
-        mediumTextBase,
+    const {
+        references: mediumReferences,
+        syncErrors: mediumErrors,
+    } = resolveContextData(
+        'severity.flags.medium',
         externalContext?.severity?.medium?.references,
+        externalContext?.severity?.medium?.error,
+    );
+    const mediumText = injectExternalContext(
+        `${mediumTextBase}${formatAugmentations('severity.flags.medium')}`,
+        mediumReferences,
+        mediumErrors,
     );
 
     const lowTextBase = getTextOrDefault(sev.low, defaultLow);
-    const lowText = injectExternalContext(
-        lowTextBase,
+    const {
+        references: lowReferences,
+        syncErrors: lowErrors,
+    } = resolveContextData(
+        'severity.flags.low',
         externalContext?.severity?.low?.references,
+        externalContext?.severity?.low?.error,
+    );
+    const lowText = injectExternalContext(
+        `${lowTextBase}${formatAugmentations('severity.flags.low')}`,
+        lowReferences,
+        lowErrors,
     );
 
     const defaultGeneration = defaults?.generation;
@@ -622,9 +857,18 @@ export const prompt_codereview_system_gemini_v2 = (
         overrides?.generation?.main,
         defaultGeneration?.main,
     );
-    const mainGenText = injectExternalContext(
-        mainGenTextBase,
+    const {
+        references: generationReferences,
+        syncErrors: generationErrors,
+    } = resolveContextData(
+        'generation.main',
         externalContext?.generation?.main?.references,
+        externalContext?.generation?.main?.error,
+    );
+    const mainGenText = injectExternalContext(
+        `${mainGenTextBase}${formatAugmentations('generation.main')}`,
+        generationReferences,
+        generationErrors,
     );
 
     return `You are Kody Bug-Hunter, a senior engineer specialized in identifying verifiable issues through mental code execution. Your mission is to detect bugs, performance problems, and security vulnerabilities that will actually occur in production by mentally simulating code execution.

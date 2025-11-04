@@ -2,7 +2,7 @@ import type {
     ContextRequirement,
     ContextRevisionActor,
     ContextRevisionScope,
-} from '@context-os-core/interfaces.js';
+} from '@context-os-core/interfaces';
 import { Entity } from '@/shared/domain/interfaces/entity';
 import { IContextReference } from '../interfaces/context-reference.interface';
 
@@ -12,7 +12,6 @@ export class ContextReferenceEntity implements Entity<IContextReference> {
     private _scope: ContextRevisionScope;
     private _entityType: string;
     private _entityId: string;
-    private _payload: Record<string, unknown>;
     private _requirements?: ContextRequirement[];
     private _knowledgeRefs?: Array<{ itemId: string; version?: string }>;
     private _origin?: ContextRevisionActor;
@@ -28,7 +27,6 @@ export class ContextReferenceEntity implements Entity<IContextReference> {
         this._scope = contextReference.scope;
         this._entityType = contextReference.entityType;
         this._entityId = contextReference.entityId;
-        this._payload = contextReference.payload;
         this._requirements = contextReference.requirements;
         this._knowledgeRefs = contextReference.knowledgeRefs;
         this._origin = contextReference.origin;
@@ -63,9 +61,6 @@ export class ContextReferenceEntity implements Entity<IContextReference> {
         return this._entityId;
     }
 
-    public get payload() {
-        return this._payload;
-    }
 
     public get requirements() {
         return this._requirements;
@@ -98,7 +93,6 @@ export class ContextReferenceEntity implements Entity<IContextReference> {
             scope: this._scope,
             entityType: this._entityType,
             entityId: this._entityId,
-            payload: this._payload,
             requirements: this._requirements,
             knowledgeRefs: this._knowledgeRefs,
             origin: this._origin,
@@ -115,7 +109,6 @@ export class ContextReferenceEntity implements Entity<IContextReference> {
             scope: this._scope,
             entityType: this._entityType,
             entityId: this._entityId,
-            payload: this._payload,
             requirements: this._requirements,
             knowledgeRefs: this._knowledgeRefs,
             origin: this._origin,

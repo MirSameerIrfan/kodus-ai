@@ -3,11 +3,11 @@ import {
     CatalogLayerBuilder,
     ActiveLayerBuilder,
     SequentialPackAssemblyPipeline,
-} from '../src/index.js';
-import type { LayerInputContext, ContextLayer } from '../src/interfaces.js';
-import type { CoreLayerMaterializer } from '../src/builders/core-layer-builder.js';
-import type { CatalogLayerMaterializer } from '../src/builders/catalog-layer-builder.js';
-import type { ActiveLayerSelector } from '../src/builders/active-layer-builder.js';
+} from '../../../src/shared/utils/context-os-core/index.js';
+import type { LayerInputContext, ContextLayer } from '../../../src/shared/utils/context-os-core/interfaces.js';
+import type { CoreLayerMaterializer } from '../../../src/shared/utils/context-os-core/builders/core-layer-builder.js';
+import type { CatalogLayerMaterializer } from '../../../src/shared/utils/context-os-core/builders/catalog-layer-builder.js';
+import type { ActiveLayerSelector } from '../../../src/shared/utils/context-os-core/builders/active-layer-builder.js';
 
 class KnowledgeCoreMaterializer implements CoreLayerMaterializer {
     async materialize() {

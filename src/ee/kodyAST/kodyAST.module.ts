@@ -2,9 +2,10 @@ import { Global, Module } from '@nestjs/common';
 import { AST_ANALYSIS_SERVICE_TOKEN } from '@/core/domain/codeBase/contracts/ASTAnalysisService.contract';
 import { CodeAstAnalysisService } from '@/ee/kodyAST/codeASTAnalysis.service';
 import { PlatformIntegrationModule } from '@/modules/platformIntegration.module';
+import { ContextReferenceModule } from '@/modules/contextReference.module';
 import { environment } from '../configs/environment';
 
-const staticImports = [PlatformIntegrationModule];
+const staticImports = [PlatformIntegrationModule, ContextReferenceModule];
 
 const providers = [];
 const moduleExports = [AST_ANALYSIS_SERVICE_TOKEN];

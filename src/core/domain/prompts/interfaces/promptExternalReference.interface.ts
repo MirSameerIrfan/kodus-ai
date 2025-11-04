@@ -70,6 +70,8 @@ export interface IPromptExternalReference {
     readonly kodyRuleId?: string;
     readonly repositoryName: string;
     promptHash: string;
+    contextReferenceId?: string;
+    contextRequirementsHash?: string;
     readonly references: IFileReference[];
     syncErrors?: IPromptReferenceSyncError[];
     processingStatus: PromptProcessingStatus;
@@ -114,4 +116,3 @@ export interface IDetectedReference {
         readonly end: number;
     };
 }
-
