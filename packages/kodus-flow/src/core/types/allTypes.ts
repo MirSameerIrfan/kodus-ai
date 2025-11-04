@@ -16,6 +16,7 @@ import { EventQueue } from '../../runtime/core/index.js';
 import { ExecutionKernel } from '../../kernel/kernel.js';
 import { AgentEngine, AgentExecutor } from '../../engine/index.js';
 import { BaseSDKError } from '../errors.js';
+import { MCPRegistry } from '../../adapters/mcp/registry.js';
 
 export enum AgentInputEnum {
     USER = 'user',
@@ -2635,7 +2636,7 @@ export interface MCPAdapter {
         serverName?: string,
     ): Promise<unknown>;
     getMetrics(): Record<string, unknown>;
-    getRegistry(): unknown;
+    getRegistry(): MCPRegistry;
 }
 
 export interface ConversationMessage {

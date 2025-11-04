@@ -66,7 +66,11 @@ import {
     pathToKey,
     resolveSourceTypeFromPath,
 } from '@/core/infrastructure/adapters/services/context/code-review-context.utils';
-import { convertTiptapJSONToText } from '@/core/utils/tiptap-json-to-text';
+import { convertTiptapJSONToText } from '@/core/utils/tiptap-json';
+import {
+    MCPToolMetadata,
+    MCPToolMetadataService,
+} from '@/core/infrastructure/adapters/mcp/services/mcp-tool-metadata.service';
 
 @Injectable()
 export class UpdateOrCreateCodeReviewParameterUseCase {
@@ -92,6 +96,8 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
         private readonly logger: PinoLoggerService,
 
         private readonly authorizationService: AuthorizationService,
+
+        private readonly mcpToolMetadataService: MCPToolMetadataService,
     ) {}
 
     async execute(
@@ -516,6 +522,15 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
             return;
         }
 
+        const {
+            providerMap,
+            toolMap,
+            allowedTools,
+            metadata: toolMetadata,
+        } = await this.mcpToolMetadataService.loadMetadataForOrganization(
+            organizationAndTeamData,
+        );
+
         for (const field of normalizedFields) {
             const pathKey = pathToKey(field.path);
             const consumerId = `${baseConsumerId}#${pathKey}`;
@@ -523,11 +538,19 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
                 field.text,
             );
 
-            const { dependencies: mcpDependencies, markers: mcpMarkers } =
+            const { dependencies: rawMcpDependencies, markers: mcpMarkers } =
                 extractDependenciesFromValue(
                     field.text,
                     CODE_REVIEW_CONTEXT_PATTERNS,
                 );
+
+            const promptNormalization = this.normalizeMCPDependencies(
+                rawMcpDependencies,
+                providerMap,
+                toolMap,
+                allowedTools,
+                toolMetadata,
+            );
 
             let detectionResult:
                 | Awaited<
@@ -572,9 +595,17 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
                     (requirement) => requirement.id === consumerId,
                 ) ?? detectionResult?.requirements?.[0];
 
-            const combinedDependencies = this.mergeDependencies(
-                mcpDependencies,
+            const detectionNormalization = this.normalizeMCPDependencies(
                 detectionRequirement?.dependencies,
+                providerMap,
+                toolMap,
+                allowedTools,
+                toolMetadata,
+            );
+
+            const combinedDependencies = this.mergeDependencies(
+                promptNormalization.dependencies,
+                detectionNormalization.dependencies,
             );
 
             const markersSet = new Set<string>([
@@ -587,6 +618,8 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
             ]);
 
             const syncErrorsRaw: IPromptReferenceSyncError[] = [
+                ...promptNormalization.errors,
+                ...detectionNormalization.errors,
                 ...(detectionResult?.syncErrors ?? []),
                 ...(Array.isArray(detectionRequirement?.metadata?.syncErrors)
                     ? (detectionRequirement?.metadata
@@ -828,6 +861,357 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
         }
 
         return Array.from(map.values());
+    }
+
+    private normalizeMCPDependencies(
+        dependencies: ContextDependency[] | undefined,
+        providerMap: Map<string, string>,
+        toolMap: Map<string, Map<string, string>>,
+        allowedTools: Map<string, Set<string>>,
+        toolMetadata: Map<string, MCPToolMetadata>,
+    ): {
+        dependencies: ContextDependency[];
+        errors: IPromptReferenceSyncError[];
+    } {
+        if (!dependencies?.length) {
+            return { dependencies: [], errors: [] };
+        }
+
+        const merged: ContextDependency[] = [];
+        const errors: IPromptReferenceSyncError[] = [];
+
+        for (const dependency of dependencies) {
+            const normalized = this.normalizeDependency(
+                dependency,
+                providerMap,
+                toolMap,
+                allowedTools,
+            );
+            if (normalized.errors.length) {
+                errors.push(...normalized.errors);
+            }
+            if (normalized.dependency) {
+                const enriched = this.applyToolMetadata(
+                    normalized.dependency,
+                    toolMetadata,
+                    providerMap,
+                    toolMap,
+                );
+                merged.push(enriched);
+            }
+        }
+
+        return { dependencies: merged, errors };
+    }
+
+    private normalizeDependency(
+        dependency: ContextDependency,
+        providerMap: Map<string, string>,
+        toolMap: Map<string, Map<string, string>>,
+        allowedTools: Map<string, Set<string>>,
+    ): {
+        dependency?: ContextDependency;
+        errors: IPromptReferenceSyncError[];
+    } {
+        if (
+            dependency.type !== 'mcp' &&
+            dependency.type !== 'tool'
+        ) {
+            return { dependency, errors: [] };
+        }
+
+        const originalProvider = this.resolveDependencyProvider(dependency);
+        const canonicalProvider = originalProvider
+            ? this.resolveCanonicalProvider(originalProvider, providerMap)
+            : undefined;
+
+        const finalProvider = canonicalProvider ?? originalProvider;
+        const errors: IPromptReferenceSyncError[] = [];
+
+        if (!finalProvider) {
+            if (originalProvider) {
+                errors.push({
+                    type: PromptReferenceErrorType.INVALID_FORMAT,
+                    message: `Provider MCP \"${originalProvider}\" não está configurado para esta organização/time. Ajuste o prompt ou habilite a conexão correspondente.`,
+                    details: {
+                        timestamp: new Date(),
+                    },
+                });
+            }
+            return { dependency: undefined, errors };
+        }
+
+        const originalTool = this.resolveDependencyToolName(dependency);
+        const canonicalTool = this.resolveCanonicalTool(
+            originalTool,
+            finalProvider,
+            toolMap,
+        );
+        const finalTool = canonicalTool ?? originalTool;
+
+        const metadata: Record<string, unknown> = {
+            ...(dependency.metadata ?? {}),
+        };
+
+        metadata.provider = finalProvider;
+        if (
+            originalProvider &&
+            originalProvider !== finalProvider &&
+            !metadata.providerAlias
+        ) {
+            metadata.providerAlias = originalProvider;
+        }
+
+        if (finalTool) {
+            metadata.toolName = finalTool;
+        }
+        if (
+            originalTool &&
+            finalTool &&
+            originalTool !== finalTool &&
+            !metadata.toolNameAlias
+        ) {
+            metadata.toolNameAlias = originalTool;
+        }
+
+        if (!finalTool && originalTool) {
+            const available = allowedTools.get(finalProvider);
+            const availableList = available
+                ? Array.from(available.values()).join(', ')
+                : 'nenhuma ferramenta cadastrada';
+
+            errors.push({
+                type: PromptReferenceErrorType.INVALID_FORMAT,
+                message: `A ferramenta \"${originalTool}\" não está habilitada para o MCP \"${finalProvider}\". Ferramentas disponíveis: ${availableList}.`,
+                details: {
+                    timestamp: new Date(),
+                },
+            });
+            return { dependency: undefined, errors };
+        }
+
+        let descriptor = dependency.descriptor;
+        if (descriptor && typeof descriptor === 'object') {
+            const candidate = descriptor as Record<string, unknown>;
+            descriptor = {
+                ...candidate,
+                mcpId: finalProvider,
+                ...(finalTool ? { toolName: finalTool } : {}),
+            };
+        }
+
+        let normalizedId = dependency.id;
+        if (finalTool) {
+            normalizedId = `${finalProvider}|${finalTool}`;
+        } else if (
+            typeof normalizedId === 'string' &&
+            normalizedId.includes('|')
+        ) {
+            const [, tool] = normalizedId.split('|', 2);
+            normalizedId = tool ? `${finalProvider}|${tool}` : finalProvider;
+        } else {
+            normalizedId = finalProvider;
+        }
+
+        return {
+            dependency: {
+                ...dependency,
+                id: normalizedId,
+                metadata,
+                descriptor,
+            },
+            errors,
+        };
+    }
+
+    private applyToolMetadata(
+        dependency: ContextDependency,
+        metadataMap: Map<string, MCPToolMetadata>,
+        providerMap: Map<string, string>,
+        toolMap: Map<string, Map<string, string>>,
+    ): ContextDependency {
+        const provider = this.resolveDependencyProvider(dependency);
+        const toolName = this.resolveDependencyToolName(dependency);
+
+        if (!provider || !toolName) {
+            return dependency;
+        }
+
+        const metadata = this.mcpToolMetadataService.getMetadataForTool(
+            metadataMap,
+            provider,
+            toolName,
+            providerMap,
+            toolMap,
+        );
+        if (!metadata) {
+            return dependency;
+        }
+
+        const currentMetadata = (dependency.metadata ?? {}) as Record<
+            string,
+            unknown
+        >;
+        const existingRequired = Array.isArray(currentMetadata.requiredArgs)
+            ? (currentMetadata.requiredArgs as string[])
+            : [];
+        const mergedRequired = Array.from(
+            new Set([...existingRequired, ...metadata.requiredArgs]),
+        );
+
+        const mergedMetadata = {
+            ...currentMetadata,
+            requiredArgs: mergedRequired,
+            toolInputSchema: metadata.inputSchema,
+        } as Record<string, unknown>;
+
+        return {
+            ...dependency,
+            metadata: mergedMetadata,
+        };
+    }
+
+    private resolveCanonicalProvider(
+        provider: string,
+        aliasMap: Map<string, string>,
+    ): string | undefined {
+        const key = this.normalizeProviderKey(provider);
+        if (!key) {
+            return undefined;
+        }
+        return aliasMap.get(key);
+    }
+
+    private resolveCanonicalTool(
+        toolName: string | undefined,
+        provider: string,
+        toolMap: Map<string, Map<string, string>>,
+    ): string | undefined {
+        if (!toolName) {
+            return undefined;
+        }
+
+        const providerKey = this.normalizeProviderKey(provider);
+        if (!providerKey) {
+            return undefined;
+        }
+
+        const providerToolMap = toolMap.get(providerKey);
+        if (!providerToolMap) {
+            return undefined;
+        }
+
+        const toolKey = this.normalizeToolKey(toolName);
+        if (!toolKey) {
+            return undefined;
+        }
+
+        return providerToolMap.get(toolKey);
+    }
+
+    private resolveDependencyProvider(
+        dependency: ContextDependency,
+    ): string | undefined {
+        const metadata = dependency.metadata as
+            | Record<string, unknown>
+            | undefined;
+
+        if (metadata) {
+            const provider = metadata.provider as string | undefined;
+            if (provider && provider.trim()) {
+                return provider;
+            }
+
+            const providerAlias = metadata.providerAlias as
+                | string
+                | undefined;
+            if (providerAlias && providerAlias.trim()) {
+                return providerAlias;
+            }
+        }
+
+        if (
+            dependency.descriptor &&
+            typeof dependency.descriptor === 'object'
+        ) {
+            const candidate = dependency.descriptor as Record<string, unknown>;
+            const descriptorProvider = candidate.mcpId as string | undefined;
+            if (descriptorProvider && descriptorProvider.trim()) {
+                return descriptorProvider;
+            }
+        }
+
+        if (typeof dependency.id === 'string' && dependency.id.includes('|')) {
+            const [providerId] = dependency.id.split('|', 2);
+            if (providerId && providerId.trim()) {
+                return providerId;
+            }
+        }
+
+        return undefined;
+    }
+
+    private resolveDependencyToolName(
+        dependency: ContextDependency,
+    ): string | undefined {
+        const metadata = dependency.metadata as
+            | Record<string, unknown>
+            | undefined;
+
+        if (metadata && typeof metadata.toolName === 'string') {
+            return metadata.toolName;
+        }
+
+        if (
+            dependency.descriptor &&
+            typeof dependency.descriptor === 'object'
+        ) {
+            const candidate = dependency.descriptor as Record<string, unknown>;
+            if (typeof candidate.toolName === 'string') {
+                return candidate.toolName;
+            }
+        }
+
+        if (typeof dependency.id === 'string' && dependency.id.includes('|')) {
+            const [, tool] = dependency.id.split('|', 2);
+            if (tool && tool.trim()) {
+                return tool;
+            }
+        }
+
+        return undefined;
+    }
+
+    private normalizeProviderKey(value?: string | null): string | undefined {
+        if (!value) {
+            return undefined;
+        }
+
+        const normalized = value
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '');
+
+        if (!normalized) {
+            return undefined;
+        }
+
+        return normalized.endsWith('mcp') && normalized.length > 3
+            ? normalized.slice(0, -3)
+            : normalized;
+    }
+
+    private normalizeToolKey(value?: string | null): string | undefined {
+        if (!value) {
+            return undefined;
+        }
+
+        const normalized = value
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '');
+
+        return normalized || undefined;
     }
 
     private resolveBaseConsumerId(

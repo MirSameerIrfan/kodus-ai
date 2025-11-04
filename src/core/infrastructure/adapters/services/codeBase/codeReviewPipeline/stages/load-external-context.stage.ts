@@ -12,10 +12,16 @@ import {
     PROMPT_CONTEXT_LOADER_SERVICE_TOKEN,
 } from '@/core/domain/prompts/contracts/promptContextLoader.contract';
 import { ILoadExternalContextStage } from './contracts/loadExternalContextStage.contract';
-import { CodeReviewContextPackService } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
+import {
+    CodeReviewContextPackService,
+    SkippedMCPTool,
+} from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
 
 @Injectable()
-export class LoadExternalContextStage extends BasePipelineStage<CodeReviewPipelineContext> implements ILoadExternalContextStage {
+export class LoadExternalContextStage
+    extends BasePipelineStage<CodeReviewPipelineContext>
+    implements ILoadExternalContextStage
+{
     readonly stageName = 'LoadExternalContextStage';
 
     constructor(
@@ -39,7 +45,7 @@ export class LoadExternalContextStage extends BasePipelineStage<CodeReviewPipeli
 
             const configKeys =
                 this.promptReferenceManager.buildConfigKeysHierarchy(
-                    organizationId,
+                    context.organizationAndTeamData,
                     repositoryId,
                     directoryId,
                 );
@@ -75,23 +81,23 @@ export class LoadExternalContextStage extends BasePipelineStage<CodeReviewPipeli
             let contextLayers: ContextLayer[] | undefined;
 
             if (sortedReferences.length > 0) {
-                const loadResult = await this.promptContextLoader.loadExternalContext(
-                    {
-                        organizationAndTeamData:
-                            context.organizationAndTeamData,
-                        repository: context.repository,
-                        pullRequest: context.pullRequest,
-                        allReferences: sortedReferences,
-                    },
-                    { buildLayers: true },
-                );
+                const loadResult =
+                    await this.promptContextLoader.loadExternalContext(
+                        {
+                            organizationAndTeamData:
+                                context.organizationAndTeamData,
+                            repository: context.repository,
+                            pullRequest: context.pullRequest,
+                            allReferences: sortedReferences,
+                        },
+                        { buildLayers: true },
+                    );
 
                 externalContext = loadResult.externalContext;
                 contextLayers = loadResult.contextLayers;
 
-                const totalReferencesLoaded = this.countLoadedReferences(
-                    externalContext,
-                );
+                const totalReferencesLoaded =
+                    this.countLoadedReferences(externalContext);
 
                 this.logger.log({
                     message: 'Successfully loaded external prompt context',
@@ -117,8 +123,7 @@ export class LoadExternalContextStage extends BasePipelineStage<CodeReviewPipeli
             }
 
             let sharedContextPack = context.sharedContextPack;
-            let sharedContextAugmentations =
-                context.sharedContextAugmentations;
+            let sharedContextAugmentations = context.sharedContextAugmentations;
             let sharedSanitizedOverrides =
                 context.sharedSanitizedOverrides ??
                 context.codeReviewConfig?.v2PromptOverrides;
@@ -126,13 +131,16 @@ export class LoadExternalContextStage extends BasePipelineStage<CodeReviewPipeli
 
             if (context.codeReviewConfig?.contextReferenceId) {
                 try {
-                    const resolved = await this.contextPackService.buildContextPack({
-                        organizationAndTeamData: context.organizationAndTeamData,
-                        overrides: context.codeReviewConfig?.v2PromptOverrides,
-                        contextReferenceId:
-                            context.codeReviewConfig.contextReferenceId,
-                        externalLayers: contextLayers,
-                    });
+                    const resolved =
+                        await this.contextPackService.buildContextPack({
+                            organizationAndTeamData:
+                                context.organizationAndTeamData,
+                            overrides:
+                                context.codeReviewConfig?.v2PromptOverrides,
+                            contextReferenceId:
+                                context.codeReviewConfig.contextReferenceId,
+                            externalLayers: contextLayers,
+                        });
 
                     if (resolved.sanitizedOverrides) {
                         sharedSanitizedOverrides = resolved.sanitizedOverrides;
@@ -148,6 +156,24 @@ export class LoadExternalContextStage extends BasePipelineStage<CodeReviewPipeli
 
                     if (resolved.pack) {
                         sharedContextPack = resolved.pack;
+                        const skipped = resolved.pack.metadata
+                            ?.skippedMcpTools as SkippedMCPTool[] | undefined;
+                        if (skipped?.length) {
+                            this.logger.warn({
+                                message:
+                                    'Algumas ferramentas MCP foram ignoradas por falta de argumentos',
+                                context: this.stageName,
+                                metadata: {
+                                    organizationId,
+                                    skippedTools: skipped.map((tool) => ({
+                                        provider: tool.provider,
+                                        toolName: tool.toolName,
+                                        missingArgs: tool.missingArgs,
+                                        requirementId: tool.requirementId,
+                                    })),
+                                },
+                            });
+                        }
                     }
                 } catch (error) {
                     this.logger.warn({

@@ -314,7 +314,7 @@ export function createMCPAdapter(config: MCPAdapterConfig): MCPAdapter {
             return metrics;
         },
 
-        getRegistry(): unknown {
+        getRegistry(): MCPRegistry {
             return registry;
         },
     };

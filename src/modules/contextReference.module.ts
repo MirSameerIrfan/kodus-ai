@@ -6,12 +6,16 @@ import { CONTEXT_REFERENCE_REPOSITORY_TOKEN } from '@/core/domain/contextReferen
 import { ContextReferenceService } from '@/core/infrastructure/adapters/services/context/context-reference.service';
 import { CodeReviewContextPackService } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
 import { CONTEXT_REFERENCE_SERVICE_TOKEN } from '@/core/domain/contextReferences/contracts/context-reference.service.contract';
+import { MCPToolArgResolver } from '@/core/infrastructure/adapters/services/context/mcp-tool-arg-resolver.service';
+import { MCPToolMetadataService } from '@/core/infrastructure/adapters/mcp/services/mcp-tool-metadata.service';
 
 @Module({
     imports: [TypeOrmModule.forFeature([ContextReferenceModel])],
     providers: [
         ContextReferenceService,
         CodeReviewContextPackService,
+        MCPToolArgResolver,
+        MCPToolMetadataService,
         {
             provide: CONTEXT_REFERENCE_SERVICE_TOKEN,
             useExisting: ContextReferenceService,
@@ -24,6 +28,8 @@ import { CONTEXT_REFERENCE_SERVICE_TOKEN } from '@/core/domain/contextReferences
     exports: [
         ContextReferenceService,
         CodeReviewContextPackService,
+        MCPToolArgResolver,
+        MCPToolMetadataService,
         CONTEXT_REFERENCE_SERVICE_TOKEN,
         CONTEXT_REFERENCE_REPOSITORY_TOKEN,
     ],

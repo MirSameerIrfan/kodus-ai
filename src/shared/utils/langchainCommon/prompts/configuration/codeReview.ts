@@ -1,7 +1,7 @@
 import { LimitationType } from '@/config/types/general/codeReview.type';
 import type { ContextPack } from '@context-os-core/interfaces';
 import { getDefaultKodusConfigFile } from '@/shared/utils/validateCodeReviewConfigFile';
-import { convertTiptapJSONToText } from '@/core/utils/tiptap-json-to-text';
+import { convertTiptapJSONToMarkdown } from '@/core/utils/tiptap-json';
 import {
     CODE_REVIEW_CONTEXT_PATTERNS,
     stripMarkersFromText,
@@ -580,7 +580,9 @@ export const prompt_codereview_system_gemini_v2 = (
     // Build dynamic bullet lists with safe fallbacks
     const limitText = (text: string, max = 2000): string =>
         text.length > max ? text.slice(0, max) : text;
-    const extractRawValue = (value: any): string | Record<string, unknown> | undefined => {
+    const extractRawValue = (
+        value: any,
+    ): string | Record<string, unknown> | undefined => {
         if (value === null || value === undefined) {
             return undefined;
         }
@@ -601,7 +603,7 @@ export const prompt_codereview_system_gemini_v2 = (
     };
 
     const getTextOrDefault = (text: any, fallbackText?: any): string => {
-        const primaryRaw = convertTiptapJSONToText(
+        const primaryRaw = convertTiptapJSONToMarkdown(
             extractRawValue(text),
         ).trim();
         const primary = sanitizePromptText(primaryRaw);
@@ -609,7 +611,7 @@ export const prompt_codereview_system_gemini_v2 = (
             return limitText(primary);
         }
 
-        const fallbackRaw = convertTiptapJSONToText(
+        const fallbackRaw = convertTiptapJSONToMarkdown(
             extractRawValue(fallbackText),
         ).trim();
         const fallback = sanitizePromptText(fallbackRaw);
@@ -646,9 +648,7 @@ export const prompt_codereview_system_gemini_v2 = (
         return `${sanitizedBase}\n\n## External Reference Context\n${contextSection}${errorSection}`;
     };
 
-    const formatSyncErrors = (
-        errors: any[] | string | undefined,
-    ): string => {
+    const formatSyncErrors = (errors: any[] | string | undefined): string => {
         if (!errors) {
             return '';
         }
@@ -730,14 +730,12 @@ export const prompt_codereview_system_gemini_v2 = (
         overrides?.categories?.descriptions?.bug,
         defaultBug,
     );
-    const {
-        references: bugReferences,
-        syncErrors: bugErrors,
-    } = resolveContextData(
-        'categories.descriptions.bug',
-        externalContext?.categories?.bug?.references,
-        externalContext?.categories?.bug?.error,
-    );
+    const { references: bugReferences, syncErrors: bugErrors } =
+        resolveContextData(
+            'categories.descriptions.bug',
+            externalContext?.categories?.bug?.references,
+            externalContext?.categories?.bug?.error,
+        );
     const bugText = injectExternalContext(
         `${bugTextBase}${formatAugmentations('categories.descriptions.bug')}`,
         bugReferences,
@@ -748,14 +746,12 @@ export const prompt_codereview_system_gemini_v2 = (
         overrides?.categories?.descriptions?.performance,
         defaultPerf,
     );
-    const {
-        references: perfReferences,
-        syncErrors: perfErrors,
-    } = resolveContextData(
-        'categories.descriptions.performance',
-        externalContext?.categories?.performance?.references,
-        externalContext?.categories?.performance?.error,
-    );
+    const { references: perfReferences, syncErrors: perfErrors } =
+        resolveContextData(
+            'categories.descriptions.performance',
+            externalContext?.categories?.performance?.references,
+            externalContext?.categories?.performance?.error,
+        );
     const perfText = injectExternalContext(
         `${perfTextBase}${formatAugmentations('categories.descriptions.performance')}`,
         perfReferences,
@@ -766,14 +762,12 @@ export const prompt_codereview_system_gemini_v2 = (
         overrides?.categories?.descriptions?.security,
         defaultSec,
     );
-    const {
-        references: secReferences,
-        syncErrors: secErrors,
-    } = resolveContextData(
-        'categories.descriptions.security',
-        externalContext?.categories?.security?.references,
-        externalContext?.categories?.security?.error,
-    );
+    const { references: secReferences, syncErrors: secErrors } =
+        resolveContextData(
+            'categories.descriptions.security',
+            externalContext?.categories?.security?.references,
+            externalContext?.categories?.security?.error,
+        );
     const secText = injectExternalContext(
         `${secTextBase}${formatAugmentations('categories.descriptions.security')}`,
         secReferences,
@@ -791,14 +785,12 @@ export const prompt_codereview_system_gemini_v2 = (
 
     // ✅ Get base text and inject external context for severity
     const criticalTextBase = getTextOrDefault(sev.critical, defaultCritical);
-    const {
-        references: criticalReferences,
-        syncErrors: criticalErrors,
-    } = resolveContextData(
-        'severity.flags.critical',
-        externalContext?.severity?.critical?.references,
-        externalContext?.severity?.critical?.error,
-    );
+    const { references: criticalReferences, syncErrors: criticalErrors } =
+        resolveContextData(
+            'severity.flags.critical',
+            externalContext?.severity?.critical?.references,
+            externalContext?.severity?.critical?.error,
+        );
     const criticalText = injectExternalContext(
         `${criticalTextBase}${formatAugmentations('severity.flags.critical')}`,
         criticalReferences,
@@ -806,14 +798,12 @@ export const prompt_codereview_system_gemini_v2 = (
     );
 
     const highTextBase = getTextOrDefault(sev.high, defaultHigh);
-    const {
-        references: highReferences,
-        syncErrors: highErrors,
-    } = resolveContextData(
-        'severity.flags.high',
-        externalContext?.severity?.high?.references,
-        externalContext?.severity?.high?.error,
-    );
+    const { references: highReferences, syncErrors: highErrors } =
+        resolveContextData(
+            'severity.flags.high',
+            externalContext?.severity?.high?.references,
+            externalContext?.severity?.high?.error,
+        );
     const highText = injectExternalContext(
         `${highTextBase}${formatAugmentations('severity.flags.high')}`,
         highReferences,
@@ -821,14 +811,12 @@ export const prompt_codereview_system_gemini_v2 = (
     );
 
     const mediumTextBase = getTextOrDefault(sev.medium, defaultMedium);
-    const {
-        references: mediumReferences,
-        syncErrors: mediumErrors,
-    } = resolveContextData(
-        'severity.flags.medium',
-        externalContext?.severity?.medium?.references,
-        externalContext?.severity?.medium?.error,
-    );
+    const { references: mediumReferences, syncErrors: mediumErrors } =
+        resolveContextData(
+            'severity.flags.medium',
+            externalContext?.severity?.medium?.references,
+            externalContext?.severity?.medium?.error,
+        );
     const mediumText = injectExternalContext(
         `${mediumTextBase}${formatAugmentations('severity.flags.medium')}`,
         mediumReferences,
@@ -836,14 +824,12 @@ export const prompt_codereview_system_gemini_v2 = (
     );
 
     const lowTextBase = getTextOrDefault(sev.low, defaultLow);
-    const {
-        references: lowReferences,
-        syncErrors: lowErrors,
-    } = resolveContextData(
-        'severity.flags.low',
-        externalContext?.severity?.low?.references,
-        externalContext?.severity?.low?.error,
-    );
+    const { references: lowReferences, syncErrors: lowErrors } =
+        resolveContextData(
+            'severity.flags.low',
+            externalContext?.severity?.low?.references,
+            externalContext?.severity?.low?.error,
+        );
     const lowText = injectExternalContext(
         `${lowTextBase}${formatAugmentations('severity.flags.low')}`,
         lowReferences,
@@ -857,14 +843,12 @@ export const prompt_codereview_system_gemini_v2 = (
         overrides?.generation?.main,
         defaultGeneration?.main,
     );
-    const {
-        references: generationReferences,
-        syncErrors: generationErrors,
-    } = resolveContextData(
-        'generation.main',
-        externalContext?.generation?.main?.references,
-        externalContext?.generation?.main?.error,
-    );
+    const { references: generationReferences, syncErrors: generationErrors } =
+        resolveContextData(
+            'generation.main',
+            externalContext?.generation?.main?.references,
+            externalContext?.generation?.main?.error,
+        );
     const mainGenText = injectExternalContext(
         `${mainGenTextBase}${formatAugmentations('generation.main')}`,
         generationReferences,

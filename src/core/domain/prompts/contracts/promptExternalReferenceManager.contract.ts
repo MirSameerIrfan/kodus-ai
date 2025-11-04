@@ -1,3 +1,4 @@
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { PromptExternalReferenceEntity } from '../entities/promptExternalReference.entity';
 import { PromptSourceType } from '../interfaces/promptExternalReference.interface';
 
@@ -6,13 +7,13 @@ export const PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN =
 
 export interface IPromptExternalReferenceManagerService {
     buildConfigKey(
-        organizationId: string,
+        organizationAndTeamData: OrganizationAndTeamData,
         repositoryId: string,
         directoryId?: string,
     ): string;
 
     buildConfigKeysHierarchy(
-        organizationId: string,
+        organizationAndTeamData: OrganizationAndTeamData,
         repositoryId: string,
         directoryId?: string,
     ): string[];

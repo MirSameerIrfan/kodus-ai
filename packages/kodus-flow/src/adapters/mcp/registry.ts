@@ -257,7 +257,7 @@ export class MCPRegistry {
         serverName?: string,
     ): Promise<unknown> {
         if (serverName) {
-            const client = this.clients.get(serverName);
+            const client = this.resolveClientByAlias(serverName);
 
             if (!client) {
                 throw new Error(`MCP server ${serverName} not found`);
@@ -342,5 +342,50 @@ export class MCPRegistry {
     private markToolsDirty(serverName: string): void {
         this.toolIndex.clear();
         this.options.onToolsChanged?.(serverName);
+    }
+
+    private resolveClientByAlias(
+        serverName?: string,
+    ): SpecCompliantMCPClient | undefined {
+        if (!serverName) {
+            return undefined;
+        }
+
+        const direct = this.clients.get(serverName);
+        if (direct) {
+            return direct;
+        }
+
+        const normalizedTarget = this.normalizeServerKey(serverName);
+        if (!normalizedTarget) {
+            return undefined;
+        }
+
+        for (const [candidate, client] of this.clients.entries()) {
+            if (this.normalizeServerKey(candidate) === normalizedTarget) {
+                return client;
+            }
+        }
+
+        return undefined;
+    }
+
+    private normalizeServerKey(value?: string | null): string | undefined {
+        if (!value || typeof value !== 'string') {
+            return undefined;
+        }
+
+        const normalized = value
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '');
+
+        if (!normalized) {
+            return undefined;
+        }
+
+        return normalized.endsWith('mcp') && normalized.length > 3
+            ? normalized.slice(0, -3)
+            : normalized;
     }
 }

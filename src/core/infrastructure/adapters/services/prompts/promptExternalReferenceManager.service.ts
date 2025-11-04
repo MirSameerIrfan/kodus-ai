@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { randomUUID } from 'crypto';
 import { IPromptExternalReferenceManagerService } from '@/core/domain/prompts/contracts/promptExternalReferenceManager.contract';
 import { PromptExternalReferenceEntity } from '@/core/domain/prompts/entities/promptExternalReference.entity';
@@ -14,13 +15,14 @@ import { ContextReferenceService } from '@/core/infrastructure/adapters/services
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { ContextReferenceEntity } from '@/core/domain/contextReferences/entities/context-reference.entity';
 import { computeRequirementsHash } from '@context-os-core/utils/context-requirements';
-import type { ContextRequirement, ContextDependency } from '@context-os-core/interfaces';
-import {
-    resolveSourceTypeFromPath,
-} from '../context/code-review-context.utils';
+import type {
+    ContextRequirement,
+    ContextDependency,
+} from '@context-os-core/interfaces';
+import { resolveSourceTypeFromPath } from '../context/code-review-context.utils';
 
 type ParsedConfigKey = {
-    organizationId: string;
+    organizationAndTeamData: OrganizationAndTeamData;
     repositoryId: string;
     repositoryName: string;
     directoryId?: string;
@@ -50,31 +52,76 @@ export class PromptExternalReferenceManagerService
     ) {}
 
     buildConfigKey(
-        organizationId: string,
+        organizationAndTeamData: OrganizationAndTeamData,
         repositoryId: string,
         directoryId?: string,
     ): string {
-        if (directoryId) {
-            return `${organizationId}:${repositoryId}:${directoryId}`;
-        }
-        return `${organizationId}:${repositoryId}`;
+        return this.composeEntityId({
+            organizationAndTeamData,
+            repositoryId: this.normalizeRepositoryId(repositoryId),
+            directoryId,
+        });
     }
 
     buildConfigKeysHierarchy(
-        organizationId: string,
+        organizationAndTeamData: OrganizationAndTeamData,
         repositoryId: string,
         directoryId?: string,
     ): string[] {
-        const keys: string[] = [];
+        const normalizedRepositoryId = this.normalizeRepositoryId(repositoryId);
+        const keys = new Map<string, true>();
+
+        const registerKey = (key?: string) => {
+            if (key) {
+                keys.set(key, true);
+            }
+        };
 
         if (directoryId) {
-            keys.push(`${organizationId}:${repositoryId}:${directoryId}`);
+            registerKey(
+                this.composeEntityId({
+                    organizationAndTeamData,
+                    repositoryId: normalizedRepositoryId,
+                    directoryId,
+                }),
+            );
+            registerKey(
+                this.composeLegacyKey(
+                    organizationAndTeamData.organizationId,
+                    normalizedRepositoryId ?? 'global',
+                    directoryId,
+                ),
+            );
         }
 
-        keys.push(`${organizationId}:${repositoryId}`);
-        keys.push(`${organizationId}:global`);
+        if (normalizedRepositoryId) {
+            registerKey(
+                this.composeEntityId({
+                    organizationAndTeamData,
+                    repositoryId: normalizedRepositoryId,
+                }),
+            );
+            registerKey(
+                this.composeLegacyKey(
+                    organizationAndTeamData.organizationId,
+                    normalizedRepositoryId,
+                ),
+            );
+        }
 
-        return keys;
+        registerKey(
+            this.composeEntityId({
+                organizationAndTeamData,
+            }),
+        );
+        registerKey(
+            this.composeLegacyKey(
+                organizationAndTeamData.organizationId,
+                'global',
+            ),
+        );
+
+        return Array.from(keys.keys());
     }
 
     async findByConfigKeys(
@@ -82,16 +129,27 @@ export class PromptExternalReferenceManagerService
     ): Promise<PromptExternalReferenceEntity[]> {
         const aggregated: PromptExternalReferenceEntity[] = [];
 
+        const visited = new Set<string>();
+
         for (const configKey of configKeys) {
-            const revision = await this.fetchLatestRevision(configKey);
-            if (!revision) {
-                continue;
+            const candidates = this.expandConfigKeyCandidates(configKey);
+
+            for (const candidate of candidates) {
+                if (visited.has(candidate)) {
+                    continue;
+                }
+                visited.add(candidate);
+
+                const revision = await this.fetchLatestRevision(candidate);
+                if (!revision) {
+                    continue;
+                }
+
+                const parsed = this.parseConfigKey(candidate);
+                const entities = this.mapRevisionToReferences(revision, parsed);
+
+                aggregated.push(...entities);
             }
-
-            const parsed = this.parseConfigKey(configKey);
-            const entities = this.mapRevisionToReferences(revision, parsed);
-
-            aggregated.push(...entities);
         }
 
         return aggregated;
@@ -103,9 +161,8 @@ export class PromptExternalReferenceManagerService
     ): Promise<PromptExternalReferenceEntity | null> {
         const references = await this.findByConfigKeys([configKey]);
         return (
-            references.find(
-                (entity) => entity.sourceType === sourceType,
-            ) ?? null
+            references.find((entity) => entity.sourceType === sourceType) ??
+            null
         );
     }
 
@@ -144,27 +201,113 @@ export class PromptExternalReferenceManagerService
     }
 
     private parseConfigKey(configKey: string): ParsedConfigKey {
-        const parts = configKey.split(':');
-        const organizationId = parts[0] ?? '';
-        const repositoryId = parts[1] ?? 'global';
-        const directoryId = parts.length > 2 ? parts[2] : undefined;
+        if (configKey.includes('/')) {
+            return this.parseEntityIdFormat(configKey);
+        }
 
-        const segments = [`org:${organizationId}`];
-        if (repositoryId && repositoryId !== 'global') {
-            segments.push(`repo:${repositoryId}`);
+        return this.parseLegacyFormat(configKey);
+    }
+
+    private parseEntityIdFormat(configKey: string): ParsedConfigKey {
+        const segments = configKey.split('/');
+        let organizationId = '';
+        let teamId: string | undefined;
+        let repositoryId: string | undefined;
+        let directoryId: string | undefined;
+
+        for (const segment of segments) {
+            if (segment.startsWith('org:')) {
+                organizationId = segment.slice(4);
+            } else if (segment.startsWith('team:')) {
+                teamId = segment.slice(5);
+            } else if (segment.startsWith('repo:')) {
+                repositoryId = segment.slice(5);
+            } else if (segment.startsWith('dir:')) {
+                directoryId = segment.slice(4);
+            }
         }
-        if (directoryId) {
-            segments.push(`dir:${directoryId}`);
-        }
+
+        const normalizedRepositoryId =
+            repositoryId && repositoryId.length > 0 ? repositoryId : undefined;
 
         return {
-            organizationId,
-            repositoryId,
-            repositoryName: repositoryId,
+            organizationAndTeamData: {
+                organizationId,
+                teamId,
+            },
+            repositoryId: normalizedRepositoryId ?? 'global',
+            repositoryName: normalizedRepositoryId ?? 'global',
             directoryId,
             configKey,
-            entityId: segments.join('/'),
+            entityId: configKey,
         };
+    }
+
+    private parseLegacyFormat(configKey: string): ParsedConfigKey {
+        const parts = configKey.split(':');
+        const organizationId = parts[0] ?? '';
+        let repositoryId = parts[1] ?? 'global';
+        const directoryId = parts.length > 2 ? parts[2] : undefined;
+
+        if (repositoryId === 'global') {
+            repositoryId = undefined;
+        }
+
+        const entityId = this.composeEntityId({
+            organizationAndTeamData: {
+                organizationId,
+            },
+            repositoryId,
+            directoryId,
+        });
+
+        return {
+            organizationAndTeamData: {
+                organizationId,
+            },
+            repositoryId: repositoryId ?? 'global',
+            repositoryName: repositoryId ?? 'global',
+            directoryId,
+            configKey,
+            entityId,
+        };
+    }
+
+    private expandConfigKeyCandidates(configKey: string): string[] {
+        const parsed = this.parseConfigKey(configKey);
+        const normalizedRepositoryId = this.normalizeRepositoryId(
+            parsed.repositoryId,
+        );
+
+        const candidates = new Map<string, true>();
+
+        const register = (value?: string) => {
+            if (value) {
+                candidates.set(value, true);
+            }
+        };
+
+        register(parsed.entityId);
+
+        if (parsed.organizationAndTeamData.teamId) {
+            register(
+                this.composeEntityId({
+                    organizationAndTeamData: parsed.organizationAndTeamData,
+                    repositoryId: normalizedRepositoryId,
+                    directoryId: parsed.directoryId,
+                }),
+            );
+        }
+
+        register(
+            this.composeLegacyKey(
+                parsed.organizationAndTeamData.organizationId,
+                normalizedRepositoryId ?? 'global',
+                parsed.directoryId,
+            ),
+        );
+
+        return Array.from(candidates.keys());
     }
 
     private async fetchLatestRevision(
@@ -213,9 +356,8 @@ export class PromptExternalReferenceManagerService
                 parsedKey.repositoryName,
             );
 
-            const syncErrors = this.extractSyncErrorsFromRequirement(
-                requirement,
-            );
+            const syncErrors =
+                this.extractSyncErrorsFromRequirement(requirement);
 
             const processingStatus =
                 requirement.status === 'draft' ||
@@ -237,7 +379,8 @@ export class PromptExternalReferenceManagerService
                     uuid: `${revision.uuid}:${requirement.id}:${randomUUID()}`,
                     configKey: parsedKey.configKey,
                     sourceType,
-                    organizationId: parsedKey.organizationId,
+                    organizationId:
+                        parsedKey.organizationAndTeamData.organizationId,
                     repositoryId: parsedKey.repositoryId,
                     directoryId: parsedKey.directoryId,
                     repositoryName: parsedKey.repositoryName,
@@ -279,9 +422,7 @@ export class PromptExternalReferenceManagerService
         return undefined;
     }
 
-    private isPromptSourceType(
-        value: string,
-    ): value is PromptSourceType {
+    private isPromptSourceType(value: string): value is PromptSourceType {
         return Object.values(PromptSourceType).includes(
             value as PromptSourceType,
         );
@@ -324,7 +465,9 @@ export class PromptExternalReferenceManagerService
         dependency: ContextDependency,
         fallbackRepositoryName: string,
     ): IFileReference | undefined {
-        const metadata = dependency.metadata as Record<string, unknown> | undefined;
+        const metadata = dependency.metadata as
+            | Record<string, unknown>
+            | undefined;
         const filePath =
             typeof metadata?.filePath === 'string'
                 ? metadata.filePath
@@ -361,7 +504,7 @@ export class PromptExternalReferenceManagerService
         const lastValidatedAt =
             typeof metadata?.lastValidatedAt === 'string'
                 ? new Date(metadata.lastValidatedAt)
-                : detectedAt ?? new Date();
+                : (detectedAt ?? new Date());
 
         const lastContentHash =
             typeof metadata?.lastContentHash === 'string'
@@ -409,8 +552,7 @@ export class PromptExternalReferenceManagerService
             return undefined;
         }
 
-        const message =
-            typeof error.message === 'string' ? error.message : '';
+        const message = typeof error.message === 'string' ? error.message : '';
         const attemptedPatterns = Array.isArray(error.attemptedPatterns)
             ? (error.attemptedPatterns as string[])
             : [];
@@ -477,7 +619,9 @@ export class PromptExternalReferenceManagerService
         requirement: ContextRequirement,
         revision: ContextReferenceEntity,
     ): Date | undefined {
-        const metadata = requirement.metadata as Record<string, unknown> | undefined;
+        const metadata = requirement.metadata as
+            | Record<string, unknown>
+            | undefined;
         if (metadata?.lastProcessedAt) {
             const raw = metadata.lastProcessedAt as string;
             if (typeof raw === 'string') {
@@ -486,5 +630,61 @@ export class PromptExternalReferenceManagerService
         }
 
         return revision.updatedAt ?? revision.createdAt ?? new Date();
+    }
+
+    private composeEntityId(options: {
+        organizationAndTeamData: OrganizationAndTeamData;
+        repositoryId?: string;
+        directoryId?: string;
+    }): string {
+        const segments = [
+            `org:${options.organizationAndTeamData.organizationId}`,
+        ];
+
+        if (options.organizationAndTeamData.teamId) {
+            segments.push(`team:${options.organizationAndTeamData.teamId}`);
+        }
+
+        if (options.repositoryId) {
+            segments.push(`repo:${options.repositoryId}`);
+        }
+
+        if (options.directoryId) {
+            segments.push(`dir:${options.directoryId}`);
+        }
+
+        return segments.join('/');
+    }
+
+    private composeLegacyKey(
+        organizationId: string,
+        repositoryId: string,
+        directoryId?: string,
+    ): string {
+        if (directoryId) {
+            return `${organizationId}:${repositoryId}:${directoryId}`;
+        }
+
+        return `${organizationId}:${repositoryId}`;
+    }
+
+    private normalizeRepositoryId(repositoryId?: string): string | undefined {
+        if (!repositoryId || repositoryId === 'global') {
+            return undefined;
+        }
+        return repositoryId;
+    }
+
+    private normalizeToolKey(value?: string | null): string | undefined {
+        if (!value) {
+            return undefined;
+        }
+
+        const normalized = value
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '');
+
+        return normalized || undefined;
     }
 }

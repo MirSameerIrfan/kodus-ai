@@ -20,12 +20,16 @@ import { MCPOrchestrator } from '@context-os-core/mcp/orchestrator';
 import { InMemoryMCPRegistry } from '@context-os-core/mcp/registry';
 import { SequentialPackAssemblyPipeline } from '@context-os-core/pipeline/sequential-pack-pipeline';
 import { ContextReferenceService } from './context-reference.service';
+import { MCPToolArgResolver } from './mcp-tool-arg-resolver.service';
 import {
     CODE_REVIEW_CONTEXT_PATTERNS,
     pathToKey,
     stripMarkersFromText,
 } from './code-review-context.utils';
-import { MCPManagerService } from '../../mcp/services/mcp-manager.service';
+import {
+    MCPToolMetadata,
+    MCPToolMetadataService,
+} from '../../mcp/services/mcp-tool-metadata.service';
 import { PinoLoggerService } from '../logger/pino.service';
 
 export interface ContextAugmentationOutput {
@@ -44,6 +48,15 @@ export type ContextAugmentationsMap = Record<
         outputs: ContextAugmentationOutput[];
     }
 >;
+
+export interface SkippedMCPTool {
+    provider?: string;
+    toolName?: string;
+    requirementId?: string;
+    path?: string[];
+    missingArgs: string[];
+    message: string;
+}
 
 interface BuildPackParams {
     organizationAndTeamData?: OrganizationAndTeamData;
@@ -173,8 +186,9 @@ class AdapterBackedMCPClient {
 export class CodeReviewContextPackService {
     constructor(
         private readonly contextReferenceService: ContextReferenceService,
-        private readonly mcpManagerService: MCPManagerService,
+        private readonly mcpToolMetadataService: MCPToolMetadataService,
         private readonly logger: PinoLoggerService,
+        private readonly mcpToolArgResolver: MCPToolArgResolver,
     ) {}
 
     /**
@@ -227,17 +241,79 @@ export class CodeReviewContextPackService {
             requirementIds: requirements.map((req) => req.id),
         };
 
-        if (!dependencies.length) {
+        const metadataLoad = dependencies.length
+            ? await this.mcpToolMetadataService.loadMetadataForOrganization(
+                  organizationAndTeamData,
+              )
+            : {
+                  connections: [] as MCPServerConfig[],
+                  metadata: new Map<string, MCPToolMetadata>(),
+                  providerMap: new Map<string, string>(),
+                  toolMap: new Map<string, Map<string, string>>(),
+                  allowedTools: new Map<string, Set<string>>(),
+              };
+
+        let connections = metadataLoad.connections;
+        let metadata = metadataLoad.metadata;
+        let providerAliases = metadataLoad.providerMap;
+        let toolAliases = metadataLoad.toolMap;
+
+        if (dependencies.length && metadata.size) {
+            const neededProviders = this.collectNeededProviders(
+                dependencies,
+                providerAliases,
+            );
+
+            if (neededProviders.size) {
+                connections = this.filterConnectionsByProviders(
+                    connections,
+                    neededProviders,
+                );
+                metadata = this.filterMetadataByProviders(
+                    metadata,
+                    neededProviders,
+                );
+                providerAliases = this.filterProviderAliases(
+                    providerAliases,
+                    neededProviders,
+                );
+                toolAliases = this.filterToolAliases(
+                    toolAliases,
+                    providerAliases,
+                    neededProviders,
+                );
+
+                if (!metadata.size) {
+                    connections = [];
+                    providerAliases = new Map<string, string>();
+                    toolAliases = new Map<string, Map<string, string>>();
+                }
+            } else {
+                connections = [];
+                metadata = new Map<string, MCPToolMetadata>();
+                providerAliases = new Map<string, string>();
+                toolAliases = new Map<string, Map<string, string>>();
+            }
+        }
+
+        const { resolvedDependencies, skippedDependencies } =
+            await this.resolveMCPDependenciesForPack({
+                dependencies,
+                pack,
+                organizationAndTeamData,
+                toolMetadata: metadata,
+                providerAliases,
+                toolAliases,
+            });
+
+        pack.dependencies = resolvedDependencies;
+
+        if (!resolvedDependencies.length) {
             return {
                 sanitizedOverrides,
                 pack,
             };
         }
-
-        const connections = (await this.mcpManagerService.getConnections(
-            organizationAndTeamData,
-            true,
-        )) as MCPServerConfig[];
 
         if (!connections?.length) {
             return {
@@ -249,7 +325,7 @@ export class CodeReviewContextPackService {
         const { augmentations } = await this.executeDependencies({
             contextReferenceId,
             connections,
-            dependencies,
+            dependencies: resolvedDependencies,
             pack,
         });
 
@@ -407,6 +483,360 @@ export class CodeReviewContextPackService {
         };
     }
 
+    private async resolveMCPDependenciesForPack(params: {
+        dependencies: ContextDependency[];
+        pack: ContextPack;
+        organizationAndTeamData?: OrganizationAndTeamData;
+        toolMetadata: Map<string, MCPToolMetadata>;
+        providerAliases: Map<string, string>;
+        toolAliases: Map<string, Map<string, string>>;
+    }): Promise<{
+        resolvedDependencies: ContextDependency[];
+        skippedDependencies: SkippedMCPTool[];
+    }> {
+        const {
+            dependencies,
+            pack,
+            organizationAndTeamData,
+            toolMetadata,
+            providerAliases,
+            toolAliases,
+        } = params;
+        const resolvedDependencies: ContextDependency[] = [];
+        const skippedDependencies: SkippedMCPTool[] = [];
+
+        for (const dependency of dependencies) {
+            try {
+                const enrichedDependency = this.applyToolMetadata(
+                    dependency,
+                    toolMetadata,
+                    providerAliases,
+                    toolAliases,
+                );
+
+                const resolution = await this.mcpToolArgResolver.resolve({
+                    dependency: enrichedDependency,
+                    organizationAndTeamData,
+                    pack,
+                    input: DEFAULT_LAYER_INPUT,
+                    runtime: undefined,
+                });
+
+                if (resolution.status === 'ready') {
+                    resolvedDependencies.push(resolution.dependency);
+                    continue;
+                }
+
+                const provider = this.resolveProvider(enrichedDependency);
+                const toolName = this.resolveToolName(enrichedDependency);
+                const requirementId =
+                    this.resolveRequirementId(enrichedDependency);
+                const path = this.resolveDependencyPath(enrichedDependency);
+
+                const message = `MCP tool ${provider ?? 'unknown'}::${
+                    toolName ?? 'unknown'
+                } não executada. Argumentos ausentes: ${
+                    resolution.missingArgs.join(', ') || 'desconhecidos'
+                }.`;
+
+                this.logger.warn({
+                    message,
+                    context: CodeReviewContextPackService.name,
+                    metadata: {
+                        provider,
+                        toolName,
+                        requirementId,
+                        missingArgs: resolution.missingArgs,
+                        path,
+                        severity: 'warning',
+                    },
+                });
+
+                skippedDependencies.push({
+                    provider,
+                    toolName,
+                    requirementId,
+                    path,
+                    missingArgs: resolution.missingArgs,
+                    message,
+                });
+            } catch (error) {
+                const provider = this.resolveProvider(dependency);
+                const toolName = this.resolveToolName(dependency);
+
+                this.logger.error({
+                    message:
+                        'Erro ao resolver argumentos para ferramenta MCP antes da execução',
+                    context: CodeReviewContextPackService.name,
+                    error,
+                    metadata: {
+                        provider,
+                        toolName,
+                        requirementId: this.resolveRequirementId(dependency),
+                    },
+                });
+
+                skippedDependencies.push({
+                    provider,
+                    toolName,
+                    requirementId: this.resolveRequirementId(dependency),
+                    path: this.resolveDependencyPath(dependency),
+                    missingArgs: [],
+                    message:
+                        'Falha interna ao preparar argumentos para a ferramenta MCP.',
+                });
+            }
+        }
+
+        return { resolvedDependencies, skippedDependencies };
+    }
+
+    private resolveConnectionProviderId(
+        connection: MCPServerConfig,
+    ): string | undefined {
+        const candidates = [
+            connection.provider,
+            connection.name,
+            connection.url,
+        ];
+
+        for (const candidate of candidates) {
+            if (typeof candidate === 'string' && candidate.trim().length > 0) {
+                return candidate.trim();
+            }
+        }
+
+        return undefined;
+    }
+
+    private applyToolMetadata(
+        dependency: ContextDependency,
+        metadataMap: Map<string, MCPToolMetadata>,
+        providerAliases: Map<string, string>,
+        toolAliases: Map<string, Map<string, string>>,
+    ): ContextDependency {
+        const provider = this.resolveProvider(dependency);
+        const toolName = this.resolveToolName(dependency);
+
+        if (!provider || !toolName) {
+            return dependency;
+        }
+
+        const metadata = this.mcpToolMetadataService.getMetadataForTool(
+            metadataMap,
+            provider,
+            toolName,
+            providerAliases,
+            toolAliases,
+        );
+        if (!metadata) {
+            return dependency;
+        }
+
+        const normalizedProviderKey = this.normalizeProviderKey(provider);
+        const canonicalProvider = normalizedProviderKey
+            ? (providerAliases.get(normalizedProviderKey) ?? provider)
+            : provider;
+
+        const providerToolKey = this.normalizeProviderKey(canonicalProvider);
+        let canonicalToolName = toolName;
+        if (providerToolKey) {
+            const providerToolMap = toolAliases.get(providerToolKey);
+            if (providerToolMap) {
+                const toolAliasKey = this.normalizeToolKey(toolName);
+                if (toolAliasKey) {
+                    const resolved = providerToolMap.get(toolAliasKey);
+                    if (resolved) {
+                        canonicalToolName = resolved;
+                    }
+                }
+            }
+        }
+
+        const currentMetadata = (dependency.metadata ?? {}) as Record<
+            string,
+            unknown
+        >;
+        const existingRequired = Array.isArray(currentMetadata.requiredArgs)
+            ? (currentMetadata.requiredArgs as string[])
+            : [];
+        const mergedRequired = Array.from(
+            new Set([...existingRequired, ...metadata.requiredArgs]),
+        );
+
+        const mergedMetadata = {
+            ...currentMetadata,
+            requiredArgs: mergedRequired,
+            toolInputSchema: metadata.inputSchema,
+            provider: canonicalProvider,
+            toolName: canonicalToolName,
+        } as Record<string, unknown>;
+
+        if (
+            provider &&
+            canonicalProvider &&
+            provider !== canonicalProvider &&
+            !mergedMetadata.providerAlias
+        ) {
+            mergedMetadata.providerAlias = provider;
+        }
+
+        if (
+            toolName &&
+            canonicalToolName &&
+            toolName !== canonicalToolName &&
+            !mergedMetadata.toolNameAlias
+        ) {
+            mergedMetadata.toolNameAlias = toolName;
+        }
+
+        let descriptor = dependency.descriptor;
+        if (descriptor && typeof descriptor === 'object') {
+            const descriptorRecord = descriptor as Record<string, unknown>;
+            descriptor = {
+                ...descriptorRecord,
+                mcpId: canonicalProvider,
+                toolName: canonicalToolName,
+            };
+        }
+
+        return {
+            ...dependency,
+            metadata: mergedMetadata,
+            descriptor,
+        };
+    }
+
+    private normalizeProviderKey(value?: string | null): string | undefined {
+        if (!value) {
+            return undefined;
+        }
+
+        const normalized = value
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '');
+
+        if (!normalized) {
+            return undefined;
+        }
+
+        return normalized.endsWith('mcp') && normalized.length > 3
+            ? normalized.slice(0, -3)
+            : normalized;
+    }
+
+    private normalizeToolKey(value?: string | null): string | undefined {
+        if (!value) {
+            return undefined;
+        }
+
+        const normalized = value
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '');
+
+        return normalized || undefined;
+    }
+
+    private collectNeededProviders(
+        dependencies: ContextDependency[],
+        providerAliases: Map<string, string>,
+    ): Set<string> {
+        const needed = new Set<string>();
+
+        for (const dependency of dependencies) {
+            const provider = this.resolveProvider(dependency);
+            if (!provider) {
+                continue;
+            }
+
+            const aliasKey = this.normalizeProviderKey(provider);
+            const canonical = aliasKey
+                ? (providerAliases.get(aliasKey) ?? provider)
+                : provider;
+
+            needed.add(canonical);
+        }
+
+        return needed;
+    }
+
+    private filterConnectionsByProviders(
+        connections: MCPServerConfig[],
+        neededProviders: Set<string>,
+    ): MCPServerConfig[] {
+        return connections.filter((connection) => {
+            const canonical =
+                connection.provider?.trim() ||
+                connection.name?.trim() ||
+                connection.url?.trim();
+
+            if (!canonical) {
+                return false;
+            }
+
+            if (neededProviders.has(canonical)) {
+                return true;
+            }
+
+            const normalized = this.normalizeProviderKey(canonical);
+            return normalized ? neededProviders.has(normalized) : false;
+        });
+    }
+
+    private filterMetadataByProviders(
+        metadata: Map<string, MCPToolMetadata>,
+        neededProviders: Set<string>,
+    ): Map<string, MCPToolMetadata> {
+        const filtered = new Map<string, MCPToolMetadata>();
+
+        for (const [key, value] of metadata.entries()) {
+            const [providerKey] = key.split('|', 1);
+            const canonical = providerKey ?? key;
+            if (neededProviders.has(canonical)) {
+                filtered.set(key, value);
+            }
+        }
+
+        return filtered;
+    }
+
+    private filterProviderAliases(
+        providerAliases: Map<string, string>,
+        neededProviders: Set<string>,
+    ): Map<string, string> {
+        const filtered = new Map<string, string>();
+
+        for (const [alias, canonical] of providerAliases.entries()) {
+            if (neededProviders.has(canonical)) {
+                filtered.set(alias, canonical);
+            }
+        }
+
+        return filtered;
+    }
+
+    private filterToolAliases(
+        toolAliases: Map<string, Map<string, string>>,
+        providerAliases: Map<string, string>,
+        neededProviders: Set<string>,
+    ): Map<string, Map<string, string>> {
+        const filtered = new Map<string, Map<string, string>>();
+
+        for (const [aliasKey, toolMap] of toolAliases.entries()) {
+            const canonical = providerAliases.get(aliasKey) ?? aliasKey;
+
+            if (!neededProviders.has(canonical)) {
+                continue;
+            }
+
+            filtered.set(aliasKey, toolMap);
+        }
+
+        return filtered;
+    }
+
     /**
      * Executa todas as ferramentas MCP necessárias e devolve as augmentations resultantes.
      */
@@ -450,6 +880,7 @@ export class CodeReviewContextPackService {
             if (!provider || !toolName) {
                 continue;
             }
+
             if (!requiredToolsByProvider.has(provider)) {
                 requiredToolsByProvider.set(provider, new Set());
             }
@@ -457,10 +888,7 @@ export class CodeReviewContextPackService {
         }
 
         for (const connection of connections) {
-            const providerId =
-                connection.name?.trim() ||
-                connection.provider?.trim() ||
-                connection.url?.trim();
+            const providerId = this.resolveConnectionProviderId(connection);
 
             if (!providerId) {
                 continue;
@@ -470,10 +898,10 @@ export class CodeReviewContextPackService {
 
             const requiredTools =
                 requiredToolsByProvider.get(providerId) ?? new Set<string>();
-            const allowedTools = new Set<string>(connection.allowedTools ?? []);
-            for (const tool of requiredTools) {
-                allowedTools.add(tool);
-            }
+            const toolsToRegister =
+                requiredTools.size > 0
+                    ? Array.from(requiredTools)
+                    : Array.from(connection.allowedTools ?? []);
 
             registry.register({
                 id: providerId,
@@ -481,7 +909,7 @@ export class CodeReviewContextPackService {
                 endpoint: connection.url ?? '',
                 description: connection.name ?? providerId,
                 status: 'available',
-                tools: Array.from(allowedTools).map((toolName) => ({
+                tools: toolsToRegister.map((toolName) => ({
                     mcpId: providerId,
                     toolName,
                     metadata: {},

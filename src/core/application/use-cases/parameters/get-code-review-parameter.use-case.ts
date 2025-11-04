@@ -167,7 +167,7 @@ export class GetCodeReviewParameterUseCase {
 
         // Buscar e adicionar referências externas do nível global
         const globalConfigKey = this.promptReferenceManager.buildConfigKey(
-            organizationAndTeamData.organizationId,
+            organizationAndTeamData,
             'global',
         );
         formattedGlobalConfig = await this.enrichConfigWithExternalReferences(
@@ -206,7 +206,7 @@ export class GetCodeReviewParameterUseCase {
 
             // Buscar e adicionar referências externas do nível repositório
             const repoConfigKey = this.promptReferenceManager.buildConfigKey(
-                organizationAndTeamData.organizationId,
+                organizationAndTeamData,
                 repo.id,
             );
             formattedRepoFileConfig = await this.enrichConfigWithExternalReferences(
@@ -244,7 +244,7 @@ export class GetCodeReviewParameterUseCase {
 
                 // Buscar e adicionar referências externas do nível diretório
                 const dirConfigKey = this.promptReferenceManager.buildConfigKey(
-                    organizationAndTeamData.organizationId,
+                    organizationAndTeamData,
                     repo.id,
                     dir.id,
                 );
