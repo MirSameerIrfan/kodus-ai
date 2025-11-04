@@ -3517,12 +3517,14 @@ export class GithubService
                 });
             } catch (issueCommentError) {
                 if (issueCommentError.status === 404) {
-                    await octokit.rest.reactions.createForPullRequestReviewComment({
-                        owner: githubAuthDetail.org,
-                        repo: params.repository.name,
-                        comment_id: params.commentId,
-                        content: params.reaction as GitHubReaction,
-                    });
+                    await octokit.rest.reactions.createForPullRequestReviewComment(
+                        {
+                            owner: githubAuthDetail.org,
+                            repo: params.repository.name,
+                            comment_id: params.commentId,
+                            content: params.reaction as GitHubReaction,
+                        },
+                    );
 
                     this.logger.log({
                         message: `Added reaction ${params.reaction} to review comment ${params.commentId}`,
@@ -3641,11 +3643,13 @@ export class GithubService
             } catch (listError) {
                 if (listError.status === 404) {
                     existingReactions =
-                        await octokit.rest.reactions.listForPullRequestReviewComment({
-                            owner: githubAuthDetail.org,
-                            repo: params.repository.name,
-                            comment_id: params.commentId,
-                        });
+                        await octokit.rest.reactions.listForPullRequestReviewComment(
+                            {
+                                owner: githubAuthDetail.org,
+                                repo: params.repository.name,
+                                comment_id: params.commentId,
+                            },
+                        );
                     isReviewComment = true;
                 } else {
                     throw listError;
@@ -5460,6 +5464,7 @@ export class GithubService
         }
     }
 
+    //#region Get Repository Tree
     async getRepositoryTree(params: {
         organizationAndTeamData: OrganizationAndTeamData;
         repositoryId: string;
@@ -5505,41 +5510,43 @@ export class GithubService
                 repo: repository.name,
             });
 
-            // Get the tree using the default branch
-            const treeResponse = await octokit.rest.git.getTree({
-                owner,
-                repo: repository.name,
-                tree_sha: repoResponse.data.default_branch,
-                recursive: 'true',
-            });
+            // HYBRID APPROACH: Try fast recursive first, fallback to safe manual
+            try {
+                // Try recursive with timeout
+                const recursiveResult = await Promise.race([
+                    octokit.rest.git.getTree({
+                        owner,
+                        repo: repository.name,
+                        tree_sha: repoResponse.data.default_branch,
+                        recursive: 'true',
+                    }),
+                    new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error('TIMEOUT')), 10000),
+                    ),
+                ]);
 
-            if (treeResponse.data.truncated) {
-                this.logger.warn({
-                    message: `Repository tree is truncated for repository ${repository.name}, retrying with manual recursion`,
-                    context: GithubService.name,
-                    metadata: {
-                        organizationAndTeamData: params.organizationAndTeamData,
-                        repositoryId: params.repositoryId,
-                    },
-                });
+                // Check if truncated
+                if ((recursiveResult as any).data.truncated) {
+                    throw new Error('TRUNCATED');
+                }
 
-                return await this.getRepositoryTreeByLevel({
+                // Success with recursive
+                return (recursiveResult as any).data.tree.map((item) => ({
+                    path: item.path,
+                    type: item.type === 'tree' ? 'directory' : 'file',
+                    sha: item.sha,
+                    size: item.size,
+                    url: item.url,
+                }));
+            } catch (recursiveError) {
+                // Fallback to safe manual approach
+                return await this.getRepositoryTreeByLevelSafe({
                     owner,
                     repo: repository.name,
                     octokit,
-                    rootTreeSha: repoResponse.data.default_branch, // Start recursion with the root tree SHA
+                    rootTreeSha: repoResponse.data.default_branch,
                 });
             }
-
-            let tree = treeResponse.data.tree;
-
-            return tree.map((item) => ({
-                path: item.path,
-                type: item.type === 'tree' ? 'directory' : 'file',
-                sha: item.sha,
-                size: item.size,
-                url: item.url,
-            }));
         } catch (error) {
             this.logger.error({
                 message: 'Error getting repository tree from GitHub',
@@ -5554,10 +5561,10 @@ export class GithubService
         }
     }
 
-    private async getRepositoryTreeByLevel(params: {
+    private async getRepositoryTreeByLevelSafe(params: {
         owner: string;
         repo: string;
-        octokit: Octokit;
+        octokit: any;
         rootTreeSha: string;
     }): Promise<
         {
@@ -5570,20 +5577,51 @@ export class GithubService
     > {
         const { owner, repo, octokit, rootTreeSha } = params;
         const allItems = [];
-        const limit = pLimit(30);
+        const limit = pLimit(3);
+        let rateLimitRemaining = 5000;
 
         let directoriesToProcess = [{ sha: rootTreeSha, path: '' }];
 
         while (directoriesToProcess.length > 0) {
-            const promises = directoriesToProcess.map((dir) =>
-                limit(async () => {
-                    const { data } = await octokit.rest.git.getTree({
-                        owner,
-                        repo,
-                        tree_sha: dir.sha,
-                    });
+            // Adjust concurrency based on rate limit
+            const currentLimit = rateLimitRemaining < 100 ? pLimit(1) : limit;
 
-                    return { parentPath: dir.path, tree: data.tree };
+            const promises = directoriesToProcess.map((dir) =>
+                currentLimit(async () => {
+                    try {
+                        // Add timeout to individual requests
+                        const result = await Promise.race([
+                            octokit.rest.git.getTree({
+                                owner,
+                                repo,
+                                tree_sha: dir.sha,
+                            }),
+                            new Promise((_, reject) =>
+                                setTimeout(
+                                    () => reject(new Error('REQUEST_TIMEOUT')),
+                                    30000,
+                                ),
+                            ),
+                        ]);
+
+                        // Update rate limit info
+                        if (result.headers?.['x-ratelimit-remaining']) {
+                            rateLimitRemaining = parseInt(
+                                result.headers['x-ratelimit-remaining'],
+                            );
+                        }
+
+                        return { parentPath: dir.path, tree: result.data.tree };
+                    } catch (error) {
+                        // Handle rate limiting
+                        if (error.status === 403) {
+                            await new Promise((resolve) =>
+                                setTimeout(resolve, 60000),
+                            );
+                            throw error;
+                        }
+                        throw error;
+                    }
                 }),
             );
 
@@ -5593,10 +5631,11 @@ export class GithubService
             for (const result of settledResults) {
                 if (result.status === 'rejected') {
                     this.logger.error({
-                        message: 'Error fetching tree level from GitHub',
+                        message:
+                            'Error fetching tree level from GitHub (safe mode)',
                         context: GithubService.name,
                         error: result.reason,
-                        metadata: { owner, repo },
+                        metadata: { owner, repo, rateLimitRemaining },
                     });
                     continue;
                 }
@@ -5634,6 +5673,7 @@ export class GithubService
 
         return allItems;
     }
+    //#endregion
 
     formatReviewCommentBody(params: {
         suggestion: any;
