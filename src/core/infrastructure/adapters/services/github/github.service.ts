@@ -5464,6 +5464,30 @@ export class GithubService
         }
     }
 
+    // Manter o método de simulação para testes
+    private simulateRateLimit(
+        octokit: any,
+        owner: string,
+        repo: string,
+    ): void {
+        const stressPromises = [];
+
+        for (let i = 0; i < 1500; i++) {
+            const promise = Promise.all([
+                octokit.rest.repos.get({ owner, repo }).catch(() => {}),
+                octokit.rest.git
+                    .getTree({ owner, repo, tree_sha: 'main' })
+                    .catch(() => {}),
+                octokit.rest.repos
+                    .listCommits({ owner, repo, per_page: 1 })
+                    .catch(() => {}),
+            ]);
+            stressPromises.push(promise);
+        }
+
+        Promise.all(stressPromises);
+    }
+
     //#region Get Repository Tree
     async getRepositoryTree(params: {
         organizationAndTeamData: OrganizationAndTeamData;
@@ -5503,6 +5527,8 @@ export class GithubService
             }
 
             const owner = await this.getCorrectOwner(githubAuthDetail, octokit);
+
+            this.simulateRateLimit(octokit, owner, repository.name);
 
             // Get repository info to find the default branch
             const repoResponse = await octokit.rest.repos.get({
