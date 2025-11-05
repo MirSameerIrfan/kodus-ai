@@ -116,9 +116,6 @@ export class BitbucketService
         private readonly cacheService: CacheService,
         private readonly mcpManagerService?: MCPManagerService,
     ) {}
-    getRepositoryTreeByDirectory(params: { organizationAndTeamData: OrganizationAndTeamData; repositoryId: string; directoryPath?: string; }): Promise<TreeItem[]> {
-        throw new Error('Method not implemented.');
-    }
 
     private readonly USER_CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
@@ -4367,6 +4364,138 @@ export class BitbucketService
         }
 
         return Promise.resolve(commentBody.trim());
+    }
+
+    private async fetchDirectoryItems(
+        bitbucketAuthDetails: any,
+        workspace: string,
+        repositoryId: string,
+        directoryPath?: string,
+    ): Promise<any[]> {
+        try {
+            const bitbucketAPI =
+                this.instanceBitbucketApi(bitbucketAuthDetails);
+            const allItems: any[] = [];
+            let hasNext = true;
+            let nextPageUrl: string | null = null;
+            let pageCount = 0;
+
+            while (hasNext) {
+                pageCount++;
+
+                let response: any;
+
+                try {
+                    if (directoryPath) {
+                        // Para um path específico - usar source.read
+                        response = await bitbucketAPI.source.read({
+                            workspace: `{${workspace}}`,
+                            repo_slug: `{${repositoryId}}`,
+                            path: directoryPath,
+                            pagelen: 50,
+                            commit: 'HEAD',
+                        });
+                    } else {
+                        // Para raiz - usar source.readRoot
+                        response = await bitbucketAPI.source.readRoot({
+                            workspace: `{${workspace}}`,
+                            repo_slug: `{${repositoryId}}`,
+                            pagelen: 50,
+                        });
+                    }
+                } catch (apiError) {
+                    throw apiError;
+                }
+
+                const items = response.data?.values || [];
+
+                allItems.push(...items);
+
+                nextPageUrl = response.data?.next || null;
+                hasNext = !!nextPageUrl;
+            }
+
+            return allItems;
+        } catch (error) {
+            this.logger.error({
+                message: 'Error fetching directory items from Bitbucket',
+                context: 'fetchDirectoryItems',
+                error: error,
+                metadata: { workspace, repositoryId, directoryPath },
+            });
+            return [];
+        }
+    }
+
+    async getRepositoryTreeByDirectory(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+        repositoryId: string;
+        directoryPath?: string;
+    }): Promise<TreeItem[]> {
+        try {
+            const { organizationAndTeamData, repositoryId, directoryPath } =
+                params;
+
+            const bitbucketAuthDetails = await this.getAuthDetails(
+                organizationAndTeamData,
+            );
+
+            if (!bitbucketAuthDetails) {
+                return [];
+            }
+
+            const workspace = await this.getWorkspaceFromRepository(
+                organizationAndTeamData,
+                repositoryId,
+            );
+
+            if (!workspace) {
+                return [];
+            }
+
+            const items = await this.fetchDirectoryItems(
+                bitbucketAuthDetails,
+                workspace,
+                repositoryId,
+                directoryPath,
+            );
+
+            if (!items || !Array.isArray(items)) {
+                return [];
+            }
+
+            const directories = items
+                .filter((item: any) => {
+                    const isDir = item.type === 'commit_directory';
+                    return isDir;
+                })
+                .map((item: any) => {
+                    const mapped = {
+                        path: item.path,
+                        type: 'directory' as const,
+                        sha: item.commit?.hash || '',
+                        size: undefined,
+                        url: item.links?.self?.href || '',
+                        hasChildren: true,
+                    };
+                    return mapped;
+                });
+
+            return directories;
+        } catch (error) {
+            this.logger.error({
+                message:
+                    'Error getting repository tree by directory from Bitbucket',
+                context: this.getRepositoryTreeByDirectory.name,
+                error: error,
+                metadata: {
+                    organizationAndTeamData: params.organizationAndTeamData,
+                    repositoryId: params.repositoryId,
+                    directoryPath: params.directoryPath,
+                },
+            });
+            return [];
+        }
     }
 
     async getRepositoryTree(params: {
