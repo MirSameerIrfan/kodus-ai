@@ -161,7 +161,7 @@ export class LoadExternalContextStage
                         if (skipped?.length) {
                             this.logger.warn({
                                 message:
-                                    'Algumas ferramentas MCP foram ignoradas por falta de argumentos',
+                                    'Some MCP tools were skipped due to missing arguments',
                                 context: this.stageName,
                                 metadata: {
                                     organizationId,
@@ -222,8 +222,8 @@ export class LoadExternalContextStage
     }
 
     /**
-     * Conta quantas referências externas foram efetivamente carregadas
-     * (útil apenas para logging/observabilidade do stage).
+     * Counts how many external references were effectively loaded
+     * (useful only for logging/observability of the stage).
      */
     private countLoadedReferences(context: any): number {
         let count = 0;

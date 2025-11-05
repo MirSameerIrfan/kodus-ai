@@ -652,7 +652,7 @@ export class AzureReposRequestHelper {
                 error.response?.status === 404
             ) {
                 throw new Error(
-                    `Erro ao buscar diff para o arquivo '${params.filePath || 'ALL'}' entre ${params.baseCommit} e ${params.targetCommitId}.`,
+                    `Error fetching diff for file '${params.filePath || 'ALL'}' between ${params.baseCommit} and ${params.targetCommitId}.`,
                 );
             }
             throw error;
@@ -946,7 +946,7 @@ export class AzureReposRequestHelper {
             } = {
                 params: {
                     'api-version': '7.1-preview.1',
-                    subjectTypes: 'aad,msa,vss,svc',
+                    'subjectTypes': 'aad,msa,vss,svc',
                 },
             };
 
@@ -956,7 +956,10 @@ export class AzureReposRequestHelper {
                 };
             }
 
-            const response = await instance.get('/_apis/graph/users', requestConfig);
+            const response = await instance.get(
+                '/_apis/graph/users',
+                requestConfig,
+            );
             users.push(...(response.data?.value ?? []));
 
             const headerValue =

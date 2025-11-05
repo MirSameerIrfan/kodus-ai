@@ -12,5 +12,6 @@ export * from './pipeline/tri-layer-pack-builder.js';
 export * from './mcp/registry.js';
 export * from './mcp/orchestrator.js';
 export * from './mcp/sanitizer.js';
+export * from './mcp/utils.js';
 export * from './utils/budget.js';
 export * from './utils/context-requirements.js';

@@ -178,7 +178,7 @@ export class CodeReviewHandlerService {
             }
 
             this.logger.error({
-                message: `Erro ao executar pipeline de code review para PR#${pullRequest.number}`,
+                message: `Error executing code review pipeline for PR#${pullRequest.number}`,
                 context: CodeReviewHandlerService.name,
                 error,
                 metadata: {

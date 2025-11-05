@@ -155,7 +155,7 @@ export class GetModelsByProviderUseCase {
             return models;
         } catch (error) {
             throw new BadRequestException(
-                `Erro ao buscar modelos OpenAI: ${(error as Error).message}`,
+                `Error fetching OpenAI models: ${(error as Error).message}`,
             );
         }
     }
@@ -182,7 +182,7 @@ export class GetModelsByProviderUseCase {
             };
         } catch (error) {
             throw new BadRequestException(
-                `Erro ao buscar modelos Anthropic: ${(error as Error).message}`,
+                `Error fetching Anthropic models: ${(error as Error).message}`,
             );
         }
     }
@@ -247,7 +247,7 @@ export class GetModelsByProviderUseCase {
             return models;
         } catch (error) {
             throw new BadRequestException(
-                `Erro ao buscar modelos Gemini: ${(error as Error).message}`,
+                `Error fetching Gemini models: ${(error as Error).message}`,
             );
         }
     }
@@ -272,7 +272,7 @@ export class GetModelsByProviderUseCase {
             };
         } catch (error) {
             throw new BadRequestException(
-                `Erro ao buscar modelos OpenRouter: ${(error as Error).message}`,
+                `Error fetching OpenRouter models: ${(error as Error).message}`,
             );
         }
     }
@@ -298,7 +298,7 @@ export class GetModelsByProviderUseCase {
             };
         } catch (error) {
             throw new BadRequestException(
-                `Erro ao buscar modelos Novita: ${(error as Error).message}`,
+                `Error fetching Novita models: ${(error as Error).message}`,
             );
         }
     }
@@ -334,7 +334,7 @@ export class GetModelsByProviderUseCase {
             };
         } catch (error) {
             throw new BadRequestException(
-                `Erro ao buscar modelos OpenAI Compatible: ${(error as Error).message}`,
+                `Error fetching OpenAI Compatible models: ${(error as Error).message}`,
             );
         }
     }
@@ -379,9 +379,9 @@ export class GetModelsByProviderUseCase {
                     })),
             };
         } catch (error) {
-            console.error('❌ Erro ao buscar modelos Vertex:', error);
+            console.error('❌ Error fetching Vertex models:', error);
             throw new BadRequestException(
-                `Erro ao buscar modelos Google Vertex: ${(error as Error).message}`,
+                `Error fetching Google Vertex models: ${(error as Error).message}`,
             );
         }
     }

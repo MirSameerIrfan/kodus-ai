@@ -40,6 +40,7 @@ export interface MCPExecutionContext {
     pack: ContextPack;
     input: LayerInputContext;
     runtime?: RuntimeContextSnapshot;
+    dependencies?: ContextDependency[];
 }
 
 export interface MCPToolExecutionRecord {
@@ -184,8 +185,11 @@ export class MCPOrchestrator {
         pack,
         input,
         runtime,
+        dependencies: explicitDependencies,
     }: MCPExecutionContext): Promise<MCPOrchestratorReport> {
-        const required = this.extractToolDependencies(pack.dependencies);
+        // Usa dependencies explícitas se fornecidas, senão usa do pack
+        const dependencies = explicitDependencies ?? pack.dependencies ?? [];
+        const required = this.extractToolDependencies(dependencies);
 
         if (!required.length) {
             const now = Date.now();

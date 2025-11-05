@@ -71,6 +71,7 @@ import {
     MCPToolMetadata,
     MCPToolMetadataService,
 } from '@/core/infrastructure/adapters/mcp/services/mcp-tool-metadata.service';
+import type { MCPServerConfig } from '@kodus/flow';
 
 @Injectable()
 export class UpdateOrCreateCodeReviewParameterUseCase {
@@ -522,14 +523,13 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
             return;
         }
 
-        const {
-            providerMap,
-            toolMap,
-            allowedTools,
-            metadata: toolMetadata,
-        } = await this.mcpToolMetadataService.loadMetadataForOrganization(
-            organizationAndTeamData,
-        );
+        const { connections: mcpConnections, metadata: toolMetadata } =
+            await this.mcpToolMetadataService.loadMetadataForOrganization(
+                organizationAndTeamData,
+            );
+
+        const { providerAliases, toolAliases, allowedTools } =
+            this.buildMCPAliasStructures(mcpConnections);
 
         for (const field of normalizedFields) {
             const pathKey = pathToKey(field.path);
@@ -546,8 +546,8 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
 
             const promptNormalization = this.normalizeMCPDependencies(
                 rawMcpDependencies,
-                providerMap,
-                toolMap,
+                providerAliases,
+                toolAliases,
                 allowedTools,
                 toolMetadata,
             );
@@ -597,8 +597,8 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
 
             const detectionNormalization = this.normalizeMCPDependencies(
                 detectionRequirement?.dependencies,
-                providerMap,
-                toolMap,
+                providerAliases,
+                toolAliases,
                 allowedTools,
                 toolMetadata,
             );
@@ -863,10 +863,105 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
         return Array.from(map.values());
     }
 
+    private buildMCPAliasStructures(connections: MCPServerConfig[]): {
+        providerAliases: Map<string, string>;
+        toolAliases: Map<string, Map<string, string>>;
+        allowedTools: Map<string, Set<string>>;
+    } {
+        const providerAliases = new Map<string, string>();
+        const toolAliases = new Map<string, Map<string, string>>();
+        const allowedTools = new Map<string, Set<string>>();
+
+        const registerProviderAlias = (
+            alias: string | undefined,
+            canonical: string,
+        ) => {
+            const trimmed = alias?.trim();
+            if (!trimmed) {
+                return;
+            }
+            if (!providerAliases.has(trimmed)) {
+                providerAliases.set(trimmed, canonical);
+            }
+            const normalized = this.normalizeProviderKey(trimmed);
+            if (normalized && !providerAliases.has(normalized)) {
+                providerAliases.set(normalized, canonical);
+            }
+        };
+
+        const registerToolAlias = (
+            aliasMap: Map<string, string>,
+            canonicalTool: string,
+        ) => {
+            const trimmed = canonicalTool?.trim();
+            if (!trimmed) {
+                return;
+            }
+
+            if (!aliasMap.has(trimmed)) {
+                aliasMap.set(trimmed, trimmed);
+            }
+
+            const lower = trimmed.toLowerCase();
+            if (!aliasMap.has(lower)) {
+                aliasMap.set(lower, trimmed);
+            }
+
+            const upper = trimmed.toUpperCase();
+            if (!aliasMap.has(upper)) {
+                aliasMap.set(upper, trimmed);
+            }
+
+            const normalized = this.normalizeToolKey(trimmed);
+            if (normalized && !aliasMap.has(normalized)) {
+                aliasMap.set(normalized, trimmed);
+            }
+        };
+
+        for (const connection of connections ?? []) {
+            const canonicalProvider =
+                connection.provider?.trim() ||
+                connection.name?.trim() ||
+                connection.url?.trim();
+
+            if (!canonicalProvider) {
+                continue;
+            }
+
+            registerProviderAlias(canonicalProvider, canonicalProvider);
+            registerProviderAlias(connection.provider, canonicalProvider);
+            registerProviderAlias(connection.name, canonicalProvider);
+            registerProviderAlias(connection.url, canonicalProvider);
+
+            if (!allowedTools.has(canonicalProvider)) {
+                allowedTools.set(canonicalProvider, new Set());
+            }
+
+            if (!toolAliases.has(canonicalProvider)) {
+                toolAliases.set(canonicalProvider, new Map());
+            }
+
+            const aliasMap = toolAliases.get(canonicalProvider)!;
+            const providerAllowedTools = allowedTools.get(canonicalProvider)!;
+
+            for (const tool of connection.allowedTools ?? []) {
+                const canonicalTool = tool?.trim();
+                if (!canonicalTool) {
+                    continue;
+                }
+
+                providerAllowedTools.add(canonicalTool);
+                registerToolAlias(aliasMap, canonicalTool);
+            }
+        }
+
+        return { providerAliases, toolAliases, allowedTools };
+    }
+
     private normalizeMCPDependencies(
         dependencies: ContextDependency[] | undefined,
-        providerMap: Map<string, string>,
-        toolMap: Map<string, Map<string, string>>,
+        providerAliases: Map<string, string>,
+        toolAliases: Map<string, Map<string, string>>,
         allowedTools: Map<string, Set<string>>,
         toolMetadata: Map<string, MCPToolMetadata>,
     ): {
@@ -883,8 +978,8 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
         for (const dependency of dependencies) {
             const normalized = this.normalizeDependency(
                 dependency,
-                providerMap,
-                toolMap,
+                providerAliases,
+                toolAliases,
                 allowedTools,
             );
             if (normalized.errors.length) {
@@ -894,8 +989,8 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
                 const enriched = this.applyToolMetadata(
                     normalized.dependency,
                     toolMetadata,
-                    providerMap,
-                    toolMap,
+                    providerAliases,
+                    toolAliases,
                 );
                 merged.push(enriched);
             }
@@ -906,33 +1001,35 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
 
     private normalizeDependency(
         dependency: ContextDependency,
-        providerMap: Map<string, string>,
-        toolMap: Map<string, Map<string, string>>,
+        providerAliases: Map<string, string>,
+        toolAliases: Map<string, Map<string, string>>,
         allowedTools: Map<string, Set<string>>,
     ): {
         dependency?: ContextDependency;
         errors: IPromptReferenceSyncError[];
     } {
-        if (
-            dependency.type !== 'mcp' &&
-            dependency.type !== 'tool'
-        ) {
+        if (dependency.type !== 'mcp' && dependency.type !== 'tool') {
             return { dependency, errors: [] };
         }
 
         const originalProvider = this.resolveDependencyProvider(dependency);
         const canonicalProvider = originalProvider
-            ? this.resolveCanonicalProvider(originalProvider, providerMap)
+            ? this.resolveCanonicalProvider(originalProvider, providerAliases)
             : undefined;
 
-        const finalProvider = canonicalProvider ?? originalProvider;
         const errors: IPromptReferenceSyncError[] = [];
+
+        const finalProvider =
+            canonicalProvider ??
+            (originalProvider && allowedTools.has(originalProvider)
+                ? originalProvider
+                : undefined);
 
         if (!finalProvider) {
             if (originalProvider) {
                 errors.push({
                     type: PromptReferenceErrorType.INVALID_FORMAT,
-                    message: `Provider MCP \"${originalProvider}\" não está configurado para esta organização/time. Ajuste o prompt ou habilite a conexão correspondente.`,
+                    message: `MCP provider "${originalProvider}" is not configured for this organization/team. Adjust the prompt or enable the corresponding connection.`,
                     details: {
                         timestamp: new Date(),
                     },
@@ -945,7 +1042,7 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
         const canonicalTool = this.resolveCanonicalTool(
             originalTool,
             finalProvider,
-            toolMap,
+            toolAliases,
         );
         const finalTool = canonicalTool ?? originalTool;
 
@@ -978,11 +1075,11 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
             const available = allowedTools.get(finalProvider);
             const availableList = available
                 ? Array.from(available.values()).join(', ')
-                : 'nenhuma ferramenta cadastrada';
+                : 'no tools registered';
 
             errors.push({
                 type: PromptReferenceErrorType.INVALID_FORMAT,
-                message: `A ferramenta \"${originalTool}\" não está habilitada para o MCP \"${finalProvider}\". Ferramentas disponíveis: ${availableList}.`,
+                message: `Tool "${originalTool}" is not enabled for MCP provider "${finalProvider}". Available tools: ${availableList}.`,
                 details: {
                     timestamp: new Date(),
                 },
@@ -1027,8 +1124,8 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
     private applyToolMetadata(
         dependency: ContextDependency,
         metadataMap: Map<string, MCPToolMetadata>,
-        providerMap: Map<string, string>,
-        toolMap: Map<string, Map<string, string>>,
+        providerAliases: Map<string, string>,
+        toolAliases: Map<string, Map<string, string>>,
     ): ContextDependency {
         const provider = this.resolveDependencyProvider(dependency);
         const toolName = this.resolveDependencyToolName(dependency);
@@ -1037,13 +1134,26 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
             return dependency;
         }
 
-        const metadata = this.mcpToolMetadataService.getMetadataForTool(
+        const canonicalProvider =
+            this.resolveCanonicalProvider(provider, providerAliases) ??
+            provider;
+        const canonicalToolName =
+            this.resolveCanonicalTool(
+                toolName,
+                canonicalProvider,
+                toolAliases,
+            ) ?? toolName;
+
+        const metadataEntry = this.mcpToolMetadataService.resolveToolMetadata(
             metadataMap,
-            provider,
-            toolName,
-            providerMap,
-            toolMap,
+            canonicalProvider,
+            canonicalToolName,
         );
+
+        const resolvedProvider = metadataEntry?.providerId ?? canonicalProvider;
+        const resolvedToolName = metadataEntry?.toolName ?? canonicalToolName;
+        const metadata = metadataEntry?.metadata;
+
         if (!metadata) {
             return dependency;
         }
@@ -1063,11 +1173,43 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
             ...currentMetadata,
             requiredArgs: mergedRequired,
             toolInputSchema: metadata.inputSchema,
+            provider: resolvedProvider,
+            toolName: resolvedToolName,
         } as Record<string, unknown>;
+
+        if (
+            provider &&
+            resolvedProvider &&
+            provider !== resolvedProvider &&
+            !mergedMetadata.providerAlias
+        ) {
+            mergedMetadata.providerAlias = provider;
+        }
+
+        if (
+            toolName &&
+            resolvedToolName &&
+            toolName !== resolvedToolName &&
+            !mergedMetadata.toolNameAlias
+        ) {
+            mergedMetadata.toolNameAlias = toolName;
+        }
+
+        let descriptor = dependency.descriptor;
+        if (descriptor && typeof descriptor === 'object') {
+            const candidate = descriptor as Record<string, unknown>;
+            descriptor = {
+                ...candidate,
+                mcpId: resolvedProvider,
+                toolName: resolvedToolName,
+            };
+        }
 
         return {
             ...dependency,
+            id: `${resolvedProvider}|${resolvedToolName}`,
             metadata: mergedMetadata,
+            descriptor,
         };
     }
 
@@ -1075,38 +1217,68 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
         provider: string,
         aliasMap: Map<string, string>,
     ): string | undefined {
-        const key = this.normalizeProviderKey(provider);
-        if (!key) {
+        const trimmed = provider?.trim();
+        if (!trimmed) {
             return undefined;
         }
-        return aliasMap.get(key);
+
+        if (aliasMap.has(trimmed)) {
+            return aliasMap.get(trimmed);
+        }
+
+        const key = this.normalizeProviderKey(trimmed);
+        if (key && aliasMap.has(key)) {
+            return aliasMap.get(key);
+        }
+
+        return undefined;
     }
 
     private resolveCanonicalTool(
         toolName: string | undefined,
         provider: string,
-        toolMap: Map<string, Map<string, string>>,
+        toolAliases: Map<string, Map<string, string>>,
     ): string | undefined {
         if (!toolName) {
             return undefined;
         }
 
-        const providerKey = this.normalizeProviderKey(provider);
-        if (!providerKey) {
+        const trimmedProvider = provider?.trim();
+        if (!trimmedProvider) {
             return undefined;
         }
 
-        const providerToolMap = toolMap.get(providerKey);
-        if (!providerToolMap) {
+        const aliasMap = toolAliases.get(trimmedProvider);
+
+        if (!aliasMap) {
             return undefined;
         }
 
-        const toolKey = this.normalizeToolKey(toolName);
-        if (!toolKey) {
+        const trimmedTool = toolName.trim();
+        if (!trimmedTool) {
             return undefined;
         }
 
-        return providerToolMap.get(toolKey);
+        if (aliasMap.has(trimmedTool)) {
+            return aliasMap.get(trimmedTool);
+        }
+
+        const lower = trimmedTool.toLowerCase();
+        if (aliasMap.has(lower)) {
+            return aliasMap.get(lower);
+        }
+
+        const upper = trimmedTool.toUpperCase();
+        if (aliasMap.has(upper)) {
+            return aliasMap.get(upper);
+        }
+
+        const normalized = this.normalizeToolKey(trimmedTool);
+        if (normalized && aliasMap.has(normalized)) {
+            return aliasMap.get(normalized);
+        }
+
+        return undefined;
     }
 
     private resolveDependencyProvider(
@@ -1122,9 +1294,7 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
                 return provider;
             }
 
-            const providerAlias = metadata.providerAlias as
-                | string
-                | undefined;
+            const providerAlias = metadata.providerAlias as string | undefined;
             if (providerAlias && providerAlias.trim()) {
                 return providerAlias;
             }

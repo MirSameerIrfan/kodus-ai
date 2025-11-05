@@ -6,15 +6,19 @@ import { CONTEXT_REFERENCE_REPOSITORY_TOKEN } from '@/core/domain/contextReferen
 import { ContextReferenceService } from '@/core/infrastructure/adapters/services/context/context-reference.service';
 import { CodeReviewContextPackService } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
 import { CONTEXT_REFERENCE_SERVICE_TOKEN } from '@/core/domain/contextReferences/contracts/context-reference.service.contract';
-import { MCPToolArgResolver } from '@/core/infrastructure/adapters/services/context/mcp-tool-arg-resolver.service';
+import { MCPToolArgResolverAgentService } from '@/core/infrastructure/adapters/services/context/mcp-tool-arg-resolver-agent.service';
 import { MCPToolMetadataService } from '@/core/infrastructure/adapters/mcp/services/mcp-tool-metadata.service';
+import { PermissionValidationModule } from '@/ee/shared/permission-validation.module';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([ContextReferenceModel])],
+    imports: [
+        TypeOrmModule.forFeature([ContextReferenceModel]),
+        PermissionValidationModule,
+    ],
     providers: [
         ContextReferenceService,
         CodeReviewContextPackService,
-        MCPToolArgResolver,
+        MCPToolArgResolverAgentService,
         MCPToolMetadataService,
         {
             provide: CONTEXT_REFERENCE_SERVICE_TOKEN,
@@ -28,7 +32,7 @@ import { MCPToolMetadataService } from '@/core/infrastructure/adapters/mcp/servi
     exports: [
         ContextReferenceService,
         CodeReviewContextPackService,
-        MCPToolArgResolver,
+        MCPToolArgResolverAgentService,
         MCPToolMetadataService,
         CONTEXT_REFERENCE_SERVICE_TOKEN,
         CONTEXT_REFERENCE_REPOSITORY_TOKEN,

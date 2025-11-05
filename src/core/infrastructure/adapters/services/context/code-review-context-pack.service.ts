@@ -20,7 +20,7 @@ import { MCPOrchestrator } from '@context-os-core/mcp/orchestrator';
 import { InMemoryMCPRegistry } from '@context-os-core/mcp/registry';
 import { SequentialPackAssemblyPipeline } from '@context-os-core/pipeline/sequential-pack-pipeline';
 import { ContextReferenceService } from './context-reference.service';
-import { MCPToolArgResolver } from './mcp-tool-arg-resolver.service';
+import { MCPToolArgResolverAgentService } from './mcp-tool-arg-resolver-agent.service';
 import {
     CODE_REVIEW_CONTEXT_PATTERNS,
     pathToKey,
@@ -188,7 +188,7 @@ export class CodeReviewContextPackService {
         private readonly contextReferenceService: ContextReferenceService,
         private readonly mcpToolMetadataService: MCPToolMetadataService,
         private readonly logger: PinoLoggerService,
-        private readonly mcpToolArgResolver: MCPToolArgResolver,
+        private readonly mcpToolArgResolver: MCPToolArgResolverAgentService,
     ) {}
 
     /**
@@ -199,33 +199,123 @@ export class CodeReviewContextPackService {
         const { organizationAndTeamData, contextReferenceId, overrides } =
             params;
 
-        const sanitizedOverrides = this.sanitizeOverrides(overrides);
+        // NÃO sanitiza ainda - vamos substituir os marcadores MCP primeiro
+        // depois sanitiza o que sobrou (se necessário)
+        let processedOverrides = overrides
+            ? (JSON.parse(
+                  JSON.stringify(overrides),
+              ) as CodeReviewConfig['v2PromptOverrides'])
+            : undefined;
 
         if (!contextReferenceId || !organizationAndTeamData?.organizationId) {
-            return { sanitizedOverrides };
+            // Se não tem contexto, sanitiza e retorna
+            return {
+                sanitizedOverrides: this.sanitizeOverrides(processedOverrides),
+            };
         }
 
         const reference =
             await this.contextReferenceService.findById(contextReferenceId);
 
         if (!reference) {
-            return { sanitizedOverrides };
+            return {
+                sanitizedOverrides: this.sanitizeOverrides(processedOverrides),
+            };
         }
 
         const requirements = reference.requirements ?? [];
         const dependencies = this.buildDependencies(requirements);
         const hasPackContent =
-            Boolean(sanitizedOverrides) ||
+            Boolean(processedOverrides) ||
             dependencies.length > 0 ||
             (params.externalLayers?.length ?? 0) > 0;
 
         if (!hasPackContent) {
-            return { sanitizedOverrides };
+            return {
+                sanitizedOverrides: this.sanitizeOverrides(processedOverrides),
+            };
         }
 
+        // Carrega metadata e resolve dependencies ANTES de executar tools
+        const metadataLoad = dependencies.length
+            ? await this.mcpToolMetadataService.loadMetadataForOrganization(
+                  organizationAndTeamData,
+              )
+            : {
+                  connections: [] as MCPServerConfig[],
+                  metadata: new Map<string, MCPToolMetadata>(),
+              };
+
+        const connections = metadataLoad.connections;
+        const metadata = metadataLoad.metadata;
+
+        // Cria pack temporário para resolução de dependencies
+        const tempPack = await this.assemblePackFromPipeline({
+            contextReferenceId,
+            instructionsLayer: processedOverrides
+                ? this.createInstructionsLayer(
+                      contextReferenceId,
+                      processedOverrides,
+                  )
+                : undefined,
+            externalLayers: params.externalLayers,
+        });
+
+        const { resolvedDependencies } =
+            await this.resolveMCPDependenciesForPack({
+                dependencies,
+                pack: tempPack,
+                organizationAndTeamData,
+                toolMetadata: metadata,
+            });
+
+        // Executa tools e substitui marcadores ANTES de criar o pack final
+        let augmentations: ContextAugmentationsMap | undefined;
+        if (resolvedDependencies.length > 0 && connections?.length > 0) {
+            const { augmentations: execAugmentations } =
+                await this.executeDependencies({
+                    contextReferenceId,
+                    connections,
+                    dependencies: resolvedDependencies,
+                    pack: tempPack,
+                });
+
+            augmentations = execAugmentations;
+
+            // Substitui marcadores MCP pelos resultados das tools nos overrides
+            if (augmentations && Object.keys(augmentations).length > 0) {
+                this.logger.debug({
+                    message: 'MCP marker replacement: starting replacement',
+                    context: CodeReviewContextPackService.name,
+                    metadata: {
+                        augmentationsKeys: Object.keys(augmentations),
+                        dependenciesCount: resolvedDependencies.length,
+                        hasProcessedOverrides: !!processedOverrides,
+                    },
+                });
+
+                processedOverrides = this.replaceMCPMarkersInOverrides(
+                    processedOverrides,
+                    augmentations,
+                    resolvedDependencies,
+                );
+
+                this.logger.debug({
+                    message: 'MCP marker replacement: replacement completed',
+                    context: CodeReviewContextPackService.name,
+                    metadata: {
+                        resultStringified: JSON.stringify(
+                            processedOverrides,
+                        ).substring(0, 500),
+                    },
+                });
+            }
+        }
+
+        // Agora cria o pack FINAL com os overrides já substituídos
         const instructionsLayer = this.createInstructionsLayer(
             contextReferenceId,
-            sanitizedOverrides,
+            processedOverrides,
         );
 
         const pack = await this.assemblePackFromPipeline({
@@ -234,100 +324,14 @@ export class CodeReviewContextPackService {
             externalLayers: params.externalLayers,
         });
 
-        pack.dependencies = dependencies;
+        // Garante que dependencies sempre seja um array (mesmo que vazio)
+        pack.dependencies =
+            resolvedDependencies.length > 0 ? resolvedDependencies : [];
         pack.metadata = {
             ...(pack.metadata ?? {}),
             contextReferenceId,
             requirementIds: requirements.map((req) => req.id),
         };
-
-        const metadataLoad = dependencies.length
-            ? await this.mcpToolMetadataService.loadMetadataForOrganization(
-                  organizationAndTeamData,
-              )
-            : {
-                  connections: [] as MCPServerConfig[],
-                  metadata: new Map<string, MCPToolMetadata>(),
-                  providerMap: new Map<string, string>(),
-                  toolMap: new Map<string, Map<string, string>>(),
-                  allowedTools: new Map<string, Set<string>>(),
-              };
-
-        let connections = metadataLoad.connections;
-        let metadata = metadataLoad.metadata;
-        let providerAliases = metadataLoad.providerMap;
-        let toolAliases = metadataLoad.toolMap;
-
-        if (dependencies.length && metadata.size) {
-            const neededProviders = this.collectNeededProviders(
-                dependencies,
-                providerAliases,
-            );
-
-            if (neededProviders.size) {
-                connections = this.filterConnectionsByProviders(
-                    connections,
-                    neededProviders,
-                );
-                metadata = this.filterMetadataByProviders(
-                    metadata,
-                    neededProviders,
-                );
-                providerAliases = this.filterProviderAliases(
-                    providerAliases,
-                    neededProviders,
-                );
-                toolAliases = this.filterToolAliases(
-                    toolAliases,
-                    providerAliases,
-                    neededProviders,
-                );
-
-                if (!metadata.size) {
-                    connections = [];
-                    providerAliases = new Map<string, string>();
-                    toolAliases = new Map<string, Map<string, string>>();
-                }
-            } else {
-                connections = [];
-                metadata = new Map<string, MCPToolMetadata>();
-                providerAliases = new Map<string, string>();
-                toolAliases = new Map<string, Map<string, string>>();
-            }
-        }
-
-        const { resolvedDependencies, skippedDependencies } =
-            await this.resolveMCPDependenciesForPack({
-                dependencies,
-                pack,
-                organizationAndTeamData,
-                toolMetadata: metadata,
-                providerAliases,
-                toolAliases,
-            });
-
-        pack.dependencies = resolvedDependencies;
-
-        if (!resolvedDependencies.length) {
-            return {
-                sanitizedOverrides,
-                pack,
-            };
-        }
-
-        if (!connections?.length) {
-            return {
-                sanitizedOverrides,
-                pack,
-            };
-        }
-
-        const { augmentations } = await this.executeDependencies({
-            contextReferenceId,
-            connections,
-            dependencies: resolvedDependencies,
-            pack,
-        });
 
         if (augmentations && Object.keys(augmentations).length > 0) {
             pack.layers.push(
@@ -338,6 +342,10 @@ export class CodeReviewContextPackService {
             );
         }
 
+        // NÃO sanitiza depois - os marcadores já foram substituídos ou mantidos
+        // Se ainda houver marcadores não resolvidos, eles serão mantidos (não removidos)
+        const sanitizedOverrides = processedOverrides;
+
         return {
             sanitizedOverrides,
             augmentations,
@@ -347,6 +355,7 @@ export class CodeReviewContextPackService {
 
     /**
      * Remove marcadores e campos vazios dos overrides antes de inseri-los no pack.
+     * NÃO remove nós mcpMention do TipTap JSON - esses serão substituídos depois.
      */
     private sanitizeOverrides(
         overrides?: CodeReviewConfig['v2PromptOverrides'],
@@ -369,8 +378,14 @@ export class CodeReviewContextPackService {
             }
 
             if (node && typeof node === 'object') {
+                const candidate = node as Record<string, unknown>;
+
+                if (candidate.type === 'mcpMention') {
+                    return node;
+                }
+
                 const result: Record<string, unknown> = {};
-                for (const [key, value] of Object.entries(node)) {
+                for (const [key, value] of Object.entries(candidate)) {
                     result[key] = sanitizeRecursive(value);
                 }
                 return result;
@@ -384,9 +399,392 @@ export class CodeReviewContextPackService {
         ) as CodeReviewConfig['v2PromptOverrides'];
     }
 
-    /**
-     * Converte os requirements em uma lista deduplicada de dependências MCP.
-     */
+    private replaceMCPMarkersInOverrides(
+        overrides: CodeReviewConfig['v2PromptOverrides'] | undefined,
+        augmentations: ContextAugmentationsMap,
+        dependencies: ContextDependency[],
+    ): CodeReviewConfig['v2PromptOverrides'] | undefined {
+        if (!overrides) {
+            return undefined;
+        }
+
+        const clone = JSON.parse(
+            JSON.stringify(overrides),
+        ) as CodeReviewConfig['v2PromptOverrides'];
+
+        const dependencyMap = new Map<string, ContextDependency>();
+        for (const dep of dependencies) {
+            const provider = this.resolveProvider(dep);
+            const toolName = this.resolveToolName(dep);
+            if (provider && toolName) {
+                dependencyMap.set(`${provider}|${toolName}`, dep);
+            }
+        }
+
+        const { resultsMap, errorsMap } = this.buildToolResultMaps(
+            augmentations,
+            dependencyMap,
+        );
+
+        const lookup = (provider: string, tool: string) => {
+            const normalized = this.normalizeProviderToolKey(provider, tool);
+
+            let result = resultsMap.get(normalized);
+            let error = errorsMap.get(normalized);
+
+            if (result || error) {
+                return { result, error };
+            }
+
+            const dep =
+                dependencyMap.get(normalized) ??
+                dependencyMap.get(`${provider}|${tool}`);
+
+            if (dep) {
+                const providerAlias = dep.metadata?.providerAlias as
+                    | string
+                    | undefined;
+                const toolNameAlias = dep.metadata?.toolNameAlias as
+                    | string
+                    | undefined;
+
+                const aliasKeys = this.generateNormalizedKeys(
+                    provider,
+                    tool,
+                    providerAlias,
+                    toolNameAlias,
+                );
+
+                for (const key of aliasKeys) {
+                    result = resultsMap.get(key);
+                    error = errorsMap.get(key);
+                    if (result || error) {
+                        return { result, error };
+                    }
+                }
+
+                const realProvider = this.resolveProvider(dep);
+                const realToolName = this.resolveToolName(dep);
+                if (realProvider && realToolName) {
+                    const realKey = this.normalizeProviderToolKey(
+                        realProvider,
+                        realToolName,
+                    );
+                    result = resultsMap.get(realKey);
+                    error = errorsMap.get(realKey);
+                    if (result || error) {
+                        return { result, error };
+                    }
+                }
+            }
+
+            return { result: undefined, error: undefined };
+        };
+
+        const replaceRecursive = (node: unknown): unknown => {
+            if (typeof node === 'string') {
+                const parsed = this.tryParseJSON(node);
+                if (parsed !== null) {
+                    const processed = replaceRecursive(parsed);
+                    if (processed !== parsed) {
+                        return JSON.stringify(processed);
+                    }
+                }
+                return this.replaceMarkersInString(node, lookup);
+            }
+
+            if (Array.isArray(node)) {
+                const replaced: unknown[] = [];
+                for (const item of node) {
+                    if (
+                        item &&
+                        typeof item === 'object' &&
+                        (item as Record<string, unknown>).type === 'mcpMention'
+                    ) {
+                        const replacedNode = this.replaceMCPMentionNode(
+                            item as Record<string, unknown>,
+                            lookup,
+                        );
+                        if (
+                            replacedNode !== null &&
+                            replacedNode !== undefined
+                        ) {
+                            replaced.push(replacedNode);
+                        }
+                        continue;
+                    }
+                    const replacedItem = replaceRecursive(item);
+                    if (replacedItem !== null && replacedItem !== undefined) {
+                        replaced.push(replacedItem);
+                    }
+                }
+                return replaced;
+            }
+
+            if (node && typeof node === 'object') {
+                const candidate = node as Record<string, unknown>;
+
+                if (candidate.type === 'mcpMention') {
+                    return this.replaceMCPMentionNode(candidate, lookup);
+                }
+
+                const result: Record<string, unknown> = {};
+                for (const [key, value] of Object.entries(candidate)) {
+                    const replaced = replaceRecursive(value);
+                    if (replaced !== null && replaced !== undefined) {
+                        result[key] = replaced;
+                    }
+                }
+                return result;
+            }
+
+            return node;
+        };
+
+        return replaceRecursive(clone) as CodeReviewConfig['v2PromptOverrides'];
+    }
+
+    private tryParseJSON(str: string): unknown | null {
+        if (!str || typeof str !== 'string') {
+            return null;
+        }
+
+        const trimmed = str.trim();
+        if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
+            return null;
+        }
+
+        try {
+            return JSON.parse(str);
+        } catch {
+            return null;
+        }
+    }
+
+    private normalizeProviderToolKey(provider: string, tool: string): string {
+        return `${provider.toLowerCase().trim()}|${tool.toLowerCase().trim()}`;
+    }
+
+    private generateNormalizedKeys(
+        provider: string,
+        toolName: string,
+        providerAlias?: string,
+        toolNameAlias?: string,
+    ): Set<string> {
+        const keys = new Set<string>();
+
+        keys.add(this.normalizeProviderToolKey(provider, toolName));
+
+        if (providerAlias) {
+            keys.add(this.normalizeProviderToolKey(providerAlias, toolName));
+        }
+
+        if (toolNameAlias) {
+            keys.add(this.normalizeProviderToolKey(provider, toolNameAlias));
+        }
+
+        if (providerAlias && toolNameAlias) {
+            keys.add(
+                this.normalizeProviderToolKey(providerAlias, toolNameAlias),
+            );
+        }
+
+        return keys;
+    }
+
+    private buildToolResultMaps(
+        augmentations: ContextAugmentationsMap,
+        dependencyMap: Map<string, ContextDependency>,
+    ): {
+        resultsMap: Map<string, string>;
+        errorsMap: Map<string, string>;
+    } {
+        const resultsMap = new Map<string, string>();
+        const errorsMap = new Map<string, string>();
+
+        for (const augmentation of Object.values(augmentations)) {
+            for (const output of augmentation.outputs) {
+                if (!output.provider || !output.toolName) {
+                    continue;
+                }
+
+                const normalizedKey = this.normalizeProviderToolKey(
+                    output.provider,
+                    output.toolName,
+                );
+                const dep =
+                    dependencyMap.get(normalizedKey) ??
+                    dependencyMap.get(`${output.provider}|${output.toolName}`);
+
+                const providerAlias = dep?.metadata?.providerAlias as
+                    | string
+                    | undefined;
+                const toolNameAlias = dep?.metadata?.toolNameAlias as
+                    | string
+                    | undefined;
+
+                const keys = this.generateNormalizedKeys(
+                    output.provider,
+                    output.toolName,
+                    providerAlias,
+                    toolNameAlias,
+                );
+
+                if (output.success && output.output) {
+                    for (const key of keys) {
+                        resultsMap.set(key, output.output);
+                    }
+                } else if (output.error) {
+                    for (const key of keys) {
+                        errorsMap.set(key, output.error);
+                    }
+                }
+            }
+        }
+
+        return { resultsMap, errorsMap };
+    }
+
+    private replaceMarkersInString(
+        text: string,
+        lookup: (
+            provider: string,
+            tool: string,
+        ) => {
+            result?: string;
+            error?: string;
+        },
+    ): string {
+        const markerRegex = /@mcp<([^|>]+)\|([^>]+)>/gi;
+        const matches: Array<{
+            marker: string;
+            provider: string;
+            tool: string;
+        }> = [];
+
+        let match: RegExpExecArray | null;
+        while ((match = markerRegex.exec(text)) !== null) {
+            matches.push({
+                marker: match[0],
+                provider: match[1].trim(),
+                tool: match[2].trim(),
+            });
+        }
+
+        if (matches.length > 0) {
+            this.logger.debug({
+                message: 'MCP marker replacement: found markers in string',
+                context: CodeReviewContextPackService.name,
+                metadata: {
+                    matchesCount: matches.length,
+                    matches: matches.map((m) => ({
+                        marker: m.marker,
+                        provider: m.provider,
+                        tool: m.tool,
+                    })),
+                },
+            });
+        }
+
+        let result = text;
+        for (let i = matches.length - 1; i >= 0; i--) {
+            const { marker, provider, tool } = matches[i];
+            const normalized = this.normalizeProviderToolKey(provider, tool);
+            const { result: replacement, error } = lookup(provider, tool);
+
+            this.logger.debug({
+                message: 'MCP marker replacement: attempting lookup',
+                context: CodeReviewContextPackService.name,
+                metadata: {
+                    marker,
+                    provider,
+                    tool,
+                    normalized,
+                    foundResult: !!replacement,
+                    foundError: !!error,
+                },
+            });
+
+            if (replacement) {
+                result = result.replace(marker, replacement);
+                this.logger.debug({
+                    message: 'MCP marker replacement: SUCCESS',
+                    context: CodeReviewContextPackService.name,
+                    metadata: {
+                        marker,
+                        provider,
+                        tool,
+                        replacementLength: replacement.length,
+                    },
+                });
+            } else if (error) {
+                result = result.replace(
+                    marker,
+                    `[MCP Tool ${tool} failed: ${error}]`,
+                );
+            }
+        }
+
+        return result;
+    }
+
+    private replaceMCPMentionNode(
+        node: Record<string, unknown>,
+        lookup: (
+            provider: string,
+            tool: string,
+        ) => {
+            result?: string;
+            error?: string;
+        },
+    ): unknown {
+        const attrs = node.attrs as Record<string, unknown> | undefined;
+        const provider = typeof attrs?.app === 'string' ? attrs.app : undefined;
+        const toolName =
+            typeof attrs?.tool === 'string' ? attrs.tool : undefined;
+
+        if (!provider || !toolName) {
+            return node;
+        }
+
+        const normalized = this.normalizeProviderToolKey(provider, toolName);
+        const { result, error } = lookup(provider, toolName);
+
+        this.logger.debug({
+            message: 'MCP marker replacement: processing mcpMention node',
+            context: CodeReviewContextPackService.name,
+            metadata: {
+                provider,
+                toolName,
+                normalized,
+                foundResult: !!result,
+                foundError: !!error,
+            },
+        });
+
+        if (result) {
+            this.logger.debug({
+                message: 'MCP marker replacement: SUCCESS (rich text)',
+                context: CodeReviewContextPackService.name,
+                metadata: {
+                    provider,
+                    toolName,
+                    resultLength: result.length,
+                },
+            });
+            return { type: 'text', text: result };
+        }
+
+        if (error) {
+            return {
+                type: 'text',
+                text: `[MCP Tool ${toolName} failed: ${error}]`,
+            };
+        }
+
+        return node;
+    }
+
     private buildDependencies(
         requirements: ContextRequirement[],
     ): ContextDependency[] {
@@ -443,9 +841,6 @@ export class CodeReviewContextPackService {
         return dependencies;
     }
 
-    /**
-     * Garante que o descriptor de uma dependência MCP tenha provider/tool/metadata completos.
-     */
     private buildDescriptor(
         currentDescriptor: unknown,
         provider: string,
@@ -488,20 +883,12 @@ export class CodeReviewContextPackService {
         pack: ContextPack;
         organizationAndTeamData?: OrganizationAndTeamData;
         toolMetadata: Map<string, MCPToolMetadata>;
-        providerAliases: Map<string, string>;
-        toolAliases: Map<string, Map<string, string>>;
     }): Promise<{
         resolvedDependencies: ContextDependency[];
         skippedDependencies: SkippedMCPTool[];
     }> {
-        const {
-            dependencies,
-            pack,
-            organizationAndTeamData,
-            toolMetadata,
-            providerAliases,
-            toolAliases,
-        } = params;
+        const { dependencies, pack, organizationAndTeamData, toolMetadata } =
+            params;
         const resolvedDependencies: ContextDependency[] = [];
         const skippedDependencies: SkippedMCPTool[] = [];
 
@@ -510,11 +897,9 @@ export class CodeReviewContextPackService {
                 const enrichedDependency = this.applyToolMetadata(
                     dependency,
                     toolMetadata,
-                    providerAliases,
-                    toolAliases,
                 );
 
-                const resolution = await this.mcpToolArgResolver.resolve({
+                const resolution = await this.mcpToolArgResolver.resolveArgs({
                     dependency: enrichedDependency,
                     organizationAndTeamData,
                     pack,
@@ -522,8 +907,18 @@ export class CodeReviewContextPackService {
                     runtime: undefined,
                 });
 
-                if (resolution.status === 'ready') {
-                    resolvedDependencies.push(resolution.dependency);
+                if (resolution.missingArgs.length === 0) {
+                    const resolvedDependency: ContextDependency = {
+                        ...enrichedDependency,
+                        metadata: {
+                            ...(enrichedDependency.metadata ?? {}),
+                            args: resolution.args,
+                            argsSources: {
+                                _agent: `resolved with confidence ${resolution.confidence}`,
+                            },
+                        },
+                    };
+                    resolvedDependencies.push(resolvedDependency);
                     continue;
                 }
 
@@ -535,9 +930,9 @@ export class CodeReviewContextPackService {
 
                 const message = `MCP tool ${provider ?? 'unknown'}::${
                     toolName ?? 'unknown'
-                } não executada. Argumentos ausentes: ${
-                    resolution.missingArgs.join(', ') || 'desconhecidos'
-                }.`;
+                } not executed. Missing arguments: ${
+                    resolution.missingArgs.join(', ') || 'unknown'
+                }. Confidence: ${resolution.confidence.toFixed(2)}`;
 
                 this.logger.warn({
                     message,
@@ -548,6 +943,7 @@ export class CodeReviewContextPackService {
                         requirementId,
                         missingArgs: resolution.missingArgs,
                         path,
+                        confidence: resolution.confidence,
                         severity: 'warning',
                     },
                 });
@@ -566,7 +962,7 @@ export class CodeReviewContextPackService {
 
                 this.logger.error({
                     message:
-                        'Erro ao resolver argumentos para ferramenta MCP antes da execução',
+                        'Error resolving arguments for MCP tool before execution',
                     context: CodeReviewContextPackService.name,
                     error,
                     metadata: {
@@ -583,7 +979,7 @@ export class CodeReviewContextPackService {
                     path: this.resolveDependencyPath(dependency),
                     missingArgs: [],
                     message:
-                        'Falha interna ao preparar argumentos para a ferramenta MCP.',
+                        'Internal failure while preparing arguments for MCP tool.',
                 });
             }
         }
@@ -612,8 +1008,6 @@ export class CodeReviewContextPackService {
     private applyToolMetadata(
         dependency: ContextDependency,
         metadataMap: Map<string, MCPToolMetadata>,
-        providerAliases: Map<string, string>,
-        toolAliases: Map<string, Map<string, string>>,
     ): ContextDependency {
         const provider = this.resolveProvider(dependency);
         const toolName = this.resolveToolName(dependency);
@@ -622,35 +1016,31 @@ export class CodeReviewContextPackService {
             return dependency;
         }
 
-        const metadata = this.mcpToolMetadataService.getMetadataForTool(
+        const metadataEntry = this.mcpToolMetadataService.resolveToolMetadata(
             metadataMap,
             provider,
             toolName,
-            providerAliases,
-            toolAliases,
         );
+        const resolvedProvider = metadataEntry?.providerId ?? provider;
+        const resolvedToolName = metadataEntry?.toolName ?? toolName;
+        const metadata = metadataEntry?.metadata;
+
         if (!metadata) {
-            return dependency;
-        }
-
-        const normalizedProviderKey = this.normalizeProviderKey(provider);
-        const canonicalProvider = normalizedProviderKey
-            ? (providerAliases.get(normalizedProviderKey) ?? provider)
-            : provider;
-
-        const providerToolKey = this.normalizeProviderKey(canonicalProvider);
-        let canonicalToolName = toolName;
-        if (providerToolKey) {
-            const providerToolMap = toolAliases.get(providerToolKey);
-            if (providerToolMap) {
-                const toolAliasKey = this.normalizeToolKey(toolName);
-                if (toolAliasKey) {
-                    const resolved = providerToolMap.get(toolAliasKey);
-                    if (resolved) {
-                        canonicalToolName = resolved;
-                    }
-                }
-            }
+            return {
+                ...dependency,
+                id: `${resolvedProvider}|${resolvedToolName}`,
+                metadata: {
+                    ...(dependency.metadata ?? {}),
+                    provider: resolvedProvider,
+                    toolName: resolvedToolName,
+                    ...(resolvedProvider !== provider
+                        ? { providerAlias: provider }
+                        : {}),
+                    ...(resolvedToolName !== toolName
+                        ? { toolNameAlias: toolName }
+                        : {}),
+                },
+            };
         }
 
         const currentMetadata = (dependency.metadata ?? {}) as Record<
@@ -668,23 +1058,23 @@ export class CodeReviewContextPackService {
             ...currentMetadata,
             requiredArgs: mergedRequired,
             toolInputSchema: metadata.inputSchema,
-            provider: canonicalProvider,
-            toolName: canonicalToolName,
+            provider: resolvedProvider,
+            toolName: resolvedToolName,
         } as Record<string, unknown>;
 
         if (
+            resolvedProvider &&
             provider &&
-            canonicalProvider &&
-            provider !== canonicalProvider &&
+            resolvedProvider !== provider &&
             !mergedMetadata.providerAlias
         ) {
             mergedMetadata.providerAlias = provider;
         }
 
         if (
+            resolvedToolName &&
             toolName &&
-            canonicalToolName &&
-            toolName !== canonicalToolName &&
+            resolvedToolName !== toolName &&
             !mergedMetadata.toolNameAlias
         ) {
             mergedMetadata.toolNameAlias = toolName;
@@ -695,151 +1085,19 @@ export class CodeReviewContextPackService {
             const descriptorRecord = descriptor as Record<string, unknown>;
             descriptor = {
                 ...descriptorRecord,
-                mcpId: canonicalProvider,
-                toolName: canonicalToolName,
+                mcpId: resolvedProvider,
+                toolName: resolvedToolName,
             };
         }
 
         return {
             ...dependency,
+            id: `${resolvedProvider}|${resolvedToolName}`,
             metadata: mergedMetadata,
             descriptor,
         };
     }
 
-    private normalizeProviderKey(value?: string | null): string | undefined {
-        if (!value) {
-            return undefined;
-        }
-
-        const normalized = value
-            .trim()
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, '');
-
-        if (!normalized) {
-            return undefined;
-        }
-
-        return normalized.endsWith('mcp') && normalized.length > 3
-            ? normalized.slice(0, -3)
-            : normalized;
-    }
-
-    private normalizeToolKey(value?: string | null): string | undefined {
-        if (!value) {
-            return undefined;
-        }
-
-        const normalized = value
-            .trim()
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, '');
-
-        return normalized || undefined;
-    }
-
-    private collectNeededProviders(
-        dependencies: ContextDependency[],
-        providerAliases: Map<string, string>,
-    ): Set<string> {
-        const needed = new Set<string>();
-
-        for (const dependency of dependencies) {
-            const provider = this.resolveProvider(dependency);
-            if (!provider) {
-                continue;
-            }
-
-            const aliasKey = this.normalizeProviderKey(provider);
-            const canonical = aliasKey
-                ? (providerAliases.get(aliasKey) ?? provider)
-                : provider;
-
-            needed.add(canonical);
-        }
-
-        return needed;
-    }
-
-    private filterConnectionsByProviders(
-        connections: MCPServerConfig[],
-        neededProviders: Set<string>,
-    ): MCPServerConfig[] {
-        return connections.filter((connection) => {
-            const canonical =
-                connection.provider?.trim() ||
-                connection.name?.trim() ||
-                connection.url?.trim();
-
-            if (!canonical) {
-                return false;
-            }
-
-            if (neededProviders.has(canonical)) {
-                return true;
-            }
-
-            const normalized = this.normalizeProviderKey(canonical);
-            return normalized ? neededProviders.has(normalized) : false;
-        });
-    }
-
-    private filterMetadataByProviders(
-        metadata: Map<string, MCPToolMetadata>,
-        neededProviders: Set<string>,
-    ): Map<string, MCPToolMetadata> {
-        const filtered = new Map<string, MCPToolMetadata>();
-
-        for (const [key, value] of metadata.entries()) {
-            const [providerKey] = key.split('|', 1);
-            const canonical = providerKey ?? key;
-            if (neededProviders.has(canonical)) {
-                filtered.set(key, value);
-            }
-        }
-
-        return filtered;
-    }
-
-    private filterProviderAliases(
-        providerAliases: Map<string, string>,
-        neededProviders: Set<string>,
-    ): Map<string, string> {
-        const filtered = new Map<string, string>();
-
-        for (const [alias, canonical] of providerAliases.entries()) {
-            if (neededProviders.has(canonical)) {
-                filtered.set(alias, canonical);
-            }
-        }
-
-        return filtered;
-    }
-
-    private filterToolAliases(
-        toolAliases: Map<string, Map<string, string>>,
-        providerAliases: Map<string, string>,
-        neededProviders: Set<string>,
-    ): Map<string, Map<string, string>> {
-        const filtered = new Map<string, Map<string, string>>();
-
-        for (const [aliasKey, toolMap] of toolAliases.entries()) {
-            const canonical = providerAliases.get(aliasKey) ?? aliasKey;
-
-            if (!neededProviders.has(canonical)) {
-                continue;
-            }
-
-            filtered.set(aliasKey, toolMap);
-        }
-
-        return filtered;
-    }
-
-    /**
-     * Executa todas as ferramentas MCP necessárias e devolve as augmentations resultantes.
-     */
     private async executeDependencies(params: {
         contextReferenceId: string;
         connections: MCPServerConfig[];
@@ -875,8 +1133,8 @@ export class CodeReviewContextPackService {
 
         const requiredToolsByProvider = new Map<string, Set<string>>();
         for (const dependency of dependencies) {
-            const provider = this.resolveProvider(dependency);
-            const toolName = this.resolveToolName(dependency);
+            const provider = this.resolveProvider(dependency)?.trim();
+            const toolName = this.resolveToolName(dependency)?.trim();
             if (!provider || !toolName) {
                 continue;
             }
@@ -961,6 +1219,7 @@ export class CodeReviewContextPackService {
             const report = await orchestrator.executeRequiredTools({
                 pack,
                 input: DEFAULT_LAYER_INPUT,
+                dependencies,
             });
 
             for (const record of report.results) {
@@ -1049,9 +1308,6 @@ export class CodeReviewContextPackService {
         };
     }
 
-    /**
-     * Constrói o `ContextPack` usando o pipeline sequencial (instruções + layers externos).
-     */
     private async assemblePackFromPipeline(params: {
         contextReferenceId: string;
         instructionsLayer?: ContextLayer;
@@ -1099,9 +1355,6 @@ export class CodeReviewContextPackService {
         return pack;
     }
 
-    /**
-     * Cria a camada de instruções com os overrides sanitizados do usuário.
-     */
     private createInstructionsLayer(
         contextReferenceId: string,
         overrides?: CodeReviewConfig['v2PromptOverrides'],
@@ -1123,9 +1376,6 @@ export class CodeReviewContextPackService {
         };
     }
 
-    /**
-     * Indexa dependências MCP para associar resultados do orchestrator às seções corretas.
-     */
     private buildDependencyIndex(dependencies: ContextDependency[]): Map<
         string,
         {
@@ -1174,9 +1424,6 @@ export class CodeReviewContextPackService {
         return index;
     }
 
-    /**
-     * Constrói uma camada contendo as respostas das ferramentas MCP.
-     */
     private createAugmentationsLayer(
         contextReferenceId: string,
         augmentations: ContextAugmentationsMap,
@@ -1194,9 +1441,6 @@ export class CodeReviewContextPackService {
         };
     }
 
-    /**
-     * Extrai o path de um requirement (usado para mapear augmentations).
-     */
     private resolveRequirementPath(requirement: ContextRequirement): string[] {
         if (
             Array.isArray(requirement.metadata?.path) &&
@@ -1210,9 +1454,6 @@ export class CodeReviewContextPackService {
         return this.derivePathFromRequirementId(requirement.id);
     }
 
-    /**
-     * Resolve o path associado a uma dependência (fallback para requirementId).
-     */
     private resolveDependencyPath(dependency: ContextDependency): string[] {
         if (
             Array.isArray(dependency.metadata?.path) &&
@@ -1231,9 +1472,6 @@ export class CodeReviewContextPackService {
         return [];
     }
 
-    /**
-     * Cria a chave normalizada (`pathKey`) de uma dependência.
-     */
     private resolveDependencyPathKey(
         dependency: ContextDependency,
     ): string | undefined {
@@ -1245,9 +1483,6 @@ export class CodeReviewContextPackService {
         return path.length ? pathToKey(path) : undefined;
     }
 
-    /**
-     * Recupera o requirementId original associado à dependência (se existir).
-     */
     private resolveRequirementId(
         dependency: ContextDependency,
     ): string | undefined {
@@ -1257,9 +1492,6 @@ export class CodeReviewContextPackService {
         return undefined;
     }
 
-    /**
-     * Converte um requirementId (`foo#bar.baz`) no path correspondente.
-     */
     private derivePathFromRequirementId(id: string): string[] {
         if (!id.includes('#')) {
             return [id];
@@ -1269,9 +1501,6 @@ export class CodeReviewContextPackService {
         return tail.split('.');
     }
 
-    /**
-     * Normaliza os campos (provider, toolName, args) de uma dependência MCP.
-     */
     private parseDependency(dependency: ContextDependency): {
         provider?: string;
         toolName?: string;
@@ -1305,9 +1534,6 @@ export class CodeReviewContextPackService {
         return { provider, toolName, args };
     }
 
-    /**
-     * Determina o provider (MCP id) de uma dependência.
-     */
     private resolveProvider(dependency: ContextDependency): string | undefined {
         const metadata = dependency.metadata ?? {};
         if (typeof metadata.provider === 'string') {
@@ -1320,9 +1546,6 @@ export class CodeReviewContextPackService {
         return provider || undefined;
     }
 
-    /**
-     * Determina o nome da tool de uma dependência.
-     */
     private resolveToolName(dependency: ContextDependency): string | undefined {
         const metadata = dependency.metadata ?? {};
         if (typeof metadata.toolName === 'string') {
@@ -1335,9 +1558,6 @@ export class CodeReviewContextPackService {
         return toolName || undefined;
     }
 
-    /**
-     * Combina pathKey + provider/tool em uma chave única para augmentations.
-     */
     private buildAugmentationKey(
         pathKey?: string,
         provider?: string,
@@ -1350,9 +1570,6 @@ export class CodeReviewContextPackService {
         return `${pathKey}::${providerKey}::${toolName}`;
     }
 
-    /**
-     * Serializa o resultado bruto de uma tool MCP para texto legível.
-     */
     private formatToolOutput(result: unknown): string {
         if (result === null || result === undefined) {
             return 'No output returned.';
@@ -1369,9 +1586,6 @@ export class CodeReviewContextPackService {
         }
     }
 
-    /**
-     * Função utilitária para limitar o tamanho da string de output.
-     */
     private truncate(value: string, max = MAX_TOOL_OUTPUT_LENGTH): string {
         if (value.length <= max) {
             return value;
@@ -1379,9 +1593,6 @@ export class CodeReviewContextPackService {
         return `${value.slice(0, max)}…`;
     }
 
-    /**
-     * Produz uma cópia defensiva de uma camada do pack.
-     */
     private cloneLayer(layer: ContextLayer): ContextLayer {
         return {
             ...layer,

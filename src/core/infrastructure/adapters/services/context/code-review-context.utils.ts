@@ -7,11 +7,6 @@ export interface ContextMarkerPattern {
     toDependency(match: RegExpMatchArray): ContextDependency | null;
 }
 
-export interface ContextFieldEntry {
-    path: string[];
-    value: string;
-}
-
 const GLOBAL_REGEX_FLAGS = (regex: RegExp): string =>
     regex.flags.includes('g') ? regex.flags : `${regex.flags}g`;
 
@@ -45,63 +40,19 @@ export const CODE_REVIEW_CONTEXT_PATTERNS: ContextMarkerPattern[] = [
 
 const PATH_SOURCE_TYPE_MAP: Record<string, PromptSourceType> = {
     'summary.customInstructions': PromptSourceType.CUSTOM_INSTRUCTION,
-    'v2PromptOverrides.categories.descriptions.bug': PromptSourceType.CATEGORY_BUG,
+    'v2PromptOverrides.categories.descriptions.bug':
+        PromptSourceType.CATEGORY_BUG,
     'v2PromptOverrides.categories.descriptions.performance':
         PromptSourceType.CATEGORY_PERFORMANCE,
     'v2PromptOverrides.categories.descriptions.security':
         PromptSourceType.CATEGORY_SECURITY,
-    'v2PromptOverrides.severity.flags.critical': PromptSourceType.SEVERITY_CRITICAL,
+    'v2PromptOverrides.severity.flags.critical':
+        PromptSourceType.SEVERITY_CRITICAL,
     'v2PromptOverrides.severity.flags.high': PromptSourceType.SEVERITY_HIGH,
     'v2PromptOverrides.severity.flags.medium': PromptSourceType.SEVERITY_MEDIUM,
     'v2PromptOverrides.severity.flags.low': PromptSourceType.SEVERITY_LOW,
     'v2PromptOverrides.generation.main': PromptSourceType.GENERATION_MAIN,
 };
-
-const EXTERNAL_REFERENCE_PATTERNS: RegExp[] = [
-    /@file[:\s]/i,
-    /\[\[file:/i,
-    /@\w+\.(ts|js|py|md|yml|yaml|json|txt|go|java|cpp|c|h|rs)/i,
-    /refer to.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
-    /check.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
-    /see.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
-    /\b\w+\.\w+\.(ts|js|py|md|yml|yaml|json|txt)\b/i,
-    /\b[A-Z_][A-Z0-9_]*\.(ts|js|py|md|yml|yaml|json|txt)\b/,
-    /\b(readme|contributing|changelog|license|setup|config|package|tsconfig|jest\.config|vite\.config|webpack\.config)\.(md|json|yml|yaml|ts|js)\b/i,
-];
-
-export function collectStringFields(
-    value: unknown,
-    basePath: string[] = [],
-): ContextFieldEntry[] {
-    const seen = new Set<unknown>();
-
-    function inner(current: unknown, path: string[]): ContextFieldEntry[] {
-        if (typeof current === 'string') {
-            return [{ path, value: current }];
-        }
-
-        if (!current || typeof current !== 'object') {
-            return [];
-        }
-
-        if (seen.has(current)) {
-            return [];
-        }
-        seen.add(current);
-
-        if (Array.isArray(current)) {
-            return current.flatMap((item, index) =>
-                inner(item, [...path, String(index)]),
-            );
-        }
-
-        return Object.entries(current).flatMap(([key, child]) =>
-            inner(child, [...path, key]),
-        );
-    }
-
-    return inner(value, basePath);
-}
 
 function mergeDependencyMaps(
     target: Map<string, ContextDependency>,
@@ -109,6 +60,7 @@ function mergeDependencyMaps(
 ) {
     for (const dependency of source) {
         const key = `${dependency.type}:${dependency.id}`;
+
         if (target.has(key)) {
             const existing = target.get(key)!;
             target.set(key, {
@@ -185,9 +137,13 @@ export function extractDependenciesFromRichText(
         const type = candidate.type as string | undefined;
 
         if (type === 'mcpMention') {
-            const attrs = candidate.attrs as Record<string, unknown> | undefined;
-            const provider = typeof attrs?.app === 'string' ? attrs.app : undefined;
-            const toolName = typeof attrs?.tool === 'string' ? attrs.tool : undefined;
+            const attrs = candidate.attrs as
+                | Record<string, unknown>
+                | undefined;
+            const provider =
+                typeof attrs?.app === 'string' ? attrs.app : undefined;
+            const toolName =
+                typeof attrs?.tool === 'string' ? attrs.tool : undefined;
             if (provider && toolName) {
                 const dependency: ContextDependency = {
                     type: 'mcp',
@@ -253,7 +209,10 @@ export function stripMarkersFromText(
 ): string {
     let sanitized = text;
     for (const pattern of patterns) {
-        const regex = new RegExp(pattern.regex.source, GLOBAL_REGEX_FLAGS(pattern.regex));
+        const regex = new RegExp(
+            pattern.regex.source,
+            GLOBAL_REGEX_FLAGS(pattern.regex),
+        );
         sanitized = sanitized.replace(regex, '');
     }
 
@@ -276,18 +235,4 @@ export function resolveSourceTypeFromPath(
     }
     const key = pathToKey(path);
     return PATH_SOURCE_TYPE_MAP[key];
-}
-
-export function hasExternalReferenceMarkers(text: string): boolean {
-    if (!text) {
-        return false;
-    }
-
-    for (const pattern of EXTERNAL_REFERENCE_PATTERNS) {
-        if (pattern.test(text)) {
-            return true;
-        }
-    }
-
-    return false;
 }

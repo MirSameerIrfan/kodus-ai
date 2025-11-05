@@ -112,6 +112,7 @@ export class ContextReferenceService implements IContextReferenceService {
         pointer: { uuid: string; requirementsHash?: string };
     }> {
         const target = await this.repository.findById(params.targetReferenceId);
+
         if (!target) {
             throw new Error(
                 `Context reference ${params.targetReferenceId} not found`,

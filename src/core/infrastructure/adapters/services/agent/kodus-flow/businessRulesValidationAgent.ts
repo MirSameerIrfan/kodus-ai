@@ -561,7 +561,7 @@ RESPONSE FORMAT:
             needsMoreInfo: true,
             missingInfo: 'Error parsing validation result. Please try again.',
             summary:
-                '❌ **Erro ao processar validação**\n\nOcorreu um erro ao processar a resposta do sistema. Por favor, tente novamente.',
+                '❌ **Error processing validation**\n\nAn error occurred while processing the system response. Please try again.',
         };
     }
 

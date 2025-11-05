@@ -3,6 +3,11 @@ import { createMCPAdapter, type MCPServerConfig } from '@kodus/flow';
 import type { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { MCPManagerService } from './mcp-manager.service';
 import { PinoLoggerService } from '../../services/logger/pino.service';
+import {
+    markProviderHasMetadata,
+    normalizeProviderKey,
+    normalizeToolKey,
+} from '@context-os-core/mcp/utils';
 
 export interface MCPToolMetadata {
     requiredArgs: string[];
@@ -12,9 +17,6 @@ export interface MCPToolMetadata {
 interface MetadataLoadResult {
     connections: MCPServerConfig[];
     metadata: Map<string, MCPToolMetadata>;
-    providerMap: Map<string, string>;
-    toolMap: Map<string, Map<string, string>>;
-    allowedTools: Map<string, Set<string>>;
 }
 
 @Injectable()
@@ -58,7 +60,7 @@ export class MCPToolMetadataService {
             if (providersWithMetadata.has(canonical)) {
                 return true;
             }
-            const normalized = this.normalizeProviderKey(canonical);
+            const normalized = normalizeProviderKey(canonical);
             return normalized ? providersWithMetadata.has(normalized) : false;
         });
 
@@ -66,31 +68,9 @@ export class MCPToolMetadataService {
             return this.buildEmptyResult();
         }
 
-        let aliasMaps: {
-            providerMap: Map<string, string>;
-            toolMap: Map<string, Map<string, string>>;
-            allowedTools: Map<string, Set<string>>;
-        };
-
-        try {
-            aliasMaps = this.buildAliasMaps(filteredConnections);
-        } catch (error) {
-            this.logger.warn({
-                message: 'Falha ao construir alias maps para MCP',
-                context: MCPToolMetadataService.name,
-                error,
-            });
-            aliasMaps = {
-                providerMap: new Map(),
-                toolMap: new Map(),
-                allowedTools: new Map(),
-            };
-        }
-
         return {
             connections: filteredConnections,
             metadata,
-            ...aliasMaps,
         };
     }
 
@@ -98,29 +78,74 @@ export class MCPToolMetadataService {
         map: Map<string, MCPToolMetadata>,
         providerId: string | undefined,
         toolName: string | undefined,
-        providerMap: Map<string, string>,
-        toolMap: Map<string, Map<string, string>>,
     ): MCPToolMetadata | undefined {
+        const entry = this.resolveToolMetadata(map, providerId, toolName);
+        return entry?.metadata;
+    }
+
+    resolveToolMetadata(
+        map: Map<string, MCPToolMetadata>,
+        providerId: string | undefined,
+        toolName: string | undefined,
+    ):
+        | {
+              providerId: string;
+              toolName: string;
+              metadata: MCPToolMetadata;
+          }
+        | undefined {
         if (!providerId || !toolName) {
             return undefined;
         }
 
-        const canonicalProvider =
-            this.resolveCanonicalProvider(providerId, providerMap) ?? providerId;
-        const canonicalTool =
-            this.resolveCanonicalTool(toolName, canonicalProvider, toolMap) ??
-            toolName;
+        const trimmedProvider = providerId.trim();
+        const trimmedTool = toolName.trim();
 
-        return map.get(`${canonicalProvider}|${canonicalTool}`);
+        if (!trimmedProvider || !trimmedTool) {
+            return undefined;
+        }
+
+        const direct = map.get(`${trimmedProvider}|${trimmedTool}`);
+        if (direct) {
+            return {
+                providerId: trimmedProvider,
+                toolName: trimmedTool,
+                metadata: direct,
+            };
+        }
+
+        const normalizedProvider = normalizeProviderKey(trimmedProvider);
+        const normalizedTool = normalizeToolKey(trimmedTool);
+
+        for (const [key, metadata] of map.entries()) {
+            const [candidateProvider, candidateTool] = key.split('|', 2);
+            if (!candidateProvider || !candidateTool) {
+                continue;
+            }
+
+            if (
+                this.providersMatch(
+                    candidateProvider,
+                    trimmedProvider,
+                    normalizedProvider,
+                ) &&
+                this.toolsMatch(candidateTool, trimmedTool, normalizedTool)
+            ) {
+                return {
+                    providerId: candidateProvider,
+                    toolName: candidateTool,
+                    metadata,
+                };
+            }
+        }
+
+        return undefined;
     }
 
     private buildEmptyResult(): MetadataLoadResult {
         return {
             connections: [],
             metadata: new Map(),
-            providerMap: new Map(),
-            toolMap: new Map(),
-            allowedTools: new Map(),
         };
     }
 
@@ -143,7 +168,7 @@ export class MCPToolMetadataService {
             maxRetries: 1,
             onError: (error, serverName) => {
                 this.logger.warn({
-                    message: 'Erro ao sincronizar metadata das ferramentas MCP',
+                    message: 'Error synchronizing MCP tools metadata',
                     context: MCPToolMetadataService.name,
                     error,
                     metadata: { serverName },
@@ -271,38 +296,64 @@ export class MCPToolMetadataService {
         return inferred;
     }
 
-    private resolveCanonicalProvider(
-        provider: string,
-        providerMap: Map<string, string>,
-    ): string | undefined {
-        const key = this.normalizeProviderKey(provider);
-        if (!key) {
-            return undefined;
+    private providersMatch(
+        candidate: string,
+        requested: string,
+        requestedNormalized?: string,
+    ): boolean {
+        const trimmedCandidate = candidate?.trim();
+        if (!trimmedCandidate) {
+            return false;
         }
-        return providerMap.get(key);
+
+        if (trimmedCandidate === requested) {
+            return true;
+        }
+
+        const candidateNormalized = normalizeProviderKey(trimmedCandidate);
+        if (!candidateNormalized) {
+            return false;
+        }
+
+        if (candidateNormalized === requestedNormalized) {
+            return true;
+        }
+
+        const requestedNormalizedFallback = normalizeProviderKey(requested);
+        return (
+            !!requestedNormalizedFallback &&
+            candidateNormalized === requestedNormalizedFallback
+        );
     }
 
-    private resolveCanonicalTool(
-        toolName: string,
-        canonicalProvider: string,
-        toolMap: Map<string, Map<string, string>>,
-    ): string | undefined {
-        const providerKey = this.normalizeProviderKey(canonicalProvider);
-        if (!providerKey) {
-            return undefined;
+    private toolsMatch(
+        candidate: string,
+        requested: string,
+        requestedNormalized?: string,
+    ): boolean {
+        const trimmedCandidate = candidate?.trim();
+        if (!trimmedCandidate) {
+            return false;
         }
 
-        const providerTools = toolMap.get(providerKey);
-        if (!providerTools) {
-            return undefined;
+        if (trimmedCandidate === requested) {
+            return true;
         }
 
-        const toolKey = this.normalizeToolKey(toolName);
-        if (!toolKey) {
-            return undefined;
+        const candidateNormalized = normalizeToolKey(trimmedCandidate);
+        if (!candidateNormalized) {
+            return false;
         }
 
-        return providerTools.get(toolKey);
+        if (candidateNormalized === requestedNormalized) {
+            return true;
+        }
+
+        const requestedNormalizedFallback = normalizeToolKey(requested);
+        return (
+            !!requestedNormalizedFallback &&
+            candidateNormalized === requestedNormalizedFallback
+        );
     }
 
     private registerMetadataEntry(
@@ -320,154 +371,6 @@ export class MCPToolMetadataService {
         }
 
         map.set(`${canonicalProvider}|${canonicalTool}`, metadata);
-
-        providersWithMetadata.add(canonicalProvider);
-
-        const normalizedProvider = this.normalizeProviderKey(canonicalProvider);
-        if (normalizedProvider) {
-            providersWithMetadata.add(normalizedProvider);
-        }
-    }
-
-    private buildAliasMaps(
-        connections: MCPServerConfig[],
-    ): {
-        providerMap: Map<string, string>;
-        toolMap: Map<string, Map<string, string>>;
-        allowedTools: Map<string, Set<string>>;
-    } {
-        const providerMap = new Map<string, string>();
-        const toolMap = new Map<string, Map<string, string>>();
-        const allowedTools = new Map<string, Set<string>>();
-
-        for (const connection of connections) {
-            const canonicalProvider =
-                connection.provider?.trim() ||
-                connection.name?.trim() ||
-                connection.url?.trim();
-
-            if (!canonicalProvider) {
-                continue;
-            }
-
-            const canonicalValue =
-                connection.provider?.trim() ?? canonicalProvider;
-
-            const aliases = new Set<string>();
-            const aliasCandidates = [
-                canonicalProvider,
-                connection.provider,
-                connection.name,
-                connection.url,
-            ];
-
-            for (const candidate of aliasCandidates) {
-                const key = this.normalizeProviderKey(candidate);
-                if (!key) {
-                    continue;
-                }
-                aliases.add(key);
-                if (!providerMap.has(key)) {
-                    providerMap.set(key, canonicalValue);
-                }
-
-                const stripped = this.stripMcpSuffix(key);
-                if (stripped && !aliases.has(stripped)) {
-                    aliases.add(stripped);
-                    if (!providerMap.has(stripped)) {
-                        providerMap.set(stripped, canonicalValue);
-                    }
-                }
-            }
-
-            if (!allowedTools.has(canonicalValue)) {
-                allowedTools.set(canonicalValue, new Set());
-            }
-
-            const connectionTools = connection.allowedTools ?? [];
-            if (!connectionTools.length) {
-                continue;
-            }
-
-            const normalizedToolEntries = connectionTools
-                .map((tool) => tool?.trim())
-                .filter((tool): tool is string => Boolean(tool))
-                .map((tool) => ({
-                    key: this.normalizeToolKey(tool),
-                    value: tool,
-                }))
-                .filter((entry) => Boolean(entry.key)) as Array<{
-                key: string;
-                value: string;
-            }>;
-
-            if (!normalizedToolEntries.length) {
-                continue;
-            }
-
-            for (const aliasKey of aliases) {
-                if (!toolMap.has(aliasKey)) {
-                    toolMap.set(aliasKey, new Map());
-                }
-                const toolAliasMap = toolMap.get(aliasKey)!;
-                for (const entry of normalizedToolEntries) {
-                    if (!toolAliasMap.has(entry.key)) {
-                        toolAliasMap.set(entry.key, entry.value);
-                    }
-                }
-            }
-
-            const providerAllowedSet = allowedTools.get(canonicalValue)!;
-            for (const entry of normalizedToolEntries) {
-                providerAllowedSet.add(entry.value);
-            }
-        }
-
-        return { providerMap, toolMap, allowedTools };
-    }
-
-    private normalizeProviderKey(value?: string | null): string | undefined {
-        if (!value) {
-            return undefined;
-        }
-
-        const normalized = value
-            .trim()
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, '');
-
-        if (!normalized) {
-            return undefined;
-        }
-
-        return normalized.endsWith('mcp') && normalized.length > 3
-            ? normalized.slice(0, -3)
-            : normalized;
-    }
-
-    private normalizeToolKey(value?: string | null): string | undefined {
-        if (!value) {
-            return undefined;
-        }
-
-        const normalized = value
-            .trim()
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, '');
-
-        return normalized || undefined;
-    }
-
-    private stripMcpSuffix(value?: string | null): string | undefined {
-        if (!value) {
-            return undefined;
-        }
-
-        if (value.length <= 3) {
-            return value;
-        }
-
-        return value.endsWith('mcp') ? value.slice(0, -3) : value;
+        markProviderHasMetadata(providersWithMetadata, canonicalProvider);
     }
 }
-
