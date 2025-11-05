@@ -75,7 +75,10 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { GitCloneParams } from '@/core/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
 import { RepositoryFile } from '@/core/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
-import { isFileMatchingGlob, isFileMatchingGlobCaseInsensitive } from '@/shared/utils/glob-utils';
+import {
+    isFileMatchingGlob,
+    isFileMatchingGlobCaseInsensitive,
+} from '@/shared/utils/glob-utils';
 import { MCPManagerService } from '../mcp/services/mcp-manager.service';
 import { TreeItem } from '@/config/types/general/tree.type';
 
@@ -111,10 +114,6 @@ export class AzureReposService
         private readonly configService: ConfigService,
         private readonly mcpManagerService?: MCPManagerService,
     ) {}
-
-    getRepositoryTreeByDirectory(params: { organizationAndTeamData: OrganizationAndTeamData; repositoryId: string; directoryPath?: string; }): Promise<TreeItem[]> {
-        throw new Error('Method not implemented.');
-    }
 
     async getPullRequestAuthors(params: {
         organizationAndTeamData: OrganizationAndTeamData;
@@ -264,9 +263,7 @@ export class AzureReposService
                     };
                 })
                 .filter(
-                    (
-                        member,
-                    ): member is { name: string; id: string | number } =>
+                    (member): member is { name: string; id: string | number } =>
                         Boolean(member),
                 );
 
@@ -1327,10 +1324,7 @@ export class AzureReposService
                                 organizationAndTeamData,
                                 username: authorName,
                             });
-                            userId =
-                                user?.descriptor ??
-                                user?.originId ??
-                                null;
+                            userId = user?.descriptor ?? user?.originId ?? null;
                         } catch {
                             userId = null;
                         }
@@ -3929,6 +3923,148 @@ export class AzureReposService
         }
     }
 
+    async getRepositoryTreeByDirectory(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+        repositoryId: string;
+        directoryPath?: string;
+    }): Promise<TreeItem[]> {
+        try {
+            const { organizationAndTeamData, repositoryId, directoryPath } =
+                params;
+
+            const authDetails = await this.getAuthDetails(
+                organizationAndTeamData,
+            );
+
+            if (!authDetails) {
+                this.logger.error({
+                    message: 'Azure Repos auth details not found',
+                    context: this.getRepositoryTreeByDirectory.name,
+                    metadata: {
+                        organizationAndTeamData,
+                        repositoryId,
+                        directoryPath,
+                    },
+                });
+                return [];
+            }
+
+            const { orgName, token } = authDetails;
+            const projectId = await this.getProjectIdFromRepository(
+                organizationAndTeamData,
+                repositoryId,
+            );
+
+            if (!projectId) {
+                this.logger.error({
+                    message:
+                        'Project ID not found for Azure Repos repository tree',
+                    context: this.getRepositoryTreeByDirectory.name,
+                    metadata: {
+                        organizationAndTeamData,
+                        repositoryId,
+                        directoryPath,
+                    },
+                });
+                return [];
+            }
+
+            // Buscar apenas um nível do diretório especificado
+            const items =
+                await this.azureReposRequestHelper.getRepositoryTreeByDirectory(
+                    {
+                        orgName,
+                        token,
+                        projectId,
+                        repositoryId,
+                        scopePath: directoryPath
+                            ? `/${directoryPath}`
+                            : undefined,
+                        recursionLevel: 'OneLevel',
+                    },
+                );
+
+            if (!items || !Array.isArray(items)) {
+                this.logger.warn({
+                    message: 'No items found or invalid response',
+                    context: this.getRepositoryTreeByDirectory.name,
+                    metadata: {
+                        organizationAndTeamData,
+                        repositoryId,
+                        directoryPath,
+                    },
+                });
+                return [];
+            }
+
+            // Normalizar o scopePath para comparação (remover '/' inicial)
+            const normalizedScopePath = directoryPath?.startsWith('/')
+                ? directoryPath.substring(1)
+                : directoryPath;
+
+            // Filtrar apenas diretórios e EXCLUIR o próprio diretório pai
+            const directories = items
+                .filter((item) => {
+                    // Remover '/' inicial do path para comparação
+                    const itemPath = item.path?.startsWith('/')
+                        ? item.path.substring(1)
+                        : item.path;
+
+                    // Excluir o próprio diretório pai (evitar loop)
+                    const isSelfDirectory =
+                        normalizedScopePath && itemPath === normalizedScopePath;
+
+                    // Incluir apenas se for pasta E não for o próprio diretório
+                    return (
+                        item.gitObjectType === 'tree' &&
+                        item.isFolder &&
+                        !isSelfDirectory
+                    );
+                })
+                .map((item) => {
+                    // Remover '/' inicial do path
+                    const normalizedPath = item.path?.startsWith('/')
+                        ? item.path.substring(1)
+                        : item.path;
+
+                    return {
+                        path: normalizedPath,
+                        type: 'directory' as const,
+                        sha: item.objectId,
+                        size: undefined,
+                        url: item.url,
+                        hasChildren: true,
+                    };
+                });
+
+            this.logger.debug({
+                message: `Azure Repos tree by directory: ${directories.length} directories`,
+                context: this.getRepositoryTreeByDirectory.name,
+                metadata: {
+                    organizationAndTeamData,
+                    repositoryId,
+                    directoryPath: directoryPath || 'root',
+                    totalDirectories: directories.length,
+                },
+            });
+
+            return directories;
+        } catch (error) {
+            this.logger.error({
+                message:
+                    'Error getting repository tree by directory from Azure Repos',
+                context: this.getRepositoryTreeByDirectory.name,
+                error: error,
+                metadata: {
+                    organizationAndTeamData: params.organizationAndTeamData,
+                    repositoryId: params.repositoryId,
+                    directoryPath: params.directoryPath,
+                },
+            });
+            return [];
+        }
+    }
+    
     async getRepositoryAllFiles(params: {
         organizationAndTeamData: OrganizationAndTeamData;
         repository: { id: string; name: string };
