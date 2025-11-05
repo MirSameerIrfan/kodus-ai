@@ -74,6 +74,7 @@ import {
     isFileMatchingGlobCaseInsensitive,
 } from '@/shared/utils/glob-utils';
 import { MCPManagerService } from '../../mcp/services/mcp-manager.service';
+import { TreeItem } from '@/config/types/general/tree.type';
 
 @Injectable()
 @IntegrationServiceDecorator(PlatformType.BITBUCKET, 'codeManagement')
@@ -115,6 +116,9 @@ export class BitbucketService
         private readonly cacheService: CacheService,
         private readonly mcpManagerService?: MCPManagerService,
     ) {}
+    getRepositoryTreeByDirectory(params: { organizationAndTeamData: OrganizationAndTeamData; repositoryId: string; directoryPath?: string; }): Promise<TreeItem[]> {
+        throw new Error('Method not implemented.');
+    }
 
     private readonly USER_CACHE_TTL = 60 * 60 * 1000; // 1 hour
 

@@ -77,6 +77,7 @@ import { GitCloneParams } from '@/core/domain/platformIntegrations/types/codeMan
 import { RepositoryFile } from '@/core/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
 import { isFileMatchingGlob, isFileMatchingGlobCaseInsensitive } from '@/shared/utils/glob-utils';
 import { MCPManagerService } from '../mcp/services/mcp-manager.service';
+import { TreeItem } from '@/config/types/general/tree.type';
 
 @IntegrationServiceDecorator(PlatformType.AZURE_REPOS, 'codeManagement')
 export class AzureReposService
@@ -110,6 +111,10 @@ export class AzureReposService
         private readonly configService: ConfigService,
         private readonly mcpManagerService?: MCPManagerService,
     ) {}
+
+    getRepositoryTreeByDirectory(params: { organizationAndTeamData: OrganizationAndTeamData; repositoryId: string; directoryPath?: string; }): Promise<TreeItem[]> {
+        throw new Error('Method not implemented.');
+    }
 
     async getPullRequestAuthors(params: {
         organizationAndTeamData: OrganizationAndTeamData;

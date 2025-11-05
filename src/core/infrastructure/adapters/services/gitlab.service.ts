@@ -84,6 +84,7 @@ import {
 } from '@/shared/utils/glob-utils';
 import { CacheService } from '@/shared/utils/cache/cache.service';
 import { MCPManagerService } from '../mcp/services/mcp-manager.service';
+import { TreeItem } from '@/config/types/general/tree.type';
 
 @Injectable()
 @IntegrationServiceDecorator(PlatformType.GITLAB, 'codeManagement')
@@ -122,6 +123,9 @@ export class GitlabService
         private readonly cacheService: CacheService,
         private readonly mcpManagerService?: MCPManagerService,
     ) {}
+    getRepositoryTreeByDirectory(params: { organizationAndTeamData: OrganizationAndTeamData; repositoryId: string; directoryPath?: string; }): Promise<TreeItem[]> {
+        throw new Error('Method not implemented.');
+    }
 
     async getPullRequestAuthors(params: {
         organizationAndTeamData: OrganizationAndTeamData;

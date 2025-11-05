@@ -23,6 +23,7 @@ import {
     GitHubReaction,
     GitlabReaction,
 } from '@/core/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
+import { TreeItem } from '@/config/types/general/tree.type';
 
 export interface ICodeManagementService
     extends ICommonPlatformIntegrationService {
@@ -205,6 +206,12 @@ export interface ICodeManagementService
         organizationAndTeamData: OrganizationAndTeamData;
         repositoryId: string;
     }): Promise<any>;
+
+    getRepositoryTreeByDirectory(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+        repositoryId: string;
+        directoryPath?: string;
+    }): Promise<TreeItem[]>;
 
     updateResponseToComment(params: {
         organizationAndTeamData: OrganizationAndTeamData;
