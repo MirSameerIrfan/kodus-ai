@@ -14,7 +14,7 @@ export interface DirectoryItem {
     name: string;
     path: string;
     sha: string;
-    hasChildren: boolean; // agora vem verdadeiro/falso do service (sem chute)
+    hasChildren: boolean;
 }
 
 export interface RepositoryTreeByDirectoryResponse {
