@@ -30,6 +30,7 @@ import {
     GitHubReaction,
     GitlabReaction,
 } from '@/core/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
+import { TreeItem } from '@/config/types/general/tree.type';
 
 @Injectable()
 export class CodeManagementService implements ICodeManagementService {
@@ -1123,6 +1124,30 @@ export class CodeManagementService implements ICodeManagementService {
             this.platformIntegrationFactory.getCodeManagementService(type);
 
         return codeManagementService.getRepositoryTree(params);
+    }
+    
+    async getRepositoryTreeByDirectory(
+        params: {
+            organizationAndTeamData: OrganizationAndTeamData;
+            repositoryId: string;
+            directoryPath?: string;
+        },
+        type?: PlatformType,
+    ): Promise<TreeItem[]> {
+        if (!type) {
+            type = await this.getTypeIntegration(
+                params.organizationAndTeamData,
+            );
+        }
+
+        if (!type) {
+            return [];
+        }
+
+        const codeManagementService =
+            this.platformIntegrationFactory.getCodeManagementService(type);
+
+        return codeManagementService.getRepositoryTreeByDirectory(params);
     }
 
     async updateResponseToComment(params: {

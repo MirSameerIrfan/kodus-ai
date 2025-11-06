@@ -5,6 +5,7 @@ import { graphql } from '@octokit/graphql';
 import { Octokit, RestEndpointMethodTypes } from '@octokit/rest';
 import { retry } from '@octokit/plugin-retry';
 import { throttling } from '@octokit/plugin-throttling';
+import type { EndpointDefaults } from '@octokit/types';
 import { v4 as uuidv4 } from 'uuid';
 import { extractRepoData, extractRepoNames } from '@/shared/utils/helpers';
 import { createAppAuth } from '@octokit/auth-app';
@@ -94,6 +95,13 @@ import {
 } from '@/shared/utils/glob-utils';
 import pLimit from 'p-limit';
 import { MCPManagerService } from '../../mcp/services/mcp-manager.service';
+import { TreeItem } from '@/config/types/general/tree.type';
+import {
+    ALLOWLIST_TREES_ONLY,
+    attachETagHooksAllowlist,
+    ETagCacheEntry,
+    ETagStore,
+} from './octokit-etag-allowlist';
 
 interface GitHubAuthResponse {
     token: string;
@@ -1795,6 +1803,26 @@ export class GithubService
         }
     }
 
+    private makeTenantETagStore(namespace: string): ETagStore {
+        const prefix = `etag:${namespace}:`;
+        return {
+            get: async <T>(key: string) =>
+                (await this.cacheService.getFromCache<ETagCacheEntry<T>>(
+                    prefix + key,
+                )) ?? undefined,
+            set: async <T>(
+                key: string,
+                value: ETagCacheEntry<T>,
+                ttlSeconds?: number,
+            ) =>
+                this.cacheService.addToCache(
+                    prefix + key,
+                    value,
+                    (ttlSeconds ?? 86400) * 1000,
+                ),
+        };
+    }
+
     private async instanceOctokit(
         organizationAndTeamData: OrganizationAndTeamData,
         authDetails?: GithubAuthDetail,
@@ -1812,6 +1840,9 @@ export class GithubService
                 throw new BadRequestException('Instalation not found');
             }
 
+            const ns = `${organizationAndTeamData?.organizationId ?? 'no-org'}:${organizationAndTeamData?.teamId ?? 'no-team'}`;
+            const store = this.makeTenantETagStore(ns);
+
             if (
                 githubAuthDetail.authMode === AuthMode.OAUTH &&
                 'installationId' in githubAuthDetail
@@ -1826,32 +1857,92 @@ export class GithubService
                 const octokit = new MyOctokit({
                     // @ts-ignore
                     auth: installationAuthentication.token,
+                    request: { retries: 2 },
                     throttle: {
                         onRateLimit: (
-                            _retryAfter,
-                            options: { method: string; url: string },
-                            octokit,
+                            retryAfter: number,
+                            options: Required<EndpointDefaults>,
+                            octokit: Octokit,
+                            retryCount: number,
                         ) => {
+                            const attempts = retryCount;
+                            const jitter = Math.floor(Math.random() * 1000);
+
+                            // Log do Octokit (mantém compatibilidade com plugin)
                             octokit.log.warn(
-                                `Request quota exhausted for request ${options.method} ${options.url}`,
+                                `RATE-LIMIT core: ${options.method} ${options.url} — retryAfter=${retryAfter}s attempts=${attempts}`,
                             );
 
-                            return true;
+                            // Log do Pino (integração com sistema de logging)
+                            this.logger.warn({
+                                message: `RATE-LIMIT core: ${options.method} ${options.url} — retryAfter=${retryAfter}s attempts=${attempts}`,
+                                context: GithubService.name,
+                                metadata: {
+                                    method: options.method,
+                                    url: options.url,
+                                    retryAfter,
+                                    attempts,
+                                    organizationId:
+                                        organizationAndTeamData.organizationId,
+                                    teamId: organizationAndTeamData.teamId,
+                                },
+                            });
+
+                            if (attempts < 2) {
+                                octokit.log.info(
+                                    `Retrying after ~${retryAfter}s (+${jitter}ms jitter)`,
+                                );
+
+                                this.logger.log({
+                                    message: `Retrying after ~${retryAfter}s (+${jitter}ms jitter)`,
+                                    context: GithubService.name,
+                                    metadata: {
+                                        method: options.method,
+                                        url: options.url,
+                                        retryAfter,
+                                        jitter,
+                                        attempts,
+                                    },
+                                });
+                                return true;
+                            }
+
+                            return false;
                         },
                         onSecondaryRateLimit: (
-                            _retryAfter,
-                            options: { method: string; url: string },
-                            octokit,
+                            retryAfter: number,
+                            options: Required<EndpointDefaults>,
+                            octokit: Octokit,
+                            retryCount: number,
                         ) => {
-                            octokit.log.warn(
-                                `Secondary rate limit hit for request ${options.method} ${options.url}`,
+                            octokit.log.error(
+                                `SECONDARY-RATE-LIMIT: ${options.method} ${options.url} — wait=${retryAfter}s`,
                             );
 
-                            return true;
+                            this.logger.error({
+                                message: `SECONDARY-RATE-LIMIT: ${options.method} ${options.url} — wait=${retryAfter}s`,
+                                context: GithubService.name,
+                                metadata: {
+                                    method: options.method,
+                                    url: options.url,
+                                    retryAfter,
+                                    retryCount,
+                                    organizationId:
+                                        organizationAndTeamData.organizationId,
+                                    teamId: organizationAndTeamData.teamId,
+                                },
+                            });
                         },
                     },
                 });
 
+                attachETagHooksAllowlist(
+                    octokit,
+                    store,
+                    ALLOWLIST_TREES_ONLY,
+                    true,
+                    24 * 60 * 60,
+                );
                 return octokit;
             } else if (
                 githubAuthDetail.authMode === AuthMode.TOKEN &&
@@ -1892,6 +1983,13 @@ export class GithubService
                     },
                 });
 
+                attachETagHooksAllowlist(
+                    octokit,
+                    store,
+                    ALLOWLIST_TREES_ONLY,
+                    true,
+                    24 * 60 * 60,
+                );
                 return octokit;
             } else {
                 throw new BadRequestException('Unknown authentication type.');
@@ -5672,6 +5770,137 @@ export class GithubService
         }
 
         return allItems;
+    }
+
+    async getRepositoryTreeByDirectory(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+        repositoryId: string;
+        directoryPath?: string;
+    }): Promise<TreeItem[]> {
+        try {
+            const githubAuthDetail = await this.getGithubAuthDetails(
+                params.organizationAndTeamData,
+            );
+            if (!githubAuthDetail) {
+                return [];
+            }
+
+            const octokit = await this.instanceOctokit(
+                params.organizationAndTeamData,
+            );
+
+            const repositories =
+                await this.findOneByOrganizationAndTeamDataAndConfigKey(
+                    params.organizationAndTeamData,
+                    IntegrationConfigKey.REPOSITORIES,
+                );
+            if (!repositories) {
+                return [];
+            }
+
+            const repository = repositories.find(
+                (repo: any) => repo.id.toString() === params.repositoryId,
+            );
+            if (!repository) return [];
+
+            const owner = await this.getCorrectOwner(githubAuthDetail, octokit);
+
+            const repoResponse = await octokit.rest.repos.get({
+                owner,
+                repo: repository.name,
+            });
+            const branch = repoResponse.data.default_branch;
+
+            const head = await octokit.rest.repos.getBranch({
+                owner,
+                repo: repository.name,
+                branch,
+            });
+            const commitSha = head.data.commit.sha;
+
+            const commit = await octokit.rest.git.getCommit({
+                owner,
+                repo: repository.name,
+                commit_sha: commitSha,
+            });
+            let currentTreeSha = commit.data.tree.sha;
+
+            if (params.directoryPath) {
+                const parts = params.directoryPath.split('/').filter(Boolean);
+                for (const segment of parts) {
+                    const treeResp = await octokit.rest.git.getTree({
+                        owner,
+                        repo: repository.name,
+                        tree_sha: currentTreeSha,
+                    });
+                    const next = treeResp.data.tree.find(
+                        (i: any) => i.path === segment && i.type === 'tree',
+                    );
+                    if (!next) {
+                        this.logger.warn({
+                            message: 'Directory segment not found',
+                            context: GithubService.name,
+                            metadata: {
+                                segment,
+                                directoryPath: params.directoryPath,
+                            },
+                        });
+                        return [];
+                    }
+                    currentTreeSha = next.sha;
+                }
+            }
+
+            const levelResp = await octokit.rest.git.getTree({
+                owner,
+                repo: repository.name,
+                tree_sha: currentTreeSha,
+            });
+
+            const onlyDirs = levelResp.data.tree.filter(
+                (i: any) => i.type === 'tree',
+            );
+
+            const result: TreeItem[] = [];
+            for (const dir of onlyDirs) {
+                const childTree = await octokit.rest.git.getTree({
+                    owner,
+                    repo: repository.name,
+                    tree_sha: dir.sha,
+                });
+
+                const hasSubdir = childTree.data.tree.some(
+                    (e: any) => e.type === 'tree',
+                );
+
+                const fullPath = params.directoryPath
+                    ? `${params.directoryPath}/${dir.path}`
+                    : dir.path;
+
+                result.push({
+                    path: fullPath,
+                    type: 'directory',
+                    sha: dir.sha,
+                    url: dir.url,
+                    hasChildren: hasSubdir,
+                } as any);
+            }
+
+            return result;
+        } catch (error) {
+            this.logger.error({
+                message:
+                    'Error getting repository tree by directory from GitHub',
+                context: GithubService.name,
+                error,
+                metadata: {
+                    organizationAndTeamData: params.organizationAndTeamData,
+                    repositoryId: params.repositoryId,
+                    directoryPath: params.directoryPath,
+                },
+            });
+            return [];
+        }
     }
     //#endregion
 

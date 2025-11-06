@@ -8,7 +8,6 @@ export const jwtConfigLoader = registerAs(
         secret: process.env.API_JWT_SECRET,
         expiresIn: process.env.API_JWT_EXPIRES_IN as StringValue,
         refreshSecret: process.env.API_JWT_REFRESH_SECRET,
-        refreshExpiresIn:
-            process.env.API_JWT_REFRESH_EXPIRES_IN as StringValue,
+        refreshExpiresIn: process.env.API_JWT_REFRESH_EXPIRES_IN as StringValue,
     }),
 );

@@ -27,7 +27,6 @@ import { FinishOnboardingUseCase } from '@/core/application/use-cases/platformIn
 import { DeleteIntegrationUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/delete-integration.use-case';
 import { DeleteIntegrationAndRepositoriesUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/delete-integration-and-repositories.use-case';
 import { GetRepositoryTreeUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-repository-tree.use-case';
-import { GetRepositoryTreeDto } from '../../dtos/get-repository-tree.dto';
 import { GetWebhookStatusUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-webhook-status.use-case';
 import { WebhookStatusQueryDto } from '../../dtos/webhook-status-query.dto';
 import {
@@ -42,6 +41,8 @@ import {
     checkPermissions,
     checkRepoPermissions,
 } from '@/core/infrastructure/adapters/services/permissions/policy.handlers';
+import { GetRepositoryTreeByDirectoryUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-repository-tree-by-directory.use-case';
+import { GetRepositoryTreeByDirectoryDto } from '../../dtos/get-repository-tree-by-directory.dto';
 
 @Controller('code-management')
 export class CodeManagementController {
@@ -62,7 +63,7 @@ export class CodeManagementController {
         private readonly finishOnboardingUseCase: FinishOnboardingUseCase,
         private readonly deleteIntegrationUseCase: DeleteIntegrationUseCase,
         private readonly deleteIntegrationAndRepositoriesUseCase: DeleteIntegrationAndRepositoriesUseCase,
-        private readonly getRepositoryTreeUseCase: GetRepositoryTreeUseCase,
+        private readonly getRepositoryTreeByDirectoryUseCase: GetRepositoryTreeByDirectoryUseCase,
         private readonly getWebhookStatusUseCase: GetWebhookStatusUseCase,
     ) {}
 
@@ -112,7 +113,12 @@ export class CodeManagementController {
         checkPermissions(Action.Create, ResourceType.CodeReviewSettings),
     )
     public async createRepositories(
-        @Body() body: { repositories: Repository[]; teamId: string; type?: "replace" | "append" },
+        @Body()
+        body: {
+            repositories: Repository[];
+            teamId: string;
+            type?: 'replace' | 'append';
+        },
     ) {
         return this.createRepositoriesUseCase.execute(body);
     }
@@ -269,18 +275,17 @@ export class CodeManagementController {
         );
     }
 
-    @Get('/get-repository-tree')
+    @Get('/get-repository-tree-by-directory')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
         checkRepoPermissions(Action.Read, ResourceType.CodeReviewSettings, {
             key: { query: 'repositoryId' },
         }),
     )
-    public async getRepositoryTree(
-        @Query()
-        query: GetRepositoryTreeDto,
-    ): Promise<any> {
-        return await this.getRepositoryTreeUseCase.execute(query);
+    public async getRepositoryTreeByDirectory(
+        @Query() query: GetRepositoryTreeByDirectoryDto,
+    ) {
+        return await this.getRepositoryTreeByDirectoryUseCase.execute(query);
     }
 
     @Get('/webhook-status')
