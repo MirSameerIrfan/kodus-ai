@@ -14,13 +14,13 @@ export interface DirectoryItem {
     name: string;
     path: string;
     sha: string;
-    hasChildren: boolean; // Indica se deve mostrar o ícone de expandir
+    hasChildren: boolean; // agora vem verdadeiro/falso do service (sem chute)
 }
 
 export interface RepositoryTreeByDirectoryResponse {
     repository: string | null;
-    parentPath: string | null; // Path do diretório pai (null se for raiz)
-    currentPath: string | null; // Path do diretório atual (null se for raiz)
+    parentPath: string | null;
+    currentPath: string | null;
     directories: DirectoryItem[];
 }
 
@@ -38,7 +38,6 @@ export class GetRepositoryTreeByDirectoryUseCase implements IUseCase {
         params: GetRepositoryTreeByDirectoryDto,
     ): Promise<RepositoryTreeByDirectoryResponse> {
         try {
-            // Criar chave de cache única para cada diretório
             const cacheKey = this.buildCacheKey(
                 params.organizationId,
                 params.teamId,
@@ -46,9 +45,8 @@ export class GetRepositoryTreeByDirectoryUseCase implements IUseCase {
                 params.directoryPath,
             );
 
-            // Tentar buscar do cache se useCache = true
             let directories: TreeItem[] = [];
-            
+
             if (params.useCache) {
                 const cached = await this.cacheService.getFromCache<{
                     directories: TreeItem[];
@@ -56,9 +54,9 @@ export class GetRepositoryTreeByDirectoryUseCase implements IUseCase {
 
                 if (cached) {
                     directories = cached.directories;
-                    
                     this.logger.debug({
-                        message: 'Repository tree by directory loaded from cache',
+                        message:
+                            'Repository tree by directory loaded from cache',
                         context: GetRepositoryTreeByDirectoryUseCase.name,
                         metadata: {
                             organizationId: params.organizationId,
@@ -69,35 +67,32 @@ export class GetRepositoryTreeByDirectoryUseCase implements IUseCase {
                 }
             }
 
-            // Se não tem no cache, buscar da API
             if (directories.length === 0) {
-                directories = await this.codeManagementService.getRepositoryTreeByDirectory({
-                    organizationAndTeamData: {
-                        organizationId: params.organizationId,
-                        teamId: params.teamId,
-                    },
-                    repositoryId: params.repositoryId,
-                    directoryPath: params.directoryPath,
-                });
+                directories =
+                    await this.codeManagementService.getRepositoryTreeByDirectory(
+                        {
+                            organizationAndTeamData: {
+                                organizationId: params.organizationId,
+                                teamId: params.teamId,
+                            },
+                            repositoryId: params.repositoryId,
+                            directoryPath: params.directoryPath,
+                        },
+                    );
 
-                // Salvar no cache por 15 minutos
                 if (directories.length > 0) {
                     await this.cacheService.addToCache(
                         cacheKey,
                         { directories },
-                        900000, // 15 minutes
+                        900_000,
                     );
                 }
             }
 
-            // Formatar a resposta
             const formattedDirectories = this.formatDirectories(directories);
-
-            // Calcular o parent path
             const parentPath = this.getParentPath(params.directoryPath);
 
-            // Buscar nome do repositório
-            const repositoryName = 
+            const repositoryName =
                 await this.getAdditionalInfoHelper.getRepositoryNameByOrganizationAndRepository(
                     params.organizationId,
                     params.repositoryId,
@@ -113,14 +108,14 @@ export class GetRepositoryTreeByDirectoryUseCase implements IUseCase {
             this.logger.error({
                 message: 'Error while getting repository tree by directory',
                 context: GetRepositoryTreeByDirectoryUseCase.name,
-                error: error,
+                error,
                 metadata: {
                     organizationId: params.organizationId,
                     repositoryId: params.repositoryId,
                     directoryPath: params.directoryPath,
                 },
             });
-            
+
             return {
                 repository: null,
                 parentPath: null,
@@ -130,53 +125,39 @@ export class GetRepositoryTreeByDirectoryUseCase implements IUseCase {
         }
     }
 
-    /**
-     * Formata os itens da árvore para o formato de resposta
-     */
     private formatDirectories(treeItems: TreeItem[]): DirectoryItem[] {
         return treeItems.map((item) => {
-            const pathParts = item.path.split('/');
-            const name = pathParts[pathParts.length - 1];
+            const name = item.path.split('/').pop()!;
 
             return {
                 name,
                 path: item.path,
                 sha: item.sha,
-                hasChildren: true, // Assumimos que todo diretório pode ter filhos
+                hasChildren: (item as any).hasChildren === true,
             };
         });
     }
 
-    /**
-     * Calcula o path do diretório pai
-     * @example getParentPath('src/services/auth') -> 'src/services'
-     * @example getParentPath('src') -> null
-     * @example getParentPath(undefined) -> null
-     */
     private getParentPath(currentPath?: string): string | null {
         if (!currentPath) {
-            return null; // Está na raiz, não tem pai
+            return null;
         }
-
-        const pathParts = currentPath.split('/');
-        
-        if (pathParts.length === 1) {
-            return null; // Está no primeiro nível, pai é a raiz
+        const parts = currentPath.split('/').filter(Boolean);
+        if (parts.length <= 1) {
+            return null;
         }
-
-        return pathParts.slice(0, -1).join('/');
+        return parts.slice(0, -1).join('/');
     }
 
-    /**
-     * Constrói a chave de cache única para cada combinação
-     */
     private buildCacheKey(
         organizationId: string,
         teamId: string,
         repositoryId: string,
         directoryPath?: string,
     ): string {
-        const pathSegment = directoryPath ? `-${directoryPath.replace(/\//g, '-')}` : '-root';
+        const pathSegment = directoryPath
+            ? `-${directoryPath.replace(/\//g, '-')}`
+            : '-root';
         return `repo-tree-by-dir-${organizationId}-${teamId}-${repositoryId}${pathSegment}`;
     }
 }
