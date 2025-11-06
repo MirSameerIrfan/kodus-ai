@@ -1101,6 +1101,34 @@ export class AzureReposRequestHelper {
         return data?.value || [];
     }
 
+    async getRepositoryTreeByDirectory(params: {
+        orgName: string;
+        token: string;
+        projectId: string;
+        repositoryId: string;
+        scopePath?: string;
+        recursionLevel?: 'OneLevel' | 'Full' | 'None';
+    }): Promise<any[]> {
+        const instance = await this.azureRequest(params);
+    
+        const queryParams = new URLSearchParams();
+        queryParams.append('api-version', '7.1');
+        queryParams.append(
+            'recursionLevel',
+            params.recursionLevel || 'OneLevel', // ← Padrão: apenas 1 nível
+        );
+    
+        if (params.scopePath) {
+            queryParams.append('scopePath', params.scopePath);
+        }
+    
+        const { data } = await instance.get(
+            `/${params.projectId}/_apis/git/repositories/${params.repositoryId}/items?${queryParams.toString()}`,
+        );
+    
+        return data?.value || [];
+    }
+
     async updateThreadComment(params: {
         orgName: string;
         token: string;
