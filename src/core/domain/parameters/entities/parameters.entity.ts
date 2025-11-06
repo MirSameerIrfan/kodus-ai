@@ -24,6 +24,7 @@ export class ParametersEntity<K extends ParametersKey>
         this._createdAt = parameters.createdAt;
         this._updatedAt = parameters.updatedAt;
         this._active = parameters.active;
+        this._version = parameters.version;
     }
 
     public static create<K extends ParametersKey>(

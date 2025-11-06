@@ -75,28 +75,101 @@ export class ParametersService implements IParametersService {
         organizationAndTeamData: OrganizationAndTeamData,
     ): Promise<ParametersEntity<K> | boolean> {
         try {
-            const parameters = await this.findOne({
-                team: { uuid: organizationAndTeamData.teamId },
+            const teamId = organizationAndTeamData.teamId;
+
+            const existingParameters = await this.findOne({
+                team: { uuid: teamId },
                 configKey: parametersKey,
                 active: true,
             });
 
-            const version = parameters ? parameters.version + 1 : 1;
+            const version = existingParameters
+                ? existingParameters.version + 1
+                : 1;
 
-            if (parameters) {
-                await this.update({ uuid: parameters.uuid }, { active: false });
+            if (parametersKey !== ParametersKey.CODE_REVIEW_CONFIG) {
+                return existingParameters
+                    ? this.updateExistingParameters(
+                          existingParameters,
+                          configValue,
+                          teamId,
+                      )
+                    : this.createNewParameters(
+                          parametersKey,
+                          configValue,
+                          teamId,
+                          version,
+                      );
             }
 
-            return await this.create({
-                uuid: uuidv4(),
-                configKey: parametersKey,
+            if (existingParameters) {
+                const disabled =
+                    await this.disableExistingParameters(existingParameters);
+
+                if (!disabled) {
+                    throw new Error(
+                        'Error disabling existing code review config parameters',
+                    );
+                }
+            }
+
+            return this.createNewParameters(
+                parametersKey,
                 configValue,
-                team: { uuid: organizationAndTeamData.teamId },
-                active: true,
+                teamId,
                 version,
-            });
+            );
         } catch (err) {
             throw new BadRequestException(err);
         }
+    }
+
+    private async disableExistingParameters<K extends ParametersKey>(
+        existingParameters: ParametersEntity<K>,
+    ): Promise<boolean> {
+        await this.update(
+            {
+                uuid: existingParameters.uuid,
+            },
+            {
+                active: false,
+            },
+        );
+        return true;
+    }
+
+    private async updateExistingParameters<K extends ParametersKey>(
+        existingParameters: ParametersEntity<K>,
+        configValue: ParametersEntity<K>['configValue'],
+        teamId: string,
+    ): Promise<boolean> {
+        await this.update(
+            {
+                uuid: existingParameters.uuid,
+                team: { uuid: teamId },
+            },
+            {
+                configKey: existingParameters.configKey,
+                configValue,
+                team: { uuid: teamId },
+            },
+        );
+        return true;
+    }
+
+    private async createNewParameters<K extends ParametersKey>(
+        parametersKey: K,
+        configValue: ParametersEntity<K>['configValue'],
+        teamId: string,
+        version: number,
+    ): Promise<ParametersEntity<K>> {
+        return this.create({
+            uuid: uuidv4(),
+            configKey: parametersKey,
+            configValue,
+            team: { uuid: teamId },
+            active: true,
+            version,
+        });
     }
 }

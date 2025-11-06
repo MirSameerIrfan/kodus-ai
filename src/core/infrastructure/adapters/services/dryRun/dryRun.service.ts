@@ -5,7 +5,13 @@ import {
 } from '@/core/domain/dryRun/contracts/dryRun.repository.contract';
 import { IDryRunService } from '@/core/domain/dryRun/contracts/dryRun.service.contract';
 import { DryRunEntity } from '@/core/domain/dryRun/entities/dryRun.entity';
-import { IDryRun } from '@/core/domain/dryRun/interfaces/dryRun.interface';
+import {
+    DryRunEventType,
+    DryRunStatus,
+    IDryRun,
+    IDryRunEvent,
+    IDryRunPayloadMap,
+} from '@/core/domain/dryRun/interfaces/dryRun.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { PinoLoggerService } from '../logger/pino.service';
 import { createHash } from 'crypto';
@@ -34,6 +40,8 @@ import {
     CODE_BASE_CONFIG_SERVICE_TOKEN,
     ICodeBaseConfigService,
 } from '@/core/domain/codeBase/contracts/CodeBaseConfigService.contract';
+import { v4 } from 'uuid';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class DryRunService implements IDryRunService {
@@ -51,6 +59,8 @@ export class DryRunService implements IDryRunService {
         private readonly codeBaseConfigService: ICodeBaseConfigService,
 
         private readonly logger: PinoLoggerService,
+
+        private readonly eventEmitter: EventEmitter2,
     ) {}
 
     create(
@@ -140,7 +150,38 @@ export class DryRunService implements IDryRunService {
         }
     }
 
+    async findDryRunById(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+        id: string;
+    }): Promise<IDryRun['runs'][number] | null> {
+        const { organizationAndTeamData, id } = params;
+
+        try {
+            const { existing, runIndex } = await this.findRun(
+                organizationAndTeamData,
+                id,
+            );
+
+            if (!existing || runIndex === -1) {
+                return null;
+            }
+
+            return existing.runs[runIndex];
+        } catch (error) {
+            this.logger.error({
+                message: 'Error finding DryRun by ID',
+                error,
+                context: DryRunService.name,
+                metadata: { organizationAndTeamData, id },
+            });
+
+            throw error;
+        }
+    }
+
     async addDryRun(params: {
+        id?: string;
+        status?: DryRunStatus;
         organizationAndTeamData: OrganizationAndTeamData;
         config: CodeReviewConfig;
         pullRequestMessagesConfig?: IPullRequestMessages;
@@ -155,9 +196,13 @@ export class DryRunService implements IDryRunService {
         directoryId?: string;
     }): Promise<IDryRun['runs'][number]> {
         const {
+            id = v4(),
+            status = DryRunStatus.IN_PROGRESS,
             organizationAndTeamData,
             config,
             pullRequestMessagesConfig,
+            files = [],
+            prLevelSuggestions = [],
             ...dryRunData
         } = params;
 
@@ -167,7 +212,7 @@ export class DryRunService implements IDryRunService {
                 organizationAndTeamData,
             );
 
-            const { hash, ...configHashes } = this.generateHashes(
+            const configHashes = this.generateHashes(
                 dryRunData,
                 config,
                 pullRequestMessagesConfig,
@@ -177,9 +222,10 @@ export class DryRunService implements IDryRunService {
 
             const newDryRun: IDryRun['runs'][number] = {
                 ...dryRunData,
-                files: params.files || [],
-                prLevelSuggestions: params.prLevelSuggestions || [],
-                hash,
+                id,
+                status,
+                files,
+                prLevelSuggestions,
                 createdAt: now,
                 updatedAt: now,
                 dependents: [],
@@ -206,7 +252,9 @@ export class DryRunService implements IDryRunService {
             }
 
             // Check if an identical dry run already exists
-            const fullMatch = existing.runs.find((run) => run.hash === hash);
+            const fullMatch = existing.runs.find(
+                (run) => run.configHashes.full === configHashes.full,
+            );
             if (fullMatch) {
                 return fullMatch;
             }
@@ -219,11 +267,11 @@ export class DryRunService implements IDryRunService {
                 // Check if there's an existing dry run with the same LLM-affecting config
                 if (llmMatch) {
                     // Point the new run's files/suggestions to the matched run's hash
-                    newDryRun.files = llmMatch.hash;
-                    newDryRun.prLevelSuggestions = llmMatch.hash;
+                    newDryRun.files = llmMatch.id;
+                    newDryRun.prLevelSuggestions = llmMatch.id;
 
                     // Add the new run's hash as a dependent of the matched run
-                    llmMatch.dependents.push(hash);
+                    llmMatch.dependents.push(id);
                     llmMatch.updatedAt = now;
                 }
 
@@ -250,7 +298,7 @@ export class DryRunService implements IDryRunService {
 
     async addMessageToDryRun(params: {
         organizationAndTeamData: OrganizationAndTeamData;
-        hash: string;
+        id: string;
         content: string;
         path?: string;
         lines?: {
@@ -261,12 +309,12 @@ export class DryRunService implements IDryRunService {
         category?: string;
         codeBlock?: string;
     }): Promise<IDryRun['runs'][number] | null> {
-        const { organizationAndTeamData, hash, ...content } = params;
+        const { organizationAndTeamData, id, ...content } = params;
 
         try {
             const { existing, runIndex } = await this.findRun(
                 organizationAndTeamData,
-                hash,
+                id,
             );
 
             if (!existing || runIndex === -1) {
@@ -286,13 +334,25 @@ export class DryRunService implements IDryRunService {
                 { runs: nextState.runs },
             );
 
+            this.emitEvent(
+                id,
+                organizationAndTeamData,
+                DryRunEventType.MESSAGE_ADDED,
+                {
+                    message: {
+                        id: updatedDryRun.runs[runIndex].messages.length - 1,
+                        ...content,
+                    },
+                },
+            );
+
             return updatedDryRun.runs[runIndex];
         } catch (error) {
             this.logger.error({
                 message: 'Error adding message to DryRun',
                 error,
                 context: DryRunService.name,
-                metadata: { organizationAndTeamData, hash, content },
+                metadata: { organizationAndTeamData, hash: id, content },
             });
 
             throw error;
@@ -301,16 +361,16 @@ export class DryRunService implements IDryRunService {
 
     async updateMessageInDryRun(params: {
         organizationAndTeamData: OrganizationAndTeamData;
-        hash: string;
+        id: string;
         commentId: number;
         content: string;
     }): Promise<IDryRun['runs'][number] | null> {
-        const { organizationAndTeamData, hash, commentId, content } = params;
+        const { organizationAndTeamData, id, commentId, content } = params;
 
         try {
             const { existing, runIndex } = await this.findRun(
                 organizationAndTeamData,
-                hash,
+                id,
             );
 
             if (!existing || runIndex === -1) {
@@ -326,7 +386,7 @@ export class DryRunService implements IDryRunService {
                     message:
                         'No message found in DryRun run with the specified commentId',
                     context: DryRunService.name,
-                    metadata: { organizationAndTeamData, hash, commentId },
+                    metadata: { organizationAndTeamData, hash: id, commentId },
                 });
                 return null;
             }
@@ -343,6 +403,16 @@ export class DryRunService implements IDryRunService {
                 { runs: nextState.runs },
             );
 
+            this.emitEvent(
+                id,
+                organizationAndTeamData,
+                DryRunEventType.MESSAGE_UPDATED,
+                {
+                    messageId: commentId,
+                    content,
+                },
+            );
+
             return updatedDryRun.runs[runIndex];
         } catch (error) {
             this.logger.error({
@@ -351,7 +421,7 @@ export class DryRunService implements IDryRunService {
                 context: DryRunService.name,
                 metadata: {
                     organizationAndTeamData,
-                    hash,
+                    hash: id,
                     commentId,
                     body: content,
                 },
@@ -363,41 +433,74 @@ export class DryRunService implements IDryRunService {
 
     async updateDescriptionInDryRun(params: {
         organizationAndTeamData: OrganizationAndTeamData;
-        hash: string;
+        id: string;
         description: string;
     }): Promise<IDryRun['runs'][number] | null> {
-        const { organizationAndTeamData, hash, description } = params;
+        const { organizationAndTeamData, id, description } = params;
 
         try {
-            const { existing, runIndex } = await this.findRun(
+            const updateDryRun = await this.editRun(
                 organizationAndTeamData,
-                hash,
+                id,
+                {
+                    runData: { description },
+                },
             );
 
-            if (!existing || runIndex === -1) {
-                return null;
-            }
-
-            const now = new Date();
-
-            const nextState = produce(existing.toObject(), (draft) => {
-                const run = draft.runs[runIndex];
-                run.description = description;
-                run.updatedAt = now;
-            });
-
-            const updatedDryRun = await this.dryRunRepository.update(
-                existing.uuid,
-                { runs: nextState.runs },
+            this.emitEvent(
+                id,
+                organizationAndTeamData,
+                DryRunEventType.DESCRIPTION_UPDATED,
+                {
+                    description,
+                },
             );
 
-            return updatedDryRun.runs[runIndex];
+            return updateDryRun;
         } catch (error) {
             this.logger.error({
                 message: 'Error updating description in DryRun',
                 error,
                 context: DryRunService.name,
-                metadata: { organizationAndTeamData, hash, description },
+                metadata: { organizationAndTeamData, hash: id, description },
+            });
+
+            throw error;
+        }
+    }
+
+    async updateDryRunStatus(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+        id: string;
+        status: DryRunStatus;
+    }): Promise<IDryRun['runs'][number] | null> {
+        const { organizationAndTeamData, id, status } = params;
+
+        try {
+            const updatedDryRun = await this.editRun(
+                organizationAndTeamData,
+                id,
+                {
+                    runData: { status },
+                },
+            );
+
+            this.emitEvent(
+                id,
+                organizationAndTeamData,
+                DryRunEventType.STATUS_UPDATED,
+                {
+                    status,
+                },
+            );
+
+            return updatedDryRun;
+        } catch (error) {
+            this.logger.error({
+                message: 'Error updating DryRun status',
+                error,
+                context: DryRunService.name,
+                metadata: { organizationAndTeamData, hash: id, status },
             });
 
             throw error;
@@ -406,14 +509,14 @@ export class DryRunService implements IDryRunService {
 
     async removeDryRunByHash(params: {
         organizationAndTeamData: OrganizationAndTeamData;
-        hash: string;
+        id: string;
     }): Promise<IDryRun | null> {
-        const { organizationAndTeamData, hash } = params;
+        const { organizationAndTeamData, id } = params;
 
         try {
             const { existing, runIndex: runIndexToRemove } = await this.findRun(
                 organizationAndTeamData,
-                hash,
+                id,
             );
 
             if (!existing || runIndexToRemove === -1) {
@@ -440,13 +543,19 @@ export class DryRunService implements IDryRunService {
                 { runs: nextState.runs },
             );
 
+            this.emitEvent(
+                id,
+                organizationAndTeamData,
+                DryRunEventType.REMOVED,
+            );
+
             return updatedDryRun.toObject();
         } catch (error) {
             this.logger.error({
                 message: 'Error removing DryRun by hash',
                 error,
                 context: DryRunService.name,
-                metadata: { organizationAndTeamData, hash },
+                metadata: { organizationAndTeamData, hash: id },
             });
 
             throw error;
@@ -466,12 +575,12 @@ export class DryRunService implements IDryRunService {
             return; // This run has no parent
         }
 
-        const parentHash = runToRemove.files;
-        const parentRun = draft.runs.find((run) => run.hash === parentHash);
+        const parentId = runToRemove.files;
+        const parentRun = draft.runs.find((run) => run.id === parentId);
 
         if (parentRun) {
             parentRun.dependents = parentRun.dependents.filter(
-                (depHash) => depHash !== runToRemove.hash,
+                (depId) => depId !== runToRemove.id,
             );
             parentRun.updatedAt = now;
         }
@@ -490,9 +599,9 @@ export class DryRunService implements IDryRunService {
             return; // No dependents to promote
         }
 
-        const promotedHash = runToRemove.dependents[0];
+        const promotedId = runToRemove.dependents[0];
         const otherDependentHashes = runToRemove.dependents.slice(1);
-        const promotedRun = draft.runs.find((run) => run.hash === promotedHash);
+        const promotedRun = draft.runs.find((run) => run.id === promotedId);
 
         if (!promotedRun) {
             throw new Error(
@@ -507,13 +616,14 @@ export class DryRunService implements IDryRunService {
         promotedRun.updatedAt = now;
 
         // 2. Re-link all other dependents to the promoted run
-        otherDependentHashes.forEach((depHash) => {
+        otherDependentHashes.forEach((depId) => {
             const otherDependentRun = draft.runs.find(
-                (run) => run.hash === depHash,
+                (run) => run.id === depId,
             );
+
             if (otherDependentRun) {
-                otherDependentRun.files = promotedHash;
-                otherDependentRun.prLevelSuggestions = promotedHash;
+                otherDependentRun.files = promotedId;
+                otherDependentRun.prLevelSuggestions = promotedId;
                 otherDependentRun.updatedAt = now;
             }
         });
@@ -554,8 +664,7 @@ export class DryRunService implements IDryRunService {
         >,
         config: CodeReviewConfigWithoutLLMProvider,
         pullRequestMessages?: IPullRequestMessages,
-    ): IDryRun['runs'][number]['configHashes'] &
-        Pick<IDryRun['runs'][number], 'hash'> {
+    ): IDryRun['runs'][number]['configHashes'] {
         const fullHash = this.generateHash({
             config,
             pullRequestMessages,
@@ -585,6 +694,7 @@ export class DryRunService implements IDryRunService {
             restPullRequestMessages,
             restStartReviewMessage,
             restEndReviewMessage,
+            restSummary,
         };
 
         const llmConfig = {
@@ -598,7 +708,7 @@ export class DryRunService implements IDryRunService {
         const llmHash = this.generateHash(llmConfig);
 
         return {
-            hash: fullHash,
+            full: fullHash,
             basic: basicHash,
             llm: llmHash,
         };
@@ -616,7 +726,7 @@ export class DryRunService implements IDryRunService {
 
     private async findRun(
         organizationAndTeamData: OrganizationAndTeamData,
-        hash: string,
+        id: string,
     ) {
         const existing = await this.dryRunRepository.findOne({
             organizationId: organizationAndTeamData.organizationId,
@@ -627,22 +737,87 @@ export class DryRunService implements IDryRunService {
             this.logger.warn({
                 message: 'No DryRun found for organization and team',
                 context: DryRunService.name,
-                metadata: { organizationAndTeamData, hash },
+                metadata: { organizationAndTeamData, id },
             });
             return { existing: null, runIndex: -1, run: null };
         }
 
-        const runIndex = existing.runs.findIndex((run) => run.hash === hash);
+        const runIndex = existing.runs.findIndex((run) => run.id === id);
 
         if (runIndex === -1) {
             this.logger.warn({
-                message: 'No DryRun run found with the specified hash',
+                message: 'No DryRun run found with the specified id',
                 context: DryRunService.name,
-                metadata: { organizationAndTeamData, hash },
+                metadata: { organizationAndTeamData, id },
             });
             return { existing, runIndex: -1, run: null };
         }
 
         return { existing, runIndex, run: existing.runs[runIndex] };
+    }
+
+    private async editRun(
+        organizationAndTeamData: OrganizationAndTeamData,
+        id: string,
+        editData: {
+            runData?: Partial<IDryRun['runs'][number]>;
+            editFn?: (
+                existingRun: IDryRun['runs'][number],
+            ) => Partial<IDryRun['runs'][number]>;
+        },
+    ) {
+        const { existing, runIndex } = await this.findRun(
+            organizationAndTeamData,
+            id,
+        );
+
+        if (!existing || runIndex === -1) {
+            return null;
+        }
+
+        const now = new Date();
+
+        if (!editData.runData && !editData.editFn) {
+            return null;
+        }
+
+        const newRunData = editData.editFn
+            ? editData.editFn(existing.runs[runIndex])
+            : editData.runData;
+
+        const nextState = produce(existing.toObject(), (draft) => {
+            const run = draft.runs[runIndex];
+            Object.assign(run, newRunData);
+            run.updatedAt = now;
+        });
+
+        const updatedDryRun = await this.dryRunRepository.update(
+            existing.uuid,
+            {
+                runs: nextState.runs,
+            },
+        );
+
+        return updatedDryRun.runs[runIndex];
+    }
+
+    private emitEvent<T extends DryRunEventType>(
+        id: string,
+        organizationAndTeamData: OrganizationAndTeamData,
+        eventType: T,
+        payload?: IDryRunPayloadMap[T],
+    ) {
+        const event = {
+            dryRunId: id,
+            type: eventType,
+            organizationId: organizationAndTeamData.organizationId,
+            teamId: organizationAndTeamData.teamId,
+            payload,
+        };
+
+        this.eventEmitter.emit(
+            `dryRun.${id}.${eventType}`,
+            event as IDryRunEvent,
+        );
     }
 }

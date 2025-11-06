@@ -1,6 +1,6 @@
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { DryRunEntity } from '../entities/dryRun.entity';
-import { IDryRun } from '../interfaces/dryRun.interface';
+import { DryRunStatus, IDryRun } from '../interfaces/dryRun.interface';
 import { IDryRunRepository } from './dryRun.repository.contract';
 import { CodeReviewConfig } from '@/config/types/general/codeReview.type';
 import {
@@ -15,7 +15,13 @@ export const DRY_RUN_SERVICE_TOKEN = Symbol('DRY_RUN_SERVICE_TOKEN');
 export interface IDryRunService extends IDryRunRepository {
     findById(id: string): Promise<DryRunEntity | null>;
 
+    findDryRunById(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+        id: string;
+    }): Promise<IDryRun['runs'][number] | null>;
+
     addDryRun(params: {
+        id?: string;
         organizationAndTeamData: OrganizationAndTeamData;
         config: CodeReviewConfig;
         pullRequestMessagesConfig: IPullRequestMessages | null;
@@ -32,7 +38,7 @@ export interface IDryRunService extends IDryRunRepository {
 
     addMessageToDryRun(params: {
         organizationAndTeamData: OrganizationAndTeamData;
-        hash: string;
+        id: string;
         content: string;
         path?: string;
         lines?: {
@@ -46,20 +52,26 @@ export interface IDryRunService extends IDryRunRepository {
 
     updateMessageInDryRun(params: {
         organizationAndTeamData: OrganizationAndTeamData;
-        hash: string;
+        id: string;
         commentId: number;
         content: string;
     }): Promise<IDryRun['runs'][number] | null>;
 
     updateDescriptionInDryRun(params: {
         organizationAndTeamData: OrganizationAndTeamData;
-        hash: string;
+        id: string;
         description: string;
+    }): Promise<IDryRun['runs'][number] | null>;
+
+    updateDryRunStatus(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+        id: string;
+        status: DryRunStatus;
     }): Promise<IDryRun['runs'][number] | null>;
 
     removeDryRunByHash(params: {
         organizationAndTeamData: OrganizationAndTeamData;
-        hash: string;
+        id: string;
     }): Promise<IDryRun | null>;
 
     clearDryRuns(params: {

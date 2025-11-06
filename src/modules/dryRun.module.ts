@@ -19,6 +19,7 @@ import { CodeReviewPipelineModule } from './codeReviewPipeline.module';
 import { PromptsModule } from './prompts.module';
 import { DryRunController } from '@/core/infrastructure/http/controllers/dryRun.controller';
 import { PlatformIntegrationModule } from './platformIntegration.module';
+import { IntegrationConfigModule } from './integrationConfig.module';
 
 @Module({
     imports: [
@@ -34,6 +35,7 @@ import { PlatformIntegrationModule } from './platformIntegration.module';
         forwardRef(() => CodeReviewPipelineModule),
         forwardRef(() => PromptsModule),
         forwardRef(() => PlatformIntegrationModule),
+        forwardRef(() => IntegrationConfigModule),
     ],
     providers: [
         ...UseCases,

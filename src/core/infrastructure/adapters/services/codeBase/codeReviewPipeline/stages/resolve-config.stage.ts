@@ -86,9 +86,10 @@ export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineCont
             const pullRequestMessagesConfig =
                 await this.setPullRequestMessagesConfig(context);
 
-            let dryRunHash = undefined;
+            let dryRunId = undefined;
             if (context.dryRun?.enabled) {
                 const dryRun = await this.dryRunService.addDryRun({
+                    id: context.dryRun.id,
                     organizationAndTeamData: context.organizationAndTeamData,
                     provider: context.platformType,
                     prNumber: context.pullRequest.number,
@@ -99,7 +100,7 @@ export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineCont
                     pullRequestMessagesConfig,
                 });
 
-                dryRunHash = dryRun.hash;
+                dryRunId = dryRun.id;
             }
 
             return this.updateContext(context, (draft) => {
@@ -107,7 +108,7 @@ export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineCont
                 draft.pullRequestMessagesConfig = pullRequestMessagesConfig;
                 draft.dryRun = {
                     ...draft.dryRun,
-                    hash: dryRunHash,
+                    id: dryRunId,
                 };
             });
         } catch (error) {

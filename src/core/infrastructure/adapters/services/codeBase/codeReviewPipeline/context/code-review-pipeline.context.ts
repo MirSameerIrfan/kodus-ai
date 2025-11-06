@@ -20,7 +20,7 @@ import { IExternalPromptContext } from '@/core/domain/prompts/interfaces/promptE
 export interface CodeReviewPipelineContext extends PipelineContext {
     dryRun: {
         enabled: boolean;
-        hash?: string;
+        id?: string;
     };
     organizationAndTeamData: OrganizationAndTeamData;
     repository: Repository;

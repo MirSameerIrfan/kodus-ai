@@ -42,6 +42,8 @@ import {
     checkPermissions,
     checkRepoPermissions,
 } from '@/core/infrastructure/adapters/services/permissions/policy.handlers';
+import { GetPRsByRepoUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-prs-repo.use-case';
+import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
 
 @Controller('code-management')
 export class CodeManagementController {
@@ -64,6 +66,7 @@ export class CodeManagementController {
         private readonly deleteIntegrationAndRepositoriesUseCase: DeleteIntegrationAndRepositoriesUseCase,
         private readonly getRepositoryTreeUseCase: GetRepositoryTreeUseCase,
         private readonly getWebhookStatusUseCase: GetWebhookStatusUseCase,
+        private readonly getPRsByRepoUseCase: GetPRsByRepoUseCase,
     ) {}
 
     @Get('/repositories/org')
@@ -112,7 +115,12 @@ export class CodeManagementController {
         checkPermissions(Action.Create, ResourceType.CodeReviewSettings),
     )
     public async createRepositories(
-        @Body() body: { repositories: Repository[]; teamId: string; type?: "replace" | "append" },
+        @Body()
+        body: {
+            repositories: Repository[];
+            teamId: string;
+            type?: 'replace' | 'append';
+        },
     ) {
         return this.createRepositoriesUseCase.execute(body);
     }
@@ -202,6 +210,31 @@ export class CodeManagementController {
             number: query.number,
             title: query.title,
             url: query.url,
+        });
+    }
+
+    @Get('/get-prs-repo')
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(checkPermissions(Action.Read, ResourceType.PullRequests))
+    public async getPRsByRepo(
+        @Query()
+        query: {
+            teamId: string;
+            repositoryId: string;
+            number?: number;
+            startDate?: string;
+            endDate?: string;
+            author?: string;
+            branch?: string;
+            title?: string;
+            state?: PullRequestState;
+        },
+    ) {
+        const { teamId, repositoryId, ...filters } = query;
+        return await this.getPRsByRepoUseCase.execute({
+            teamId,
+            repositoryId,
+            filters,
         });
     }
 
