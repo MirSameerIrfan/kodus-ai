@@ -84,6 +84,7 @@ import {
 } from '@/shared/utils/glob-utils';
 import { CacheService } from '@/shared/utils/cache/cache.service';
 import { MCPManagerService } from '../mcp/services/mcp-manager.service';
+import { TreeItem } from '@/config/types/general/tree.type';
 
 @Injectable()
 @IntegrationServiceDecorator(PlatformType.GITLAB, 'codeManagement')
@@ -3921,6 +3922,73 @@ export class GitlabService
                 metadata: {
                     organizationAndTeamData: params.organizationAndTeamData,
                     repositoryId: params.repositoryId,
+                },
+            });
+            return [];
+        }
+    }
+
+    async getRepositoryTreeByDirectory(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+        repositoryId: string;
+        directoryPath?: string;
+    }): Promise<TreeItem[]> {
+        try {
+            const gitlabAuthDetail = await this.getAuthDetails(
+                params.organizationAndTeamData,
+            );
+
+            if (!gitlabAuthDetail) {
+                return [];
+            }
+
+            const gitlabAPI = this.instanceGitlabApi(gitlabAuthDetail);
+
+            // Configurar opções da busca
+            const options: any = {
+                recursive: false, // ← IMPORTANTE: apenas 1 nível
+            };
+
+            // Se tem directoryPath, adicionar nas opções
+            if (params.directoryPath) {
+                options.path = params.directoryPath;
+            }
+
+            // Buscar a árvore do diretório
+            const tree = await gitlabAPI.Repositories.allRepositoryTrees(
+                params.repositoryId,
+                options,
+            );
+
+            // Filtrar apenas diretórios e mapear para o formato padrão
+            const directories = tree
+                .filter((item: any) => item.type === 'tree')
+                .map((item: any) => {
+                    const fullPath = params.directoryPath
+                        ? `${params.directoryPath}/${item.name}`
+                        : item.name;
+
+                    return {
+                        path: fullPath,
+                        type: 'directory' as const,
+                        sha: item.id, 
+                        size: undefined,
+                        url: undefined, 
+                        hasChildren: true,
+                    };
+                });
+
+            return directories;
+        } catch (error) {
+            this.logger.error({
+                message:
+                    'Error getting repository tree by directory from GitLab',
+                context: GitlabService.name,
+                error: error,
+                metadata: {
+                    organizationAndTeamData: params.organizationAndTeamData,
+                    repositoryId: params.repositoryId,
+                    directoryPath: params.directoryPath,
                 },
             });
             return [];

@@ -22,6 +22,11 @@ import {
     Action,
     ResourceType,
 } from '@/core/domain/permissions/enums/permissions.enum';
+import {
+    IIntegrationConfigService,
+    INTEGRATION_CONFIG_SERVICE_TOKEN,
+} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
 
 @Injectable()
 export class GetIssueByIdUseCase implements IUseCase {
@@ -34,6 +39,9 @@ export class GetIssueByIdUseCase implements IUseCase {
 
         @Inject(KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN)
         private readonly kodyIssuesManagementService: KodyIssuesManagementService,
+
+        @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
+        private readonly integrationConfigService: IIntegrationConfigService,
 
         @Inject(REQUEST)
         private readonly request: Request & {
@@ -69,13 +77,31 @@ export class GetIssueByIdUseCase implements IUseCase {
             issue,
             codeReviewFeedback,
         );
-        const prUrls = await this.selectAllPrNumbers(issue);
+
+        let httpUrl = null;
+
+        if (issue.repository.platform === PlatformType.AZURE_REPOS) {
+            const integrationConfig =
+                await this.integrationConfigService.findOne({
+                    configKey: IntegrationConfigKey.REPOSITORIES,
+                    configValue: [{ id: issue.repository.id }],
+                });
+
+            const repoConfig = integrationConfig?.configValue?.find(
+                (x) => x.id === issue.repository.id,
+            );
+            
+            httpUrl = repoConfig?.http_url ?? null;
+        }
 
         const dataToBuildUrls = {
             platform: issue.repository.platform,
             repositoryName: issue.repository.name,
             repositoryFullName: issue.repository.full_name,
+            httpUrl: httpUrl,
         };
+
+        const prUrls = await this.selectAllPrNumbers(issue, dataToBuildUrls);
 
         const enrichedContributingSuggestions =
             await this.kodyIssuesManagementService.enrichContributingSuggestions(
@@ -168,7 +194,15 @@ export class GetIssueByIdUseCase implements IUseCase {
         };
     }
 
-    private async selectAllPrNumbers(issue: IssuesEntity): Promise<
+    private async selectAllPrNumbers(
+        issue: IssuesEntity,
+        dataToBuildUrls: {
+            platform: PlatformType;
+            repositoryName: string;
+            repositoryFullName: string;
+            httpUrl: string;
+        },
+    ): Promise<
         {
             number: string;
             url: string;
@@ -183,12 +217,6 @@ export class GetIssueByIdUseCase implements IUseCase {
                 }
             });
         }
-
-        const dataToBuildUrls = {
-            platform: issue.repository.platform,
-            repositoryName: issue.repository.name,
-            repositoryFullName: issue.repository.full_name,
-        };
 
         const repositoryUrl = this.buildRepositoryUrl(dataToBuildUrls);
 
@@ -212,6 +240,7 @@ export class GetIssueByIdUseCase implements IUseCase {
             platform: PlatformType;
             repositoryName: string;
             repositoryFullName: string;
+            httpUrl: string;
         },
         filePath: string,
         branch: string = 'main',
@@ -226,7 +255,7 @@ export class GetIssueByIdUseCase implements IUseCase {
             case PlatformType.GITLAB:
                 return `https://gitlab.com/${data.repositoryFullName}/-/blob/${branch}/${cleanFilePath}`;
             case PlatformType.AZURE_REPOS:
-                return `https://dev.azure.com/${data.repositoryFullName}/_git/${data.repositoryName}?path=/${cleanFilePath}`;
+                return `${data.httpUrl}?path=/${cleanFilePath}`;
             case PlatformType.BITBUCKET:
                 return `https://bitbucket.org/${data.repositoryFullName}/src/${branch}/${cleanFilePath}`;
             default:
@@ -239,6 +268,7 @@ export class GetIssueByIdUseCase implements IUseCase {
             platform: PlatformType;
             repositoryName: string;
             repositoryFullName: string;
+            httpUrl: string;
         },
         prNumber: string,
     ): string {
@@ -248,7 +278,7 @@ export class GetIssueByIdUseCase implements IUseCase {
             case PlatformType.GITLAB:
                 return `https://gitlab.com/${data.repositoryFullName}/-/merge_requests/${prNumber}`;
             case PlatformType.AZURE_REPOS:
-                return `https://dev.azure.com/${data.repositoryFullName}/_git/${data.repositoryName}/pullrequest/${prNumber}`;
+                return `${data.httpUrl}/pullrequest/${prNumber}`;
             case PlatformType.BITBUCKET:
                 return `https://bitbucket.org/${data.repositoryFullName}/pull-requests/${prNumber}`;
             default:
@@ -259,6 +289,7 @@ export class GetIssueByIdUseCase implements IUseCase {
     private buildRepositoryUrl(data: {
         platform: PlatformType;
         repositoryFullName: string;
+        httpUrl: string;
     }): string {
         switch (data.platform) {
             case PlatformType.GITHUB:
@@ -266,7 +297,7 @@ export class GetIssueByIdUseCase implements IUseCase {
             case PlatformType.GITLAB:
                 return `https://gitlab.com/${data.repositoryFullName}`;
             case PlatformType.AZURE_REPOS:
-                return `https://dev.azure.com/${data.repositoryFullName}`;
+                return data.httpUrl;
             case PlatformType.BITBUCKET:
                 return `https://bitbucket.org/${data.repositoryFullName}`;
             default:

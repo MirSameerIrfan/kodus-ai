@@ -110,8 +110,8 @@ export class CheckSyncStatusUseCase {
                         repositoryId,
                     );
 
-                const ideRules = rules.find((rule) =>
-                    rule.rules.find((r: IKodyRule) => r.sourcePath),
+                const ideRules = rules?.find((rule) =>
+                    rule?.rules?.find((r: IKodyRule) => r.sourcePath),
                 );
 
                 syncStatusFlags.ideRulesSyncEnabledFirstTime = !ideRules;

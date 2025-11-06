@@ -18,6 +18,7 @@ import { DeleteIntegrationUseCase } from './delete-integration.use-case';
 import { DeleteIntegrationAndRepositoriesUseCase } from './delete-integration-and-repositories.use-case';
 import { GetRepositoryTreeUseCase } from './get-repository-tree.use-case';
 import { GetWebhookStatusUseCase } from './get-webhook-status.use-case';
+import { GetRepositoryTreeByDirectoryUseCase } from './get-repository-tree-by-directory.use-case';
 import { GetPRsByRepoUseCase } from './get-prs-repo.use-case';
 
 export default [
@@ -40,6 +41,7 @@ export default [
     DeleteIntegrationUseCase,
     DeleteIntegrationAndRepositoriesUseCase,
     GetRepositoryTreeUseCase,
+    GetRepositoryTreeByDirectoryUseCase,
     GetWebhookStatusUseCase,
     GetPRsByRepoUseCase,
 ];

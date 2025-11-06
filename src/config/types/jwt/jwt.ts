@@ -1,8 +1,10 @@
+import type { StringValue } from 'ms';
+
 export type JWT = {
     secret: string;
-    expiresIn: string;
+    expiresIn: StringValue;
     refreshSecret: string;
-    refreshExpiresIn: string;
+    refreshExpiresIn: StringValue;
 };
 
 export type TokenResponse = {
