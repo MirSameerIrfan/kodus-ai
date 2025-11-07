@@ -363,6 +363,10 @@ export class ValidateConfigStage extends BasePipelineStage<CodeReviewPipelineCon
         context: CodeReviewPipelineContext,
         config: any,
     ): Promise<boolean> {
+        if (context.dryRun.enabled) {
+            return false;
+        }
+
         const pushesToTrigger = config.reviewCadence?.pushesToTrigger || 3;
         const timeWindowMinutes = config.reviewCadence?.timeWindow || 15;
 
@@ -376,10 +380,7 @@ export class ValidateConfigStage extends BasePipelineStage<CodeReviewPipelineCon
             timeWindowStart,
         );
 
-        return (
-            !context.dryRun.enabled &&
-            recentExecutions.length >= pushesToTrigger
-        );
+        return recentExecutions.length >= pushesToTrigger;
     }
 
     private async getRecentSuccessfulExecutions(

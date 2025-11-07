@@ -133,10 +133,6 @@ export class InternalCodeManagementService
         }
     }
 
-    private formatCodeBlock(language: string, code: string): string {
-        return `\`\`\`${language || ''}\n${code || ''}\n\`\`\``;
-    }
-
     async createReviewComment(params: {
         organizationAndTeamData: OrganizationAndTeamData;
         lineComment: Comment;
@@ -159,10 +155,9 @@ export class InternalCodeManagementService
                 path: lineComment.path,
                 category: lineComment.suggestion.label,
                 severity: lineComment.suggestion.severity,
-                codeBlock: this.formatCodeBlock(
-                    lineComment.suggestion.language,
-                    lineComment.suggestion.improvedCode,
-                ),
+                language: lineComment.suggestion.language,
+                existingCode: lineComment.suggestion.existingCode,
+                improvedCode: lineComment.suggestion.improvedCode,
             });
 
             if (!result) {

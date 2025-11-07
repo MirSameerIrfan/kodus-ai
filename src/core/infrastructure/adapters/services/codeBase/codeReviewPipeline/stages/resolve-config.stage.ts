@@ -24,6 +24,11 @@ import {
     IPullRequestMessagesService,
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
 } from '@/core/domain/pullRequestMessages/contracts/pullRequestMessages.service.contract';
+import {
+    IParametersService,
+    PARAMETERS_SERVICE_TOKEN,
+} from '@/core/domain/parameters/contracts/parameters.service.contract';
+import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
 
 @Injectable()
 export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineContext> {
@@ -36,6 +41,8 @@ export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineCont
         private readonly pullRequestHandlerService: IPullRequestManagerService,
         @Inject(PULL_REQUEST_MESSAGES_SERVICE_TOKEN)
         private readonly pullRequestMessagesService: IPullRequestMessagesService,
+        @Inject(PARAMETERS_SERVICE_TOKEN)
+        private readonly parametersService: IParametersService,
 
         @Inject(DRY_RUN_SERVICE_TOKEN)
         private readonly dryRunService: IDryRunService,
@@ -86,30 +93,27 @@ export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineCont
             const pullRequestMessagesConfig =
                 await this.setPullRequestMessagesConfig(context);
 
-            let dryRunId = undefined;
             if (context.dryRun?.enabled) {
-                const dryRun = await this.dryRunService.addDryRun({
+                const codeReviewConfigId = (
+                    await this.parametersService.findByKey(
+                        ParametersKey.CODE_REVIEW_CONFIG,
+                        context.organizationAndTeamData,
+                    )
+                ).uuid;
+
+                await this.dryRunService.addConfigsToDryRun({
                     id: context.dryRun.id,
                     organizationAndTeamData: context.organizationAndTeamData,
-                    provider: context.platformType,
-                    prNumber: context.pullRequest.number,
-                    repositoryId: context.repository.id,
-                    repositoryName: context.repository.name,
-                    directoryId: config?.directoryId,
                     config,
+                    configId: codeReviewConfigId,
                     pullRequestMessagesConfig,
+                    pullRequestMessagesId: pullRequestMessagesConfig?.uuid,
                 });
-
-                dryRunId = dryRun.id;
             }
 
             return this.updateContext(context, (draft) => {
                 draft.codeReviewConfig = config;
                 draft.pullRequestMessagesConfig = pullRequestMessagesConfig;
-                draft.dryRun = {
-                    ...draft.dryRun,
-                    id: dryRunId,
-                };
             });
         } catch (error) {
             this.logger.error({

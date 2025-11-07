@@ -98,6 +98,16 @@ export class ExecuteDryRunUseCase {
                 prNumber,
             );
 
+            const dryRun = await this.dryRunService.initializeDryRun({
+                id: correlationId,
+                organizationAndTeamData,
+                provider: platformType,
+                prNumber: pullRequest.number,
+                prTitle: pullRequest.title,
+                repositoryId: repository.id,
+                repositoryName: repository.name,
+            });
+
             await this.observabilityService.initializeObservability(
                 this.config,
                 {
@@ -109,7 +119,7 @@ export class ExecuteDryRunUseCase {
             const context = {
                 dryRun: {
                     enabled: true,
-                    id: correlationId,
+                    id: dryRun.id,
                 },
                 statusInfo: {
                     status: AutomationStatus.IN_PROGRESS,

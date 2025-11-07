@@ -32,6 +32,7 @@ export interface IDryRunData {
 
     provider: IPullRequests['provider'];
     prNumber: number;
+    prTitle: string;
     repositoryId: string;
     repositoryName: string;
     directoryId?: string;
@@ -44,7 +45,7 @@ export interface IDryRunData {
         | IDryRunData['id']; // PR level suggestions or reference to another dry run
 
     config: string; // ID of the code review config used
-    // pullRequestMessages: string; // ID of the pull request messages used
+    pullRequestMessages: string; // ID of the pull request messages used
 
     configHashes: {
         full: string; // Hash of the full config
@@ -63,7 +64,9 @@ export interface IDryRunMessage {
     };
     severity?: string;
     category?: string;
-    codeBlock?: string;
+    language?: string;
+    existingCode?: string;
+    improvedCode?: string;
 }
 
 export enum DryRunEventType {

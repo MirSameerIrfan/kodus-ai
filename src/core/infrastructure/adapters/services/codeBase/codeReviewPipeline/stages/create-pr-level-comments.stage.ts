@@ -14,6 +14,10 @@ import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
 } from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
+import {
+    DRY_RUN_SERVICE_TOKEN,
+    IDryRunService,
+} from '@/core/domain/dryRun/contracts/dryRun.service.contract';
 
 @Injectable()
 export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipelineContext> {
@@ -30,6 +34,9 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
 
         @Inject(PULL_REQUESTS_SERVICE_TOKEN)
         private readonly pullRequestsService: IPullRequestsService,
+
+        @Inject(DRY_RUN_SERVICE_TOKEN)
+        private readonly dryRunService: IDryRunService,
     ) {
         super();
     }
@@ -148,11 +155,7 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
                 }
 
                 // Transformar commentResults em ISuggestionByPR e salvar no banco
-                if (
-                    commentResults &&
-                    commentResults.length > 0 &&
-                    !context.dryRun?.enabled
-                ) {
+                if (commentResults && commentResults.length > 0) {
                     try {
                         const transformedPrLevelSuggestions =
                             this.suggestionService.transformCommentResultsToPrLevelSuggestions(
@@ -161,12 +164,24 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
 
                         if (transformedPrLevelSuggestions?.length > 0) {
                             try {
-                                await this.pullRequestsService.addPrLevelSuggestions(
-                                    context.pullRequest.number,
-                                    context.repository.name,
-                                    transformedPrLevelSuggestions,
-                                    context.organizationAndTeamData,
-                                );
+                                if (context.dryRun?.enabled) {
+                                    await this.dryRunService.addPrLevelSuggestions(
+                                        {
+                                            organizationAndTeamData:
+                                                context.organizationAndTeamData,
+                                            id: context.dryRun.id,
+                                            prLevelSuggestions:
+                                                transformedPrLevelSuggestions,
+                                        },
+                                    );
+                                } else {
+                                    await this.pullRequestsService.addPrLevelSuggestions(
+                                        context.pullRequest.number,
+                                        context.repository.name,
+                                        transformedPrLevelSuggestions,
+                                        context.organizationAndTeamData,
+                                    );
+                                }
 
                                 this.logger.log({
                                     message: `Saved ${transformedPrLevelSuggestions.length} PR level suggestions to database`,

@@ -40,6 +40,10 @@ import {
     TEAM_AUTOMATION_SERVICE_TOKEN,
 } from '@/core/domain/automation/contracts/team-automation.service';
 import { AutomationType } from '@/core/domain/automation/enums/automation-type';
+import {
+    DRY_RUN_SERVICE_TOKEN,
+    IDryRunService,
+} from '@/core/domain/dryRun/contracts/dryRun.service.contract';
 
 @Injectable()
 export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelineContext> {
@@ -62,6 +66,9 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
 
         @Inject(SUGGESTION_SERVICE_TOKEN)
         private readonly suggestionService: ISuggestionService,
+
+        @Inject(DRY_RUN_SERVICE_TOKEN)
+        private readonly dryRunService: IDryRunService,
 
         private readonly codeManagementService: CodeManagementService,
     ) {
@@ -417,10 +424,6 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
         fileMetadata?: Map<string, any>,
         dryRun?: CodeReviewPipelineContext['dryRun'],
     ) {
-        if (dryRun?.enabled) {
-            return;
-        }
-
         const enrichedFiles = changedFiles.map((file) => {
             const metadata = fileMetadata?.get(file.filename);
             if (metadata) {
@@ -432,6 +435,18 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
             }
             return file;
         });
+
+        if (dryRun?.enabled) {
+            await this.dryRunService.addFilesToDryRun({
+                organizationAndTeamData,
+                id: dryRun.id,
+                files: enrichedFiles,
+                prioritizedSuggestions: sortedPrioritizedSuggestions as any,
+                unusedSuggestions: discardedSuggestions as any,
+            });
+
+            return;
+        }
 
         const suggestionsWithStatus =
             await this.suggestionService.verifyIfSuggestionsWereSent(
