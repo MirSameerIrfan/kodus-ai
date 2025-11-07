@@ -29,6 +29,7 @@ import {
     ResourceType,
 } from '@/core/domain/permissions/enums/permissions.enum';
 import { GetDryRunUseCase } from '@/core/application/use-cases/dryRun/get-dry-run.use-case';
+import { ListDryRunsUseCase } from '@/core/application/use-cases/dryRun/list-dry-runs.use-case';
 
 @Controller('dry-run')
 export class DryRunController {
@@ -37,6 +38,7 @@ export class DryRunController {
         private readonly getStatusDryRunUseCase: GetStatusDryRunUseCase,
         private readonly sseDryRunUseCase: SseDryRunUseCase,
         private readonly getDryRunUseCase: GetDryRunUseCase,
+        private readonly listDryRunsUseCase: ListDryRunsUseCase,
 
         @Inject(REQUEST)
         private readonly request: UserRequest,
@@ -98,9 +100,55 @@ export class DryRunController {
     @CheckPolicies(
         checkPermissions(Action.Manage, ResourceType.CodeReviewSettings),
     )
-    events(@Param('correlationId') correlationId: string) {
+    events(
+        @Param('correlationId') correlationId: string,
+        @Query('teamId') teamId: string,
+    ) {
+        if (!this.request.user?.organization?.uuid) {
+            throw new Error('Organization UUID is missing in the request');
+        }
+
         return this.sseDryRunUseCase.execute({
             correlationId,
+            organizationAndTeamData: {
+                teamId,
+                organizationId: this.request.user.organization.uuid,
+            },
+        });
+    }
+
+    @Get('')
+    @UseGuards(PolicyGuard)
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(
+        checkPermissions(Action.Manage, ResourceType.CodeReviewSettings),
+    )
+    listDryRuns(
+        @Query('teamId') teamId: string,
+        @Query('repositoryId') repositoryId?: string,
+        @Query('directoryId') directoryId?: string,
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string,
+        @Query('prNumber') prNumber?: string,
+        @Query('status') status?: string,
+    ) {
+        if (!this.request.user?.organization?.uuid) {
+            throw new Error('Organization UUID is missing in the request');
+        }
+
+        return this.listDryRunsUseCase.execute({
+            organizationAndTeamData: {
+                organizationId: this.request.user.organization.uuid,
+                teamId,
+            },
+            filters: {
+                repositoryId,
+                directoryId,
+                status,
+                startDate,
+                endDate,
+                prNumber,
+            },
         });
     }
 

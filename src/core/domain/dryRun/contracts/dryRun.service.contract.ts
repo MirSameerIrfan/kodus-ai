@@ -15,6 +15,18 @@ export const DRY_RUN_SERVICE_TOKEN = Symbol('DRY_RUN_SERVICE_TOKEN');
 export interface IDryRunService extends IDryRunRepository {
     findById(id: string): Promise<DryRunEntity | null>;
 
+    listDryRuns(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+        filters?: {
+            repositoryId?: string;
+            directoryId?: string;
+            startDate?: Date;
+            endDate?: Date;
+            prNumber?: number;
+            status?: string;
+        };
+    }): Promise<IDryRun['runs']>;
+
     findDryRunById(params: {
         organizationAndTeamData: OrganizationAndTeamData;
         id: string;

@@ -90,16 +90,16 @@ export class InternalCodeManagementService
 
     async updateDescriptionInPullRequest(params: {
         organizationAndTeamData: OrganizationAndTeamData;
-        body: string;
+        summary: string;
         dryRun: CodeReviewPipelineContext['dryRun'];
     }): Promise<any | null> {
-        const { organizationAndTeamData, body, dryRun } = params;
+        const { organizationAndTeamData, summary, dryRun } = params;
 
         try {
             const result = await this.dryRunService.updateDescriptionInDryRun({
                 organizationAndTeamData,
                 id: dryRun.id,
-                description: body,
+                description: summary,
             });
 
             if (!result) {

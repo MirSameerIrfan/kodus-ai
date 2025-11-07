@@ -150,6 +150,70 @@ export class DryRunService implements IDryRunService {
         }
     }
 
+    async listDryRuns(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+        filters?: {
+            repositoryId?: string;
+            directoryId?: string;
+            startDate?: Date;
+            endDate?: Date;
+            prNumber?: number;
+            status?: string;
+        };
+    }): Promise<IDryRun['runs']> {
+        const { organizationAndTeamData, filters = {} } = params;
+        try {
+            const existing = await this.dryRunRepository.findOne({
+                organizationId: organizationAndTeamData.organizationId,
+                teamId: organizationAndTeamData.teamId,
+            });
+
+            if (!existing) {
+                return [];
+            }
+
+            const filteredRuns = [];
+
+            for (const run of existing.runs) {
+                if (
+                    filters.repositoryId &&
+                    run.repositoryId !== filters.repositoryId
+                ) {
+                    continue;
+                }
+                if (
+                    filters.directoryId &&
+                    run.directoryId !== filters.directoryId
+                ) {
+                    continue;
+                }
+                if (filters.prNumber && run.prNumber !== filters.prNumber) {
+                    continue;
+                }
+                if (filters.startDate && run.createdAt < filters.startDate) {
+                    continue;
+                }
+                if (filters.endDate && run.createdAt > filters.endDate) {
+                    continue;
+                }
+                if (filters.status && run.status !== filters.status) {
+                    continue;
+                }
+                filteredRuns.push(run);
+            }
+
+            return filteredRuns;
+        } catch (error) {
+            this.logger.error({
+                message: 'Error listing DryRuns',
+                error,
+                context: DryRunService.name,
+                metadata: { organizationAndTeamData, filters },
+            });
+            throw error;
+        }
+    }
+
     async findDryRunById(params: {
         organizationAndTeamData: OrganizationAndTeamData;
         id: string;
@@ -233,6 +297,7 @@ export class DryRunService implements IDryRunService {
                 messages: [],
                 config: configParameter.uuid,
                 description: '',
+                events: [],
             };
 
             const existing = await this.dryRunRepository.findOne({
@@ -323,9 +388,24 @@ export class DryRunService implements IDryRunService {
 
             const now = new Date();
 
+            const event = this.createEvent(
+                id,
+                organizationAndTeamData,
+                DryRunEventType.MESSAGE_ADDED,
+                {
+                    message: {
+                        id: existing.runs[runIndex].messages?.length || 0,
+                        ...content,
+                    },
+                },
+            );
+
             const nextState = produce(existing.toObject(), (draft) => {
                 const length = draft.runs[runIndex].messages?.length || 0;
                 draft.runs[runIndex].messages.push({ id: length, ...content });
+
+                draft.runs[runIndex].events.push(event);
+
                 draft.runs[runIndex].updatedAt = now;
             });
 
@@ -334,17 +414,7 @@ export class DryRunService implements IDryRunService {
                 { runs: nextState.runs },
             );
 
-            this.emitEvent(
-                id,
-                organizationAndTeamData,
-                DryRunEventType.MESSAGE_ADDED,
-                {
-                    message: {
-                        id: updatedDryRun.runs[runIndex].messages.length - 1,
-                        ...content,
-                    },
-                },
-            );
+            this.emitEvent(event);
 
             return updatedDryRun.runs[runIndex];
         } catch (error) {
@@ -393,17 +463,7 @@ export class DryRunService implements IDryRunService {
 
             const now = new Date();
 
-            const nextState = produce(existing.toObject(), (draft) => {
-                draft.runs[runIndex].messages[messageIndex].content = content;
-                draft.runs[runIndex].updatedAt = now;
-            });
-
-            const updatedDryRun = await this.dryRunRepository.update(
-                existing.uuid,
-                { runs: nextState.runs },
-            );
-
-            this.emitEvent(
+            const event = this.createEvent(
                 id,
                 organizationAndTeamData,
                 DryRunEventType.MESSAGE_UPDATED,
@@ -412,6 +472,19 @@ export class DryRunService implements IDryRunService {
                     content,
                 },
             );
+
+            const nextState = produce(existing.toObject(), (draft) => {
+                draft.runs[runIndex].messages[messageIndex].content = content;
+                draft.runs[runIndex].events.push(event);
+                draft.runs[runIndex].updatedAt = now;
+            });
+
+            const updatedDryRun = await this.dryRunRepository.update(
+                existing.uuid,
+                { runs: nextState.runs },
+            );
+
+            this.emitEvent(event);
 
             return updatedDryRun.runs[runIndex];
         } catch (error) {
@@ -439,15 +512,7 @@ export class DryRunService implements IDryRunService {
         const { organizationAndTeamData, id, description } = params;
 
         try {
-            const updateDryRun = await this.editRun(
-                organizationAndTeamData,
-                id,
-                {
-                    runData: { description },
-                },
-            );
-
-            this.emitEvent(
+            const event = this.createEvent(
                 id,
                 organizationAndTeamData,
                 DryRunEventType.DESCRIPTION_UPDATED,
@@ -455,6 +520,20 @@ export class DryRunService implements IDryRunService {
                     description,
                 },
             );
+
+            const updateDryRun = await this.editRun(
+                organizationAndTeamData,
+                id,
+                {
+                    editFn: (existing) => ({
+                        ...existing,
+                        description,
+                        events: [...existing.events, event],
+                    }),
+                },
+            );
+
+            this.emitEvent(event);
 
             return updateDryRun;
         } catch (error) {
@@ -477,15 +556,7 @@ export class DryRunService implements IDryRunService {
         const { organizationAndTeamData, id, status } = params;
 
         try {
-            const updatedDryRun = await this.editRun(
-                organizationAndTeamData,
-                id,
-                {
-                    runData: { status },
-                },
-            );
-
-            this.emitEvent(
+            const event = this.createEvent(
                 id,
                 organizationAndTeamData,
                 DryRunEventType.STATUS_UPDATED,
@@ -493,6 +564,20 @@ export class DryRunService implements IDryRunService {
                     status,
                 },
             );
+
+            const updatedDryRun = await this.editRun(
+                organizationAndTeamData,
+                id,
+                {
+                    editFn: (existing) => ({
+                        ...existing,
+                        status,
+                        events: [...existing.events, event],
+                    }),
+                },
+            );
+
+            this.emitEvent(event);
 
             return updatedDryRun;
         } catch (error) {
@@ -543,7 +628,7 @@ export class DryRunService implements IDryRunService {
                 { runs: nextState.runs },
             );
 
-            this.emitEvent(
+            this.createAndEmitEvent(
                 id,
                 organizationAndTeamData,
                 DryRunEventType.REMOVED,
@@ -801,23 +886,40 @@ export class DryRunService implements IDryRunService {
         return updatedDryRun.runs[runIndex];
     }
 
-    private emitEvent<T extends DryRunEventType>(
+    private createEvent<T extends DryRunEventType>(
         id: string,
         organizationAndTeamData: OrganizationAndTeamData,
         eventType: T,
         payload?: IDryRunPayloadMap[T],
     ) {
-        const event = {
+        return {
+            id: v4(),
             dryRunId: id,
             type: eventType,
             organizationId: organizationAndTeamData.organizationId,
             teamId: organizationAndTeamData.teamId,
             payload,
-        };
+            timestamp: new Date(),
+        } as IDryRunEvent;
+    }
 
-        this.eventEmitter.emit(
-            `dryRun.${id}.${eventType}`,
-            event as IDryRunEvent,
+    private emitEvent(event: IDryRunEvent) {
+        this.eventEmitter.emit(`dryRun.${event.dryRunId}.${event.type}`, event);
+    }
+
+    private createAndEmitEvent<T extends DryRunEventType>(
+        id: string,
+        organizationAndTeamData: OrganizationAndTeamData,
+        eventType: T,
+        payload?: IDryRunPayloadMap[T],
+    ) {
+        const event = this.createEvent(
+            id,
+            organizationAndTeamData,
+            eventType,
+            payload,
         );
+
+        this.emitEvent(event);
     }
 }

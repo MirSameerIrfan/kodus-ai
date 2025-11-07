@@ -24,6 +24,7 @@ export interface IDryRun {
 export interface IDryRunData {
     id: string;
     status: DryRunStatus;
+    events: IDryRunEvent[]; // Historical events for this dry run
 
     dependents: IDryRunData['id'][]; // Ids of dry runs that reference this one
     createdAt: Date;
@@ -32,6 +33,7 @@ export interface IDryRunData {
     provider: IPullRequests['provider'];
     prNumber: number;
     repositoryId: string;
+    repositoryName: string;
     directoryId?: string;
 
     description: string;
@@ -54,7 +56,7 @@ export interface IDryRunData {
 export interface IDryRunMessage {
     id: number;
     content: string;
-    file?: string;
+    path?: string;
     lines?: {
         start: number;
         end: number;
@@ -73,11 +75,13 @@ export enum DryRunEventType {
 }
 
 export interface IDryRunBaseEvent {
+    id: string;
     dryRunId: string;
     organizationId: string;
     teamId: string;
     type: DryRunEventType;
     payload: any;
+    timestamp: Date;
 }
 
 export interface IDryRunMessageAddedEvent extends IDryRunBaseEvent {
