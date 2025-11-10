@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { createMCPAdapter, type MCPServerConfig } from '@kodus/flow';
+import { createHash } from 'crypto';
 import type { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import type { CodeReviewConfig } from '@/config/types/general/codeReview.type';
+import type {
+    CodeReviewConfig,
+    Repository,
+    AnalysisContext,
+} from '@/config/types/general/codeReview.type';
 import type {
     ContextDependency,
     ContextLayer,
@@ -31,6 +36,9 @@ import {
     MCPToolMetadataService,
 } from '../../mcp/services/mcp-tool-metadata.service';
 import { PinoLoggerService } from '../logger/pino.service';
+import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
+import { PromptReferenceErrorType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
+import type { IPromptReferenceSyncError } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
 
 export interface ContextAugmentationOutput {
     provider?: string;
@@ -63,6 +71,8 @@ interface BuildPackParams {
     contextReferenceId?: string;
     overrides?: CodeReviewConfig['v2PromptOverrides'];
     externalLayers?: ContextLayer[];
+    repository?: Partial<Repository>;
+    pullRequest?: AnalysisContext['pullRequest'];
 }
 
 interface BuildPackResult {
@@ -189,6 +199,7 @@ export class CodeReviewContextPackService {
         private readonly mcpToolMetadataService: MCPToolMetadataService,
         private readonly logger: PinoLoggerService,
         private readonly mcpToolArgResolver: MCPToolArgResolverAgentService,
+        private readonly codeManagementService: CodeManagementService,
     ) {}
 
     /**
@@ -224,10 +235,12 @@ export class CodeReviewContextPackService {
         }
 
         const requirements = reference.requirements ?? [];
-        const dependencies = this.buildDependencies(requirements);
+        const { mcpDependencies, knowledgeDependencies } =
+            this.buildDependencyGroups(requirements);
         const hasPackContent =
             Boolean(processedOverrides) ||
-            dependencies.length > 0 ||
+            mcpDependencies.length > 0 ||
+            knowledgeDependencies.length > 0 ||
             (params.externalLayers?.length ?? 0) > 0;
 
         if (!hasPackContent) {
@@ -237,7 +250,7 @@ export class CodeReviewContextPackService {
         }
 
         // Carrega metadata e resolve dependencies ANTES de executar tools
-        const metadataLoad = dependencies.length
+        const metadataLoad = mcpDependencies.length
             ? await this.mcpToolMetadataService.loadMetadataForOrganization(
                   organizationAndTeamData,
               )
@@ -248,6 +261,8 @@ export class CodeReviewContextPackService {
 
         const connections = metadataLoad.connections;
         const metadata = metadataLoad.metadata;
+
+        const syncErrors: IPromptReferenceSyncError[] = [];
 
         // Cria pack temporário para resolução de dependencies
         const tempPack = await this.assemblePackFromPipeline({
@@ -261,9 +276,29 @@ export class CodeReviewContextPackService {
             externalLayers: params.externalLayers,
         });
 
+        const knowledgeResolution = knowledgeDependencies.length
+            ? await this.resolveKnowledgeDependencies({
+                  contextReferenceId,
+                  dependencies: knowledgeDependencies,
+                  organizationAndTeamData,
+                  repository: params.repository,
+                  pullRequest: params.pullRequest,
+              })
+            : {
+                  layers: [],
+                  items: [],
+                  errors: [] as IPromptReferenceSyncError[],
+              };
+
+        if (knowledgeResolution.layers.length) {
+            for (const layer of knowledgeResolution.layers) {
+                tempPack.layers.push(this.cloneLayer(layer));
+            }
+        }
+
         const { resolvedDependencies } =
             await this.resolveMCPDependenciesForPack({
-                dependencies,
+                dependencies: mcpDependencies,
                 pack: tempPack,
                 organizationAndTeamData,
                 toolMetadata: metadata,
@@ -310,6 +345,32 @@ export class CodeReviewContextPackService {
                     },
                 });
             }
+        } else if (resolvedDependencies.length > 0 && (!connections || !connections.length)) {
+            const message =
+                'Context pack found MCP dependencies but no MCP connections/metadata were available during execution.';
+            this.logger.error({
+                message,
+                context: CodeReviewContextPackService.name,
+                metadata: {
+                    contextReferenceId,
+                    dependencies: resolvedDependencies.map((dep) => ({
+                        id: dep.id,
+                        provider: this.resolveProvider(dep),
+                        toolName: this.resolveToolName(dep),
+                        requirementId: this.resolveRequirementId(dep),
+                    })),
+                },
+            });
+
+            for (const dependency of resolvedDependencies) {
+                syncErrors.push({
+                    type: PromptReferenceErrorType.MCP_CONNECTION_FAILED,
+                    message: `${message} Tool=${this.resolveToolName(dependency) ?? 'unknown'} Provider=${this.resolveProvider(dependency) ?? 'unknown'} Requirement=${this.resolveRequirementId(dependency) ?? 'n/a'}`,
+                    details: {
+                        timestamp: new Date(),
+                    },
+                });
+            }
         }
 
         // Agora cria o pack FINAL com os overrides já substituídos
@@ -324,14 +385,54 @@ export class CodeReviewContextPackService {
             externalLayers: params.externalLayers,
         });
 
+        if (knowledgeResolution.layers.length) {
+            for (const layer of knowledgeResolution.layers) {
+                pack.layers.push(this.cloneLayer(layer));
+            }
+        }
+
         // Garante que dependencies sempre seja um array (mesmo que vazio)
-        pack.dependencies =
-            resolvedDependencies.length > 0 ? resolvedDependencies : [];
+        const combinedDependencies = [
+            ...resolvedDependencies,
+            ...knowledgeDependencies,
+        ];
+        pack.dependencies = combinedDependencies;
+        const combinedSyncErrors = [
+            ...knowledgeResolution.errors,
+            ...syncErrors,
+        ];
         pack.metadata = {
             ...(pack.metadata ?? {}),
             contextReferenceId,
             requirementIds: requirements.map((req) => req.id),
+            knowledgeItemsCount: knowledgeResolution.items.length,
+            knowledgeErrors: knowledgeResolution.errors,
+            mcpErrors: syncErrors,
         };
+
+        try {
+            await this.contextReferenceService.update(
+                { uuid: contextReferenceId },
+                {
+                    metadata: {
+                        ...(reference.metadata ?? {}),
+                        syncErrors: combinedSyncErrors,
+                    },
+                    lastProcessedAt: new Date(),
+                },
+            );
+        } catch (error) {
+            this.logger.error({
+                message:
+                    'Failed to persist sync errors back to context reference',
+                context: CodeReviewContextPackService.name,
+                error,
+                metadata: {
+                    contextReferenceId,
+                    syncErrorsCount: combinedSyncErrors.length,
+                },
+            });
+        }
 
         if (augmentations && Object.keys(augmentations).length > 0) {
             pack.layers.push(
@@ -762,83 +863,118 @@ export class CodeReviewContextPackService {
             },
         });
 
-        if (result) {
-            this.logger.debug({
-                message: 'MCP marker replacement: SUCCESS (rich text)',
-                context: CodeReviewContextPackService.name,
-                metadata: {
-                    provider,
-                    toolName,
-                    resultLength: result.length,
-                },
-            });
-            return { type: 'text', text: result };
-        }
-
-        if (error) {
+        if (result || error) {
+            const replacement = result ?? `[MCP Tool ${toolName} failed: ${error}]`;
             return {
-                type: 'text',
-                text: `[MCP Tool ${toolName} failed: ${error}]`,
+                ...node,
+                attrs: {
+                    ...(node.attrs as Record<string, unknown>),
+                    resolvedOutput: replacement,
+                    lastUpdatedAt: Date.now(),
+                },
             };
         }
 
         return node;
     }
 
-    private buildDependencies(
-        requirements: ContextRequirement[],
-    ): ContextDependency[] {
-        const dependencies: ContextDependency[] = [];
-        const dedupe = new Set<string>();
+    private buildDependencyGroups(requirements: ContextRequirement[]): {
+        mcpDependencies: ContextDependency[];
+        knowledgeDependencies: ContextDependency[];
+    } {
+        const mcpDependencies: ContextDependency[] = [];
+        const knowledgeDependencies: ContextDependency[] = [];
+        const mcpDedupe = new Set<string>();
+        const knowledgeDedupe = new Set<string>();
 
         for (const requirement of requirements) {
             const path = this.resolveRequirementPath(requirement);
             const pathKey = pathToKey(path);
 
             for (const dependency of requirement.dependencies ?? []) {
-                if (!dependency || dependency.type !== 'mcp') {
+                if (!dependency) {
                     continue;
                 }
 
-                const { provider, toolName, args } =
-                    this.parseDependency(dependency);
-                if (!provider || !toolName) {
-                    continue;
+                if (dependency.type === 'mcp') {
+                    const provider = this.resolveProvider(dependency);
+                    const toolName = this.resolveToolName(dependency);
+                    if (!provider || !toolName) {
+                        continue;
+                    }
+
+                    const uniqueKey = `${pathKey}::${provider}::${toolName}`;
+                    if (mcpDedupe.has(uniqueKey)) {
+                        continue;
+                    }
+                    mcpDedupe.add(uniqueKey);
+
+                    const metadata = {
+                        ...(dependency.metadata ?? {}),
+                        provider,
+                        toolName,
+                        path,
+                        pathKey,
+                        requirementId: requirement.id,
+                    };
+
+                    const descriptor = this.buildDescriptor(
+                        dependency.descriptor,
+                        provider,
+                        toolName,
+                        metadata,
+                    );
+
+                    mcpDependencies.push({
+                        type: 'mcp',
+                        id: `${provider}|${toolName}`,
+                        descriptor,
+                        metadata,
+                    });
+                } else if (dependency.type === 'knowledge') {
+                    const filePath = dependency.metadata?.filePath as
+                        | string
+                        | undefined;
+                    if (!filePath) {
+                        continue;
+                    }
+
+                    const repositoryName = dependency.metadata
+                        ?.repositoryName as string | undefined;
+                    const repositoryId = dependency.metadata?.repositoryId as
+                        | string
+                        | undefined;
+
+                    const knowledgeKey = `${repositoryName ?? repositoryId ?? 'default'}::${filePath}`;
+                    if (knowledgeDedupe.has(knowledgeKey)) {
+                        continue;
+                    }
+                    knowledgeDedupe.add(knowledgeKey);
+
+                    const metadata = {
+                        ...(dependency.metadata ?? {}),
+                        filePath,
+                        repositoryName,
+                        repositoryId,
+                        path,
+                        pathKey,
+                        requirementId: requirement.id,
+                    };
+
+                    knowledgeDependencies.push({
+                        type: 'knowledge',
+                        id: dependency.id || knowledgeKey,
+                        descriptor: dependency.descriptor,
+                        metadata,
+                    });
                 }
-
-                const uniqueKey = `${pathKey}::${provider}::${toolName}`;
-                if (dedupe.has(uniqueKey)) {
-                    continue;
-                }
-                dedupe.add(uniqueKey);
-
-                const metadata = {
-                    ...(dependency.metadata ?? {}),
-                    provider,
-                    toolName,
-                    path,
-                    pathKey,
-                    requirementId: requirement.id,
-                    ...(args ? { args } : {}),
-                };
-
-                const descriptor = this.buildDescriptor(
-                    dependency.descriptor,
-                    provider,
-                    toolName,
-                    metadata,
-                );
-
-                dependencies.push({
-                    type: 'mcp',
-                    id: `${provider}|${toolName}`,
-                    descriptor,
-                    metadata,
-                });
             }
         }
 
-        return dependencies;
+        return {
+            mcpDependencies,
+            knowledgeDependencies,
+        };
     }
 
     private buildDescriptor(
@@ -985,6 +1121,271 @@ export class CodeReviewContextPackService {
         }
 
         return { resolvedDependencies, skippedDependencies };
+    }
+
+    private async resolveKnowledgeDependencies(params: {
+        contextReferenceId: string;
+        dependencies: ContextDependency[];
+        organizationAndTeamData?: OrganizationAndTeamData;
+        repository?: Partial<Repository>;
+        pullRequest?: AnalysisContext['pullRequest'];
+    }): Promise<{
+        layers: ContextLayer[];
+        items: Array<{
+            dependencyId: string;
+            filePath: string;
+            repositoryId?: string;
+            repositoryName?: string;
+            content: string;
+            lineRange?: { start: number; end: number };
+            description?: string;
+            tokens: number;
+            hash: string;
+        }>;
+        errors: IPromptReferenceSyncError[];
+    }> {
+        const { contextReferenceId, dependencies, organizationAndTeamData } =
+            params;
+
+        const resolvedItems: Array<{
+            dependencyId: string;
+            filePath: string;
+            repositoryId?: string;
+            repositoryName?: string;
+            content: string;
+            lineRange?: { start: number; end: number };
+            description?: string;
+            tokens: number;
+            hash: string;
+        }> = [];
+        const errors: IPromptReferenceSyncError[] = [];
+        const dedupe = new Set<string>();
+
+        for (const dependency of dependencies) {
+            const filePath = dependency.metadata?.filePath as
+                | string
+                | undefined;
+            if (!filePath) {
+                continue;
+            }
+
+            const repositoryName = (
+                dependency.metadata?.repositoryName as string | undefined
+            )?.trim();
+            const repositoryId = (
+                dependency.metadata?.repositoryId as string | undefined
+            )?.trim();
+            const description = dependency.metadata?.description as
+                | string
+                | undefined;
+            const lineRange = dependency.metadata?.lineRange as
+                | { start: number; end: number }
+                | undefined;
+
+            const uniqueKey = `${repositoryName ?? repositoryId ?? 'default'}::${filePath}::${lineRange?.start ?? 'all'}-${lineRange?.end ?? 'all'}`;
+            if (dedupe.has(uniqueKey)) {
+                continue;
+            }
+            dedupe.add(uniqueKey);
+
+            try {
+                const content = await this.fetchKnowledgeContent({
+                    filePath,
+                    repositoryId,
+                    repositoryName,
+                    organizationAndTeamData,
+                    repositoryFallback: params.repository,
+                    pullRequest: params.pullRequest,
+                    lineRange,
+                });
+
+                if (!content) {
+                    errors.push({
+                        type: PromptReferenceErrorType.FILE_NOT_FOUND,
+                        message: `File not found: ${filePath}`,
+                        details: {
+                            fileName: filePath,
+                            repositoryName:
+                                repositoryName ?? params.repository?.name,
+                            timestamp: new Date(),
+                        },
+                    });
+                    continue;
+                }
+
+                const tokens = this.estimateTokens(content);
+                const hash = this.calculateContentHash(content);
+
+                resolvedItems.push({
+                    dependencyId: dependency.id as string,
+                    filePath,
+                    repositoryId: repositoryId ?? params.repository?.id,
+                    repositoryName: repositoryName ?? params.repository?.name,
+                    content,
+                    lineRange,
+                    description,
+                    tokens,
+                    hash,
+                });
+            } catch (error) {
+                this.logger.error({
+                    message:
+                        'Failed to resolve knowledge dependency for context pack',
+                    context: CodeReviewContextPackService.name,
+                    error,
+                    metadata: {
+                        filePath,
+                        repositoryId,
+                        repositoryName,
+                        contextReferenceId,
+                    },
+                });
+
+                errors.push({
+                    type: PromptReferenceErrorType.FETCH_FAILED,
+                    message: `Error loading knowledge dependency: ${filePath}`,
+                    details: {
+                        fileName: filePath,
+                        repositoryName:
+                            repositoryName ?? params.repository?.name,
+                        timestamp: new Date(),
+                    },
+                });
+            }
+        }
+
+        if (!resolvedItems.length) {
+            return { layers: [], items: [], errors };
+        }
+
+        const knowledgeLayer: ContextLayer = {
+            id: `${contextReferenceId}::knowledge`,
+            kind: 'catalog',
+            priority: 1,
+            tokens: resolvedItems.reduce((sum, item) => sum + item.tokens, 0),
+            content: resolvedItems.map((item) => ({
+                id: item.dependencyId,
+                filePath: item.filePath,
+                repositoryId: item.repositoryId,
+                repositoryName: item.repositoryName,
+                lineRange: item.lineRange,
+                description: item.description,
+                content: item.content,
+                tokens: item.tokens,
+                hash: item.hash,
+            })),
+            references: resolvedItems.map((item) => ({
+                itemId: item.dependencyId,
+            })),
+            metadata: {
+                contextReferenceId,
+                type: 'knowledge',
+                itemsCount: resolvedItems.length,
+            },
+        };
+
+        return {
+            layers: [knowledgeLayer],
+            items: resolvedItems,
+            errors,
+        };
+    }
+
+    private async fetchKnowledgeContent(params: {
+        filePath: string;
+        repositoryId?: string;
+        repositoryName?: string;
+        repositoryFallback?: Partial<Repository>;
+        organizationAndTeamData?: OrganizationAndTeamData;
+        pullRequest?: AnalysisContext['pullRequest'];
+        lineRange?: { start: number; end: number };
+    }): Promise<string | null> {
+        const {
+            filePath,
+            repositoryId,
+            repositoryName,
+            repositoryFallback,
+            organizationAndTeamData,
+            pullRequest,
+            lineRange,
+        } = params;
+
+        const repoName = repositoryName ?? repositoryFallback?.name;
+        const repoId = repositoryId ?? repositoryFallback?.id ?? '';
+
+        if (!repoName) {
+            return null;
+        }
+
+        const response =
+            await this.codeManagementService.getRepositoryContentFile({
+                organizationAndTeamData,
+                repository: {
+                    id: repoId,
+                    name: repoName,
+                },
+                file: { filename: filePath },
+                pullRequest: pullRequest as any,
+            });
+
+        let content = response?.data?.content;
+        if (!content) {
+            return null;
+        }
+
+        if (response?.data?.encoding === 'base64') {
+            content = Buffer.from(content, 'base64').toString('utf-8');
+        }
+
+        if (lineRange) {
+            const extracted = this.extractLineRange(content, lineRange);
+            if (extracted && extracted.trim().length > 0) {
+                content = extracted;
+            }
+        }
+
+        return content;
+    }
+
+    private extractLineRange(
+        content: string,
+        range: { start: number; end: number },
+    ): string {
+        const lines = content.split('\n');
+
+        if (range.start <= 0 || range.end <= 0 || range.start > range.end) {
+            this.logger.warn({
+                message: 'Invalid line range provided for knowledge dependency',
+                context: CodeReviewContextPackService.name,
+                metadata: { range },
+            });
+            return '';
+        }
+
+        if (range.start > lines.length) {
+            this.logger.warn({
+                message:
+                    'Line range start exceeds file length for knowledge dependency',
+                context: CodeReviewContextPackService.name,
+                metadata: { range, totalLines: lines.length },
+            });
+            return '';
+        }
+
+        const start = Math.max(0, range.start - 1);
+        const end = Math.min(lines.length, range.end);
+        return lines.slice(start, end).join('\n');
+    }
+
+    private estimateTokens(content: string): number {
+        if (!content) {
+            return 0;
+        }
+        return Math.max(1, Math.ceil(content.length / 4));
+    }
+
+    private calculateContentHash(content: string): string {
+        return createHash('sha256').update(content).digest('hex');
     }
 
     private resolveConnectionProviderId(

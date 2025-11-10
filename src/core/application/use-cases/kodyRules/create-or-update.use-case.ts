@@ -10,13 +10,13 @@ import { AuthorizationService } from '@/core/infrastructure/adapters/services/pe
 import { CreateKodyRuleDto } from '@/core/infrastructure/http/dtos/create-kody-rule.dto';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import { ExternalReferenceDetectorService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceDetector.service';
 import {
     IGetAdditionalInfoHelper,
     GET_ADDITIONAL_INFO_HELPER_TOKEN,
 } from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
 import { PromptSourceType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
 import { ContextReferenceDetectionService } from '@/core/infrastructure/adapters/services/context/context-reference-detection.service';
+import type { ContextDetectionField } from '@/core/infrastructure/adapters/services/context/context-reference-detection.service';
 
 @Injectable()
 export class CreateOrUpdateKodyRulesUseCase {
@@ -36,7 +36,6 @@ export class CreateOrUpdateKodyRulesUseCase {
         },
 
         private readonly authorizationService: AuthorizationService,
-        private readonly externalReferenceDetectorService: ExternalReferenceDetectorService,
         private readonly contextReferenceDetectionService: ContextReferenceDetectionService,
         @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
         private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
@@ -186,18 +185,36 @@ export class CreateOrUpdateKodyRulesUseCase {
                         repositoryName = repositoryId;
                     }
 
+                    const detectionFields: ContextDetectionField[] = [
+                        {
+                            fieldId: '',
+                            path: ['kodyRule', ruleId],
+                            sourceType: PromptSourceType.KODY_RULE,
+                            text: ruleText,
+                            metadata: {
+                                sourceSnippet: ruleText,
+                            },
+                            consumerKind: 'prompt',
+                            consumerName: ruleId,
+                            conversationIdOverride: ruleId,
+                            requestDomain: 'code',
+                            taskIntent: 'Process kodyRule references',
+                        },
+                    ];
+
                     // ✅ Usa o serviço compartilhado para detecção e salvamento
-                    const contextReferenceId = await this.contextReferenceDetectionService.detectAndSaveReferences({
-                        entityType: 'kodyRule',
-                        entityId: ruleId,
-                        text: ruleText,
-                        path: ['kodyRule', ruleId],
-                        sourceType: PromptSourceType.KODY_RULE,
-                        repositoryId,
-                        repositoryName,
-                        organizationAndTeamData,
-                        detectionMode: 'rule',
-                    });
+                    // KodyRules podem ser globais ou específicas de repositório
+                    const contextReferenceId =
+                        await this.contextReferenceDetectionService.detectAndSaveReferences(
+                            {
+                                entityType: 'kodyRule',
+                                entityId: ruleId,
+                                fields: detectionFields,
+                                repositoryId,
+                                repositoryName,
+                                organizationAndTeamData,
+                            },
+                        );
 
                     // ✅ Atualiza apenas o contextReferenceId na kodyRule
                     await this.kodyRulesService.updateRuleReferences(
@@ -209,7 +226,8 @@ export class CreateOrUpdateKodyRulesUseCase {
                     );
 
                     this.logger.log({
-                        message: 'KodyRule successfully processed with Context OS',
+                        message:
+                            'KodyRule successfully processed with Context OS',
                         context: CreateOrUpdateKodyRulesUseCase.name,
                         metadata: {
                             ruleId,
@@ -217,7 +235,6 @@ export class CreateOrUpdateKodyRulesUseCase {
                             repositoryId,
                         },
                     });
-
                 } catch (error) {
                     this.logger.error({
                         message: 'Failed to process kodyRule with Context OS',

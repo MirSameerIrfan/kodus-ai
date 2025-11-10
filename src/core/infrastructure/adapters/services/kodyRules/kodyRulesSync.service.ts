@@ -3,12 +3,10 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { RULE_FILE_PATTERNS } from '@/shared/utils/kody-rules/file-patterns';
 import { isFileMatchingGlob } from '@/shared/utils/glob-utils';
-import { CreateOrUpdateKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/create-or-update.use-case';
 import {
     KodyRulesOrigin,
     KodyRulesScope,
     KodyRulesStatus,
-    KodyRuleProcessingStatus,
 } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
 import {
     CreateKodyRuleDto,
@@ -35,12 +33,17 @@ import * as path from 'path';
 import { ObservabilityService } from '../logger/observability.service';
 import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
 import { BYOKPromptRunnerService } from '@/shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { ExternalReferenceDetectorService } from './externalReferenceDetector.service';
-import {
-    IGetAdditionalInfoHelper,
-    GET_ADDITIONAL_INFO_HELPER_TOKEN,
-} from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
 import { kodyRulesIDEGeneratorSchema } from '@/shared/utils/langchainCommon/prompts/kodyRules';
+import {
+    ContextDetectionField,
+    ContextReferenceDetectionService,
+} from '@/core/infrastructure/adapters/services/context/context-reference-detection.service';
+import { PromptSourceType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
+import {
+    GET_ADDITIONAL_INFO_HELPER_TOKEN,
+    IGetAdditionalInfoHelper,
+} from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
+import type { UserInfo } from '@/config/types/general/codeReviewSettingsLog.type';
 
 type SyncTarget = {
     organizationAndTeamData: OrganizationAndTeamData;
@@ -54,9 +57,12 @@ type SyncTarget = {
 
 @Injectable()
 export class KodyRulesSyncService {
+    private readonly systemUserInfo: UserInfo = {
+        userId: 'kody-rules-sync',
+        userEmail: 'kody@kodus.io',
+    };
+
     constructor(
-        @Inject(CreateOrUpdateKodyRulesUseCase)
-        private readonly upsertRule: CreateOrUpdateKodyRulesUseCase,
         @Inject(KODY_RULES_SERVICE_TOKEN)
         private readonly kodyRulesService: IKodyRulesService,
         @Inject(PARAMETERS_SERVICE_TOKEN)
@@ -67,7 +73,7 @@ export class KodyRulesSyncService {
         private readonly promptRunnerService: PromptRunnerService,
         private readonly permissionValidationService: PermissionValidationService,
         private readonly observabilityService: ObservabilityService,
-        private readonly externalReferenceDetectorService: ExternalReferenceDetectorService,
+        private readonly contextReferenceDetectionService: ContextReferenceDetectionService,
         @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
         private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
     ) {}
@@ -539,10 +545,18 @@ export class KodyRulesSyncService {
                         : [],
                 } as CreateKodyRuleDto;
 
-                const result = await this.upsertRule.execute(
+                const result = await this.kodyRulesService.createOrUpdate(
+                    organizationAndTeamData,
                     dto,
-                    organizationAndTeamData.organizationId,
+                    this.systemUserInfo,
                 );
+
+                await this.processContextReferences({
+                    ruleId: this.getRuleId(result),
+                    ruleText: dto.rule,
+                    repositoryId: dto.repositoryId,
+                    organizationAndTeamData,
+                });
 
                 try {
                     await this.updateOrCreateCodeReviewParameterUseCase.execute(
@@ -763,10 +777,18 @@ export class KodyRulesSyncService {
                         : [],
                 } as CreateKodyRuleDto;
 
-                await this.upsertRule.execute(
+                const result = await this.kodyRulesService.createOrUpdate(
+                    organizationAndTeamData,
                     dto,
-                    organizationAndTeamData.organizationId,
+                    this.systemUserInfo,
                 );
+
+                await this.processContextReferences({
+                    ruleId: this.getRuleId(result),
+                    ruleText: dto.rule,
+                    repositoryId: dto.repositoryId,
+                    organizationAndTeamData,
+                });
 
                 try {
                     await this.updateOrCreateCodeReviewParameterUseCase.execute(
@@ -962,85 +984,25 @@ export class KodyRulesSyncService {
 
             if (!result?.rules || result.rules.length === 0) return [];
 
-            let repositoryName: string;
-            try {
-                repositoryName =
-                    await this.getAdditionalInfoHelper.getRepositoryNameByOrganizationAndRepository(
-                        params.organizationAndTeamData.organizationId,
-                        params.repositoryId,
-                    );
-            } catch (error) {
-                this.logger.warn({
-                    message:
-                        'Failed to resolve repository name, using ID as fallback',
-                    context: KodyRulesSyncService.name,
-                    error,
-                    metadata: {
-                        organizationAndTeamData: params.organizationAndTeamData,
-                    },
-                });
-                repositoryName = params.repositoryId;
-            }
-
-            const rulesWithReferences = await Promise.all(
-                result?.rules.map(async (r) => {
-                    const { references, syncErrors, ruleHash } =
-                        await this.externalReferenceDetectorService.detectAndResolveReferences(
-                            {
-                                ruleText: r?.rule || '',
-                                repositoryId: params.repositoryId,
-                                repositoryName,
-                                organizationAndTeamData:
-                                    params.organizationAndTeamData,
-                                byokConfig: byokConfigValue,
-                            },
-                        );
-
-                    // ✅ Determina o status final
-                    let finalStatus: KodyRuleProcessingStatus.FAILED | KodyRuleProcessingStatus.COMPLETED | undefined;
-                    
-                    if (syncErrors && syncErrors.length > 0) {
-                        // Tem erros = FAILED
-                        finalStatus = KodyRuleProcessingStatus.FAILED;
-                    } else if (references.length > 0) {
-                        // Tem referências = COMPLETED
-                        finalStatus = KodyRuleProcessingStatus.COMPLETED;
-                    } else {
-                        // Sem referências E sem erros = Remove status (undefined)
-                        finalStatus = undefined;
-                    }
-
-                    return {
-                        ...r,
-                        severity:
-                            (r?.severity
-                                ?.toString?.()
-                                .toLowerCase?.() as any) ||
-                            KodyRuleSeverity.MEDIUM,
-                        scope: (r?.scope as any) || KodyRulesScope.FILE,
-                        path: r?.path || params.filePath,
-                        origin: KodyRulesOrigin.USER,
-                        externalReferences:
-                            references.length > 0 ? references : undefined,
-                        syncErrors:
-                            syncErrors && syncErrors.length > 0
-                                ? syncErrors
-                                : undefined,
-                        referenceProcessingStatus: finalStatus,
-                        lastReferenceProcessedAt: finalStatus ? new Date() : undefined,
-                        ruleHash,
-                    };
-                }),
-            );
-
-            return rulesWithReferences.map((r) => ({
-                ...r,
+            const normalizeRule = (rule: any): Partial<CreateKodyRuleDto> => ({
+                ...rule,
+                severity:
+                    (rule?.severity?.toString?.().toLowerCase?.() as any) ||
+                    KodyRuleSeverity.MEDIUM,
+                scope: (rule?.scope as any) || KodyRulesScope.FILE,
+                path: rule?.path || params.filePath,
+                sourcePath: rule?.sourcePath || params.filePath,
+                origin: KodyRulesOrigin.USER,
                 status: KodyRulesStatus.ACTIVE,
-                examples: r?.examples?.map((e) => ({
-                    snippet: e?.snippet || '',
-                    isCorrect: e?.isCorrect || false,
-                })),
-            }));
+                examples: Array.isArray(rule?.examples)
+                    ? rule.examples.map((example: any) => ({
+                          snippet: example?.snippet || '',
+                          isCorrect: example?.isCorrect || false,
+                      }))
+                    : [],
+            });
+
+            return result.rules.map(normalizeRule);
         } catch (error) {
             const fbRun = 'kodyRulesFileToRulesRaw';
             try {
@@ -1093,71 +1055,27 @@ export class KodyRulesSyncService {
                     return [];
                 }
 
-                let repositoryName: string;
-                try {
-                    repositoryName =
-                        await this.getAdditionalInfoHelper.getRepositoryNameByOrganizationAndRepository(
-                            params.organizationAndTeamData.organizationId,
-                            params.repositoryId,
-                        );
-                } catch (error) {
-                    this.logger.warn({
-                        message:
-                            'Failed to resolve repository name, using ID as fallback',
-                        context: KodyRulesSyncService.name,
-                        error,
-                        metadata: {
-                            organizationAndTeamData:
-                                params.organizationAndTeamData,
-                        },
-                    });
-                    repositoryName = params.repositoryId;
-                }
+                const normalizeRule = (
+                    rule: any,
+                ): Partial<CreateKodyRuleDto> => ({
+                    ...rule,
+                    severity:
+                        (rule?.severity?.toString?.().toLowerCase?.() as any) ||
+                        KodyRuleSeverity.MEDIUM,
+                    scope: (rule?.scope as any) || KodyRulesScope.FILE,
+                    path: rule?.path || params.filePath,
+                    sourcePath: rule?.sourcePath || params.filePath,
+                    origin: KodyRulesOrigin.USER,
+                    status: KodyRulesStatus.ACTIVE,
+                    examples: Array.isArray(rule?.examples)
+                        ? rule.examples.map((example: any) => ({
+                              snippet: example?.snippet || '',
+                              isCorrect: example?.isCorrect || false,
+                          }))
+                        : [],
+                });
 
-                const rulesWithReferences = await Promise.all(
-                    parsed.map(async (r) => {
-                        const { references, syncErrors, ruleHash } =
-                            await this.externalReferenceDetectorService.detectAndResolveReferences(
-                                {
-                                    ruleText: r?.rule || '',
-                                    repositoryId: params.repositoryId,
-                                    repositoryName,
-                                    organizationAndTeamData:
-                                        params.organizationAndTeamData,
-                                    byokConfig: byokConfigValue,
-                                },
-                            );
-
-                        return {
-                            ...r,
-                            severity:
-                                (r?.severity
-                                    ?.toString?.()
-                                    .toLowerCase?.() as any) ||
-                                KodyRuleSeverity.MEDIUM,
-                            scope: (r?.scope as any) || KodyRulesScope.FILE,
-                            path: r?.path || params.filePath,
-                            sourcePath: r?.sourcePath || params.filePath,
-                            origin: KodyRulesOrigin.USER,
-                            externalReferences:
-                                references.length > 0 ? references : undefined,
-                            syncErrors:
-                                syncErrors && syncErrors.length > 0
-                                    ? syncErrors
-                                    : undefined,
-                            referenceProcessingStatus:
-                                syncErrors && syncErrors.length > 0
-                                    ? ('failed' as any)
-                                    : references.length > 0
-                                      ? ('completed' as any)
-                                      : undefined,
-                            lastReferenceProcessedAt: new Date(),
-                            ruleHash,
-                        };
-                    }),
-                );
-
-                return rulesWithReferences;
+                return parsed.map(normalizeRule);
             } catch (fallbackError) {
                 this.logger.error({
                     message: 'LLM conversion failed for rule file',
@@ -1192,6 +1110,143 @@ export class KodyRulesSyncService {
         } catch {
             return null;
         }
+    }
+
+    private getRuleId(
+        result: Partial<{ uuid?: string; id?: string }> | null | undefined,
+    ): string | undefined {
+        if (!result) {
+            return undefined;
+        }
+
+        if (typeof result.uuid === 'string' && result.uuid) {
+            return result.uuid;
+        }
+
+        if (typeof result.id === 'string' && result.id) {
+            return result.id;
+        }
+
+        const fallback =
+            typeof (result as Record<string, unknown>)._id === 'string'
+                ? ((result as Record<string, unknown>)._id as string)
+                : undefined;
+        return fallback;
+    }
+
+    private async processContextReferences(params: {
+        ruleId?: string;
+        ruleText?: string;
+        repositoryId?: string;
+        organizationAndTeamData: OrganizationAndTeamData;
+    }): Promise<void> {
+        const { ruleId, ruleText, repositoryId, organizationAndTeamData } =
+            params;
+
+        if (!ruleId || !ruleText || !repositoryId) {
+            this.logger.debug({
+                message:
+                    'Skipping context reference detection due to missing data',
+                context: KodyRulesSyncService.name,
+                metadata: {
+                    hasRuleId: !!ruleId,
+                    hasRuleText: !!ruleText,
+                    hasRepositoryId: !!repositoryId,
+                },
+            });
+            return;
+        }
+
+        let repositoryName = repositoryId;
+        try {
+            repositoryName = await this.resolveRepositoryName(
+                organizationAndTeamData.organizationId,
+                repositoryId,
+            );
+        } catch (error) {
+            this.logger.warn({
+                message:
+                    'Failed to resolve repository name for context references, using ID as fallback',
+                context: KodyRulesSyncService.name,
+                error,
+                metadata: {
+                    repositoryId,
+                    organizationAndTeamData,
+                },
+            });
+        }
+
+        const detectionFields: ContextDetectionField[] = [
+            {
+                fieldId: '',
+                path: ['kodyRule', ruleId],
+                sourceType: PromptSourceType.KODY_RULE,
+                text: ruleText,
+                metadata: { sourceSnippet: ruleText },
+                consumerKind: 'prompt',
+                consumerName: ruleId,
+                conversationIdOverride: ruleId,
+                requestDomain: 'code',
+                taskIntent: 'Process kodyRule references',
+            },
+        ];
+
+        try {
+            const contextReferenceId =
+                await this.contextReferenceDetectionService.detectAndSaveReferences(
+                    {
+                        entityType: 'kodyRule',
+                        entityId: ruleId,
+                        fields: detectionFields,
+                        repositoryId,
+                        repositoryName,
+                        organizationAndTeamData,
+                    },
+                );
+
+            if (contextReferenceId) {
+                await this.kodyRulesService.updateRuleReferences(
+                    organizationAndTeamData.organizationId,
+                    ruleId,
+                    { contextReferenceId },
+                );
+            }
+
+            this.logger.log({
+                message: 'Processed context references for synced kody rule',
+                context: KodyRulesSyncService.name,
+                metadata: {
+                    ruleId,
+                    repositoryId,
+                    contextReferenceId,
+                },
+            });
+        } catch (error) {
+            this.logger.error({
+                message:
+                    'Failed to detect or persist context references for kody rule',
+                context: KodyRulesSyncService.name,
+                error,
+                metadata: {
+                    ruleId,
+                    repositoryId,
+                },
+            });
+        }
+    }
+
+    private async resolveRepositoryName(
+        organizationId: string,
+        repositoryId: string,
+    ): Promise<string> {
+        if (repositoryId === 'global') {
+            return 'global';
+        }
+
+        return await this.getAdditionalInfoHelper.getRepositoryNameByOrganizationAndRepository(
+            organizationId,
+            repositoryId,
+        );
     }
 
     /**

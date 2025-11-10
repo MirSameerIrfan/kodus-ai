@@ -448,8 +448,11 @@ export class PromptContextEngineService implements IPromptContextEngineService {
     ): Promise<IFileReference[]> {
         try {
             const targetRepoName = ref.repositoryName || repositoryName;
+            const targetRepoId = ref.repositoryName
+                ? ref.repositoryName
+                : repositoryId;
             const targetRepo = {
-                id: ref.repositoryName ? repositoryId : repositoryId,
+                id: targetRepoId,
                 name: targetRepoName,
             };
 
@@ -480,9 +483,8 @@ export class PromptContextEngineService implements IPromptContextEngineService {
                     description: ref.description,
                     originalText: ref.originalText,
                     lineRange: ref.lineRange,
-                    ...(ref.repositoryName && {
-                        repositoryName: ref.repositoryName,
-                    }),
+                    repositoryName: targetRepo.name,
+                    repositoryId: targetRepo.id,
                     lastContentHash: '',
                     lastValidatedAt: new Date(),
                     estimatedTokens: 0,
@@ -521,7 +523,8 @@ export class PromptContextEngineService implements IPromptContextEngineService {
                     reference.filePath
                 }|${index}`,
                 metadata: {
-                    repositoryId: params.repositoryId,
+                    repositoryId:
+                        reference.repositoryId ?? params.repositoryId,
                     repositoryName:
                         reference.repositoryName ?? params.repositoryName,
                     filePath: reference.filePath,

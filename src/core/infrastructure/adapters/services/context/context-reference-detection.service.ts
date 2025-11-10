@@ -10,26 +10,45 @@ import {
     IContextReferenceService,
 } from '@/core/domain/contextReferences/contracts/context-reference.service.contract';
 import { PinoLoggerService } from '../logger/pino.service';
+import { createHash } from 'crypto';
+import type {
+    ContextRequirement,
+    ContextDependency,
+    ContextConsumerKind,
+    ContextDomain,
+} from '@context-os-core/interfaces';
+import { BYOKConfig } from '@kodus/kodus-common/llm';
+import type { IPromptReferenceSyncError } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
 import {
-    MCPToolMetadataService,
     MCPToolMetadata,
+    MCPToolMetadataService,
 } from '@/core/infrastructure/adapters/mcp/services/mcp-tool-metadata.service';
 import type { MCPServerConfig } from '@kodus/flow';
-import type {
-    ContextDependency,
-    ContextRequirement,
-} from '@context-os-core/interfaces';
+import { PromptReferenceErrorType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
+
+export interface ContextDetectionField {
+    fieldId?: string;
+    path: string[];
+    sourceType: PromptSourceType | string;
+    text: string;
+    inlineMarkers?: string[];
+    promptHash?: string;
+    metadata?: Record<string, unknown>;
+    consumerKind?: ContextConsumerKind;
+    consumerName?: string;
+    requestDomain?: ContextDomain;
+    taskIntent?: string;
+    conversationIdOverride?: string;
+}
 
 export interface ContextReferenceDetectionParams {
     entityType: 'kodyRule' | 'codeReviewConfig';
     entityId: string;
-    text: string;
-    path: string[];
-    sourceType: PromptSourceType;
+    fields: ContextDetectionField[];
     repositoryId?: string;
     repositoryName?: string;
     organizationAndTeamData: OrganizationAndTeamData;
-    detectionMode?: 'rule' | 'prompt';
+    byokConfig?: BYOKConfig;
 }
 
 @Injectable()
@@ -49,168 +68,616 @@ export class ContextReferenceDetectionService {
         const {
             entityType,
             entityId,
-            text,
-            path,
-            sourceType,
+            fields,
             repositoryId,
             repositoryName,
             organizationAndTeamData,
-            detectionMode,
+            byokConfig,
         } = params;
 
-        this.logger.debug({
-            message: `Starting reference detection for ${entityType}`,
-            context: ContextReferenceDetectionService.name,
-            metadata: {
-                entityType,
-                entityId,
-                textLength: text.length,
-                repositoryId,
-                organizationAndTeamData,
-            },
-        });
-
-        const detection =
-            await this.promptContextEngine.detectAndResolveReferences({
-                requirementId: `${entityType}:${entityId}`,
-                promptText: text,
-                path,
-                sourceType,
-                repositoryId,
-                repositoryName,
-                organizationAndTeamData,
-                detectionMode,
-            });
-
-        let { requirements, syncErrors } = detection;
-
-        // Se não tem requirements nem erros, não salva nada
-        if (!requirements.length && !syncErrors.length) {
-            this.logger.debug({
-                message: `No references detected for ${entityType}, skipping save`,
+        if (!fields || fields.length === 0) {
+            this.logger.warn({
+                message: 'No fields provided for context detection',
                 context: ContextReferenceDetectionService.name,
                 metadata: { entityType, entityId },
             });
             return undefined;
         }
 
-        // Para entidades que suportam MCPs, normalizar as dependências com aliases
-        if (entityType === 'kodyRule' || entityType === 'codeReviewConfig') {
-            const normalized = await this.normalizeRequirementsWithMCPs(
-                requirements,
-                syncErrors,
-                organizationAndTeamData,
-            );
-            requirements = normalized.requirements;
-            syncErrors = normalized.syncErrors;
+        const preparedFields = fields
+            .map((field) => ({
+                ...field,
+                text: field.text ?? '',
+            }))
+            .filter((field) => field.text.trim().length > 0);
+
+        if (!preparedFields.length) {
+            this.logger.warn({
+                message: 'All provided fields are empty after trimming',
+                context: ContextReferenceDetectionService.name,
+                metadata: { entityType, entityId },
+            });
+            return undefined;
         }
 
         this.logger.log({
-            message: `Saving ${requirements.length} requirements and ${syncErrors.length} errors to Context OS`,
+            message: `Starting context detection for ${entityType}`,
             context: ContextReferenceDetectionService.name,
             metadata: {
                 entityType,
                 entityId,
-                requirementsCount: requirements.length,
-                syncErrorsCount: syncErrors.length,
+                repositoryId,
+                fieldsCount: preparedFields.length,
             },
         });
 
-        // Gerar revisionId para ponte com fonte da verdade
-        const revisionId = `rev:${entityType}:${entityId}:${Date.now()}`;
+        const requirements: ContextRequirement[] = [];
+        const knowledgeRefsMap = new Map<
+            string,
+            { itemId: string; version?: string }
+        >();
+        const aggregatedSyncErrors: IPromptReferenceSyncError[] = [];
 
-        // 🔧 AJUSTE: Scope completo com tenant/organization/repository
-        // Determinar nível baseado no entityType e contexto
-        const scopeLevel = this.determineScopeLevel(entityType, repositoryId);
-        const scopeIdentifiers = {
-            tenantId: organizationAndTeamData.organizationId, // tenant = organization
-            organizationId: organizationAndTeamData.organizationId,
-            ...(organizationAndTeamData.teamId && {
-                teamId: organizationAndTeamData.teamId,
-            }),
-            ...(repositoryId && { repositoryId }),
-        };
+        for (const field of preparedFields) {
+            const result = await this.processFieldDetection({
+                entityType,
+                entityId,
+                field,
+                repositoryId,
+                repositoryName,
+                organizationAndTeamData,
+                byokConfig,
+            });
 
-        const scopePath = this.buildScopePath(
-            scopeLevel,
-            organizationAndTeamData.organizationId,
-            organizationAndTeamData.teamId,
-            repositoryId,
+            if (!result) {
+                continue;
+            }
+
+            requirements.push(result.requirement);
+
+            for (const ref of result.knowledgeRefs) {
+                if (!knowledgeRefsMap.has(ref.itemId)) {
+                    knowledgeRefsMap.set(ref.itemId, ref);
+                }
+            }
+
+            aggregatedSyncErrors.push(...result.syncErrors);
+        }
+
+        if (!requirements.length) {
+            this.logger.warn({
+                message: 'No requirements generated after processing fields',
+                context: ContextReferenceDetectionService.name,
+                metadata: { entityType, entityId },
+            });
+            return undefined;
+        }
+
+        const entityHash = this.calculateEntityHash(
+            preparedFields.map((field) => field.text.trim()).join('\n:::\n'),
         );
 
-        const scope = {
-            level: scopeLevel,
-            identifiers: scopeIdentifiers,
-            path: scopePath,
-            metadata: {
-                source: entityType, // 'kodyRule' ou 'codeReviewConfig'
-            },
-        };
+        const knowledgeRefs = Array.from(knowledgeRefsMap.values());
 
-        const result = await this.contextReferenceService.commitRevision({
-            scope,
+        return this.saveToContextOS({
             entityType,
             entityId,
             requirements,
-            origin: { kind: 'system', id: 'kody-system' },
-            revisionId, // Ponte para fonte da verdade
+            knowledgeRefs,
+            entityHash,
+            aggregatedSyncErrors,
+            organizationAndTeamData,
+            repositoryId,
+            repositoryName,
+        });
+    }
+
+    private calculateEntityHash(text: string): string {
+        return createHash('sha256').update(text).digest('hex');
+    }
+
+    private async processFieldDetection(params: {
+        entityType: 'kodyRule' | 'codeReviewConfig';
+        entityId: string;
+        field: ContextDetectionField;
+        repositoryId?: string;
+        repositoryName?: string;
+        organizationAndTeamData: OrganizationAndTeamData;
+        byokConfig?: BYOKConfig;
+    }): Promise<
+        | {
+              requirement: ContextRequirement;
+              knowledgeRefs: Array<{ itemId: string; version?: string }>;
+              syncErrors: IPromptReferenceSyncError[];
+          }
+        | undefined
+    > {
+        const {
+            entityType,
+            entityId,
+            field,
+            repositoryId,
+            repositoryName,
+            organizationAndTeamData,
+            byokConfig,
+        } = params;
+
+        const trimmedText = field.text.trim();
+        if (!trimmedText) {
+            return undefined;
+        }
+
+        const fieldKey = this.resolveFieldKey(field);
+        const hasSuffix = !!fieldKey && fieldKey.length > 0;
+        const requirementId = hasSuffix
+            ? `${entityType}:${entityId}#${fieldKey}`
+            : `${entityType}:${entityId}`;
+        const consumerId = field.conversationIdOverride
+            ? field.conversationIdOverride
+            : hasSuffix
+              ? `${entityId}#${fieldKey}`
+              : entityId;
+        const consumerKind: ContextConsumerKind =
+            field.consumerKind ??
+            (entityType === 'kodyRule' ? 'prompt' : 'prompt_section');
+        const consumerName =
+            field.consumerName ?? (hasSuffix ? fieldKey : entityId);
+        const requestDomain: ContextDomain =
+            field.requestDomain ??
+            (entityType === 'kodyRule' ? ('code' as ContextDomain) : 'general');
+        const taskIntent =
+            field.taskIntent ?? `Process ${entityType} references`;
+
+        let detectionReferences: Array<{
+            filePath: string;
+            description?: string;
+            originalText?: string;
+            lineRange?: { start: number; end: number };
+            repositoryName?: string;
+            repositoryId?: string;
+            lastValidatedAt?: string | Date;
+            lastContentHash?: string;
+            estimatedTokens?: number;
+        }> = [];
+        let detectionSyncErrors: IPromptReferenceSyncError[] = [];
+
+        const shouldAttemptDetection =
+            this.hasLikelyExternalReferences(trimmedText) ||
+            entityType === 'kodyRule';
+
+        if (shouldAttemptDetection) {
+            const detection = await this.detectAndResolveReferences({
+                text: trimmedText,
+                path: field.path,
+                sourceType: field.sourceType,
+                entityType,
+                repositoryId,
+                repositoryName,
+                organizationAndTeamData,
+                byokConfig,
+                fieldId: fieldKey,
+            });
+
+            detectionReferences = detection.references;
+            detectionSyncErrors = detection.syncErrors;
+        } else {
+            this.logger.debug({
+                message: 'Skipping detection due to lack of reference patterns',
+                context: ContextReferenceDetectionService.name,
+                metadata: {
+                    entityType,
+                    entityId,
+                    fieldKey,
+                },
+            });
+        }
+
+        const normalization = await this.applyFullMCPNormalization({
+            references: detectionReferences,
+            syncErrors: detectionSyncErrors,
+            organizationAndTeamData,
+            entityType,
+            repositoryName,
         });
 
-        const contextReferenceId = result.pointer.uuid;
+        const dependencies = normalization.dependencies;
+        const syncErrors = normalization.syncErrors;
 
-        this.logger.log({
-            message: `Successfully saved references for ${entityType}`,
+        if (dependencies.length === 0 && syncErrors.length === 0) {
+            this.logger.debug({
+                message: 'Skipping field without dependencies or sync errors',
+                context: ContextReferenceDetectionService.name,
+                metadata: {
+                    entityType,
+                    entityId,
+                    fieldKey,
+                },
+            });
+            return undefined;
+        }
+
+        const knowledgeRefs = this.extractKnowledgeRefs(dependencies);
+
+        const requirementMetadata: Record<string, unknown> = {
+            source: entityType,
+            entityHash: this.calculateEntityHash(trimmedText),
+            path: field.path,
+            sourceType: field.sourceType,
+            sourceSnippet: field.metadata?.sourceSnippet ?? trimmedText,
+        };
+
+        if (field.inlineMarkers?.length) {
+            requirementMetadata.inlineMarkers = Array.from(
+                new Set(field.inlineMarkers),
+            );
+        }
+
+        if (field.promptHash) {
+            requirementMetadata.promptHash = field.promptHash;
+        }
+
+        if (field.metadata) {
+            const { sourceSnippet: _ignoredSnippet, ...rest } = field.metadata;
+            Object.assign(requirementMetadata, rest);
+        }
+
+        if (syncErrors.length) {
+            requirementMetadata.syncErrors = syncErrors;
+        }
+
+        const consumerMetadata: Record<string, unknown> = {
+            path: field.path,
+            sourceType: field.sourceType,
+        };
+
+        const requirement: ContextRequirement = {
+            id: requirementId,
+            consumer: {
+                kind: consumerKind,
+                id: consumerId,
+                name: consumerName,
+                metadata: consumerMetadata,
+            },
+            request: {
+                domain: requestDomain,
+                taskIntent,
+                signal: {
+                    conversationId: consumerId,
+                    metadata: {
+                        path: field.path,
+                        sourceType: field.sourceType,
+                    },
+                },
+            },
+            dependencies,
+            status: syncErrors.length > 0 ? 'draft' : 'active',
+            metadata: requirementMetadata,
+        };
+
+        this.logger.debug({
+            message: 'Built requirement for field',
             context: ContextReferenceDetectionService.name,
             metadata: {
-                entityType,
-                entityId,
-                contextReferenceId,
-                requirementsHash: result.pointer.requirementsHash,
+                requirementId,
+                dependencyCount: dependencies.length,
+                syncErrors: syncErrors.length,
             },
         });
 
-        return contextReferenceId;
+        return {
+            requirement,
+            knowledgeRefs,
+            syncErrors,
+        };
     }
 
-    private async normalizeRequirementsWithMCPs(
-        requirements: ContextRequirement[],
-        syncErrors: any[],
-        organizationAndTeamData: OrganizationAndTeamData,
-    ): Promise<{ requirements: ContextRequirement[]; syncErrors: any[] }> {
-        // Carregar metadados MCP para a organização
+    private resolveFieldKey(field: ContextDetectionField): string {
+        if (field.fieldId !== undefined) {
+            return field.fieldId.trim();
+        }
+
+        return this.buildPathKey(field.path);
+    }
+
+    private buildPathKey(path: string[]): string {
+        if (!path || path.length === 0) {
+            return '';
+        }
+
+        return path.join('.');
+    }
+
+    private extractKnowledgeRefs(
+        dependencies: ContextDependency[],
+    ): Array<{ itemId: string; version?: string }> {
+        const refs: Array<{ itemId: string; version?: string }> = [];
+
+        for (const dependency of dependencies) {
+            if (dependency.type !== 'knowledge') {
+                continue;
+            }
+
+            const metadata =
+                (dependency.metadata as Record<string, unknown> | undefined) ??
+                {};
+            const repositoryId = metadata.repositoryId as string | undefined;
+            const repositoryName = metadata.repositoryName as
+                | string
+                | undefined;
+            const filePath =
+                (metadata.filePath as string | undefined) ??
+                (typeof dependency.id === 'string' ? dependency.id : 'unknown');
+
+            const baseId =
+                typeof dependency.id === 'string' && dependency.id.includes('|')
+                    ? dependency.id
+                    : `${repositoryId ?? repositoryName ?? 'unknown'}|${filePath}`;
+
+            const version =
+                (metadata.version as string | undefined) ??
+                (metadata.lastContentHash as string | undefined);
+
+            refs.push({ itemId: baseId, version });
+        }
+
+        return refs;
+    }
+
+    private hasLikelyExternalReferences(text: string): boolean {
+        const patterns = [
+            // Padrões diretos
+            /@file[:\s]/i,
+            /\[\[file:/i,
+            /@\w+\.(ts|js|py|md|yml|yaml|json|txt|go|java|cpp|c|h|rs)/i,
+
+            // Padrões narrativos (mais comuns em kodyRules)
+            /refer to.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
+            /check.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
+            /see.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
+            /use.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
+            /read.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
+            /open.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
+            /examine.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
+
+            // Padrões de nomes de arquivos
+            /\b\w+\.\w+\.(ts|js|py|md|yml|yaml|json|txt)\b/i,
+            /\b[A-Z_][A-Z0-9_]*\.(ts|js|py|md|yml|yaml|json|txt)\b/,
+
+            // Arquivos comuns (sem extensão específica)
+            /\b(readme|contributing|changelog|license|setup|config|package|tsconfig|jest\.config|vite\.config|webpack\.config|dockerfile|makefile)\b/i,
+
+            // Referências a diretórios
+            /src\//i,
+            /lib\//i,
+            /test\//i,
+            /docs\//i,
+            /config\//i,
+
+            // Padrões MCP
+            /@mcp/i,
+            /mcp:/i,
+        ];
+        return patterns.some((pattern) => pattern.test(text));
+    }
+
+    private async detectAndResolveReferences(params: {
+        text: string;
+        path: string[];
+        sourceType: any;
+        entityType: 'kodyRule' | 'codeReviewConfig';
+        repositoryId?: string;
+        repositoryName?: string;
+        organizationAndTeamData: OrganizationAndTeamData;
+        byokConfig?: BYOKConfig;
+        fieldId?: string;
+    }): Promise<{
+        references: Array<{
+            filePath: string;
+            description?: string;
+            originalText?: string;
+            lineRange?: { start: number; end: number };
+            repositoryName?: string;
+            repositoryId?: string;
+        }>;
+        syncErrors: IPromptReferenceSyncError[];
+    }> {
+        // Usa o mesmo fluxo do PromptContextEngine (igual ao PromptExternalReferenceManagerService)
+        const detection =
+            await this.promptContextEngine.detectAndResolveReferences({
+                requirementId:
+                    params.fieldId && params.fieldId.length > 0
+                        ? `field-detection:${params.fieldId}`
+                        : `unified-detection-${Date.now()}`,
+                promptText: params.text,
+                path: params.path,
+                sourceType: params.sourceType,
+                repositoryId: params.repositoryId,
+                repositoryName: params.repositoryName,
+                organizationAndTeamData: params.organizationAndTeamData,
+                context:
+                    params.entityType === 'codeReviewConfig'
+                        ? 'instruction'
+                        : 'rule',
+                detectionMode:
+                    params.entityType === 'kodyRule' ? 'rule' : 'prompt',
+                byokConfig: params.byokConfig,
+            });
+
+        // Extrair tanto arquivos quanto MCPs dos requirements
+        const allDependencies: ContextDependency[] = [];
+        if (detection.requirements && detection.requirements.length > 0) {
+            allDependencies.push(
+                ...(detection.requirements[0].dependencies || []),
+            );
+        }
+
+        // Converter dependencies para o formato esperado
+        const references = allDependencies.map((dep) => {
+            if (dep.type === 'mcp') {
+                // MCP reference
+                return {
+                    filePath: dep.id, // formato: provider|tool
+                    description: dep.metadata?.description as string,
+                    originalText: dep.metadata?.originalText as string,
+                    repositoryName: undefined,
+                    repositoryId: undefined,
+                    lineRange: undefined,
+                    lastValidatedAt: undefined,
+                    lastContentHash: undefined,
+                    estimatedTokens: undefined,
+                };
+            } else {
+                // Knowledge/file reference
+                return {
+                    filePath: (dep.metadata?.filePath as string) || dep.id,
+                    description: dep.metadata?.description as string,
+                    originalText: dep.metadata?.originalText as string,
+                    repositoryName: dep.metadata?.repositoryName as string,
+                    repositoryId: dep.metadata?.repositoryId as string,
+                    lineRange: dep.metadata?.lineRange as
+                        | { start: number; end: number }
+                        | undefined,
+                    lastValidatedAt: dep.metadata?.lastValidatedAt as
+                        | string
+                        | Date
+                        | undefined,
+                    lastContentHash: dep.metadata?.lastContentHash as
+                        | string
+                        | undefined,
+                    estimatedTokens: dep.metadata?.estimatedTokens as
+                        | number
+                        | undefined,
+                };
+            }
+        });
+
+        this.logger.log({
+            message: `Detected ${references.length} references for ${params.entityType}`,
+            context: ContextReferenceDetectionService.name,
+            metadata: {
+                entityType: params.entityType,
+                entityId: params.fieldId ?? params.entityType,
+                referenceCount: references.length,
+                references: references.map((r) => ({
+                    filePath: r.filePath,
+                    hasDescription: !!r.description,
+                })),
+            },
+        });
+
+        return {
+            references,
+            syncErrors: detection.syncErrors || [],
+        };
+    }
+
+    private async applyFullMCPNormalization(params: {
+        references: Array<{
+            filePath: string;
+            description?: string;
+            originalText?: string;
+            lineRange?: { start: number; end: number };
+            repositoryName?: string;
+            repositoryId?: string;
+            lastValidatedAt?: string | Date;
+            lastContentHash?: string;
+            estimatedTokens?: number;
+        }>;
+        syncErrors: IPromptReferenceSyncError[];
+        organizationAndTeamData: OrganizationAndTeamData;
+        entityType: 'kodyRule' | 'codeReviewConfig';
+        repositoryName?: string;
+    }): Promise<{
+        dependencies: ContextDependency[];
+        syncErrors: IPromptReferenceSyncError[];
+    }> {
+        const {
+            references,
+            syncErrors,
+            organizationAndTeamData,
+            entityType,
+            repositoryName,
+        } = params;
+
+        const dependenciesInput: ContextDependency[] = references.map((ref) => {
+            if (ref.filePath.includes('|')) {
+                const [provider, tool] = ref.filePath.split('|', 2);
+                return {
+                    type: 'mcp' as const,
+                    id: ref.filePath,
+                    metadata: {
+                        provider,
+                        toolName: tool,
+                        description: ref.description,
+                        originalText: ref.originalText,
+                        detectedAt: new Date(),
+                    },
+                } satisfies ContextDependency;
+            }
+
+            const knowledgeId = ref.repositoryName
+                ? `${ref.repositoryName}|${ref.filePath}`
+                : ref.filePath;
+
+            return {
+                type: 'knowledge' as const,
+                id: knowledgeId,
+                metadata: {
+                    filePath: ref.filePath,
+                    description: ref.description,
+                    originalText: ref.originalText,
+                    repositoryName: ref.repositoryName ?? repositoryName,
+                    repositoryId: ref.repositoryId,
+                    lineRange: ref.lineRange,
+                    lastValidatedAt: ref.lastValidatedAt
+                        ? new Date(ref.lastValidatedAt)
+                        : undefined,
+                    lastContentHash: ref.lastContentHash,
+                    estimatedTokens: ref.estimatedTokens,
+                    detectedAt: new Date(),
+                },
+            } satisfies ContextDependency;
+        });
+
+        if (!dependenciesInput.some((dep) => dep.type === 'mcp')) {
+            return { dependencies: dependenciesInput, syncErrors };
+        }
+
+        // Carregar configurações MCP da organização
         const { connections: mcpConnections, metadata: toolMetadata } =
             await this.mcpToolMetadataService.loadMetadataForOrganization(
                 organizationAndTeamData,
             );
 
-        // Construir estruturas de aliases
+        // Construir estruturas de alias
         const { providerAliases, toolAliases, allowedTools } =
             this.buildMCPAliasStructures(mcpConnections);
 
-        // Normalizar cada requirement
-        const normalizedRequirements = requirements.map((requirement) => ({
-            ...requirement,
-            dependencies: this.normalizeMCPDependencies(
-                requirement.dependencies,
-                providerAliases,
-                toolAliases,
-                allowedTools,
-                toolMetadata,
-            ).dependencies,
-        }));
-
-        // Normalizar syncErrors (mesma lógica do UpdateOrCreateCodeReviewParameterUseCase)
-        const normalizedSyncErrors = this.normalizeMCPDependencies(
-            [], // Não temos dependências brutas aqui, apenas erros
+        // Aplicar normalização MCP completa (mesma lógica dos Custom Prompts)
+        const normalizedDependencies = this.normalizeMCPDependencies(
+            dependenciesInput,
             providerAliases,
             toolAliases,
             allowedTools,
             toolMetadata,
-        ).errors; // Os erros vêm da normalização
+        );
+
+        const allSyncErrors = [...syncErrors, ...normalizedDependencies.errors];
+
+        this.logger.log({
+            message: `Applied full MCP normalization for ${entityType}`,
+            context: ContextReferenceDetectionService.name,
+            metadata: {
+                entityType,
+                dependencyCount: references.length,
+                syncErrorsBefore: syncErrors.length,
+                syncErrorsAfter: allSyncErrors.length,
+            },
+        });
 
         return {
-            requirements: normalizedRequirements,
-            syncErrors: [...syncErrors, ...normalizedSyncErrors],
+            dependencies: normalizedDependencies.dependencies,
+            syncErrors: allSyncErrors,
         };
     }
 
@@ -317,14 +784,14 @@ export class ContextReferenceDetectionService {
         toolMetadata: Map<string, MCPToolMetadata>,
     ): {
         dependencies: ContextDependency[];
-        errors: any[];
+        errors: IPromptReferenceSyncError[];
     } {
         if (!dependencies?.length) {
             return { dependencies: [], errors: [] };
         }
 
         const merged: ContextDependency[] = [];
-        const errors: any[] = [];
+        const errors: IPromptReferenceSyncError[] = [];
 
         for (const dependency of dependencies) {
             const normalized = this.normalizeDependency(
@@ -357,7 +824,7 @@ export class ContextReferenceDetectionService {
         allowedTools: Map<string, Set<string>>,
     ): {
         dependency?: ContextDependency;
-        errors: any[];
+        errors: IPromptReferenceSyncError[];
     } {
         if (dependency.type !== 'mcp' && dependency.type !== 'tool') {
             return { dependency, errors: [] };
@@ -368,7 +835,7 @@ export class ContextReferenceDetectionService {
             ? this.resolveCanonicalProvider(originalProvider, providerAliases)
             : undefined;
 
-        const errors: any[] = [];
+        const errors: IPromptReferenceSyncError[] = [];
 
         const finalProvider =
             canonicalProvider ??
@@ -379,7 +846,7 @@ export class ContextReferenceDetectionService {
         if (!finalProvider) {
             if (originalProvider) {
                 errors.push({
-                    type: 'invalid_format',
+                    type: PromptReferenceErrorType.INVALID_FORMAT,
                     message: `MCP provider "${originalProvider}" is not configured for this organization/team. Adjust the prompt or enable the corresponding connection.`,
                     details: {
                         timestamp: new Date(),
@@ -429,7 +896,7 @@ export class ContextReferenceDetectionService {
                 : 'no tools registered';
 
             errors.push({
-                type: 'invalid_format',
+                type: PromptReferenceErrorType.INVALID_FORMAT,
                 message: `Tool "${originalTool}" is not enabled for MCP provider "${finalProvider}". Available tools: ${availableList}.`,
                 details: {
                     timestamp: new Date(),
@@ -649,12 +1116,6 @@ export class ContextReferenceDetectionService {
             if (providerAlias && providerAlias.trim()) {
                 return providerAlias;
             }
-
-            // Fallback para 'app' (formato antigo do extractMCPDependencies)
-            const app = metadata.app as string | undefined;
-            if (app && app.trim()) {
-                return app;
-            }
         }
 
         if (
@@ -685,15 +1146,8 @@ export class ContextReferenceDetectionService {
             | Record<string, unknown>
             | undefined;
 
-        if (metadata) {
-            if (typeof metadata.toolName === 'string') {
-                return metadata.toolName;
-            }
-
-            // Fallback para 'tool' (formato antigo do extractMCPDependencies)
-            if (typeof metadata.tool === 'string') {
-                return metadata.tool;
-            }
+        if (metadata && typeof metadata.toolName === 'string') {
+            return metadata.toolName;
         }
 
         if (
@@ -748,30 +1202,6 @@ export class ContextReferenceDetectionService {
         return normalized || undefined;
     }
 
-    /**
-     * Determina o nível do scope baseado no entityType e contexto
-     */
-    private determineScopeLevel(
-        entityType: string,
-        repositoryId?: string,
-    ): string {
-        switch (entityType) {
-            case 'kodyRule':
-                // KodyRules podem ser global ou por repository
-                return repositoryId && repositoryId !== 'global'
-                    ? 'repository'
-                    : 'organization';
-            case 'codeReviewConfig':
-                // Code review configs geralmente são por repository
-                return 'repository';
-            default:
-                return 'organization'; // fallback seguro
-        }
-    }
-
-    /**
-     * Constrói o path do scope baseado no nível determinado
-     */
     private buildScopePath(
         scopeLevel: string,
         organizationId: string,
@@ -791,5 +1221,100 @@ export class ContextReferenceDetectionService {
         }
 
         return path;
+    }
+
+    private async saveToContextOS(params: {
+        entityType: 'kodyRule' | 'codeReviewConfig';
+        entityId: string;
+        entityHash: string;
+        requirements: ContextRequirement[];
+        knowledgeRefs: Array<{ itemId: string; version?: string }>;
+        aggregatedSyncErrors: IPromptReferenceSyncError[];
+        organizationAndTeamData: OrganizationAndTeamData;
+        repositoryId?: string;
+        repositoryName?: string;
+    }): Promise<string> {
+        const {
+            entityType,
+            entityId,
+            entityHash,
+            requirements,
+            knowledgeRefs,
+            aggregatedSyncErrors,
+            organizationAndTeamData,
+            repositoryId,
+            repositoryName,
+        } = params;
+
+        // Scope baseado no repositoryId: se for global/undefined = organization, se específico = repository
+        const isGlobalScope = !repositoryId || repositoryId === 'global';
+        const scopeLevel = isGlobalScope ? 'organization' : 'repository';
+        const scopePath = this.buildScopePath(
+            scopeLevel,
+            organizationAndTeamData.organizationId,
+            organizationAndTeamData.teamId,
+            isGlobalScope ? undefined : repositoryId,
+        );
+
+        const scope = {
+            level: scopeLevel,
+            identifiers: {
+                tenantId: organizationAndTeamData.organizationId,
+                organizationId: organizationAndTeamData.organizationId,
+                ...(organizationAndTeamData.teamId && {
+                    teamId: organizationAndTeamData.teamId,
+                }),
+                // Incluir repositoryId apenas se não for global
+                ...(!isGlobalScope && { repositoryId }),
+            },
+            path: scopePath,
+            metadata: { source: entityType },
+        };
+
+        // Buscar versão anterior para manter relação
+        const previousReference =
+            await this.contextReferenceService.getLatestRevision(
+                entityType,
+                entityId,
+            );
+
+        // Salvar no Context OS
+        const revisionId = `rev:${entityType}:${entityId}:${Date.now()}`;
+        const result = await this.contextReferenceService.commitRevision({
+            scope,
+            entityType,
+            entityId,
+            requirements,
+            origin: { kind: 'system', id: 'kody-system' },
+            revisionId,
+            parentReferenceId: previousReference?.uuid,
+            knowledgeRefs: knowledgeRefs.length ? knowledgeRefs : undefined,
+            metadata: {
+                source: entityType,
+                repositoryId: repositoryId ?? 'global',
+                repositoryName,
+                entityHash,
+                requirementsCount: requirements.length,
+                syncErrorsCount: aggregatedSyncErrors.length,
+                syncErrors:
+                    aggregatedSyncErrors.length > 0
+                        ? aggregatedSyncErrors
+                        : undefined,
+            },
+        });
+
+        this.logger.log({
+            message: `Successfully saved unified references to Context OS`,
+            context: ContextReferenceDetectionService.name,
+            metadata: {
+                entityType,
+                entityId,
+                contextReferenceId: result.pointer.uuid,
+                requirementsCount: requirements.length,
+                knowledgeRefsCount: knowledgeRefs.length,
+            },
+        });
+
+        return result.pointer.uuid;
     }
 }

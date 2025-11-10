@@ -324,3 +324,13 @@ export function createMCPAdapter(config: MCPAdapterConfig): MCPAdapter {
 
 export { MCPRegistry } from './registry.js';
 export { SpecCompliantMCPClient as MCPClient } from './client.js';
+export {
+    SessionManager,
+    type ISessionManager,
+    type Session,
+} from './session-manager.js';
+export {
+    JWTValidator,
+    type JWTOptions,
+    type JWTClaims,
+} from './jwt-validator.js';

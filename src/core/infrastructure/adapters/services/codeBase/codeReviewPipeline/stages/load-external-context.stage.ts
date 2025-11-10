@@ -140,6 +140,8 @@ export class LoadExternalContextStage
                             contextReferenceId:
                                 context.codeReviewConfig.contextReferenceId,
                             externalLayers: contextLayers,
+                            repository: context.repository,
+                            pullRequest: context.pullRequest,
                         });
 
                     if (resolved.sanitizedOverrides) {

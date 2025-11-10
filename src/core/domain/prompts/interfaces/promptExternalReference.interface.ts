@@ -25,6 +25,7 @@ export enum PromptReferenceErrorType {
     INVALID_FORMAT = 'invalid_format',
     FILE_TOO_LARGE = 'file_too_large',
     FETCH_FAILED = 'fetch_failed',
+    MCP_CONNECTION_FAILED = 'mcp_connection_failed',
 }
 
 export interface IFileReferenceError {
@@ -41,6 +42,7 @@ export interface IFileReference {
         readonly end: number;
     };
     readonly repositoryName?: string;
+    readonly repositoryId?: string;
     readonly description?: string;
     readonly originalText?: string;
     lastContentHash: string;

@@ -9,6 +9,7 @@ import {
     CONTEXT_REFERENCE_SERVICE_TOKEN,
     IContextReferenceService,
 } from '@/core/domain/contextReferences/contracts/context-reference.service.contract';
+import { enrichRulesWithContextReferences } from './utils/enrich-rules-with-context-references.util';
 
 @Injectable()
 export class FindByOrganizationIdKodyRulesUseCase {
@@ -43,11 +44,17 @@ export class FindByOrganizationIdKodyRulesUseCase {
                 );
             }
 
-            // Enriquecer com informações de referências do Context OS
-            const enrichedRules =
-                await this.enrichRulesWithContextReferences(existing);
+            const enrichedRulesArray =
+                await enrichRulesWithContextReferences(
+                    existing.rules || [],
+                    this.contextReferenceService,
+                    this.logger,
+                );
 
-            return enrichedRules;
+            return {
+                ...existing,
+                rules: enrichedRulesArray,
+            };
         } catch (error) {
             this.logger.error({
                 message: 'Error finding Kody Rules by organization ID',
@@ -61,117 +68,4 @@ export class FindByOrganizationIdKodyRulesUseCase {
         }
     }
 
-    /**
-     * Enriquece as kodyRules com informações de referências do Context OS
-     */
-    private async enrichRulesWithContextReferences(
-        kodyRules: any,
-    ): Promise<any> {
-        const enrichedRules = await Promise.all(
-            (kodyRules.rules || []).map(async (rule: any) => {
-                if (!rule.contextReferenceId) {
-                    return {
-                        ...rule,
-                        referenceProcessingStatus: null,
-                        externalReferences: [],
-                        syncErrors: [],
-                    };
-                }
-
-                try {
-                    const contextRef =
-                        await this.contextReferenceService.findById(
-                            rule.contextReferenceId,
-                        );
-
-                    if (!contextRef) {
-                        return {
-                            ...rule,
-                            referenceProcessingStatus: 'pending',
-                            externalReferences: [],
-                            syncErrors: [],
-                        };
-                    }
-
-                    // Extrair referencias de knowledge dos requirements
-                    const externalReferences =
-                        this.extractExternalReferences(contextRef);
-                    const syncErrors = this.extractSyncErrors(contextRef);
-
-                    return {
-                        ...rule,
-                        referenceProcessingStatus: contextRef.processingStatus,
-                        lastReferenceProcessedAt: contextRef.lastProcessedAt,
-                        externalReferences,
-                        syncErrors,
-                    };
-                } catch (error) {
-                    this.logger.warn({
-                        message: 'Failed to fetch context reference for rule',
-                        context: FindByOrganizationIdKodyRulesUseCase.name,
-                        error,
-                        metadata: {
-                            ruleId: rule.uuid,
-                            contextReferenceId: rule.contextReferenceId,
-                        },
-                    });
-
-                    return {
-                        ...rule,
-                        referenceProcessingStatus: 'failed',
-                        externalReferences: [],
-                        syncErrors: [],
-                    };
-                }
-            }),
-        );
-
-        return {
-            ...kodyRules,
-            rules: enrichedRules,
-        };
-    }
-
-    /**
-     * Extrai external references dos requirements (tipo 'knowledge')
-     */
-    private extractExternalReferences(contextRef: any): any[] {
-        const references: any[] = [];
-        const requirements = contextRef.requirements || [];
-
-        for (const requirement of requirements) {
-            const dependencies = requirement.dependencies || [];
-
-            for (const dep of dependencies) {
-                if (dep.type === 'knowledge' && dep.metadata) {
-                    references.push({
-                        filePath: dep.metadata.filePath,
-                        description: dep.metadata.description,
-                        originalText: dep.metadata.originalText,
-                        repositoryName: dep.metadata.repositoryName,
-                        lastValidatedAt: dep.metadata.detectedAt
-                            ? new Date(dep.metadata.detectedAt)
-                            : undefined,
-                    });
-                }
-            }
-        }
-
-        return references;
-    }
-
-    /**
-     * Extrai sync errors dos requirements metadata
-     */
-    private extractSyncErrors(contextRef: any): any[] {
-        const errors: any[] = [];
-        const requirements = contextRef.requirements || [];
-
-        for (const requirement of requirements) {
-            const syncErrors = (requirement.metadata as any)?.syncErrors || [];
-            errors.push(...syncErrors);
-        }
-
-        return errors;
-    }
 }

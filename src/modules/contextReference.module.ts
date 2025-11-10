@@ -11,12 +11,14 @@ import { MCPToolArgResolverAgentService } from '@/core/infrastructure/adapters/s
 import { MCPToolMetadataService } from '@/core/infrastructure/adapters/mcp/services/mcp-tool-metadata.service';
 import { PermissionValidationModule } from '@/ee/shared/permission-validation.module';
 import { PromptsModule } from './prompts.module';
+import { PlatformIntegrationModule } from './platformIntegration.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([ContextReferenceModel]),
         PermissionValidationModule,
         forwardRef(() => PromptsModule),
+        forwardRef(() => PlatformIntegrationModule),
     ],
     providers: [
         ContextReferenceService,
