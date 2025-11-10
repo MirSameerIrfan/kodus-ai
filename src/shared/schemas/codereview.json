@@ -50,7 +50,8 @@
                 "yarn.lock",
                 "package-lock.json",
                 "package.json",
-                ".env"
+                ".env",
+                "**/*.json"
             ],
             "description": "List of file paths to ignore during the review."
         },
