@@ -439,7 +439,7 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
         if (dryRun?.enabled) {
             await this.dryRunService.addFilesToDryRun({
                 organizationAndTeamData,
-                id: dryRun.id,
+                id: dryRun?.id,
                 files: enrichedFiles,
                 prioritizedSuggestions: sortedPrioritizedSuggestions as any,
                 unusedSuggestions: discardedSuggestions as any,
@@ -490,7 +490,7 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
         platformType: PlatformType;
         dryRun: CodeReviewPipelineContext['dryRun'];
     }) {
-        if (dryRun.enabled) {
+        if (dryRun?.enabled) {
             return;
         }
 

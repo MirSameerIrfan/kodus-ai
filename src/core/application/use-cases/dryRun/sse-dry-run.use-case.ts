@@ -96,7 +96,7 @@ export class SseDryRunUseCase {
             this.logger.error({
                 message: 'Error fetching past dry run events',
                 error,
-                metadata: { correlationId },
+                metadata: { correlationId, organizationAndTeamData },
                 context: SseDryRunUseCase.name,
             });
 

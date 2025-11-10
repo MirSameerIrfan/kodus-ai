@@ -169,7 +169,7 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
                                         {
                                             organizationAndTeamData:
                                                 context.organizationAndTeamData,
-                                            id: context.dryRun.id,
+                                            id: context.dryRun?.id,
                                             prLevelSuggestions:
                                                 transformedPrLevelSuggestions,
                                         },

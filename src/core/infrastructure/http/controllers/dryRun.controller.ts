@@ -3,6 +3,7 @@ import { ExecuteDryRunUseCase } from '@/core/application/use-cases/dryRun/execut
 import { GetStatusDryRunUseCase } from '@/core/application/use-cases/dryRun/get-status-dry-run.use-case';
 import { IdGenerator } from '@kodus/flow';
 import {
+    BadRequestException,
     Body,
     Controller,
     Get,
@@ -58,7 +59,9 @@ export class DryRunController {
         body: ExecuteDryRunDto,
     ) {
         if (!this.request.user?.organization?.uuid) {
-            throw new Error('Organization UUID is missing in the request');
+            throw new BadRequestException(
+                'Organization UUID is missing in the request',
+            );
         }
 
         const correlationId = this.executeDryRunUseCase.execute({
@@ -83,7 +86,9 @@ export class DryRunController {
         @Query('teamId') teamId: string,
     ) {
         if (!this.request.user?.organization?.uuid) {
-            throw new Error('Organization UUID is missing in the request');
+            throw new BadRequestException(
+                'Organization UUID is missing in the request',
+            );
         }
 
         return this.getStatusDryRunUseCase.execute({
@@ -105,7 +110,9 @@ export class DryRunController {
         @Query('teamId') teamId: string,
     ) {
         if (!this.request.user?.organization?.uuid) {
-            throw new Error('Organization UUID is missing in the request');
+            throw new BadRequestException(
+                'Organization UUID is missing in the request',
+            );
         }
 
         return this.sseDryRunUseCase.execute({
@@ -133,7 +140,9 @@ export class DryRunController {
         @Query('status') status?: string,
     ) {
         if (!this.request.user?.organization?.uuid) {
-            throw new Error('Organization UUID is missing in the request');
+            throw new BadRequestException(
+                'Organization UUID is missing in the request',
+            );
         }
 
         return this.listDryRunsUseCase.execute({
@@ -162,7 +171,9 @@ export class DryRunController {
         @Query('teamId') teamId: string,
     ) {
         if (!this.request.user?.organization?.uuid) {
-            throw new Error('Organization UUID is missing in the request');
+            throw new BadRequestException(
+                'Organization UUID is missing in the request',
+            );
         }
 
         return this.getDryRunUseCase.execute({

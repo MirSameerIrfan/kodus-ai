@@ -52,7 +52,7 @@ export class InternalCodeManagementService
         try {
             const result = this.dryRunService.updateMessageInDryRun({
                 organizationAndTeamData,
-                id: dryRun.id,
+                id: dryRun?.id,
                 commentId,
                 content: body,
             });
@@ -98,7 +98,7 @@ export class InternalCodeManagementService
         try {
             const result = await this.dryRunService.updateDescriptionInDryRun({
                 organizationAndTeamData,
-                id: dryRun.id,
+                id: dryRun?.id,
                 description: summary,
             });
 
@@ -143,7 +143,7 @@ export class InternalCodeManagementService
         try {
             const result = await this.dryRunService.addMessageToDryRun({
                 organizationAndTeamData,
-                id: dryRun.id,
+                id: dryRun?.id,
                 content: await this.formatReviewCommentBody({
                     organizationAndTeamData,
                     suggestion: lineComment.suggestion,
@@ -198,7 +198,7 @@ export class InternalCodeManagementService
         try {
             const result = await this.dryRunService.addMessageToDryRun({
                 organizationAndTeamData,
-                id: dryRun.id,
+                id: dryRun?.id,
                 content: body,
                 category: suggestion?.label,
                 severity: suggestion?.severity,

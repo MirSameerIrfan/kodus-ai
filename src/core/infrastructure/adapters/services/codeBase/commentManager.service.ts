@@ -514,7 +514,7 @@ export class CommentManagerService implements ICommentManagerService {
                                 : comment.id.toString(),
                             reason: 'OUTDATED',
                         },
-                        dryRun.enabled ? PlatformType.INTERNAL : undefined,
+                        dryRun?.enabled ? PlatformType.INTERNAL : undefined,
                     );
                 } catch (error) {
                     this.logger.warn({
@@ -768,7 +768,7 @@ export class CommentManagerService implements ICommentManagerService {
                                 language,
                                 dryRun,
                             },
-                            dryRun.enabled ? PlatformType.INTERNAL : undefined,
+                            dryRun?.enabled ? PlatformType.INTERNAL : undefined,
                         );
 
                     commentResults.push({
@@ -1362,7 +1362,7 @@ ${reviewOptions}
                                 language,
                                 organizationAndTeamData,
                             },
-                            dryRun.enabled ? PlatformType.INTERNAL : undefined,
+                            dryRun?.enabled ? PlatformType.INTERNAL : undefined,
                         );
 
                     // Criar comentário geral
@@ -1379,7 +1379,7 @@ ${reviewOptions}
                                 dryRun,
                                 suggestion,
                             },
-                            dryRun.enabled ? PlatformType.INTERNAL : undefined,
+                            dryRun?.enabled ? PlatformType.INTERNAL : undefined,
                         );
 
                     if (createdComment?.id) {
@@ -1652,13 +1652,13 @@ ${reviewOptions}
                 prNumber,
                 body: commentBody,
             },
-            dryRun.enabled ? PlatformType.INTERNAL : undefined,
+            dryRun?.enabled ? PlatformType.INTERNAL : undefined,
         );
 
         if (
             platformType === PlatformType.GITHUB &&
             pullRequestMessagesConfig?.globalSettings?.hideComments &&
-            !dryRun.enabled
+            !dryRun?.enabled
         ) {
             await this.codeManagementService.minimizeComment({
                 organizationAndTeamData,

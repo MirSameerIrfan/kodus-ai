@@ -20,6 +20,7 @@ import { PromptsModule } from './prompts.module';
 import { DryRunController } from '@/core/infrastructure/http/controllers/dryRun.controller';
 import { PlatformIntegrationModule } from './platformIntegration.module';
 import { IntegrationConfigModule } from './integrationConfig.module';
+import { OrganizationParametersModule } from './organizationParameters.module';
 
 @Module({
     imports: [
@@ -36,6 +37,7 @@ import { IntegrationConfigModule } from './integrationConfig.module';
         forwardRef(() => PromptsModule),
         forwardRef(() => PlatformIntegrationModule),
         forwardRef(() => IntegrationConfigModule),
+        forwardRef(() => OrganizationParametersModule),
     ],
     providers: [
         ...UseCases,

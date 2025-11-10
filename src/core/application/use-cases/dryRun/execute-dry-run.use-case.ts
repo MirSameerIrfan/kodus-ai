@@ -10,6 +10,10 @@ import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
 } from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import {
+    IOrganizationParametersService,
+    ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
+} from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
 import { Repositories } from '@/core/domain/platformIntegrations/types/codeManagement/repositories.type';
 import { CodeReviewPipelineContext } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/context/code-review-pipeline.context';
 import { DryRunCodeReviewPipeline } from '@/core/infrastructure/adapters/services/dryRun/dryRunPipeline';
@@ -18,6 +22,7 @@ import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logge
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
 import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
+import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 import { IdGenerator } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
@@ -43,12 +48,15 @@ export class ExecuteDryRunUseCase {
 
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
         private readonly integrationConfigService: IIntegrationConfigService,
+
+        @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
+        private readonly organizationParametersService: IOrganizationParametersService,
     ) {
         this.config =
             this.configService.get<DatabaseConnection>('mongoDatabase');
     }
 
-    execute(params: {
+    async execute(params: {
         organizationAndTeamData: {
             organizationId: string;
             teamId: string;
@@ -56,14 +64,110 @@ export class ExecuteDryRunUseCase {
         repositoryId: string;
         prNumber: number;
     }) {
-        const correlationId = IdGenerator.correlationId();
+        try {
+            const limit = await this.enforceLimit(
+                params.organizationAndTeamData,
+            );
 
-        this.runDryRun({
-            correlationId,
-            ...params,
+            if (limit) {
+                return limit;
+            }
+
+            const correlationId = IdGenerator.correlationId();
+
+            this.runDryRun({
+                correlationId,
+                ...params,
+            });
+
+            return correlationId;
+        } catch (error) {
+            this.logger.error({
+                message: 'Error starting dry run',
+                error,
+                metadata: params,
+                context: ExecuteDryRunUseCase.name,
+            });
+
+            return null;
+        }
+    }
+
+    private async enforceLimit(
+        organizationAndTeamData: OrganizationAndTeamData,
+    ): Promise<string | void> {
+        const limit = await this.getLimit(organizationAndTeamData);
+
+        const dailyRunCount = await this.getDailyRunCount(
+            organizationAndTeamData,
+        );
+
+        if (dailyRunCount >= limit) {
+            this.logger.warn({
+                message: `Dry run limit of ${limit} reached for today`,
+                context: ExecuteDryRunUseCase.name,
+                serviceName: ExecuteDryRunUseCase.name,
+                metadata: {
+                    organizationAndTeamData,
+                    limit,
+                    dailyRunCount,
+                },
+            });
+
+            return 'Limit.Reached';
+        }
+    }
+
+    private async getLimit(
+        organizationAndTeamData: OrganizationAndTeamData,
+    ): Promise<number> {
+        const limitConfig = await this.organizationParametersService.findByKey(
+            OrganizationParametersKey.DRY_RUN_LIMIT,
+            organizationAndTeamData,
+        );
+
+        if (!limitConfig) {
+            const limit = 5;
+
+            this.logger.warn({
+                message: `Dry run limit not set, defaulting to ${limit}`,
+                context: ExecuteDryRunUseCase.name,
+                serviceName: ExecuteDryRunUseCase.name,
+                metadata: {
+                    organizationAndTeamData,
+                },
+            });
+
+            await this.organizationParametersService.createOrUpdateConfig(
+                OrganizationParametersKey.DRY_RUN_LIMIT,
+                limit,
+                organizationAndTeamData,
+            );
+
+            return limit;
+        }
+
+        return Number(limitConfig.configValue);
+    }
+
+    private async getDailyRunCount(
+        organizationAndTeamData: OrganizationAndTeamData,
+    ): Promise<number> {
+        const since = new Date();
+        since.setHours(0, 0, 0, 0);
+
+        const until = new Date();
+        until.setHours(23, 59, 59, 999);
+
+        const runs = await this.dryRunService.listDryRuns({
+            organizationAndTeamData,
+            filters: {
+                startDate: since,
+                endDate: until,
+            },
         });
 
-        return correlationId;
+        return runs.length;
     }
 
     private async runDryRun(params: {

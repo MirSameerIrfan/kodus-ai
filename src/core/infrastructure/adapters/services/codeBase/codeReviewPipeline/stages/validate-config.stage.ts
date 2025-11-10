@@ -363,7 +363,7 @@ export class ValidateConfigStage extends BasePipelineStage<CodeReviewPipelineCon
         context: CodeReviewPipelineContext,
         config: any,
     ): Promise<boolean> {
-        if (context.dryRun.enabled) {
+        if (context.dryRun?.enabled) {
             return false;
         }
 

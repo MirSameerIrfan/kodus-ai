@@ -99,10 +99,10 @@ export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineCont
                         ParametersKey.CODE_REVIEW_CONFIG,
                         context.organizationAndTeamData,
                     )
-                ).uuid;
+                )?.uuid;
 
                 await this.dryRunService.addConfigsToDryRun({
-                    id: context.dryRun.id,
+                    id: context.dryRun?.id,
                     organizationAndTeamData: context.organizationAndTeamData,
                     config,
                     configId: codeReviewConfigId,
