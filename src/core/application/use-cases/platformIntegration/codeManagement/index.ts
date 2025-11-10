@@ -19,6 +19,7 @@ import { DeleteIntegrationAndRepositoriesUseCase } from './delete-integration-an
 import { GetRepositoryTreeUseCase } from './get-repository-tree.use-case';
 import { GetWebhookStatusUseCase } from './get-webhook-status.use-case';
 import { GetRepositoryTreeByDirectoryUseCase } from './get-repository-tree-by-directory.use-case';
+import { GetPRsByRepoUseCase } from './get-prs-repo.use-case';
 
 export default [
     GetCodeManagementMemberListUseCase,
@@ -42,4 +43,5 @@ export default [
     GetRepositoryTreeUseCase,
     GetRepositoryTreeByDirectoryUseCase,
     GetWebhookStatusUseCase,
+    GetPRsByRepoUseCase,
 ];

@@ -38,6 +38,7 @@ import { ValidateNewCommitsStage } from '@/core/infrastructure/adapters/services
 import { ResolveConfigStage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/resolve-config.stage';
 import { KodyFineTuningContextModule } from './kodyFineTuningContext.module';
 import { PromptsModule } from './prompts.module';
+import { DryRunModule } from './dryRun.module';
 
 @Module({
     imports: [
@@ -55,6 +56,7 @@ import { PromptsModule } from './prompts.module';
         forwardRef(() => KodyASTAnalyzeContextModule),
         forwardRef(() => PullRequestMessagesModule),
         forwardRef(() => PromptsModule),
+        forwardRef(() => DryRunModule),
     ],
     providers: [
         PipelineExecutor,

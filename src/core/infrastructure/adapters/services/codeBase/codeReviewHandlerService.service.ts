@@ -79,6 +79,9 @@ export class CodeReviewHandlerService {
             );
 
             initialContext = {
+                dryRun: {
+                    enabled: false,
+                },
                 statusInfo: {
                     status: AutomationStatus.IN_PROGRESS,
                     message: 'Pipeline started',

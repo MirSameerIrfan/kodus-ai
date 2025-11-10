@@ -43,6 +43,8 @@ import {
 } from '@/core/infrastructure/adapters/services/permissions/policy.handlers';
 import { GetRepositoryTreeByDirectoryUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-repository-tree-by-directory.use-case';
 import { GetRepositoryTreeByDirectoryDto } from '../../dtos/get-repository-tree-by-directory.dto';
+import { GetPRsByRepoUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-prs-repo.use-case';
+import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
 
 @Controller('code-management')
 export class CodeManagementController {
@@ -65,6 +67,7 @@ export class CodeManagementController {
         private readonly deleteIntegrationAndRepositoriesUseCase: DeleteIntegrationAndRepositoriesUseCase,
         private readonly getRepositoryTreeByDirectoryUseCase: GetRepositoryTreeByDirectoryUseCase,
         private readonly getWebhookStatusUseCase: GetWebhookStatusUseCase,
+        private readonly getPRsByRepoUseCase: GetPRsByRepoUseCase,
     ) {}
 
     @Get('/repositories/org')
@@ -208,6 +211,31 @@ export class CodeManagementController {
             number: query.number,
             title: query.title,
             url: query.url,
+        });
+    }
+
+    @Get('/get-prs-repo')
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(checkPermissions(Action.Read, ResourceType.PullRequests))
+    public async getPRsByRepo(
+        @Query()
+        query: {
+            teamId: string;
+            repositoryId: string;
+            number?: number;
+            startDate?: string;
+            endDate?: string;
+            author?: string;
+            branch?: string;
+            title?: string;
+            state?: PullRequestState;
+        },
+    ) {
+        const { teamId, repositoryId, ...filters } = query;
+        return await this.getPRsByRepoUseCase.execute({
+            teamId,
+            repositoryId,
+            filters,
         });
     }
 

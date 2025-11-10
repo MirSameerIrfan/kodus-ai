@@ -61,12 +61,15 @@ export class ParametersRepository implements IParametersRepository {
 
             const teamCondition = createNestedConditions('team', team);
 
-            const findOptions: FindManyOptions<ParametersModel> = {
+            const findOptions: FindOneOptions<ParametersModel> = {
                 where: {
                     ...otherFilterAttributes,
                     ...teamCondition,
                 },
                 relations: ['team'],
+                order: {
+                    createdAt: 'DESC',
+                },
             };
 
             const integrationConfigModel =

@@ -53,9 +53,12 @@ import { PermissionsModule } from './permissions.module';
 import { WebhookLogModule } from './webhookLog.module';
 import { PermissionValidationModule } from '@/ee/shared/permission-validation.module';
 import { UsageModule } from './usage.module';
+import { DryRunModule } from './dryRun.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
     imports: [
+        EventEmitterModule.forRoot(),
         McpModule.forRoot(),
         GlobalCacheModule,
         RabbitMQWrapperModule.register(),
@@ -110,6 +113,7 @@ import { UsageModule } from './usage.module';
         WebhookLogModule,
         PermissionValidationModule,
         UsageModule,
+        DryRunModule,
     ],
     providers: [
         {

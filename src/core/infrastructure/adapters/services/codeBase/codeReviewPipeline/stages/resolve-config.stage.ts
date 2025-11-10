@@ -14,6 +14,21 @@ import {
     AutomationMessage,
     AutomationStatus,
 } from '@/core/domain/automation/enums/automation-status';
+import {
+    DRY_RUN_SERVICE_TOKEN,
+    IDryRunService,
+} from '@/core/domain/dryRun/contracts/dryRun.service.contract';
+import { IPullRequestMessages } from '@/core/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
+import { ConfigLevel } from '@/config/types/general/pullRequestMessages.type';
+import {
+    IPullRequestMessagesService,
+    PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
+} from '@/core/domain/pullRequestMessages/contracts/pullRequestMessages.service.contract';
+import {
+    IParametersService,
+    PARAMETERS_SERVICE_TOKEN,
+} from '@/core/domain/parameters/contracts/parameters.service.contract';
+import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
 
 @Injectable()
 export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineContext> {
@@ -24,6 +39,13 @@ export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineCont
         private readonly codeBaseConfigService: ICodeBaseConfigService,
         @Inject(PULL_REQUEST_MANAGER_SERVICE_TOKEN)
         private readonly pullRequestHandlerService: IPullRequestManagerService,
+        @Inject(PULL_REQUEST_MESSAGES_SERVICE_TOKEN)
+        private readonly pullRequestMessagesService: IPullRequestMessagesService,
+        @Inject(PARAMETERS_SERVICE_TOKEN)
+        private readonly parametersService: IParametersService,
+
+        @Inject(DRY_RUN_SERVICE_TOKEN)
+        private readonly dryRunService: IDryRunService,
         private readonly logger: PinoLoggerService,
     ) {
         super();
@@ -68,8 +90,30 @@ export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineCont
                 preliminaryFiles,
             );
 
+            const pullRequestMessagesConfig =
+                await this.setPullRequestMessagesConfig(context);
+
+            if (context.dryRun?.enabled) {
+                const codeReviewConfigId = (
+                    await this.parametersService.findByKey(
+                        ParametersKey.CODE_REVIEW_CONFIG,
+                        context.organizationAndTeamData,
+                    )
+                )?.uuid;
+
+                await this.dryRunService.addConfigsToDryRun({
+                    id: context.dryRun?.id,
+                    organizationAndTeamData: context.organizationAndTeamData,
+                    config,
+                    configId: codeReviewConfigId,
+                    pullRequestMessagesConfig,
+                    pullRequestMessagesId: pullRequestMessagesConfig?.uuid,
+                });
+            }
+
             return this.updateContext(context, (draft) => {
                 draft.codeReviewConfig = config;
+                draft.pullRequestMessagesConfig = pullRequestMessagesConfig;
             });
         } catch (error) {
             this.logger.error({
@@ -90,5 +134,43 @@ export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineCont
                 };
             });
         }
+    }
+
+    private async setPullRequestMessagesConfig(
+        context: CodeReviewPipelineContext,
+    ): Promise<IPullRequestMessages | null> {
+        const repositoryId = context.repository.id;
+        const organizationId = context.organizationAndTeamData.organizationId;
+
+        let pullRequestMessagesConfig = null;
+
+        if (context.codeReviewConfig?.configLevel === ConfigLevel.DIRECTORY) {
+            pullRequestMessagesConfig =
+                await this.pullRequestMessagesService.findOne({
+                    organizationId,
+                    repositoryId,
+                    directoryId: context.codeReviewConfig?.directoryId,
+                    configLevel: ConfigLevel.DIRECTORY,
+                });
+        }
+
+        if (!pullRequestMessagesConfig) {
+            pullRequestMessagesConfig =
+                await this.pullRequestMessagesService.findOne({
+                    organizationId,
+                    repositoryId,
+                    configLevel: ConfigLevel.REPOSITORY,
+                });
+        }
+
+        if (!pullRequestMessagesConfig) {
+            pullRequestMessagesConfig =
+                await this.pullRequestMessagesService.findOne({
+                    organizationId,
+                    configLevel: ConfigLevel.GLOBAL,
+                });
+        }
+
+        return pullRequestMessagesConfig;
     }
 }

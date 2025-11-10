@@ -40,6 +40,10 @@ import {
     TEAM_AUTOMATION_SERVICE_TOKEN,
 } from '@/core/domain/automation/contracts/team-automation.service';
 import { AutomationType } from '@/core/domain/automation/enums/automation-type';
+import {
+    DRY_RUN_SERVICE_TOKEN,
+    IDryRunService,
+} from '@/core/domain/dryRun/contracts/dryRun.service.contract';
 
 @Injectable()
 export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelineContext> {
@@ -62,6 +66,9 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
 
         @Inject(SUGGESTION_SERVICE_TOKEN)
         private readonly suggestionService: ISuggestionService,
+
+        @Inject(DRY_RUN_SERVICE_TOKEN)
+        private readonly dryRunService: IDryRunService,
 
         private readonly codeManagementService: CodeManagementService,
     ) {
@@ -114,6 +121,7 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
             repository: context.repository,
             prNumber: context.pullRequest.number,
             platformType: context.platformType as PlatformType,
+            dryRun: context.dryRun,
         });
 
         if (validSuggestions.length === 0) {
@@ -225,6 +233,7 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
             codeReviewConfig,
             repository,
             platformType,
+            dryRun,
         } = context;
 
         // Sort and prioritize suggestions
@@ -246,6 +255,7 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
                 repository,
                 codeReviewConfig,
                 platformType,
+                dryRun,
             );
 
         // Save pull request suggestions
@@ -259,6 +269,7 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
             allDiscardedSuggestions,
             platformType,
             context.fileMetadata,
+            dryRun,
         );
 
         return {
@@ -298,6 +309,7 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
         repository: Partial<Repository>,
         codeReviewConfig: CodeReviewConfig,
         platformType: string,
+        dryRun: CodeReviewPipelineContext['dryRun'],
     ) {
         try {
             const lineComments = sortedPrioritizedSuggestions
@@ -333,6 +345,7 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
                     },
                     lineComments,
                     codeReviewConfig?.languageResultPrompt,
+                    dryRun,
                 );
 
             return { lastAnalyzedCommit, commentResults };
@@ -409,6 +422,7 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
         discardedSuggestions: Partial<CodeSuggestion>[],
         platformType: string,
         fileMetadata?: Map<string, any>,
+        dryRun?: CodeReviewPipelineContext['dryRun'],
     ) {
         const enrichedFiles = changedFiles.map((file) => {
             const metadata = fileMetadata?.get(file.filename);
@@ -421,6 +435,18 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
             }
             return file;
         });
+
+        if (dryRun?.enabled) {
+            await this.dryRunService.addFilesToDryRun({
+                organizationAndTeamData,
+                id: dryRun?.id,
+                files: enrichedFiles,
+                prioritizedSuggestions: sortedPrioritizedSuggestions as any,
+                unusedSuggestions: discardedSuggestions as any,
+            });
+
+            return;
+        }
 
         const suggestionsWithStatus =
             await this.suggestionService.verifyIfSuggestionsWereSent(
@@ -456,12 +482,18 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
         repository,
         prNumber,
         platformType,
+        dryRun,
     }: {
         organizationAndTeamData: OrganizationAndTeamData;
         repository: Partial<Repository>;
         prNumber: number;
         platformType: PlatformType;
+        dryRun: CodeReviewPipelineContext['dryRun'];
     }) {
+        if (dryRun?.enabled) {
+            return;
+        }
+
         try {
             const codeManagementRequestData = {
                 organizationAndTeamData,

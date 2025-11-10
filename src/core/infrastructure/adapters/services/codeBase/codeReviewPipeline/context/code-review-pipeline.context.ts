@@ -18,6 +18,10 @@ import { IClusterizedSuggestion } from '@/core/domain/kodyFineTuning/interfaces/
 import { IExternalPromptContext } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
 
 export interface CodeReviewPipelineContext extends PipelineContext {
+    dryRun: {
+        enabled: boolean;
+        id?: string;
+    };
     organizationAndTeamData: OrganizationAndTeamData;
     repository: Repository;
     branch: string;

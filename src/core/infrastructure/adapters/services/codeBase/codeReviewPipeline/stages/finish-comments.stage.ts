@@ -94,6 +94,7 @@ export class UpdateCommentsAndGenerateSummaryStage extends BasePipelineStage<Cod
                 pullRequest.number,
                 repository,
                 summaryPR,
+                context.dryRun,
             );
         }
 
@@ -113,6 +114,8 @@ export class UpdateCommentsAndGenerateSummaryStage extends BasePipelineStage<Cod
                 lineComments,
                 codeReviewConfig,
                 initialCommentData.threadId,
+                undefined,
+                context.dryRun,
             );
             return context;
         }
@@ -164,6 +167,7 @@ export class UpdateCommentsAndGenerateSummaryStage extends BasePipelineStage<Cod
                 codeReviewConfig,
                 initialCommentData.threadId,
                 finalCommentBody,
+                context.dryRun,
             );
             return context;
         }
@@ -192,6 +196,7 @@ export class UpdateCommentsAndGenerateSummaryStage extends BasePipelineStage<Cod
                 codeReviewConfig,
                 finalCommentBody,
                 context.pullRequestMessagesConfig,
+                context.dryRun,
             );
         }
 
