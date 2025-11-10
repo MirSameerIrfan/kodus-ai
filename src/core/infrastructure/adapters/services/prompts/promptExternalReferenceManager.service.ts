@@ -1,7 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { randomUUID } from 'crypto';
-import { IPromptExternalReferenceManagerService } from '@/core/domain/prompts/contracts/promptExternalReferenceManager.contract';
+import {
+    IPromptExternalReferenceManagerService,
+    PromptReferenceLookupOptions,
+} from '@/core/domain/prompts/contracts/promptExternalReferenceManager.contract';
 import { PromptExternalReferenceEntity } from '@/core/domain/prompts/entities/promptExternalReference.entity';
 import {
     IFileReference,
@@ -126,7 +129,36 @@ export class PromptExternalReferenceManagerService
 
     async findByConfigKeys(
         configKeys: string[],
+        options?: PromptReferenceLookupOptions,
     ): Promise<PromptExternalReferenceEntity[]> {
+        if (!configKeys?.length) {
+            return [];
+        }
+
+        if (options?.contextReferenceId) {
+            const revision = await this.fetchRevisionByContextReferenceId(
+                options.contextReferenceId,
+            );
+
+            if (revision) {
+                const targetConfigKey =
+                    this.selectConfigKeyForRevision(configKeys, revision) ??
+                    configKeys[0];
+                const parsed = this.parseConfigKey(targetConfigKey);
+                return this.mapRevisionToReferences(revision, parsed);
+            }
+
+            this.logger.warn({
+                message:
+                    'Context reference pointer provided but revision was not found',
+                context: PromptExternalReferenceManagerService.name,
+                metadata: {
+                    contextReferenceId: options.contextReferenceId,
+                    configKeys,
+                },
+            });
+        }
+
         const aggregated: PromptExternalReferenceEntity[] = [];
 
         const visited = new Set<string>();
@@ -158,8 +190,12 @@ export class PromptExternalReferenceManagerService
     async findByConfigKey(
         configKey: string,
         sourceType: PromptSourceType,
+        options?: PromptReferenceLookupOptions,
     ): Promise<PromptExternalReferenceEntity | null> {
-        const references = await this.findByConfigKeys([configKey]);
+        const references = await this.findByConfigKeys(
+            [configKey],
+            options,
+        );
         return (
             references.find((entity) => entity.sourceType === sourceType) ??
             null
@@ -169,13 +205,15 @@ export class PromptExternalReferenceManagerService
     async getReference(
         configKey: string,
         sourceType: PromptSourceType,
+        options?: PromptReferenceLookupOptions,
     ): Promise<PromptExternalReferenceEntity | null> {
-        return await this.findByConfigKey(configKey, sourceType);
+        return await this.findByConfigKey(configKey, sourceType, options);
     }
 
     async getMultipleReferences(
         configKey: string,
         sourceTypes: PromptSourceType[],
+        options?: PromptReferenceLookupOptions,
     ): Promise<Map<PromptSourceType, PromptExternalReferenceEntity>> {
         const result = new Map<
             PromptSourceType,
@@ -186,7 +224,10 @@ export class PromptExternalReferenceManagerService
             return result;
         }
 
-        const references = await this.findByConfigKeys([configKey]);
+        const references = await this.findByConfigKeys(
+            [configKey],
+            options,
+        );
 
         for (const sourceType of sourceTypes) {
             const match = references.find(
@@ -331,6 +372,55 @@ export class PromptExternalReferenceManagerService
             });
             return undefined;
         }
+    }
+
+    private async fetchRevisionByContextReferenceId(
+        contextReferenceId: string,
+    ): Promise<ContextReferenceEntity | undefined> {
+        try {
+            return await this.contextReferenceService.findById(
+                contextReferenceId,
+            );
+        } catch (error) {
+            this.logger.warn({
+                message: 'Failed to fetch context reference by pointer id',
+                context: PromptExternalReferenceManagerService.name,
+                error,
+                metadata: { contextReferenceId },
+            });
+            return undefined;
+        }
+    }
+
+    private selectConfigKeyForRevision(
+        configKeys: string[],
+        revision: ContextReferenceEntity,
+    ): string | undefined {
+        const metadata =
+            (revision.metadata as Record<string, unknown>) ?? undefined;
+
+        const revisionRepositoryId =
+            typeof metadata?.repositoryId === 'string'
+                ? (metadata.repositoryId as string)
+                : 'global';
+        const revisionDirectoryId =
+            typeof metadata?.directoryId === 'string'
+                ? (metadata.directoryId as string)
+                : undefined;
+
+        for (const key of configKeys) {
+            const parsed = this.parseConfigKey(key);
+            const parsedRepositoryId = parsed.repositoryId ?? 'global';
+
+            if (
+                parsedRepositoryId === revisionRepositoryId &&
+                parsed.directoryId === revisionDirectoryId
+            ) {
+                return key;
+            }
+        }
+
+        return configKeys[0];
     }
 
     private mapRevisionToReferences(

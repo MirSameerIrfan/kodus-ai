@@ -216,11 +216,13 @@ export class KodyRulesPrLevelAnalysisService
             filteredKodyRules = kodyRulesPrLevel;
         }
 
-        const externalReferencesMap =
-            await this.externalReferenceLoaderService.loadReferencesForRules(
-                filteredKodyRules,
-                context,
-            );
+        const {
+            referencesMap: externalReferencesMap,
+            mcpResultsMap,
+        } = await this.externalReferenceLoaderService.loadReferencesForRules(
+            filteredKodyRules,
+            context,
+        );
 
         const rulesWithLoadedReferences = filteredKodyRules.filter((rule) => {
             const fullRule = rule as Partial<IKodyRule>;
@@ -271,6 +273,7 @@ export class KodyRulesPrLevelAnalysisService
                 language,
                 provider,
                 externalReferencesMap,
+                mcpResultsMap,
             );
         } catch (error) {
             this.logger.error({
@@ -608,6 +611,7 @@ export class KodyRulesPrLevelAnalysisService
         language: string,
         provider: LLMModelProvider,
         externalReferencesMap?: Map<string, any[]>,
+        mcpResultsMap?: Map<string, Record<string, unknown>>,
     ): Promise<AIAnalysisResultPrLevel> {
         // 1. Preparar dados para chunking
         const preparedFiles = this.prepareFilesForPayload(changedFiles);
@@ -659,6 +663,7 @@ export class KodyRulesPrLevelAnalysisService
             organizationAndTeamData,
             batchConfig,
             externalReferencesMap,
+            mcpResultsMap,
         );
 
         this.logger.log({
@@ -716,6 +721,7 @@ export class KodyRulesPrLevelAnalysisService
         organizationAndTeamData: OrganizationAndTeamData,
         batchConfig: BatchProcessingConfig,
         externalReferencesMap?: Map<string, any[]>,
+        mcpResultsMap?: Map<string, Record<string, unknown>>,
     ): Promise<ExtendedKodyRule[]> {
         const allViolatedRules: ExtendedKodyRule[] = [];
         const totalChunks = chunks.length;
@@ -751,6 +757,7 @@ export class KodyRulesPrLevelAnalysisService
                 organizationAndTeamData,
                 batchConfig,
                 externalReferencesMap,
+                mcpResultsMap,
             );
 
             // Consolidar resultados do batch
@@ -800,6 +807,7 @@ export class KodyRulesPrLevelAnalysisService
         organizationAndTeamData: OrganizationAndTeamData,
         batchConfig: BatchProcessingConfig,
         externalReferencesMap?: Map<string, any[]>,
+        mcpResultsMap?: Map<string, Record<string, unknown>>,
     ): Promise<ChunkProcessingResult[]> {
         // Criar promises para processar chunks em paralelo
         const chunkPromises = batchChunks.map(async (chunk, batchIndex) => {
@@ -816,6 +824,7 @@ export class KodyRulesPrLevelAnalysisService
                 organizationAndTeamData,
                 batchConfig,
                 externalReferencesMap,
+                mcpResultsMap,
             );
         });
 
@@ -837,6 +846,7 @@ export class KodyRulesPrLevelAnalysisService
         organizationAndTeamData: OrganizationAndTeamData,
         batchConfig: BatchProcessingConfig,
         externalReferencesMap?: Map<string, any[]>,
+        mcpResultsMap?: Map<string, Record<string, unknown>>,
     ): Promise<ChunkProcessingResult> {
         const { retryAttempts, retryDelay } = batchConfig;
 
@@ -867,6 +877,7 @@ export class KodyRulesPrLevelAnalysisService
                     prNumber,
                     organizationAndTeamData,
                     externalReferencesMap,
+                    mcpResultsMap,
                 );
 
                 return {
@@ -955,6 +966,7 @@ export class KodyRulesPrLevelAnalysisService
         prNumber: number,
         organizationAndTeamData: OrganizationAndTeamData,
         externalReferencesMap?: Map<string, any[]>,
+        mcpResultsMap?: Map<string, Record<string, unknown>>,
     ): Promise<ExtendedKodyRule[] | null> {
         // payload do chunk
         const analyzerPayload: KodyRulesPrLevelPayload = {
@@ -970,6 +982,7 @@ export class KodyRulesPrLevelAnalysisService
             rules: kodyRulesPrLevel,
             language,
             externalReferencesMap,
+            mcpResultsMap,
         };
 
         const fallbackProvider = LLMModelProvider.NOVITA_DEEPSEEK_V3;

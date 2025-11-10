@@ -49,8 +49,7 @@ export interface IKodyRule {
     scope?: KodyRulesScope;
     directoryId?: string;
     inheritance?: IKodyRulesInheritance;
-    contextReferenceId?: string; // Link com Context OS - única referência mantida na kodyRule
-    // Todos os outros campos de referência foram movidos para Context OS
+    contextReferenceId?: string;
 }
 
 export interface IKodyRulesExtendedContext {

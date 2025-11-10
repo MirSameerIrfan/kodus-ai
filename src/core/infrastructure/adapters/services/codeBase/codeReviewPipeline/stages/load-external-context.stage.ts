@@ -63,7 +63,13 @@ export class LoadExternalContextStage
             });
 
             const allReferences =
-                await this.promptReferenceManager.findByConfigKeys(configKeys);
+                await this.promptReferenceManager.findByConfigKeys(
+                    configKeys,
+                    {
+                        contextReferenceId:
+                            context.codeReviewConfig?.contextReferenceId,
+                    },
+                );
 
             const priorityMap = new Map(
                 configKeys.map((key, index) => [key, index]),

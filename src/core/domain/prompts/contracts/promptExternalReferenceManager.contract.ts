@@ -20,20 +20,28 @@ export interface IPromptExternalReferenceManagerService {
 
     findByConfigKeys(
         configKeys: string[],
+        options?: PromptReferenceLookupOptions,
     ): Promise<PromptExternalReferenceEntity[]>;
 
     findByConfigKey(
         configKey: string,
         sourceType: PromptSourceType,
+        options?: PromptReferenceLookupOptions,
     ): Promise<PromptExternalReferenceEntity | null>;
 
     getReference(
         configKey: string,
         sourceType: PromptSourceType,
+        options?: PromptReferenceLookupOptions,
     ): Promise<PromptExternalReferenceEntity | null>;
 
     getMultipleReferences(
         configKey: string,
         sourceTypes: PromptSourceType[],
+        options?: PromptReferenceLookupOptions,
     ): Promise<Map<PromptSourceType, PromptExternalReferenceEntity>>;
+}
+
+export interface PromptReferenceLookupOptions {
+    contextReferenceId?: string;
 }

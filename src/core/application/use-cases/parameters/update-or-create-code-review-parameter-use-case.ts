@@ -39,6 +39,10 @@ import { deepDifference, deepMerge } from '@/shared/utils/deep';
 import { CreateOrUpdateCodeReviewParameterDto } from '@/core/infrastructure/http/dtos/create-or-update-code-review-parameter.dto';
 import { v4 as uuidv4 } from 'uuid';
 import { PromptSourceType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
+import {
+    IPromptExternalReferenceManagerService,
+    PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
+} from '@/core/domain/prompts/contracts/promptExternalReferenceManager.contract';
 import { CodeReviewVersion } from '@/config/types/general/codeReview.type';
 import {
     CODE_REVIEW_CONTEXT_PATTERNS,
@@ -72,6 +76,9 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
         private readonly authorizationService: AuthorizationService,
 
         private readonly contextReferenceDetectionService: ContextReferenceDetectionService,
+
+        @Inject(PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN)
+        private readonly promptReferenceManager: IPromptExternalReferenceManagerService,
     ) {}
 
     async execute(
@@ -506,11 +513,17 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
             },
         });
 
+        const contextEntityId = this.buildContextReferenceEntityId(
+            organizationAndTeamData,
+            repositoryId ?? 'global',
+            directoryId,
+        );
+
         const contextReferenceId =
             await this.contextReferenceDetectionService.detectAndSaveReferences(
                 {
                     entityType: 'codeReviewConfig',
-                    entityId: baseConsumerId,
+                    entityId: contextEntityId,
                     fields: detectionFields,
                     repositoryId: repositoryId ?? 'global',
                     repositoryName: repositoryName ?? repositoryId ?? 'global',
@@ -685,6 +698,18 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
                 organizationAndTeamData: body.organizationAndTeamData,
             },
         });
+    }
+
+    private buildContextReferenceEntityId(
+        organizationAndTeamData: OrganizationAndTeamData,
+        repositoryId: string,
+        directoryId?: string,
+    ): string {
+        return this.promptReferenceManager.buildConfigKey(
+            organizationAndTeamData,
+            repositoryId,
+            directoryId,
+        );
     }
 }
 

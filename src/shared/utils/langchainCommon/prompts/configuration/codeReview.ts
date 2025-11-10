@@ -272,26 +272,101 @@ function injectExternalContext(
     baseText: string,
     references: unknown[] | undefined,
     syncErrors?: unknown[] | string | undefined,
+    contextKey?: string,
+    collectContext?: (dedupeKey: string, section: string) => void,
 ): string {
     const sanitizedBase = sanitizePromptText(baseText);
 
-    if (!references || references.length === 0) {
-        const errorSection = formatSyncErrors(syncErrors);
-        return errorSection ? `${sanitizedBase}${errorSection}` : sanitizedBase;
+    const errorSection = formatSyncErrors(syncErrors);
+    const hasReferences = Boolean(references && references.length);
+
+    if (!collectContext) {
+        if (!hasReferences) {
+            return errorSection ? `${sanitizedBase}${errorSection}` : sanitizedBase;
+        }
+
+        const contextSection = formatReferenceSection(references);
+        return `${sanitizedBase}\n\n## External Reference Context\n${contextSection}${errorSection}`;
     }
 
-    const contextSection = (references as Array<Record<string, unknown>>)
+    const contextParts: string[] = [];
+    if (hasReferences) {
+        contextParts.push(formatReferenceSection(references));
+    }
+    if (errorSection) {
+        contextParts.push(errorSection.trim());
+    }
+
+    if (contextParts.length) {
+        const combined = contextParts.filter(Boolean).join('\n\n').trim();
+        if (combined.length) {
+            const dedupeKey = buildContextDedupeKey(
+                contextKey,
+                references,
+                syncErrors,
+            );
+            collectContext(dedupeKey, combined);
+        }
+    }
+
+    return sanitizedBase;
+}
+
+function formatReferenceSection(references: unknown[]): string {
+    return (references as Array<Record<string, unknown>>)
         .map((ref) => {
             const header = ref.lineRange
-                ? `\n--- Content from ${ref.filePath} (lines ${(ref.lineRange as Record<string, unknown>).start}-${(ref.lineRange as Record<string, unknown>).end}) ---\n`
-                : `\n--- Content from ${ref.filePath} ---\n`;
-            return `${header}${ref.content}\n--- End of ${ref.filePath} ---`;
+                ? `--- Content from ${ref.filePath} (lines ${(ref.lineRange as Record<string, unknown>).start}-${(ref.lineRange as Record<string, unknown>).end}) ---`
+                : `--- Content from ${ref.filePath} ---`;
+            return `${header}\n${ref.content}\n--- End of ${ref.filePath} ---`;
         })
         .join('\n');
+}
 
-    const errorSection = formatSyncErrors(syncErrors);
+function buildContextDedupeKey(
+    contextKey: string | undefined,
+    references?: unknown[],
+    syncErrors?: unknown[] | string,
+): string {
+    if (Array.isArray(references) && references.length) {
+        const identifiers = references
+            .map((ref) => {
+                if (!ref || typeof ref !== 'object') {
+                    return '';
+                }
+                const data = ref as Record<string, unknown>;
+                const filePath =
+                    typeof data.filePath === 'string' ? data.filePath : '';
+                const repositoryName =
+                    typeof data.repositoryName === 'string'
+                        ? data.repositoryName
+                        : '';
+                const lineRange = data.lineRange as
+                    | { start?: number; end?: number }
+                    | undefined;
+                const rangeKey = lineRange
+                    ? `${lineRange.start ?? ''}-${lineRange.end ?? ''}`
+                    : '';
+                return `${repositoryName}:${filePath}:${rangeKey}`;
+            })
+            .sort()
+            .join('|');
+        if (identifiers.length) {
+            return identifiers;
+        }
+    }
 
-    return `${sanitizedBase}\n\n## External Reference Context\n${contextSection}${errorSection}`;
+    if (syncErrors) {
+        const serialized =
+            typeof syncErrors === 'string'
+                ? syncErrors
+                : JSON.stringify(syncErrors);
+        if (serialized) {
+            return `errors:${serialized}`;
+        }
+    }
+
+    return contextKey ?? `context:${Date.now()}`;
 }
 
 /**
@@ -521,6 +596,10 @@ function resolveContextData(
  * @param augmentations - Optional MCP tool output augmentations
  * @returns Fully processed section text with all context injected
  */
+interface ProcessSectionOptions {
+    collectContext?: (dedupeKey: string, section: string) => void;
+}
+
 function processSection(
     config: SectionConfig,
     overrides: CodeReviewPayload['v2PromptOverrides'],
@@ -531,6 +610,7 @@ function processSection(
         { references?: unknown[]; syncErrors?: unknown[] }
     >,
     augmentations?: CodeReviewPayload['contextAugmentations'],
+    options?: ProcessSectionOptions,
 ): string {
     const getNestedValue = (
         obj: Record<string, unknown> | undefined,
@@ -584,6 +664,8 @@ function processSection(
         `${textBase}${formatAugmentations(config.pathKey, augmentations)}`,
         references,
         syncErrors,
+        config.pathKey,
+        options?.collectContext,
     );
 }
 
@@ -606,6 +688,7 @@ function processCategorySections(
         { references?: unknown[]; syncErrors?: unknown[] }
     >,
     augmentations?: CodeReviewPayload['contextAugmentations'],
+    options?: ProcessSectionOptions,
 ): {
     bugText: string;
     perfText: string;
@@ -629,6 +712,7 @@ function processCategorySections(
             externalContext,
             layerContextData,
             augmentations,
+            options,
         ),
         perfText: processSection(
             perfConfig,
@@ -637,6 +721,7 @@ function processCategorySections(
             externalContext,
             layerContextData,
             augmentations,
+            options,
         ),
         secText: processSection(
             secConfig,
@@ -645,6 +730,7 @@ function processCategorySections(
             externalContext,
             layerContextData,
             augmentations,
+            options,
         ),
     };
 }
@@ -668,6 +754,7 @@ function processSeveritySections(
         { references?: unknown[]; syncErrors?: unknown[] }
     >,
     augmentations?: CodeReviewPayload['contextAugmentations'],
+    options?: ProcessSectionOptions,
 ): {
     criticalText: string;
     highText: string;
@@ -695,6 +782,7 @@ function processSeveritySections(
             externalContext,
             layerContextData,
             augmentations,
+            options,
         ),
         highText: processSection(
             highConfig,
@@ -703,6 +791,7 @@ function processSeveritySections(
             externalContext,
             layerContextData,
             augmentations,
+            options,
         ),
         mediumText: processSection(
             mediumConfig,
@@ -711,6 +800,7 @@ function processSeveritySections(
             externalContext,
             layerContextData,
             augmentations,
+            options,
         ),
         lowText: processSection(
             lowConfig,
@@ -719,6 +809,7 @@ function processSeveritySections(
             externalContext,
             layerContextData,
             augmentations,
+            options,
         ),
     };
 }
@@ -742,6 +833,7 @@ function processGenerationSection(
         { references?: unknown[]; syncErrors?: unknown[] }
     >,
     augmentations?: CodeReviewPayload['contextAugmentations'],
+    options?: ProcessSectionOptions,
 ): string {
     const genConfig = SECTION_CONFIG.find(
         (c) => c.pathKey === 'generation.main',
@@ -754,6 +846,7 @@ function processGenerationSection(
         externalContext,
         layerContextData,
         augmentations,
+        options,
     );
 }
 
@@ -1406,12 +1499,28 @@ export const prompt_codereview_system_gemini_v2 = (
 
     const layerContextData = buildLayerContextData(contextLayers);
 
+    const externalContextSections = new Map<string, string>();
+    const collectExternalContext = (dedupeKey: string, section: string) => {
+        if (!section?.trim()) {
+            return;
+        }
+        if (externalContextSections.has(dedupeKey)) {
+            return;
+        }
+        externalContextSections.set(dedupeKey, section.trim());
+    };
+
+    const processOptions = {
+        collectContext: collectExternalContext,
+    };
+
     const { bugText, perfText, secText } = processCategorySections(
         overrides,
         defaults,
         externalContext,
         layerContextData,
         payload?.contextAugmentations,
+        processOptions,
     );
 
     const { criticalText, highText, mediumText, lowText } =
@@ -1421,6 +1530,7 @@ export const prompt_codereview_system_gemini_v2 = (
             externalContext,
             layerContextData,
             payload?.contextAugmentations,
+            processOptions,
         );
 
     const mainGenText = processGenerationSection(
@@ -1429,9 +1539,10 @@ export const prompt_codereview_system_gemini_v2 = (
         externalContext,
         layerContextData,
         payload?.contextAugmentations,
+        processOptions,
     );
 
-    return buildFinalPrompt(
+    const prompt = buildFinalPrompt(
         languageNote,
         bugText,
         perfText,
@@ -1442,6 +1553,16 @@ export const prompt_codereview_system_gemini_v2 = (
         lowText,
         mainGenText,
     );
+
+    const contextBlocks = Array.from(
+        new Set(externalContextSections.values()),
+    ).filter((section) => section.length);
+
+    if (!contextBlocks.length) {
+        return prompt;
+    }
+
+    return `${prompt}\n\n## External Reference Context\n${contextBlocks.join('\n\n')}`;
 };
 
 export const prompt_codereview_user_gemini_v2 = (

@@ -7,11 +7,17 @@ import {
     CONTEXT_REFERENCE_SERVICE_TOKEN,
     IContextReferenceService,
 } from '@/core/domain/contextReferences/contracts/context-reference.service.contract';
+import { CodeReviewContextPackService } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
 
 export interface LoadedReference {
     filePath: string;
     content: string;
     description?: string;
+}
+
+export interface LoadedReferencesResult {
+    referencesMap: Map<string, LoadedReference[]>;
+    mcpResultsMap: Map<string, Record<string, unknown>>;
 }
 
 @Injectable()
@@ -21,12 +27,13 @@ export class ExternalReferenceLoaderService {
         private readonly logger: PinoLoggerService,
         @Inject(CONTEXT_REFERENCE_SERVICE_TOKEN)
         private readonly contextReferenceService: IContextReferenceService,
+        private readonly contextPackService: CodeReviewContextPackService,
     ) {}
 
     async loadReferences(
         rule: IKodyRule,
         context: AnalysisContext,
-    ): Promise<LoadedReference[]> {
+    ): Promise<{ references: LoadedReference[]; augmentations: Map<string, Record<string, unknown>> }> {
         // Load from context-references (Context OS)
         if (rule.contextReferenceId) {
             try {
@@ -41,7 +48,7 @@ export class ExternalReferenceLoaderService {
                         contextReferenceId: rule.contextReferenceId,
                     },
                 });
-                return [];
+                return { references: [], augmentations: new Map() };
             }
         }
 
@@ -54,71 +61,129 @@ export class ExternalReferenceLoaderService {
                 ruleUuid: rule.uuid,
             },
         });
-        return [];
+        return { references: [], augmentations: new Map() };
     }
 
     private async loadFromContextReference(
         rule: IKodyRule,
         context: AnalysisContext,
-    ): Promise<LoadedReference[]> {
-        const contextRef = await this.contextReferenceService.findById(
-            rule.contextReferenceId!,
+    ): Promise<{ references: LoadedReference[]; augmentations: Map<string, Record<string, unknown>> }> {
+        const packReferences = await this.tryLoadFromContextPack(
+            rule,
+            context,
         );
-
-        if (!contextRef?.requirements?.[0]?.dependencies) {
-            return [];
+        if (packReferences.references.length) {
+            return packReferences;
         }
 
-        const loadedReferences: LoadedReference[] = [];
+        return await this.loadFromContextReferenceLegacy(rule, context);
+    }
 
-        // Load KNOWLEDGE dependencies (files)
-        const knowledgeDeps = contextRef.requirements[0].dependencies.filter(
-            (dep) => dep.type === 'knowledge',
-        );
+    private async tryLoadFromContextPack(
+        rule: IKodyRule,
+        context: AnalysisContext,
+    ): Promise<{ references: LoadedReference[]; augmentations: Map<string, Record<string, unknown>> }> {
+        if (!rule.contextReferenceId) {
+            return { references: [], augmentations: new Map() };
+        }
 
-        for (const dep of knowledgeDeps) {
-            const filePath = dep.metadata?.filePath as string;
-            const lineRange = dep.metadata?.lineRange as
-                | { start: number; end: number }
-                | undefined;
-            const description = dep.metadata?.description as string | undefined;
+        try {
+            const result = await this.contextPackService.buildContextPack({
+                organizationAndTeamData: context.organizationAndTeamData,
+                contextReferenceId: rule.contextReferenceId,
+                repository: context.repository,
+                pullRequest: context.pullRequest,
+            });
 
-            if (!filePath) continue;
+            const layers = result.pack?.layers ?? [];
+            const references: LoadedReference[] = [];
+            for (const layer of layers) {
+                const metadata = layer.metadata as Record<string, unknown>;
+                if (metadata?.sourceType !== 'knowledge') {
+                    continue;
+                }
+                if (Array.isArray(layer.content)) {
+                    for (const entry of layer.content) {
+                        if (
+                            entry &&
+                            typeof entry === 'object' &&
+                            typeof (entry as Record<string, unknown>)
+                                .filePath === 'string' &&
+                            typeof (entry as Record<string, unknown>)
+                                .content === 'string'
+                        ) {
+                            references.push({
+                                filePath: (entry as Record<string, unknown>)
+                                    .filePath as string,
+                                content: (entry as Record<string, unknown>)
+                                    .content as string,
+                                description:
+                                    typeof (entry as Record<string, unknown>)
+                                        .description === 'string'
+                                        ? ((entry as Record<string, unknown>)
+                                              .description as string)
+                                        : undefined,
+                            });
+                        }
+                    }
+                }
+            }
 
-            const content = await this.fetchFileContent(
-                filePath,
-                lineRange,
-                context,
-            );
-            if (content) {
-                loadedReferences.push({
-                    filePath,
-                    content,
-                    description,
-                });
-
+            if (references.length) {
                 this.logger.log({
-                    message: 'Successfully loaded reference from Context OS',
+                    message:
+                        'Loaded references via Context Pack for Kody Rule context',
                     context: ExternalReferenceLoaderService.name,
                     metadata: {
-                        filePath,
                         ruleUuid: rule.uuid,
-                        contentLength: content.length,
-                        hasLineRange: !!lineRange,
+                        contextReferenceId: rule.contextReferenceId,
+                        referencesCount: references.length,
                     },
                 });
             }
-        }
 
-        return loadedReferences;
+            const augmentations = new Map<string, Record<string, unknown>>();
+            if (result.augmentations) {
+                for (const [pathKey, entry] of Object.entries(
+                    result.augmentations,
+                )) {
+                    const outputs = entry.outputs ?? [];
+                    outputs.forEach((output, index) => {
+                        if (output.success && output.output) {
+                            augmentations.set(
+                                `${pathKey}::${index}`,
+                                {
+                                    provider: output.provider,
+                                    toolName: output.toolName,
+                                    output: output.output,
+                                } as Record<string, unknown>,
+                            );
+                        }
+                    });
+                }
+            }
+
+            return { references, augmentations };
+        } catch (error) {
+            this.logger.warn({
+                message:
+                    'Failed to load references via Context Pack, falling back to legacy loader',
+                context: ExternalReferenceLoaderService.name,
+                error,
+                metadata: {
+                    ruleUuid: rule.uuid,
+                    contextReferenceId: rule.contextReferenceId,
+                },
+            });
+            return { references: [], augmentations: new Map() };
+        }
     }
 
-    private async loadFromLegacyReferences(
+    private async loadFromContextReferenceLegacy(
         rule: IKodyRule,
         context: AnalysisContext,
-    ): Promise<LoadedReference[]> {
-        // Legacy loading removed - externalReferences field no longer exists
-        return [];
+    ): Promise<{ references: LoadedReference[]; augmentations: Map<string, Record<string, unknown>> }> {
+        return { references: [], augmentations: new Map() };
     }
 
     private async fetchFileContent(
@@ -223,17 +288,22 @@ export class ExternalReferenceLoaderService {
     async loadReferencesForRules(
         rules: Partial<IKodyRule>[],
         context: AnalysisContext,
-    ): Promise<Map<string, LoadedReference[]>> {
+    ): Promise<LoadedReferencesResult> {
         const referencesMap = new Map<string, LoadedReference[]>();
+        const mcpResultsMap = new Map<string, Record<string, unknown>>();
 
         for (const rule of rules) {
             if (rule.uuid) {
-                const loadedRefs = await this.loadReferences(
-                    rule as IKodyRule,
-                    context,
-                );
-                if (loadedRefs.length > 0) {
-                    referencesMap.set(rule.uuid, loadedRefs);
+                const { references, augmentations } =
+                    await this.loadReferences(rule as IKodyRule, context);
+                if (references.length > 0) {
+                    referencesMap.set(rule.uuid, references);
+                }
+                if (augmentations.size > 0) {
+                    mcpResultsMap.set(
+                        rule.uuid,
+                        Object.fromEntries(augmentations),
+                    );
                 }
             }
         }
@@ -254,6 +324,6 @@ export class ExternalReferenceLoaderService {
             },
         });
 
-        return referencesMap;
+        return { referencesMap, mcpResultsMap };
     }
 }

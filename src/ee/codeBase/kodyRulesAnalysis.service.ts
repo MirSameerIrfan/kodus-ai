@@ -423,11 +423,13 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
         }
 
         // 3) Load external references for rules that have them
-        const externalReferencesMap =
-            await this.externalReferenceLoaderService.loadReferencesForRules(
-                baseContext.kodyRules,
-                context,
-            );
+        const {
+            referencesMap: externalReferencesMap,
+            mcpResultsMap: externalMcpResultsMap,
+        } = await this.externalReferenceLoaderService.loadReferencesForRules(
+            baseContext.kodyRules,
+            context,
+        );
 
         // Filter out rules that have contextReferenceId but failed to load references
         const rulesWithLoadedReferences = baseContext.kodyRules.filter(
@@ -472,10 +474,12 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
         baseContext.kodyRules = rulesWithLoadedReferences;
 
         // 4) Execute MCPs for rules that have contextReferenceId
-        const mcpResultsMap = await this.executeMCPsForRules(
-            baseContext.kodyRules,
-            context,
-        );
+        const mcpResultsMap = externalMcpResultsMap.size
+            ? externalMcpResultsMap
+            : await this.executeMCPsForRules(
+                  baseContext.kodyRules,
+                  context,
+              );
 
         let extendedContext = {
             ...baseContext,
@@ -915,6 +919,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
                 rule: rule?.rule,
                 severity: rule?.severity,
                 examples: rule?.examples ?? [],
+                contextReferenceId: rule?.contextReferenceId,
             }));
 
         const baseContext = {
@@ -1233,29 +1238,19 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
         rules: Array<Partial<IKodyRule>>,
         context: AnalysisContext,
     ): Promise<Map<string, Record<string, unknown>>> {
-        const mcpResultsMap = new Map<string, Record<string, unknown>>();
-
-        // TODO: Implement MCP execution for kodyRules
-        // This requires:
-        // 1. Inject IContextReferenceService to fetch requirements by contextReferenceId
-        // 2. MCPManagerService to fetch connections
-        // 3. Create MCPRegistry and register tools
-        // 4. Create MCPClient with adapter
-        // 5. Create MCPOrchestrator and execute tools
-        // 6. Map results back to mcpResultsMap
-        // For now, MCPs detected in rules are stored in context-references
-        // but not executed during analysis. This will be implemented in a future iteration.
-
         this.logger.debug({
-            message: 'MCP execution for kodyRules not yet implemented',
+            message:
+                'Skipping MCP execution because results are provided by Context Pack',
             context: KodyRulesAnalysisService.name,
             metadata: {
                 rulesCount: rules.length,
-                hasContextAugmentations: !!context.sharedContextAugmentations,
+                hasSharedAugmentations:
+                    !!context.sharedContextAugmentations &&
+                    Object.keys(context.sharedContextAugmentations).length > 0,
             },
         });
 
-        return mcpResultsMap;
+        return new Map<string, Record<string, unknown>>();
     }
 
     private buildTags(

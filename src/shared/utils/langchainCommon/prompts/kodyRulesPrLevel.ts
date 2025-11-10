@@ -12,6 +12,7 @@ export type KodyRulesPrLevelPayload = {
     rule?: any;
     language?: string;
     externalReferencesMap?: Map<string, any[]>;
+    mcpResultsMap?: Map<string, Record<string, unknown>>;
 };
 
 export const prompt_kodyrules_prlevel_analyzer = (
@@ -69,6 +70,42 @@ ${refs
 ${ref.content}
 `,
     )
+    .join('\n')}`;
+    })
+    .join('\n')}
+`
+        : ''
+}
+${
+    payload?.mcpResultsMap && payload.mcpResultsMap.size > 0
+        ? `
+### External Tool Outputs
+${Array.from(payload.mcpResultsMap.entries())
+    .map(([ruleUuid, augmentations]) => {
+        const rule = payload.rules?.find((r: any) => r.uuid === ruleUuid);
+        const entries = augmentations
+            ? Object.entries(augmentations as Record<string, any>)
+            : [];
+        if (!rule || !entries.length) return '';
+        return `
+Rule: ${rule.title} (${ruleUuid})
+${entries
+    .map(([pathKey, metadata]) => {
+        const augmentation = metadata as Record<string, any>;
+        const provider = augmentation?.provider ?? 'unknown';
+        const toolName = augmentation?.toolName ?? 'unknown';
+        const output =
+            augmentation?.output !== undefined &&
+            augmentation?.output !== null
+                ? JSON.stringify(augmentation.output, null, 2)
+                : 'No output provided';
+        return `  Context Path: ${pathKey}
+  Provider: ${provider}
+  Tool: ${toolName}
+  Output:
+${output}
+`;
+    })
     .join('\n')}`;
     })
     .join('\n')}
