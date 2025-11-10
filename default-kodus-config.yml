@@ -15,6 +15,7 @@ ignorePaths:
     - 'package-lock.json'
     - 'package.json'
     - '.env'
+    - '**/*.json'
 ignoredTitleKeywords: []
 baseBranches: []
 
