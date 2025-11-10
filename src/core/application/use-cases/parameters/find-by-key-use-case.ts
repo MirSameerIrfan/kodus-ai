@@ -86,6 +86,8 @@ export class FindByKeyParametersUseCase {
                 createdAt: parameter.createdAt,
                 updatedAt: parameter.updatedAt,
                 active: parameter.active,
+                description: parameter.description,
+                version: parameter.version,
             };
         } else {
             return {
@@ -94,6 +96,10 @@ export class FindByKeyParametersUseCase {
                 team: parameter.team,
                 uuid: parameter.uuid,
                 active: parameter.active,
+                description: parameter.description,
+                version: parameter.version,
+                createdAt: parameter.createdAt,
+                updatedAt: parameter.updatedAt,
             };
         }
     }

@@ -46,11 +46,7 @@ export class ContextReferenceService implements IContextReferenceService {
             id: 'unknown',
         };
 
-        // 🔒 INVARIANTE 1: Garantir tenantId no scope (usa organizationId como fallback)
         const scopeWithTenant = this.ensureTenantInScope(params.scope);
-
-        // 🔒 INVARIANTE 2: Manter TODOS os requirements (incluindo draft/erro)
-        // para trilha completa de debugging, mas marcar quais são executáveis
         const allRequirements = params.requirements ?? [];
 
         const entry = createRevisionEntry({
@@ -60,18 +56,16 @@ export class ContextReferenceService implements IContextReferenceService {
             entityType: params.entityType,
             entityId: params.entityId,
             origin,
-            requirements: allRequirements, // Manter todos para trilha completa
+            requirements: allRequirements,
             metadata: params.metadata,
             knowledgeRefs: params.knowledgeRefs,
         });
 
-        // 🔒 INVARIANTE 3: Incluir ponte para revisão de origem
         const metadataWithRevision = {
             ...entry.metadata,
             ...(params.revisionId && { revisionId: params.revisionId }),
         };
 
-        // Calcular status de processamento baseado nas requirements
         const processingStatus = this.computeProcessingStatus(
             entry.requirements,
         );
@@ -85,7 +79,7 @@ export class ContextReferenceService implements IContextReferenceService {
             requirements: entry.requirements,
             knowledgeRefs: entry.knowledgeRefs,
             origin: entry.origin,
-            revisionId: params.revisionId, // Ponte explícita para fonte da verdade
+            revisionId: params.revisionId,
             processingStatus,
             lastProcessedAt: new Date(),
             metadata: metadataWithRevision,
@@ -195,25 +189,18 @@ export class ContextReferenceService implements IContextReferenceService {
         return this.repository.delete(uuid);
     }
 
-    /**
-     * 🔒 INVARIANTE 1: Garante tenantId no scope
-     * Usa organizationId como fallback para compatibilidade com dados existentes
-     */
     private ensureTenantInScope(
         scope: ContextRevisionScope,
     ): ContextRevisionScope {
         const identifiers = { ...scope.identifiers };
 
-        // Se já tem tenantId, mantém
         if (identifiers.tenantId) {
             return { ...scope, identifiers };
         }
 
-        // Fallback: usa organizationId como tenant lógico
         if (identifiers.organizationId) {
             identifiers.tenantId = identifiers.organizationId;
         } else {
-            // Se não tem nenhum, gera um erro mas não quebra
             console.warn(
                 'ContextRevisionScope sem tenantId ou organizationId:',
                 scope,
@@ -223,9 +210,6 @@ export class ContextReferenceService implements IContextReferenceService {
         return { ...scope, identifiers };
     }
 
-    /**
-     * Calcula o status de processamento baseado nas requirements
-     */
     private computeProcessingStatus(
         requirements?: ContextRequirement[],
     ): 'pending' | 'processing' | 'completed' | 'failed' {

@@ -67,11 +67,19 @@ export function convertTiptapJSONToText(
                 break;
             case 'mcpMention': {
                 const attrs = node.attrs as Record<string, unknown> | undefined;
-                const app =
-                    typeof attrs?.app === 'string' ? attrs.app : '';
-                const tool =
-                    typeof attrs?.tool === 'string' ? attrs.tool : '';
-                result += `@mcp<${app}|${tool}>`;
+                const resolved =
+                    typeof attrs?.resolvedOutput === 'string'
+                        ? attrs.resolvedOutput
+                        : undefined;
+                if (resolved) {
+                    result += resolved;
+                } else {
+                    const app =
+                        typeof attrs?.app === 'string' ? attrs.app : '';
+                    const tool =
+                        typeof attrs?.tool === 'string' ? attrs.tool : '';
+                    result += `@mcp<${app}|${tool}>`;
+                }
                 break;
             }
             default:
@@ -151,11 +159,19 @@ export function convertTiptapJSONToMarkdown(
                 return;
             case 'mcpMention': {
                 const attrs = node.attrs as Record<string, unknown> | undefined;
-                const app =
-                    typeof attrs?.app === 'string' ? attrs.app : '';
-                const tool =
-                    typeof attrs?.tool === 'string' ? attrs.tool : '';
-                markdown += `@mcp<${app}|${tool}>`;
+                const resolved =
+                    typeof attrs?.resolvedOutput === 'string'
+                        ? attrs.resolvedOutput
+                        : undefined;
+                if (resolved) {
+                    markdown += resolved;
+                } else {
+                    const app =
+                        typeof attrs?.app === 'string' ? attrs.app : '';
+                    const tool =
+                        typeof attrs?.tool === 'string' ? attrs.tool : '';
+                    markdown += `@mcp<${app}|${tool}>`;
+                }
                 return;
             }
             case 'paragraph': {

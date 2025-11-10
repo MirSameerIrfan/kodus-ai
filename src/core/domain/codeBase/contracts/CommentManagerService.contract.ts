@@ -14,6 +14,7 @@ import {
     IPullRequestMessageContent,
     IPullRequestMessages,
 } from '../../pullRequestMessages/interfaces/pullRequestMessages.interface';
+import { CodeReviewPipelineContext } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/context/code-review-pipeline.context';
 
 export const COMMENT_MANAGER_SERVICE_TOKEN = Symbol('CommentManagerService');
 
@@ -27,6 +28,7 @@ export interface ICommentManagerService {
         platformType: string,
         codeReviewConfig?: CodeReviewConfig,
         pullRequestMessages?: IPullRequestMessages,
+        dryRun?: CodeReviewPipelineContext['dryRun'],
     ): Promise<{ commentId: number; noteId: number; threadId?: number }>;
 
     processEndReviewMessageTemplate(
@@ -63,6 +65,7 @@ export interface ICommentManagerService {
         codeReviewConfig?: CodeReviewConfig,
         threadId?: number,
         finalCommentBody?: string,
+        dryRun?: CodeReviewPipelineContext['dryRun'],
     ): Promise<void>;
 
     updateSummarizationInPR(
@@ -70,6 +73,7 @@ export interface ICommentManagerService {
         prNumber: number,
         repository: { name: string; id: string },
         summary: string,
+        dryRun: CodeReviewPipelineContext['dryRun'],
     ): Promise<void>;
 
     createLineComments(
@@ -78,6 +82,7 @@ export interface ICommentManagerService {
         repository: { name: string; id: string; language: string },
         lineComments: Comment[],
         language: string,
+        dryRun: CodeReviewPipelineContext['dryRun'],
     ): Promise<{
         lastAnalyzedCommit: any;
         commits: any[];
@@ -107,6 +112,7 @@ export interface ICommentManagerService {
         repository: { name: string; id: string; language: string },
         prLevelSuggestions: ISuggestionByPR[],
         language: string,
+        dryRun?: CodeReviewPipelineContext['dryRun'],
     ): Promise<{ commentResults: Array<CommentResult> }>;
 
     findLastReviewComment(
@@ -134,5 +140,6 @@ export interface ICommentManagerService {
         codeReviewConfig?: CodeReviewConfig,
         endReviewMessage?: string,
         pullRequestMessagesConfig?: IPullRequestMessages,
+        dryRun?: CodeReviewPipelineContext['dryRun'],
     ): Promise<void>;
 }

@@ -26,6 +26,7 @@ export enum PromptReferenceErrorType {
     FILE_TOO_LARGE = 'file_too_large',
     FETCH_FAILED = 'fetch_failed',
     MCP_CONNECTION_FAILED = 'mcp_connection_failed',
+    MCP_EXECUTION_FAILED = 'mcp_execution_failed',
 }
 
 export interface IFileReferenceError {
@@ -42,7 +43,7 @@ export interface IFileReference {
         readonly end: number;
     };
     readonly repositoryName?: string;
-    readonly repositoryId?: string;
+    repositoryId?: string;
     readonly description?: string;
     readonly originalText?: string;
     lastContentHash: string;

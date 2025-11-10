@@ -93,6 +93,11 @@ interface SectionConfig {
     externalPath: string[];
 }
 
+const SOURCE_TYPE_ALIASES: Record<string, string> = {
+    knowledge: 'generation_main',
+    instructions: 'custom_instruction',
+};
+
 const SECTION_CONFIG: SectionConfig[] = [
     {
         pathKey: 'categories.descriptions.bug',
@@ -340,6 +345,99 @@ function formatAugmentations(
  * @param contextLayers - Array of context layers from the context pack
  * @returns Map keyed by source type, containing references and sync errors
  */
+function normalizeLayerSourceType(sourceType?: string): string | undefined {
+    if (!sourceType) {
+        return undefined;
+    }
+    return SOURCE_TYPE_ALIASES[sourceType] ?? sourceType;
+}
+
+function extractLayerReferences(
+    layer: ContextPack['layers'][number],
+): unknown[] | undefined {
+    const { content } = layer;
+
+    if (Array.isArray(content)) {
+        const hasFileContext = content.some(
+            (entry) =>
+                entry &&
+                typeof entry === 'object' &&
+                typeof (entry as Record<string, unknown>).filePath ===
+                    'string' &&
+                typeof (entry as Record<string, unknown>).content === 'string',
+        );
+        if (hasFileContext) {
+            return content as unknown[];
+        }
+    } else if (
+        content &&
+        typeof content === 'object' &&
+        Array.isArray((content as Record<string, unknown>).references)
+    ) {
+        return (content as Record<string, unknown>).references as unknown[];
+    }
+
+    if (
+        Array.isArray(layer.references) &&
+        layer.references.some(
+            (entry) =>
+                entry &&
+                typeof entry === 'object' &&
+                typeof (entry as Record<string, unknown>).content === 'string',
+        )
+    ) {
+        return layer.references as unknown[];
+    }
+
+    return undefined;
+}
+
+function extractLayerSyncErrors(
+    content: unknown,
+    metadata?: Record<string, unknown>,
+): unknown[] | undefined {
+    if (
+        content &&
+        typeof content === 'object' &&
+        !Array.isArray(content) &&
+        Array.isArray((content as Record<string, unknown>).syncErrors)
+    ) {
+        return (content as Record<string, unknown>).syncErrors as unknown[];
+    }
+
+    if (Array.isArray(metadata?.syncErrors)) {
+        return metadata?.syncErrors as unknown[];
+    }
+
+    return undefined;
+}
+
+function mergeReferenceArrays(
+    current?: unknown[],
+    incoming?: unknown[],
+): unknown[] | undefined {
+    if (!current) {
+        return incoming;
+    }
+    if (!incoming) {
+        return current;
+    }
+    return [...current, ...incoming];
+}
+
+function mergeSyncErrorArrays(
+    current?: unknown[],
+    incoming?: unknown[],
+): unknown[] | undefined {
+    if (!current) {
+        return incoming;
+    }
+    if (!incoming) {
+        return current;
+    }
+    return [...current, ...incoming];
+}
+
 function buildLayerContextData(
     contextLayers: ContextPack['layers'],
 ): Map<string, { references?: unknown[]; syncErrors?: unknown[] }> {
@@ -350,25 +448,34 @@ function buildLayerContextData(
 
     for (const layer of contextLayers) {
         const metadata = layer.metadata as Record<string, unknown> | undefined;
-        const sourceType =
+        const normalizedSourceType = normalizeLayerSourceType(
             typeof metadata?.sourceType === 'string'
                 ? (metadata.sourceType as string)
-                : undefined;
-        if (!sourceType) {
+                : undefined,
+        );
+
+        if (!normalizedSourceType) {
             continue;
         }
 
-        const content = layer.content as Record<string, unknown> | undefined;
-        const references = Array.isArray(content?.references)
-            ? (content?.references as unknown[])
-            : undefined;
-        const syncErrors = Array.isArray(content?.syncErrors)
-            ? (content?.syncErrors as unknown[])
-            : undefined;
+        const references = extractLayerReferences(layer);
+        const syncErrors = extractLayerSyncErrors(layer.content, metadata);
 
-        if (references || syncErrors) {
-            layerContextData.set(sourceType, { references, syncErrors });
+        if (!references && !syncErrors) {
+            continue;
         }
+
+        const existingEntry = layerContextData.get(normalizedSourceType);
+        layerContextData.set(normalizedSourceType, {
+            references: mergeReferenceArrays(
+                existingEntry?.references,
+                references,
+            ),
+            syncErrors: mergeSyncErrorArrays(
+                existingEntry?.syncErrors,
+                syncErrors,
+            ),
+        });
     }
 
     return layerContextData;

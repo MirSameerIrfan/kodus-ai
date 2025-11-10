@@ -10,4 +10,6 @@ export interface IParameters<K extends ParametersKey> {
     createdAt?: Date;
     updatedAt?: Date;
     active: boolean;
+    description?: string;
+    version: number;
 }

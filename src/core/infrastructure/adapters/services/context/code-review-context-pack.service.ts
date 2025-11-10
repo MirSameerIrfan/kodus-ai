@@ -39,6 +39,7 @@ import { PinoLoggerService } from '../logger/pino.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { PromptReferenceErrorType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
 import type { IPromptReferenceSyncError } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
+import { formatMCPOutput } from './mcp-output-formatter';
 
 export interface ContextAugmentationOutput {
     provider?: string;
@@ -81,7 +82,6 @@ interface BuildPackResult {
     pack?: ContextPack;
 }
 
-const MAX_TOOL_OUTPUT_LENGTH = 1200;
 const DEFAULT_LAYER_INPUT: LayerInputContext = {
     domain: 'code',
     taskIntent: 'review',
@@ -94,10 +94,6 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
     return Boolean(value && typeof value === 'object' && !Array.isArray(value));
 }
 
-/**
- * Une os argumentos declarados na dependência MCP com o contexto padrão
- * passado pelo orchestrator, priorizando os valores explícitos do requisito.
- */
 function resolveMCPArgs(
     request: MCPInvocationRequest,
 ): Record<string, unknown> {
@@ -142,14 +138,20 @@ class StaticLayerBuilder implements ContextLayerBuilder {
 class AdapterBackedMCPClient {
     constructor(
         private readonly adapter: ReturnType<typeof createMCPAdapter>,
-        private readonly connectionById: Map<string, MCPServerConfig>,
+        private readonly connectionRouting: Map<
+            string,
+            Map<string, MCPServerConfig>
+        >,
     ) {}
 
     async invoke(request: MCPInvocationRequest): Promise<MCPInvocationResult> {
         const startedAt = Date.now();
 
         try {
-            const serverConfig = this.connectionById.get(request.registry.id);
+            const serverConfig = this.resolveConnection(
+                request.registry.id,
+                request.tool.toolName,
+            );
             const metadataServerName =
                 request.registry.metadata &&
                 typeof (request.registry.metadata as Record<string, unknown>)
@@ -190,6 +192,22 @@ class AdapterBackedMCPClient {
             };
         }
     }
+
+    private resolveConnection(
+        providerId: string,
+        toolName?: string,
+    ): MCPServerConfig | undefined {
+        const routing = this.connectionRouting.get(providerId);
+        if (!routing) {
+            return undefined;
+        }
+
+        if (toolName && routing.has(toolName)) {
+            return routing.get(toolName);
+        }
+
+        return routing.get('*');
+    }
 }
 
 @Injectable()
@@ -202,16 +220,10 @@ export class CodeReviewContextPackService {
         private readonly codeManagementService: CodeManagementService,
     ) {}
 
-    /**
-     * Monta o `ContextPack` com as instruções do usuário, camadas externas e
-     * execuções MCP necessárias para o review.
-     */
     async buildContextPack(params: BuildPackParams): Promise<BuildPackResult> {
         const { organizationAndTeamData, contextReferenceId, overrides } =
             params;
 
-        // NÃO sanitiza ainda - vamos substituir os marcadores MCP primeiro
-        // depois sanitiza o que sobrou (se necessário)
         let processedOverrides = overrides
             ? (JSON.parse(
                   JSON.stringify(overrides),
@@ -219,7 +231,6 @@ export class CodeReviewContextPackService {
             : undefined;
 
         if (!contextReferenceId || !organizationAndTeamData?.organizationId) {
-            // Se não tem contexto, sanitiza e retorna
             return {
                 sanitizedOverrides: this.sanitizeOverrides(processedOverrides),
             };
@@ -249,7 +260,6 @@ export class CodeReviewContextPackService {
             };
         }
 
-        // Carrega metadata e resolve dependencies ANTES de executar tools
         const metadataLoad = mcpDependencies.length
             ? await this.mcpToolMetadataService.loadMetadataForOrganization(
                   organizationAndTeamData,
@@ -264,7 +274,6 @@ export class CodeReviewContextPackService {
 
         const syncErrors: IPromptReferenceSyncError[] = [];
 
-        // Cria pack temporário para resolução de dependencies
         const tempPack = await this.assemblePackFromPipeline({
             contextReferenceId,
             instructionsLayer: processedOverrides
@@ -304,20 +313,23 @@ export class CodeReviewContextPackService {
                 toolMetadata: metadata,
             });
 
-        // Executa tools e substitui marcadores ANTES de criar o pack final
         let augmentations: ContextAugmentationsMap | undefined;
         if (resolvedDependencies.length > 0 && connections?.length > 0) {
-            const { augmentations: execAugmentations } =
-                await this.executeDependencies({
-                    contextReferenceId,
-                    connections,
-                    dependencies: resolvedDependencies,
-                    pack: tempPack,
-                });
+            const {
+                augmentations: execAugmentations,
+                syncErrors: execSyncErrors,
+            } = await this.executeDependencies({
+                contextReferenceId,
+                connections,
+                dependencies: resolvedDependencies,
+                pack: tempPack,
+            });
 
             augmentations = execAugmentations;
+            if (execSyncErrors?.length) {
+                syncErrors.push(...execSyncErrors);
+            }
 
-            // Substitui marcadores MCP pelos resultados das tools nos overrides
             if (augmentations && Object.keys(augmentations).length > 0) {
                 this.logger.debug({
                     message: 'MCP marker replacement: starting replacement',
@@ -345,7 +357,10 @@ export class CodeReviewContextPackService {
                     },
                 });
             }
-        } else if (resolvedDependencies.length > 0 && (!connections || !connections.length)) {
+        } else if (
+            resolvedDependencies.length > 0 &&
+            (!connections || !connections.length)
+        ) {
             const message =
                 'Context pack found MCP dependencies but no MCP connections/metadata were available during execution.';
             this.logger.error({
@@ -373,7 +388,6 @@ export class CodeReviewContextPackService {
             }
         }
 
-        // Agora cria o pack FINAL com os overrides já substituídos
         const instructionsLayer = this.createInstructionsLayer(
             contextReferenceId,
             processedOverrides,
@@ -391,7 +405,6 @@ export class CodeReviewContextPackService {
             }
         }
 
-        // Garante que dependencies sempre seja um array (mesmo que vazio)
         const combinedDependencies = [
             ...resolvedDependencies,
             ...knowledgeDependencies,
@@ -443,8 +456,6 @@ export class CodeReviewContextPackService {
             );
         }
 
-        // NÃO sanitiza depois - os marcadores já foram substituídos ou mantidos
-        // Se ainda houver marcadores não resolvidos, eles serão mantidos (não removidos)
         const sanitizedOverrides = processedOverrides;
 
         return {
@@ -454,10 +465,6 @@ export class CodeReviewContextPackService {
         };
     }
 
-    /**
-     * Remove marcadores e campos vazios dos overrides antes de inseri-los no pack.
-     * NÃO remove nós mcpMention do TipTap JSON - esses serão substituídos depois.
-     */
     private sanitizeOverrides(
         overrides?: CodeReviewConfig['v2PromptOverrides'],
     ): CodeReviewConfig['v2PromptOverrides'] | undefined {
@@ -864,7 +871,8 @@ export class CodeReviewContextPackService {
         });
 
         if (result || error) {
-            const replacement = result ?? `[MCP Tool ${toolName} failed: ${error}]`;
+            const replacement =
+                result ?? `[MCP Tool ${toolName} failed: ${error}]`;
             return {
                 ...node,
                 attrs: {
@@ -1169,12 +1177,15 @@ export class CodeReviewContextPackService {
                 continue;
             }
 
-            const repositoryName = (
-                dependency.metadata?.repositoryName as string | undefined
-            )?.trim();
-            const repositoryId = (
-                dependency.metadata?.repositoryId as string | undefined
-            )?.trim();
+            const rawRepositoryName =
+                (dependency.metadata?.repositoryName as string | undefined) ??
+                params.repository?.name;
+            const rawRepositoryId =
+                (dependency.metadata?.repositoryId as string | undefined) ??
+                params.repository?.id;
+
+            const repositoryName = rawRepositoryName?.trim();
+            const repositoryId = rawRepositoryId?.trim();
             const description = dependency.metadata?.description as
                 | string
                 | undefined;
@@ -1187,6 +1198,16 @@ export class CodeReviewContextPackService {
                 continue;
             }
             dedupe.add(uniqueKey);
+
+            const dependencyMetadata =
+                (dependency.metadata as Record<string, unknown>) ?? {};
+            if (repositoryName) {
+                dependencyMetadata.repositoryName = repositoryName;
+            }
+            if (repositoryId) {
+                dependencyMetadata.repositoryId = repositoryId;
+            }
+            dependency.metadata = dependencyMetadata;
 
             try {
                 const content = await this.fetchKnowledgeContent({
@@ -1281,6 +1302,7 @@ export class CodeReviewContextPackService {
                 contextReferenceId,
                 type: 'knowledge',
                 itemsCount: resolvedItems.length,
+                sourceType: 'knowledge',
             },
         };
 
@@ -1504,7 +1526,10 @@ export class CodeReviewContextPackService {
         connections: MCPServerConfig[];
         dependencies: ContextDependency[];
         pack: ContextPack;
-    }): Promise<{ augmentations?: ContextAugmentationsMap }> {
+    }): Promise<{
+        augmentations?: ContextAugmentationsMap;
+        syncErrors?: IPromptReferenceSyncError[];
+    }> {
         const { contextReferenceId, connections, dependencies, pack } = params;
 
         if (!dependencies.length) {
@@ -1529,8 +1554,12 @@ export class CodeReviewContextPackService {
             },
         });
 
-        const connectionById = new Map<string, MCPServerConfig>();
         const registry = new InMemoryMCPRegistry();
+        const connectionRouting = new Map<
+            string,
+            Map<string, MCPServerConfig>
+        >();
+        const connectionsByProvider = new Map<string, MCPServerConfig[]>();
 
         const requiredToolsByProvider = new Map<string, Set<string>>();
         for (const dependency of dependencies) {
@@ -1553,34 +1582,81 @@ export class CodeReviewContextPackService {
                 continue;
             }
 
-            connectionById.set(providerId, connection);
+            if (!connectionsByProvider.has(providerId)) {
+                connectionsByProvider.set(providerId, []);
+            }
 
-            const requiredTools =
-                requiredToolsByProvider.get(providerId) ?? new Set<string>();
-            const toolsToRegister =
-                requiredTools.size > 0
-                    ? Array.from(requiredTools)
-                    : Array.from(connection.allowedTools ?? []);
+            connectionsByProvider.get(providerId)!.push(connection);
+        }
+
+        for (const [providerId, providerConnections] of connectionsByProvider) {
+            if (!providerConnections.length) {
+                continue;
+            }
+
+            const requiredTools = requiredToolsByProvider.get(providerId);
+            if (!requiredTools || !requiredTools.size) {
+                continue;
+            }
+
+            const primaryConnection = providerConnections[0];
+            if (!primaryConnection) {
+                continue;
+            }
+
+            const routing = new Map<string, MCPServerConfig>();
+            routing.set('*', primaryConnection);
+
+            const toolsArray: string[] = [];
+
+            for (const toolName of requiredTools) {
+                const trimmedTool = toolName?.trim();
+                if (!trimmedTool) {
+                    continue;
+                }
+
+                toolsArray.push(trimmedTool);
+
+                if (routing.has(trimmedTool)) {
+                    continue;
+                }
+
+                const supportingConnection = providerConnections.find(
+                    (connection) =>
+                        (connection.allowedTools ?? []).includes(trimmedTool),
+                );
+
+                routing.set(
+                    trimmedTool,
+                    supportingConnection ?? primaryConnection,
+                );
+            }
+
+            if (!toolsArray.length) {
+                continue;
+            }
+
+            connectionRouting.set(providerId, routing);
 
             registry.register({
                 id: providerId,
-                title: connection.name ?? providerId,
-                endpoint: connection.url ?? '',
-                description: connection.name ?? providerId,
+                title: primaryConnection.name ?? providerId,
+                endpoint: primaryConnection.url ?? '',
+                description: primaryConnection.name ?? providerId,
                 status: 'available',
-                tools: toolsToRegister.map((toolName) => ({
+                tools: toolsArray.map((toolName) => ({
                     mcpId: providerId,
                     toolName,
                     metadata: {},
                 })),
                 metadata: {
-                    serverName: connection.name ?? providerId,
-                    provider: connection.provider ?? providerId,
+                    serverName: primaryConnection.name ?? providerId,
+                    provider: providerId,
                 },
             } satisfies MCPRegistration);
         }
 
-        const client = new AdapterBackedMCPClient(adapter, connectionById);
+        const client = new AdapterBackedMCPClient(adapter, connectionRouting);
 
         const orchestrator = new MCPOrchestrator(registry, client, {
             logger: {
@@ -1613,6 +1689,7 @@ export class CodeReviewContextPackService {
 
         const dependencyIndex = this.buildDependencyIndex(dependencies);
         const augmentations: ContextAugmentationsMap = {};
+        const executionSyncErrors: IPromptReferenceSyncError[] = [];
 
         try {
             await adapter.connect();
@@ -1671,10 +1748,26 @@ export class CodeReviewContextPackService {
                     outputEntry.output = this.formatToolOutput(
                         record.result.output,
                     );
-                } else if (record.result?.error?.message) {
-                    outputEntry.error = record.result.error.message;
-                } else if (record.error) {
-                    outputEntry.error = record.error;
+                } else {
+                    const errorPayload =
+                        record.result?.error ??
+                        record.result?.output ??
+                        record.result ??
+                        record.error ??
+                        'Unknown MCP error';
+                    const errorSummary = this.extractMCPErrorSummary(
+                        errorPayload,
+                    );
+
+                    outputEntry.error = this.formatToolOutput(errorPayload);
+
+                    executionSyncErrors.push({
+                        type: PromptReferenceErrorType.MCP_EXECUTION_FAILED,
+                        message: `MCP tool ${dependencyMeta.toolName} (${dependencyMeta.provider ?? 'unknown provider'}) failed: ${errorSummary}`,
+                        details: {
+                            timestamp: new Date(),
+                        },
+                    });
                 }
 
                 augmentations[dependencyMeta.pathKey].outputs.push(outputEntry);
@@ -1687,6 +1780,13 @@ export class CodeReviewContextPackService {
                 error,
                 metadata: {
                     contextReferenceId,
+                },
+            });
+            executionSyncErrors.push({
+                type: PromptReferenceErrorType.MCP_EXECUTION_FAILED,
+                message: `MCP orchestrator execution failed: ${this.extractMCPErrorSummary(error)}`,
+                details: {
+                    timestamp: new Date(),
                 },
             });
         } finally {
@@ -1705,6 +1805,9 @@ export class CodeReviewContextPackService {
         return {
             augmentations: Object.keys(augmentations).length
                 ? augmentations
+                : undefined,
+            syncErrors: executionSyncErrors.length
+                ? executionSyncErrors
                 : undefined,
         };
     }
@@ -1773,6 +1876,7 @@ export class CodeReviewContextPackService {
             references: [],
             metadata: {
                 contextReferenceId,
+                sourceType: 'instructions',
             },
         };
     }
@@ -1838,6 +1942,7 @@ export class CodeReviewContextPackService {
             references: [],
             metadata: {
                 contextReferenceId,
+                sourceType: 'augmentations',
             },
         };
     }
@@ -1972,26 +2077,31 @@ export class CodeReviewContextPackService {
     }
 
     private formatToolOutput(result: unknown): string {
-        if (result === null || result === undefined) {
-            return 'No output returned.';
-        }
-
-        if (typeof result === 'string') {
-            return this.truncate(result);
-        }
-
-        try {
-            return this.truncate(JSON.stringify(result, null, 2));
-        } catch {
-            return this.truncate(String(result));
-        }
+        return formatMCPOutput(result, (value) => this.tryParseJSON(value));
     }
 
-    private truncate(value: string, max = MAX_TOOL_OUTPUT_LENGTH): string {
-        if (value.length <= max) {
-            return value;
+    private extractMCPErrorSummary(error: unknown): string {
+        if (!error) {
+            return 'Unknown error';
         }
-        return `${value.slice(0, max)}…`;
+        if (typeof error === 'string') {
+            return error;
+        }
+        if (error instanceof Error) {
+            return error.message;
+        }
+        if (
+            typeof error === 'object' &&
+            error &&
+            typeof (error as Record<string, unknown>).message === 'string'
+        ) {
+            return (error as Record<string, unknown>).message as string;
+        }
+        try {
+            return JSON.stringify(error);
+        } catch {
+            return String(error);
+        }
     }
 
     private cloneLayer(layer: ContextLayer): ContextLayer {

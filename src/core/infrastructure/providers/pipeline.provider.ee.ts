@@ -16,13 +16,14 @@ export const pipelineProvider: Provider = {
     provide: PIPELINE_PROVIDER_TOKEN,
     useFactory: (
         codeReviewPipeline: IPipeline<CodeReviewPipelineContext>,
+        dryRunPipeline: IPipeline<CodeReviewPipelineContext>,
         logger: PinoLoggerService,
     ): PipelineFactory<PipelineContext> => {
-        const factory = new PipelineFactory<PipelineContext>([codeReviewPipeline]);
+        const factory = new PipelineFactory<PipelineContext>([
+            codeReviewPipeline,
+            dryRunPipeline,
+        ]);
         return factory;
     },
-    inject: [
-        CODE_REVIEW_PIPELINE_TOKEN,
-        PinoLoggerService,
-    ],
+    inject: [CODE_REVIEW_PIPELINE_TOKEN, PinoLoggerService],
 };

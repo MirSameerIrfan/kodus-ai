@@ -278,6 +278,7 @@ export class ContextReferenceDetectionService {
             organizationAndTeamData,
             entityType,
             repositoryName,
+            repositoryId,
         });
 
         const dependencies = normalization.dependencies;
@@ -425,12 +426,10 @@ export class ContextReferenceDetectionService {
 
     private hasLikelyExternalReferences(text: string): boolean {
         const patterns = [
-            // Padrões diretos
             /@file[:\s]/i,
             /\[\[file:/i,
             /@\w+\.(ts|js|py|md|yml|yaml|json|txt|go|java|cpp|c|h|rs)/i,
 
-            // Padrões narrativos (mais comuns em kodyRules)
             /refer to.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
             /check.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
             /see.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
@@ -439,21 +438,17 @@ export class ContextReferenceDetectionService {
             /open.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
             /examine.*\.(ts|js|py|md|yml|yaml|json|txt)/i,
 
-            // Padrões de nomes de arquivos
             /\b\w+\.\w+\.(ts|js|py|md|yml|yaml|json|txt)\b/i,
             /\b[A-Z_][A-Z0-9_]*\.(ts|js|py|md|yml|yaml|json|txt)\b/,
 
-            // Arquivos comuns (sem extensão específica)
             /\b(readme|contributing|changelog|license|setup|config|package|tsconfig|jest\.config|vite\.config|webpack\.config|dockerfile|makefile)\b/i,
 
-            // Referências a diretórios
             /src\//i,
             /lib\//i,
             /test\//i,
             /docs\//i,
             /config\//i,
 
-            // Padrões MCP
             /@mcp/i,
             /mcp:/i,
         ];
@@ -481,7 +476,6 @@ export class ContextReferenceDetectionService {
         }>;
         syncErrors: IPromptReferenceSyncError[];
     }> {
-        // Usa o mesmo fluxo do PromptContextEngine (igual ao PromptExternalReferenceManagerService)
         const detection =
             await this.promptContextEngine.detectAndResolveReferences({
                 requirementId:
@@ -503,7 +497,6 @@ export class ContextReferenceDetectionService {
                 byokConfig: params.byokConfig,
             });
 
-        // Extrair tanto arquivos quanto MCPs dos requirements
         const allDependencies: ContextDependency[] = [];
         if (detection.requirements && detection.requirements.length > 0) {
             allDependencies.push(
@@ -511,12 +504,10 @@ export class ContextReferenceDetectionService {
             );
         }
 
-        // Converter dependencies para o formato esperado
         const references = allDependencies.map((dep) => {
             if (dep.type === 'mcp') {
-                // MCP reference
                 return {
-                    filePath: dep.id, // formato: provider|tool
+                    filePath: dep.id,
                     description: dep.metadata?.description as string,
                     originalText: dep.metadata?.originalText as string,
                     repositoryName: undefined,
@@ -526,29 +517,35 @@ export class ContextReferenceDetectionService {
                     lastContentHash: undefined,
                     estimatedTokens: undefined,
                 };
-            } else {
-                // Knowledge/file reference
-                return {
-                    filePath: (dep.metadata?.filePath as string) || dep.id,
-                    description: dep.metadata?.description as string,
-                    originalText: dep.metadata?.originalText as string,
-                    repositoryName: dep.metadata?.repositoryName as string,
-                    repositoryId: dep.metadata?.repositoryId as string,
-                    lineRange: dep.metadata?.lineRange as
-                        | { start: number; end: number }
-                        | undefined,
-                    lastValidatedAt: dep.metadata?.lastValidatedAt as
-                        | string
-                        | Date
-                        | undefined,
-                    lastContentHash: dep.metadata?.lastContentHash as
-                        | string
-                        | undefined,
-                    estimatedTokens: dep.metadata?.estimatedTokens as
-                        | number
-                        | undefined,
-                };
             }
+
+            const resolvedRepositoryName =
+                (dep.metadata?.repositoryName as string | undefined) ??
+                params.repositoryName;
+            const resolvedRepositoryId =
+                (dep.metadata?.repositoryId as string | undefined) ??
+                params.repositoryId;
+
+            return {
+                filePath: (dep.metadata?.filePath as string) || dep.id,
+                description: dep.metadata?.description as string,
+                originalText: dep.metadata?.originalText as string,
+                repositoryName: resolvedRepositoryName,
+                repositoryId: resolvedRepositoryId,
+                lineRange: dep.metadata?.lineRange as
+                    | { start: number; end: number }
+                    | undefined,
+                lastValidatedAt: dep.metadata?.lastValidatedAt as
+                    | string
+                    | Date
+                    | undefined,
+                lastContentHash: dep.metadata?.lastContentHash as
+                    | string
+                    | undefined,
+                estimatedTokens: dep.metadata?.estimatedTokens as
+                    | number
+                    | undefined,
+            };
         });
 
         this.logger.log({
@@ -587,6 +584,7 @@ export class ContextReferenceDetectionService {
         organizationAndTeamData: OrganizationAndTeamData;
         entityType: 'kodyRule' | 'codeReviewConfig';
         repositoryName?: string;
+        repositoryId?: string;
     }): Promise<{
         dependencies: ContextDependency[];
         syncErrors: IPromptReferenceSyncError[];
@@ -597,6 +595,7 @@ export class ContextReferenceDetectionService {
             organizationAndTeamData,
             entityType,
             repositoryName,
+            repositoryId,
         } = params;
 
         const dependenciesInput: ContextDependency[] = references.map((ref) => {
@@ -615,9 +614,11 @@ export class ContextReferenceDetectionService {
                 } satisfies ContextDependency;
             }
 
-            const knowledgeId = ref.repositoryName
-                ? `${ref.repositoryName}|${ref.filePath}`
-                : ref.filePath;
+            const knowledgeId = ref.repositoryId
+                ? `${ref.repositoryId}|${ref.filePath}`
+                : ref.repositoryName
+                  ? `${ref.repositoryName}|${ref.filePath}`
+                  : ref.filePath;
 
             return {
                 type: 'knowledge' as const,
@@ -627,7 +628,7 @@ export class ContextReferenceDetectionService {
                     description: ref.description,
                     originalText: ref.originalText,
                     repositoryName: ref.repositoryName ?? repositoryName,
-                    repositoryId: ref.repositoryId,
+                    repositoryId: ref.repositoryId ?? repositoryId,
                     lineRange: ref.lineRange,
                     lastValidatedAt: ref.lastValidatedAt
                         ? new Date(ref.lastValidatedAt)
@@ -643,17 +644,14 @@ export class ContextReferenceDetectionService {
             return { dependencies: dependenciesInput, syncErrors };
         }
 
-        // Carregar configurações MCP da organização
         const { connections: mcpConnections, metadata: toolMetadata } =
             await this.mcpToolMetadataService.loadMetadataForOrganization(
                 organizationAndTeamData,
             );
 
-        // Construir estruturas de alias
         const { providerAliases, toolAliases, allowedTools } =
             this.buildMCPAliasStructures(mcpConnections);
 
-        // Aplicar normalização MCP completa (mesma lógica dos Custom Prompts)
         const normalizedDependencies = this.normalizeMCPDependencies(
             dependenciesInput,
             providerAliases,
@@ -1246,7 +1244,6 @@ export class ContextReferenceDetectionService {
             repositoryName,
         } = params;
 
-        // Scope baseado no repositoryId: se for global/undefined = organization, se específico = repository
         const isGlobalScope = !repositoryId || repositoryId === 'global';
         const scopeLevel = isGlobalScope ? 'organization' : 'repository';
         const scopePath = this.buildScopePath(
@@ -1264,21 +1261,18 @@ export class ContextReferenceDetectionService {
                 ...(organizationAndTeamData.teamId && {
                     teamId: organizationAndTeamData.teamId,
                 }),
-                // Incluir repositoryId apenas se não for global
                 ...(!isGlobalScope && { repositoryId }),
             },
             path: scopePath,
             metadata: { source: entityType },
         };
 
-        // Buscar versão anterior para manter relação
         const previousReference =
             await this.contextReferenceService.getLatestRevision(
                 entityType,
                 entityId,
             );
 
-        // Salvar no Context OS
         const revisionId = `rev:${entityType}:${entityId}:${Date.now()}`;
         const result = await this.contextReferenceService.commitRevision({
             scope,

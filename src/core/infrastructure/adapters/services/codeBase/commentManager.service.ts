@@ -50,6 +50,7 @@ import {
 } from './utils/services/messageTemplateProcessor.service';
 import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
 import { ObservabilityService } from '../logger/observability.service';
+import { CodeReviewPipelineContext } from './codeReviewPipeline/context/code-review-pipeline.context';
 
 @Injectable()
 export class CommentManagerService implements ICommentManagerService {
@@ -147,22 +148,27 @@ export class CommentManagerService implements ICommentManagerService {
 
                 // Adds custom instructions if provided
                 if (summaryConfig?.customInstructions) {
-                    let customInstructionsText = summaryConfig.customInstructions;
-                    
+                    let customInstructionsText =
+                        summaryConfig.customInstructions;
+
                     // Inject external context if available
-                    if (externalPromptContext?.customInstructions?.references?.length > 0) {
-                        const contextSection = externalPromptContext.customInstructions.references
-                            .map((ref) => {
-                                const header = ref.lineRange
-                                    ? `\n--- Content from ${ref.filePath} (lines ${ref.lineRange.start}-${ref.lineRange.end}) ---\n`
-                                    : `\n--- Content from ${ref.filePath} ---\n`;
-                                return `${header}${ref.content}\n--- End of ${ref.filePath} ---`;
-                            })
-                            .join('\n');
-                        
+                    if (
+                        externalPromptContext?.customInstructions?.references
+                            ?.length > 0
+                    ) {
+                        const contextSection =
+                            externalPromptContext.customInstructions.references
+                                .map((ref) => {
+                                    const header = ref.lineRange
+                                        ? `\n--- Content from ${ref.filePath} (lines ${ref.lineRange.start}-${ref.lineRange.end}) ---\n`
+                                        : `\n--- Content from ${ref.filePath} ---\n`;
+                                    return `${header}${ref.content}\n--- End of ${ref.filePath} ---`;
+                                })
+                                .join('\n');
+
                         customInstructionsText += `\n\n## External Reference Context\n${contextSection}`;
                     }
-                    
+
                     promptBase += `\n\n**Custom Instructions**:\n${customInstructionsText}`;
                 }
 
@@ -388,21 +394,26 @@ export class CommentManagerService implements ICommentManagerService {
         prNumber: number,
         repository: { name: string; id: string },
         summary: string,
+        dryRun: CodeReviewPipelineContext['dryRun'],
     ): Promise<void> {
         try {
             if (!summary) {
                 return;
             }
 
-            await this.codeManagementService.updateDescriptionInPullRequest({
-                organizationAndTeamData,
-                prNumber,
-                repository: {
-                    name: repository.name,
-                    id: repository.id,
+            await this.codeManagementService.updateDescriptionInPullRequest(
+                {
+                    organizationAndTeamData,
+                    prNumber,
+                    repository: {
+                        name: repository.name,
+                        id: repository.id,
+                    },
+                    summary,
+                    dryRun,
                 },
-                summary,
-            });
+                dryRun?.enabled ? PlatformType.INTERNAL : undefined,
+            );
 
             this.logger.log({
                 message: `Updated summary for PR#${prNumber}`,
@@ -440,9 +451,10 @@ export class CommentManagerService implements ICommentManagerService {
         platformType: PlatformType,
         codeReviewConfig?: CodeReviewConfig,
         pullRequestMessages?: IPullRequestMessages,
+        dryRun?: CodeReviewPipelineContext['dryRun'],
     ): Promise<{ commentId: number; noteId: number; threadId?: number }> {
         try {
-            let commentBody;
+            let commentBody: string;
 
             if (pullRequestMessages?.startReviewMessage?.content?.length > 0) {
                 const placeholderContext = await this.getTemplateContext(
@@ -484,7 +496,9 @@ export class CommentManagerService implements ICommentManagerService {
                         id: repository.id,
                     },
                     body: commentBody,
+                    dryRun,
                 },
+                dryRun?.enabled ? PlatformType.INTERNAL : undefined,
             );
 
             if (
@@ -492,13 +506,16 @@ export class CommentManagerService implements ICommentManagerService {
                 pullRequestMessages?.globalSettings?.hideComments
             ) {
                 try {
-                    await this.codeManagementService.minimizeComment({
-                        organizationAndTeamData,
-                        commentId: comment?.node_id
-                            ? comment.node_id.toString()
-                            : comment.id.toString(),
-                        reason: 'OUTDATED',
-                    });
+                    await this.codeManagementService.minimizeComment(
+                        {
+                            organizationAndTeamData,
+                            commentId: comment?.node_id
+                                ? comment.node_id.toString()
+                                : comment.id.toString(),
+                            reason: 'OUTDATED',
+                        },
+                        dryRun?.enabled ? PlatformType.INTERNAL : undefined,
+                    );
                 } catch (error) {
                     this.logger.warn({
                         message: `Comment created but failed to minimize for PR#${prNumber}: ${error.message}`,
@@ -513,7 +530,10 @@ export class CommentManagerService implements ICommentManagerService {
                 }
             }
 
-            const commentId = Number(comment?.id) || null;
+            const commentId =
+                comment?.id !== undefined && comment?.id !== null
+                    ? Number(comment.id)
+                    : null;
 
             let noteId = null;
             let threadId = null;
@@ -598,6 +618,7 @@ export class CommentManagerService implements ICommentManagerService {
         codeReviewConfig?: CodeReviewConfig,
         threadId?: number,
         finalCommentBody?: string,
+        dryRun?: CodeReviewPipelineContext['dryRun'],
     ): Promise<void> {
         try {
             let commentBody = finalCommentBody;
@@ -612,18 +633,22 @@ export class CommentManagerService implements ICommentManagerService {
                 );
             }
 
-            await this.codeManagementService.updateIssueComment({
-                organizationAndTeamData,
-                prNumber,
-                commentId,
-                repository: {
-                    name: repository.name,
-                    id: repository.id,
+            await this.codeManagementService.updateIssueComment(
+                {
+                    organizationAndTeamData,
+                    prNumber,
+                    commentId,
+                    repository: {
+                        name: repository.name,
+                        id: repository.id,
+                    },
+                    body: commentBody,
+                    noteId,
+                    threadId,
+                    dryRun,
                 },
-                body: commentBody,
-                noteId,
-                threadId,
-            });
+                dryRun?.enabled ? PlatformType.INTERNAL : undefined,
+            );
 
             this.logger.log({
                 message: `Updated overall comment for PR#${prNumber}`,
@@ -674,6 +699,7 @@ export class CommentManagerService implements ICommentManagerService {
         repository: { name: string; id: string; language: string },
         lineComments: Comment[],
         language: string,
+        dryRun: CodeReviewPipelineContext['dryRun'],
     ): Promise<{
         lastAnalyzedCommit: any;
         commits: any[];
@@ -732,14 +758,19 @@ export class CommentManagerService implements ICommentManagerService {
             for (const comment of lineComments) {
                 try {
                     const createdComment =
-                        await this.codeManagementService.createReviewComment({
-                            organizationAndTeamData,
-                            repository,
-                            commit: lastAnalyzedCommit,
-                            prNumber,
-                            lineComment: comment,
-                            language,
-                        });
+                        await this.codeManagementService.createReviewComment(
+                            {
+                                organizationAndTeamData,
+                                repository,
+                                commit: lastAnalyzedCommit,
+                                prNumber,
+                                lineComment: comment,
+                                language,
+                                dryRun,
+                            },
+                            dryRun?.enabled ? PlatformType.INTERNAL : undefined,
+                        );
+
                     commentResults.push({
                         comment,
                         deliveryStatus: 'sent',
@@ -1289,6 +1320,7 @@ ${reviewOptions}
         repository: { name: string; id: string; language: string },
         prLevelSuggestions: ISuggestionByPR[],
         language: string,
+        dryRun?: CodeReviewPipelineContext['dryRun'],
     ): Promise<{ commentResults: Array<CommentResult> }> {
         try {
             if (!prLevelSuggestions?.length) {
@@ -1330,19 +1362,25 @@ ${reviewOptions}
                                 language,
                                 organizationAndTeamData,
                             },
+                            dryRun?.enabled ? PlatformType.INTERNAL : undefined,
                         );
 
                     // Criar comentário geral
                     const createdComment =
-                        await this.codeManagementService.createIssueComment({
-                            organizationAndTeamData,
-                            repository: {
-                                name: repository.name,
-                                id: repository.id,
+                        await this.codeManagementService.createIssueComment(
+                            {
+                                organizationAndTeamData,
+                                repository: {
+                                    name: repository.name,
+                                    id: repository.id,
+                                },
+                                prNumber,
+                                body: commentBody,
+                                dryRun,
+                                suggestion,
                             },
-                            prNumber,
-                            body: commentBody,
-                        });
+                            dryRun?.enabled ? PlatformType.INTERNAL : undefined,
+                        );
 
                     if (createdComment?.id) {
                         commentResults.push({
@@ -1575,8 +1613,9 @@ ${reviewOptions}
         codeReviewConfig?: CodeReviewConfig,
         endReviewMessage?: string,
         pullRequestMessagesConfig?: IPullRequestMessages,
+        dryRun?: CodeReviewPipelineContext['dryRun'],
     ): Promise<void> {
-        let commentBody;
+        let commentBody: string;
 
         if (endReviewMessage) {
             commentBody = endReviewMessage;
@@ -1606,16 +1645,20 @@ ${reviewOptions}
             );
         }
 
-        const comment = await this.codeManagementService.createIssueComment({
-            organizationAndTeamData,
-            repository,
-            prNumber,
-            body: commentBody,
-        });
+        const comment = await this.codeManagementService.createIssueComment(
+            {
+                organizationAndTeamData,
+                repository,
+                prNumber,
+                body: commentBody,
+            },
+            dryRun?.enabled ? PlatformType.INTERNAL : undefined,
+        );
 
         if (
             platformType === PlatformType.GITHUB &&
-            pullRequestMessagesConfig?.globalSettings?.hideComments
+            pullRequestMessagesConfig?.globalSettings?.hideComments &&
+            !dryRun?.enabled
         ) {
             await this.codeManagementService.minimizeComment({
                 organizationAndTeamData,

@@ -20,6 +20,10 @@ import type { ContextLayer, ContextPack } from '@context-os-core/interfaces';
 import type { ContextAugmentationsMap } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
 
 export interface CodeReviewPipelineContext extends PipelineContext {
+    dryRun: {
+        enabled: boolean;
+        id?: string;
+    };
     organizationAndTeamData: OrganizationAndTeamData;
     repository: Repository;
     branch: string;

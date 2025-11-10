@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { createHash } from 'crypto';
 import type {
     ContextDependency,
@@ -32,6 +32,12 @@ import {
     prompt_kodyrules_detect_references_user,
 } from '@/shared/utils/langchainCommon/prompts/kodyRulesExternalReferences';
 import { IPromptContextEngineService } from '@/core/domain/prompts/contracts/promptContextEngine.contract';
+import {
+    IIntegrationConfigService,
+    INTEGRATION_CONFIG_SERVICE_TOKEN,
+} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
+import { Repositories } from '@/core/domain/platformIntegrations/types/codeManagement/repositories.type';
 
 interface DetectReferencesParams {
     requirementId: string;
@@ -60,6 +66,8 @@ const DEFAULT_INTENT = 'review';
 @Injectable()
 export class PromptContextEngineService implements IPromptContextEngineService {
     constructor(
+        @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
+        private readonly integrationConfigService: IIntegrationConfigService,
         private readonly promptRunnerService: PromptRunnerService,
         private readonly observabilityService: ObservabilityService,
         private readonly codeManagementService: CodeManagementService,
@@ -318,10 +326,40 @@ export class PromptContextEngineService implements IPromptContextEngineService {
 
         for (const ref of detectedReferences) {
             try {
+                const integrationConfig =
+                    await this.integrationConfigService.findOne({
+                        configKey: IntegrationConfigKey.REPOSITORIES,
+                        team: { uuid: params.organizationAndTeamData?.teamId },
+                        configValue: [{ name: ref.repositoryName?.toString() }],
+                        integration: {
+                            status: true,
+                        },
+                    });
+
+                let targetRepo = {
+                    id: params.repositoryId,
+                    name: ref.repositoryName,
+                };
+
+                if (
+                    integrationConfig &&
+                    integrationConfig?.configValue?.length > 0
+                ) {
+                    const repositories =
+                        integrationConfig?.configValue as Repositories[];
+
+                    targetRepo = repositories?.find(
+                        (repo) => repo.name === ref.repositoryName,
+                    ) ?? {
+                        id: params.repositoryId,
+                        name: ref.repositoryName,
+                    };
+                }
+
                 const found = await this.findFileWithHybridStrategy(
                     ref,
-                    params.repositoryId,
-                    params.repositoryName,
+                    targetRepo.id,
+                    targetRepo.name,
                     params.organizationAndTeamData,
                 );
 
@@ -448,24 +486,14 @@ export class PromptContextEngineService implements IPromptContextEngineService {
     ): Promise<IFileReference[]> {
         try {
             const targetRepoName = ref.repositoryName || repositoryName;
-            const targetRepoId = ref.repositoryName
-                ? ref.repositoryName
-                : repositoryId;
+            const targetRepoId =
+                repositoryId && repositoryId !== ref.repositoryName
+                    ? repositoryId
+                    : ref.repositoryName;
             const targetRepo = {
                 id: targetRepoId,
                 name: targetRepoName,
             };
-
-            this.logger.debug({
-                message: 'Searching for external reference file',
-                context: PromptContextEngineService.name,
-                metadata: {
-                    filePatterns,
-                    targetRepository: targetRepo,
-                    crossRepo: !!ref.repositoryName,
-                    organizationAndTeamData,
-                },
-            });
 
             const files =
                 await this.codeManagementService.getRepositoryAllFiles({
@@ -523,8 +551,7 @@ export class PromptContextEngineService implements IPromptContextEngineService {
                     reference.filePath
                 }|${index}`,
                 metadata: {
-                    repositoryId:
-                        reference.repositoryId ?? params.repositoryId,
+                    repositoryId: reference.repositoryId ?? params.repositoryId,
                     repositoryName:
                         reference.repositoryName ?? params.repositoryName,
                     filePath: reference.filePath,

@@ -10,12 +10,14 @@ import { LOAD_EXTERNAL_CONTEXT_STAGE_TOKEN } from '@/core/infrastructure/adapter
 import { LogModule } from './log.module';
 import { PlatformIntegrationModule } from './platformIntegration.module';
 import { ContextReferenceModule } from './contextReference.module';
+import { IntegrationConfigModule } from './integrationConfig.module';
 
 @Module({
     imports: [
         LogModule,
         forwardRef(() => PlatformIntegrationModule),
         ContextReferenceModule,
+        forwardRef(() => IntegrationConfigModule),
     ],
     providers: [
         {
