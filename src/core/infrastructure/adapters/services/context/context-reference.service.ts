@@ -62,7 +62,7 @@ export class ContextReferenceService implements IContextReferenceService {
         });
 
         const metadataWithRevision = {
-            ...entry.metadata,
+            ...(entry.metadata ?? {}),
             ...(params.revisionId && { revisionId: params.revisionId }),
         };
 

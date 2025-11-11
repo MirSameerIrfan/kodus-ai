@@ -55,10 +55,16 @@ import { mcpToolsToEngineTools } from './tools.js';
  * ```
  */
 export function createMCPAdapter(config: MCPAdapterConfig): MCPAdapter {
+    const logger = createLogger('createMCPAdapter');
+
+    let isConnected = false;
+    let ensurePromise: Promise<void> | null = null;
+    let toolIndexDirty = true;
+
     const registry = new MCPRegistry({
         defaultTimeout: config.defaultTimeout,
         maxRetries: config.maxRetries,
-        onToolsChanged: (serverName) => {
+        onToolsChanged: (serverName: string) => {
             toolIndexDirty = true;
             logger.debug('Tool index marked dirty due to change', {
                 serverName,
@@ -66,18 +72,11 @@ export function createMCPAdapter(config: MCPAdapterConfig): MCPAdapter {
         },
     });
 
-    const logger = createLogger('createMCPAdapter');
-
-    let isConnected = false;
-    let ensurePromise: Promise<void> | null = null;
-    let toolIndexDirty = true;
-
     const adapter: MCPAdapter = {
         /**
          * Connect to all configured MCP servers
          */
         async connect(): Promise<void> {
-            // Always reconnect to ensure fresh connections
             if (isConnected) {
                 await this.disconnect();
             }

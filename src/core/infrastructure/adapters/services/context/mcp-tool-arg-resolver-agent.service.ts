@@ -53,7 +53,6 @@ const MODULE_NAME = 'MCPToolArgResolver';
 @Injectable()
 export class MCPToolArgResolverAgentService extends BaseAgentProvider {
     protected config: DatabaseConnection;
-    private orchestration: SDKOrchestrator | null = null;
     private readonly logger: PinoLoggerService;
     protected readonly defaultLLMConfig = {
         llmProvider: LLMModelProvider.GEMINI_2_5_FLASH,
@@ -86,10 +85,15 @@ export class MCPToolArgResolverAgentService extends BaseAgentProvider {
         // No-op: este serviço não utiliza MCP adapter
     }
 
-    private async createOrchestration(): Promise<void> {
+    private async createRequestOrchestration(
+        organizationAndTeamData: OrganizationAndTeamData,
+    ): Promise<SDKOrchestrator> {
+        await this.fetchBYOKConfig(organizationAndTeamData);
+
+        // Orchestration must be created per-request to avoid state corruption in a singleton service.
         const llmAdapter = this.createLLMAdapter(MODULE_NAME, AGENT_NAME);
 
-        this.orchestration = await createOrchestration({
+        const orchestration = await createOrchestration({
             tenantId: TENANT_ID,
             llmAdapter,
             observability:
@@ -107,7 +111,7 @@ export class MCPToolArgResolverAgentService extends BaseAgentProvider {
             },
         });
 
-        await this.orchestration.createAgent({
+        await orchestration.createAgent({
             name: AGENT_NAME,
             enableSession: false,
             enableState: false,
@@ -121,13 +125,8 @@ export class MCPToolArgResolverAgentService extends BaseAgentProvider {
                 type: PlannerType.REACT,
             },
         });
-    }
 
-    private async initialize(
-        organizationAndTeamData?: OrganizationAndTeamData,
-    ): Promise<void> {
-        await this.createMCPAdapter(organizationAndTeamData!);
-        await this.createOrchestration();
+        return orchestration;
     }
 
     async resolveArgs(params: {
@@ -232,15 +231,12 @@ export class MCPToolArgResolverAgentService extends BaseAgentProvider {
         }
 
         try {
-            await this.fetchBYOKConfig(organizationAndTeamData);
-            await this.initialize(organizationAndTeamData);
-
-            if (!this.orchestration) {
-                throw new Error('Failed to initialize orchestration');
-            }
+            const orchestration = await this.createRequestOrchestration(
+                organizationAndTeamData,
+            );
 
             this.logger.debug({
-                message: 'Orchestration obtained, building prompt',
+                message: 'Orchestration created, building prompt',
                 context: 'MCPToolArgResolverAgentService',
                 metadata: logContext,
             });
@@ -291,14 +287,10 @@ export class MCPToolArgResolverAgentService extends BaseAgentProvider {
                 },
             });
 
-            const result = await this.orchestration.callAgent(
-                AGENT_NAME,
-                prompt,
-                {
-                    thread,
-                    userContext: { organizationAndTeamData },
-                },
-            );
+            const result = await orchestration.callAgent(AGENT_NAME, prompt, {
+                thread,
+                userContext: { organizationAndTeamData },
+            });
 
             this.logger.log({
                 message: 'Agent response received',
@@ -479,11 +471,44 @@ Return ONLY a valid JSON object with this exact structure:
                     : JSON.stringify(response);
 
             // Extract JSON from response (might have markdown code blocks)
-            const jsonMatch =
-                responseStr.match(/```json\s*([\s\S]*?)\s*```/) ||
-                responseStr.match(/```\s*([\s\S]*?)\s*```/);
+            // Use safe extraction to avoid regex backtracking DoS
+            let jsonStr = responseStr;
 
-            const jsonStr = jsonMatch ? jsonMatch[1] : responseStr;
+            // Try to extract from ```json blocks first
+            const jsonBlockStart = responseStr.indexOf('```json');
+            if (jsonBlockStart !== -1) {
+                const jsonBlockEnd = responseStr.indexOf(
+                    '```',
+                    jsonBlockStart + 7,
+                );
+                if (jsonBlockEnd !== -1) {
+                    jsonStr = responseStr
+                        .substring(jsonBlockStart + 7, jsonBlockEnd)
+                        .trim();
+                }
+            } else {
+                // Try generic ``` blocks
+                const genericBlockStart = responseStr.indexOf('```');
+                if (genericBlockStart !== -1) {
+                    const nextNewline = responseStr.indexOf(
+                        '\n',
+                        genericBlockStart + 3,
+                    );
+                    const contentStart =
+                        nextNewline !== -1
+                            ? nextNewline + 1
+                            : genericBlockStart + 3;
+                    const genericBlockEnd = responseStr.indexOf(
+                        '```',
+                        contentStart,
+                    );
+                    if (genericBlockEnd !== -1) {
+                        jsonStr = responseStr
+                            .substring(contentStart, genericBlockEnd)
+                            .trim();
+                    }
+                }
+            }
 
             return JSON.parse(jsonStr.trim()) as ToolArgResolutionOutput;
         } catch (error) {

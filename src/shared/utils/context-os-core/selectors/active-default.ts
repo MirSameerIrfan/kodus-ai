@@ -63,10 +63,13 @@ export class DefaultActiveSelector implements ActiveLayerSelector {
         const snippetText =
             primarySlice?.summary ??
             candidate.item.payload.text ??
-            JSON.stringify(candidate.item.payload.structured ?? candidate.item);
+            (candidate.item.payload.structured
+                ? JSON.stringify(candidate.item.payload.structured)
+                : '');
 
         const resources =
-            this.includeAttachments && Array.isArray(candidate.item.payload.attachments)
+            this.includeAttachments &&
+            Array.isArray(candidate.item.payload.attachments)
                 ? candidate.item.payload.attachments.map(
                       (attachment, index): ContextResourceRef => ({
                           id: `${candidate.item.id}-attachment-${index}`,

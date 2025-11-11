@@ -136,6 +136,30 @@ export class JWTValidator {
      * Custom claim validations
      */
     private validateCustomClaims(payload: JWTClaims): void {
+        // Validate issuer
+        if (this.options.issuer && payload.iss !== this.options.issuer) {
+            throw new Error('Invalid issuer');
+        }
+
+        // Validate audience
+        if (this.options.audience) {
+            const tokenAudiences = payload.aud
+                ? Array.isArray(payload.aud)
+                    ? payload.aud
+                    : [payload.aud]
+                : [];
+
+            const expectedAudiences = Array.isArray(this.options.audience)
+                ? this.options.audience
+                : [this.options.audience];
+
+            if (
+                !expectedAudiences.some((aud) => tokenAudiences.includes(aud))
+            ) {
+                throw new Error('Invalid audience');
+            }
+        }
+
         // Validate required claims
         if (!payload.sub && !payload.jti) {
             throw new Error('Token must have subject (sub) or JWT ID (jti)');

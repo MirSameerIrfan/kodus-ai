@@ -66,22 +66,25 @@ function fallbackCatalogEntries(
     const entries: CatalogEntry[] = limited.map((candidate, index) => {
         const summary =
             candidate.slices?.map((slice) => slice.summary).join('\n') ??
-            candidate.item.payload.text ??
-            JSON.stringify(candidate.item.payload.structured ?? candidate.item);
+            candidate.item.payload?.text ??
+            JSON.stringify(
+                candidate.item.payload?.structured ?? candidate.item,
+            );
 
         const tokens = estimator.estimateText(summary);
         const truncatedSummary =
             tokens > 512 ? `${summary.slice(0, 2048)}... (truncated)` : summary;
 
         return {
-            id: `${candidate.item.id}-catalog-${index}`,
+            id: `${candidate.item?.id ?? 'unknown'}-catalog-${index}`,
             title:
-                candidate.item.metadata.title ??
-                candidate.item.source.location ??
-                candidate.item.id,
+                candidate.item?.metadata?.title ??
+                candidate.item?.source?.location ??
+                candidate.item?.id ??
+                'Untitled',
             summary: truncatedSummary,
             importance: index === 0 ? 'high' : 'medium',
-            references: [{ itemId: candidate.item.id }],
+            references: [{ itemId: candidate.item?.id ?? 'unknown' }],
             metadata: {
                 score: candidate.score,
                 rationale: candidate.rationale,
@@ -92,13 +95,17 @@ function fallbackCatalogEntries(
     return {
         entries,
         insights: limited
-            .map((candidate) => candidate.metadata?.reason as string | undefined)
+            .map(
+                (candidate) => candidate.metadata?.reason as string | undefined,
+            )
             .filter((value): value is string => Boolean(value)),
         runtimeState: {
             fallback: true,
             candidateCount: candidates.length,
         },
-        references: limited.map((candidate) => ({ itemId: candidate.item.id })),
+        references: limited.map((candidate) => ({
+            itemId: candidate.item?.id ?? 'unknown',
+        })),
     };
 }
 
@@ -163,7 +170,9 @@ export class CatalogLayerBuilder implements ContextLayerBuilder {
         const diagnostics: LayerBuildDiagnostics = {
             tokensBefore: entries.reduce((acc, entry) => acc + entry.tokens, 0),
             tokensAfter: total,
-            compactionStrategy: dropped.length ? 'truncate-by-limit' : undefined,
+            compactionStrategy: dropped.length
+                ? 'truncate-by-limit'
+                : undefined,
             notes: summarizeDropped(dropped),
         };
 
