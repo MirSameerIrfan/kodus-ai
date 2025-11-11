@@ -101,7 +101,9 @@ export class PromptContextEngineService implements IPromptContextEngineService {
     ): Promise<DetectionResult> {
         const promptHash = this.calculatePromptHash(params.promptText);
 
-        if (!this.hasLikelyExternalReferences(params.promptText)) {
+        const skipPrefilter = params.detectionMode === 'rule';
+
+        if (!skipPrefilter && !this.hasLikelyExternalReferences(params.promptText)) {
             this.logger.debug({
                 message:
                     'No external reference patterns detected (regex pre-filter)',

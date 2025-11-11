@@ -8,19 +8,34 @@ jest.mock('@kodus/flow', () => ({
             }),
         }),
     }),
+    IdGenerator: {
+        generate: jest.fn().mockReturnValue('mock-id'),
+    },
 }));
+
+const buildContextPackMock = jest.fn();
+jest.mock(
+    '@/core/infrastructure/adapters/services/context/code-review-context-pack.service',
+    () => ({
+        CodeReviewContextPackService: jest
+            .fn()
+            .mockImplementation(() => ({
+                buildContextPack: buildContextPackMock,
+            })),
+    }),
+);
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { ExternalReferenceLoaderService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceLoader.service';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { CodeReviewContextPackService } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
 import { IKodyRule } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
 import { AnalysisContext } from '@/config/types/general/codeReview.type';
 
 describe('ExternalReferenceLoaderService', () => {
     let service: ExternalReferenceLoaderService;
-    let mockCodeManagementService: jest.Mocked<CodeManagementService>;
     let mockLogger: jest.Mocked<PinoLoggerService>;
+    let mockContextPackService: jest.Mocked<CodeReviewContextPackService>;
 
     const mockContext: AnalysisContext = {
         organizationAndTeamData: {
@@ -39,26 +54,28 @@ describe('ExternalReferenceLoaderService', () => {
     } as any;
 
     beforeEach(async () => {
-        mockCodeManagementService = {
-            getRepositoryContentFile: jest.fn(),
-        } as any;
-
         mockLogger = {
             log: jest.fn(),
             warn: jest.fn(),
             error: jest.fn(),
+            debug: jest.fn(),
+        } as any;
+
+        buildContextPackMock.mockReset();
+        mockContextPackService = {
+            buildContextPack: buildContextPackMock,
         } as any;
 
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 ExternalReferenceLoaderService,
                 {
-                    provide: CodeManagementService,
-                    useValue: mockCodeManagementService,
-                },
-                {
                     provide: PinoLoggerService,
                     useValue: mockLogger,
+                },
+                {
+                    provide: CodeReviewContextPackService,
+                    useValue: mockContextPackService,
                 },
             ],
         }).compile();
@@ -69,296 +86,210 @@ describe('ExternalReferenceLoaderService', () => {
     });
 
     describe('loadReferences', () => {
-        it('should load and decode base64 content', async () => {
+        it('should return knowledge references and augmentations from context pack', async () => {
             const rule: IKodyRule = {
                 uuid: 'rule-1',
-                title: 'Check owners',
-                externalReferences: [
-                    {
-                        filePath: '.github/CODEOWNERS',
-                        description: 'file ownership',
-                    },
-                ],
+                contextReferenceId: 'ctx-ref-1',
             } as any;
 
-            const content = 'admin/* @team-admin\napi/* @team-api';
-            mockCodeManagementService.getRepositoryContentFile.mockResolvedValue({
-                data: {
-                    content: Buffer.from(content).toString('base64'),
-                    encoding: 'base64',
+            mockContextPackService.buildContextPack.mockResolvedValue({
+                pack: {
+                    layers: [
+                        {
+                            metadata: { sourceType: 'knowledge' },
+                            content: [
+                                {
+                                    filePath: 'docs/rule.md',
+                                    content: 'Rule content',
+                                    description: 'Important rule',
+                                },
+                                {
+                                    filePath: 'docs/invalid.json',
+                                    content: 123,
+                                },
+                            ],
+                        },
+                        {
+                            metadata: { sourceType: 'other' },
+                            content: [
+                                {
+                                    filePath: 'ignored',
+                                    content: 'should be ignored',
+                                },
+                            ],
+                        },
+                    ],
+                },
+                augmentations: {
+                    requirementA: {
+                        path: ['requirementA'],
+                        outputs: [
+                            {
+                                success: true,
+                                toolName: 'tool-1',
+                                provider: 'provider-1',
+                                output: 'value',
+                            },
+                            {
+                                success: false,
+                                toolName: 'tool-1',
+                                provider: 'provider-1',
+                                error: 'missing args',
+                            },
+                        ],
+                    },
                 },
             });
 
             const result = await service.loadReferences(rule, mockContext);
 
-            expect(result).toEqual([
+            expect(result.references).toEqual([
                 {
-                    filePath: '.github/CODEOWNERS',
-                    content: 'admin/* @team-admin\napi/* @team-api',
-                    description: 'file ownership',
+                    filePath: 'docs/rule.md',
+                    content: 'Rule content',
+                    description: 'Important rule',
                 },
             ]);
-        });
 
-        it('should handle plain text content without encoding', async () => {
-            const rule: IKodyRule = {
-                uuid: 'rule-1',
-                externalReferences: [
-                    {
-                        filePath: 'package.json',
-                    },
-                ],
-            } as any;
-
-            const content = '{"name": "test-package", "version": "1.0.0"}';
-            mockCodeManagementService.getRepositoryContentFile.mockResolvedValue({
-                data: {
-                    content,
-                    encoding: '',
-                },
+            expect(result.augmentations.size).toBe(1);
+            expect(result.augmentations.get('requirementA::0')).toEqual({
+                provider: 'provider-1',
+                toolName: 'tool-1',
+                output: 'value',
             });
-
-            const result = await service.loadReferences(rule, mockContext);
-
-            expect(result[0].content).toBe(content);
-        });
-
-        it('should load multiple references for a single rule', async () => {
-            const rule: IKodyRule = {
-                uuid: 'rule-1',
-                externalReferences: [
-                    { filePath: 'CODEOWNERS', fileType: 'codeowners' },
-                    { filePath: 'src/types/UserRole.enum.ts', fileType: 'enum' },
-                ],
-            } as any;
-
-            mockCodeManagementService.getRepositoryContentFile
-                .mockResolvedValueOnce({
-                    data: { content: 'owner1', encoding: '' },
-                })
-                .mockResolvedValueOnce({
-                    data: { content: 'enum UserRole {}', encoding: '' },
-                });
-
-            const result = await service.loadReferences(rule, mockContext);
-
-            expect(result).toHaveLength(2);
-            expect(result[0].content).toBe('owner1');
-            expect(result[1].content).toBe('enum UserRole {}');
-        });
-
-        it('should return empty array for rule without external references', async () => {
-            const rule: IKodyRule = {
-                uuid: 'rule-1',
-                title: 'Simple rule',
-            } as any;
-
-            const result = await service.loadReferences(rule, mockContext);
-
-            expect(result).toEqual([]);
-            expect(
-                mockCodeManagementService.getRepositoryContentFile,
-            ).not.toHaveBeenCalled();
-        });
-
-        it('should skip references that fail to load', async () => {
-            const rule: IKodyRule = {
-                uuid: 'rule-1',
-                externalReferences: [
-                    { filePath: 'file1.ts' },
-                    { filePath: 'file2.ts' },
-                    { filePath: 'file3.ts' },
-                ],
-            } as any;
-
-            mockCodeManagementService.getRepositoryContentFile
-                .mockResolvedValueOnce({ data: { content: 'content1' } })
-                .mockRejectedValueOnce(new Error('404 Not Found'))
-                .mockResolvedValueOnce({ data: { content: 'content3' } });
-
-            const result = await service.loadReferences(rule, mockContext);
-
-            expect(result).toHaveLength(2);
-            expect(result[0].filePath).toBe('file1.ts');
-            expect(result[1].filePath).toBe('file3.ts');
-            expect(mockLogger.error).toHaveBeenCalledWith(
+            expect(mockLogger.log).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    message: 'Failed to load external reference file',
+                    message:
+                        'Loaded references via Context Pack for Kody Rule context',
                 }),
             );
         });
 
-        it('should warn when file exists but content is empty', async () => {
+        it('should return empty arrays when rule has no contextReferenceId', async () => {
             const rule: IKodyRule = {
                 uuid: 'rule-1',
-                externalReferences: [
-                    { filePath: 'empty.ts' },
-                ],
             } as any;
-
-            mockCodeManagementService.getRepositoryContentFile.mockResolvedValue({
-                data: {
-                    content: '',
-                    encoding: '',
-                },
-            });
 
             const result = await service.loadReferences(rule, mockContext);
 
-            expect(result).toEqual([]);
+            expect(result.references).toEqual([]);
+            expect(result.augmentations.size).toBe(0);
+            expect(mockLogger.debug).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    message:
+                        'Rule has no contextReferenceId, skipping reference loading',
+                }),
+            );
+            expect(mockContextPackService.buildContextPack).not.toHaveBeenCalled();
+        });
+
+        it('should handle errors thrown by context pack service', async () => {
+            const rule: IKodyRule = {
+                uuid: 'rule-1',
+                contextReferenceId: 'ctx-ref-1',
+            } as any;
+
+            mockContextPackService.buildContextPack.mockRejectedValue(
+                new Error('boom'),
+            );
+
+            const result = await service.loadReferences(rule, mockContext);
+
+            expect(result.references).toEqual([]);
+            expect(result.augmentations.size).toBe(0);
             expect(mockLogger.warn).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    message: 'External reference file found but content is empty',
+                    message: 'Failed to load references via Context Pack',
                 }),
             );
-        });
-
-        it('should call getRepositoryContentFile with correct parameters', async () => {
-            const rule: IKodyRule = {
-                uuid: 'rule-1',
-                externalReferences: [
-                    { filePath: 'test.ts' },
-                ],
-            } as any;
-
-            mockCodeManagementService.getRepositoryContentFile.mockResolvedValue({
-                data: { content: 'test content' },
-            });
-
-            await service.loadReferences(rule, mockContext);
-
-            expect(
-                mockCodeManagementService.getRepositoryContentFile,
-            ).toHaveBeenCalledWith({
-                organizationAndTeamData: mockContext.organizationAndTeamData,
-                repository: {
-                    id: 'repo-123',
-                    name: 'test-repo',
-                },
-                file: { filename: 'test.ts' },
-                pullRequest: mockContext.pullRequest,
-            });
         });
     });
 
     describe('loadReferencesForRules', () => {
-        it('should load references for multiple rules', async () => {
+        it('should aggregate references and augmentations for multiple rules', async () => {
             const rules: Partial<IKodyRule>[] = [
-                {
-                    uuid: 'rule-1',
-                    externalReferences: [{ filePath: 'file1.ts', fileType: 'enum' }],
-                },
-                {
-                    uuid: 'rule-2',
-                    externalReferences: [{ filePath: 'file2.ts', fileType: 'config' }],
-                },
+                { uuid: 'rule-1', contextReferenceId: 'ctx-1' },
+                { uuid: 'rule-2', contextReferenceId: 'ctx-2' },
+                { uuid: 'rule-without-context' },
             ];
 
-            mockCodeManagementService.getRepositoryContentFile
-                .mockResolvedValueOnce({ data: { content: 'content1' } })
-                .mockResolvedValueOnce({ data: { content: 'content2' } });
+            mockContextPackService.buildContextPack
+                .mockResolvedValueOnce({
+                    pack: {
+                        layers: [
+                            {
+                                metadata: { sourceType: 'knowledge' },
+                                content: [
+                                    {
+                                        filePath: 'docs/rule1.md',
+                                        content: 'content-1',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                    augmentations: {
+                        requirementA: {
+                            outputs: [
+                                {
+                                    success: true,
+                                    toolName: 'tool-A',
+                                    provider: 'provider-A',
+                                    output: 'value-A',
+                                },
+                            ],
+                        },
+                    },
+                })
+                .mockResolvedValueOnce({
+                    pack: {
+                        layers: [
+                            {
+                                metadata: { sourceType: 'knowledge' },
+                                content: [
+                                    {
+                                        filePath: 'docs/rule2.md',
+                                        content: 'content-2',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                    augmentations: undefined,
+                });
 
             const result = await service.loadReferencesForRules(
                 rules,
                 mockContext,
             );
 
-            expect(result.size).toBe(2);
-            expect(result.get('rule-1')).toHaveLength(1);
-            expect(result.get('rule-1')?.[0].content).toBe('content1');
-            expect(result.get('rule-2')).toHaveLength(1);
-            expect(result.get('rule-2')?.[0].content).toBe('content2');
-        });
+            expect(result.referencesMap.size).toBe(2);
+            expect(result.referencesMap.get('rule-1')).toEqual([
+                { filePath: 'docs/rule1.md', content: 'content-1' },
+            ]);
+            expect(result.referencesMap.get('rule-2')).toEqual([
+                { filePath: 'docs/rule2.md', content: 'content-2' },
+            ]);
 
-        it('should skip rules without uuid', async () => {
-            const rules: Partial<IKodyRule>[] = [
-                {
-                    externalReferences: [{ filePath: 'file1.ts' }],
+            expect(result.mcpResultsMap.size).toBe(1);
+            expect(result.mcpResultsMap.get('rule-1')).toEqual({
+                'requirementA::0': {
+                    provider: 'provider-A',
+                    toolName: 'tool-A',
+                    output: 'value-A',
                 },
-            ];
-
-            const result = await service.loadReferencesForRules(
-                rules,
-                mockContext,
-            );
-
-            expect(result.size).toBe(0);
-            expect(
-                mockCodeManagementService.getRepositoryContentFile,
-            ).not.toHaveBeenCalled();
-        });
-
-        it('should skip rules without external references', async () => {
-            const rules: Partial<IKodyRule>[] = [
-                {
-                    uuid: 'rule-1',
-                    title: 'Simple rule',
-                },
-            ];
-
-            const result = await service.loadReferencesForRules(
-                rules,
-                mockContext,
-            );
-
-            expect(result.size).toBe(0);
-            expect(
-                mockCodeManagementService.getRepositoryContentFile,
-            ).not.toHaveBeenCalled();
-        });
-
-        it('should not include rules where all references failed to load', async () => {
-            const rules: Partial<IKodyRule>[] = [
-                {
-                    uuid: 'rule-1',
-                    externalReferences: [{ filePath: 'missing.ts' }],
-                },
-            ];
-
-            mockCodeManagementService.getRepositoryContentFile.mockRejectedValue(
-                new Error('404'),
-            );
-
-            const result = await service.loadReferencesForRules(
-                rules,
-                mockContext,
-            );
-
-            expect(result.size).toBe(0);
-        });
-
-        it('should log aggregated statistics', async () => {
-            const rules: Partial<IKodyRule>[] = [
-                {
-                    uuid: 'rule-1',
-                    externalReferences: [
-                        { filePath: 'file1.ts' },
-                        { filePath: 'file2.ts' },
-                    ],
-                },
-                {
-                    uuid: 'rule-2',
-                    externalReferences: [{ filePath: 'file3.ts' }],
-                },
-            ];
-
-            mockCodeManagementService.getRepositoryContentFile.mockResolvedValue({
-                data: { content: 'test' },
             });
-
-            await service.loadReferencesForRules(rules, mockContext);
 
             expect(mockLogger.log).toHaveBeenCalledWith(
                 expect.objectContaining({
                     message: 'Loaded external references for rules',
                     metadata: expect.objectContaining({
-                        totalRules: 2,
+                        totalRules: 3,
                         rulesWithReferences: 2,
-                        totalReferencesLoaded: 3,
+                        totalReferencesLoaded: 2,
                     }),
                 }),
             );
         });
     });
 });
-

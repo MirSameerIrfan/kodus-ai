@@ -351,9 +351,12 @@ export class CodeReviewContextPackService {
                     message: 'MCP marker replacement: replacement completed',
                     context: CodeReviewContextPackService.name,
                     metadata: {
-                        resultStringified: JSON.stringify(
-                            processedOverrides,
-                        ).substring(0, 500),
+                        resultPreview: processedOverrides
+                            ? JSON.stringify(processedOverrides).substring(
+                                  0,
+                                  500,
+                              )
+                            : 'undefined',
                     },
                 });
             }

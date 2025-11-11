@@ -1157,6 +1157,33 @@ export class KodyRulesSyncService {
             return;
         }
 
+        let resolvedTeamId: string | undefined =
+            organizationAndTeamData.teamId;
+        if (!resolvedTeamId && repositoryId !== 'global') {
+            try {
+                resolvedTeamId =
+                    await this.getAdditionalInfoHelper.getTeamIdByOrganizationAndRepository(
+                        organizationAndTeamData.organizationId,
+                        repositoryId,
+                    );
+            } catch (error) {
+                this.logger.warn({
+                    message:
+                        'Failed to resolve team for repository while syncing context references',
+                    context: KodyRulesSyncService.name,
+                    error,
+                    metadata: {
+                        repositoryId,
+                        organizationAndTeamData,
+                    },
+                });
+            }
+        }
+
+        const detectionOrgData: OrganizationAndTeamData = resolvedTeamId
+            ? { ...organizationAndTeamData, teamId: resolvedTeamId }
+            : organizationAndTeamData;
+
         let repositoryName = repositoryId;
         try {
             repositoryName = await this.resolveRepositoryName(
@@ -1200,7 +1227,7 @@ export class KodyRulesSyncService {
                         fields: detectionFields,
                         repositoryId,
                         repositoryName,
-                        organizationAndTeamData,
+                        organizationAndTeamData: detectionOrgData,
                     },
                 );
 

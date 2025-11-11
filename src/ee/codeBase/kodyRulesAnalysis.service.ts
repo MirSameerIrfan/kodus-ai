@@ -419,10 +419,10 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
                     kodyRulesCount: baseContext.kodyRules?.length || 0,
                 },
             });
+
             return { codeSuggestions: [] };
         }
 
-        // 3) Load external references for rules that have them
         const {
             referencesMap: externalReferencesMap,
             mcpResultsMap: externalMcpResultsMap,
@@ -431,22 +431,25 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
             context,
         );
 
-        // Filter out rules that have contextReferenceId but failed to load references
         const rulesWithLoadedReferences = baseContext.kodyRules.filter(
             (rule) => {
                 const fullRule = rule as Partial<IKodyRule>;
-                // If rule has no contextReferenceId, include it (no references to load)
                 if (!fullRule.contextReferenceId) {
                     return true;
                 }
-                // If rule has contextReferenceId and was loaded successfully, include it
-                if (fullRule.uuid && externalReferencesMap.has(fullRule.uuid)) {
-                    return true;
+
+                if (fullRule.uuid) {
+                    const hasKnowledge = externalReferencesMap.has(fullRule.uuid);
+                    const hasMcp = externalMcpResultsMap.has(fullRule.uuid);
+
+                    if (hasKnowledge || hasMcp) {
+                        return true;
+                    }
                 }
-                // Rule has contextReferenceId but failed to load - skip it
+
                 this.logger.warn({
                     message:
-                        'Skipping rule with contextReferenceId that failed to load references',
+                        'Skipping rule with contextReferenceId that failed to load references or MCP results',
                     context: KodyRulesAnalysisService.name,
                     metadata: {
                         ruleUuid: fullRule.uuid,
@@ -454,13 +457,14 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
                         contextReferenceId: fullRule.contextReferenceId,
                     },
                 });
+
                 return false;
             },
         );
 
         if (rulesWithLoadedReferences.length === 0) {
             this.logger.log({
-                message: `No rules with loaded references for file: ${fileContext?.file?.filename}`,
+                message: `No rules with external context (knowledge or MCP) for file: ${fileContext?.file?.filename}`,
                 context: KodyRulesAnalysisService.name,
                 metadata: {
                     organizationAndTeamData,
@@ -476,10 +480,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
         // 4) Execute MCPs for rules that have contextReferenceId
         const mcpResultsMap = externalMcpResultsMap.size
             ? externalMcpResultsMap
-            : await this.executeMCPsForRules(
-                  baseContext.kodyRules,
-                  context,
-              );
+            : new Map<string, Record<string, unknown>>();
 
         let extendedContext = {
             ...baseContext,
@@ -916,6 +917,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
             )
             ?.map((rule) => ({
                 uuid: rule?.uuid,
+                title: rule?.title,
                 rule: rule?.rule,
                 severity: rule?.severity,
                 examples: rule?.examples ?? [],
@@ -1234,24 +1236,6 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
         }
     }
 
-    private async executeMCPsForRules(
-        rules: Array<Partial<IKodyRule>>,
-        context: AnalysisContext,
-    ): Promise<Map<string, Record<string, unknown>>> {
-        this.logger.debug({
-            message:
-                'Skipping MCP execution because results are provided by Context Pack',
-            context: KodyRulesAnalysisService.name,
-            metadata: {
-                rulesCount: rules.length,
-                hasSharedAugmentations:
-                    !!context.sharedContextAugmentations &&
-                    Object.keys(context.sharedContextAugmentations).length > 0,
-            },
-        });
-
-        return new Map<string, Record<string, unknown>>();
-    }
 
     private buildTags(
         provider: LLMModelProvider,

@@ -226,18 +226,21 @@ export class KodyRulesPrLevelAnalysisService
 
         const rulesWithLoadedReferences = filteredKodyRules.filter((rule) => {
             const fullRule = rule as Partial<IKodyRule>;
-            // If rule has no contextReferenceId, include it (no references to load)
             if (!fullRule.contextReferenceId) {
                 return true;
             }
-            // If rule has contextReferenceId and was loaded successfully, include it
-            if (fullRule.uuid && externalReferencesMap.has(fullRule.uuid)) {
-                return true;
+
+            if (fullRule.uuid) {
+                const hasKnowledge = externalReferencesMap.has(fullRule.uuid);
+                const hasMcp = mcpResultsMap.has(fullRule.uuid);
+                if (hasKnowledge || hasMcp) {
+                    return true;
+                }
             }
-            // Rule has contextReferenceId but failed to load - skip it
+
             this.logger.warn({
                 message:
-                    'Skipping PR-level rule with contextReferenceId that failed to load references',
+                    'Skipping PR-level rule with contextReferenceId that failed to load references or MCP results',
                 context: KodyRulesPrLevelAnalysisService.name,
                 metadata: {
                     ruleUuid: fullRule.uuid,
@@ -251,7 +254,7 @@ export class KodyRulesPrLevelAnalysisService
 
         if (rulesWithLoadedReferences.length === 0) {
             this.logger.log({
-                message: `No PR-level rules with loaded references for PR#${prNumber}`,
+                message: `No PR-level rules with external context (knowledge or MCP) for PR#${prNumber}`,
                 context: KodyRulesPrLevelAnalysisService.name,
                 metadata: {
                     organizationAndTeamData,

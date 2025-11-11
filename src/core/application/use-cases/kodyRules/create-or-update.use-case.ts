@@ -159,6 +159,31 @@ export class CreateOrUpdateKodyRulesUseCase {
         return new Promise((resolve) => {
             setImmediate(async () => {
                 try {
+                    let resolvedTeamId: string | undefined;
+                    if (
+                        repositoryId !== 'global' &&
+                        !organizationAndTeamData.teamId
+                    ) {
+                        try {
+                            resolvedTeamId =
+                                await this.getAdditionalInfoHelper.getTeamIdByOrganizationAndRepository(
+                                    organizationAndTeamData.organizationId,
+                                    repositoryId,
+                                );
+                        } catch (error) {
+                            this.logger.warn({
+                                message:
+                                    'Failed to resolve team for repository, detection may miss cross-repo context',
+                                context: CreateOrUpdateKodyRulesUseCase.name,
+                                error,
+                                metadata: {
+                                    repositoryId,
+                                    organizationAndTeamData,
+                                },
+                            });
+                        }
+                    }
+
                     let repositoryName: string;
                     try {
                         // Para repositoryId "global", usar o próprio ID como nome
@@ -184,6 +209,14 @@ export class CreateOrUpdateKodyRulesUseCase {
                         });
                         repositoryName = repositoryId;
                     }
+
+                    const detectionOrgData: OrganizationAndTeamData =
+                        resolvedTeamId
+                            ? {
+                                  ...organizationAndTeamData,
+                                  teamId: resolvedTeamId,
+                              }
+                            : organizationAndTeamData;
 
                     const detectionFields: ContextDetectionField[] = [
                         {
@@ -212,7 +245,7 @@ export class CreateOrUpdateKodyRulesUseCase {
                                 fields: detectionFields,
                                 repositoryId,
                                 repositoryName,
-                                organizationAndTeamData,
+                                organizationAndTeamData: detectionOrgData,
                             },
                         );
 

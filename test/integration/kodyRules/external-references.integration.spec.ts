@@ -32,7 +32,6 @@ import { CreateOrUpdateKodyRulesUseCase } from '@/core/application/use-cases/kod
 import { ExternalReferenceDetectorService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceDetector.service';
 import { ExternalReferenceLoaderService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceLoader.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { KodyRulesAnalysisService } from '@/ee/codeBase/kodyRulesAnalysis.service';
 import {
     CreateKodyRuleDto,
     KodyRuleSeverity,
@@ -46,6 +45,7 @@ import { AnalysisContext } from '@/config/types/general/codeReview.type';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
 import { PromptRunnerService } from '@kodus/kodus-common/llm';
+import { CodeReviewContextPackService } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
 
 describe('External References - Integration Tests', () => {
     let createOrUpdateUseCase: CreateOrUpdateKodyRulesUseCase;
@@ -56,11 +56,15 @@ describe('External References - Integration Tests', () => {
     let mockLogger: jest.Mocked<PinoLoggerService>;
     let mockObservabilityService: jest.Mocked<ObservabilityService>;
     let mockPromptRunnerService: any;
+    let mockContextPackService: jest.Mocked<CodeReviewContextPackService>;
 
     beforeEach(async () => {
         mockCodeManagementService = {
             getRepositoryAllFiles: jest.fn(),
             getRepositoryContentFile: jest.fn(),
+        } as any;
+        mockContextPackService = {
+            buildContextPack: jest.fn(),
         } as any;
 
         mockKodyRulesService = {
@@ -71,6 +75,7 @@ describe('External References - Integration Tests', () => {
             log: jest.fn(),
             warn: jest.fn(),
             error: jest.fn(),
+            debug: jest.fn(),
         } as any;
 
         mockObservabilityService = {
@@ -105,6 +110,10 @@ describe('External References - Integration Tests', () => {
                 {
                     provide: PinoLoggerService,
                     useValue: mockLogger,
+                },
+                {
+                    provide: CodeReviewContextPackService,
+                    useValue: mockContextPackService,
                 },
                 {
                     provide: ObservabilityService,
@@ -187,12 +196,23 @@ describe('External References - Integration Tests', () => {
             ]);
 
             const codeownersContent = 'admin/* @admin-team\napi/* @api-team';
-            mockCodeManagementService.getRepositoryContentFile.mockResolvedValue({
-                data: {
-                    content: Buffer.from(codeownersContent).toString('base64'),
-                    encoding: 'base64',
+            mockContextPackService.buildContextPack.mockResolvedValue({
+                pack: {
+                    layers: [
+                        {
+                            metadata: { sourceType: 'knowledge' },
+                            content: [
+                                {
+                                    filePath: '.github/CODEOWNERS',
+                                    content: codeownersContent,
+                                    description: 'file ownership mapping',
+                                },
+                            ],
+                        },
+                    ],
                 },
             });
+            (kodyRule as any).contextReferenceId = 'ctx-ref-1';
 
             const loadedRefs = await loaderService.loadReferences(
                 kodyRule as any,
@@ -203,13 +223,14 @@ describe('External References - Integration Tests', () => {
                 } as any,
             );
 
-            expect(loadedRefs).toEqual([
+            expect(loadedRefs.references).toEqual([
                 {
                     filePath: '.github/CODEOWNERS',
                     content: codeownersContent,
                     description: 'file ownership mapping',
                 },
             ]);
+            expect(loadedRefs.augmentations.size).toBe(0);
         });
 
         it('should handle multiple references in single rule', async () => {
@@ -448,7 +469,7 @@ describe('External References - Integration Tests', () => {
             expect(result).toEqual([]);
         });
 
-        it('should handle file loading errors during PR analysis', async () => {
+        it('should handle context pack errors during PR analysis', async () => {
             const mockContext: AnalysisContext = {
                 organizationAndTeamData: { organizationId: 'org-123' },
                 repository: { id: 'repo-123', name: 'test-repo' },
@@ -457,18 +478,17 @@ describe('External References - Integration Tests', () => {
 
             const rule = {
                 uuid: 'rule-1',
-                externalReferences: [
-                    { filePath: '.github/CODEOWNERS' },
-                ],
+                contextReferenceId: 'ctx-ref-1',
             } as any;
 
-            mockCodeManagementService.getRepositoryContentFile.mockRejectedValue(
-                new Error('File not found'),
+            mockContextPackService.buildContextPack.mockRejectedValue(
+                new Error('Context OS unavailable'),
             );
 
             const result = await loaderService.loadReferences(rule, mockContext);
 
-            expect(result).toEqual([]);
+            expect(result.references).toEqual([]);
+            expect(result.augmentations.size).toBe(0);
         });
     });
 
@@ -626,4 +646,3 @@ describe('External References - Integration Tests', () => {
         });
     });
 });
-
