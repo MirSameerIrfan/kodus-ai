@@ -142,16 +142,16 @@ export class PermissionValidationService {
                 validation.planType,
             );
 
-            let byokConfig: BYOKConfig | null = null;
+            const byokConfig = await this.getBYOKConfig(
+                organizationAndTeamData,
+            );
 
             // 4. Managed plans usam nossas keys
-            if (identifiedPlanType === PlanType.MANAGED) {
-                byokConfig = null; // Usa keys da Kodus
-            }
+            // if (identifiedPlanType === PlanType.MANAGED) {
+            //     byokConfig = null; // Usa keys da Kodus
+            // }
             // 5. Free/BYOK plans precisam de BYOK config (verificar ANTES de validar usuário)
-            else if (this.requiresBYOK(identifiedPlanType)) {
-                byokConfig = await this.getBYOKConfig(organizationAndTeamData);
-
+            if (this.requiresBYOK(identifiedPlanType)) {
                 if (!byokConfig) {
                     this.logger.warn({
                         message: `BYOK required but not configured for plan ${validation.planType}`,
@@ -336,55 +336,49 @@ export class PermissionValidationService {
             );
 
             // Managed plans usam nossas keys
-            if (identifiedPlanType === PlanType.MANAGED) {
-                this.logger.log({
-                    message: 'Using managed keys for operation',
-                    context: contextName || PermissionValidationService.name,
-                    metadata: {
-                        organizationAndTeamData,
-                        planType: validation?.planType,
-                        identifiedPlanType,
-                    },
-                });
-                return null;
-            }
+            // if (identifiedPlanType === PlanType.MANAGED) {
+            //     this.logger.log({
+            //         message: 'Using managed keys for operation',
+            //         context: contextName || PermissionValidationService.name,
+            //         metadata: {
+            //             organizationAndTeamData,
+            //             planType: validation?.planType,
+            //             identifiedPlanType,
+            //         },
+            //     });
+            //     return null;
+            // }
 
             // Free ou BYOK plans precisam de BYOK config
-            if (this.requiresBYOK(identifiedPlanType)) {
-                const byokConfig = await this.getBYOKConfig(
-                    organizationAndTeamData,
-                );
+            const byokConfig = await this.getBYOKConfig(
+                organizationAndTeamData,
+            );
 
-                if (!byokConfig) {
-                    this.logger.warn({
-                        message: `BYOK required but not configured for plan ${validation?.planType}`,
-                        context:
-                            contextName || PermissionValidationService.name,
-                        metadata: {
-                            organizationAndTeamData,
-                            planType: validation?.planType,
-                        },
-                    });
-
-                    throw new Error('BYOK_NOT_CONFIGURED');
-                }
-
-                this.logger.log({
-                    message: 'Using BYOK configuration for operation',
+            if (!byokConfig && this.requiresBYOK(identifiedPlanType)) {
+                this.logger.warn({
+                    message: `BYOK required but not configured for plan ${validation?.planType}`,
                     context: contextName || PermissionValidationService.name,
                     metadata: {
                         organizationAndTeamData,
                         planType: validation?.planType,
-                        provider: byokConfig?.main?.provider,
-                        model: byokConfig?.main?.model,
                     },
                 });
 
-                return byokConfig;
+                throw new Error('BYOK_NOT_CONFIGURED');
             }
 
-            // Caso não identificado, usar keys gerenciadas
-            return null;
+            this.logger.log({
+                message: 'Using BYOK configuration for operation',
+                context: contextName || PermissionValidationService.name,
+                metadata: {
+                    organizationAndTeamData,
+                    planType: validation?.planType,
+                    provider: byokConfig?.main?.provider,
+                    model: byokConfig?.main?.model,
+                },
+            });
+
+            return byokConfig;
         } catch (error) {
             if (error.message === 'BYOK_NOT_CONFIGURED') {
                 throw error; // Re-throw para ser tratado pelo caller
@@ -468,6 +462,6 @@ export class PermissionValidationService {
             organizationAndTeamData,
         );
 
-        return byokConfig?.configValue;
+        return byokConfig?.configValue || null;
     }
 }

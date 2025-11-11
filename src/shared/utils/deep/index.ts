@@ -72,21 +72,36 @@ export function deepDifference<T extends object>(
     return result;
 }
 
-export function deepSort<T>(obj: T): T {
-    if (Array.isArray(obj)) {
-        return obj
-            .filter((item) => item !== undefined)
-            .map(deepSort) as unknown as T;
-    } else if (isObject(obj)) {
-        const sortedKeys = Object.keys(obj).sort();
+const CIRCULAR_REFERENCE_PLACEHOLDER = '[Circular]';
+
+export function deepSort<T>(obj: T, seen = new WeakSet<object>()): T {
+    if (obj === null || typeof obj !== 'object') {
+        return obj;
+    }
+
+    if (seen.has(obj as object)) {
+        return CIRCULAR_REFERENCE_PLACEHOLDER as unknown as T;
+    }
+
+    seen.add(obj as object);
+
+    try {
+        if (Array.isArray(obj)) {
+            return obj
+                .filter((item) => item !== undefined)
+                .map((item) => deepSort(item, seen)) as unknown as T;
+        }
+
+        const sortedKeys = Object.keys(obj as object).sort();
         const result: any = {};
         for (const key of sortedKeys) {
             const value = (obj as any)[key];
             if (value !== undefined) {
-                result[key] = deepSort(value);
+                result[key] = deepSort(value, seen);
             }
         }
         return result;
+    } finally {
+        seen.delete(obj as object);
     }
-    return obj;
 }
