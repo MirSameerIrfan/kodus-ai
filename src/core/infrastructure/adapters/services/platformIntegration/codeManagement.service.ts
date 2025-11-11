@@ -22,13 +22,11 @@ import {
     CodeSuggestion,
     CommentResult,
     Repository,
-    ReviewComment,
 } from '@/config/types/general/codeReview.type';
 import { ICodeManagementService } from '@/core/domain/platformIntegrations/interfaces/code-management.interface';
 import { GitCloneParams } from '@/core/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
 import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
 import { RepositoryFile } from '@/core/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
-import { CommitLeadTimeForChange } from '@/core/domain/platformIntegrations/types/codeManagement/commitLeadTimeForChange.type';
 import {
     GitHubReaction,
     GitlabReaction,

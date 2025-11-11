@@ -77,8 +77,6 @@ export class GetCodeReviewParameterUseCase {
 
             const filteredRepositories = [];
             for (const repo of parameters.configValue.repositories) {
-                // if (!repo.isSelected) continue;
-
                 const hasPermission = await this.authorizationService.check({
                     user,
                     action: Action.Read,
@@ -167,7 +165,7 @@ export class GetCodeReviewParameterUseCase {
 
         // Buscar e adicionar referências externas do nível global
         const globalConfigKey = this.promptReferenceManager.buildConfigKey(
-            organizationAndTeamData.organizationId,
+            organizationAndTeamData,
             'global',
         );
         formattedGlobalConfig = await this.enrichConfigWithExternalReferences(
@@ -206,13 +204,14 @@ export class GetCodeReviewParameterUseCase {
 
             // Buscar e adicionar referências externas do nível repositório
             const repoConfigKey = this.promptReferenceManager.buildConfigKey(
-                organizationAndTeamData.organizationId,
+                organizationAndTeamData,
                 repo.id,
             );
-            formattedRepoFileConfig = await this.enrichConfigWithExternalReferences(
-                formattedRepoFileConfig,
-                repoConfigKey,
-            );
+            formattedRepoFileConfig =
+                await this.enrichConfigWithExternalReferences(
+                    formattedRepoFileConfig,
+                    repoConfigKey,
+                );
 
             const formattedDirectories = [];
 
@@ -244,14 +243,15 @@ export class GetCodeReviewParameterUseCase {
 
                 // Buscar e adicionar referências externas do nível diretório
                 const dirConfigKey = this.promptReferenceManager.buildConfigKey(
-                    organizationAndTeamData.organizationId,
+                    organizationAndTeamData,
                     repo.id,
                     dir.id,
                 );
-                formattedDirFileConfig = await this.enrichConfigWithExternalReferences(
-                    formattedDirFileConfig,
-                    dirConfigKey,
-                );
+                formattedDirFileConfig =
+                    await this.enrichConfigWithExternalReferences(
+                        formattedDirFileConfig,
+                        dirConfigKey,
+                    );
 
                 formattedDirectories.push({
                     ...dir,
@@ -344,12 +344,14 @@ export class GetCodeReviewParameterUseCase {
         configKey: string,
     ): Promise<FormattedCodeReviewConfig> {
         const enriched = structuredClone(config);
+        const contextReferenceId =
+            this.extractContextReferenceIdFromFormattedConfig(config);
 
-        // Enriquecer summary.customInstructions
         if (enriched.summary?.customInstructions) {
             const ref = await this.promptReferenceManager.getReference(
                 configKey,
                 PromptSourceType.CUSTOM_INSTRUCTION,
+                { contextReferenceId },
             );
             if (ref) {
                 enriched.summary.customInstructions = {
@@ -364,7 +366,6 @@ export class GetCodeReviewParameterUseCase {
             }
         }
 
-        // Enriquecer v2PromptOverrides
         if (enriched.v2PromptOverrides) {
             const categories = ['bug', 'performance', 'security'] as const;
             const severities = ['critical', 'high', 'medium', 'low'] as const;
@@ -373,17 +374,29 @@ export class GetCodeReviewParameterUseCase {
 
             if (enriched.v2PromptOverrides.categories?.descriptions) {
                 categories
-                    .filter(category => enriched.v2PromptOverrides.categories.descriptions[category])
-                    .forEach(category => {
-                        sourceTypesToFetch.push(`category_${category}` as PromptSourceType);
+                    .filter(
+                        (category) =>
+                            enriched.v2PromptOverrides.categories.descriptions[
+                                category
+                            ],
+                    )
+                    .forEach((category) => {
+                        sourceTypesToFetch.push(
+                            `category_${category}` as PromptSourceType,
+                        );
                     });
             }
 
             if (enriched.v2PromptOverrides.severity?.flags) {
                 severities
-                    .filter(severity => enriched.v2PromptOverrides.severity.flags[severity])
-                    .forEach(severity => {
-                        sourceTypesToFetch.push(`severity_${severity}` as PromptSourceType);
+                    .filter(
+                        (severity) =>
+                            enriched.v2PromptOverrides.severity.flags[severity],
+                    )
+                    .forEach((severity) => {
+                        sourceTypesToFetch.push(
+                            `severity_${severity}` as PromptSourceType,
+                        );
                     });
             }
 
@@ -391,18 +404,29 @@ export class GetCodeReviewParameterUseCase {
                 sourceTypesToFetch.push(PromptSourceType.GENERATION_MAIN);
             }
 
-            const referencesMap = await this.promptReferenceManager.getMultipleReferences(
-                configKey,
-                sourceTypesToFetch,
-            );
+            const referencesMap =
+                await this.promptReferenceManager.getMultipleReferences(
+                    configKey,
+                    sourceTypesToFetch,
+                    { contextReferenceId },
+                );
 
             if (enriched.v2PromptOverrides.categories?.descriptions) {
                 for (const category of categories) {
-                    if (enriched.v2PromptOverrides.categories.descriptions[category]) {
-                        const ref = referencesMap.get(`category_${category}` as PromptSourceType);
+                    if (
+                        enriched.v2PromptOverrides.categories.descriptions[
+                            category
+                        ]
+                    ) {
+                        const ref = referencesMap.get(
+                            `category_${category}` as PromptSourceType,
+                        );
                         if (ref) {
-                            enriched.v2PromptOverrides.categories.descriptions[category] = {
-                                ...enriched.v2PromptOverrides.categories.descriptions[category],
+                            enriched.v2PromptOverrides.categories.descriptions[
+                                category
+                            ] = {
+                                ...enriched.v2PromptOverrides.categories
+                                    .descriptions[category],
                                 externalReferences: {
                                     references: ref.references,
                                     syncErrors: ref.syncErrors || [],
@@ -418,10 +442,16 @@ export class GetCodeReviewParameterUseCase {
             if (enriched.v2PromptOverrides.severity?.flags) {
                 for (const severity of severities) {
                     if (enriched.v2PromptOverrides.severity.flags[severity]) {
-                        const ref = referencesMap.get(`severity_${severity}` as PromptSourceType);
+                        const ref = referencesMap.get(
+                            `severity_${severity}` as PromptSourceType,
+                        );
                         if (ref) {
-                            enriched.v2PromptOverrides.severity.flags[severity] = {
-                                ...enriched.v2PromptOverrides.severity.flags[severity],
+                            enriched.v2PromptOverrides.severity.flags[
+                                severity
+                            ] = {
+                                ...enriched.v2PromptOverrides.severity.flags[
+                                    severity
+                                ],
                                 externalReferences: {
                                     references: ref.references,
                                     syncErrors: ref.syncErrors || [],
@@ -451,5 +481,18 @@ export class GetCodeReviewParameterUseCase {
         }
 
         return enriched;
+    }
+
+    private extractContextReferenceIdFromFormattedConfig(
+        config: FormattedCodeReviewConfig,
+    ): string | undefined {
+        const entry = config?.contextReferenceId as
+            | IFormattedConfigProperty<string>
+            | undefined;
+        if (entry && typeof entry.value === 'string') {
+            const trimmed = entry.value.trim();
+            return trimmed.length ? trimmed : undefined;
+        }
+        return undefined;
     }
 }

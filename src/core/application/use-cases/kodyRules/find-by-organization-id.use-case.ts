@@ -5,6 +5,11 @@ import {
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
+import {
+    CONTEXT_REFERENCE_SERVICE_TOKEN,
+    IContextReferenceService,
+} from '@/core/domain/contextReferences/contracts/context-reference.service.contract';
+import { enrichRulesWithContextReferences } from './utils/enrich-rules-with-context-references.util';
 
 @Injectable()
 export class FindByOrganizationIdKodyRulesUseCase {
@@ -16,6 +21,9 @@ export class FindByOrganizationIdKodyRulesUseCase {
 
         @Inject(KODY_RULES_SERVICE_TOKEN)
         private readonly kodyRulesService: IKodyRulesService,
+
+        @Inject(CONTEXT_REFERENCE_SERVICE_TOKEN)
+        private readonly contextReferenceService: IContextReferenceService,
 
         private readonly logger: PinoLoggerService,
     ) {}
@@ -36,7 +44,17 @@ export class FindByOrganizationIdKodyRulesUseCase {
                 );
             }
 
-            return existing;
+            const enrichedRulesArray =
+                await enrichRulesWithContextReferences(
+                    existing.rules || [],
+                    this.contextReferenceService,
+                    this.logger,
+                );
+
+            return {
+                ...existing,
+                rules: enrichedRulesArray,
+            };
         } catch (error) {
             this.logger.error({
                 message: 'Error finding Kody Rules by organization ID',
@@ -49,4 +67,5 @@ export class FindByOrganizationIdKodyRulesUseCase {
             throw error;
         }
     }
+
 }

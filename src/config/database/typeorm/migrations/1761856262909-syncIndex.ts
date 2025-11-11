@@ -5,49 +5,49 @@ export class SyncIndex1761856262909 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."IDX_users_org_status"
+            DROP INDEX IF EXISTS "public"."IDX_users_org_status"
         `);
         await queryRunner.query(`
-            DROP INDEX "public"."IDX_users_email"
+            DROP INDEX IF EXISTS "public"."IDX_users_email"
         `);
         await queryRunner.query(`
-            DROP INDEX "public"."IDX_integration_team_category_status"
+            DROP INDEX IF EXISTS "public"."IDX_integration_team_category_status"
         `);
         await queryRunner.query(`
-            DROP INDEX "public"."IDX_org_params_config_value_gin"
+            DROP INDEX IF EXISTS "public"."IDX_org_params_config_value_gin"
         `);
         await queryRunner.query(`
-            DROP INDEX "public"."IDX_org_params_key_org"
+            DROP INDEX IF EXISTS "public"."IDX_org_params_key_org"
         `);
         await queryRunner.query(`
-            DROP INDEX "public"."IDX_parameters_active_only"
+            DROP INDEX IF EXISTS "public"."IDX_parameters_active_only"
         `);
         await queryRunner.query(`
-            DROP INDEX "public"."IDX_parameters_config_value_gin"
+            DROP INDEX IF EXISTS "public"."IDX_parameters_config_value_gin"
         `);
         await queryRunner.query(`
-            DROP INDEX "public"."IDX_parameters_key_team_active"
+            DROP INDEX IF EXISTS "public"."IDX_parameters_key_team_active"
         `);
         await queryRunner.query(`
-            DROP INDEX "public"."IDX_teams_org_created"
+            DROP INDEX IF EXISTS "public"."IDX_teams_org_created"
         `);
         await queryRunner.query(`
-            DROP INDEX "public"."IDX_teams_org_status"
+            DROP INDEX IF EXISTS "public"."IDX_teams_org_status"
         `);
         await queryRunner.query(`
-            DROP INDEX "public"."IDX_automation_exec_created_desc"
+            DROP INDEX IF EXISTS "public"."IDX_automation_exec_created_desc"
         `);
         await queryRunner.query(`
-            DROP INDEX "public"."IDX_automation_exec_pr_repo"
+            DROP INDEX IF EXISTS "public"."IDX_automation_exec_pr_repo"
         `);
         await queryRunner.query(`
-            DROP INDEX "public"."IDX_automation_exec_team_status"
+            DROP INDEX IF EXISTS "public"."IDX_automation_exec_team_status"
         `);
         await queryRunner.query(`
-            DROP INDEX "public"."idx_active_executions"
+            DROP INDEX IF EXISTS "public"."idx_active_executions"
         `);
         await queryRunner.query(`
-            DROP INDEX "public"."idx_unique_active_execution"
+            DROP INDEX IF EXISTS "public"."idx_unique_active_execution"
         `);
     }
 

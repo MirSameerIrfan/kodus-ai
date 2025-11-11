@@ -18,7 +18,6 @@ import { IntegrationConfigModule } from './integrationConfig.module';
 import { CreateOrUpdateParametersUseCase } from '@/core/application/use-cases/parameters/create-or-update-use-case';
 import { ParametersModule } from './parameters.module';
 
-import { ProjectManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/projectManagement.service';
 import { PlatformIntegrationFactory } from '@/core/infrastructure/adapters/services/platformIntegration/platformIntegration.factory';
 import { IntegrationModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/integration.model';
 
@@ -36,7 +35,6 @@ import { IntegrationModel } from '@/core/infrastructure/adapters/repositories/ty
         ...UseCases,
         CreateOrUpdateParametersUseCase,
         OrganizationParametersService,
-        ProjectManagementService,
         PlatformIntegrationFactory,
         PromptService,
         TeamService,

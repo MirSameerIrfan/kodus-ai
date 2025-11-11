@@ -320,13 +320,17 @@ export class KodyRulesValidationService {
                 repositoryId,
             });
 
-            if (
+            const matchesExactContextLevel =
                 (currentLevel === 'repository' &&
                     repositoryId === rule.repositoryId) ||
                 (currentLevel === 'directory' &&
-                    directoryId === rule.directoryId)
-            ) {
-                return true;
+                    directoryId === rule.directoryId);
+
+            if (matchesExactContextLevel) {
+                return (
+                    isPathMatch(rule) &&
+                    isInheritanceMatch(rule)
+                );
             }
 
             return (

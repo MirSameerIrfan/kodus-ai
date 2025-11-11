@@ -22,7 +22,6 @@ import { KodyRulesService } from '@/ee/kodyRules/service/kodyRules.service';
 import { KodyRulesRepository } from '@/ee/kodyRules/repository/kodyRules.repository';
 import { KodyRulesValidationService } from '@/ee/kodyRules/service/kody-rules-validation.service';
 import { KodyRulesSyncService } from '@/core/infrastructure/adapters/services/kodyRules/kodyRulesSync.service';
-import { ExternalReferenceDetectorService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceDetector.service';
 import { ExternalReferenceLoaderService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceLoader.service';
 import { SendRulesNotificationUseCase } from '@/core/application/use-cases/kodyRules/send-rules-notification.use-case';
 import { SyncSelectedRepositoriesKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/sync-selected-repositories.use-case';
@@ -39,6 +38,8 @@ import { ResyncRulesFromIdeUseCase } from '@/core/application/use-cases/kodyRule
 import { GetAdditionalInfoHelper } from '@/shared/utils/helpers/getAdditionalInfo.helper';
 import { GET_ADDITIONAL_INFO_HELPER_TOKEN } from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
 import { PullRequestsModule } from './pullRequests.module';
+import { PromptsModule } from './prompts.module';
+import { ContextReferenceModule } from './contextReference.module';
 
 @Module({
     imports: [
@@ -60,6 +61,8 @@ import { PullRequestsModule } from './pullRequests.module';
         forwardRef(() => LicenseModule),
         forwardRef(() => OrganizationParametersModule),
         forwardRef(() => PullRequestsModule),
+        forwardRef(() => PromptsModule),
+        forwardRef(() => ContextReferenceModule),
         KodyRulesValidationModule,
         GlobalCacheModule,
         PermissionValidationModule,
@@ -76,7 +79,6 @@ import { PullRequestsModule } from './pullRequests.module';
         },
         KodyRulesValidationService,
         KodyRulesSyncService,
-        ExternalReferenceDetectorService,
         ExternalReferenceLoaderService,
         {
             provide: GET_ADDITIONAL_INFO_HELPER_TOKEN,
@@ -95,7 +97,6 @@ import { PullRequestsModule } from './pullRequests.module';
         SendRulesNotificationUseCase,
         KodyRulesValidationService,
         KodyRulesSyncService,
-        ExternalReferenceDetectorService,
         ExternalReferenceLoaderService,
         SyncSelectedRepositoriesKodyRulesUseCase,
         ResyncRulesFromIdeUseCase,

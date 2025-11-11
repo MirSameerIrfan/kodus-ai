@@ -33,21 +33,28 @@ import {
     ResourceType,
 } from '@/core/domain/permissions/enums/permissions.enum';
 import { UserRequest } from '@/config/types/http/user-request.type';
-import { DeepPartial } from 'typeorm';
 import { getDefaultKodusConfigFile } from '@/shared/utils/validateCodeReviewConfigFile';
 import { produce } from 'immer';
 import { deepDifference, deepMerge } from '@/shared/utils/deep';
 import { CreateOrUpdateCodeReviewParameterDto } from '@/core/infrastructure/http/dtos/create-or-update-code-review-parameter.dto';
 import { v4 as uuidv4 } from 'uuid';
+import { PromptSourceType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
 import {
     IPromptExternalReferenceManagerService,
     PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
 } from '@/core/domain/prompts/contracts/promptExternalReferenceManager.contract';
-import { PromptSourceType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
+import { CodeReviewVersion } from '@/config/types/general/codeReview.type';
 import {
-    IGetAdditionalInfoHelper,
-    GET_ADDITIONAL_INFO_HELPER_TOKEN,
-} from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
+    CODE_REVIEW_CONTEXT_PATTERNS,
+    pathToKey,
+    resolveSourceTypeFromPath,
+    extractDependenciesFromValue,
+} from '@/core/infrastructure/adapters/services/context/code-review-context.utils';
+import { convertTiptapJSONToText } from '@/core/utils/tiptap-json';
+import {
+    ContextReferenceDetectionService,
+    type ContextDetectionField,
+} from '@/core/infrastructure/adapters/services/context/context-reference-detection.service';
 
 @Injectable()
 export class UpdateOrCreateCodeReviewParameterUseCase {
@@ -68,11 +75,10 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
 
         private readonly authorizationService: AuthorizationService,
 
+        private readonly contextReferenceDetectionService: ContextReferenceDetectionService,
+
         @Inject(PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN)
         private readonly promptReferenceManager: IPromptExternalReferenceManagerService,
-
-        @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
-        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
     ) {}
 
     async execute(
@@ -176,25 +182,6 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
                 directoryId,
             );
 
-            // Process external references in background
-            this.processExternalReferencesAsync(
-                configValue,
-                organizationAndTeamData,
-                repositoryId,
-                directoryId,
-            ).catch((error) => {
-                this.logger.error({
-                    message: 'Background reference processing failed',
-                    context: UpdateOrCreateCodeReviewParameterUseCase.name,
-                    error,
-                    metadata: {
-                        organizationAndTeamData,
-                        repositoryId,
-                        directoryId,
-                    },
-                });
-            });
-
             return result;
         } catch (error) {
             this.handleError(error, body);
@@ -236,6 +223,15 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
         configValue: CreateOrUpdateCodeReviewParameterDto['configValue'],
         filteredRepositoryInfo: RepositoryCodeReviewConfig[],
     ) {
+        // Process references inline (mantém lógica original complexa)
+        await this.processExternalReferencesInline(
+            configValue,
+            organizationAndTeamData,
+            'global',
+            undefined,
+            'global',
+        );
+
         const defaultConfig = getDefaultKodusConfigFile();
 
         const updatedConfigValue = deepDifference(defaultConfig, configValue);
@@ -306,6 +302,14 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
             oldConfig = codeReviewConfigs.configs ?? {};
         }
 
+        await this.processExternalReferencesInline(
+            newConfigValue,
+            organizationAndTeamData,
+            repositoryId,
+            directoryId,
+            repository?.name ?? repositoryId ?? 'global',
+        );
+
         const newResolvedConfig = deepMerge(
             parentConfig,
             oldConfig,
@@ -342,6 +346,280 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
         });
 
         return true;
+    }
+
+    private async processExternalReferencesInline(
+        configValue: CreateOrUpdateCodeReviewParameterDto['configValue'],
+        organizationAndTeamData: OrganizationAndTeamData,
+        repositoryId?: string,
+        directoryId?: string,
+        repositoryName?: string,
+    ): Promise<void> {
+        const { summaryText, overrides, contextTarget, nestedTarget } =
+            this.resolveOverridesForContext(configValue);
+
+        const baseConsumerId = this.resolveBaseConsumerId(configValue);
+
+        const normalizedFields: Array<{
+            path: string[];
+            text: string;
+            sourceType: PromptSourceType;
+        }> = [];
+
+        const resolvePromptText = (value: unknown): string => {
+            if (value === undefined || value === null) {
+                return '';
+            }
+
+            if (typeof value === 'string') {
+                return convertTiptapJSONToText(value).trim();
+            }
+
+            if (typeof value === 'object') {
+                if ('value' in value) {
+                    return resolvePromptText(
+                        (value as { value?: unknown }).value,
+                    );
+                }
+
+                return convertTiptapJSONToText(
+                    value as Record<string, unknown>,
+                ).trim();
+            }
+
+            return '';
+        };
+
+        // Extrair todos os campos de texto dos prompts
+        if (summaryText !== undefined) {
+            const text = resolvePromptText(summaryText);
+            if (text) {
+                normalizedFields.push({
+                    path: ['summary', 'customInstructions'],
+                    text,
+                    sourceType: PromptSourceType.CUSTOM_INSTRUCTION,
+                });
+            }
+        }
+
+        const v2 = overrides ?? {};
+
+        if (v2.categories?.descriptions) {
+            for (const [key, value] of Object.entries(
+                v2.categories.descriptions,
+            )) {
+                const text = resolvePromptText(value);
+                if (!text) continue;
+
+                const sourceType = resolveSourceTypeFromPath([
+                    'v2PromptOverrides',
+                    'categories',
+                    'descriptions',
+                    key,
+                ]);
+                if (!sourceType) continue;
+
+                normalizedFields.push({
+                    path: [
+                        'v2PromptOverrides',
+                        'categories',
+                        'descriptions',
+                        key,
+                    ],
+                    text,
+                    sourceType,
+                });
+            }
+        }
+
+        if (v2.severity?.flags) {
+            for (const [key, value] of Object.entries(v2.severity.flags)) {
+                const text = resolvePromptText(value);
+                if (!text) continue;
+
+                const sourceType = resolveSourceTypeFromPath([
+                    'v2PromptOverrides',
+                    'severity',
+                    'flags',
+                    key,
+                ]);
+                if (!sourceType) continue;
+
+                normalizedFields.push({
+                    path: ['v2PromptOverrides', 'severity', 'flags', key],
+                    text,
+                    sourceType,
+                });
+            }
+        }
+
+        const generationOverride = v2.generation?.main;
+
+        if (generationOverride !== undefined) {
+            const text = resolvePromptText(generationOverride);
+            if (text) {
+                const sourceType = resolveSourceTypeFromPath([
+                    'v2PromptOverrides',
+                    'generation',
+                    'main',
+                ]);
+
+                if (sourceType) {
+                    normalizedFields.push({
+                        path: ['v2PromptOverrides', 'generation', 'main'],
+                        text,
+                        sourceType,
+                    });
+                }
+            }
+        }
+
+        if (!normalizedFields.length) {
+            return;
+        }
+
+        const detectionFields: ContextDetectionField[] = normalizedFields.map(
+            (field) => {
+                const pathKey = pathToKey(field.path);
+                const { markers } = extractDependenciesFromValue(
+                    field.text,
+                    CODE_REVIEW_CONTEXT_PATTERNS,
+                );
+
+                return {
+                    fieldId: pathKey,
+                    path: field.path,
+                    sourceType: field.sourceType,
+                    text: field.text,
+                    inlineMarkers: markers,
+                    metadata: {
+                        sourceSnippet: field.text,
+                    },
+                    consumerKind: 'prompt_section',
+                    consumerName: pathKey,
+                    conversationIdOverride: `${baseConsumerId}#${pathKey}`,
+                    requestDomain: 'general',
+                    taskIntent: 'Process codeReviewConfig references',
+                } satisfies ContextDetectionField;
+            },
+        );
+
+        this.logger.log({
+            message: `🔧 Processing ${detectionFields.length} prompt sections for context references`,
+            context: UpdateOrCreateCodeReviewParameterUseCase.name,
+            metadata: {
+                baseConsumerId,
+                organizationId: organizationAndTeamData.organizationId,
+            },
+        });
+
+        const contextEntityId = this.buildContextReferenceEntityId(
+            organizationAndTeamData,
+            repositoryId ?? 'global',
+            directoryId,
+        );
+
+        const contextReferenceId =
+            await this.contextReferenceDetectionService.detectAndSaveReferences(
+                {
+                    entityType: 'codeReviewConfig',
+                    entityId: contextEntityId,
+                    fields: detectionFields,
+                    repositoryId: repositoryId ?? 'global',
+                    repositoryName: repositoryName ?? repositoryId ?? 'global',
+                    organizationAndTeamData,
+                },
+            );
+
+        this.logger.log({
+            message: `✅ Context references persisted for codeReviewConfig`,
+            context: UpdateOrCreateCodeReviewParameterUseCase.name,
+            metadata: {
+                baseConsumerId,
+                contextReferenceId,
+                organizationId: organizationAndTeamData.organizationId,
+            },
+        });
+
+        if (contextReferenceId) {
+            contextTarget.contextReferenceId = contextReferenceId;
+            if (nestedTarget) {
+                nestedTarget.contextReferenceId = contextReferenceId;
+            }
+        }
+    }
+
+    private resolveOverridesForContext(
+        config: CreateOrUpdateCodeReviewParameterDto['configValue'],
+    ): {
+        summaryText?: string;
+        overrides: PromptOverrides | undefined;
+        contextTarget: Record<string, any>;
+        nestedTarget?: Record<string, any>;
+    } {
+        const contextTarget = config as Record<string, any>;
+        let nestedTarget: Record<string, any> | undefined;
+        let overrides: PromptOverrides | undefined;
+
+        const maybeNested =
+            config &&
+            typeof config === 'object' &&
+            'configs' in config &&
+            (config as Record<string, unknown>).configs &&
+            typeof (config as Record<string, unknown>).configs === 'object'
+                ? ((config as Record<string, unknown>).configs as Record<
+                      string,
+                      unknown
+                  >)
+                : undefined;
+
+        if (config?.v2PromptOverrides) {
+            overrides = config.v2PromptOverrides as PromptOverrides;
+        } else if (
+            maybeNested &&
+            typeof maybeNested.v2PromptOverrides === 'object' &&
+            maybeNested.v2PromptOverrides
+        ) {
+            overrides = maybeNested.v2PromptOverrides as PromptOverrides;
+            nestedTarget = maybeNested as Record<string, any>;
+        }
+
+        const summaryFromContext =
+            contextTarget?.summary &&
+            typeof contextTarget.summary === 'object' &&
+            contextTarget.summary !== null &&
+            typeof contextTarget.summary.customInstructions === 'string'
+                ? (contextTarget.summary.customInstructions as string)
+                : undefined;
+
+        const summaryFromNested =
+            nestedTarget?.summary &&
+            typeof nestedTarget.summary === 'object' &&
+            nestedTarget.summary !== null &&
+            typeof nestedTarget.summary.customInstructions === 'string'
+                ? (nestedTarget.summary.customInstructions as string)
+                : undefined;
+
+        return {
+            summaryText: summaryFromContext ?? summaryFromNested ?? undefined,
+            overrides,
+            contextTarget,
+            nestedTarget,
+        };
+    }
+
+    private resolveBaseConsumerId(
+        config: CreateOrUpdateCodeReviewParameterDto['configValue'],
+    ): string {
+        if (config?.codeReviewVersion === CodeReviewVersion.v2) {
+            return 'code-review-v2';
+        }
+
+        if (config?.codeReviewVersion === CodeReviewVersion.LEGACY) {
+            return 'code-review-legacy';
+        }
+
+        return 'code-review';
     }
 
     private async logConfigUpdate(options: {
@@ -422,183 +700,16 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
         });
     }
 
-    private async processExternalReferencesAsync(
-        configValue: CreateOrUpdateCodeReviewParameterDto['configValue'],
+    private buildContextReferenceEntityId(
         organizationAndTeamData: OrganizationAndTeamData,
-        repositoryId?: string,
+        repositoryId: string,
         directoryId?: string,
-    ): Promise<void> {
-        const configKey = this.promptReferenceManager.buildConfigKey(
-            organizationAndTeamData.organizationId,
-            repositoryId || 'global',
+    ): string {
+        return this.promptReferenceManager.buildConfigKey(
+            organizationAndTeamData,
+            repositoryId,
             directoryId,
         );
-
-        let repositoryName: string;
-        if (repositoryId && repositoryId !== 'global') {
-            try {
-                repositoryName =
-                    await this.getAdditionalInfoHelper.getRepositoryNameByOrganizationAndRepository(
-                        organizationAndTeamData.organizationId,
-                        repositoryId,
-                    );
-            } catch (error) {
-                this.logger.warn({
-                    message:
-                        'Failed to resolve repository name, using ID as fallback',
-                    context: UpdateOrCreateCodeReviewParameterUseCase.name,
-                    error,
-                    metadata: {
-                        organizationAndTeamData,
-                        repositoryId,
-                        directoryId,
-                    },
-                });
-                repositoryName = repositoryId;
-            }
-        } else {
-            repositoryName = 'global';
-        }
-
-        const prompts = this.extractPromptsFromConfig(configValue);
-
-        await Promise.all(
-            prompts.map((promptData) =>
-                this.promptReferenceManager.createOrUpdatePendingReference({
-                    promptText: promptData.text,
-                    configKey,
-                    sourceType: promptData.sourceType,
-                    organizationId: organizationAndTeamData.organizationId,
-                    repositoryId: repositoryId || 'global',
-                    repositoryName,
-                    organizationAndTeamData,
-                    directoryId,
-                }),
-            ),
-        );
-
-        setImmediate(async () => {
-            try {
-                await Promise.all(
-                    prompts.map((promptData) =>
-                        this.promptReferenceManager.processReferencesInBackground(
-                            {
-                                promptText: promptData.text,
-                                configKey,
-                                sourceType: promptData.sourceType,
-                                organizationId:
-                                    organizationAndTeamData.organizationId,
-                                repositoryId: repositoryId || 'global',
-                                repositoryName,
-                                directoryId,
-                                organizationAndTeamData,
-                                context: 'instruction',
-                            },
-                        ),
-                    ),
-                );
-
-                this.logger.log({
-                    message:
-                        'Successfully processed external references in background',
-                    context: UpdateOrCreateCodeReviewParameterUseCase.name,
-                    metadata: {
-                        organizationAndTeamData,
-                        repositoryId,
-                        directoryId,
-                        promptsProcessed: prompts.length,
-                    },
-                });
-            } catch (error) {
-                this.logger.error({
-                    message: 'Failed to process external references',
-                    context: UpdateOrCreateCodeReviewParameterUseCase.name,
-                    error,
-                    metadata: {
-                        organizationAndTeamData,
-                        repositoryId,
-                        directoryId,
-                    },
-                });
-            }
-        });
-    }
-
-    private extractPromptsFromConfig(
-        configValue: CreateOrUpdateCodeReviewParameterDto['configValue'],
-    ): Array<{ text: string; sourceType: PromptSourceType }> {
-        const prompts: Array<{ text: string; sourceType: PromptSourceType }> =
-            [];
-
-        if (configValue?.summary?.customInstructions) {
-            prompts.push({
-                text: configValue.summary.customInstructions,
-                sourceType: PromptSourceType.CUSTOM_INSTRUCTION,
-            });
-        }
-
-        if (configValue?.v2PromptOverrides?.categories?.descriptions) {
-            const { bug, performance, security } =
-                configValue.v2PromptOverrides.categories.descriptions;
-
-            if (bug) {
-                prompts.push({
-                    text: bug,
-                    sourceType: PromptSourceType.CATEGORY_BUG,
-                });
-            }
-            if (performance) {
-                prompts.push({
-                    text: performance,
-                    sourceType: PromptSourceType.CATEGORY_PERFORMANCE,
-                });
-            }
-            if (security) {
-                prompts.push({
-                    text: security,
-                    sourceType: PromptSourceType.CATEGORY_SECURITY,
-                });
-            }
-        }
-
-        if (configValue?.v2PromptOverrides?.severity?.flags) {
-            const { critical, high, medium, low } =
-                configValue.v2PromptOverrides.severity.flags;
-
-            if (critical) {
-                prompts.push({
-                    text: critical,
-                    sourceType: PromptSourceType.SEVERITY_CRITICAL,
-                });
-            }
-            if (high) {
-                prompts.push({
-                    text: high,
-                    sourceType: PromptSourceType.SEVERITY_HIGH,
-                });
-            }
-            if (medium) {
-                prompts.push({
-                    text: medium,
-                    sourceType: PromptSourceType.SEVERITY_MEDIUM,
-                });
-            }
-            if (low) {
-                prompts.push({
-                    text: low,
-                    sourceType: PromptSourceType.SEVERITY_LOW,
-                });
-            }
-        }
-
-        if (configValue?.v2PromptOverrides?.generation?.main) {
-            prompts.push({
-                text: configValue.v2PromptOverrides.generation.main,
-                sourceType: PromptSourceType.GENERATION_MAIN,
-            });
-        }
-
-        return prompts;
     }
 }
 
@@ -696,3 +807,7 @@ class ConfigResolver {
         return deepMerge(resolvedGlobal, repository.configs ?? {});
     }
 }
+
+type PromptOverrides = NonNullable<
+    CreateOrUpdateCodeReviewParameterDto['configValue']['v2PromptOverrides']
+>;

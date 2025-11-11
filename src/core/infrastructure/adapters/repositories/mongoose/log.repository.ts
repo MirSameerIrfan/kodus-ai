@@ -25,10 +25,7 @@ export class LogDatabaseRepository implements ILogRepository {
         try {
             await this.logModel.insertMany(logs, { ordered: false });
         } catch (error) {
-            console.error(
-                'Erro ao inserir logs em lote (batch) no repositório:',
-                error,
-            );
+            console.error('Error inserting batch logs into repository:', error);
             throw error;
         }
     }

@@ -8,7 +8,7 @@ export default {
   },
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^@context-os-core/(.*)$': '<rootDir>/src/shared/utils/context-os-core/$1',
   },
+  modulePathIgnorePatterns: ['<rootDir>/.yalc'],
 };
-
-

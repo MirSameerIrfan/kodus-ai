@@ -1,5 +1,11 @@
 import { LimitationType } from '@/config/types/general/codeReview.type';
+import type { ContextPack } from '@context-os-core/interfaces';
 import { getDefaultKodusConfigFile } from '@/shared/utils/validateCodeReviewConfigFile';
+import { convertTiptapJSONToMarkdown } from '@/core/utils/tiptap-json';
+import {
+    CODE_REVIEW_CONTEXT_PATTERNS,
+    stripMarkersFromText,
+} from '@/core/infrastructure/adapters/services/context/code-review-context.utils';
 
 export interface CodeReviewPayload {
     limitationType?: LimitationType;
@@ -51,6 +57,981 @@ export interface CodeReviewPayload {
             main?: { references?: any[]; error?: string };
         };
     };
+    contextAugmentations?: Record<
+        string,
+        {
+            path: string[];
+            requirementId?: string;
+            outputs: Array<{
+                provider?: string;
+                toolName: string;
+                success: boolean;
+                output?: string;
+                error?: string;
+            }>;
+        }
+    >;
+    contextPack?: ContextPack;
+}
+
+const PATH_SOURCE_TYPE_MAP: Record<string, string> = {
+    'summary.customInstructions': 'custom_instruction',
+    'categories.descriptions.bug': 'category_bug',
+    'categories.descriptions.performance': 'category_performance',
+    'categories.descriptions.security': 'category_security',
+    'severity.flags.critical': 'severity_critical',
+    'severity.flags.high': 'severity_high',
+    'severity.flags.medium': 'severity_medium',
+    'severity.flags.low': 'severity_low',
+    'generation.main': 'generation_main',
+};
+
+interface SectionConfig {
+    pathKey: string;
+    overridePath: string[];
+    defaultPath: string[];
+    externalPath: string[];
+}
+
+const SOURCE_TYPE_ALIASES: Record<string, string> = {
+    knowledge: 'generation_main',
+    instructions: 'custom_instruction',
+};
+
+const SECTION_CONFIG: SectionConfig[] = [
+    {
+        pathKey: 'categories.descriptions.bug',
+        overridePath: ['categories', 'descriptions', 'bug'],
+        defaultPath: ['categories', 'descriptions', 'bug'],
+        externalPath: ['categories', 'bug'],
+    },
+    {
+        pathKey: 'categories.descriptions.performance',
+        overridePath: ['categories', 'descriptions', 'performance'],
+        defaultPath: ['categories', 'descriptions', 'performance'],
+        externalPath: ['categories', 'performance'],
+    },
+    {
+        pathKey: 'categories.descriptions.security',
+        overridePath: ['categories', 'descriptions', 'security'],
+        defaultPath: ['categories', 'descriptions', 'security'],
+        externalPath: ['categories', 'security'],
+    },
+    {
+        pathKey: 'severity.flags.critical',
+        overridePath: ['severity', 'flags', 'critical'],
+        defaultPath: ['severity', 'flags', 'critical'],
+        externalPath: ['severity', 'critical'],
+    },
+    {
+        pathKey: 'severity.flags.high',
+        overridePath: ['severity', 'flags', 'high'],
+        defaultPath: ['severity', 'flags', 'high'],
+        externalPath: ['severity', 'high'],
+    },
+    {
+        pathKey: 'severity.flags.medium',
+        overridePath: ['severity', 'flags', 'medium'],
+        defaultPath: ['severity', 'flags', 'medium'],
+        externalPath: ['severity', 'medium'],
+    },
+    {
+        pathKey: 'severity.flags.low',
+        overridePath: ['severity', 'flags', 'low'],
+        defaultPath: ['severity', 'flags', 'low'],
+        externalPath: ['severity', 'low'],
+    },
+    {
+        pathKey: 'generation.main',
+        overridePath: ['generation', 'main'],
+        defaultPath: ['generation', 'main'],
+        externalPath: ['generation', 'main'],
+    },
+];
+
+/**
+ * Limits text length to a maximum number of characters.
+ * @param text - The text to limit
+ * @param max - Maximum character length (default: 2000)
+ * @returns Truncated text if it exceeds max length, otherwise the original text
+ */
+function limitText(text: string, max = 2000): string {
+    return text.length > max ? text.slice(0, max) : text;
+}
+
+/**
+ * Extracts the raw value from a potentially nested structure.
+ * Handles string values, objects with a 'value' property, or plain objects.
+ * @param value - The value to extract (can be string, object, or undefined)
+ * @returns Extracted string or object, or undefined if value is null/undefined
+ */
+function extractRawValue(
+    value: unknown,
+): string | Record<string, unknown> | undefined {
+    if (value === null || value === undefined) {
+        return undefined;
+    }
+    if (typeof value === 'string') {
+        return value;
+    }
+    if (
+        typeof value === 'object' &&
+        typeof (value as Record<string, unknown>).value !== 'undefined'
+    ) {
+        return (value as Record<string, unknown>).value as
+            | string
+            | Record<string, unknown>;
+    }
+    return value as Record<string, unknown>;
+}
+
+/**
+ * Sanitizes prompt text by removing MCP markers and trimming whitespace.
+ * @param raw - The raw text to sanitize
+ * @returns Sanitized text, or empty string if input is falsy
+ */
+function sanitizePromptText(raw?: string): string {
+    if (!raw) {
+        return '';
+    }
+    return stripMarkersFromText(raw, CODE_REVIEW_CONTEXT_PATTERNS).trim();
+}
+
+/**
+ * Gets text from primary source or falls back to default text.
+ * Converts TipTap JSON to markdown, sanitizes, and limits length.
+ * @param text - Primary text source (can be TipTap JSON or string)
+ * @param fallbackText - Fallback text if primary is empty
+ * @returns Processed text string, or empty string if both sources are empty
+ */
+function getTextOrDefault(text: unknown, fallbackText?: unknown): string {
+    const primaryRaw = convertTiptapJSONToMarkdown(
+        extractRawValue(text),
+    ).trim();
+    const primary = sanitizePromptText(primaryRaw);
+    if (primary.length) {
+        return limitText(primary);
+    }
+
+    const fallbackRaw = convertTiptapJSONToMarkdown(
+        extractRawValue(fallbackText),
+    ).trim();
+    const fallback = sanitizePromptText(fallbackRaw);
+
+    return fallback.length ? limitText(fallback) : '';
+}
+
+/**
+ * Formats synchronization errors into a readable string.
+ * Handles both array of errors and single error string.
+ * @param errors - Array of errors, single error string, or undefined
+ * @returns Formatted error section string, or empty string if no errors
+ */
+function formatSyncErrors(errors: unknown[] | string | undefined): string {
+    if (!errors) {
+        return '';
+    }
+
+    const normalized = Array.isArray(errors) ? errors : [errors];
+    const formatted = normalized
+        .map((error) => {
+            if (!error) {
+                return null;
+            }
+            if (typeof error === 'string') {
+                return `- ${error}`;
+            }
+            if (typeof error === 'object') {
+                const message =
+                    typeof (error as Record<string, unknown>).message ===
+                    'string'
+                        ? ((error as Record<string, unknown>).message as string)
+                        : 'Unknown reference error';
+                return `- ${message}`;
+            }
+            return null;
+        })
+        .filter((line): line is string => Boolean(line));
+
+    if (!formatted.length) {
+        return '';
+    }
+
+    return `\n\n⚠ Reference issues\n${formatted.join('\n')}`;
+}
+
+/**
+ * Injects external context references into prompt text.
+ * Appends referenced file contents and error messages to the base text.
+ * @param baseText - The base prompt text
+ * @param references - Array of external file references with content
+ * @param syncErrors - Optional synchronization errors to display
+ * @returns Base text with external context and errors appended
+ */
+function injectExternalContext(
+    baseText: string,
+    references: unknown[] | undefined,
+    syncErrors?: unknown[] | string | undefined,
+    contextKey?: string,
+    collectContext?: (dedupeKey: string, section: string) => void,
+): string {
+    const sanitizedBase = sanitizePromptText(baseText);
+
+    const errorSection = formatSyncErrors(syncErrors);
+    const hasReferences = Boolean(references && references.length);
+
+    if (!collectContext) {
+        if (!hasReferences) {
+            return errorSection ? `${sanitizedBase}${errorSection}` : sanitizedBase;
+        }
+
+        const contextSection = formatReferenceSection(references);
+        return `${sanitizedBase}\n\n## External Reference Context\n${contextSection}${errorSection}`;
+    }
+
+    const contextParts: string[] = [];
+    if (hasReferences) {
+        contextParts.push(formatReferenceSection(references));
+    }
+    if (errorSection) {
+        contextParts.push(errorSection.trim());
+    }
+
+    if (contextParts.length) {
+        const combined = contextParts.filter(Boolean).join('\n\n').trim();
+        if (combined.length) {
+            const dedupeKey = buildContextDedupeKey(
+                contextKey,
+                references,
+                syncErrors,
+            );
+            collectContext(dedupeKey, combined);
+        }
+    }
+
+    return sanitizedBase;
+}
+
+function formatReferenceSection(references: unknown[]): string {
+    return (references as Array<Record<string, unknown>>)
+        .map((ref) => {
+            const header = ref.lineRange
+                ? `--- Content from ${ref.filePath} (lines ${(ref.lineRange as Record<string, unknown>).start}-${(ref.lineRange as Record<string, unknown>).end}) ---`
+                : `--- Content from ${ref.filePath} ---`;
+            return `${header}\n${ref.content}\n--- End of ${ref.filePath} ---`;
+        })
+        .join('\n');
+}
+
+function buildContextDedupeKey(
+    contextKey: string | undefined,
+    references?: unknown[],
+    syncErrors?: unknown[] | string,
+): string {
+    if (Array.isArray(references) && references.length) {
+        const identifiers = references
+            .map((ref) => {
+                if (!ref || typeof ref !== 'object') {
+                    return '';
+                }
+                const data = ref as Record<string, unknown>;
+                const filePath =
+                    typeof data.filePath === 'string' ? data.filePath : '';
+                const repositoryName =
+                    typeof data.repositoryName === 'string'
+                        ? data.repositoryName
+                        : '';
+                const lineRange = data.lineRange as
+                    | { start?: number; end?: number }
+                    | undefined;
+                const rangeKey = lineRange
+                    ? `${lineRange.start ?? ''}-${lineRange.end ?? ''}`
+                    : '';
+                return `${repositoryName}:${filePath}:${rangeKey}`;
+            })
+            .sort()
+            .join('|');
+        if (identifiers.length) {
+            return identifiers;
+        }
+    }
+
+    if (syncErrors) {
+        const serialized =
+            typeof syncErrors === 'string'
+                ? syncErrors
+                : JSON.stringify(syncErrors);
+        if (serialized) {
+            return `errors:${serialized}`;
+        }
+    }
+
+    return contextKey ?? `context:${Date.now()}`;
+}
+
+/**
+ * Formats context augmentations (MCP tool outputs) into a readable section.
+ * @param pathKey - The path key identifying the section (e.g., 'categories.descriptions.bug')
+ * @param augmentations - Map of context augmentations by path key
+ * @returns Formatted augmentation section string, or empty string if no augmentations
+ */
+function formatAugmentations(
+    pathKey: string,
+    augmentations?: Record<
+        string,
+        {
+            path: string[];
+            requirementId?: string;
+            outputs: Array<{
+                provider?: string;
+                toolName: string;
+                success: boolean;
+                output?: string;
+                error?: string;
+            }>;
+        }
+    >,
+): string {
+    const entry = augmentations?.[pathKey];
+    if (!entry?.outputs?.length) {
+        return '';
+    }
+
+    const lines = entry.outputs.map((output) => {
+        const parts = [output.toolName];
+        if (output.provider) {
+            parts.push(`(${output.provider})`);
+        }
+        const label = parts.filter(Boolean).join(' ');
+
+        if (output.success) {
+            return `- ${label}: ${output.output ?? 'No output returned.'}`;
+        }
+
+        return `- ${label}: FAILED ${output.error ?? 'Unknown error'}`;
+    });
+
+    return `\n\n### Context Insights (${pathKey})\n${lines.join('\n')}`;
+}
+
+/**
+ * Builds a map of context data from context pack layers.
+ * Extracts references and sync errors organized by source type.
+ * @param contextLayers - Array of context layers from the context pack
+ * @returns Map keyed by source type, containing references and sync errors
+ */
+function normalizeLayerSourceType(sourceType?: string): string | undefined {
+    if (!sourceType) {
+        return undefined;
+    }
+    return SOURCE_TYPE_ALIASES[sourceType] ?? sourceType;
+}
+
+function extractLayerReferences(
+    layer: ContextPack['layers'][number],
+): unknown[] | undefined {
+    const { content } = layer;
+
+    if (Array.isArray(content)) {
+        const hasFileContext = content.some(
+            (entry) =>
+                entry &&
+                typeof entry === 'object' &&
+                typeof (entry as Record<string, unknown>).filePath ===
+                    'string' &&
+                typeof (entry as Record<string, unknown>).content === 'string',
+        );
+        if (hasFileContext) {
+            return content as unknown[];
+        }
+    } else if (
+        content &&
+        typeof content === 'object' &&
+        Array.isArray((content as Record<string, unknown>).references)
+    ) {
+        return (content as Record<string, unknown>).references as unknown[];
+    }
+
+    if (
+        Array.isArray(layer.references) &&
+        layer.references.some(
+            (entry) =>
+                entry &&
+                typeof entry === 'object' &&
+                typeof (entry as Record<string, unknown>).content === 'string',
+        )
+    ) {
+        return layer.references as unknown[];
+    }
+
+    return undefined;
+}
+
+function extractLayerSyncErrors(
+    content: unknown,
+    metadata?: Record<string, unknown>,
+): unknown[] | undefined {
+    if (
+        content &&
+        typeof content === 'object' &&
+        !Array.isArray(content) &&
+        Array.isArray((content as Record<string, unknown>).syncErrors)
+    ) {
+        return (content as Record<string, unknown>).syncErrors as unknown[];
+    }
+
+    if (Array.isArray(metadata?.syncErrors)) {
+        return metadata?.syncErrors as unknown[];
+    }
+
+    return undefined;
+}
+
+function mergeReferenceArrays(
+    current?: unknown[],
+    incoming?: unknown[],
+): unknown[] | undefined {
+    if (!current) {
+        return incoming;
+    }
+    if (!incoming) {
+        return current;
+    }
+    return [...current, ...incoming];
+}
+
+function mergeSyncErrorArrays(
+    current?: unknown[],
+    incoming?: unknown[],
+): unknown[] | undefined {
+    if (!current) {
+        return incoming;
+    }
+    if (!incoming) {
+        return current;
+    }
+    return [...current, ...incoming];
+}
+
+function buildLayerContextData(
+    contextLayers: ContextPack['layers'],
+): Map<string, { references?: unknown[]; syncErrors?: unknown[] }> {
+    const layerContextData = new Map<
+        string,
+        { references?: unknown[]; syncErrors?: unknown[] }
+    >();
+
+    for (const layer of contextLayers) {
+        const metadata = layer.metadata as Record<string, unknown> | undefined;
+        const normalizedSourceType = normalizeLayerSourceType(
+            typeof metadata?.sourceType === 'string'
+                ? (metadata.sourceType as string)
+                : undefined,
+        );
+
+        if (!normalizedSourceType) {
+            continue;
+        }
+
+        const references = extractLayerReferences(layer);
+        const syncErrors = extractLayerSyncErrors(layer.content, metadata);
+
+        if (!references && !syncErrors) {
+            continue;
+        }
+
+        const existingEntry = layerContextData.get(normalizedSourceType);
+        layerContextData.set(normalizedSourceType, {
+            references: mergeReferenceArrays(
+                existingEntry?.references,
+                references,
+            ),
+            syncErrors: mergeSyncErrorArrays(
+                existingEntry?.syncErrors,
+                syncErrors,
+            ),
+        });
+    }
+
+    return layerContextData;
+}
+
+/**
+ * Resolves context data for a specific path key.
+ * Prioritizes layer context data over external fallback references.
+ * @param pathKey - The path key to resolve (e.g., 'categories.descriptions.bug')
+ * @param layerContextData - Map of context data from layers
+ * @param fallbackRefs - Optional fallback references from external context
+ * @param fallbackError - Optional fallback error from external context
+ * @returns Resolved references and sync errors
+ */
+function resolveContextData(
+    pathKey: string,
+    layerContextData: Map<
+        string,
+        { references?: unknown[]; syncErrors?: unknown[] }
+    >,
+    fallbackRefs?: unknown[],
+    fallbackError?: unknown,
+): { references?: unknown[]; syncErrors?: unknown[] | string } {
+    const sourceType = PATH_SOURCE_TYPE_MAP[pathKey];
+    const layerData = sourceType ? layerContextData.get(sourceType) : undefined;
+
+    return {
+        references: layerData?.references ?? fallbackRefs,
+        syncErrors:
+            layerData?.syncErrors ??
+            (fallbackError as unknown[] | string | undefined),
+    };
+}
+
+/**
+ * Processes a single section configuration to generate formatted text.
+ * Handles override/default text resolution, external context injection, and augmentations.
+ * @param config - Section configuration with path mappings
+ * @param overrides - User-provided prompt overrides
+ * @param defaults - Default prompt values from config file
+ * @param externalContext - External prompt context with file references
+ * @param layerContextData - Context data from context pack layers
+ * @param augmentations - Optional MCP tool output augmentations
+ * @returns Fully processed section text with all context injected
+ */
+interface ProcessSectionOptions {
+    collectContext?: (dedupeKey: string, section: string) => void;
+}
+
+function processSection(
+    config: SectionConfig,
+    overrides: CodeReviewPayload['v2PromptOverrides'],
+    defaults: CodeReviewPayload['v2PromptOverrides'],
+    externalContext: CodeReviewPayload['externalPromptContext'],
+    layerContextData: Map<
+        string,
+        { references?: unknown[]; syncErrors?: unknown[] }
+    >,
+    augmentations?: CodeReviewPayload['contextAugmentations'],
+    options?: ProcessSectionOptions,
+): string {
+    const getNestedValue = (
+        obj: Record<string, unknown> | undefined,
+        path: string[],
+    ): unknown => {
+        if (!obj) {
+            return undefined;
+        }
+        let current: unknown = obj;
+        for (const key of path) {
+            if (
+                current &&
+                typeof current === 'object' &&
+                !Array.isArray(current)
+            ) {
+                current = (current as Record<string, unknown>)[key];
+            } else {
+                return undefined;
+            }
+        }
+        return current;
+    };
+
+    const overrideText = getNestedValue(
+        overrides as Record<string, unknown> | undefined,
+        config.overridePath,
+    );
+    const defaultText = getNestedValue(
+        defaults as Record<string, unknown> | undefined,
+        config.defaultPath,
+    );
+
+    const externalRefs = getNestedValue(
+        externalContext as Record<string, unknown> | undefined,
+        [...config.externalPath, 'references'],
+    ) as unknown[] | undefined;
+    const externalError = getNestedValue(
+        externalContext as Record<string, unknown> | undefined,
+        [...config.externalPath, 'error'],
+    );
+
+    const textBase = getTextOrDefault(overrideText, defaultText);
+    const { references, syncErrors } = resolveContextData(
+        config.pathKey,
+        layerContextData,
+        externalRefs,
+        externalError,
+    );
+
+    return injectExternalContext(
+        `${textBase}${formatAugmentations(config.pathKey, augmentations)}`,
+        references,
+        syncErrors,
+        config.pathKey,
+        options?.collectContext,
+    );
+}
+
+/**
+ * Processes all category sections (bug, performance, security).
+ * Generates formatted text for each category with context injection.
+ * @param overrides - User-provided prompt overrides
+ * @param defaults - Default prompt values from config file
+ * @param externalContext - External prompt context with file references
+ * @param layerContextData - Context data from context pack layers
+ * @param augmentations - Optional MCP tool output augmentations
+ * @returns Object containing processed text for bug, performance, and security categories
+ */
+function processCategorySections(
+    overrides: CodeReviewPayload['v2PromptOverrides'],
+    defaults: CodeReviewPayload['v2PromptOverrides'],
+    externalContext: CodeReviewPayload['externalPromptContext'],
+    layerContextData: Map<
+        string,
+        { references?: unknown[]; syncErrors?: unknown[] }
+    >,
+    augmentations?: CodeReviewPayload['contextAugmentations'],
+    options?: ProcessSectionOptions,
+): {
+    bugText: string;
+    perfText: string;
+    secText: string;
+} {
+    const bugConfig = SECTION_CONFIG.find(
+        (c) => c.pathKey === 'categories.descriptions.bug',
+    )!;
+    const perfConfig = SECTION_CONFIG.find(
+        (c) => c.pathKey === 'categories.descriptions.performance',
+    )!;
+    const secConfig = SECTION_CONFIG.find(
+        (c) => c.pathKey === 'categories.descriptions.security',
+    )!;
+
+    return {
+        bugText: processSection(
+            bugConfig,
+            overrides,
+            defaults,
+            externalContext,
+            layerContextData,
+            augmentations,
+            options,
+        ),
+        perfText: processSection(
+            perfConfig,
+            overrides,
+            defaults,
+            externalContext,
+            layerContextData,
+            augmentations,
+            options,
+        ),
+        secText: processSection(
+            secConfig,
+            overrides,
+            defaults,
+            externalContext,
+            layerContextData,
+            augmentations,
+            options,
+        ),
+    };
+}
+
+/**
+ * Processes all severity sections (critical, high, medium, low).
+ * Generates formatted text for each severity level with context injection.
+ * @param overrides - User-provided prompt overrides
+ * @param defaults - Default prompt values from config file
+ * @param externalContext - External prompt context with file references
+ * @param layerContextData - Context data from context pack layers
+ * @param augmentations - Optional MCP tool output augmentations
+ * @returns Object containing processed text for all severity levels
+ */
+function processSeveritySections(
+    overrides: CodeReviewPayload['v2PromptOverrides'],
+    defaults: CodeReviewPayload['v2PromptOverrides'],
+    externalContext: CodeReviewPayload['externalPromptContext'],
+    layerContextData: Map<
+        string,
+        { references?: unknown[]; syncErrors?: unknown[] }
+    >,
+    augmentations?: CodeReviewPayload['contextAugmentations'],
+    options?: ProcessSectionOptions,
+): {
+    criticalText: string;
+    highText: string;
+    mediumText: string;
+    lowText: string;
+} {
+    const criticalConfig = SECTION_CONFIG.find(
+        (c) => c.pathKey === 'severity.flags.critical',
+    )!;
+    const highConfig = SECTION_CONFIG.find(
+        (c) => c.pathKey === 'severity.flags.high',
+    )!;
+    const mediumConfig = SECTION_CONFIG.find(
+        (c) => c.pathKey === 'severity.flags.medium',
+    )!;
+    const lowConfig = SECTION_CONFIG.find(
+        (c) => c.pathKey === 'severity.flags.low',
+    )!;
+
+    return {
+        criticalText: processSection(
+            criticalConfig,
+            overrides,
+            defaults,
+            externalContext,
+            layerContextData,
+            augmentations,
+            options,
+        ),
+        highText: processSection(
+            highConfig,
+            overrides,
+            defaults,
+            externalContext,
+            layerContextData,
+            augmentations,
+            options,
+        ),
+        mediumText: processSection(
+            mediumConfig,
+            overrides,
+            defaults,
+            externalContext,
+            layerContextData,
+            augmentations,
+            options,
+        ),
+        lowText: processSection(
+            lowConfig,
+            overrides,
+            defaults,
+            externalContext,
+            layerContextData,
+            augmentations,
+            options,
+        ),
+    };
+}
+
+/**
+ * Processes the generation main section.
+ * Generates formatted text for the main generation instructions with context injection.
+ * @param overrides - User-provided prompt overrides
+ * @param defaults - Default prompt values from config file
+ * @param externalContext - External prompt context with file references
+ * @param layerContextData - Context data from context pack layers
+ * @param augmentations - Optional MCP tool output augmentations
+ * @returns Processed text for the generation main section
+ */
+function processGenerationSection(
+    overrides: CodeReviewPayload['v2PromptOverrides'],
+    defaults: CodeReviewPayload['v2PromptOverrides'],
+    externalContext: CodeReviewPayload['externalPromptContext'],
+    layerContextData: Map<
+        string,
+        { references?: unknown[]; syncErrors?: unknown[] }
+    >,
+    augmentations?: CodeReviewPayload['contextAugmentations'],
+    options?: ProcessSectionOptions,
+): string {
+    const genConfig = SECTION_CONFIG.find(
+        (c) => c.pathKey === 'generation.main',
+    )!;
+
+    return processSection(
+        genConfig,
+        overrides,
+        defaults,
+        externalContext,
+        layerContextData,
+        augmentations,
+        options,
+    );
+}
+
+/**
+ * Builds the final system prompt for Gemini v2 code review.
+ * Assembles all processed sections into a complete prompt template.
+ * @param languageNote - Language preference for responses (e.g., 'en-US')
+ * @param bugText - Processed text for bug category
+ * @param perfText - Processed text for performance category
+ * @param secText - Processed text for security category
+ * @param criticalText - Processed text for critical severity
+ * @param highText - Processed text for high severity
+ * @param mediumText - Processed text for medium severity
+ * @param lowText - Processed text for low severity
+ * @param mainGenText - Processed text for generation main instructions
+ * @returns Complete system prompt string ready for LLM consumption
+ */
+function buildFinalPrompt(
+    languageNote: string,
+    bugText: string,
+    perfText: string,
+    secText: string,
+    criticalText: string,
+    highText: string,
+    mediumText: string,
+    lowText: string,
+    mainGenText: string,
+): string {
+    return `You are Kody Bug-Hunter, a senior engineer specialized in identifying verifiable issues through mental code execution. Your mission is to detect bugs, performance problems, and security vulnerabilities that will actually occur in production by mentally simulating code execution.
+
+## Core Method: Mental Simulation
+
+Instead of pattern matching, you will mentally execute the code step-by-step focusing on critical points:
+
+- Function entry/exit points
+- Conditional branches (if/else, switch)
+- Loop boundaries and iterations
+- Variable assignments and transformations
+- Function calls and return values
+- Resource allocation/deallocation
+- Data structure operations
+
+### Multiple Execution Contexts
+
+Simulate the code in different execution contexts:
+- **Repeated invocations**: What changes when the same code runs multiple times?
+- **Parallel execution**: What happens when multiple executions overlap?
+- **Delayed execution**: What state exists when deferred code actually runs?
+- **State persistence**: What survives between executions and what gets reset?
+- **Order of operations**: Verify that measurements and computations happen in the correct sequence (e.g., timers started before the operation they measure)
+- **Cardinality analysis**: When iterating over collections, check if N operations are performed when M unique operations would suffice (where M << N)
+
+## Simulation Scenarios
+
+For each critical code section, mentally execute with these scenarios:
+1. **Happy path**: Expected valid inputs
+2. **Edge cases**: Empty, null, undefined, zero values
+3. **Boundary conditions**: Min/max values, array limits
+4. **Error conditions**: Invalid inputs, failed operations
+5. **Resource scenarios**: Memory limits, connection failures
+6. **Invariant violations**: System constraints that must always hold (e.g., cache size limits, unique constraints)
+7. **Failure cascades**: When one operation fails, what happens to dependent operations?
+
+## Detection Categories
+
+### BUG
+A bug exists when mental simulation reveals:
+${bugText}
+
+### Asynchronous Execution Analysis
+When analyzing asynchronous code (setTimeout, setInterval, Promises, callbacks):
+- **Closure State Capture**: What variable values exist when the async code ACTUALLY executes vs when it was SCHEDULED?
+- **Loop Variable Binding**: In loops with async callbacks, verify if loop variables are captured correctly
+- **Deferred State Access**: When callbacks execute later, is the accessed state still valid/expected?
+- **Timing Dependencies**: What has changed between scheduling and execution?
+
+### PERFORMANCE
+A performance issue exists when mental simulation reveals:
+${perfText}
+
+### SECURITY
+A security vulnerability exists when mental simulation reveals:
+${secText}
+
+## Severity Assessment
+
+For each confirmed issue, evaluate severity based on impact and scope:
+
+**CRITICAL** - Immediate and severe impact
+${criticalText}
+
+**HIGH** - Significant but not immediate impact
+${highText}
+
+**MEDIUM** - Moderate impact
+${mediumText}
+
+**LOW** - Minimal impact
+${lowText}
+
+## Analysis Rules
+
+### MUST DO:
+1. **Focus ONLY on verifiable issues** - Must be able to confirm with available context
+2. **Analyze ONLY added lines** - Lines prefixed with '+' in the diff
+3. **Consider ONLY bugs, performance, and security** - NO style, formatting, or preferences
+4. **Simulate actual execution** - Trace through code paths mentally
+5. **Verify with concrete scenarios** - Use realistic inputs and conditions
+6. **Trace resource lifecycle** - For any stateful resource (caches, maps, collections), verify both creation AND cleanup
+7. **Validate deduplication opportunities** - When performing operations in loops, check if duplicate work can be eliminated
+
+### MUST NOT DO:
+- **NO speculation whatsoever** - If you cannot trace the exact execution path that causes the issue, DO NOT report it
+- **NO "could", "might", "possibly"** - Only report what WILL definitely happen
+- **NO assumptions about external behavior** - Don't assume how external APIs, callbacks, or user code behaves
+- **NO defensive programming as bugs** - Missing try-catch, validation, or error handling is NOT a bug unless you can prove it causes actual failure
+- **NO theoretical edge cases** - Must be able to demonstrate with concrete, realistic values
+- **NO "if the user does X"** - Unless you can prove X is a normal, expected usage
+- **NO style or best practices** - Zero suggestions about code organization, naming, or preferences
+- **NO potential issues** - Only report issues you can reproduce mentally with specific inputs
+- **NO "in production this could..."** - Must be able to prove it WILL happen, not that it COULD happen
+- **NO assuming missing code is wrong** - If code isn't shown, don't assume it exists or how it works
+- **NO indentation-related issues** - Never report issues where the root cause is indentation, spacing, or whitespace - even if you believe it causes syntax errors, parsing failures, or runtime crashes. Indentation problems are NOT bugs.
+- **ONLY report if you can provide**:
+  1. Exact input values that trigger the issue
+  2. Step-by-step execution trace showing the failure
+  3. The specific line where the failure occurs
+  4. The exact incorrect behavior that results
+
+## Analysis Process
+
+1. **Understand PR intent** from summary as context for expected behavior
+2. **Identify critical points** in the changed code (+lines only)
+3. **Simulate execution** through each critical path considering:
+   - Variable initialization order vs usage order
+   - Number of unique operations vs total iterations
+   - Resource accumulation without corresponding cleanup
+3.5. **For async code**: Track variable values at SCHEDULING time vs EXECUTION time
+3.6. **For operations that can fail**: Verify ALL failure paths are handled and system invariants maintained
+4. **Test concrete scenarios** on each path with realistic inputs
+5. **Detect verifiable issues** where behavior is definitively problematic
+6. **Confirm with available context** - must be provable with given information
+6.5. **Indentation check**: If your issue involves the words "indent", "spacing", "whitespace", or "same level", STOP - do not report it.
+7. **Assess severity** of confirmed issues based on impact and scope
+
+
+## Output Requirements
+
+- Report ONLY issues you can definitively prove will occur
+- Focus ONLY on bugs, performance, and security categories
+- Use PR summary as auxiliary context, not absolute truth
+- Be precise and concise in descriptions
+- Always respond in ${languageNote} language
+- Return ONLY the JSON object, no additional text
+
+### Issue description
+
+Custom instructions for 'suggestionContent'
+IMPORTANT none of these instructions should be taken into consideration for any other fields such as 'improvedCode'
+
+${mainGenText}
+
+### Response format
+
+Return only valid JSON, nothing more. Under no circumstances should there be any text of any kind before the \`\`\`json or after the final \`\`\`, use the following JSON format:
+
+\`\`\`json
+{
+    "codeSuggestions": [
+        {
+            "relevantFile": "path/to/file",
+            "language": "programming_language",
+            "suggestionContent": "The full issue description",
+            "existingCode": "Problematic code from PR",
+            "improvedCode": "Fixed code proposal",
+            "oneSentenceSummary": "Concise issue description",
+            "relevantLinesStart": "starting_line",
+            "relevantLinesEnd": "ending_line",
+            "label": "bug|performance|security",
+            "severity": "low|medium|high|critical"
+        }
+    ]
+}
+\`\`\`
+`;
 }
 
 export const prompt_codereview_system_main = () => {
@@ -514,277 +1495,74 @@ export const prompt_codereview_system_gemini_v2 = (
     const overrides = payload?.v2PromptOverrides || {};
     const defaults = getDefaultKodusConfigFile()?.v2PromptOverrides;
     const externalContext = payload?.externalPromptContext;
+    const contextLayers = payload?.contextPack?.layers || [];
 
-    // Build dynamic bullet lists with safe fallbacks
-    const limitText = (text: string, max = 2000): string =>
-        text.length > max ? text.slice(0, max) : text;
-    const getTextOrDefault = (
-        text: string | undefined,
-        fallbackText: string,
-    ): string =>
-        text && typeof text === 'string' && text.trim().length
-            ? limitText(text.trim())
-            : fallbackText;
+    const layerContextData = buildLayerContextData(contextLayers);
 
-    // Helper to inject external context into prompt text
-    const injectExternalContext = (
-        baseText: string,
-        references: any[] | undefined,
-    ): string => {
-        if (!references || references.length === 0) {
-            return baseText;
+    const externalContextSections = new Map<string, string>();
+    const collectExternalContext = (dedupeKey: string, section: string) => {
+        if (!section?.trim()) {
+            return;
         }
-
-        const contextSection = references
-            .map((ref) => {
-                const header = ref.lineRange
-                    ? `\n--- Content from ${ref.filePath} (lines ${ref.lineRange.start}-${ref.lineRange.end}) ---\n`
-                    : `\n--- Content from ${ref.filePath} ---\n`;
-                return `${header}${ref.content}\n--- End of ${ref.filePath} ---`;
-            })
-            .join('\n');
-
-        return `${baseText}\n\n## External Reference Context\n${contextSection}`;
+        if (externalContextSections.has(dedupeKey)) {
+            return;
+        }
+        externalContextSections.set(dedupeKey, section.trim());
     };
 
-    const defaultCategories = defaults?.categories?.descriptions;
+    const processOptions = {
+        collectContext: collectExternalContext,
+    };
 
-    const defaultBug = defaultCategories?.bug;
-    const defaultPerf = defaultCategories?.performance;
-    const defaultSec = defaultCategories?.security;
-
-    // ✅ Get base text and inject external context
-    const bugTextBase = getTextOrDefault(
-        overrides?.categories?.descriptions?.bug,
-        defaultBug,
-    );
-    const bugText = injectExternalContext(
-        bugTextBase,
-        externalContext?.categories?.bug?.references,
+    const { bugText, perfText, secText } = processCategorySections(
+        overrides,
+        defaults,
+        externalContext,
+        layerContextData,
+        payload?.contextAugmentations,
+        processOptions,
     );
 
-    const perfTextBase = getTextOrDefault(
-        overrides?.categories?.descriptions?.performance,
-        defaultPerf,
-    );
-    const perfText = injectExternalContext(
-        perfTextBase,
-        externalContext?.categories?.performance?.references,
-    );
+    const { criticalText, highText, mediumText, lowText } =
+        processSeveritySections(
+            overrides,
+            defaults,
+            externalContext,
+            layerContextData,
+            payload?.contextAugmentations,
+            processOptions,
+        );
 
-    const secTextBase = getTextOrDefault(
-        overrides?.categories?.descriptions?.security,
-        defaultSec,
-    );
-    const secText = injectExternalContext(
-        secTextBase,
-        externalContext?.categories?.security?.references,
-    );
-
-    const defaultSeverity = defaults?.severity?.flags;
-
-    const defaultCritical = defaultSeverity?.critical;
-    const defaultHigh = defaultSeverity?.high;
-    const defaultMedium = defaultSeverity?.medium;
-    const defaultLow = defaultSeverity?.low;
-
-    const sev = overrides?.severity?.flags || {};
-
-    // ✅ Get base text and inject external context for severity
-    const criticalTextBase = getTextOrDefault(sev.critical, defaultCritical);
-    const criticalText = injectExternalContext(
-        criticalTextBase,
-        externalContext?.severity?.critical?.references,
+    const mainGenText = processGenerationSection(
+        overrides,
+        defaults,
+        externalContext,
+        layerContextData,
+        payload?.contextAugmentations,
+        processOptions,
     );
 
-    const highTextBase = getTextOrDefault(sev.high, defaultHigh);
-    const highText = injectExternalContext(
-        highTextBase,
-        externalContext?.severity?.high?.references,
+    const prompt = buildFinalPrompt(
+        languageNote,
+        bugText,
+        perfText,
+        secText,
+        criticalText,
+        highText,
+        mediumText,
+        lowText,
+        mainGenText,
     );
 
-    const mediumTextBase = getTextOrDefault(sev.medium, defaultMedium);
-    const mediumText = injectExternalContext(
-        mediumTextBase,
-        externalContext?.severity?.medium?.references,
-    );
+    const contextBlocks = Array.from(
+        new Set(externalContextSections.values()),
+    ).filter((section) => section.length);
 
-    const lowTextBase = getTextOrDefault(sev.low, defaultLow);
-    const lowText = injectExternalContext(
-        lowTextBase,
-        externalContext?.severity?.low?.references,
-    );
+    if (!contextBlocks.length) {
+        return prompt;
+    }
 
-    const defaultGeneration = defaults?.generation;
-
-    // ✅ Get base text and inject external context for generation
-    const mainGenTextBase = getTextOrDefault(
-        overrides?.generation?.main,
-        defaultGeneration?.main,
-    );
-    const mainGenText = injectExternalContext(
-        mainGenTextBase,
-        externalContext?.generation?.main?.references,
-    );
-
-    return `You are Kody Bug-Hunter, a senior engineer specialized in identifying verifiable issues through mental code execution. Your mission is to detect bugs, performance problems, and security vulnerabilities that will actually occur in production by mentally simulating code execution.
-
-## Core Method: Mental Simulation
-
-Instead of pattern matching, you will mentally execute the code step-by-step focusing on critical points:
-
-- Function entry/exit points
-- Conditional branches (if/else, switch)
-- Loop boundaries and iterations
-- Variable assignments and transformations
-- Function calls and return values
-- Resource allocation/deallocation
-- Data structure operations
-
-### Multiple Execution Contexts
-
-Simulate the code in different execution contexts:
-- **Repeated invocations**: What changes when the same code runs multiple times?
-- **Parallel execution**: What happens when multiple executions overlap?
-- **Delayed execution**: What state exists when deferred code actually runs?
-- **State persistence**: What survives between executions and what gets reset?
-- **Order of operations**: Verify that measurements and computations happen in the correct sequence (e.g., timers started before the operation they measure)
-- **Cardinality analysis**: When iterating over collections, check if N operations are performed when M unique operations would suffice (where M << N)
-
-## Simulation Scenarios
-
-For each critical code section, mentally execute with these scenarios:
-1. **Happy path**: Expected valid inputs
-2. **Edge cases**: Empty, null, undefined, zero values
-3. **Boundary conditions**: Min/max values, array limits
-4. **Error conditions**: Invalid inputs, failed operations
-5. **Resource scenarios**: Memory limits, connection failures
-6. **Invariant violations**: System constraints that must always hold (e.g., cache size limits, unique constraints)
-7. **Failure cascades**: When one operation fails, what happens to dependent operations?
-
-## Detection Categories
-
-### BUG
-A bug exists when mental simulation reveals:
-${bugText}
-
-### Asynchronous Execution Analysis
-When analyzing asynchronous code (setTimeout, setInterval, Promises, callbacks):
-- **Closure State Capture**: What variable values exist when the async code ACTUALLY executes vs when it was SCHEDULED?
-- **Loop Variable Binding**: In loops with async callbacks, verify if loop variables are captured correctly
-- **Deferred State Access**: When callbacks execute later, is the accessed state still valid/expected?
-- **Timing Dependencies**: What has changed between scheduling and execution?
-
-### PERFORMANCE
-A performance issue exists when mental simulation reveals:
-${perfText}
-
-### SECURITY
-A security vulnerability exists when mental simulation reveals:
-${secText}
-
-## Severity Assessment
-
-For each confirmed issue, evaluate severity based on impact and scope:
-
-**CRITICAL** - Immediate and severe impact
-${criticalText}
-
-**HIGH** - Significant but not immediate impact
-${highText}
-
-**MEDIUM** - Moderate impact
-${mediumText}
-
-**LOW** - Minimal impact
-${lowText}
-
-## Analysis Rules
-
-### MUST DO:
-1. **Focus ONLY on verifiable issues** - Must be able to confirm with available context
-2. **Analyze ONLY added lines** - Lines prefixed with '+' in the diff
-3. **Consider ONLY bugs, performance, and security** - NO style, formatting, or preferences
-4. **Simulate actual execution** - Trace through code paths mentally
-5. **Verify with concrete scenarios** - Use realistic inputs and conditions
-6. **Trace resource lifecycle** - For any stateful resource (caches, maps, collections), verify both creation AND cleanup
-7. **Validate deduplication opportunities** - When performing operations in loops, check if duplicate work can be eliminated
-
-### MUST NOT DO:
-- **NO speculation whatsoever** - If you cannot trace the exact execution path that causes the issue, DO NOT report it
-- **NO "could", "might", "possibly"** - Only report what WILL definitely happen
-- **NO assumptions about external behavior** - Don't assume how external APIs, callbacks, or user code behaves
-- **NO defensive programming as bugs** - Missing try-catch, validation, or error handling is NOT a bug unless you can prove it causes actual failure
-- **NO theoretical edge cases** - Must be able to demonstrate with concrete, realistic values
-- **NO "if the user does X"** - Unless you can prove X is a normal, expected usage
-- **NO style or best practices** - Zero suggestions about code organization, naming, or preferences
-- **NO potential issues** - Only report issues you can reproduce mentally with specific inputs
-- **NO "in production this could..."** - Must be able to prove it WILL happen, not that it COULD happen
-- **NO assuming missing code is wrong** - If code isn't shown, don't assume it exists or how it works
-- **NO analyze instruction files** - Remember that some files are not code files themselves, just instructions, so it doesn't make sense to analyze their contents as executable code
-- **NO indentation-related issues** - Never report issues where the root cause is indentation, spacing, or whitespace - even if you believe it causes syntax errors, parsing failures, or runtime crashes. Indentation problems are NOT bugs.
-- **ONLY report if you can provide**:
-  1. Exact input values that trigger the issue
-  2. Step-by-step execution trace showing the failure
-  3. The specific line where the failure occurs
-  4. The exact incorrect behavior that results
-
-## Analysis Process
-
-1. **Understand PR intent** from summary as context for expected behavior
-2. **Identify critical points** in the changed code (+lines only)
-3. **Simulate execution** through each critical path considering:
-   - Variable initialization order vs usage order
-   - Number of unique operations vs total iterations
-   - Resource accumulation without corresponding cleanup
-3.5. **For async code**: Track variable values at SCHEDULING time vs EXECUTION time
-3.6. **For operations that can fail**: Verify ALL failure paths are handled and system invariants maintained
-4. **Test concrete scenarios** on each path with realistic inputs
-5. **Detect verifiable issues** where behavior is definitively problematic
-6. **Confirm with available context** - must be provable with given information
-6.5. **Indentation check**: If your issue involves the words "indent", "spacing", "whitespace", or "same level", STOP - do not report it.
-7. **Assess severity** of confirmed issues based on impact and scope
-
-
-## Output Requirements
-
-- Report ONLY issues you can definitively prove will occur
-- Focus ONLY on bugs, performance, and security categories
-- Use PR summary as auxiliary context, not absolute truth
-- Be precise and concise in descriptions
-- Always respond in ${languageNote} language
-- Return ONLY the JSON object, no additional text
-
-### Issue description
-
-Custom instructions for 'suggestionContent'
-IMPORTANT none of these instructions should be taken into consideration for any other fields such as 'improvedCode'
-
-${mainGenText}
-
-### Response format
-
-Return only valid JSON, nothing more. Under no circumstances should there be any text of any kind before the \`\`\`json or after the final \`\`\`, use the following JSON format:
-
-\`\`\`json
-{
-    "codeSuggestions": [
-        {
-            "relevantFile": "path/to/file",
-            "language": "programming_language",
-            "suggestionContent": "The full issue description",
-            "existingCode": "Problematic code from PR",
-            "improvedCode": "Fixed code proposal",
-            "oneSentenceSummary": "Concise issue description",
-            "relevantLinesStart": "starting_line",
-            "relevantLinesEnd": "ending_line",
-            "label": "bug|performance|security",
-            "severity": "low|medium|high|critical"
-        }
-    ]
-}
-\`\`\`
-`;
+    return `${prompt}\n\n## External Reference Context\n${contextBlocks.join('\n\n')}`;
 };
 
 export const prompt_codereview_user_gemini_v2 = (

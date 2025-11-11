@@ -25,6 +25,8 @@ export enum PromptReferenceErrorType {
     INVALID_FORMAT = 'invalid_format',
     FILE_TOO_LARGE = 'file_too_large',
     FETCH_FAILED = 'fetch_failed',
+    MCP_CONNECTION_FAILED = 'mcp_connection_failed',
+    MCP_EXECUTION_FAILED = 'mcp_execution_failed',
 }
 
 export interface IFileReferenceError {
@@ -41,6 +43,7 @@ export interface IFileReference {
         readonly end: number;
     };
     readonly repositoryName?: string;
+    repositoryId?: string;
     readonly description?: string;
     readonly originalText?: string;
     lastContentHash: string;
@@ -70,6 +73,8 @@ export interface IPromptExternalReference {
     readonly kodyRuleId?: string;
     readonly repositoryName: string;
     promptHash: string;
+    contextReferenceId?: string;
+    contextRequirementsHash?: string;
     readonly references: IFileReference[];
     syncErrors?: IPromptReferenceSyncError[];
     processingStatus: PromptProcessingStatus;
@@ -114,4 +119,3 @@ export interface IDetectedReference {
         readonly end: number;
     };
 }
-

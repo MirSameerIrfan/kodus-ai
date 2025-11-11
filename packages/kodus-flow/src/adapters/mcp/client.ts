@@ -6,6 +6,7 @@
 import { EventEmitter } from 'node:events';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 
@@ -37,6 +38,8 @@ import {
     SecurityPolicy,
     TenantContext,
 } from '../../core/types/allTypes.js';
+import { ISessionManager, SessionManager } from './session-manager.js';
+import { JWTValidator } from './jwt-validator.js';
 
 class SecurityManager {
     constructor(
@@ -96,10 +99,171 @@ class SecurityManager {
 }
 
 // =============================================================================
+// CONSENT MANAGER (Prevents Confused Deputy Problem)
+// =============================================================================
+
+interface ConsentRecord {
+    clientId: string;
+    redirectUri: string;
+    grantedAt: number;
+    expiresAt: number;
+    tenantId: string;
+    userId?: string;
+}
+
+class ConsentManager {
+    private static readonly consentValidityMs = 24 * 60 * 60 * 1000; // 24 hours
+    private consents = new Map<string, ConsentRecord>();
+
+    /**
+     * Check if consent is required for a client ID
+     * If using static client IDs, additional consent is required
+     */
+    requiresAdditionalConsent(clientId: string, tenantId: string): boolean {
+        // Check if this client ID has been used before in this tenant context
+        const key = `${tenantId}:${clientId}`;
+        const existingConsent = this.consents.get(key);
+
+        if (!existingConsent) {
+            return true; // First time - requires consent
+        }
+
+        // Check if consent is still valid
+        if (Date.now() > existingConsent.expiresAt) {
+            this.consents.delete(key); // Clean up expired consent
+            return true; // Expired - requires new consent
+        }
+
+        return false; // Valid consent exists
+    }
+
+    /**
+     * Grant consent for a client ID
+     */
+    grantConsent(
+        clientId: string,
+        redirectUri: string,
+        tenantId: string,
+        userId?: string,
+    ): void {
+        const key = `${tenantId}:${clientId}`;
+        const now = Date.now();
+
+        const consent: ConsentRecord = {
+            clientId,
+            redirectUri,
+            grantedAt: now,
+            expiresAt: now + ConsentManager.consentValidityMs,
+            tenantId,
+            userId,
+        };
+
+        this.consents.set(key, consent);
+    }
+
+    /**
+     * Validate consent for a client ID and redirect URI
+     */
+    validateConsent(
+        clientId: string,
+        redirectUri: string,
+        tenantId: string,
+    ): boolean {
+        const key = `${tenantId}:${clientId}`;
+        const consent = this.consents.get(key);
+
+        if (!consent) return false;
+
+        // Check expiration
+        if (Date.now() > consent.expiresAt) {
+            this.consents.delete(key);
+            return false;
+        }
+
+        // Validate redirect URI matches (prevents malicious redirects)
+        return consent.redirectUri === redirectUri;
+    }
+
+    /**
+     * Clean up expired consents
+     */
+    cleanupExpiredConsents(): void {
+        const now = Date.now();
+        for (const [key, consent] of this.consents) {
+            if (now > consent.expiresAt) {
+                this.consents.delete(key);
+            }
+        }
+    }
+}
+
+// =============================================================================
+// TOKEN VALIDATOR (Prevents Token Passthrough)
+// =============================================================================
+
+class TokenValidator {
+    private readonly expectedAudience: string;
+    private readonly jwtValidator: JWTValidator;
+
+    constructor(serverUrl: string, tenantId: string) {
+        // Generate expected audience based on server and tenant
+        this.expectedAudience = `mcp://${serverUrl.replace(/^https?:\/\//, '')}/${tenantId}`;
+
+        // Initialize production-ready JWT validator
+        this.jwtValidator = JWTValidator.forServiceTokens(
+            this.expectedAudience,
+        );
+    }
+
+    /**
+     * Validate that a token was issued for this MCP server
+     * Prevents token passthrough attacks by ensuring tokens are audience-restricted
+     */
+    validateTokenAudience(token: string): boolean {
+        return this.jwtValidator.validateAudience(token, this.expectedAudience);
+    }
+
+    /**
+     * Validate token format and basic properties
+     */
+    validateTokenFormat(token: string): boolean {
+        // Use JWT validator for proper format checking
+        return this.jwtValidator.isValidJWTFormat(token);
+    }
+
+    /**
+     * Check if token is expired (if JWT)
+     */
+    isTokenExpired(token: string): boolean {
+        return this.jwtValidator.isExpired(token);
+    }
+
+    /**
+     * Get token expiration time
+     */
+    getTokenExpiration(token: string): number | null {
+        return this.jwtValidator.getExpirationTime(token);
+    }
+
+    /**
+     * Full JWT validation (for production use)
+     */
+    async validateFullToken(token: string): Promise<boolean> {
+        try {
+            await this.jwtValidator.validateToken(token);
+            return this.validateTokenAudience(token);
+        } catch {
+            return false;
+        }
+    }
+}
+
+// =============================================================================
 // METRICS COLLECTOR
 // =============================================================================
 
 class MetricsCollector {
+    private static readonly maxDurationSamples = 100;
     private metrics: MCPMetrics;
 
     constructor(private tenantId: string) {
@@ -135,6 +299,16 @@ class MetricsCollector {
     recordRequest(type: string, duration: number, success: boolean): void {
         this.metrics.requestsTotal++;
         this.metrics.requestDuration.push(duration);
+        if (
+            this.metrics.requestDuration.length >
+            MetricsCollector.maxDurationSamples
+        ) {
+            this.metrics.requestDuration.splice(
+                0,
+                this.metrics.requestDuration.length -
+                    MetricsCollector.maxDurationSamples,
+            );
+        }
 
         if (success) {
             this.metrics.requestsSuccessful++;
@@ -203,6 +377,7 @@ class MetricsCollector {
 // =============================================================================
 
 class AuditLogger {
+    private static readonly maxEvents = 100;
     private events: AuditEvent[] = [];
 
     constructor(private tenantId: string) {}
@@ -214,6 +389,9 @@ class AuditLogger {
             ...event,
         };
 
+        if (this.events.length >= AuditLogger.maxEvents) {
+            this.events.shift();
+        }
         this.events.push(auditEvent);
     }
 
@@ -241,6 +419,9 @@ export class SpecCompliantMCPClient extends EventEmitter<MCPClientEvents> {
 
     // Client features
     private securityManager?: SecurityManager;
+    private tokenValidator?: TokenValidator;
+    private consentManager?: ConsentManager;
+    private sessionManager?: ISessionManager;
     private metricsCollector: MetricsCollector;
     private auditLogger: AuditLogger;
     private approvalHandler?: HumanApprovalHandler;
@@ -249,6 +430,7 @@ export class SpecCompliantMCPClient extends EventEmitter<MCPClientEvents> {
     private resourcesCache: Resource[] | null = null;
     private promptsCache: Prompt[] | null = null;
     private rootsCache: Root[] | null = null;
+    private metricsIntervalId?: ReturnType<typeof setInterval>;
 
     // Logger for internal use
     private logger?: {
@@ -278,6 +460,20 @@ export class SpecCompliantMCPClient extends EventEmitter<MCPClientEvents> {
                 config.tenant,
             );
         }
+
+        // Initialize token validator (prevents token passthrough)
+        if (config.transport.url) {
+            this.tokenValidator = new TokenValidator(
+                config.transport.url,
+                config.tenant?.tenantId || 'default',
+            );
+        }
+
+        // Initialize consent manager (prevents confused deputy)
+        this.consentManager = new ConsentManager();
+
+        // Initialize session manager (prevents session hijacking)
+        this.sessionManager = new SessionManager();
 
         // Create MCP Client with full capabilities
         this.client = new Client(config.clientInfo, {
@@ -420,6 +616,9 @@ export class SpecCompliantMCPClient extends EventEmitter<MCPClientEvents> {
             ) {
                 throw new Error('Permission denied: connect');
             }
+
+            // 2. Validate authorization tokens (prevent token passthrough)
+            this.validateAuthHeaders();
 
             // 2. Create transport
             this.transport = this.createTransport();
@@ -661,6 +860,22 @@ export class SpecCompliantMCPClient extends EventEmitter<MCPClientEvents> {
     async listTools(): Promise<Tool[]> {
         this.ensureConnected();
 
+        // Security: Validate permission for tool listing
+        if (
+            this.securityManager &&
+            !this.securityManager.checkPermission('tools.list')
+        ) {
+            this.metricsCollector.recordSecurityEvent('unauthorized');
+            this.auditLogger.log({
+                event: 'permission_denied',
+                resource: 'tools',
+                success: false,
+                error: 'Insufficient permissions to list tools',
+                metadata: { action: 'list' },
+            });
+            throw new Error('Permission denied: tools.list');
+        }
+
         try {
             const result = await this.client.listTools();
 
@@ -786,10 +1001,11 @@ export class SpecCompliantMCPClient extends EventEmitter<MCPClientEvents> {
         name: string,
         args?: Record<string, unknown>,
     ): Promise<CallToolResult> {
-        const maxRetries = this.config.transport.retries || 1;
+        const maxRetries = Math.max(1, this.config.transport.retries ?? 1);
         const timeout = this.config.transport.timeout || 60000; // ✅ UNIFIED: 60s timeout
         let lastError: Error = new Error('Unknown error');
         const startTime = Date.now();
+        let lastErrorMessage: string | undefined;
 
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
@@ -842,6 +1058,8 @@ export class SpecCompliantMCPClient extends EventEmitter<MCPClientEvents> {
                     duration,
                     false,
                 );
+                lastErrorMessage =
+                    error instanceof Error ? error.message : String(error);
 
                 // Log error with context
                 this.logger?.warn('MCP tool execution failed', {
@@ -868,6 +1086,7 @@ export class SpecCompliantMCPClient extends EventEmitter<MCPClientEvents> {
             lastError,
             {
                 toolName: name,
+                lastErrorMessage,
                 maxRetries,
             },
         );
@@ -929,6 +1148,22 @@ export class SpecCompliantMCPClient extends EventEmitter<MCPClientEvents> {
     ): Promise<CallToolResult> {
         this.ensureConnected();
 
+        // Security: Validate permission for tool execution
+        if (
+            this.securityManager &&
+            !this.securityManager.checkPermission('tools.call')
+        ) {
+            this.metricsCollector.recordSecurityEvent('unauthorized');
+            this.auditLogger.log({
+                event: 'permission_denied',
+                resource: name,
+                success: false,
+                error: 'Insufficient permissions to call tools',
+                metadata: { action: 'call' },
+            });
+            throw new Error('Permission denied: tools.call');
+        }
+
         const startTime = Date.now();
 
         try {
@@ -983,6 +1218,22 @@ export class SpecCompliantMCPClient extends EventEmitter<MCPClientEvents> {
 
     async readResource(uri: string): Promise<ReadResourceResult> {
         this.ensureConnected();
+
+        // Security: Validate permission for resource reading
+        if (
+            this.securityManager &&
+            !this.securityManager.checkPermission('resources.read')
+        ) {
+            this.metricsCollector.recordSecurityEvent('unauthorized');
+            this.auditLogger.log({
+                event: 'permission_denied',
+                resource: uri,
+                success: false,
+                error: 'Insufficient permissions to read resources',
+                metadata: { action: 'read' },
+            });
+            throw new Error('Permission denied: resources.read');
+        }
 
         const startTime = Date.now();
 
@@ -1046,6 +1297,231 @@ export class SpecCompliantMCPClient extends EventEmitter<MCPClientEvents> {
 
     setApprovalHandler(handler: HumanApprovalHandler): void {
         this.approvalHandler = handler;
+    }
+
+    /**
+     * Check if additional consent is required for OAuth flows
+     * Prevents confused deputy attacks when using static client IDs
+     */
+    requiresAdditionalConsent(clientId: string): boolean {
+        const tenantId = this.config.tenant?.tenantId || 'default';
+        return (
+            this.consentManager?.requiresAdditionalConsent(
+                clientId,
+                tenantId,
+            ) ?? false
+        );
+    }
+
+    /**
+     * Grant consent for a client ID (after user approval)
+     * Required when using static client IDs to prevent confused deputy attacks
+     */
+    grantConsent(clientId: string, redirectUri: string): void {
+        const tenantId = this.config.tenant?.tenantId || 'default';
+        const userId = this.config.tenant?.userId;
+
+        this.consentManager?.grantConsent(
+            clientId,
+            redirectUri,
+            tenantId,
+            userId,
+        );
+
+        this.auditLogger.log({
+            event: 'consent_granted',
+            success: true,
+            metadata: {
+                clientId,
+                redirectUri,
+                tenantId,
+                userId,
+            },
+        });
+    }
+
+    /**
+     * Validate consent for OAuth callback
+     * Ensures the redirect URI matches what was consented to
+     */
+    validateConsentForCallback(clientId: string, redirectUri: string): boolean {
+        const tenantId = this.config.tenant?.tenantId || 'default';
+        const isValid =
+            this.consentManager?.validateConsent(
+                clientId,
+                redirectUri,
+                tenantId,
+            ) ?? false;
+
+        this.auditLogger.log({
+            event: 'consent_validation',
+            success: isValid,
+            metadata: {
+                clientId,
+                redirectUri,
+                tenantId,
+            },
+        });
+
+        return isValid;
+    }
+
+    /**
+     * Create a secure session (prevents session hijacking)
+     * Returns a cryptographically secure UUID bound to the user
+     */
+    createSecureSession(): string {
+        const tenantId = this.config.tenant?.tenantId || 'default';
+        const userId = this.config.tenant?.userId;
+
+        if (!this.sessionManager) {
+            throw new Error('Session manager not initialized');
+        }
+        const sessionId = this.sessionManager.createSession(tenantId, userId);
+
+        this.auditLogger.log({
+            event: 'session_created',
+            success: true,
+            metadata: {
+                sessionId,
+                tenantId,
+                userId,
+            },
+        });
+
+        return sessionId;
+    }
+
+    /**
+     * Validate a session (prevents session hijacking)
+     * Ensures the session belongs to the correct user and hasn't expired
+     */
+    validateSecureSession(sessionId: string): boolean {
+        const userId = this.config.tenant?.userId;
+        if (!this.sessionManager) {
+            return false;
+        }
+        const isValid = this.sessionManager.validateSession(sessionId, userId);
+
+        this.auditLogger.log({
+            event: 'session_validation',
+            success: isValid,
+            metadata: {
+                sessionId,
+                userId,
+            },
+        });
+
+        return isValid;
+    }
+
+    /**
+     * Destroy a session
+     */
+    destroySecureSession(sessionId: string): void {
+        const userId = this.config.tenant?.userId;
+
+        if (!this.sessionManager) {
+            return;
+        }
+        this.sessionManager.destroySession(sessionId, userId);
+
+        this.auditLogger.log({
+            event: 'session_destroyed',
+            success: true,
+            metadata: {
+                sessionId,
+                userId,
+            },
+        });
+    }
+
+    /**
+     * Get session metadata
+     */
+    getSessionMetadata(sessionId: string): Record<string, unknown> | null {
+        const userId = this.config.tenant?.userId;
+        if (!this.sessionManager) {
+            return null;
+        }
+        return this.sessionManager.getSessionMetadata(sessionId, userId);
+    }
+
+    /**
+     * Update session metadata
+     */
+    updateSessionMetadata(
+        sessionId: string,
+        metadata: Record<string, unknown>,
+    ): void {
+        const userId = this.config.tenant?.userId;
+        if (!this.sessionManager) {
+            return;
+        }
+        this.sessionManager.updateSessionMetadata(sessionId, metadata, userId);
+    }
+
+    /**
+     * Validate authorization headers to prevent token passthrough attacks
+     * Ensures tokens were issued specifically for this MCP server
+     */
+    private validateAuthHeaders(): void {
+        const headers = this.config.transport.headers;
+
+        if (!headers) return; // No headers to validate
+
+        // Check for authorization tokens
+        const authHeader = headers['authorization'] || headers['Authorization'];
+        if (!authHeader) return; // No auth header
+
+        // Extract token from Bearer format
+        let token: string;
+        if (authHeader.startsWith('Bearer ')) {
+            token = authHeader.substring(7);
+        } else {
+            token = authHeader; // Assume it's the token directly
+        }
+
+        // Validate token format
+        if (!this.tokenValidator?.validateTokenFormat(token)) {
+            this.metricsCollector.recordSecurityEvent('violation');
+            this.auditLogger.log({
+                event: 'token_validation_failed',
+                success: false,
+                error: 'Invalid token format',
+            });
+            throw new Error('Invalid authorization token format');
+        }
+
+        // Validate token audience (prevents token passthrough)
+        if (!this.tokenValidator?.validateTokenAudience(token)) {
+            this.metricsCollector.recordSecurityEvent('violation');
+            this.auditLogger.log({
+                event: 'token_audience_invalid',
+                success: false,
+                error: 'Token not issued for this MCP server',
+            });
+            throw new Error(
+                'Token was not issued for this MCP server (audience mismatch)',
+            );
+        }
+
+        // Check token expiration
+        if (this.tokenValidator?.isTokenExpired(token)) {
+            this.metricsCollector.recordSecurityEvent('violation');
+            this.auditLogger.log({
+                event: 'token_expired',
+                success: false,
+                error: 'Authorization token expired',
+            });
+            throw new Error('Authorization token has expired');
+        }
+
+        this.auditLogger.log({
+            event: 'token_validation_success',
+            success: true,
+            metadata: { hasValidToken: true },
+        });
     }
 
     /**
@@ -1213,9 +1689,12 @@ export class SpecCompliantMCPClient extends EventEmitter<MCPClientEvents> {
 
     private setupMetricsCollection(): void {
         if (this.config.observability?.enableMetrics) {
+            if (this.metricsIntervalId) {
+                return;
+            }
             const interval = this.config.observability.metricsInterval || 60000;
 
-            setInterval(() => {
+            this.metricsIntervalId = setInterval(() => {
                 this.emit('metricsUpdated', this.getMetrics());
             }, interval);
         }
@@ -1253,6 +1732,11 @@ export class SpecCompliantMCPClient extends EventEmitter<MCPClientEvents> {
         this.connected = false;
         this.serverCapabilities = null;
         this.transport = null;
+
+        if (this.metricsIntervalId) {
+            clearInterval(this.metricsIntervalId);
+            this.metricsIntervalId = undefined;
+        }
 
         // Clear caches
         this.resourcesCache = null;

@@ -16,11 +16,17 @@ export class MCPRegistry {
         maxRetries: number;
     };
     private logger = createLogger('MCPRegistry');
+    private toolIndex = new Map<string, Set<string>>();
 
-    constructor(_options: MCPRegistryOptions = {}) {
+    constructor(options: MCPRegistryOptions = {}) {
+        const { defaultTimeout, maxRetries, ...rest } = options;
+
         this.options = {
-            defaultTimeout: 30000,
-            maxRetries: 3,
+            defaultTimeout:
+                typeof defaultTimeout === 'number' ? defaultTimeout : 30000,
+            maxRetries: typeof maxRetries === 'number' ? maxRetries : 3,
+            ...rest,
+            onToolsChanged: options.onToolsChanged,
         };
 
         this.logger.info('MCPRegistry initialized');
@@ -72,6 +78,8 @@ export class MCPRegistry {
                 await client.connect();
                 this.clients.set(config.name, client);
 
+                this.markToolsDirty(config.name);
+
                 this.logger.info('Successfully registered MCP server', {
                     serverName: config.name,
                 });
@@ -101,6 +109,8 @@ export class MCPRegistry {
         if (client) {
             await client.disconnect();
             this.clients.delete(serverName);
+            this.removeServerFromIndex(serverName);
+            this.markToolsDirty(serverName);
         }
     }
 
@@ -109,6 +119,7 @@ export class MCPRegistry {
      */
     async listAllTools(): Promise<MCPToolRawWithServer[]> {
         const allTools: MCPToolRawWithServer[] = [];
+        const refreshedIndex = new Map<string, Set<string>>();
 
         this.logger.info('Listing all tools from MCP registry', {
             totalClients: this.clients.size,
@@ -185,6 +196,11 @@ export class MCPRegistry {
                         hasAnnotations: !!tool.annotations,
                     });
 
+                    if (!refreshedIndex.has(tool.name)) {
+                        refreshedIndex.set(tool.name, new Set());
+                    }
+                    refreshedIndex.get(tool.name)?.add(serverName);
+
                     allTools.push({
                         ...tool,
                         serverName,
@@ -226,6 +242,9 @@ export class MCPRegistry {
             ),
         });
 
+        this.toolIndex = refreshedIndex;
+        this.options.onToolsChanged?.('all');
+
         return allTools;
     }
 
@@ -238,7 +257,7 @@ export class MCPRegistry {
         serverName?: string,
     ): Promise<unknown> {
         if (serverName) {
-            const client = this.clients.get(serverName);
+            const client = this.resolveClientByAlias(serverName);
 
             if (!client) {
                 throw new Error(`MCP server ${serverName} not found`);
@@ -248,7 +267,37 @@ export class MCPRegistry {
         }
 
         // Tenta encontrar tool em qualquer servidor
-        for (const [, client] of this.clients) {
+        let candidateServers = this.toolIndex.get(toolName);
+
+        if (!candidateServers || candidateServers.size === 0) {
+            // refresh index to ensure we have latest mapping
+            await this.listAllTools();
+            candidateServers = this.toolIndex.get(toolName);
+        }
+
+        if (candidateServers && candidateServers.size > 0) {
+            for (const candidate of candidateServers) {
+                const client = this.clients.get(candidate);
+                if (!client) {
+                    continue;
+                }
+                try {
+                    return await client.executeTool(toolName, args);
+                } catch (error) {
+                    this.logger.warn('Failed to execute tool on server', {
+                        serverName: candidate,
+                        toolName,
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : String(error),
+                    });
+                }
+            }
+        }
+
+        // Fallback legacy behaviour
+        for (const client of this.clients.values()) {
             try {
                 const tools = await client.listTools();
 
@@ -277,5 +326,66 @@ export class MCPRegistry {
             });
         }
         this.clients.clear();
+        this.toolIndex.clear();
+        this.options.onToolsChanged?.('destroy');
+    }
+
+    private removeServerFromIndex(serverName: string): void {
+        for (const [toolName, servers] of this.toolIndex.entries()) {
+            servers.delete(serverName);
+            if (servers.size === 0) {
+                this.toolIndex.delete(toolName);
+            }
+        }
+    }
+
+    private markToolsDirty(serverName: string): void {
+        this.toolIndex.clear();
+        this.options.onToolsChanged?.(serverName);
+    }
+
+    private resolveClientByAlias(
+        serverName?: string,
+    ): SpecCompliantMCPClient | undefined {
+        if (!serverName) {
+            return undefined;
+        }
+
+        const direct = this.clients.get(serverName);
+        if (direct) {
+            return direct;
+        }
+
+        const normalizedTarget = this.normalizeServerKey(serverName);
+        if (!normalizedTarget) {
+            return undefined;
+        }
+
+        for (const [candidate, client] of this.clients.entries()) {
+            if (this.normalizeServerKey(candidate) === normalizedTarget) {
+                return client;
+            }
+        }
+
+        return undefined;
+    }
+
+    private normalizeServerKey(value?: string | null): string | undefined {
+        if (!value || typeof value !== 'string') {
+            return undefined;
+        }
+
+        const normalized = value
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '');
+
+        if (!normalized) {
+            return undefined;
+        }
+
+        return normalized.endsWith('mcp') && normalized.length > 3
+            ? normalized.slice(0, -3)
+            : normalized;
     }
 }

@@ -14,6 +14,12 @@ import {
 import { KodyRulesValidationService } from '@/ee/kodyRules/service/kody-rules-validation.service';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
 import { Inject, Injectable } from '@nestjs/common';
+import {
+    CONTEXT_REFERENCE_SERVICE_TOKEN,
+    IContextReferenceService,
+} from '@/core/domain/contextReferences/contracts/context-reference.service.contract';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { enrichRulesWithContextReferences } from './utils/enrich-rules-with-context-references.util';
 
 type KodyRuleWithInheritance = Partial<IKodyRule> & {
     inherited?: 'global' | 'repository' | 'directory';
@@ -30,6 +36,11 @@ export class GetInheritedRulesKodyRulesUseCase {
 
         @Inject(KODY_RULES_SERVICE_TOKEN)
         private readonly kodyRulesService: IKodyRulesService,
+
+        @Inject(CONTEXT_REFERENCE_SERVICE_TOKEN)
+        private readonly contextReferenceService: IContextReferenceService,
+
+        private readonly logger: PinoLoggerService,
     ) {}
 
     async execute(
@@ -99,7 +110,29 @@ export class GetInheritedRulesKodyRulesUseCase {
             directoryId,
         );
 
-        return rulesWithOrigins;
+        const [globalRules, repoRules, directoryRules] = await Promise.all([
+            enrichRulesWithContextReferences(
+                rulesWithOrigins.globalRules,
+                this.contextReferenceService,
+                this.logger,
+            ),
+            enrichRulesWithContextReferences(
+                rulesWithOrigins.repoRules,
+                this.contextReferenceService,
+                this.logger,
+            ),
+            enrichRulesWithContextReferences(
+                rulesWithOrigins.directoryRules,
+                this.contextReferenceService,
+                this.logger,
+            ),
+        ]);
+
+        return {
+            globalRules,
+            repoRules,
+            directoryRules,
+        };
     }
 
     private setRuleOrigins(

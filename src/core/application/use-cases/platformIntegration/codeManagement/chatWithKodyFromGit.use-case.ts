@@ -7,7 +7,6 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import { ConversationAgentUseCase } from '../../agent/conversation-agent.use-case';
 import { BusinessRulesValidationAgentUseCase } from '../../agent/business-rules-validation-agent.use-case';
 import { createThreadId } from '@kodus/flow';
-import posthogClient from '@/shared/utils/posthog';
 import { PlatformResponsePolicyFactory } from './policies/platform-response.policy';
 
 // Constants
@@ -728,51 +727,45 @@ export class ChatWithKodyFromGitUseCase {
         }
 
         let response = '';
-        if (
-            await posthogClient.isFeatureEnabled(
-                'conversation-agent',
-                organizationAndTeamData.organizationId,
-                organizationAndTeamData,
-            )
-        ) {
-            const gitUser = this.getGitUser(params);
 
-            const prepareContext = this.prepareContext({
-                comment,
-                originalKodyComment,
-                gitUser,
-                othersReplies,
-                pullRequestNumber,
-                repository,
-                pullRequestDescription,
-                platformType: params.platformType,
-                headRef,
-                baseRef,
-                defaultBranch,
-            });
+        const gitUser = this.getGitUser(params);
 
-            const thread = createThreadId(
-                {
-                    organizationId: organizationAndTeamData.organizationId,
-                    teamId: organizationAndTeamData.teamId,
-                    repositoryId: repository.id,
-                    userId: sender.id,
-                    suggestionCommentId: originalKodyComment?.id || comment?.id,
-                },
-                {
-                    prefix: 'cmc',
-                },
-            );
+        const prepareContext = this.prepareContext({
+            comment,
+            originalKodyComment,
+            gitUser,
+            othersReplies,
+            pullRequestNumber,
+            repository,
+            pullRequestDescription,
+            platformType: params.platformType,
+            headRef,
+            baseRef,
+            defaultBranch,
+        });
 
-            const commandType = this.commandManager.getCommandType(
-                prepareContext.userQuestion,
-            );
-            response = await this.processCommand(commandType, {
-                prepareContext,
-                organizationAndTeamData,
-                thread,
-            });
-        }
+        const thread = createThreadId(
+            {
+                organizationId: organizationAndTeamData.organizationId,
+                teamId: organizationAndTeamData.teamId,
+                repositoryId: repository.id,
+                userId: sender.id,
+                suggestionCommentId: originalKodyComment?.id || comment?.id,
+            },
+            {
+                prefix: 'cmc',
+            },
+        );
+
+        const commandType = this.commandManager.getCommandType(
+            prepareContext.userQuestion,
+        );
+
+        response = await this.processCommand(commandType, {
+            prepareContext,
+            organizationAndTeamData,
+            thread,
+        });
 
         if (!response) {
             this.logger.warn({

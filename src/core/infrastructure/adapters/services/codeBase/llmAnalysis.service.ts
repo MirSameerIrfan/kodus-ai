@@ -35,6 +35,8 @@ import {
 } from '@kodus/kodus-common/llm';
 import { BYOKPromptRunnerService } from '@/shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
 import { ObservabilityService } from '../logger/observability.service';
+import type { ContextAugmentationsMap } from '../context/code-review-context-pack.service';
+import type { ContextPack } from '@context-os-core/interfaces';
 
 export const LLM_ANALYSIS_SERVICE_TOKEN = Symbol('LLMAnalysisService');
 
@@ -125,7 +127,10 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
             context?.codeReviewConfig?.byokConfig,
         );
 
-        const baseContext = this.prepareAnalysisContext(fileContext, context);
+        const baseContext = await this.prepareAnalysisContext(
+            fileContext,
+            context,
+        );
         const spanName = `${LLMAnalysisService.name}::${runName}`;
         const spanAttrs = {
             type: promptRunner.executeMode,
@@ -239,7 +244,10 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
             byokConfig,
         );
 
-        const baseContext = this.prepareAnalysisContext(fileContext, context);
+        const baseContext = await this.prepareAnalysisContext(
+            fileContext,
+            context,
+        );
         const spanName = `${LLMAnalysisService.name}::${runName}`;
         const spanAttrs = {
             type: promptRunner.executeMode,
@@ -369,7 +377,7 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
         }
     }
 
-    private prepareAnalysisContext(
+    private async prepareAnalysisContext(
         fileContext: FileChangeContext,
         context: AnalysisContext,
     ) {
@@ -396,9 +404,17 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
             hasRelevantContent: fileContext?.hasRelevantContent,
             prSummary: context?.pullRequest?.body,
             // v2-only prompt customization (categories and severity guidance)
-            v2PromptOverrides: context?.codeReviewConfig?.v2PromptOverrides,
+            v2PromptOverrides:
+                context?.sharedSanitizedOverrides ??
+                context?.codeReviewConfig?.v2PromptOverrides,
             // External prompt context (referenced files)
             externalPromptContext: context?.externalPromptContext,
+            externalPromptLayers: context?.externalPromptLayers,
+            contextAugmentations:
+                context?.sharedContextAugmentations as
+                    | ContextAugmentationsMap
+                    | undefined,
+            contextPack: context?.sharedContextPack as ContextPack | undefined,
         };
 
         return baseContext;

@@ -1288,7 +1288,9 @@ export class GithubService
                     IntegrationConfigKey.REPOSITORIES,
                 );
 
-            if (!githubAuthDetail || !allRepositories) return [];
+            if (!githubAuthDetail || !allRepositories) {
+                return [];
+            }
 
             const octokit = await this.instanceOctokit(
                 params?.organizationAndTeamData,
@@ -1555,7 +1557,9 @@ export class GithubService
                 platform: PlatformType.GITHUB,
             });
 
-            if (!integration) return;
+            if (!integration) {
+                return;
+            }
 
             const integrationConfig =
                 await this.integrationConfigService.findOne({

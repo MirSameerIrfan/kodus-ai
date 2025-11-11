@@ -9,6 +9,7 @@ import {
     PromptSourceType,
 } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
 import { PromptExternalReferenceEntity } from '@/core/domain/prompts/entities/promptExternalReference.entity';
+import type { ContextLayer } from '@context-os-core/interfaces';
 import { createHash } from 'crypto';
 import {
     IPromptContextLoaderService,
@@ -24,21 +25,37 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
 
     async loadExternalContext(
         params: LoadContextParams,
-    ): Promise<IExternalPromptContext> {
+        options?: { buildLayers?: boolean },
+    ): Promise<{
+        externalContext: IExternalPromptContext;
+        contextLayers?: ContextLayer[];
+    }> {
         const fileContentCache = new Map<string, string>();
         const updatedReferences: Array<{
             entity: PromptExternalReferenceEntity;
             updated: boolean;
         }> = [];
         const successfullyLoadedFiles = new Set<string>();
+        const resolvedEntries: Array<{
+            entity: PromptExternalReferenceEntity;
+            loadedReferences: ILoadedFileReference[];
+        }> = [];
 
         for (const refDoc of params.allReferences) {
             let hasUpdates = false;
+            const loadedReferencesForEntity: ILoadedFileReference[] = [];
 
             for (const ref of refDoc.references) {
                 const cacheKey = `${ref.repositoryName || params.repository.id}:${ref.filePath}`;
 
                 if (fileContentCache.has(cacheKey)) {
+                    const cachedContent = fileContentCache.get(cacheKey);
+                    if (cachedContent) {
+                        loadedReferencesForEntity.push({
+                            ...ref,
+                            content: cachedContent,
+                        });
+                    }
                     continue;
                 }
 
@@ -52,6 +69,10 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
 
                     fileContentCache.set(cacheKey, content);
                     successfullyLoadedFiles.add(ref.filePath);
+                    loadedReferencesForEntity.push({
+                        ...ref,
+                        content,
+                    });
                 } catch (error) {
                     this.logger.warn({
                         message: 'Failed to load external reference',
@@ -67,6 +88,11 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
                     });
                 }
             }
+
+            resolvedEntries.push({
+                entity: refDoc,
+                loadedReferences: loadedReferencesForEntity,
+            });
 
             if (refDoc.syncErrors && successfullyLoadedFiles.size > 0) {
                 const beforeCleanup = refDoc.syncErrors.length;
@@ -116,7 +142,19 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
             });
         }
 
-        return this.buildContextMap(params.allReferences, fileContentCache);
+        const externalContext = this.buildContextMap(
+            params.allReferences,
+            fileContentCache,
+        );
+
+        const contextLayers = options?.buildLayers
+            ? this.buildContextLayers(resolvedEntries)
+            : undefined;
+
+        return {
+            externalContext,
+            contextLayers,
+        };
     }
 
     private async loadFileContent(
@@ -403,6 +441,67 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
         }
 
         return context;
+    }
+
+    private buildContextLayers(
+        entries: Array<{
+            entity: PromptExternalReferenceEntity;
+            loadedReferences: ILoadedFileReference[];
+        }>,
+    ): ContextLayer[] {
+        const layers: ContextLayer[] = [];
+
+        for (const { entity, loadedReferences } of entries) {
+            const hasContent = loadedReferences.length > 0;
+            const hasErrors = entity.syncErrors?.length;
+
+            if (!hasContent && !hasErrors) {
+                continue;
+            }
+
+            const layerId = `prompt-context:${entity.configKey}:${entity.sourceType}`;
+            const tokens = loadedReferences.reduce(
+                (acc, ref) => acc + this.estimateTokens(ref.content),
+                0,
+            );
+
+            const references = loadedReferences.map((ref, index) => ({
+                itemId: `${
+                    ref.repositoryName ?? entity.repositoryName
+                }:${ref.filePath}:${index}`,
+            }));
+
+            layers.push({
+                id: layerId,
+                kind: 'catalog',
+                priority: 2,
+                tokens,
+                content: {
+                    configKey: entity.configKey,
+                    sourceType: entity.sourceType,
+                    references: loadedReferences.map((ref) => ({
+                        filePath: ref.filePath,
+                        repositoryName:
+                            ref.repositoryName ?? entity.repositoryName,
+                        lineRange: ref.lineRange,
+                        description: ref.description,
+                        originalText: ref.originalText,
+                        content: ref.content,
+                    })),
+                    syncErrors: entity.syncErrors,
+                },
+                references,
+                metadata: {
+                    configKey: entity.configKey,
+                    sourceType: entity.sourceType,
+                    processingStatus: entity.processingStatus,
+                    contextReferenceId: entity.contextReferenceId,
+                    contextRequirementsHash: entity.contextRequirementsHash,
+                },
+            } satisfies ContextLayer);
+        }
+
+        return layers;
     }
 
     injectContextIntoPrompt(

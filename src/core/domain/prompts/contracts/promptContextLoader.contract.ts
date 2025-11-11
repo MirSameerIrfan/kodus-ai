@@ -1,4 +1,5 @@
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import type { ContextLayer } from '@context-os-core/interfaces';
 import { PromptExternalReferenceEntity } from '../entities/promptExternalReference.entity';
 import { IExternalPromptContext } from '../interfaces/promptExternalReference.interface';
 
@@ -21,6 +22,11 @@ export interface LoadContextParams {
 }
 
 export interface IPromptContextLoaderService {
-    loadExternalContext(params: LoadContextParams): Promise<IExternalPromptContext>;
+    loadExternalContext(
+        params: LoadContextParams,
+        options?: { buildLayers?: boolean },
+    ): Promise<{
+        externalContext: IExternalPromptContext;
+        contextLayers?: ContextLayer[];
+    }>;
 }
-

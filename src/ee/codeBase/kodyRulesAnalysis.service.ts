@@ -51,8 +51,9 @@ import {
 } from '@/core/domain/codeBase/contracts/CodeBaseConfigService.contract';
 import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
 import { BYOKPromptRunnerService } from '@/shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { ConfigLevel } from '@/config/types/general/pullRequestMessages.type';
 import { ExternalReferenceLoaderService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceLoader.service';
+import type { ContextAugmentationsMap } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
+import type { ContextPack } from '@context-os-core/interfaces';
 
 // Interface for extended context used in Kody Rules analysis
 interface KodyRulesExtendedContext {
@@ -70,12 +71,15 @@ interface KodyRulesExtendedContext {
     organizationAndTeamData: OrganizationAndTeamData;
     kodyRules: Array<Partial<IKodyRule>>;
     v2PromptOverrides?: CodeReviewConfig['v2PromptOverrides'];
+    contextAugmentations?: ContextAugmentationsMap;
+    contextPack?: ContextPack;
 
     // Extended properties added during analysis
     standardSuggestions?: AIAnalysisResult;
     updatedSuggestions?: AIAnalysisResult;
     filteredKodyRules?: Array<Partial<IKodyRule>>;
     externalReferencesMap?: Map<string, any[]>;
+    mcpResultsMap?: Map<string, Record<string, unknown>>;
 }
 
 export const KODY_RULES_ANALYSIS_SERVICE_TOKEN = Symbol(
@@ -415,45 +419,52 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
                     kodyRulesCount: baseContext.kodyRules?.length || 0,
                 },
             });
+
             return { codeSuggestions: [] };
         }
 
-        // 3) Load external references for rules that have them
-        const externalReferencesMap =
-            await this.externalReferenceLoaderService.loadReferencesForRules(
-                baseContext.kodyRules,
-                context,
-            );
+        const {
+            referencesMap: externalReferencesMap,
+            mcpResultsMap: externalMcpResultsMap,
+        } = await this.externalReferenceLoaderService.loadReferencesForRules(
+            baseContext.kodyRules,
+            context,
+        );
 
-        // Filter out rules that have external references but failed to load
         const rulesWithLoadedReferences = baseContext.kodyRules.filter(
             (rule) => {
                 const fullRule = rule as Partial<IKodyRule>;
-                if (!fullRule.externalReferences?.length) {
+                if (!fullRule.contextReferenceId) {
                     return true;
                 }
-                if (fullRule.uuid && externalReferencesMap.has(fullRule.uuid)) {
-                    return true;
+
+                if (fullRule.uuid) {
+                    const hasKnowledge = externalReferencesMap.has(fullRule.uuid);
+                    const hasMcp = externalMcpResultsMap.has(fullRule.uuid);
+
+                    if (hasKnowledge || hasMcp) {
+                        return true;
+                    }
                 }
+
                 this.logger.warn({
                     message:
-                        'Skipping rule with external references that failed to load',
+                        'Skipping rule with contextReferenceId that failed to load references or MCP results',
                     context: KodyRulesAnalysisService.name,
                     metadata: {
                         ruleUuid: fullRule.uuid,
                         ruleTitle: fullRule.title,
-                        referencePaths: fullRule.externalReferences.map(
-                            (r) => r.filePath,
-                        ),
+                        contextReferenceId: fullRule.contextReferenceId,
                     },
                 });
+
                 return false;
             },
         );
 
         if (rulesWithLoadedReferences.length === 0) {
             this.logger.log({
-                message: `No rules with loaded references for file: ${fileContext?.file?.filename}`,
+                message: `No rules with external context (knowledge or MCP) for file: ${fileContext?.file?.filename}`,
                 context: KodyRulesAnalysisService.name,
                 metadata: {
                     organizationAndTeamData,
@@ -466,12 +477,18 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
 
         baseContext.kodyRules = rulesWithLoadedReferences;
 
+        // 4) Execute MCPs for rules that have contextReferenceId
+        const mcpResultsMap = externalMcpResultsMap.size
+            ? externalMcpResultsMap
+            : new Map<string, Record<string, unknown>>();
+
         let extendedContext = {
             ...baseContext,
             standardSuggestions: hasCodeSuggestions ? suggestions : undefined,
             updatedSuggestions: undefined,
             filteredKodyRules: undefined,
             externalReferencesMap,
+            mcpResultsMap,
         };
 
         const runName = 'kodyRulesAnalyzeCodeWithAI';
@@ -900,10 +917,11 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
             )
             ?.map((rule) => ({
                 uuid: rule?.uuid,
+                title: rule?.title,
                 rule: rule?.rule,
                 severity: rule?.severity,
                 examples: rule?.examples ?? [],
-                externalReferences: rule?.externalReferences ?? [],
+                contextReferenceId: rule?.contextReferenceId,
             }));
 
         const baseContext = {
@@ -928,7 +946,14 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
                 : undefined,
             organizationAndTeamData: context?.organizationAndTeamData,
             kodyRules: kodyRulesFiltered,
-            v2PromptOverrides: context?.codeReviewConfig?.v2PromptOverrides,
+            v2PromptOverrides:
+                context?.sharedSanitizedOverrides ??
+                context?.codeReviewConfig?.v2PromptOverrides,
+            externalPromptLayers: context?.externalPromptLayers,
+            contextAugmentations: context?.sharedContextAugmentations as
+                | ContextAugmentationsMap
+                | undefined,
+            contextPack: context?.sharedContextPack as ContextPack | undefined,
         };
 
         return baseContext;
@@ -1210,6 +1235,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
             return null;
         }
     }
+
 
     private buildTags(
         provider: LLMModelProvider,

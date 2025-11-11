@@ -55,21 +55,28 @@ import { mcpToolsToEngineTools } from './tools.js';
  * ```
  */
 export function createMCPAdapter(config: MCPAdapterConfig): MCPAdapter {
-    const registry = new MCPRegistry({
-        defaultTimeout: config.defaultTimeout,
-        maxRetries: config.maxRetries,
-    });
-
     const logger = createLogger('createMCPAdapter');
 
     let isConnected = false;
+    let ensurePromise: Promise<void> | null = null;
+    let toolIndexDirty = true;
+
+    const registry = new MCPRegistry({
+        defaultTimeout: config.defaultTimeout,
+        maxRetries: config.maxRetries,
+        onToolsChanged: (serverName: string) => {
+            toolIndexDirty = true;
+            logger.debug('Tool index marked dirty due to change', {
+                serverName,
+            });
+        },
+    });
 
     const adapter: MCPAdapter = {
         /**
          * Connect to all configured MCP servers
          */
         async connect(): Promise<void> {
-            // Always reconnect to ensure fresh connections
             if (isConnected) {
                 await this.disconnect();
             }
@@ -254,17 +261,50 @@ export function createMCPAdapter(config: MCPAdapterConfig): MCPAdapter {
          * Ensure connection is fresh and working
          */
         async ensureConnection(): Promise<void> {
-            if (!isConnected) {
-                await this.connect();
+            if (ensurePromise) {
+                await ensurePromise;
                 return;
             }
 
-            try {
-                await registry.listAllTools();
-            } catch {
-                await this.disconnect();
-                await this.connect();
-            }
+            ensurePromise = (async () => {
+                try {
+                    if (!isConnected) {
+                        await this.connect();
+                        await registry.listAllTools();
+                        toolIndexDirty = false;
+                        return;
+                    }
+
+                    if (toolIndexDirty) {
+                        await registry.listAllTools();
+                        toolIndexDirty = false;
+                        return;
+                    }
+
+                    try {
+                        await registry.listAllTools();
+                        toolIndexDirty = false;
+                    } catch (error) {
+                        logger.warn(
+                            'Failed to refresh tool list, reconnecting',
+                            {
+                                error:
+                                    error instanceof Error
+                                        ? error.message
+                                        : String(error),
+                            },
+                        );
+                        await this.disconnect();
+                        await this.connect();
+                        await registry.listAllTools();
+                        toolIndexDirty = false;
+                    }
+                } finally {
+                    ensurePromise = null;
+                }
+            })();
+
+            await ensurePromise;
         },
 
         getMetrics(): Record<string, unknown> {
@@ -273,7 +313,7 @@ export function createMCPAdapter(config: MCPAdapterConfig): MCPAdapter {
             return metrics;
         },
 
-        getRegistry(): unknown {
+        getRegistry(): MCPRegistry {
             return registry;
         },
     };
@@ -283,3 +323,13 @@ export function createMCPAdapter(config: MCPAdapterConfig): MCPAdapter {
 
 export { MCPRegistry } from './registry.js';
 export { SpecCompliantMCPClient as MCPClient } from './client.js';
+export {
+    SessionManager,
+    type ISessionManager,
+    type Session,
+} from './session-manager.js';
+export {
+    JWTValidator,
+    type JWTOptions,
+    type JWTClaims,
+} from './jwt-validator.js';

@@ -362,6 +362,14 @@ class CodeReviewConfigWithoutLLMProviderDto {
     v2PromptOverrides?: V2PromptOverridesDto;
 
     @IsOptional()
+    @IsString()
+    contextReferenceId?: string;
+
+    @IsOptional()
+    @IsString()
+    contextRequirementsHash?: string;
+
+    @IsOptional()
     @ValidateNested()
     @Type(() => CustomMessagesDto)
     customMessages?: CustomMessagesDto;

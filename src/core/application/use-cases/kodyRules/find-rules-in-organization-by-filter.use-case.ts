@@ -12,6 +12,11 @@ import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logge
 import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
+import {
+    CONTEXT_REFERENCE_SERVICE_TOKEN,
+    IContextReferenceService,
+} from '@/core/domain/contextReferences/contracts/context-reference.service.contract';
+import { enrichRulesWithContextReferences } from './utils/enrich-rules-with-context-references.util';
 
 @Injectable()
 export class FindRulesInOrganizationByRuleFilterKodyRulesUseCase {
@@ -25,6 +30,9 @@ export class FindRulesInOrganizationByRuleFilterKodyRulesUseCase {
         private readonly request: UserRequest,
 
         private readonly authorizationService: AuthorizationService,
+
+        @Inject(CONTEXT_REFERENCE_SERVICE_TOKEN)
+        private readonly contextReferenceService: IContextReferenceService,
     ) {}
 
     async execute(
@@ -74,7 +82,11 @@ export class FindRulesInOrganizationByRuleFilterKodyRulesUseCase {
                 return true;
             });
 
-            return rules;
+            return await enrichRulesWithContextReferences(
+                rules,
+                this.contextReferenceService,
+                this.logger,
+            );
         } catch (error) {
             this.logger.error({
                 message:

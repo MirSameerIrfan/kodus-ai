@@ -29,7 +29,8 @@
         "disableSourceOfProjectReferenceRedirect": true,
 
         "paths": {
-            "@/*": ["src/*"]
+            "@/*": ["src/*"],
+            "@context-os-core/*": ["src/shared/utils/context-os-core/*"]
         }
     },
     "watchOptions": {
@@ -44,6 +45,7 @@
         "packages/kodus-flow/src",
         "**/*.map",
         "**/*.spec.ts",
-        "**/*.test.ts"
+        "**/*.test.ts",
+        "src/legacy"
     ]
 }
