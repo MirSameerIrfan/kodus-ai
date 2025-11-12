@@ -903,7 +903,7 @@ Simulate the code in different execution contexts:
 
 For each critical code section, mentally execute with these scenarios:
 1. **Happy path**: Expected valid inputs
-2. **Edge cases**: Empty, null, undefined, zero values
+2. **Edge cases**: Empty, null, undefined, zero values - especially verify that validation logic correctly handles falsy values (0, None, False, "") when checking for presence vs absence
 3. **Boundary conditions**: Min/max values, array limits
 4. **Error conditions**: Invalid inputs, failed operations
 5. **Resource scenarios**: Memory limits, connection failures
@@ -922,6 +922,8 @@ When analyzing asynchronous code (setTimeout, setInterval, Promises, callbacks):
 - **Loop Variable Binding**: In loops with async callbacks, verify if loop variables are captured correctly
 - **Deferred State Access**: When callbacks execute later, is the accessed state still valid/expected?
 - **Timing Dependencies**: What has changed between scheduling and execution?
+- **Semantic Inconsistency**: When related operations produce data (logs, metrics, events) that should be correlatable but cannot be, due to inconsistencies in keys, names, or identifiers. E.g., one metric uses the tag {'id': x} while a related one uses {'identifier': x}, breaking aggregation and analysis capabilities.
+- **Observability inconsistencies**: Related operations using different names for same dimensional data, breaking correlation
 
 ### PERFORMANCE
 A performance issue exists when mental simulation reveals:
@@ -957,6 +959,13 @@ ${lowText}
 5. **Verify with concrete scenarios** - Use realistic inputs and conditions
 6. **Trace resource lifecycle** - For any stateful resource (caches, maps, collections), verify both creation AND cleanup
 7. **Validate deduplication opportunities** - When performing operations in loops, check if duplicate work can be eliminated
+8. **Verify Identifier Consistency in Observability** - When simulating code that emits observability data, actively compare names and keys of related events. Verify identifiers for same logical entity are named identically (e.g., 'card' not 'cards'). Also detect duplicate emissions of same metric/log with identical values in sequential execution.
+9. **Test with falsy values** - When analyzing validation or conditional logic, simulate with falsy values (0, None, False, "") to verify the logic checks what it intends to check (presence vs truthiness)
+10. **Check for unbounded collection growth** - When collections are modified inside loops, verify there are size limits to prevent memory exhaustion, especially with pagination or external data
+11. **Verify consistent normalization** - When code normalizes case-insensitive data (emails, usernames) on one side of a comparison, verify BOTH sides are normalized to prevent bypass through case variations
+12. **Use constant-time comparison for secrets** - When comparing authentication secrets, tokens, or credentials, verify code uses constant-time functions not direct operators (===, !==)
+13. **Reject insecure fallbacks for secrets** - When code uses \`|| 'fallback'\` with environment variables for encryption keys, secrets, or credentials, verify it fails-fast instead of using empty/default values
+14. **Validate user-controlled indices** - When user input (cursor offset, page number, array index) is used in slicing/indexing, verify bounds validation prevents negative values or out-of-range access
 
 ### MUST NOT DO:
 - **NO speculation whatsoever** - If you cannot trace the exact execution path that causes the issue, DO NOT report it
