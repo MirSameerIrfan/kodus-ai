@@ -420,6 +420,7 @@ export class CodeReviewContextPackService {
         pack.metadata = {
             ...(pack.metadata ?? {}),
             contextReferenceId,
+            configContextReferenceId: reference.metadata?.contextReferenceId,
             requirementIds: requirements.map((req) => req.id),
             knowledgeItemsCount: knowledgeResolution.items.length,
             knowledgeErrors: knowledgeResolution.errors,

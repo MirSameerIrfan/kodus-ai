@@ -135,7 +135,12 @@ export class LoadExternalContextStage
                 context.codeReviewConfig?.v2PromptOverrides;
             let updatedCodeReviewConfig = context.codeReviewConfig;
 
-            if (context.codeReviewConfig?.contextReferenceId) {
+            if (
+                context.codeReviewConfig?.contextReferenceId &&
+                (context.sharedContextPack?.metadata?.contextReferenceId ??
+                    context.sharedContextPack?.metadata?.configContextReferenceId) !==
+                    context.codeReviewConfig.contextReferenceId
+            ) {
                 try {
                     const resolved =
                         await this.contextPackService.buildContextPack({
