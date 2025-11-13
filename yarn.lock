@@ -2196,10 +2196,10 @@
   resolved "https://registry.npmjs.org/@keyv/serialize/-/serialize-1.1.1.tgz#0c01dd3a3483882af7cf3878d4e71d505c81fc4a"
   integrity sha512-dXn3FZhPv0US+7dtJsIi2R+c7qWYiReoEh5zUntWCf4oSpMNib8FDhSoed6m3QyZdx5hK7iLFkYk3rNxwt8vTA==
 
-"@kodus/flow@0.1.26":
-  version "0.1.26"
-  resolved "https://us-central1-npm.pkg.dev/kodus-infra-prod/kodus-pkg/@kodus/flow/-/@kodus/flow-0.1.26.tgz#b3d84c1748251b3600eda7ea83b67f54991b0cf1"
-  integrity sha512-yGJrP2cvg4FmXJXcX/Lit/7c7MfNyju3mP4c/iekvYWC5IacTjnX0n/TumRUhZzb50/biM8wyh4ax3PQy4p1eA==
+"@kodus/flow@0.1.27":
+  version "0.1.27"
+  resolved "https://us-central1-npm.pkg.dev/kodus-infra-prod/kodus-pkg/@kodus/flow/-/@kodus/flow-0.1.27.tgz#07f8d6ac465da76b0d6ebb417d54b6d6205f1b6e"
+  integrity sha512-hrS36BawaMwSyCG7xK6ue4IVJkXpwPi62E8VkQ/TYuVNoPjFH7I3HcSCFBQikTlH0Cxe/cb/MJhojtpMxYFOEw==
   dependencies:
     "@google/generative-ai" "^0.24.1"
     "@modelcontextprotocol/sdk" "^1.21.1"
@@ -2487,7 +2487,7 @@
   resolved "https://registry.npmjs.org/@nestjs/jwt/-/jwt-11.0.0.tgz#aef1590e70830c70fba0f59e9b17314dc4d36822"
   integrity sha512-v7YRsW3Xi8HNTsO+jeHSEEqelX37TVWgwt+BcxtkG/OfXJEOs6GZdbdza200d6KqId1pJQZ6UPj1F0M6E+mxaA==
   dependencies:
-    "@types/jsonwebtoken" "9.0.10"
+    "@types/jsonwebtoken" "9.0.7"
     jsonwebtoken "9.0.2"
 
 "@nestjs/mongoose@^11.0.3":
