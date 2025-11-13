@@ -45,6 +45,7 @@ export interface ICommentManagerService {
         pullRequest: any,
         repository: { name: string; id: string },
         changedFiles: Partial<FileChange>[],
+        allFilesFromPR: Partial<FileChange>[],
         organizationAndTeamData: OrganizationAndTeamData,
         languageResultPrompt: string,
         summaryConfig: SummaryConfig,
