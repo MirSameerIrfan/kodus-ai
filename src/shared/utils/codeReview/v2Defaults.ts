@@ -36,6 +36,7 @@ export const V2_DEFAULT_CATEGORY_DESCRIPTIONS_TEXT = {
         '- Timing attacks: Direct comparison (`===`, `!==`, `==`, `!=`) of secrets, tokens, passwords, or authentication credentials that leaks information through execution time - must use constant-time comparison functions',
         '- Insecure fallback values: Using empty strings, default values, or weak fallbacks for critical security parameters (encryption keys, secrets, tokens) when environment variables are missing - system should fail-fast instead',
         '- Input validation bypass: User-controlled parameters (offsets, limits, indices, IDs) accepted without validation or with inadequate bounds checking, especially negative values in array slicing or pagination that could bypass access controls',
+        '- SSRF (Server-Side Request Forgery): Using user-controlled URLs in network operations (open, fetch, HTTP requests) without allowlist validation, enabling access to internal resources or arbitrary external sites',
         '- Case-sensitivity bypass: Inconsistent normalization in comparisons of case-insensitive data (emails, usernames, domains) where one side is normalized (toLowerCase/toUpperCase) but the other isn\'t, allowing bypass through case variations',
     ].join('\n'),
 };

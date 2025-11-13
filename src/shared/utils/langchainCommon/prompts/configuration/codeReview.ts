@@ -960,12 +960,13 @@ ${lowText}
 6. **Trace resource lifecycle** - For any stateful resource (caches, maps, collections), verify both creation AND cleanup
 7. **Validate deduplication opportunities** - When performing operations in loops, check if duplicate work can be eliminated
 8. **Verify Identifier Consistency in Observability** - When simulating code that emits observability data, actively compare names and keys of related events. Verify identifiers for same logical entity are named identically (e.g., 'card' not 'cards'). Also detect duplicate emissions of same metric/log with identical values in sequential execution.
-9. **Test with falsy values** - When analyzing validation or conditional logic, simulate with falsy values (0, None, False, "") to verify the logic checks what it intends to check (presence vs truthiness)
+9. **Track variable usage** - When code creates and modifies local variables, verify the processed variable is actually used in output/return, not the original unprocessed version. When analyzing validation or conditional logic, simulate with falsy values (0, None, False, "") to verify the logic checks what it intends to check (presence vs truthiness)
 10. **Check for unbounded collection growth** - When collections are modified inside loops, verify there are size limits to prevent memory exhaustion, especially with pagination or external data
-11. **Verify consistent normalization** - When code normalizes case-insensitive data (emails, usernames) on one side of a comparison, verify BOTH sides are normalized to prevent bypass through case variations
+11. **Verify consistent normalization** - When code normalizes case-insensitive data (emails, usernames) on one side of a comparison, verify BOTH sides are normalized. Check array methods (.includes, .some, .filter) and direct comparisons (===, !==) - both need normalization on BOTH sides
 12. **Use constant-time comparison for secrets** - When comparing authentication secrets, tokens, or credentials, verify code uses constant-time functions not direct operators (===, !==)
 13. **Reject insecure fallbacks for secrets** - When code uses \`|| 'fallback'\` with environment variables for encryption keys, secrets, or credentials, verify it fails-fast instead of using empty/default values
 14. **Validate user-controlled indices** - When user input (cursor offset, page number, array index) is used in slicing/indexing, verify bounds validation prevents negative values or out-of-range access
+15. **Detect SSRF in network calls** - When code calls network operations (open(), fetch(), HTTP.get(), requests.get()) with variables as URLs (not hardcoded strings), flag as SSRF vulnerability unless allowlist validation is present in same function
 
 ### MUST NOT DO:
 - **NO speculation whatsoever** - If you cannot trace the exact execution path that causes the issue, DO NOT report it
@@ -995,6 +996,7 @@ ${lowText}
    - Resource accumulation without corresponding cleanup
 3.5. **For async code**: Track variable values at SCHEDULING time vs EXECUTION time
 3.6. **For operations that can fail**: Verify ALL failure paths are handled and system invariants maintained
+3.7. **For network operations**: When you see open(), fetch(), HTTP requests with variable URLs, immediately flag as SSRF unless you see URL validation (allowlist, domain check, URI parse with host verification) in the same code block
 4. **Test concrete scenarios** on each path with realistic inputs
 5. **Detect verifiable issues** where behavior is definitively problematic
 6. **Confirm with available context** - must be provable with given information
