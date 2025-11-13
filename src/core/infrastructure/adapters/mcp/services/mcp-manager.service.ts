@@ -44,6 +44,7 @@ enum MCPIntegrationAuthType {
     API_KEY = 'api_key',
     BASIC = 'basic',
     BEARER_TOKEN = 'bearer_token',
+    OAUTH2 = 'oauth2',
 }
 
 enum MCPIntegrationProtocol {
@@ -72,7 +73,8 @@ type MCPIntegrationInterface =
     | MCPIntegrationNone
     | MCPIntegrationBearerToken
     | MCPIntegrationApiKey
-    | MCPIntegrationBasic;
+    | MCPIntegrationBasic
+    | MCPIntegrationOAuth2;
 
 interface MCPIntegrationBase
     extends Omit<MCPIntegrationEntity, 'authType' | 'auth' | 'headers'> {
@@ -98,6 +100,16 @@ interface MCPIntegrationBasic extends MCPIntegrationBase {
     authType: MCPIntegrationAuthType.BASIC;
     basicUser: string;
     basicPassword?: string;
+}
+
+interface MCPIntegrationOAuth2 extends MCPIntegrationBase {
+    authType: MCPIntegrationAuthType.OAUTH2;
+    clientId: string;
+    clientSecret?: string;
+    scopes?: string[];
+    accessToken?: string;
+    refreshToken?: string;
+    tokenExpiry?: number;
 }
 
 export const KODUS_MCP_INTEGRATION_ID = 'kd_mcp_oTUrzqsaxTg';
@@ -269,6 +281,14 @@ export class MCPManagerService {
                         `${basicIntegration.basicUser}:${basicIntegration.basicPassword ?? ''}`,
                     ).toString('base64');
                     headers['Authorization'] = `Basic ${credentials}`;
+                    break;
+                case MCPIntegrationAuthType.OAUTH2:
+                    const oauth2Integration =
+                        integration as MCPIntegrationOAuth2;
+                    if (oauth2Integration.accessToken) {
+                        headers['Authorization'] =
+                            `Bearer ${oauth2Integration.accessToken}`;
+                    }
                     break;
                 case MCPIntegrationAuthType.NONE:
                 default:
