@@ -33,7 +33,7 @@ export const V2_DEFAULT_CATEGORY_DESCRIPTIONS_TEXT = {
         '- Crypto issues: Weak algorithms, hardcoded keys, improper validation',
         '- Input validation gaps: Missing sanitization or bounds checks',
         '- Session management: Predictable tokens or missing expiration',
-        '- Timing attacks: Direct comparison (`===`, `!==`, `==`, `!=`) of secrets, tokens, passwords, or authentication credentials that leaks information through execution time - must use constant-time comparison functions',
+        '- Timing attacks: Direct string/value comparison of secrets, tokens, passwords, or authentication credentials that leaks information through execution time - must use constant-time comparison functions',
         '- Insecure fallback values: Using empty strings, default values, or weak fallbacks for critical security parameters (encryption keys, secrets, tokens) when environment variables are missing - system should fail-fast instead',
         '- Input validation bypass: User-controlled parameters (offsets, limits, indices, IDs) accepted without validation or with inadequate bounds checking, especially negative values in array slicing or pagination that could bypass access controls',
         '- SSRF (Server-Side Request Forgery): Using user-controlled URLs in network operations (open, fetch, HTTP requests) without allowlist validation, enabling access to internal resources or arbitrary external sites',
