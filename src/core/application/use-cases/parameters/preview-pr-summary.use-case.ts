@@ -82,6 +82,7 @@ export class PreviewPrSummaryUseCase {
             pullRequest,
             repository,
             files,
+            files,
             organizationAndTeamData,
             languageResultPrompt?.configValue ?? 'en-US',
             summaryConfig,

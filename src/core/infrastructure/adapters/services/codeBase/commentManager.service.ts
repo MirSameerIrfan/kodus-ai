@@ -73,6 +73,7 @@ export class CommentManagerService implements ICommentManagerService {
         pullRequest: any,
         repository: { name: string; id: string },
         changedFiles: Partial<FileChange>[],
+        allFilesFromPR: Partial<FileChange>[],
         organizationAndTeamData: OrganizationAndTeamData,
         languageResultPrompt: string,
         summaryConfig: SummaryConfig,
@@ -192,10 +193,17 @@ export class CommentManagerService implements ICommentManagerService {
                     summaryConfig,
                     languageResultPrompt,
                     updatedPR,
+                    allFilesFromPR,
                 };
 
+                let changedFilesUpdated = baseContext?.changedFiles;
+
+                if (isCommitRun && summaryConfig?.behaviourForNewCommits === BehaviourForNewCommits.REPLACE) {
+                    changedFilesUpdated = baseContext?.allFilesFromPR;
+                }
+
                 const fallbackProvider = LLMModelProvider.OPENAI_GPT_4O;
-                const userPrompt = `<changedFilesContext>${JSON.stringify(baseContext?.changedFiles, null, 2) || 'No files changed'}</changedFilesContext>`;
+                const userPrompt = `<changedFilesContext>${JSON.stringify(changedFilesUpdated, null, 2) || 'No files changed'}</changedFilesContext>`;
 
                 const promptRunner = new BYOKPromptRunnerService(
                     this.promptRunnerService,
