@@ -1,8 +1,6 @@
 import { CreateOrUpdateKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/create-or-update.use-case';
-import { DeleteByOrganizationIdKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/delete-by-organization-id.use-case';
 import { DeleteRuleInOrganizationByIdKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/delete-rule-in-organization-by-id.use-case';
 import { FindByOrganizationIdKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-by-organization-id.use-case';
-import { FindRuleInOrganizationByRuleIdKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-rule-in-organization-by-id.use-case';
 import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-rules-in-organization-by-filter.use-case';
 import { CreateKodyRuleDto } from '../dtos/create-kody-rule.dto';
 import { FindLibraryKodyRulesDto } from '../dtos/find-library-kody-rules.dto';
@@ -44,7 +42,6 @@ import {
 import { GetInheritedRulesKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/get-inherited-kody-rules.use-case';
 import { GetRulesLimitStatusUseCase } from '@/core/application/use-cases/kodyRules/get-rules-limit-status.use-case';
 import { UserRequest } from '@/config/types/http/user-request.type';
-import { ResyncRulesFromIdeUseCase } from '@/core/application/use-cases/kodyRules/resync-rules-from-ide.use-case';
 import { FindSuggestionsByRuleUseCase } from '@/core/application/use-cases/kodyRules/find-suggestions-by-rule.use-case';
 import { FindSuggestionsByRuleDto } from '../dtos/find-suggestions-by-rule.dto';
 
@@ -53,9 +50,7 @@ export class KodyRulesController {
     constructor(
         private readonly createOrUpdateKodyRulesUseCase: CreateOrUpdateKodyRulesUseCase,
         private readonly findByOrganizationIdKodyRulesUseCase: FindByOrganizationIdKodyRulesUseCase,
-        private readonly findRuleInOrganizationByIdKodyRulesUseCase: FindRuleInOrganizationByRuleIdKodyRulesUseCase,
         private readonly findRulesInOrganizationByRuleFilterKodyRulesUseCase: FindRulesInOrganizationByRuleFilterKodyRulesUseCase,
-        private readonly deleteByOrganizationIdKodyRulesUseCase: DeleteByOrganizationIdKodyRulesUseCase,
         private readonly deleteRuleInOrganizationByIdKodyRulesUseCase: DeleteRuleInOrganizationByIdKodyRulesUseCase,
         private readonly findLibraryKodyRulesUseCase: FindLibraryKodyRulesUseCase,
         private readonly findLibraryKodyRulesWithFeedbackUseCase: FindLibraryKodyRulesWithFeedbackUseCase,
@@ -68,7 +63,6 @@ export class KodyRulesController {
         private readonly syncSelectedReposKodyRulesUseCase: SyncSelectedRepositoriesKodyRulesUseCase,
         private readonly getInheritedRulesKodyRulesUseCase: GetInheritedRulesKodyRulesUseCase,
         private readonly getRulesLimitStatusUseCase: GetRulesLimitStatusUseCase,
-        private readonly resyncRulesFromIdeUseCase: ResyncRulesFromIdeUseCase,
         private readonly findSuggestionsByRuleUseCase: FindSuggestionsByRuleUseCase,
         @Inject(REQUEST)
         private readonly request: UserRequest,
@@ -113,71 +107,6 @@ export class KodyRulesController {
         return this.findSuggestionsByRuleUseCase.execute(query.ruleId);
     }
 
-    // TODO: remove, unused
-    @Get('/find-rule-in-organization-by-id')
-    @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Read, ResourceType.KodyRules))
-    public async findRuleInOrganizationById(
-        @Query('ruleId')
-        ruleId: string,
-    ) {
-        return this.findRuleInOrganizationByIdKodyRulesUseCase.execute(ruleId);
-    }
-
-    // TODO: remove, unused
-    @Get('/find-rules-in-organization-by-title')
-    @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Read, ResourceType.KodyRules))
-    public async findRulesInOrganizationByTitle(
-        @Query('title')
-        title: string,
-    ) {
-        if (!this.request.user.organization.uuid) {
-            throw new Error('Organization ID not found');
-        }
-
-        return this.findRulesInOrganizationByRuleFilterKodyRulesUseCase.execute(
-            this.request.user.organization.uuid,
-            { title },
-        );
-    }
-
-    // TODO: remove, unused
-    @Get('/find-rules-in-organization-by-severity')
-    @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Read, ResourceType.KodyRules))
-    public async findRulesInOrganizationBySeverity(
-        @Query('severity')
-        severity: string,
-    ) {
-        if (!this.request.user.organization.uuid) {
-            throw new Error('Organization ID not found');
-        }
-
-        return this.findRulesInOrganizationByRuleFilterKodyRulesUseCase.execute(
-            this.request.user.organization.uuid,
-            { severity },
-        );
-    }
-
-    // TODO: remove, unused
-    @Get('/find-rules-in-organization-by-path')
-    @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Read, ResourceType.KodyRules))
-    public async findRulesInOrganizationByPath(
-        @Query('path')
-        path: string,
-    ) {
-        if (!this.request.user.organization.uuid) {
-            throw new Error('Organization ID not found');
-        }
-
-        return this.findRulesInOrganizationByRuleFilterKodyRulesUseCase.execute(
-            this.request.user.organization.uuid,
-            { path },
-        );
-    }
-
     @Get('/find-rules-in-organization-by-filter')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Read, ResourceType.KodyRules))
@@ -201,14 +130,6 @@ export class KodyRulesController {
             repositoryId,
             directoryId,
         );
-    }
-
-    // TODO: remove, unused
-    @Delete('/delete-by-organization-id')
-    @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Delete, ResourceType.KodyRules))
-    public async deleteByOrganizationId() {
-        return this.deleteByOrganizationIdKodyRulesUseCase.execute();
     }
 
     @Delete('/delete-rule-in-organization-by-id')
@@ -306,21 +227,6 @@ export class KodyRulesController {
         const respositories = [body.repositoryId];
 
         return this.syncSelectedReposKodyRulesUseCase.execute({
-            teamId: body.teamId,
-            repositoriesIds: respositories,
-        });
-    }
-
-    // TODO: remove, unused
-    @Post('/resync-ide-rules')
-    @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Create, ResourceType.KodyRules))
-    public async resyncIdeRules(
-        @Body() body: { teamId: string; repositoryId: string },
-    ) {
-        const respositories = [body.repositoryId];
-
-        return this.resyncRulesFromIdeUseCase.execute({
             teamId: body.teamId,
             repositoriesIds: respositories,
         });

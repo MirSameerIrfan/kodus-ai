@@ -1,28 +1,27 @@
-import { CodeReviewSettingsLogRepository } from '@/ee/codeReviewSettingsLog/repository/codeReviewSettingsLog.repository';
+import { FindCodeReviewSettingsLogsUseCase } from '@/core/application/use-cases/codeReviewSettingsLog/find-code-review-settings-logs.use-case';
 import { CodeReviewSettingsLogModelInstance } from '@/core/infrastructure/adapters/repositories/mongoose/schema';
-import { CodeReviewSettingsLogService } from '@/ee/codeReviewSettingsLog/services/codeReviewSettingsLog.service';
-import { KodyRulesLogHandler } from '@/ee/codeReviewSettingsLog/services/kodyRulesLog.handler';
+import { CodeReviewSettingLogController } from '@/core/infrastructure/http/controllers/codeReviewSettingLog.controller';
 import { CODE_REVIEW_SETTINGS_LOG_REPOSITORY_TOKEN } from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.repository.contract';
 import { CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN } from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
-import { MongooseModule } from '@nestjs/mongoose';
-import { forwardRef, Module } from '@nestjs/common';
-import { UsersModule } from './user.module';
+import { CodeReviewSettingsLogRepository } from '@/ee/codeReviewSettingsLog/repository/codeReviewSettingsLog.repository';
 import { CodeReviewConfigLogHandler } from '@/ee/codeReviewSettingsLog/services/codeReviewConfigLog.handler';
+import { CodeReviewSettingsLogService } from '@/ee/codeReviewSettingsLog/services/codeReviewSettingsLog.service';
+import { IntegrationLogHandler } from '@/ee/codeReviewSettingsLog/services/integrationLog.handler';
+import { KodyRulesLogHandler } from '@/ee/codeReviewSettingsLog/services/kodyRulesLog.handler';
+import { PullRequestMessagesLogHandler } from '@/ee/codeReviewSettingsLog/services/pullRequestMessageLog.handler';
 import { RepositoriesLogHandler } from '@/ee/codeReviewSettingsLog/services/repositoriesLog.handler';
 import { UnifiedLogHandler } from '@/ee/codeReviewSettingsLog/services/unifiedLog.handler';
-import { IntegrationConfigModule } from './integrationConfig.module';
-import { TeamsModule } from './team.module';
-import { CodeReviewSettingLogController } from '@/core/infrastructure/http/controllers/codeReviewSettingLog.controller';
-import { RegisterUserStatusLogUseCase } from '@/core/application/use-cases/user/register-user-status-log.use-case';
-import { FindCodeReviewSettingsLogsUseCase } from '@/core/application/use-cases/codeReviewSettingsLog/find-code-review-settings-logs.use-case';
 import { UserStatusLogHandler } from '@/ee/codeReviewSettingsLog/services/userStatusLog.handler';
-import { IntegrationLogHandler } from '@/ee/codeReviewSettingsLog/services/integrationLog.handler';
-import { PullRequestMessagesLogHandler } from '@/ee/codeReviewSettingsLog/services/pullRequestMessageLog.handler';
-import { GetAdditionalInfoHelper } from '@/shared/utils/helpers/getAdditionalInfo.helper';
-import { GET_ADDITIONAL_INFO_HELPER_TOKEN } from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
-import { IntegrationModule } from './integration.module';
-import { ParametersModule } from './parameters.module';
 import { PermissionValidationModule } from '@/ee/shared/permission-validation.module';
+import { GET_ADDITIONAL_INFO_HELPER_TOKEN } from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
+import { GetAdditionalInfoHelper } from '@/shared/utils/helpers/getAdditionalInfo.helper';
+import { forwardRef, Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { IntegrationModule } from './integration.module';
+import { IntegrationConfigModule } from './integrationConfig.module';
+import { ParametersModule } from './parameters.module';
+import { TeamsModule } from './team.module';
+import { UsersModule } from './user.module';
 
 @Module({
     imports: [
@@ -50,7 +49,6 @@ import { PermissionValidationModule } from '@/ee/shared/permission-validation.mo
         IntegrationLogHandler,
         UserStatusLogHandler,
         PullRequestMessagesLogHandler,
-        RegisterUserStatusLogUseCase,
         FindCodeReviewSettingsLogsUseCase,
         {
             provide: GET_ADDITIONAL_INFO_HELPER_TOKEN,
@@ -64,7 +62,6 @@ import { PermissionValidationModule } from '@/ee/shared/permission-validation.mo
         CodeReviewConfigLogHandler,
         RepositoriesLogHandler,
         KodyRulesLogHandler,
-        RegisterUserStatusLogUseCase,
         FindCodeReviewSettingsLogsUseCase,
         IntegrationLogHandler,
         UserStatusLogHandler,

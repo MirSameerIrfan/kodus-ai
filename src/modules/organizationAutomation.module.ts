@@ -1,20 +1,18 @@
-import { UseCases } from '@/core/application/use-cases/organizationAutomation';
-import { Module, forwardRef } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { AutomationStrategyModule } from './automationStrategy.module';
-import { OrganizationModule } from './organization.module';
-import { AutomationModule } from './automation.module';
-import { PlatformIntegrationModule } from './platformIntegration.module';
-import { IntegrationModule } from './integration.module';
-import { IntegrationConfigModule } from './integrationConfig.module';
-import { ProfileConfigModule } from './profileConfig.module';
-import { OrganizationAutomationModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/organizationAutomation.model';
-import { OrganizationModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/organization.model';
-import { OrganizationAutomationRepository } from '@/core/infrastructure/adapters/repositories/typeorm/organizationAutomation.repository';
 import { ORGANIZATION_AUTOMATION_REPOSITORY_TOKEN } from '@/core/domain/automation/contracts/organization-automation.repository';
 import { ORGANIZATION_AUTOMATION_SERVICE_TOKEN } from '@/core/domain/automation/contracts/organization-automation.service';
+import { OrganizationAutomationRepository } from '@/core/infrastructure/adapters/repositories/typeorm/organizationAutomation.repository';
+import { OrganizationModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/organization.model';
+import { OrganizationAutomationModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/organizationAutomation.model';
 import { OrganizationAutomationService } from '@/core/infrastructure/adapters/services/automation/organization-automation.service';
-import { OrganizationAutomationController } from '@/core/infrastructure/http/controllers/organizationAutomation.controller';
+import { Module, forwardRef } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AutomationModule } from './automation.module';
+import { AutomationStrategyModule } from './automationStrategy.module';
+import { IntegrationModule } from './integration.module';
+import { IntegrationConfigModule } from './integrationConfig.module';
+import { OrganizationModule } from './organization.module';
+import { PlatformIntegrationModule } from './platformIntegration.module';
+import { ProfileConfigModule } from './profileConfig.module';
 
 @Module({
     imports: [
@@ -29,7 +27,6 @@ import { OrganizationAutomationController } from '@/core/infrastructure/http/con
         ProfileConfigModule,
     ],
     providers: [
-        ...UseCases,
         {
             provide: ORGANIZATION_AUTOMATION_REPOSITORY_TOKEN,
             useClass: OrganizationAutomationRepository,
@@ -39,7 +36,7 @@ import { OrganizationAutomationController } from '@/core/infrastructure/http/con
             useClass: OrganizationAutomationService,
         },
     ],
-    controllers: [OrganizationAutomationController],
+    controllers: [],
     exports: [
         ORGANIZATION_AUTOMATION_REPOSITORY_TOKEN,
         ORGANIZATION_AUTOMATION_SERVICE_TOKEN,

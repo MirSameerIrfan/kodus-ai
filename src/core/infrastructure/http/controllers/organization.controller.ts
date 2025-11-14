@@ -1,10 +1,7 @@
 import { GetOrganizationNameUseCase } from '@/core/application/use-cases/organization/get-organization-name';
-import { GetOrganizationNameByTenantUseCase } from '@/core/application/use-cases/organization/get-organization-name-by-tenant';
-import { GetOrganizationTenantNameUseCase } from '@/core/application/use-cases/organization/get-organization-tenant-name';
 import { UpdateInfoOrganizationAndPhoneUseCase } from '@/core/application/use-cases/organization/update-infos.use-case';
-import { Body, Controller, Get, Patch, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
 import { UpdateInfoOrganizationAndPhoneDto } from '../dtos/updateInfoOrgAndPhone.dto';
-import { GetOrganizationsByDomainUseCase } from '@/core/application/use-cases/organization/get-organizations-domain.use-case';
 import {
     Action,
     ResourceType,
@@ -19,30 +16,12 @@ import { checkPermissions } from '../../adapters/services/permissions/policy.han
 export class OrganizationController {
     constructor(
         private readonly getOrganizationNameUseCase: GetOrganizationNameUseCase,
-        private readonly getOrganizationTenantNameUseCase: GetOrganizationTenantNameUseCase,
-        private readonly getOrganizationNameByTenantUseCase: GetOrganizationNameByTenantUseCase,
         private readonly updateInfoOrganizationAndPhoneUseCase: UpdateInfoOrganizationAndPhoneUseCase,
-        private readonly getOrganizationsByDomainUseCase: GetOrganizationsByDomainUseCase,
     ) {}
 
     @Get('/name')
     public getOrganizationName() {
         return this.getOrganizationNameUseCase.execute();
-    }
-
-    // TODO: remove, unused
-    @Get('/name-by-tenant')
-    public getOrganizationNameByTenant(
-        @Query('tenantName')
-        tenantName: string,
-    ) {
-        return this.getOrganizationNameByTenantUseCase.execute(tenantName);
-    }
-
-    // TODO: remove, unused
-    @Get('/tenant-name')
-    public getOrganizationTenantName() {
-        return this.getOrganizationTenantNameUseCase.execute();
     }
 
     @Patch('/update-infos')
@@ -54,14 +33,5 @@ export class OrganizationController {
         @Body() body: UpdateInfoOrganizationAndPhoneDto,
     ) {
         return await this.updateInfoOrganizationAndPhoneUseCase.execute(body);
-    }
-
-    // TODO: remove, unused
-    @Get('/domain')
-    public async getOrganizationsByDomain(
-        @Query('domain')
-        domain: string,
-    ) {
-        return await this.getOrganizationsByDomainUseCase.execute(domain);
     }
 }

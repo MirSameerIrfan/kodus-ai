@@ -1,6 +1,4 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
-import { TeamQueryDto } from '../../dtos/teamId-query-dto';
-import { CreateOrUpdateIntegrationConfigUseCase } from '@/core/application/use-cases/integrations/integrationConfig/createOrUpdateIntegrationConfig.use-case';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { GetIntegrationConfigsByIntegrationCategoryUseCase } from '@/core/application/use-cases/integrations/integrationConfig/getIntegrationConfigsByIntegrationCategory.use-case';
 import {
     CheckPolicies,
@@ -16,19 +14,7 @@ import {
 export class IntegrationConfigController {
     constructor(
         private readonly getIntegrationConfigsByIntegrationCategoryUseCase: GetIntegrationConfigsByIntegrationCategoryUseCase,
-        private readonly createOrUpdateIntegrationConfigUseCase: CreateOrUpdateIntegrationConfigUseCase,
     ) {}
-
-    // TODO: remove, unused
-    @Post('/create-or-update-config')
-    @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Create, ResourceType.GitSettings))
-    public async create(
-        @Body()
-        body: {},
-    ) {
-        return this.createOrUpdateIntegrationConfigUseCase.execute(body);
-    }
 
     @Get('/get-integration-configs-by-integration-category')
     @UseGuards(PolicyGuard)

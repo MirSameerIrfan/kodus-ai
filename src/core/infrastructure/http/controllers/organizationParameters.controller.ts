@@ -17,7 +17,6 @@ import {
     Delete,
     Get,
     Post,
-    Put,
     Query,
     UseGuards,
 } from '@nestjs/common';
@@ -78,17 +77,6 @@ export class OrgnizationParametersController {
         return await this.findByKeyOrganizationParametersUseCase.execute(key, {
             organizationId,
         });
-    }
-
-    // TODO: remove, unused
-    @Get('/byok-config')
-    public async getByokConfig(
-        @Query('organizationId') organizationId: string,
-    ) {
-        return await this.findByKeyOrganizationParametersUseCase.execute(
-            OrganizationParametersKey.BYOK_CONFIG,
-            { organizationId },
-        );
     }
 
     @Get('/list-providers')
