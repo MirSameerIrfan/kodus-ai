@@ -56,7 +56,6 @@ export interface CodeReviewPipelineContext extends PipelineContext {
     automaticReviewStatus?: AutomaticReviewStatus;
 
     changedFiles?: FileChange[];
-    allFilesFromPR?: FileChange[];
     lastExecution?: {
         commentId?: any;
         noteId?: any;

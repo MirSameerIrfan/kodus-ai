@@ -75,18 +75,11 @@ export class UpdateCommentsAndGenerateSummaryStage extends BasePipelineStage<Cod
                 status: file.status,
             }));
 
-            const allFilesFromPR = context.allFilesFromPR.map((file) => ({
-                filename: file.filename,
-                patch: file.patch,
-                status: file.status,
-            }));
-
             const summaryPR =
                 await this.commentManagerService.generateSummaryPR(
                     pullRequest,
                     repository,
                     changedFiles,
-                    allFilesFromPR,
                     organizationAndTeamData,
                     codeReviewConfig.languageResultPrompt,
                     codeReviewConfig.summary,
