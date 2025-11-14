@@ -22,8 +22,9 @@ export interface IAutomationExecutionRepository {
     find(
         filter?: Partial<IAutomationExecution>,
     ): Promise<AutomationExecutionEntity[]>;
-    findPullRequestExecutionsByOrganization(params: {
+    findPullRequestExecutionsByOrganizationAndTeam(params: {
         organizationId: string;
+        teamId: string;
         repositoryIds?: string[];
         skip?: number;
         take?: number;

@@ -197,8 +197,9 @@ export class AutomationExecutionRepository
         }
     }
 
-    async findPullRequestExecutionsByOrganization(params: {
+    async findPullRequestExecutionsByOrganizationAndTeam(params: {
         organizationId: string;
+        teamId: string;
         repositoryIds?: string[];
         skip?: number;
         take?: number;
@@ -210,6 +211,7 @@ export class AutomationExecutionRepository
             skip = 0,
             take = 30,
             order = 'DESC',
+            teamId,
         } = params;
 
         try {
@@ -247,7 +249,8 @@ export class AutomationExecutionRepository
                 .andWhere('automation_execution.repositoryId IS NOT NULL')
                 .andWhere('organization.uuid = :organizationId', {
                     organizationId,
-                });
+                })
+                .andWhere('team.uuid = :teamId', { teamId });
 
             if (repositoryIds?.length) {
                 if (repositoryIds.length === 1) {
