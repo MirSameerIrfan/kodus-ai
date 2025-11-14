@@ -14,6 +14,7 @@ import { FindOptionsWhere } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { PinoLoggerService } from '../logger/pino.service';
 import { CacheService } from '@/shared/utils/cache/cache.service';
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 
 @Injectable()
 export class AutomationExecutionService implements IAutomationExecutionService {
@@ -105,8 +106,7 @@ export class AutomationExecutionService implements IAutomationExecutionService {
     }
 
     findPullRequestExecutionsByOrganizationAndTeam(params: {
-        organizationId: string;
-        teamId: string;
+        organizationAndTeamData: OrganizationAndTeamData;
         repositoryIds?: string[];
         skip?: number;
         take?: number;

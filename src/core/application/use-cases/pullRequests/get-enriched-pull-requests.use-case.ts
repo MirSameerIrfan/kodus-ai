@@ -111,8 +111,10 @@ export class GetEnrichedPullRequestsUseCase implements IUseCase {
                 const { data: executionsBatch, total } =
                     await this.automationExecutionService.findPullRequestExecutionsByOrganizationAndTeam(
                         {
-                            organizationId,
-                            teamId,
+                            organizationAndTeamData: {
+                                organizationId,
+                                teamId,
+                            },
                             repositoryIds: allowedRepositoryIds,
                             skip: initialSkip + accumulatedExecutions,
                             take: limit,

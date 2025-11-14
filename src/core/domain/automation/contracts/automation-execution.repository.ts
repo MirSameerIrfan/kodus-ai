@@ -1,6 +1,7 @@
 import { FindOptionsWhere } from 'typeorm';
 import { AutomationExecutionEntity } from '../entities/automation-execution.entity';
 import { IAutomationExecution } from '../interfaces/automation-execution.interface';
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 
 export const AUTOMATION_EXECUTION_REPOSITORY_TOKEN = Symbol(
     'AutomationExecutionRepository',
@@ -23,8 +24,7 @@ export interface IAutomationExecutionRepository {
         filter?: Partial<IAutomationExecution>,
     ): Promise<AutomationExecutionEntity[]>;
     findPullRequestExecutionsByOrganizationAndTeam(params: {
-        organizationId: string;
-        teamId: string;
+        organizationAndTeamData: OrganizationAndTeamData;
         repositoryIds?: string[];
         skip?: number;
         take?: number;

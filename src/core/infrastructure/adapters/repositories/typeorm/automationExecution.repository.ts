@@ -16,6 +16,7 @@ import {
     mapSimpleModelsToEntities,
 } from '@/shared/infrastructure/repositories/mappers';
 import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 
 @Injectable()
 export class AutomationExecutionRepository
@@ -198,23 +199,23 @@ export class AutomationExecutionRepository
     }
 
     async findPullRequestExecutionsByOrganizationAndTeam(params: {
-        organizationId: string;
-        teamId: string;
+        organizationAndTeamData: OrganizationAndTeamData;
         repositoryIds?: string[];
         skip?: number;
         take?: number;
         order?: 'ASC' | 'DESC';
     }): Promise<{ data: AutomationExecutionEntity[]; total: number }> {
         const {
-            organizationId,
+            organizationAndTeamData,
             repositoryIds,
             skip = 0,
             take = 30,
             order = 'DESC',
-            teamId,
         } = params;
 
         try {
+            const { organizationId, teamId } = organizationAndTeamData;
+
             const queryBuilder =
                 this.automationExecutionRepository.createQueryBuilder(
                     'automation_execution',
