@@ -16,6 +16,7 @@ import {
     mapSimpleModelsToEntities,
 } from '@/shared/infrastructure/repositories/mappers';
 import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 
 @Injectable()
 export class AutomationExecutionRepository
@@ -197,15 +198,15 @@ export class AutomationExecutionRepository
         }
     }
 
-    async findPullRequestExecutionsByOrganization(params: {
-        organizationId: string;
+    async findPullRequestExecutionsByOrganizationAndTeam(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
         repositoryIds?: string[];
         skip?: number;
         take?: number;
         order?: 'ASC' | 'DESC';
     }): Promise<{ data: AutomationExecutionEntity[]; total: number }> {
         const {
-            organizationId,
+            organizationAndTeamData,
             repositoryIds,
             skip = 0,
             take = 30,
@@ -213,6 +214,8 @@ export class AutomationExecutionRepository
         } = params;
 
         try {
+            const { organizationId, teamId } = organizationAndTeamData;
+
             const queryBuilder =
                 this.automationExecutionRepository.createQueryBuilder(
                     'automation_execution',
@@ -247,7 +250,8 @@ export class AutomationExecutionRepository
                 .andWhere('automation_execution.repositoryId IS NOT NULL')
                 .andWhere('organization.uuid = :organizationId', {
                     organizationId,
-                });
+                })
+                .andWhere('team.uuid = :teamId', { teamId });
 
             if (repositoryIds?.length) {
                 if (repositoryIds.length === 1) {
