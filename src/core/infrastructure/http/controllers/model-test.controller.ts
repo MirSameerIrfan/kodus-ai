@@ -40,6 +40,7 @@ type TestModelsRequest = {
     };
 };
 
+// TODO: remove, unused
 @Controller('debug-models')
 export class ModelTestController {
     constructor(
@@ -54,6 +55,7 @@ export class ModelTestController {
         },
     ) {}
 
+    // TODO: remove, unused
     @Post('test')
     async testModels(
         @Body() body: TestModelsRequest,

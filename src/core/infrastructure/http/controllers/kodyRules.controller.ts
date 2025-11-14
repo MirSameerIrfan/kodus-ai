@@ -107,10 +107,13 @@ export class KodyRulesController {
     @Get('/suggestions')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Read, ResourceType.KodyRules))
-    public async findSuggestionsByRule(@Query() query: FindSuggestionsByRuleDto) {
+    public async findSuggestionsByRule(
+        @Query() query: FindSuggestionsByRuleDto,
+    ) {
         return this.findSuggestionsByRuleUseCase.execute(query.ruleId);
     }
 
+    // TODO: remove, unused
     @Get('/find-rule-in-organization-by-id')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Read, ResourceType.KodyRules))
@@ -121,6 +124,7 @@ export class KodyRulesController {
         return this.findRuleInOrganizationByIdKodyRulesUseCase.execute(ruleId);
     }
 
+    // TODO: remove, unused
     @Get('/find-rules-in-organization-by-title')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Read, ResourceType.KodyRules))
@@ -138,6 +142,7 @@ export class KodyRulesController {
         );
     }
 
+    // TODO: remove, unused
     @Get('/find-rules-in-organization-by-severity')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Read, ResourceType.KodyRules))
@@ -155,6 +160,7 @@ export class KodyRulesController {
         );
     }
 
+    // TODO: remove, unused
     @Get('/find-rules-in-organization-by-path')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Read, ResourceType.KodyRules))
@@ -197,6 +203,7 @@ export class KodyRulesController {
         );
     }
 
+    // TODO: remove, unused
     @Delete('/delete-by-organization-id')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Delete, ResourceType.KodyRules))
@@ -304,11 +311,12 @@ export class KodyRulesController {
         });
     }
 
+    // TODO: remove, unused
     @Post('/resync-ide-rules')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Create, ResourceType.KodyRules))
     public async resyncIdeRules(
-        @Body() body: { teamId: string; repositoryId: string; },
+        @Body() body: { teamId: string; repositoryId: string },
     ) {
         const respositories = [body.repositoryId];
 

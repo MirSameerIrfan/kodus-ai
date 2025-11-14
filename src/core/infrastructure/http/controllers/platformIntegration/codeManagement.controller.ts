@@ -133,6 +133,7 @@ export class CodeManagementController {
         return this.getCodeManagementMemberListUseCase.execute();
     }
 
+    // TODO: remove, unused
     @Get('/list-members')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Read, ResourceType.UserSettings))
@@ -140,6 +141,7 @@ export class CodeManagementController {
         return this.getCodeManagementMemberListUseCase.execute();
     }
 
+    // TODO: remove, unused
     @Get('/organizations')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Read, ResourceType.GitSettings))
@@ -316,6 +318,7 @@ export class CodeManagementController {
         return await this.getRepositoryTreeByDirectoryUseCase.execute(query);
     }
 
+    // TODO: remove, unused
     @Get('/webhook-status')
     public async getWebhookStatus(
         @Query() query: WebhookStatusQueryDto,

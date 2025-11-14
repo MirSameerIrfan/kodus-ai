@@ -66,11 +66,13 @@ export class RuleLikeController {
         );
     }
 
+    // TODO: remove, unused
     @Get(':ruleId/count')
     async countByRule(@Param('ruleId') ruleId: string) {
         return this.countRuleLikesUseCase.execute(ruleId);
     }
 
+    // TODO: remove, unused
     @Get('top')
     async topByLanguage(
         @Query('language') language: ProgrammingLanguage,
@@ -79,6 +81,7 @@ export class RuleLikeController {
         return this.getTopRulesByLanguageUseCase.execute(language, limit);
     }
 
+    // TODO: remove, unused
     @Get()
     async find(
         @Query('ruleId') ruleId?: string,
@@ -93,11 +96,13 @@ export class RuleLikeController {
         return this.findRuleLikesUseCase.execute(filter);
     }
 
+    // TODO: remove, unused
     @Get('all')
     async getAllLikes() {
         return this.getAllRuleLikesUseCase.execute();
     }
 
+    // TODO: remove, unused
     @Get('all-rules-with-feedback')
     async getAllRulesWithFeedback() {
         return this.getAllRulesWithLikesUseCase.execute();

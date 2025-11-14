@@ -40,6 +40,7 @@ export class PullRequestController {
         },
     ) {}
 
+    // TODO: remove, unused
     @Get('/get-pull-request-authors')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Read, ResourceType.Billing))
@@ -60,6 +61,7 @@ export class PullRequestController {
         return await this.getEnrichedPullRequestsUseCase.execute(query);
     }
 
+    // TODO: remove, unused
     @Post('/backfill')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Create, ResourceType.PullRequests))

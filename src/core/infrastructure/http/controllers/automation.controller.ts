@@ -15,6 +15,7 @@ import {
 } from '../../adapters/services/permissions/policy.guard';
 import { checkPermissions } from '../../adapters/services/permissions/policy.handlers';
 
+// TODO: remove, unused
 @Controller('automation')
 export class AutomationController {
     constructor(
@@ -23,6 +24,7 @@ export class AutomationController {
         private readonly getAllAutomationExecutionsUseCase: getAllAutomationExecutionsUseCase,
     ) {}
 
+    // TODO: remove, unused
     @Get('/')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
@@ -32,6 +34,7 @@ export class AutomationController {
         return this.getAllAutomationsUseCase.execute(query.teamId);
     }
 
+    // TODO: remove, unused
     @Post('/run')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
@@ -58,6 +61,7 @@ export class AutomationController {
         });
     }
 
+    // TODO: remove, unused
     @Get('/executions')
     @UseGuards(PolicyGuard)
     @CheckPolicies(

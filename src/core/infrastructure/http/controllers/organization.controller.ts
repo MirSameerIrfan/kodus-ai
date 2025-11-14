@@ -30,6 +30,7 @@ export class OrganizationController {
         return this.getOrganizationNameUseCase.execute();
     }
 
+    // TODO: remove, unused
     @Get('/name-by-tenant')
     public getOrganizationNameByTenant(
         @Query('tenantName')
@@ -38,6 +39,7 @@ export class OrganizationController {
         return this.getOrganizationNameByTenantUseCase.execute(tenantName);
     }
 
+    // TODO: remove, unused
     @Get('/tenant-name')
     public getOrganizationTenantName() {
         return this.getOrganizationTenantNameUseCase.execute();
@@ -54,6 +56,7 @@ export class OrganizationController {
         return await this.updateInfoOrganizationAndPhoneUseCase.execute(body);
     }
 
+    // TODO: remove, unused
     @Get('/domain')
     public async getOrganizationsByDomain(
         @Query('domain')

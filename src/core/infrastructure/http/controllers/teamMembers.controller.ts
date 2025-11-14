@@ -38,6 +38,7 @@ export class TeamMembersController {
         private readonly deleteTeamMembersUseCase: DeleteTeamMembersUseCase,
     ) {}
 
+    // TODO: remove, unused
     @Get('/organization')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Read, ResourceType.UserSettings))
@@ -64,6 +65,7 @@ export class TeamMembersController {
         );
     }
 
+    // TODO: remove, unused
     @Post('/send-invite')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Create, ResourceType.UserSettings))

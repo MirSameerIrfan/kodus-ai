@@ -60,6 +60,7 @@ export class UsersController {
         return await this.checkUserWithEmailUserUseCase.execute(email);
     }
 
+    // TODO: remove, unused
     @Get('/info')
     public async show() {
         return await this.getUserUseCase.execute();
@@ -85,6 +86,7 @@ export class UsersController {
         return await this.joinOrganizationUseCase.execute(body);
     }
 
+    // TODO: remove, unused
     @Patch('/')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Update, ResourceType.UserSettings))
@@ -98,6 +100,7 @@ export class UsersController {
         return await this.updateUserUseCase.execute(userId, body);
     }
 
+    // TODO: remove, unused
     @Get('/awaiting-approval')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Read, ResourceType.UserSettings))

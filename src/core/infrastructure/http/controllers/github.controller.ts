@@ -86,6 +86,7 @@ export class GithubController {
         return this.getIntegrationGithubUseCase.execute(installId);
     }
 
+    // TODO: remove, unused
     @Post('/organization-name')
     public async createOrUpdateOrganizationName(
         @Body() body: { organizationName: string },

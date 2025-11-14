@@ -19,6 +19,7 @@ import { OrganizationAndTeamDataDto } from '../dtos/organizationAndTeamData.dto'
 import { RunTeamAutomationsUseCase } from '@/core/application/use-cases/teamAutomation/run-team-automations';
 import { PinoLoggerService } from '../../adapters/services/logger/pino.service';
 
+// TODO: remove, unused
 @Controller('team-automation')
 export class TeamAutomationController {
     constructor(
@@ -32,26 +33,31 @@ export class TeamAutomationController {
         private readonly logger: PinoLoggerService,
     ) {}
 
+    // TODO: remove, unused
     @Post('/')
     public async updateOrCreateAutomation(@Body() body: TeamAutomationsDto) {
         return this.updateOrCreateAutomationUseCase.execute(body);
     }
 
+    // TODO: remove, unused
     @Post('/active-all')
     public async activeAllAutomations(@Body() body: TeamQueryDto) {
         return this.activeTeamAutomationsUseCase.execute(body.teamId);
     }
 
+    // TODO: remove, unused
     @Get('/')
     public async GetTeamAutomationUseCase(@Query() query: TeamQueryDto) {
         return this.getTeamAutomationUseCase.execute(query.teamId);
     }
 
+    // TODO: remove, unused
     @Get('/list-all')
     public async ListAllTeamAutomationUseCase(@Query() query: TeamQueryDto) {
         return this.listAllTeamAutomationUseCase.execute(query.teamId);
     }
 
+    // TODO: remove, unused
     @Post('/update-status')
     public async changeStatus(
         @Body() body: { teamAutomationId: string; status: boolean },
@@ -62,6 +68,7 @@ export class TeamAutomationController {
         );
     }
 
+    // TODO: remove, unused
     @Post('/run')
     public async runAutomation(
         @Body()

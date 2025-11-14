@@ -5,6 +5,7 @@ import { ActiveOrganizationAutomationsUseCase } from '@/core/application/use-cas
 import { AutomationType } from '@/core/domain/automation/enums/automation-type';
 import { RunOrganizationAutomationsUseCase } from '@/core/application/use-cases/organizationAutomation/run-organization-automations';
 
+// TODO: remove, unused
 @Controller('organization-automation')
 export class OrganizationAutomationController {
     constructor(
@@ -13,6 +14,7 @@ export class OrganizationAutomationController {
         private readonly runOrganizationAutomationsUseCase: RunOrganizationAutomationsUseCase,
     ) {}
 
+    // TODO: remove, unused
     @Get('/')
     public async getOrganizationAutomations(
         @Query() query: OrganizationQueryDto,
@@ -22,11 +24,13 @@ export class OrganizationAutomationController {
         );
     }
 
+    // TODO: remove, unused
     @Post('/active-all')
     public async activeAllAutomations() {
         return await this.activeOrganizationAutomationUseCase.execute();
     }
 
+    // TODO: remove, unused
     @Post('/run')
     public async runAutomation(
         @Body()

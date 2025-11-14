@@ -27,9 +27,9 @@ import {
 } from '../../adapters/services/permissions/policy.guard';
 import { checkPermissions } from '../../adapters/services/permissions/policy.handlers';
 import { DeleteByokConfigUseCase } from '@/core/application/use-cases/organizationParameters/delete-byok-config.use-case';
-import { 
+import {
     GetCockpitMetricsVisibilityUseCase,
-    GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN
+    GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN,
 } from '@/core/application/use-cases/organizationParameters/get-cockpit-metrics-visibility.use-case';
 import { ICockpitMetricsVisibility } from '@/core/domain/organizationParameters/interfaces/cockpit-metrics-visibility.interface';
 import { Inject } from '@nestjs/common';
@@ -80,6 +80,7 @@ export class OrgnizationParametersController {
         });
     }
 
+    // TODO: remove, unused
     @Get('/byok-config')
     public async getByokConfig(
         @Query('organizationId') organizationId: string,
@@ -116,7 +117,10 @@ export class OrgnizationParametersController {
         @Query('organizationId') organizationId: string,
         @Query('configType') configType: 'main' | 'fallback',
     ) {
-        return await this.deleteByokConfigUseCase.execute(organizationId, configType);
+        return await this.deleteByokConfigUseCase.execute(
+            organizationId,
+            configType,
+        );
     }
 
     @Get('/cockpit-metrics-visibility')

@@ -77,11 +77,13 @@ export class PullRequestMessagesController {
         );
     }
 
+    // TODO: remove, unused
     @Get('/:id')
     public async findById(@Param('id') id: string) {
         return await this.findByIdPullRequestMessagesUseCase.execute(id);
     }
 
+    // TODO: remove, unused
     @Post('/migrate-status')
     @UseGuards(PolicyGuard)
     @CheckPolicies(

@@ -3,6 +3,7 @@ import { SaveCodeReviewFeedbackUseCase } from '@/core/application/use-cases/code
 import { CodeReviewFeedbackEntity } from '@/core/domain/codeReviewFeedback/entities/codeReviewFeedback.entity';
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 
+// TODO: remove, unused
 @Controller('code-review-feedback')
 export class CodeReviewFeedbackController {
     constructor(
@@ -10,6 +11,7 @@ export class CodeReviewFeedbackController {
         private readonly saveCodeReviewFeedbackUseCase: SaveCodeReviewFeedbackUseCase,
     ) {}
 
+    // TODO: remove, unused
     @Get('organization/:organizationId')
     async getByOrganizationId(
         @Param('organizationId') organizationId: string,
@@ -19,6 +21,7 @@ export class CodeReviewFeedbackController {
         );
     }
 
+    // TODO: remove, unused
     @Post('reactions')
     async saveReactions(
         @Body()

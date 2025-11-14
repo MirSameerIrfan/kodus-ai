@@ -18,9 +18,7 @@ import {
     CheckPolicies,
     PolicyGuard,
 } from '../../adapters/services/permissions/policy.guard';
-import {
-    checkPermissions,
-} from '../../adapters/services/permissions/policy.handlers';
+import { checkPermissions } from '../../adapters/services/permissions/policy.handlers';
 import {
     Action,
     ResourceType,
@@ -43,6 +41,7 @@ export class IssuesController {
         return this.getIssuesUseCase.execute(query);
     }
 
+    // TODO: remove, unused
     @Get('filters')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Read, ResourceType.Issues))

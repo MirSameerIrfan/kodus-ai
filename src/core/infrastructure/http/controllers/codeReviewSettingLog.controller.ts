@@ -24,6 +24,7 @@ export class CodeReviewSettingLogController {
         private readonly findCodeReviewSettingsLogsUseCase: FindCodeReviewSettingsLogsUseCase,
     ) {}
 
+    // TODO: remove, unused
     @Post('/status-change')
     public async registerStatusChange(
         @Body() body: UserStatusDto,

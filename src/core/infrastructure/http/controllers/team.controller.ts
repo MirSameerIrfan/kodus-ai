@@ -30,16 +30,19 @@ export class TeamController {
         private readonly listTeamsWithIntegrationsUseCase: ListTeamsWithIntegrationsUseCase,
     ) {}
 
+    // TODO: remove, unused
     @Post('/')
     public async create(@Body() body: CreateTeamDto) {
         return await this.createTeamUseCase.execute(body);
     }
 
+    // TODO: remove, unused
     @Patch('/')
     public async update(@Body() body: UpdateTeamDto) {
         return await this.updateTeamUseCase.execute(body);
     }
 
+    // TODO: remove, unused
     @Delete('/')
     public async delete(@Query() query: TeamQueryDto) {
         return await this.deleteTeamUseCase.execute(query?.teamId);
@@ -55,6 +58,7 @@ export class TeamController {
         return await this.listTeamsWithIntegrationsUseCase.execute();
     }
 
+    // TODO: remove, unused
     @Get('/get-by-id')
     public async getById(
         @Query()
@@ -63,6 +67,7 @@ export class TeamController {
         return await this.getByIdUseCase.execute(query?.teamId);
     }
 
+    // TODO: remove, unused
     @Get('/first-created')
     public async findFirstCreatedTeam() {
         return await this.findFirstCreatedTeamUseCase.execute();

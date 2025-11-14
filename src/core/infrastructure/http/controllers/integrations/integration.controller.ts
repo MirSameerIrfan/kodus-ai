@@ -49,6 +49,7 @@ export class IntegrationController {
         return this.checkHasIntegrationByPlatformUseCase.execute(query);
     }
 
+    // TODO: remove, unused
     @Get('/connections')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
@@ -65,6 +66,7 @@ export class IntegrationController {
         return this.getOrganizationIdUseCase.execute();
     }
 
+    // TODO: remove, unused
     @Get('/worskpace-id')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Read, ResourceType.GitSettings))
@@ -78,6 +80,7 @@ export class IntegrationController {
         );
     }
 
+    // TODO: remove, unused
     @Get('/platforms')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Read, ResourceType.GitSettings))

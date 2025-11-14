@@ -19,6 +19,7 @@ export class IntegrationConfigController {
         private readonly createOrUpdateIntegrationConfigUseCase: CreateOrUpdateIntegrationConfigUseCase,
     ) {}
 
+    // TODO: remove, unused
     @Post('/create-or-update-config')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Create, ResourceType.GitSettings))

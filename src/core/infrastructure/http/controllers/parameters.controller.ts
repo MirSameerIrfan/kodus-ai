@@ -40,7 +40,6 @@ import {
     Action,
     ResourceType,
 } from '@/core/domain/permissions/enums/permissions.enum';
-import { MigrateCodeReviewParametersUseCase } from '@/core/application/use-cases/parameters/migrate-code-review-parameters.use-case'; // TODO: Remove once all orgs have migrated
 import { GetDefaultConfigUseCase } from '@/core/application/use-cases/parameters/get-default-config.use-case';
 import { GetCodeReviewParameterUseCase } from '@/core/application/use-cases/parameters/get-code-review-parameter.use-case';
 import { REQUEST } from '@nestjs/core';
@@ -67,7 +66,6 @@ export class ParametersController {
         private readonly listCodeReviewAutomationLabelsWithStatusUseCase: ListCodeReviewAutomationLabelsWithStatusUseCase,
         private readonly getDefaultConfigUseCase: GetDefaultConfigUseCase,
         private readonly getCodeReviewParameterUseCase: GetCodeReviewParameterUseCase,
-        private readonly migrateCodeReviewParametersUseCase: MigrateCodeReviewParametersUseCase, // TODO: Remove once all orgs have migrated
     ) {}
 
     //#region Parameters
@@ -103,6 +101,7 @@ export class ParametersController {
         return await this.findByKeyParametersUseCase.execute(key, { teamId });
     }
 
+    // TODO: remove, unused
     @Get('/list-all')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
@@ -130,6 +129,7 @@ export class ParametersController {
         });
     }
 
+    // TODO: remove, unused
     @Get('/list-code-review-v2-defaults')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
@@ -216,6 +216,7 @@ export class ParametersController {
         return response.send(yamlString);
     }
 
+    // TODO: remove, unused
     @Post('/copy-code-review-parameter')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
@@ -266,6 +267,7 @@ export class ParametersController {
         return this.previewPrSummaryUseCase.execute(body);
     }
 
+    // TODO: remove, unused
     @Post('/create-or-update-issues-config')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Create, ResourceType.Issues))
