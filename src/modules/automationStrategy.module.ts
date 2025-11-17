@@ -17,7 +17,6 @@ import { GithubModule } from './github.module';
 import { IntegrationModule } from './integration.module';
 import { IntegrationConfigModule } from './integrationConfig.module';
 import { OrganizationModule } from './organization.module';
-import { OrganizationAutomationModule } from './organizationAutomation.module';
 import { OrganizationParametersModule } from './organizationParameters.module';
 import { ParametersModule } from './parameters.module';
 import { PlatformIntegrationModule } from './platformIntegration.module';
@@ -30,7 +29,6 @@ import { TeamMembersModule } from './teamMembers.module';
     imports: [
         forwardRef(() => GithubModule),
         forwardRef(() => TeamAutomationModule),
-        forwardRef(() => OrganizationAutomationModule),
         forwardRef(() => AutomationModule),
         forwardRef(() => TeamMembersModule),
         forwardRef(() => PlatformIntegrationModule),
@@ -47,7 +45,7 @@ import { TeamMembersModule } from './teamMembers.module';
         forwardRef(() => CodeReviewExecutionModule),
         AuthIntegrationModule,
         LicenseModule,
-        PermissionValidationModule,
+        forwardRef(() => PermissionValidationModule),
     ],
     providers: [
         ...SaveCodeReviewFeedbackUseCase,

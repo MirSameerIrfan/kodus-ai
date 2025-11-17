@@ -4,11 +4,11 @@
  */
 
 import { forwardRef, Module } from '@nestjs/common';
-import { KodyRulesValidationService } from './service/kody-rules-validation.service';
 import { PermissionValidationModule } from '../shared/permission-validation.module';
+import { KodyRulesValidationService } from './service/kody-rules-validation.service';
 
 @Module({
-    imports: [PermissionValidationModule],
+    imports: [forwardRef(() => PermissionValidationModule)],
     providers: [KodyRulesValidationService],
     exports: [KodyRulesValidationService],
 })

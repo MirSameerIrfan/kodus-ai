@@ -64,7 +64,7 @@ import { UsersModule } from './user.module';
         forwardRef(() => ContextReferenceModule),
         KodyRulesValidationModule,
         GlobalCacheModule,
-        PermissionValidationModule,
+        forwardRef(() => PermissionValidationModule),
     ],
     providers: [
         ...UseCases,

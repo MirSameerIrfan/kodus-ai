@@ -58,7 +58,7 @@ const UseCases = [
         GlobalCacheModule,
         LicenseModule,
         forwardRef(() => OrganizationParametersModule),
-        PermissionValidationModule,
+        forwardRef(() => PermissionValidationModule),
     ],
     providers: [
         ...UseCases,

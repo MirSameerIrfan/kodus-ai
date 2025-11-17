@@ -26,7 +26,7 @@ import { UsersModule } from './user.module';
 @Module({
     imports: [
         MongooseModule.forFeature([CodeReviewSettingsLogModelInstance]),
-        PermissionValidationModule,
+        forwardRef(() => PermissionValidationModule),
         forwardRef(() => UsersModule),
         forwardRef(() => IntegrationConfigModule),
         forwardRef(() => TeamsModule),

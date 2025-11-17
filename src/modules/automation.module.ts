@@ -3,17 +3,12 @@ import { AUTOMATION_EXECUTION_REPOSITORY_TOKEN } from '@/core/domain/automation/
 import { AUTOMATION_EXECUTION_SERVICE_TOKEN } from '@/core/domain/automation/contracts/automation-execution.service';
 import { AUTOMATION_REPOSITORY_TOKEN } from '@/core/domain/automation/contracts/automation.repository';
 import { AUTOMATION_SERVICE_TOKEN } from '@/core/domain/automation/contracts/automation.service';
-import { ORGANIZATION_AUTOMATION_EXECUTION_REPOSITORY_TOKEN } from '@/core/domain/automation/contracts/organization-automation-execution.repository';
-import { ORGANIZATION_AUTOMATION_EXECUTION_SERVICE_TOKEN } from '@/core/domain/automation/contracts/organization-automation-execution.service';
 import { AutomationRepository } from '@/core/infrastructure/adapters/repositories/typeorm/automation.repository';
 import { AutomationExecutionRepository } from '@/core/infrastructure/adapters/repositories/typeorm/automationExecution.repository';
-import { OrganizationAutomationExecutionRepository } from '@/core/infrastructure/adapters/repositories/typeorm/organizationAutomationExecution.repository';
 import { AutomationModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/automation.model';
 import { AutomationExecutionModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/automationExecution.model';
-import { OrganizationAutomationExecutionModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/organizationAutomationExecution.model';
 import { AutomationExecutionService } from '@/core/infrastructure/adapters/services/automation/automation-execution.service';
 import { AutomationService } from '@/core/infrastructure/adapters/services/automation/automation.service';
-import { OrganizationAutomationExecutionService } from '@/core/infrastructure/adapters/services/automation/organization-automation-execution.service';
 import { PromptService } from '@/core/infrastructure/adapters/services/prompt.service';
 import { RunCodeReviewAutomationUseCase } from '@/ee/automation/runCodeReview.use-case';
 import { LicenseModule } from '@/ee/license/license.module';
@@ -29,7 +24,6 @@ import { GithubModule } from './github.module';
 import { IntegrationModule } from './integration.module';
 import { IntegrationConfigModule } from './integrationConfig.module';
 import { OrganizationModule } from './organization.module';
-import { OrganizationAutomationModule } from './organizationAutomation.module';
 import { OrganizationParametersModule } from './organizationParameters.module';
 import { ParametersModule } from './parameters.module';
 import { PlatformIntegrationModule } from './platformIntegration.module';
@@ -39,15 +33,10 @@ import { TeamAutomationModule } from './teamAutomation.module';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([
-            AutomationModel,
-            AutomationExecutionModel,
-            OrganizationAutomationExecutionModel,
-        ]),
+        TypeOrmModule.forFeature([AutomationModel, AutomationExecutionModel]),
         forwardRef(() => TeamsModule),
         forwardRef(() => GithubModule),
         forwardRef(() => TeamAutomationModule),
-        forwardRef(() => OrganizationAutomationModule),
         forwardRef(() => AutomationStrategyModule),
         forwardRef(() => PlatformIntegrationModule),
         forwardRef(() => IntegrationModule),
@@ -62,7 +51,7 @@ import { TeamAutomationModule } from './teamAutomation.module';
         AuthIntegrationModule,
         LicenseModule,
         forwardRef(() => CodeReviewExecutionModule),
-        PermissionValidationModule,
+        forwardRef(() => PermissionValidationModule),
     ],
     providers: [
         ...SaveCodeReviewFeedbackUseCase,
@@ -84,14 +73,6 @@ import { TeamAutomationModule } from './teamAutomation.module';
             provide: AUTOMATION_EXECUTION_REPOSITORY_TOKEN,
             useClass: AutomationExecutionRepository,
         },
-        {
-            provide: ORGANIZATION_AUTOMATION_EXECUTION_SERVICE_TOKEN,
-            useClass: OrganizationAutomationExecutionService,
-        },
-        {
-            provide: ORGANIZATION_AUTOMATION_EXECUTION_REPOSITORY_TOKEN,
-            useClass: OrganizationAutomationExecutionRepository,
-        },
     ],
     controllers: [],
     exports: [
@@ -99,8 +80,6 @@ import { TeamAutomationModule } from './teamAutomation.module';
         AUTOMATION_SERVICE_TOKEN,
         AUTOMATION_EXECUTION_SERVICE_TOKEN,
         AUTOMATION_EXECUTION_REPOSITORY_TOKEN,
-        ORGANIZATION_AUTOMATION_EXECUTION_SERVICE_TOKEN,
-        ORGANIZATION_AUTOMATION_EXECUTION_REPOSITORY_TOKEN,
         RunCodeReviewAutomationUseCase,
     ],
 })
