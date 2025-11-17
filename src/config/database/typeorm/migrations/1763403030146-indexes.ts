@@ -3,6 +3,8 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 export class Indexes1763403030146 implements MigrationInterface {
     name = 'Indexes1763403030146';
 
+    transaction = false;
+
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             CREATE INDEX CONCURRENTLY "IDX_org_params_key_org" ON "organization_parameters" ("configKey", "organization_id")
