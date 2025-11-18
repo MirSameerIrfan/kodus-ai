@@ -59,14 +59,6 @@ export class FetchChangedFilesStage extends BasePipelineStage<CodeReviewPipeline
             context?.lastExecution?.lastAnalyzedCommit,
         );
 
-        const allFilesFromPR = await this.pullRequestHandlerService.getChangedFiles(
-            context.organizationAndTeamData,
-            context.repository,
-            context.pullRequest,
-            context.codeReviewConfig.ignorePaths,
-            null,
-        );
-
         if (!files?.length || files.length > this.maxFilesToAnalyze) {
             const msg = !files?.length
                 ? AutomationMessage.NO_FILES_AFTER_IGNORE
@@ -102,12 +94,9 @@ export class FetchChangedFilesStage extends BasePipelineStage<CodeReviewPipeline
 
         const filesWithLineNumbers = this.prepareFilesWithLineNumbers(files);
 
-        const allFilesWithLineNumbers = this.prepareFilesWithLineNumbers(allFilesFromPR);
-
         const stats = this.getStatsForPR(filesWithLineNumbers);
 
         return this.updateContext(context, (draft) => {
-            draft.allFilesFromPR = allFilesWithLineNumbers;
             draft.changedFiles = filesWithLineNumbers;
             draft.pipelineMetadata = {
                 ...draft.pipelineMetadata,

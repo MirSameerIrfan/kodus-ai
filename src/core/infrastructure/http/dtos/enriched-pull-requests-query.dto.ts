@@ -47,4 +47,8 @@ export class EnrichedPullRequestsQueryDto {
     @IsOptional()
     @IsString()
     pullRequestTitle?: string;
+
+    @IsOptional()
+    @IsString()
+    teamId?: string;
 }

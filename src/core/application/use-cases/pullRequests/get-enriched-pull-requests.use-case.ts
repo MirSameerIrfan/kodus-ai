@@ -59,6 +59,7 @@ export class GetEnrichedPullRequestsUseCase implements IUseCase {
             page = 1,
             hasSentSuggestions,
             pullRequestTitle,
+            teamId,
         } = query;
 
         if (!this.request.user?.organization?.uuid) {
@@ -108,9 +109,12 @@ export class GetEnrichedPullRequestsUseCase implements IUseCase {
 
             while (enrichedPullRequests.length < limit && hasMoreExecutions) {
                 const { data: executionsBatch, total } =
-                    await this.automationExecutionService.findPullRequestExecutionsByOrganization(
+                    await this.automationExecutionService.findPullRequestExecutionsByOrganizationAndTeam(
                         {
-                            organizationId,
+                            organizationAndTeamData: {
+                                organizationId,
+                                teamId,
+                            },
                             repositoryIds: allowedRepositoryIds,
                             skip: initialSkip + accumulatedExecutions,
                             take: limit,
