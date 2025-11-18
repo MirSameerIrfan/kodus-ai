@@ -17,9 +17,7 @@ const env = process.env.API_DATABASE_ENV ?? process.env.API_NODE_ENV;
 
 const optionsDataBase: DataSourceOptions = {
     type: 'postgres',
-    host: ['development', 'test'].includes(env)
-        ? 'localhost'
-        : process.env.API_PG_DB_HOST,
+    host: process.env.API_PG_DB_HOST,
     port: parseInt(process.env.API_PG_DB_PORT!, 10),
     username: process.env.API_PG_DB_USERNAME,
     password: process.env.API_PG_DB_PASSWORD,
