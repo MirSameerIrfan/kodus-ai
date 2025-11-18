@@ -1,22 +1,24 @@
 import { GetOrganizationNameUseCase } from '@/core/application/use-cases/organization/get-organization-name';
+import { GetOrganizationsByDomainUseCase } from '@/core/application/use-cases/organization/get-organizations-domain.use-case';
 import { UpdateInfoOrganizationAndPhoneUseCase } from '@/core/application/use-cases/organization/update-infos.use-case';
-import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
-import { UpdateInfoOrganizationAndPhoneDto } from '../dtos/updateInfoOrgAndPhone.dto';
 import {
     Action,
     ResourceType,
 } from '@/core/domain/permissions/enums/permissions.enum';
+import { Body, Controller, Get, Patch, Query, UseGuards } from '@nestjs/common';
 import {
-    PolicyGuard,
     CheckPolicies,
+    PolicyGuard,
 } from '../../adapters/services/permissions/policy.guard';
 import { checkPermissions } from '../../adapters/services/permissions/policy.handlers';
+import { UpdateInfoOrganizationAndPhoneDto } from '../dtos/updateInfoOrgAndPhone.dto';
 
 @Controller('organization')
 export class OrganizationController {
     constructor(
         private readonly getOrganizationNameUseCase: GetOrganizationNameUseCase,
         private readonly updateInfoOrganizationAndPhoneUseCase: UpdateInfoOrganizationAndPhoneUseCase,
+        private readonly getOrganizationsByDomainUseCase: GetOrganizationsByDomainUseCase,
     ) {}
 
     @Get('/name')
@@ -33,5 +35,13 @@ export class OrganizationController {
         @Body() body: UpdateInfoOrganizationAndPhoneDto,
     ) {
         return await this.updateInfoOrganizationAndPhoneUseCase.execute(body);
+    }
+
+    @Get('/domain')
+    public async getOrganizationsByDomain(
+        @Query('domain')
+        domain: string,
+    ) {
+        return await this.getOrganizationsByDomainUseCase.execute(domain);
     }
 }
