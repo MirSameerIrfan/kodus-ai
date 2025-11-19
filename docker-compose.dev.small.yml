@@ -19,7 +19,6 @@ services:
         volumes:
             - .:/usr/src/app
             - yalc_store:/root/.yalc
-            - ./certs:/usr/src/app/certs:ro
         depends_on:
             migrator:
                 condition: service_completed_successfully
