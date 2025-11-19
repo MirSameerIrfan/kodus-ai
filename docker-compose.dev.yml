@@ -23,31 +23,6 @@ services:
             - kodus-backend-services
             - shared-network
         depends_on:
-            migrator:
-                condition: service_completed_successfully
-
-    migrator:
-        container_name: ${GLOBAL_API_CONTAINER_NAME}_migrator
-        image: kodus-orchestrator-dev
-        build:
-            context: .
-            dockerfile: DockerFiles/Dockerfile.dev
-            args:
-                - API_CLOUD_MODE=${API_CLOUD_MODE:-false}
-        env_file:
-            - ${ENV_FILE:-.env}
-        environment:
-            - API_DEVELOPMENT_MODE=${API_DEVELOPMENT_MODE:-true}
-        entrypoint: sh -c
-        command: npm run migration:run
-        restart: 'no'
-        volumes:
-            - .:/usr/src/app:delegated
-            - /usr/src/app/node_modules
-        networks:
-            - kodus-backend-services
-            - shared-network
-        depends_on:
             db_postgres:
                 condition: service_healthy
             db_mongodb:

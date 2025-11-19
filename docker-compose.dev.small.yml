@@ -20,37 +20,13 @@ services:
             - .:/usr/src/app
             - yalc_store:/root/.yalc
         depends_on:
-            migrator:
-                condition: service_completed_successfully
-        networks:
-            - kodus-backend-services
-            - shared-network
-
-    migrator:
-        container_name: ${GLOBAL_API_CONTAINER_NAME}_migrator
-        image: kodus-orchestrator-dev-small
-        build:
-            context: .
-            dockerfile: DockerFiles/Dockerfile.dev.small
-            args:
-                - API_CLOUD_MODE=${API_CLOUD_MODE:-false}
-        env_file:
-            - .env
-        environment:
-            - API_DEVELOPMENT_MODE=${API_DEVELOPMENT_MODE:-true}
-        entrypoint: ['sh', '-c']
-        command: ['npm run migration:run && npm run seed']
-        restart: 'no'
-        volumes:
-            - .:/usr/src/app
-        networks:
-            - kodus-backend-services
-            - shared-network
-        depends_on:
             db_postgres:
                 condition: service_healthy
             db_mongodb:
                 condition: service_healthy
+        networks:
+            - kodus-backend-services
+            - shared-network
 
     db_postgres:
         image: pgvector/pgvector:pg16
