@@ -1,9 +1,50 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class Baseline1763402134271 implements MigrationInterface {
-    name = 'Baseline1763402134271'
+    name = 'Baseline1763402134271';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (await queryRunner.hasTable('code_review_execution')) {
+            await queryRunner.query(`
+                DROP TABLE IF EXISTS "diagnostic_analysis_history" CASCADE
+                `);
+            await queryRunner.query(`
+                DROP TABLE IF EXISTS "diagnostic_scores" CASCADE
+                `);
+            await queryRunner.query(`
+                DROP TABLE IF EXISTS "good_practices" CASCADE
+                `);
+            await queryRunner.query(`
+                DROP TABLE IF EXISTS "insights" CASCADE
+                `);
+            await queryRunner.query(`
+                DROP TABLE IF EXISTS "metrics" CASCADE
+                `);
+            await queryRunner.query(`
+                DROP TABLE IF EXISTS "organization_automation_execution" CASCADE
+                `);
+            await queryRunner.query(`
+                DROP TABLE IF EXISTS "organization_automations" CASCADE
+                `);
+            await queryRunner.query(`
+                DROP TABLE IF EXISTS "organization_metrics" CASCADE
+                `);
+            await queryRunner.query(`
+                DROP TABLE IF EXISTS "sprint" CASCADE
+                `);
+            await queryRunner.query(`
+                DROP TABLE IF EXISTS "team_good_practices" CASCADE
+                `);
+            await queryRunner.query(`
+                DROP TABLE IF EXISTS "team_insights" CASCADE
+                `);
+            await queryRunner.query(`
+                DROP TABLE IF EXISTS "team_profiles" CASCADE
+                `);
+
+            return;
+        }
+
         await queryRunner.query(`
             CREATE TYPE "public"."integration_configs_configkey_enum" AS ENUM(
                 'columns_mapping',
@@ -674,5 +715,4 @@ export class Baseline1763402134271 implements MigrationInterface {
             DROP TYPE "public"."integration_configs_configkey_enum"
         `);
     }
-
 }
