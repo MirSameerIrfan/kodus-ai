@@ -1,8 +1,28 @@
 import { CreateIntegrationUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/create-integration.use-case';
 import { CreateRepositoriesUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/create-repositories';
+import { DeleteIntegrationAndRepositoriesUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/delete-integration-and-repositories.use-case';
+import { DeleteIntegrationUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/delete-integration.use-case';
+import { FinishOnboardingUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/finish-onboarding.use-case';
 import { GetCodeManagementMemberListUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-code-management-members-list.use-case';
+import { GetPRsByRepoUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-prs-repo.use-case';
+import { GetPRsUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-prs.use-case';
 import { GetRepositoriesUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-repositories';
+import { GetRepositoryTreeByDirectoryUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-repository-tree-by-directory.use-case';
+import { GetWebhookStatusUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-webhook-status.use-case';
 import { Repository } from '@/core/domain/integrationConfigs/types/codeManagement/repositories.type';
+import {
+    Action,
+    ResourceType,
+} from '@/core/domain/permissions/enums/permissions.enum';
+import {
+    CheckPolicies,
+    PolicyGuard,
+} from '@/core/infrastructure/adapters/services/permissions/policy.guard';
+import {
+    checkPermissions,
+    checkRepoPermissions,
+} from '@/core/infrastructure/adapters/services/permissions/policy.handlers';
+import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
 import {
     Body,
     Controller,
@@ -12,27 +32,9 @@ import {
     Query,
     UseGuards,
 } from '@nestjs/common';
-import { GetPRsUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-prs.use-case';
 import { FinishOnboardingDTO } from '../../dtos/finish-onboarding.dto';
-import { FinishOnboardingUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/finish-onboarding.use-case';
-import { DeleteIntegrationUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/delete-integration.use-case';
-import { DeleteIntegrationAndRepositoriesUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/delete-integration-and-repositories.use-case';
-import {
-    CheckPolicies,
-    PolicyGuard,
-} from '@/core/infrastructure/adapters/services/permissions/policy.guard';
-import {
-    Action,
-    ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import {
-    checkPermissions,
-    checkRepoPermissions,
-} from '@/core/infrastructure/adapters/services/permissions/policy.handlers';
-import { GetRepositoryTreeByDirectoryUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-repository-tree-by-directory.use-case';
 import { GetRepositoryTreeByDirectoryDto } from '../../dtos/get-repository-tree-by-directory.dto';
-import { GetPRsByRepoUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-prs-repo.use-case';
-import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
+import { WebhookStatusQueryDto } from '../../dtos/webhook-status-query.dto';
 
 @Controller('code-management')
 export class CodeManagementController {
@@ -47,6 +49,7 @@ export class CodeManagementController {
         private readonly deleteIntegrationAndRepositoriesUseCase: DeleteIntegrationAndRepositoriesUseCase,
         private readonly getRepositoryTreeByDirectoryUseCase: GetRepositoryTreeByDirectoryUseCase,
         private readonly getPRsByRepoUseCase: GetPRsByRepoUseCase,
+        private readonly getWebhookStatusUseCase: GetWebhookStatusUseCase,
     ) {}
 
     @Get('/repositories/org')
@@ -183,5 +186,19 @@ export class CodeManagementController {
         @Query() query: GetRepositoryTreeByDirectoryDto,
     ) {
         return await this.getRepositoryTreeByDirectoryUseCase.execute(query);
+    }
+
+    // NOT USED IN WEB - INTERNAL USE ONLY
+    @Get('/webhook-status')
+    public async getWebhookStatus(
+        @Query() query: WebhookStatusQueryDto,
+    ): Promise<{ active: boolean }> {
+        return this.getWebhookStatusUseCase.execute({
+            organizationAndTeamData: {
+                organizationId: query.organizationId,
+                teamId: query.teamId,
+            },
+            repositoryId: query.repositoryId,
+        });
     }
 }

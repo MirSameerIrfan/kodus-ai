@@ -10,6 +10,7 @@ import { GetPRsByRepoUseCase } from './get-prs-repo.use-case';
 import { GetPRsUseCase } from './get-prs.use-case';
 import { GetRepositoriesUseCase } from './get-repositories';
 import { GetRepositoryTreeByDirectoryUseCase } from './get-repository-tree-by-directory.use-case';
+import { GetWebhookStatusUseCase } from './get-webhook-status.use-case';
 import { ReceiveWebhookUseCase } from './receiveWebhook.use-case';
 
 export default [
@@ -26,4 +27,5 @@ export default [
     DeleteIntegrationAndRepositoriesUseCase,
     GetRepositoryTreeByDirectoryUseCase,
     GetPRsByRepoUseCase,
+    GetWebhookStatusUseCase,
 ];

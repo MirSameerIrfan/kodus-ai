@@ -1,9 +1,25 @@
+import { UserRequest } from '@/config/types/http/user-request.type';
+import { AddLibraryKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/add-library-kody-rules.use-case';
+import { ChangeStatusKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/change-status-kody-rules.use-case';
+import { CheckSyncStatusUseCase } from '@/core/application/use-cases/kodyRules/check-sync-status.use-case';
 import { CreateOrUpdateKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/create-or-update.use-case';
 import { DeleteRuleInOrganizationByIdKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/delete-rule-in-organization-by-id.use-case';
 import { FindByOrganizationIdKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-by-organization-id.use-case';
+import { FindLibraryKodyRulesBucketsUseCase } from '@/core/application/use-cases/kodyRules/find-library-kody-rules-buckets.use-case';
+import { FindLibraryKodyRulesWithFeedbackUseCase } from '@/core/application/use-cases/kodyRules/find-library-kody-rules-with-feedback.use-case';
+import { FindLibraryKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-library-kody-rules.use-case';
 import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-rules-in-organization-by-filter.use-case';
-import { CreateKodyRuleDto } from '../dtos/create-kody-rule.dto';
-import { FindLibraryKodyRulesDto } from '../dtos/find-library-kody-rules.dto';
+import { FindSuggestionsByRuleUseCase } from '@/core/application/use-cases/kodyRules/find-suggestions-by-rule.use-case';
+import { GenerateKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/generate-kody-rules.use-case';
+import { GetInheritedRulesKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/get-inherited-kody-rules.use-case';
+import { GetRulesLimitStatusUseCase } from '@/core/application/use-cases/kodyRules/get-rules-limit-status.use-case';
+import { ResyncRulesFromIdeUseCase } from '@/core/application/use-cases/kodyRules/resync-rules-from-ide.use-case';
+import { SyncSelectedRepositoriesKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/sync-selected-repositories.use-case';
+import {
+    Action,
+    ResourceType,
+} from '@/core/domain/permissions/enums/permissions.enum';
+import { CacheService } from '@/shared/utils/cache/cache.service';
 import {
     Body,
     Controller,
@@ -14,36 +30,21 @@ import {
     Query,
     UseGuards,
 } from '@nestjs/common';
-import { FindLibraryKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-library-kody-rules.use-case';
-import { FindLibraryKodyRulesWithFeedbackUseCase } from '@/core/application/use-cases/kodyRules/find-library-kody-rules-with-feedback.use-case';
-import { FindLibraryKodyRulesBucketsUseCase } from '@/core/application/use-cases/kodyRules/find-library-kody-rules-buckets.use-case';
-import { AddLibraryKodyRulesDto } from '../dtos/add-library-kody-rules.dto';
-import { AddLibraryKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/add-library-kody-rules.use-case';
-import { GenerateKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/generate-kody-rules.use-case';
-import { GenerateKodyRulesDTO } from '../dtos/generate-kody-rules.dto';
-import { ChangeStatusKodyRulesDTO } from '../dtos/change-status-kody-rules.dto';
-import { ChangeStatusKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/change-status-kody-rules.use-case';
 import { REQUEST } from '@nestjs/core';
-import { CheckSyncStatusUseCase } from '@/core/application/use-cases/kodyRules/check-sync-status.use-case';
-import { CacheService } from '@/shared/utils/cache/cache.service';
-import { SyncSelectedRepositoriesKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/sync-selected-repositories.use-case';
 import {
-    Action,
-    ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import {
-    PolicyGuard,
     CheckPolicies,
+    PolicyGuard,
 } from '../../adapters/services/permissions/policy.guard';
 import {
     checkPermissions,
     checkRepoPermissions,
 } from '../../adapters/services/permissions/policy.handlers';
-import { GetInheritedRulesKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/get-inherited-kody-rules.use-case';
-import { GetRulesLimitStatusUseCase } from '@/core/application/use-cases/kodyRules/get-rules-limit-status.use-case';
-import { UserRequest } from '@/config/types/http/user-request.type';
-import { FindSuggestionsByRuleUseCase } from '@/core/application/use-cases/kodyRules/find-suggestions-by-rule.use-case';
+import { AddLibraryKodyRulesDto } from '../dtos/add-library-kody-rules.dto';
+import { ChangeStatusKodyRulesDTO } from '../dtos/change-status-kody-rules.dto';
+import { CreateKodyRuleDto } from '../dtos/create-kody-rule.dto';
+import { FindLibraryKodyRulesDto } from '../dtos/find-library-kody-rules.dto';
 import { FindSuggestionsByRuleDto } from '../dtos/find-suggestions-by-rule.dto';
+import { GenerateKodyRulesDTO } from '../dtos/generate-kody-rules.dto';
 
 @Controller('kody-rules')
 export class KodyRulesController {
@@ -64,6 +65,7 @@ export class KodyRulesController {
         private readonly getInheritedRulesKodyRulesUseCase: GetInheritedRulesKodyRulesUseCase,
         private readonly getRulesLimitStatusUseCase: GetRulesLimitStatusUseCase,
         private readonly findSuggestionsByRuleUseCase: FindSuggestionsByRuleUseCase,
+        private readonly resyncRulesFromIdeUseCase: ResyncRulesFromIdeUseCase,
         @Inject(REQUEST)
         private readonly request: UserRequest,
     ) {}
@@ -266,5 +268,20 @@ export class KodyRulesController {
             repositoryId,
             directoryId,
         );
+    }
+
+    // NOT USED IN WEB - INTERNAL USE ONLY
+    @Post('/resync-ide-rules')
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(checkPermissions(Action.Create, ResourceType.KodyRules))
+    public async resyncIdeRules(
+        @Body() body: { teamId: string; repositoryId: string },
+    ) {
+        const respositories = [body.repositoryId];
+
+        return this.resyncRulesFromIdeUseCase.execute({
+            teamId: body.teamId,
+            repositoriesIds: respositories,
+        });
     }
 }
