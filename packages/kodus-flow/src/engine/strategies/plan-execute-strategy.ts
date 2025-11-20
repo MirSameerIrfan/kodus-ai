@@ -94,6 +94,32 @@ export class PlanExecuteStrategy extends BaseExecutionStrategy {
                     // Fase 1: PLAN - Criar plano de execução
                     const planStepStart = Date.now();
                     const plan = await this.createPlan(context);
+
+                    // 📢 EXPOR: "O Agente criou um plano"
+                    if (context.emit) {
+                        await context.emit({
+                            type: 'agent.plan.created',
+                            agentId: context.agentContext.agentName, // agentId might not be directly available, falling back to name
+                            runId: context.agentContext.sessionId || 'unknown',
+                            timestamp: Date.now(),
+                            plan: {
+                                totalSteps: plan.steps?.length || 0,
+                                goal: plan.goal,
+                                steps: (plan.steps || []).map(
+                                    (s: any, i: number) => ({
+                                        id: `step-${i}`,
+                                        description:
+                                            s.instruction ||
+                                            s.toolName ||
+                                            'Execute step',
+                                        type: s.type,
+                                        status: 'pending',
+                                    }),
+                                ),
+                            },
+                        });
+                    }
+
                     steps.push({
                         id: `plan-${planStepStart}`,
                         type: 'plan' as any,
@@ -228,6 +254,18 @@ export class PlanExecuteStrategy extends BaseExecutionStrategy {
         for (let i = 0; i < plan.steps.length; i++) {
             const step = plan.steps[i];
 
+            // 📢 EXPOR: "Começando passo X"
+            if (context.emit) {
+                await context.emit({
+                    type: 'agent.step.started',
+                    agentId: context.agentContext.agentName,
+                    runId: context.agentContext.sessionId || 'unknown',
+                    stepId: `step-${i}`,
+                    stepIndex: i,
+                    timestamp: Date.now(),
+                });
+            }
+
             // Verificar timeout
             if (Date.now() - startTime > this.config.maxExecutionTime) {
                 this.logger.warn('Plan execution timeout reached');
@@ -282,6 +320,30 @@ export class PlanExecuteStrategy extends BaseExecutionStrategy {
                 Array.isArray(stepResult.metadata.toolCalls)
             ) {
                 toolCallsCount += stepResult.metadata.toolCalls.length;
+            }
+
+            // 📢 EXPOR: "Terminei passo X"
+            if (context.emit) {
+                const isSuccess = stepResult.status === 'completed';
+                if (isSuccess) {
+                    await context.emit({
+                        type: 'agent.step.completed',
+                        agentId: context.agentContext.agentName,
+                        runId: context.agentContext.sessionId || 'unknown',
+                        stepId: `step-${i}`,
+                        result: stepResult.result,
+                        timestamp: Date.now(),
+                    });
+                } else {
+                    await context.emit({
+                        type: 'agent.step.failed',
+                        agentId: context.agentContext.agentName,
+                        runId: context.agentContext.sessionId || 'unknown',
+                        stepId: `step-${i}`,
+                        error: stepResult.error || 'Unknown error',
+                        timestamp: Date.now(),
+                    });
+                }
             }
         }
 

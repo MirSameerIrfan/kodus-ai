@@ -26,6 +26,7 @@ import {
     LOAD_EXTERNAL_CONTEXT_STAGE_TOKEN,
 } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/contracts/loadExternalContextStage.contract';
 import { Inject } from '@nestjs/common';
+import { FileContextGateStage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/file-context-gate.stage';
 
 @Injectable()
 export class CodeReviewPipelineStrategyEE
@@ -38,6 +39,7 @@ export class CodeReviewPipelineStrategyEE
         private readonly fetchChangedFilesStage: FetchChangedFilesStage,
         @Inject(LOAD_EXTERNAL_CONTEXT_STAGE_TOKEN)
         private readonly loadExternalContextStage: ILoadExternalContextStage,
+        private readonly fileContextGateStage: FileContextGateStage,
         private readonly initialCommentStage: InitialCommentStage,
         private readonly kodyFineTuningStage: KodyFineTuningStage,
         private readonly codeAnalysisASTStage: CodeAnalysisASTStage,
@@ -62,6 +64,7 @@ export class CodeReviewPipelineStrategyEE
             this.validateConfigStage,
             this.fetchChangedFilesStage,
             this.loadExternalContextStage,
+            this.fileContextGateStage,
             this.initialCommentStage,
             this.kodyFineTuningStage,
             this.codeAnalysisASTStage,

@@ -57,3 +57,6 @@ kodus.config.json
 # Google Artifact Registry
 .npmrc.bak
 .npmrc
+
+# Folder para projetos clonados (análise)
+trd/

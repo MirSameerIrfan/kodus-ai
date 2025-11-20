@@ -8,6 +8,7 @@ import {
     AIAnalysisResult,
     AnalysisContext,
     CodeReviewVersion,
+    CodeReviewConfig,
     CodeSuggestion,
     FileChange,
     IFinalAnalysisResult,
@@ -31,7 +32,10 @@ import {
 import { DeliveryStatus } from '@/core/domain/pullRequests/enums/deliveryStatus.enum';
 import { ImplementationStatus } from '@/core/domain/pullRequests/enums/implementationStatus.enum';
 import { PriorityStatus } from '@/core/domain/pullRequests/enums/priorityStatus.enum';
-import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
+import {
+    CodeReviewPipelineContext,
+    FileContextAgentResult,
+} from '../context/code-review-pipeline.context';
 import {
     IKodyFineTuningContextPreparationService,
     KODY_FINE_TUNING_CONTEXT_PREPARATION_TOKEN,
@@ -460,12 +464,16 @@ export class ProcessFilesReview extends BasePipelineStage<CodeReviewPipelineCont
 
         const settledResults = await Promise.allSettled(
             batch.map((file) =>
-                limit(() =>
-                    this.fileReviewContextPreparation.prepareFileContext(
-                        file,
+                limit(() => {
+                    const perFileContext = this.applyFilePromptOverrides(
                         context,
-                    ),
-                ),
+                        file,
+                    );
+                    return this.fileReviewContextPreparation.prepareFileContext(
+                        file,
+                        perFileContext,
+                    );
+                }),
             ),
         );
 
@@ -958,8 +966,44 @@ export class ProcessFilesReview extends BasePipelineStage<CodeReviewPipelineCont
             externalPromptLayers: context.externalPromptLayers,
             correlationId: context.correlationId,
             sharedContextPack: context.sharedContextPack,
-            sharedContextAugmentations: context.sharedContextAugmentations,
-            sharedSanitizedOverrides: context.sharedSanitizedOverrides,
+            generatedAugmentations: context.generatedAugmentations,
+            filePromptOverrides: this.buildFilePromptOverrides(
+                context.fileContextMap,
+            ),
         };
+    }
+
+    private applyFilePromptOverrides(
+        context: AnalysisContext,
+        file: FileChange,
+    ): AnalysisContext {
+        const overrides =
+            context.filePromptOverrides?.[file.filename ?? ''] ?? undefined;
+
+        if (!overrides) {
+            return context;
+        }
+
+        return {
+            ...context,
+            activeOverrides: overrides,
+        };
+    }
+
+    private buildFilePromptOverrides(
+        fileContextMap?: Record<string, FileContextAgentResult>,
+    ): Record<string, CodeReviewConfig['v2PromptOverrides']> | undefined {
+        if (!fileContextMap) {
+            return undefined;
+        }
+
+        const map: Record<string, CodeReviewConfig['v2PromptOverrides']> = {};
+        for (const [fileName, entry] of Object.entries(fileContextMap)) {
+            if (entry?.resolvedPromptOverrides) {
+                map[fileName] = entry.resolvedPromptOverrides;
+            }
+        }
+
+        return Object.keys(map).length ? map : undefined;
     }
 }

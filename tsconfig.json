@@ -30,7 +30,7 @@
 
         "paths": {
             "@/*": ["src/*"],
-            "@context-os-core/*": ["src/shared/utils/context-os-core/*"]
+            "@context-os-core/*": ["packages/kodus-flow/src/context/core/*"]
         }
     },
     "watchOptions": {

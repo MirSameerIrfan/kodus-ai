@@ -197,15 +197,42 @@ export class MCPToolMetadataService {
 
             const providerIndex = new Map<string, string>();
             for (const connection of connections) {
-                const providerId = this.resolveConnectionProviderId(connection);
+                const providerId =
+                    this.resolveConnectionProviderId(connection);
                 if (!providerId) continue;
-                const key = connection.name ?? providerId;
-                providerIndex.set(key, providerId);
+
+                const aliases = new Set<string>();
+                if (connection.name) {
+                    aliases.add(connection.name.trim());
+                }
+                if (connection.provider) {
+                    aliases.add(connection.provider.trim());
+                }
+                if (connection.url) {
+                    aliases.add(connection.url.trim());
+                }
+                const metadataConn = (connection as any)?.metadata
+                    ?.connection;
+                if (metadataConn?.id) {
+                    aliases.add(metadataConn.id.trim());
+                }
+                if (metadataConn?.serverName) {
+                    aliases.add(metadataConn.serverName.trim());
+                }
+
+                for (const alias of aliases) {
+                    if (!alias) continue;
+                    providerIndex.set(alias, providerId);
+                    providerIndex.set(alias.toLowerCase(), providerId);
+                }
             }
 
             for (const tool of tools) {
                 const serverName = tool.serverName ?? '';
-                const providerId = providerIndex.get(serverName);
+                const trimmedServer = serverName?.trim() ?? '';
+                const providerId =
+                    providerIndex.get(trimmedServer) ??
+                    providerIndex.get(trimmedServer.toLowerCase());
                 if (!providerId) continue;
 
                 const requiredArgs = this.extractRequiredArgs(tool.inputSchema);
@@ -242,7 +269,10 @@ export class MCPToolMetadataService {
     private resolveConnectionProviderId(
         connection: MCPServerConfig,
     ): string | undefined {
+        const metadataConn = (connection as any)?.metadata?.connection;
         const candidates = [
+            metadataConn?.id,
+            metadataConn?.serverName,
             connection.provider,
             connection.name,
             connection.url,

@@ -39,6 +39,8 @@ import { ResolveConfigStage } from '@/core/infrastructure/adapters/services/code
 import { KodyFineTuningContextModule } from './kodyFineTuningContext.module';
 import { PromptsModule } from './prompts.module';
 import { DryRunModule } from './dryRun.module';
+import { FileContextGateStage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/file-context-gate.stage';
+import { McpAgentModule } from './mcpAgent.module';
 
 @Module({
     imports: [
@@ -57,6 +59,7 @@ import { DryRunModule } from './dryRun.module';
         forwardRef(() => PullRequestMessagesModule),
         forwardRef(() => PromptsModule),
         forwardRef(() => DryRunModule),
+        forwardRef(() => McpAgentModule),
     ],
     providers: [
         PipelineExecutor,
@@ -69,6 +72,7 @@ import { DryRunModule } from './dryRun.module';
         FetchChangedFilesStage,
         InitialCommentStage,
         BatchCreationStage,
+        FileContextGateStage,
         ProcessFilesReview,
         ProcessFilesPrLevelReviewStage,
         CreatePrLevelCommentsStage,

@@ -1,6 +1,7 @@
 import 'dotenv/config';
 
 export { createOrchestration } from './orchestration/index.js';
+export * from './context/index.js';
 
 export {
     createDirectLLMAdapter,
@@ -20,6 +21,7 @@ export {
 } from './observability/index.js';
 
 export { IdGenerator } from './utils/id-generator.js';
+export { EnhancedJSONParser } from './utils/json-parser.js';
 export { createThreadId } from './utils/thread-helpers.js';
 
 export { createMCPAdapter } from './adapters/index.js';

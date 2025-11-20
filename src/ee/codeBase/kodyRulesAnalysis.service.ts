@@ -53,6 +53,10 @@ import { ObservabilityService } from '@/core/infrastructure/adapters/services/lo
 import { BYOKPromptRunnerService } from '@/shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
 import { ExternalReferenceLoaderService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceLoader.service';
 import type { ContextAugmentationsMap } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
+import {
+    getAugmentationsFromPack,
+    getOverridesFromPack,
+} from '@/core/infrastructure/adapters/services/context/code-review-context.utils';
 import type { ContextPack } from '@context-os-core/interfaces';
 
 // Interface for extended context used in Kody Rules analysis
@@ -439,7 +443,9 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
                 }
 
                 if (fullRule.uuid) {
-                    const hasKnowledge = externalReferencesMap.has(fullRule.uuid);
+                    const hasKnowledge = externalReferencesMap.has(
+                        fullRule.uuid,
+                    );
                     const hasMcp = externalMcpResultsMap.has(fullRule.uuid);
 
                     if (hasKnowledge || hasMcp) {
@@ -947,12 +953,14 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
             organizationAndTeamData: context?.organizationAndTeamData,
             kodyRules: kodyRulesFiltered,
             v2PromptOverrides:
-                context?.sharedSanitizedOverrides ??
+                context?.activeOverrides ??
+                getOverridesFromPack(context?.sharedContextPack) ??
                 context?.codeReviewConfig?.v2PromptOverrides,
             externalPromptLayers: context?.externalPromptLayers,
-            contextAugmentations: context?.sharedContextAugmentations as
-                | ContextAugmentationsMap
-                | undefined,
+            contextAugmentations: {
+                ...(getAugmentationsFromPack(context?.sharedContextPack) ?? {}),
+                ...(context?.generatedAugmentations ?? {}),
+            } as ContextAugmentationsMap,
             contextPack: context?.sharedContextPack as ContextPack | undefined,
         };
 
@@ -1235,7 +1243,6 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
             return null;
         }
     }
-
 
     private buildTags(
         provider: LLMModelProvider,

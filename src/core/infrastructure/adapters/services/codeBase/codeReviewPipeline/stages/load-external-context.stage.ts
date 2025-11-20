@@ -12,10 +12,7 @@ import {
     PROMPT_CONTEXT_LOADER_SERVICE_TOKEN,
 } from '@/core/domain/prompts/contracts/promptContextLoader.contract';
 import { ILoadExternalContextStage } from './contracts/loadExternalContextStage.contract';
-import {
-    CodeReviewContextPackService,
-    SkippedMCPTool,
-} from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
+import { CodeReviewContextPackService } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
 
 @Injectable()
 export class LoadExternalContextStage
@@ -50,26 +47,11 @@ export class LoadExternalContextStage
                     directoryId,
                 );
 
-            this.logger.log({
-                message: 'Loading external prompt context',
-                context: this.stageName,
-                metadata: {
-                    organizationId,
-                    repositoryId,
-                    directoryId,
-                    configKeys,
-                    prNumber: context.pullRequest.number,
-                },
-            });
-
             const allReferences =
-                await this.promptReferenceManager.findByConfigKeys(
-                    configKeys,
-                    {
-                        contextReferenceId:
-                            context.codeReviewConfig?.contextReferenceId,
-                    },
-                );
+                await this.promptReferenceManager.findByConfigKeys(configKeys, {
+                    contextReferenceId:
+                        context.codeReviewConfig?.contextReferenceId,
+                });
 
             const priorityMap = new Map(
                 configKeys.map((key, index) => [key, index]),
@@ -101,44 +83,16 @@ export class LoadExternalContextStage
 
                 externalContext = loadResult.externalContext;
                 contextLayers = loadResult.contextLayers;
-
-                const totalReferencesLoaded =
-                    this.countLoadedReferences(externalContext);
-
-                this.logger.log({
-                    message: 'Successfully loaded external prompt context',
-                    context: this.stageName,
-                    metadata: {
-                        organizationId,
-                        repositoryId,
-                        prNumber: context.pullRequest.number,
-                        totalReferences: sortedReferences.length,
-                        totalReferencesLoaded,
-                    },
-                });
-            } else {
-                this.logger.log({
-                    message: 'No external references found for this config',
-                    context: this.stageName,
-                    metadata: {
-                        organizationId,
-                        repositoryId,
-                        prNumber: context.pullRequest.number,
-                    },
-                });
             }
 
-            let sharedContextPack = context.sharedContextPack;
-            let sharedContextAugmentations = context.sharedContextAugmentations;
-            let sharedSanitizedOverrides =
-                context.sharedSanitizedOverrides ??
-                context.codeReviewConfig?.v2PromptOverrides;
+            let sharedContextPack = undefined;
             let updatedCodeReviewConfig = context.codeReviewConfig;
 
             if (
                 context.codeReviewConfig?.contextReferenceId &&
                 (context.sharedContextPack?.metadata?.contextReferenceId ??
-                    context.sharedContextPack?.metadata?.configContextReferenceId) !==
+                    context.sharedContextPack?.metadata
+                        ?.configContextReferenceId) !==
                     context.codeReviewConfig.contextReferenceId
             ) {
                 try {
@@ -153,40 +107,18 @@ export class LoadExternalContextStage
                             externalLayers: contextLayers,
                             repository: context.repository,
                             pullRequest: context.pullRequest,
+                            executeMCPDependencies: false,
                         });
 
                     if (resolved.sanitizedOverrides) {
-                        sharedSanitizedOverrides = resolved.sanitizedOverrides;
                         updatedCodeReviewConfig = {
                             ...context.codeReviewConfig,
                             v2PromptOverrides: resolved.sanitizedOverrides,
                         };
                     }
 
-                    if (resolved.augmentations) {
-                        sharedContextAugmentations = resolved.augmentations;
-                    }
-
                     if (resolved.pack) {
                         sharedContextPack = resolved.pack;
-                        const skipped = resolved.pack.metadata
-                            ?.skippedMcpTools as SkippedMCPTool[] | undefined;
-                        if (skipped?.length) {
-                            this.logger.warn({
-                                message:
-                                    'Some MCP tools were skipped due to missing arguments',
-                                context: this.stageName,
-                                metadata: {
-                                    organizationId,
-                                    skippedTools: skipped.map((tool) => ({
-                                        provider: tool.provider,
-                                        toolName: tool.toolName,
-                                        missingArgs: tool.missingArgs,
-                                        requirementId: tool.requirementId,
-                                    })),
-                                },
-                            });
-                        }
                     }
                 } catch (error) {
                     this.logger.warn({
@@ -208,8 +140,6 @@ export class LoadExternalContextStage
                 externalPromptContext: externalContext,
                 externalPromptLayers: contextLayers,
                 sharedContextPack,
-                sharedContextAugmentations,
-                sharedSanitizedOverrides,
             };
         } catch (error) {
             this.logger.error({
@@ -227,44 +157,7 @@ export class LoadExternalContextStage
                 externalPromptContext: {},
                 externalPromptLayers: undefined,
                 sharedContextPack: undefined,
-                sharedContextAugmentations: undefined,
-                sharedSanitizedOverrides:
-                    context.codeReviewConfig?.v2PromptOverrides,
             };
         }
-    }
-
-    /**
-     * Counts how many external references were effectively loaded
-     * (useful only for logging/observability of the stage).
-     */
-    private countLoadedReferences(context: any): number {
-        let count = 0;
-
-        if (context.customInstructions?.references) {
-            count += context.customInstructions.references.length;
-        }
-
-        if (context.categories) {
-            Object.values(context.categories).forEach((cat: any) => {
-                if (cat?.references) {
-                    count += cat.references.length;
-                }
-            });
-        }
-
-        if (context.severity) {
-            Object.values(context.severity).forEach((sev: any) => {
-                if (sev?.references) {
-                    count += sev.references.length;
-                }
-            });
-        }
-
-        if (context.generation?.main?.references) {
-            count += context.generation.main.references.length;
-        }
-
-        return count;
     }
 }

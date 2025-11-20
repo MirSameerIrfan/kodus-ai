@@ -62,9 +62,9 @@ describe('🔍 formatAdditionalContext - Teste Abrangente', () => {
             expect(result).toContain('urgent, frontend');
 
             // Verificar estrutura
-            expect(result).toContain('## 🔍 ADDITIONAL INFO');
-            expect(result).toContain('### 👤 USER CONTEXT');
-            expect(result).toContain('### 🤖 AGENT IDENTITY');
+            expect(result).toContain('## ADDITIONAL INFO');
+            expect(result).toContain('### USER CONTEXT');
+            expect(result).toContain('### AGENT IDENTITY');
         });
 
         test('deve lidar com objetos grandes (deve mostrar resumo)', () => {

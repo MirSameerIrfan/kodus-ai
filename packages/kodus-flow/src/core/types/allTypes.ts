@@ -89,6 +89,11 @@ export type AgentConfig = {
     plannerOptions?: {
         type: PlannerType;
         replanPolicy?: Partial<ReplanPolicyConfig>;
+
+        scratchpad?: {
+            enabled?: boolean;
+            initialState?: string;
+        };
     };
 };
 
@@ -5396,6 +5401,10 @@ export interface AgentCoreConfig {
     plannerOptions: {
         replanPolicy?: Partial<ReplanPolicyConfig>;
         type: PlannerType;
+        scratchpad?: {
+            enabled?: boolean;
+            initialState?: string;
+        };
     };
 }
 

@@ -36,6 +36,10 @@ import {
 import { BYOKPromptRunnerService } from '@/shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
 import { ObservabilityService } from '../logger/observability.service';
 import type { ContextAugmentationsMap } from '../context/code-review-context-pack.service';
+import {
+    getAugmentationsFromPack,
+    getOverridesFromPack,
+} from '../context/code-review-context.utils';
 import type { ContextPack } from '@context-os-core/interfaces';
 
 export const LLM_ANALYSIS_SERVICE_TOKEN = Symbol('LLMAnalysisService');
@@ -405,15 +409,16 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
             prSummary: context?.pullRequest?.body,
             // v2-only prompt customization (categories and severity guidance)
             v2PromptOverrides:
-                context?.sharedSanitizedOverrides ??
+                context?.activeOverrides ??
+                getOverridesFromPack(context?.sharedContextPack) ??
                 context?.codeReviewConfig?.v2PromptOverrides,
             // External prompt context (referenced files)
             externalPromptContext: context?.externalPromptContext,
             externalPromptLayers: context?.externalPromptLayers,
-            contextAugmentations:
-                context?.sharedContextAugmentations as
-                    | ContextAugmentationsMap
-                    | undefined,
+            contextAugmentations: {
+                ...(getAugmentationsFromPack(context?.sharedContextPack) ?? {}),
+                ...(context?.generatedAugmentations ?? {}),
+            } as ContextAugmentationsMap,
             contextPack: context?.sharedContextPack as ContextPack | undefined,
         };
 

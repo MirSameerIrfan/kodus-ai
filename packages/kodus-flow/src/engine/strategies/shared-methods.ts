@@ -58,6 +58,13 @@ export class SharedStrategyMethods {
         context: StrategyExecutionContext,
     ): Promise<unknown> {
         if (action.type !== 'tool_call' || !action.toolName) {
+            this.logger.error(
+                'Invalid tool call action',
+                new Error(JSON.stringify(action)),
+                {
+                    source: 'shared-strategy-methods',
+                },
+            );
             throw new Error('Invalid tool call action');
         }
 
