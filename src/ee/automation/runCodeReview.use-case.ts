@@ -445,7 +445,8 @@ export class RunCodeReviewAutomationUseCase {
                             if (autoAssignResult.shouldProceed) {
                                 this.logger.log({
                                     message: `Proceeding with review after auto-assign check: ${autoAssignResult.reason}`,
-                                    context: RunCodeReviewAutomationUseCase.name,
+                                    context:
+                                        RunCodeReviewAutomationUseCase.name,
                                     metadata: {
                                         organizationAndTeamData,
                                         userGitId: params?.userGitId,
@@ -456,7 +457,8 @@ export class RunCodeReviewAutomationUseCase {
                                 this.logger.warn({
                                     message:
                                         'User not licensed but company has licenses',
-                                    context: RunCodeReviewAutomationUseCase.name,
+                                    context:
+                                        RunCodeReviewAutomationUseCase.name,
                                     metadata: {
                                         organizationAndTeamData,
                                         repository: params?.repository,
@@ -467,13 +469,18 @@ export class RunCodeReviewAutomationUseCase {
                                     },
                                 });
 
-                                await this.addNoLicenseReaction({
-                                    organizationAndTeamData,
-                                    repository: params.repository,
-                                    prNumber: params.prNumber,
-                                    platformType: params.platformType,
-                                    triggerCommentId: params.triggerCommentId,
-                                });
+                                if (
+                                    autoAssignResult.reason !== 'IGNORED_USER'
+                                ) {
+                                    await this.addNoLicenseReaction({
+                                        organizationAndTeamData,
+                                        repository: params.repository,
+                                        prNumber: params.prNumber,
+                                        platformType: params.platformType,
+                                        triggerCommentId:
+                                            params.triggerCommentId,
+                                    });
+                                }
 
                                 return null;
                             }
@@ -610,7 +617,6 @@ export class RunCodeReviewAutomationUseCase {
             '<!-- kody-codereview -->'
         );
     }
-
 
     private async addNoLicenseReaction(params: {
         organizationAndTeamData: OrganizationAndTeamData;
