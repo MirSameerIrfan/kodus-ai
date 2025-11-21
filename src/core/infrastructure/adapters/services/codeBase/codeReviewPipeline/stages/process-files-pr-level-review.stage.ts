@@ -7,19 +7,11 @@ import {
     KODY_RULES_PR_LEVEL_ANALYSIS_SERVICE_TOKEN,
     KodyRulesPrLevelAnalysisService,
 } from '@/ee/codeBase/kodyRulesPrLevelAnalysis.service';
-import {
-    AnalysisContext,
-    FileChange,
-    ReviewModeResponse,
-} from '@/config/types/general/codeReview.type';
+import { ReviewModeResponse } from '@/config/types/general/codeReview.type';
 import {
     CROSS_FILE_ANALYSIS_SERVICE_TOKEN,
     CrossFileAnalysisService,
 } from '../../crossFileAnalysis.service';
-import {
-    FILE_REVIEW_CONTEXT_PREPARATION_TOKEN,
-    IFileReviewContextPreparation,
-} from '@/shared/interfaces/file-review-context-preparation.interface';
 
 @Injectable()
 export class ProcessFilesPrLevelReviewStage extends BasePipelineStage<CodeReviewPipelineContext> {
@@ -33,9 +25,6 @@ export class ProcessFilesPrLevelReviewStage extends BasePipelineStage<CodeReview
 
         @Inject(CROSS_FILE_ANALYSIS_SERVICE_TOKEN)
         private readonly crossFileAnalysisService: CrossFileAnalysisService,
-
-        @Inject(FILE_REVIEW_CONTEXT_PREPARATION_TOKEN)
-        private readonly fileReviewContextPreparation: IFileReviewContextPreparation,
     ) {
         super();
     }

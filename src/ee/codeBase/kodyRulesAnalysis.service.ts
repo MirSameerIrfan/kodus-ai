@@ -63,10 +63,9 @@ import type {
 } from '@context-os-core/interfaces';
 import { FileContextAugmentationService } from '@/core/infrastructure/adapters/services/context/file-context-augmentation.service';
 import { ContextReferenceService } from '@/core/infrastructure/adapters/services/context/context-reference.service';
+import { KodyRuleDependencyService } from '@/core/infrastructure/adapters/services/kodyRules/kodyRulesDependency.service';
 
-// Interface for extended context used in Kody Rules analysis
 interface KodyRulesExtendedContext {
-    // Properties from base context (prepareAnalysisContext)
     pullRequest: any;
     patchWithLinesStr: string;
     maxSuggestionsParams?: number;
@@ -83,7 +82,6 @@ interface KodyRulesExtendedContext {
     contextAugmentations?: ContextAugmentationsMap;
     contextPack?: ContextPack;
 
-    // Extended properties added during analysis
     standardSuggestions?: AIAnalysisResult;
     updatedSuggestions?: AIAnalysisResult;
     filteredKodyRules?: Array<Partial<IKodyRule>>;
@@ -108,7 +106,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
         private readonly observabilityService: ObservabilityService,
         private readonly externalReferenceLoaderService: ExternalReferenceLoaderService,
         private readonly fileContextAugmentationService: FileContextAugmentationService,
-        private readonly contextReferenceService: ContextReferenceService,
+        private readonly kodyRuleDependencyService: KodyRuleDependencyService,
     ) {}
 
     private async buildKodyRuleLinkAndRepalceIds(
@@ -447,53 +445,6 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
         return mcpResultsMap;
     }
 
-    private async getMcpDependenciesForRules(
-        rules: Array<Partial<IKodyRule>>,
-    ): Promise<ContextDependency[]> {
-        const uniqueContextReferenceIds = [
-            ...new Set(
-                rules
-                    .map((rule) => rule.contextReferenceId)
-                    .filter((id): id is string => !!id),
-            ),
-        ];
-
-        if (!uniqueContextReferenceIds.length) {
-            return [];
-        }
-
-        const references = await Promise.all(
-            uniqueContextReferenceIds.map((id) =>
-                this.contextReferenceService.findById(id),
-            ),
-        );
-
-        const mcpDependencies: ContextDependency[] = [];
-        const seenDependencies = new Set<string>();
-
-        for (const ref of references) {
-            if (!ref) continue;
-            const requirements = ref.requirements ?? [];
-            for (const requirement of requirements) {
-                const dependencies = requirement.dependencies ?? [];
-                for (const dep of dependencies) {
-                    if (dep.type === 'mcp' && !seenDependencies.has(dep.id)) {
-                        mcpDependencies.push({
-                            ...dep,
-                            metadata: {
-                                ...((dep.metadata ?? {}) as object),
-                                contextReferenceId: ref.uuid,
-                            },
-                        });
-                        seenDependencies.add(dep.id);
-                    }
-                }
-            }
-        }
-
-        return mcpDependencies;
-    }
-
     async analyzeCodeWithAI(
         organizationAndTeamData: OrganizationAndTeamData,
         prNumber: number,
@@ -529,21 +480,45 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
             return { codeSuggestions: [] };
         }
 
-        const mcpDependencies = await this.getMcpDependenciesForRules(
-            baseContext.kodyRules,
-        );
+        const augmentationsByFile: Record<string, ContextAugmentationsMap> = {};
+        for (const rule of baseContext.kodyRules) {
+            if (!rule.contextReferenceId) continue;
 
-        const augmentationsByFile =
-            await this.fileContextAugmentationService.augmentFiles(
-                [fileContext.file],
-                context as any,
-                mcpDependencies,
+            const ruleDependencies =
+                await this.kodyRuleDependencyService.getMcpDependenciesForRules(
+                    [rule],
+                );
+
+            if (ruleDependencies.length > 0) {
+                const ruleAugmentations =
+                    await this.fileContextAugmentationService.augmentFiles(
+                        [fileContext.file],
+                        context as any,
+                        ruleDependencies,
+                        rule,
+                    );
+
+                for (const fileName in ruleAugmentations) {
+                    if (!augmentationsByFile[fileName]) {
+                        augmentationsByFile[fileName] = {};
+                    }
+                    Object.assign(
+                        augmentationsByFile[fileName],
+                        ruleAugmentations[fileName],
+                    );
+                }
+            }
+        }
+
+        const allMcpDependencies =
+            await this.kodyRuleDependencyService.getMcpDependenciesForRules(
+                baseContext.kodyRules,
             );
 
         const mcpResultsMap = this.buildMcpResultsFromAugmentations(
             augmentationsByFile,
             baseContext.kodyRules,
-            mcpDependencies,
+            allMcpDependencies,
         );
 
         const { referencesMap: externalReferencesMap } =

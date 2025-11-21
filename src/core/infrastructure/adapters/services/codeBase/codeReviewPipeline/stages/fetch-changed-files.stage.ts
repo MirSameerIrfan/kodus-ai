@@ -97,7 +97,10 @@ export class FetchChangedFilesStage extends BasePipelineStage<CodeReviewPipeline
         const stats = this.getStatsForPR(filesWithLineNumbers);
 
         return this.updateContext(context, (draft) => {
-            draft.changedFiles = filesWithLineNumbers;
+            draft.changedFiles = filesWithLineNumbers.filter(
+                (file) =>
+                    file.filename === 'src/commands/technicalInfoCommand.ts',
+            );
             draft.pipelineMetadata = {
                 ...draft.pipelineMetadata,
             };
