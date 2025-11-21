@@ -231,6 +231,7 @@ export interface ContextEvidence<TPayload = unknown> {
     metadata?: Record<string, unknown>;
     createdAt: number;
     correlationId?: string;
+    toolName?: string;
 }
 
 export interface EvidenceBusSubscription {

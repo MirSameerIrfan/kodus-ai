@@ -465,10 +465,12 @@ export class ProcessFilesReview extends BasePipelineStage<CodeReviewPipelineCont
         const settledResults = await Promise.allSettled(
             batch.map((file) =>
                 limit(() => {
-                    const perFileContext = this.applyFilePromptOverrides(
-                        context,
-                        file,
-                    );
+                    const perFileContext: AnalysisContext = {
+                        ...context,
+                        fileAugmentations:
+                            context.augmentationsByFile?.[file.filename] ?? {},
+                    };
+
                     return this.fileReviewContextPreparation.prepareFileContext(
                         file,
                         perFileContext,
@@ -966,27 +968,10 @@ export class ProcessFilesReview extends BasePipelineStage<CodeReviewPipelineCont
             externalPromptLayers: context.externalPromptLayers,
             correlationId: context.correlationId,
             sharedContextPack: context.sharedContextPack,
-            generatedAugmentations: context.generatedAugmentations,
+            augmentationsByFile: context.augmentationsByFile,
             filePromptOverrides: this.buildFilePromptOverrides(
                 context.fileContextMap,
             ),
-        };
-    }
-
-    private applyFilePromptOverrides(
-        context: AnalysisContext,
-        file: FileChange,
-    ): AnalysisContext {
-        const overrides =
-            context.filePromptOverrides?.[file.filename ?? ''] ?? undefined;
-
-        if (!overrides) {
-            return context;
-        }
-
-        return {
-            ...context,
-            activeOverrides: overrides,
         };
     }
 

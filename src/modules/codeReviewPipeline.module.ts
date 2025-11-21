@@ -41,6 +41,7 @@ import { PromptsModule } from './prompts.module';
 import { DryRunModule } from './dryRun.module';
 import { FileContextGateStage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/file-context-gate.stage';
 import { McpAgentModule } from './mcpAgent.module';
+import { FileContextAugmentationService } from '@/core/infrastructure/adapters/services/context/file-context-augmentation.service';
 
 @Module({
     imports: [
@@ -83,6 +84,7 @@ import { McpAgentModule } from './mcpAgent.module';
         KodyFineTuningStage,
         CodeAnalysisASTStage,
         CodeAnalysisASTCleanupStage,
+        FileContextAugmentationService,
     ],
     exports: [
         PipelineExecutor,
@@ -103,6 +105,7 @@ import { McpAgentModule } from './mcpAgent.module';
         RequestChangesOrApproveStage,
         CodeReviewPipelineStrategy,
         CodeReviewPipelineStrategyEE,
+        FileContextAugmentationService,
     ],
 })
 export class CodeReviewPipelineModule {}

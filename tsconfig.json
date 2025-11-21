@@ -37,7 +37,12 @@
         // Avoid looping in "npm run start:dev"
         "watchFile": "useFsEventsOnParentDirectory"
     },
-    "include": ["src", "test/**/*.ts", "tsconfig-paths-bootstrap.js"],
+    "include": [
+        "src",
+        "test/**/*.ts",
+        "tsconfig-paths-bootstrap.js",
+        "src/**/*.json"
+    ],
     "exclude": [
         "node_modules",
         "dist",
@@ -45,7 +50,6 @@
         "packages/kodus-flow/src",
         "**/*.map",
         "**/*.spec.ts",
-        "**/*.test.ts",
-        "src/legacy"
+        "**/*.test.ts"
     ]
 }

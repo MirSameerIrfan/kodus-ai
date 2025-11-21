@@ -66,9 +66,11 @@ certs
 
 .yalc
 yalc.lock
+.env.test
 # packages
 # .packages
 #packages/kodus-flow/
+.test.json
 
 # Temporary JSON files
 MIGRATION-GRPC-TO-HTTP.md

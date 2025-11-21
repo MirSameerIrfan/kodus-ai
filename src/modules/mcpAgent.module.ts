@@ -6,7 +6,7 @@ import { BusinessRulesValidationAgentUseCase } from '@/core/application/use-case
 import { ParametersModule } from './parameters.module';
 import { McpModule } from '@/core/infrastructure/adapters/mcp/mcp.module';
 import { PermissionValidationModule } from '@/ee/shared/permission-validation.module';
-import { ContextScriptAgentProvider } from '@/core/infrastructure/adapters/services/agent/kodus-flow/contextScriptAgent.provider';
+import { ContextEvidenceAgentProvider } from '@/core/infrastructure/adapters/services/agent/kodus-flow/contextEvidenceAgent.provider';
 
 @Module({
     imports: [
@@ -19,14 +19,14 @@ import { ContextScriptAgentProvider } from '@/core/infrastructure/adapters/servi
         ConversationAgentUseCase,
         BusinessRulesValidationAgentProvider,
         BusinessRulesValidationAgentUseCase,
-        ContextScriptAgentProvider,
+        ContextEvidenceAgentProvider,
     ],
     exports: [
         ConversationAgentProvider,
         ConversationAgentUseCase,
         BusinessRulesValidationAgentProvider,
         BusinessRulesValidationAgentUseCase,
-        ContextScriptAgentProvider,
+        ContextEvidenceAgentProvider,
     ],
 })
 export class McpAgentModule {}

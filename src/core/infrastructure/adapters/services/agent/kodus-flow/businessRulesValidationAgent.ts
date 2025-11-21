@@ -256,7 +256,6 @@ export class BusinessRulesValidationAgentProvider extends BaseAgentProvider {
                 );
             }
 
-            // Fetch BYOK configuration and store organization data
             await this.fetchBYOKConfig(context.organizationAndTeamData);
 
             await this.initialize(

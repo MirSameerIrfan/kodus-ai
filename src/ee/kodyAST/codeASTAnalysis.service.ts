@@ -445,7 +445,7 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
             externalPromptLayers: context?.externalPromptLayers,
             contextAugmentations: {
                 ...(getAugmentationsFromPack(context?.sharedContextPack) ?? {}),
-                ...(context?.generatedAugmentations ?? {}),
+                ...(context?.fileAugmentations ?? {}),
             } as ContextAugmentationsMap,
             contextPack: context?.sharedContextPack as ContextPack | undefined,
         };

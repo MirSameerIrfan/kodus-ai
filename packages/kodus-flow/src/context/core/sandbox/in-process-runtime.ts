@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import ivm from 'isolated-vm';
+import { createContext, Script } from 'node:vm';
 import util from 'node:util';
 
 import type {
@@ -11,27 +11,21 @@ import type {
     SandboxRuntime,
 } from '../interfaces.js';
 
-export interface IsolatedVMRuntimeOptions {
+export interface InProcessRuntimeOptions {
     defaultTimeoutMs?: number;
-    memoryLimitMb?: number;
-    inspector?: boolean;
     globals?: Record<string, unknown>;
     onEvidence?: (e: ContextEvidence) => Promise<void> | void;
 }
 
-export class IsolatedVMRuntime implements SandboxRuntime {
+export class InProcessRuntime implements SandboxRuntime {
     private readonly defaultTimeout: number;
-    private readonly memoryLimit: number;
-    private readonly inspector: boolean;
     private readonly baseGlobals: Record<string, unknown>;
     private readonly evidenceHook?: (
         e: ContextEvidence,
     ) => Promise<void> | void;
 
-    constructor(options: IsolatedVMRuntimeOptions = {}) {
+    constructor(options: InProcessRuntimeOptions = {}) {
         this.defaultTimeout = Math.max(0, options.defaultTimeoutMs ?? 5000);
-        this.memoryLimit = Math.max(8, options.memoryLimitMb ?? 128);
-        this.inspector = options.inspector ?? false;
         this.baseGlobals = {
             ...(options.globals ?? {}),
         };
@@ -46,33 +40,16 @@ export class IsolatedVMRuntime implements SandboxRuntime {
         const evidences: ContextEvidence[] = [];
         const startedAt = Date.now();
 
-        const isolate = new ivm.Isolate({
-            memoryLimit: this.memoryLimit,
-            inspector: this.inspector,
-        });
+        const sandboxGlobals: Record<string, unknown> = {
+            console: this.createConsole(logs),
+            sandboxContext: {
+                input: request.input ?? {},
+                files: request.files ?? {},
+            },
+            ...this.baseGlobals,
+        };
 
-        const context = await isolate.createContext();
-        const jail = context.global;
-
-        await jail.set('global', jail.derefInto());
-        await jail.set('console', this.createConsole(logs), {
-            reference: true,
-        });
-
-        await context.evalClosure(
-            `globalThis.__sandbox = {
-                input: arguments[0],
-                files: arguments[1],
-            };`,
-            [request.input ?? {}, request.files ?? {}],
-            { arguments: { copy: true } },
-        );
-
-        for (const [key, value] of Object.entries(this.baseGlobals)) {
-            await jail.set(key, new ivm.ExternalCopy(value).copyInto());
-        }
-
-        await this.bindHelper(context, 'publishEvidence', (raw: unknown) => {
+        sandboxGlobals.publishEvidence = (raw: unknown) => {
             const evidence = (raw ?? {}) as ContextEvidence;
             const enriched: ContextEvidence = {
                 ...evidence,
@@ -83,61 +60,35 @@ export class IsolatedVMRuntime implements SandboxRuntime {
             };
             evidences.push(enriched);
             return this.evidenceHook?.(enriched);
-        });
+        };
 
         if (request.helpers) {
             for (const [name, helper] of Object.entries(request.helpers)) {
-                if (typeof helper === 'function') {
-                    await this.bindHelper(
-                        context,
-                        name,
-                        helper as (...args: unknown[]) => unknown,
-                    );
-                } else {
-                    await context.evalClosure(
-                        'globalThis.__sandbox[arguments[0]] = arguments[1];',
-                        [name, helper],
-                        { arguments: { copy: true } },
-                    );
-                }
+                sandboxGlobals[name] = helper;
             }
         }
 
+        const context = createContext(sandboxGlobals);
         const source = this.wrapCode(request.code, request.entryPoint);
-        const script = await isolate.compileScript(source, {
-            filename:
-                (request.metadata?.filename as string | undefined) ??
-                `sandbox-${executionId}.js`,
+
+        const script = new Script(source, {
+            filename: `sandbox-${executionId}.js`,
         });
 
         let success = false;
         let output: TOutput | undefined;
         let error:
-            | {
-                  message: string;
-                  stack?: string;
-                  code?: string;
-              }
+            | { message: string; stack?: string; code?: string }
             | undefined;
 
         try {
-            const result = await script.run(context, {
+            output = await script.runInContext(context, {
                 timeout: request.timeoutMs ?? this.defaultTimeout,
             });
-            if (result instanceof ivm.Reference) {
-                output = (await result.copy()) as TOutput;
-            } else if (result && typeof result.copy === 'function') {
-                output = (await result.copy()) as TOutput;
-            } else {
-                output = result as TOutput;
-            }
             success = true;
         } catch (err) {
             success = false;
             error = this.transformError(err);
-        } finally {
-            script.release();
-            isolate.dispose();
         }
 
         const stats: SandboxExecutionStats = {
@@ -164,9 +115,7 @@ export class IsolatedVMRuntime implements SandboxRuntime {
         }
 
         if (!entryPoint) {
-            return `(async () => {
-${trimmed}
-})()`;
+            return `(async () => {\n${trimmed}\n})()`;
         }
 
         return `(async () => {
@@ -180,7 +129,7 @@ if (typeof entry !== 'function') {
     throw new Error('Sandbox entryPoint "${entryPoint}" is not a function');
 }
 
-return await entry(globalThis.__sandbox);
+return await entry(globalThis.sandboxContext);
 })()`;
     }
 
@@ -194,7 +143,6 @@ return await entry(globalThis.__sandbox);
         }
 
         if (err instanceof Error) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const anyErr = err as any;
             return {
                 message: err.message ?? 'Sandbox execution failed',
@@ -210,7 +158,7 @@ return await entry(globalThis.__sandbox);
         };
     }
 
-    private createConsole(logs: SandboxExecutionLog[]): ivm.Reference<Console> {
+    private createConsole(logs: SandboxExecutionLog[]): Console {
         const bridge = {
             log: (...args: unknown[]) =>
                 logs.push({
@@ -244,26 +192,6 @@ return await entry(globalThis.__sandbox);
                 }),
         } as unknown as Console;
 
-        return new ivm.Reference(bridge);
-    }
-
-    private async bindHelper(
-        context: ivm.Context,
-        name: string,
-        fn: (...args: unknown[]) => unknown,
-    ): Promise<void> {
-        const ref = new ivm.Reference(fn);
-        await context.evalClosure(
-            `const helperName = arguments[0];
-const helperRef = arguments[1];
-globalThis.__sandbox[helperName] = function(...innerArgs) {
-    return helperRef.applySyncPromise(undefined, innerArgs, {
-        arguments: { copy: true },
-        result: { promise: true },
-    });
-};`,
-            [name, ref],
-            { arguments: { reference: true } },
-        );
+        return bridge;
     }
 }

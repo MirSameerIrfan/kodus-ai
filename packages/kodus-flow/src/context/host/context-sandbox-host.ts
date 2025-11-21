@@ -16,8 +16,10 @@ import type {
 } from '../core/interfaces.js';
 import { InMemoryMCPRegistry, type MCPRegistry } from '../core/mcp/registry.js';
 import { MCPRuntimeClient } from '../core/mcp/runtime-client.js';
-import { IsolatedVMRuntime } from '../core/sandbox/isolated-vm-runtime.js';
-import type { IsolatedVMRuntimeOptions } from '../core/sandbox/isolated-vm-runtime.js';
+import {
+    InProcessRuntime,
+    type InProcessRuntimeOptions,
+} from '../core/sandbox/in-process-runtime.js';
 import type { VirtualEntry } from '../core/mcp/virtual-file-system.js';
 import type { MCPRegistry as FlowMCPRegistry } from '../../adapters/mcp/registry.js';
 
@@ -35,7 +37,7 @@ interface ContextSandboxHostOptions {
     mcpAdapter: MCPAdapter;
     evidenceBus?: EvidenceBus;
     runtime?: SandboxRuntime;
-    runtimeOptions?: IsolatedVMRuntimeOptions;
+    runtimeOptions?: InProcessRuntimeOptions;
 }
 
 class FlowMCPClientAdapter implements MCPClient {
@@ -84,7 +86,7 @@ export class ContextSandboxHost {
         this.evidenceBus = options.evidenceBus ?? new InMemoryEvidenceBus();
         this.runtime =
             options.runtime ??
-            new IsolatedVMRuntime({
+            new InProcessRuntime({
                 ...(options.runtimeOptions ?? {}),
                 onEvidence: async (evidence) => {
                     await this.evidenceBus.publish(evidence);

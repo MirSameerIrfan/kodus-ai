@@ -123,8 +123,8 @@ export interface CodeReviewPipelineContext extends PipelineContext {
 
     /** ContextPack compartilhado entre os stages (instruções + camadas externas). */
     sharedContextPack?: ContextPack;
-    /** Augmentations geradas dinamicamente durante o pipeline. */
-    generatedAugmentations?: ContextAugmentationsMap;
+    /** Augmentations geradas dinamicamente durante o pipeline, mapeadas por nome de arquivo. */
+    augmentationsByFile?: Record<string, ContextAugmentationsMap>;
 
     fileContextMap?: Record<string, FileContextAgentResult>;
 

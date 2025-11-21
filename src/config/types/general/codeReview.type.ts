@@ -96,8 +96,10 @@ export type AnalysisContext = {
     filePromptOverrides?: Record<string, CodeReviewConfig['v2PromptOverrides']>;
     /** Overrides ativos para a execução atual (ex: overrides específicos de arquivo). Tem precedência sobre o Pack. */
     activeOverrides?: CodeReviewConfig['v2PromptOverrides'];
-    /** Augmentations geradas dinamicamente durante o pipeline (ex: via MCP/Sandbox). */
-    generatedAugmentations?: ContextAugmentationsMap;
+    /** Augmentations geradas dinamicamente para o arquivo atual. */
+    fileAugmentations?: ContextAugmentationsMap;
+    /** Augmentations geradas dinamicamente durante o pipeline, mapeadas por nome de arquivo. */
+    augmentationsByFile?: Record<string, ContextAugmentationsMap>;
 };
 
 export type ASTAnalysisResult = {

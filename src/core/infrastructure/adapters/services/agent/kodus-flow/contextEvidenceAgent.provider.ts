@@ -23,7 +23,7 @@ import type {
 } from '@/config/types/general/codeReview.type';
 import type { ContextEvidence } from '@context-os-core/interfaces';
 
-export interface ContextScriptAgentResult {
+export interface ContextEvidenceAgentResult {
     evidences?: ContextEvidence[];
     actionsLog?: string;
 }
@@ -42,7 +42,7 @@ export interface ContextMCPDependency {
 }
 
 @Injectable()
-export class ContextScriptAgentProvider extends BaseAgentProvider {
+export class ContextEvidenceAgentProvider extends BaseAgentProvider {
     protected config: DatabaseConnection;
     private orchestration: SDKOrchestrator | null = null;
     private mcpAdapter: ReturnType<typeof createMCPAdapter>;
@@ -89,8 +89,8 @@ export class ContextScriptAgentProvider extends BaseAgentProvider {
             onError: (error) => {
                 this.logger.warn({
                     message:
-                        'ContextScriptAgent: MCP execution failed, continuing.',
-                    context: ContextScriptAgentProvider.name,
+                        'ContextEvidenceAgent: MCP execution failed, continuing.',
+                    context: ContextEvidenceAgentProvider.name,
                     error,
                 });
             },
@@ -99,12 +99,12 @@ export class ContextScriptAgentProvider extends BaseAgentProvider {
 
     private async createOrchestration() {
         const llmAdapter = super.createLLMAdapter(
-            'ContextScriptAgent',
-            'contextScriptAgent',
+            'ContextEvidenceAgent',
+            'contextEvidenceAgent',
         );
 
         this.orchestration = await createOrchestration({
-            tenantId: 'kodus-context-script-agent',
+            tenantId: 'kodus-context-evidence-agent',
             llmAdapter,
             mcpAdapter: this.mcpAdapter,
             observability:
@@ -121,101 +121,6 @@ export class ContextScriptAgentProvider extends BaseAgentProvider {
                 database: this.config.database,
             },
         });
-    }
-
-    private async initialize(organizationAndTeamData: OrganizationAndTeamData) {
-        if (this.orchestration) {
-            return;
-        }
-
-        if (this.initializing) {
-            await this.initializing;
-            return;
-        }
-
-        this.initializing = (async () => {
-            await this.createMCPAdapter(organizationAndTeamData);
-            await this.createOrchestration();
-
-            if (!this.orchestration) {
-                throw new Error('Failed to initialize orchestration');
-            }
-
-            await this.orchestration.connectMCP();
-            await this.orchestration.registerMCPTools();
-
-            await this.orchestration.createAgent({
-                name: 'kodus-context-script-agent',
-                llmDefaults: {
-                    model: this.defaultLLMConfig.llmProvider,
-                    temperature: this.defaultLLMConfig.temperature,
-                    maxTokens: this.defaultLLMConfig.maxTokens,
-                    maxReasoningTokens:
-                        this.defaultLLMConfig.maxReasoningTokens,
-                    stop: this.defaultLLMConfig.stop,
-                },
-                identity: {
-                    description: `Senior Context Intelligence Agent.
-Specialized in augmenting code review context by dynamically orchestrating MCP tools based on file changes and user-defined rules.
-
-Core Responsibilities:
-- Analyze file diffs against "Prompt Overrides" to detect trigger conditions.
-- Resolve dependencies: Identify missing arguments (e.g., URIs, IDs) and autonomously find them using available "resolver" tools.
-- Execute MCP Tools: Select and run the most appropriate tools to gather high-value context (docs, security checks, performance metrics).
-- Filter Noise: Distinguish between trivial changes (formatting) and significant logic changes that warrant deep context gathering.
-- Produce Evidence: Synthesize tool outputs into structured "ContextEvidence" JSON for downstream consumption.
-
-Mindset:
-- You are a detective, not just a script runner.
-- You assume nothing; you verify everything via tools.
-- You are persistent in resolving arguments but conservative in execution (avoiding redundant calls).`,
-                    goal: 'Reason about each file, gather the needed arguments, invoke the appropriate MCP tools, and publish the evidences.',
-                    expertise: [
-                        'Codebase Context Analysis',
-                        'Tool Orchestration and Chaining',
-                        'Dynamic Requirement Interpretation',
-                        'Gap Analysis and Information Retrieval',
-                    ],
-                    personality:
-                        'Analytical, precise, tool-agnostic, and resource-efficient. You do not guess; you investigate using tools. You prioritize gathering concrete data over making assumptions.',
-                },
-                plannerOptions: {
-                    type: PlannerType.REACT,
-                    replanPolicy: {
-                        toolUnavailable: 'replan',
-                        maxReplans: 2,
-                    },
-                    scratchpad: {
-                        enabled: true,
-                        initialState: `# EXECUTION PLAN (Status: Initializing)
-
-## 1. TRIGGER ANALYSIS
-[ ] Check if "Prompt Overrides" request specific tools.
-[ ] Compare file diff with triggers.
-> Triggers Found: null
-
-## 2. DEPENDENCY RESOLUTION
-[ ] List missing tool arguments (IDs, URIs, etc).
-[ ] Execute search/resolver tools to find these arguments.
-> Missing Arguments: []
-> Resolved Arguments: {}
-
-## 3. EVIDENCE COLLECTION
-[ ] Execute main tools.
-[ ] Validate if output is useful context.
-> Collected Evidences: []
-
-## 4. FINALIZATION
-[ ] Format output as JSON.
-[ ] Call final_answer.`,
-                    },
-                },
-            });
-        })().finally(() => {
-            this.initializing = null;
-        });
-
-        await this.initializing;
     }
 
     private buildPrompt(
@@ -256,9 +161,18 @@ You are tool-agnostic: if an override explicitly mentions ANY MCP tool or action
 ### Argument Resolution Strategy (Tool Agnostic)
 When a required tool needs an argument you don't have (e.g. an ID, URI, hash, or specific path):
 1. **Identify the Missing Argument:** Look at the tool's schema in <AVAILABLE TOOLS>.
-2. **Search for a Resolver:** Check if any OTHER available tool can provide this information. Look for tools with verbs like 'get', 'list', 'resolve', 'find' or 'search' that might output the missing data.
-3. **Chain Execution:** Execute the resolver tool first, extract the data from its result, and THEN execute the main tool.
-   - *Generic Example:* Main tool \`fetch_data(id)\` needs \`id\`. Available tool \`find_id(name)\` exists. -> Call \`find_id("target_name")\` -> Get \`id\` -> Call \`fetch_data(id)\`.
+2. **Extract Context from Diff:** Analyze function names, variable names, library imports, and comments in both the old and new code within the diff to find specific keywords to use as arguments for your tool calls.
+3. **Search for a Resolver:** Check if any OTHER available tool can provide this information. Look for tools with verbs like 'get', 'list', 'resolve', 'find' or 'search' that might output the missing data.
+4. **Chain Execution:** Execute the resolver tool first, extract the data from its result, and THEN execute the main tool.
+   - *Generic Example:* Main tool 'fetch_data(id)' needs 'id'. Available tool 'find_id(name)' exists. -> Call 'find_id("target_name")' -> Get 'id' -> Call 'fetch_data(id)'.
+
+### How to Read the Diff Snippet
+The diff snippet uses a standard format to show changes. Pay close attention to both what was removed and what was added to understand the developer's intent.
+- Lines starting with '-' represent the **old code** (what was deleted).
+- Lines starting with '+' represent the **new code** (what was added).
+- Lines without a prefix are unchanged context lines.
+- **Your goal is to understand the transformation**: Compare the old code with the new code to identify the core logic change. For example, was a function call replaced? Was a variable renamed? Was a condition changed? This comparison is critical for your analysis.
+- Note: The diff may sometimes use markers like '__old hunk__' and '__new hunk__' to explicitly separate the code before and after the change. Treat these as structural delimiters.
 
 ### ContextEvidence Schema
 When creating evidences, use this structure:
@@ -383,7 +297,7 @@ The content of your final_answer MUST be a JSON object with this structure:
 
     private parseAgentResponse(
         response: unknown,
-    ): ContextScriptAgentResult | null {
+    ): ContextEvidenceAgentResult | null {
         if (!response) {
             return null;
         }
@@ -394,13 +308,9 @@ The content of your final_answer MUST be a JSON object with this structure:
                 : JSON.stringify(response, null, 2);
 
         try {
-            // Use EnhancedJSONParser which handles code block stripping, JSON repair,
-            // and sanitization automatically.
             const parsed: any = EnhancedJSONParser.parse(text);
 
             if (!parsed) {
-                // Fallback for extremely malformed cases where EnhancedJSONParser might return null
-                // Check if it *looks* like a JSON object or array to give a better error message
                 if (
                     text.trim().startsWith('{') ||
                     text.trim().startsWith('[')
@@ -437,13 +347,12 @@ The content of your final_answer MUST be a JSON object with this structure:
                     : String(error);
 
             this.logger.warn({
-                message: 'ContextScriptAgent: failed to parse response',
+                message: 'ContextEvidenceAgent: failed to parse response',
                 error,
-                context: ContextScriptAgentProvider.name,
+                context: ContextEvidenceAgentProvider.name,
                 metadata: { responseText: text },
             });
 
-            // If we tried to parse something that looks like an object but failed
             if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
                 const preview =
                     text.length > 200 ? text.substring(0, 200) + '...' : text;
@@ -456,13 +365,151 @@ The content of your final_answer MUST be a JSON object with this structure:
         }
     }
 
-    async executeForFile(params: {
+    private async createEphemeralOrchestrator(
+        organizationAndTeamData: OrganizationAndTeamData,
+        dependencies?: ContextMCPDependency[],
+    ) {
+        const mcpManagerServers = await this.mcpManagerService.getConnections(
+            organizationAndTeamData,
+        );
+
+        const requiredServerNames = new Set<string>();
+
+        if (dependencies) {
+            for (const dep of dependencies) {
+                const serverName =
+                    (dep.metadata as any)?.providerAlias || dep.provider;
+                if (serverName) {
+                    requiredServerNames.add(serverName.toLowerCase());
+                }
+            }
+        }
+
+        requiredServerNames.add('kodus mcp');
+
+        const servers = mcpManagerServers.filter((server) => {
+            const serverName = server.name.toLowerCase();
+            return requiredServerNames.has(serverName);
+        });
+
+        const mcpAdapter = createMCPAdapter({
+            servers,
+            defaultTimeout: 15_000,
+            maxRetries: 1,
+            onError: (error) => {
+                this.logger.warn({
+                    message:
+                        'ContextEvidenceAgent: MCP execution failed, continuing.',
+                    context: ContextEvidenceAgentProvider.name,
+                    error,
+                });
+            },
+        });
+
+        const llmAdapter = super.createLLMAdapter(
+            'ContextEvidenceAgent',
+            'contextEvidenceAgent',
+        );
+
+        const orchestration = await createOrchestration({
+            tenantId: 'kodus-context-evidence-agent',
+            llmAdapter,
+            mcpAdapter,
+            observability:
+                this.observabilityService.createAgentObservabilityConfig(
+                    this.config,
+                    'context-script-agent',
+                ),
+            storage: {
+                type: StorageEnum.MONGODB,
+                connectionString:
+                    this.observabilityService.buildConnectionString(
+                        this.config,
+                    ),
+                database: this.config.database,
+            },
+        });
+
+        await orchestration.connectMCP();
+        await orchestration.registerMCPTools();
+
+        await orchestration.createAgent({
+            name: 'kodus-context-script-agent',
+            llmDefaults: {
+                model: this.defaultLLMConfig.llmProvider,
+                temperature: this.defaultLLMConfig.temperature,
+                maxTokens: this.defaultLLMConfig.maxTokens,
+                maxReasoningTokens: this.defaultLLMConfig.maxReasoningTokens,
+                stop: this.defaultLLMConfig.stop,
+            },
+            identity: {
+                description: `Senior Context Intelligence Agent.
+Specialized in augmenting code review context by dynamically orchestrating MCP tools based on file changes and user-defined rules.
+
+Core Responsibilities:
+- Analyze file diffs against "Prompt Overrides" to detect trigger conditions.
+- Resolve dependencies: Identify missing arguments (e.g., URIs, IDs) and autonomously find them using available "resolver" tools.
+- Execute MCP Tools: Select and run the most appropriate tools to gather high-value context (docs, security checks, performance metrics).
+- Filter Noise: Distinguish between trivial changes (formatting) and significant logic changes that warrant deep context gathering.
+- Produce Evidence: Synthesize tool outputs into structured "ContextEvidence" JSON for downstream consumption.
+
+Mindset:
+- You are a detective, not just a script runner.
+- You assume nothing; you verify everything via tools.
+- You are persistent in resolving arguments but conservative in execution (avoiding redundant calls).`,
+                goal: 'Reason about each file, gather the needed arguments, invoke the appropriate MCP tools, and publish the evidences.',
+                expertise: [
+                    'Codebase Context Analysis',
+                    'Tool Orchestration and Chaining',
+                    'Dynamic Requirement Interpretation',
+                    'Gap Analysis and Information Retrieval',
+                ],
+                personality:
+                    'Analytical, precise, tool-agnostic, and resource-efficient. You do not guess; you investigate using tools. You prioritize gathering concrete data over making assumptions.',
+            },
+            plannerOptions: {
+                type: PlannerType.REACT,
+                replanPolicy: {
+                    toolUnavailable: 'replan',
+                    maxReplans: 2,
+                },
+                scratchpad: {
+                    enabled: true,
+                    initialState: `# EXECUTION PLAN (Status: Initializing)
+
+## 1. TRIGGER ANALYSIS
+[ ] Check if "Prompt Overrides" request specific tools.
+[ ] Compare file diff with triggers.
+> Triggers Found: null
+
+## 2. DEPENDENCY RESOLUTION
+[ ] List missing tool arguments (IDs, URIs, etc).
+[ ] Execute search/resolver tools to find these arguments.
+> Missing Arguments: []
+> Resolved Arguments: {}
+
+## 3. EVIDENCE COLLECTION
+[ ] Execute main tools.
+[ ] Validate if output is useful context.
+> Collected Evidences: []
+
+## 4. FINALIZATION
+[ ] Format output as JSON.
+[ ] Call final_answer.`,
+                },
+            },
+        });
+
+        return orchestration;
+    }
+
+    async execute(params: {
         organizationAndTeamData: OrganizationAndTeamData;
         file: FileChange;
         dependencies?: ContextMCPDependency[];
         promptOverrides?: CodeReviewConfig['v2PromptOverrides'];
         repoContext?: string;
-    }): Promise<ContextScriptAgentResult | null> {
+    }): Promise<ContextEvidenceAgentResult | null> {
         const {
             organizationAndTeamData,
             file,
@@ -471,11 +518,36 @@ The content of your final_answer MUST be a JSON object with this structure:
             repoContext,
         } = params;
 
-        await this.initialize(organizationAndTeamData);
+        this.logger.log({
+            message: 'Starting context evidence collection for file',
+            context: ContextEvidenceAgentProvider.name,
+            serviceName: ContextEvidenceAgentProvider.name,
+            metadata: {
+                organizationId: organizationAndTeamData?.organizationId,
+                teamId: organizationAndTeamData?.teamId,
+                fileName: file.filename,
+                dependenciesCount: dependencies?.length || 0,
+                hasPromptOverrides: !!promptOverrides,
+                hasRepoContext: !!repoContext,
+            },
+        });
 
-        if (!this.orchestration || !dependencies?.length) {
+        if (!organizationAndTeamData) {
+            throw new Error(
+                'Organization and team data is required for context evidence collection.',
+            );
+        }
+
+        if (!dependencies?.length) {
             return null;
         }
+
+        await this.fetchBYOKConfig(organizationAndTeamData);
+
+        const orchestration = await this.createEphemeralOrchestrator(
+            organizationAndTeamData,
+            dependencies,
+        );
 
         const thread = createThreadId(
             {
@@ -493,7 +565,7 @@ The content of your final_answer MUST be a JSON object with this structure:
             repoContext,
         );
 
-        const result = await this.orchestration.callAgent(
+        const result = await orchestration.callAgent(
             'kodus-context-script-agent',
             prompt,
             {
@@ -502,7 +574,7 @@ The content of your final_answer MUST be a JSON object with this structure:
                     organizationAndTeamData,
                     fileName: file.filename,
                 },
-            },
+            } as any,
         );
 
         const agentOutput =
