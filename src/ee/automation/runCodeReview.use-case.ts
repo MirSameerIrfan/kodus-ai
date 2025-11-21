@@ -1,33 +1,37 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     AUTOMATION_SERVICE_TOKEN,
     IAutomationService,
 } from '@/core/domain/automation/contracts/automation.service';
 import {
-    TEAM_AUTOMATION_SERVICE_TOKEN,
     ITeamAutomationService,
+    TEAM_AUTOMATION_SERVICE_TOKEN,
 } from '@/core/domain/automation/contracts/team-automation.service';
 import { AutomationType } from '@/core/domain/automation/enums/automation-type';
 import {
-    EXECUTE_AUTOMATION_SERVICE_TOKEN,
-    IExecuteAutomationService,
-} from '@/shared/domain/contracts/execute.automation.service.contracts';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
+    GitHubReaction,
+    GitlabReaction,
+} from '@/core/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
 } from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { getMappedPlatform } from '@/shared/utils/webhooks';
 import { stripCurlyBracesFromUUIDs } from '@/core/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
-import { BYOKConfig } from '@kodus/kodus-common/llm';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import {
     PermissionValidationService,
     ValidationErrorType,
 } from '@/ee/shared/services/permissionValidation.service';
+import {
+    EXECUTE_AUTOMATION_SERVICE_TOKEN,
+    IExecuteAutomationService,
+} from '@/shared/domain/contracts/execute.automation.service.contracts';
+import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
+import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
+import { getMappedPlatform } from '@/shared/utils/webhooks';
+import { BYOKConfig } from '@kodus/kodus-common/llm';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
 const ERROR_TO_MESSAGE_TYPE: Record<
     ValidationErrorType,
@@ -38,6 +42,11 @@ const ERROR_TO_MESSAGE_TYPE: Record<
     [ValidationErrorType.BYOK_REQUIRED]: 'byok_required',
     [ValidationErrorType.PLAN_LIMIT_EXCEEDED]: 'general',
     [ValidationErrorType.NOT_ERROR]: 'no_error',
+};
+
+const NO_LICENSE_REACTION_MAP = {
+    [PlatformType.GITHUB]: GitHubReaction.THUMBS_DOWN,
+    [PlatformType.GITLAB]: GitlabReaction.LOCK,
 };
 
 @Injectable()
@@ -122,6 +131,7 @@ export class RunCodeReviewAutomationUseCase {
                     mappedUsers?.user?.id?.toString() ||
                     mappedUsers?.user?.uuid?.toString(),
                 prNumber: pullRequest?.number,
+                triggerCommentId: sanitizedPayload?.triggerCommentId,
             });
 
             if (!teamWithAutomation) {
@@ -339,6 +349,7 @@ export class RunCodeReviewAutomationUseCase {
         platformType: PlatformType;
         userGitId?: string;
         prNumber?: number;
+        triggerCommentId?: string | number;
     }): Promise<{
         organizationAndTeamData: OrganizationAndTeamData;
         automationId: string;
@@ -414,6 +425,34 @@ export class RunCodeReviewAutomationUseCase {
                         validationResult.errorType !==
                             ValidationErrorType.NOT_ERROR
                     ) {
+                        // If the user is not licensed but the company has licenses, we just add a reaction
+                        if (
+                            validationResult.errorType ===
+                            ValidationErrorType.USER_NOT_LICENSED
+                        ) {
+                            this.logger.warn({
+                                message:
+                                    'User not licensed but company has licenses',
+                                context: RunCodeReviewAutomationUseCase.name,
+                                metadata: {
+                                    organizationAndTeamData,
+                                    repository: params?.repository,
+                                    prNumber: params?.prNumber,
+                                    userGitId: params?.userGitId,
+                                },
+                            });
+
+                            await this.addNoLicenseReaction({
+                                organizationAndTeamData,
+                                repository: params.repository,
+                                prNumber: params.prNumber,
+                                platformType: params.platformType,
+                                triggerCommentId: params.triggerCommentId,
+                            });
+
+                            return null;
+                        }
+
                         const noActiveSubscriptionType =
                             validationResult.errorType
                                 ? ERROR_TO_MESSAGE_TYPE[
@@ -544,5 +583,54 @@ export class RunCodeReviewAutomationUseCase {
             'Please configure your API keys in [Settings > BYOK Configuration](https://app.kodus.io/settings/byok).\n\n' +
             '<!-- kody-codereview -->'
         );
+    }
+
+
+    private async addNoLicenseReaction(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+        repository: { id: string; name: string };
+        prNumber: number;
+        platformType: PlatformType;
+        triggerCommentId?: string | number;
+    }) {
+        try {
+            if (params.platformType === PlatformType.AZURE_REPOS) {
+                return;
+            }
+
+            const reaction = NO_LICENSE_REACTION_MAP[params.platformType];
+            if (!reaction) {
+                return;
+            }
+
+            if (params.triggerCommentId) {
+                await this.codeManagement.addReactionToComment({
+                    organizationAndTeamData: params.organizationAndTeamData,
+                    repository: params.repository,
+                    prNumber: params.prNumber,
+                    commentId:
+                        typeof params.triggerCommentId === 'string'
+                            ? parseInt(params.triggerCommentId, 10)
+                            : params.triggerCommentId,
+                    reaction,
+                });
+            } else {
+                await this.codeManagement.addReactionToPR({
+                    organizationAndTeamData: params.organizationAndTeamData,
+                    repository: params.repository,
+                    prNumber: params.prNumber,
+                    reaction,
+                });
+            }
+        } catch (error) {
+            this.logger.error({
+                message: 'Error adding no license reaction',
+                context: RunCodeReviewAutomationUseCase.name,
+                error,
+                metadata: {
+                    ...params,
+                },
+            });
+        }
     }
 }

@@ -1,18 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { GenerateIssuesFromPrClosedUseCase } from '@/core/application/use-cases/issues/generate-issues-from-pr-closed.use-case';
+import { ChatWithKodyFromGitUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/chatWithKodyFromGit.use-case';
+import { SavePullRequestUseCase } from '@/core/application/use-cases/pullRequests/save.use-case';
 import {
     IWebhookEventHandler,
     IWebhookEventParams,
 } from '@/core/domain/platformIntegrations/interfaces/webhook-event-handler.interface';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { SavePullRequestUseCase } from '@/core/application/use-cases/pullRequests/save.use-case';
-import { RunCodeReviewAutomationUseCase } from '@/ee/automation/runCodeReview.use-case';
-import { ChatWithKodyFromGitUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/chatWithKodyFromGit.use-case';
-import { getMappedPlatform } from '@/shared/utils/webhooks';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { createHash } from 'crypto';
+import { RunCodeReviewAutomationUseCase } from '@/ee/automation/runCodeReview.use-case';
+import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 import { CacheService } from '@/shared/utils/cache/cache.service';
-import { GenerateIssuesFromPrClosedUseCase } from '@/core/application/use-cases/issues/generate-issues-from-pr-closed.use-case';
+import { getMappedPlatform } from '@/shared/utils/webhooks';
+import { Injectable } from '@nestjs/common';
+import { createHash } from 'crypto';
 import { KodyRulesSyncService } from '../../services/kodyRules/kodyRulesSync.service';
 
 @Injectable()
@@ -116,6 +116,7 @@ export class AzureReposPullRequestHandler implements IWebhookEventHandler {
                         name: repository.name,
                     },
                     platformType: PlatformType.AZURE_REPOS,
+                    triggerCommentId: params.payload?.resource?.comment?.id,
                 },
             );
 
