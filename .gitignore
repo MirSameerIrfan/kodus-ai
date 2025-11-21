@@ -75,3 +75,7 @@ yalc.lock
 # Temporary JSON files
 MIGRATION-GRPC-TO-HTTP.md
 scripts/duplicate-prs
+
+# Custom
+test.json
+.cursor/rules/bmad/
