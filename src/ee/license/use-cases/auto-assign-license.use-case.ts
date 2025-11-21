@@ -84,7 +84,7 @@ export class AutoAssignLicenseUseCase {
             } as any);
 
             // If it's the first PR, it's a freebie
-            if ((prs?.length ?? 0) < 1) {
+            if ((prs?.length ?? 0) <= 1) {
                 return { shouldProceed: true, reason: 'FREEBIE' };
             }
 
