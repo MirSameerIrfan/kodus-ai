@@ -1,16 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { GenerateIssuesFromPrClosedUseCase } from '@/core/application/use-cases/issues/generate-issues-from-pr-closed.use-case';
+import { ChatWithKodyFromGitUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/chatWithKodyFromGit.use-case';
+import { SavePullRequestUseCase } from '@/core/application/use-cases/pullRequests/save.use-case';
 import {
     IWebhookEventHandler,
     IWebhookEventParams,
 } from '@/core/domain/platformIntegrations/interfaces/webhook-event-handler.interface';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { SavePullRequestUseCase } from '@/core/application/use-cases/pullRequests/save.use-case';
-import { RunCodeReviewAutomationUseCase } from '@/ee/automation/runCodeReview.use-case';
-import { ChatWithKodyFromGitUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/chatWithKodyFromGit.use-case';
-import { getMappedPlatform } from '@/shared/utils/webhooks';
-import { GenerateIssuesFromPrClosedUseCase } from '@/core/application/use-cases/issues/generate-issues-from-pr-closed.use-case';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
+import { RunCodeReviewAutomationUseCase } from '@/ee/automation/runCodeReview.use-case';
+import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
+import { getMappedPlatform } from '@/shared/utils/webhooks';
+import { Injectable } from '@nestjs/common';
 import { KodyRulesSyncService } from '../../services/kodyRules/kodyRulesSync.service';
 
 /**
@@ -92,6 +92,7 @@ export class GitLabMergeRequestHandler implements IWebhookEventHandler {
                         name: payload?.project?.path,
                     },
                     platformType: PlatformType.GITLAB,
+                    triggerCommentId: payload.comment?.id,
                 },
             );
 

@@ -14,6 +14,7 @@ export enum GitlabReaction {
     TADA = 'tada',
     CONFUSED = 'confused',
     ROCKET = 'rocket',
+    LOCK = 'lock',
 }
 
 export enum CountingType {

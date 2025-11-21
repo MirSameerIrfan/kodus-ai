@@ -1,27 +1,27 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { GenerateIssuesFromPrClosedUseCase } from '@/core/application/use-cases/issues/generate-issues-from-pr-closed.use-case';
+import { ChatWithKodyFromGitUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/chatWithKodyFromGit.use-case';
+import { SavePullRequestUseCase } from '@/core/application/use-cases/pullRequests/save.use-case';
+import {
+    IIntegrationConfigService,
+    INTEGRATION_CONFIG_SERVICE_TOKEN,
+} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
 import {
     IWebhookEventHandler,
     IWebhookEventParams,
 } from '@/core/domain/platformIntegrations/interfaces/webhook-event-handler.interface';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { SavePullRequestUseCase } from '@/core/application/use-cases/pullRequests/save.use-case';
-import { RunCodeReviewAutomationUseCase } from '@/ee/automation/runCodeReview.use-case';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { ChatWithKodyFromGitUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/chatWithKodyFromGit.use-case';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import {
-    INTEGRATION_CONFIG_SERVICE_TOKEN,
-    IIntegrationConfigService,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import {
-    PULL_REQUESTS_SERVICE_TOKEN,
-    IPullRequestsService,
-} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
-import { CodeManagementService } from '../../services/platformIntegration/codeManagement.service';
 import { IWebhookBitbucketPullRequestEvent } from '@/core/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
+import {
+    IPullRequestsService,
+    PULL_REQUESTS_SERVICE_TOKEN,
+} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { RunCodeReviewAutomationUseCase } from '@/ee/automation/runCodeReview.use-case';
+import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
+import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 import { getMappedPlatform } from '@/shared/utils/webhooks';
-import { GenerateIssuesFromPrClosedUseCase } from '@/core/application/use-cases/issues/generate-issues-from-pr-closed.use-case';
+import { Inject, Injectable } from '@nestjs/common';
 import { KodyRulesSyncService } from '../../services/kodyRules/kodyRulesSync.service';
+import { CodeManagementService } from '../../services/platformIntegration/codeManagement.service';
 
 /**
  * Handler for Bitbucket webhook events.
@@ -110,6 +110,7 @@ export class BitbucketPullRequestHandler implements IWebhookEventHandler {
                         name: repository.name,
                     },
                     platformType: PlatformType.BITBUCKET,
+                    triggerCommentId: payload.comment?.id,
                 },
             );
 

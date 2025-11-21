@@ -46,7 +46,7 @@ import {
 import { prompt_generate_conversation_title } from './generateConversationTitle';
 import { prompt_removeRepeatedSuggestions } from './removeRepeatedSuggestions';
 import { prompt_validateImplementedSuggestions } from './validateImplementedSuggestions';
-import { prompt_codeReviewSafeguard_system, prompt_codeReviewSafeguard_user } from './codeReviewSafeguard';
+import { prompt_codeReviewSafeguard_system } from './codeReviewSafeguard';
 
 export {
     prompt_ensureQuality,
@@ -86,5 +86,4 @@ export {
     prompt_removeRepeatedSuggestions,
     prompt_validateImplementedSuggestions,
     prompt_codeReviewSafeguard_system,
-    prompt_codeReviewSafeguard_user,
 };

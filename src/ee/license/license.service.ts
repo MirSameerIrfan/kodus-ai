@@ -1,11 +1,11 @@
 import { AxiosLicenseService } from '@/config/axios/microservices/license.axios';
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import {
     ILicenseService,
     OrganizationLicenseValidationResult,
     UserWithLicense,
 } from './interfaces/license.interface';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 
 /**
  * LicenseService handles organization and user license validation via billing service endpoints.
@@ -77,6 +77,56 @@ export class LicenseService implements ILicenseService {
                 },
             });
             return [];
+        }
+    }
+
+    /**
+     * Assign license to a user by calling the billing service endpoint.
+     * @param organizationAndTeamData Organization and team identifiers
+     * @param userGitId Git ID of the user
+     * @param provider The git provider (e.g., 'github', 'gitlab')
+     * @returns Promise with boolean indicating success
+     */
+    async assignLicense(
+        organizationAndTeamData: OrganizationAndTeamData,
+        userGitId: string,
+        provider: string,
+    ): Promise<boolean> {
+        try {
+            const result = await this.licenseRequest.post('assign-license', {
+                organizationId: organizationAndTeamData.organizationId,
+                teamId: organizationAndTeamData.teamId,
+                users: [
+                    {
+                        gitId: userGitId,
+                        gitTool: provider.toLowerCase(),
+                        licenseStatus: 'active',
+                    },
+                ],
+                editedBy: {
+                    email: 'system@kodus.ai', // Or some system identifier
+                },
+                userName: 'System Auto-Assign',
+            });
+            
+            if (result?.failed?.length > 0) {
+                return false;
+            }
+
+            return true;
+        } catch (error) {
+            this.logger.error({
+                message: 'AssignLicense not working',
+                error: error,
+                context: LicenseService.name,
+                serviceName: 'LicenseService assignLicense',
+                metadata: {
+                    ...organizationAndTeamData,
+                    userGitId,
+                    provider,
+                },
+            });
+            return false;
         }
     }
 }
