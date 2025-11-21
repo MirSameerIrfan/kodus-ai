@@ -10,6 +10,7 @@ import { UsersController } from '@/core/infrastructure/http/controllers/user.con
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth.module';
+import { CodeReviewSettingsLogModule } from './codeReviewSettingsLog.module';
 import { OrganizationModule } from './organization.module';
 import { ProfilesModule } from './profiles.module';
 import { TeamsModule } from './team.module';
@@ -24,6 +25,7 @@ import { TeamMembersModule } from './teamMembers.module';
         forwardRef(() => TeamMembersModule),
         forwardRef(() => OrganizationModule),
         forwardRef(() => ProfilesModule),
+        forwardRef(() => CodeReviewSettingsLogModule)
     ],
     providers: [
         ...UseCases,

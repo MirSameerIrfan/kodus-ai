@@ -3,6 +3,7 @@ import { CheckUserWithEmailUserUseCase } from './check-user-email.use-case';
 import { DeleteUserUseCase } from './delete.use-case';
 import { InviteDataUserUseCase } from './invite-data.use-case';
 import { JoinOrganizationUseCase } from './join-organization.use-case';
+import { RegisterUserStatusLogUseCase } from './register-user-status-log.use-case';
 import { UpdateAnotherUserUseCase } from './update-another.use-case';
 
 export const UseCases = [
@@ -12,4 +13,5 @@ export const UseCases = [
     CheckUserWithEmailUserUseCase,
     JoinOrganizationUseCase,
     UpdateAnotherUserUseCase,
+    RegisterUserStatusLogUseCase
 ];

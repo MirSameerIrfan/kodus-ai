@@ -1,4 +1,5 @@
 import { FindCodeReviewSettingsLogsUseCase } from '@/core/application/use-cases/codeReviewSettingsLog/find-code-review-settings-logs.use-case';
+import { RegisterUserStatusLogUseCase } from '@/core/application/use-cases/user/register-user-status-log.use-case';
 import { CodeReviewSettingsLogModelInstance } from '@/core/infrastructure/adapters/repositories/mongoose/schema';
 import { CodeReviewSettingLogController } from '@/core/infrastructure/http/controllers/codeReviewSettingLog.controller';
 import { CODE_REVIEW_SETTINGS_LOG_REPOSITORY_TOKEN } from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.repository.contract';
@@ -32,6 +33,7 @@ import { UsersModule } from './user.module';
         forwardRef(() => TeamsModule),
         forwardRef(() => ParametersModule),
         forwardRef(() => IntegrationModule),
+        forwardRef(() => UsersModule)
     ],
     providers: [
         {
@@ -54,6 +56,7 @@ import { UsersModule } from './user.module';
             provide: GET_ADDITIONAL_INFO_HELPER_TOKEN,
             useClass: GetAdditionalInfoHelper,
         },
+        RegisterUserStatusLogUseCase
     ],
     exports: [
         CODE_REVIEW_SETTINGS_LOG_REPOSITORY_TOKEN,
@@ -67,6 +70,7 @@ import { UsersModule } from './user.module';
         UserStatusLogHandler,
         PullRequestMessagesLogHandler,
         GET_ADDITIONAL_INFO_HELPER_TOKEN,
+        RegisterUserStatusLogUseCase
     ],
     controllers: [CodeReviewSettingLogController],
 })
