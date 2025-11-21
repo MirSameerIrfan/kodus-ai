@@ -194,8 +194,18 @@ export class CommentManagerService implements ICommentManagerService {
                     updatedPR,
                 };
 
-                const fallbackProvider = LLMModelProvider.OPENAI_GPT_4O;
-                const userPrompt = `<changedFilesContext>${JSON.stringify(baseContext?.changedFiles, null, 2) || 'No files changed'}</changedFilesContext>`;
+                let userPrompt = '';
+
+                if (isCommitRun && summaryConfig?.behaviourForNewCommits === BehaviourForNewCommits.REPLACE) {
+                    userPrompt =  `
+                    This is the updated pull request summary:
+                    <pullRequestSummaryContext>${updatedPR?.body || 'No pull request summary'}</pullRequestSummaryContext>
+                    Use this summary to concatenate the existing pull request summary with the new changed files context:`;
+                }
+
+                const fallbackProvider = LLMModelProvider.OPENAI_GPT_4O
+                ;
+                userPrompt += `<changedFilesContext>${JSON.stringify(baseContext?.changedFiles, null, 2) || 'No files changed'}</changedFilesContext>`;
 
                 const promptRunner = new BYOKPromptRunnerService(
                     this.promptRunnerService,
