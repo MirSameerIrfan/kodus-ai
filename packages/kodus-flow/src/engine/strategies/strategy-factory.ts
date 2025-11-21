@@ -25,6 +25,10 @@ export interface BaseStrategyConfig {
         maxReasoningTokens?: number;
         stop?: string[];
     };
+    scratchpad?: {
+        enabled?: boolean;
+        initialState?: string;
+    };
 }
 
 /**

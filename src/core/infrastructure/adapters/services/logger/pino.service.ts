@@ -30,53 +30,59 @@ const shouldPrettyPrint = (process.env.API_LOG_PRETTY || 'false') === 'true';
 @Injectable()
 export class PinoLoggerService implements LoggerService {
     private logBuffer: Array<Omit<ILog, 'uuid'>> = [];
-    private readonly MAX_BUFFER_SIZE = 50;
+    private readonly MAX_BUFFER_SIZE = 200;
     private readonly FLUSH_INTERVAL_MS = 10000;
     private flushIntervalId: NodeJS.Timeout | null = null;
 
-    private baseLogger = pino({
-        level: process.env.API_LOG_LEVEL || 'info',
-        transport:
-            shouldPrettyPrint && !isProduction
-                ? {
-                      target: 'pino-pretty',
-                      options: {
-                          colorize: true,
-                          translateTime: 'SYS:standard',
-                          ignore: 'pid,hostname',
-                          levelFirst: true,
-                          errorProps: 'message,stack', // Includes the error stack in the output
-                          messageFormat:
-                              '{level} - {serviceName} - {context} - {msg}',
-                      },
-                  }
-                : undefined,
-        formatters: {
-            level(label) {
-                return { level: label };
+    private baseLogger = pino(
+        {
+            level: process.env.API_LOG_LEVEL || 'info',
+            transport:
+                shouldPrettyPrint && !isProduction
+                    ? {
+                          target: 'pino-pretty',
+                          options: {
+                              colorize: true,
+                              translateTime: 'SYS:standard',
+                              ignore: 'pid,hostname',
+                              levelFirst: true,
+                              errorProps: 'message,stack', // Includes the error stack in the output
+                              messageFormat:
+                                  '{level} - {serviceName} - {context} - {msg}',
+                          },
+                      }
+                    : undefined,
+            formatters: {
+                level(label) {
+                    return { level: label };
+                },
+                log(object: any) {
+                    if (isProduction && !shouldPrettyPrint) {
+                        // Cleaner log for production
+                        return {
+                            message: object.message,
+                            serviceName: object.serviceName,
+                            environment: object.environment,
+                            error: object.error
+                                ? { message: object?.error?.message }
+                                : undefined,
+                        };
+                    }
+                    return object;
+                },
             },
-            log(object: any) {
-                if (isProduction && !shouldPrettyPrint) {
-                    // Cleaner log for production
-                    return {
-                        message: object.message,
-                        serviceName: object.serviceName,
-                        environment: object.environment,
-                        error: object.error
-                            ? { message: object?.error?.message }
-                            : undefined,
-                    };
-                }
-                return object;
-            },
+            redact: [
+                'password',
+                'user.sensitiveInfo',
+                'apiKey',
+                'metadata.headers.authorization',
+            ],
         },
-        redact: [
-            'password',
-            'user.sensitiveInfo',
-            'apiKey',
-            'metadata.headers.authorization',
-        ],
-    });
+        // Em produção, use buffer assíncrono para o stdout para não bloquear a thread principal
+        isProduction && !shouldPrettyPrint
+            ? pino.destination({ sync: false, minLength: 4096 })
+            : undefined,
+    );
 
     private extractContextInfo(context: ExecutionContext | string): string {
         if (typeof context === 'string') {
@@ -138,8 +144,21 @@ export class PinoLoggerService implements LoggerService {
         this.logBuffer = [];
 
         try {
-            await this.logService.createMany(logsToInsert);
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(
+                    () => reject(new Error('Timeout saving logs to DB')),
+                    5000,
+                ),
+            );
+
+            await Promise.race([
+                this.logService.createMany(logsToInsert),
+                timeoutPromise,
+            ]);
         } catch (error) {
+            console.error(
+                '[PinoLoggerService] Failed to save logs to MongoDB. Fallback to Console:',
+            );
             this.handleFlushError(error, '[Batch Insert Error]', logsToInsert);
         }
     }
@@ -156,14 +175,12 @@ export class PinoLoggerService implements LoggerService {
         if (failedLogs && failedLogs.length > 0) {
             console.error(
                 `[PinoLoggerService] ${contextMessage}: ${failedLogs.length} logs failed to insert. First few:`,
-                JSON.stringify(failedLogs.slice(0, 3)),
+                failedLogs.slice(0, 3),
             );
         }
     }
 
-    // Para NestJS, implementar onModuleDestroy ou beforeApplicationShutdown
     async onModuleDestroy(): Promise<void> {
-        // Ou beforeApplicationShutdown
         this.stopFlushInterval();
     }
 
@@ -389,15 +406,13 @@ export class PinoLoggerService implements LoggerService {
     }
 
     private saveLogAsync(log: Omit<ILog, 'uuid'>) {
-        setImmediate(async () => {
-            try {
-                await this.saveLogToDB({
-                    timestamp: new Date().toISOString(),
-                    ...log,
-                });
-            } catch (error) {
-                console.error('Failed to save log to DB:', error);
-            }
-        });
+        try {
+            this.saveLogToDB({
+                timestamp: new Date().toISOString(),
+                ...log,
+            });
+        } catch (error) {
+            console.error('Failed to save log to DB:', error);
+        }
     }
 }

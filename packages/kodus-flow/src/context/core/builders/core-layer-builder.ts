@@ -130,7 +130,9 @@ export class CoreLayerBuilder implements ContextLayerBuilder {
         const diagnostics: LayerBuildDiagnostics = {
             tokensBefore: entries.reduce((acc, entry) => acc + entry.tokens, 0),
             tokensAfter: total,
-            compactionStrategy: dropped.length ? 'truncate-by-limit' : undefined,
+            compactionStrategy: dropped.length
+                ? 'truncate-by-limit'
+                : undefined,
             notes: summarizeDropped(dropped),
         };
 

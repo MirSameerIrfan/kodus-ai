@@ -79,15 +79,7 @@ export class ToolParameterFormatter {
             : '';
     }
 
-    /**
-     * Formatação avançada de parâmetros baseada no planner-prompt-composer
-     */
-
-    /**
-     * Determines how to display the type
-     */
     private determineTypeDisplay(propObj: any): string {
-        // Handle enums first
         if (propObj.enum && Array.isArray(propObj.enum)) {
             const enumValues = propObj.enum
                 .map((v: unknown) => `"${v}"`)
@@ -143,9 +135,6 @@ export class ToolParameterFormatter {
         return `array<${items.type || 'unknown'}>`;
     }
 
-    /**
-     * Formata tipos de objeto
-     */
     private formatObjectType(properties: Record<string, unknown>): string {
         const propKeys = Object.keys(properties);
         if (propKeys.length > 0) {
@@ -154,18 +143,12 @@ export class ToolParameterFormatter {
         return 'object';
     }
 
-    /**
-     * Formata tipos de união
-     */
     private formatUnionType(propObj: any): string {
         const unionTypes = propObj.anyOf || propObj.oneOf || [];
         const types = unionTypes.map((t: any) => this.determineTypeDisplay(t));
         return `(${types.join(' | ')})`;
     }
 
-    /**
-     * Adiciona constraints ao tipo
-     */
     private addConstraints(typeDisplay: string, propObj: any): string {
         const constraints: string[] = [];
 
@@ -207,9 +190,6 @@ export class ToolParameterFormatter {
             : typeDisplay;
     }
 
-    /**
-     * Formata propriedades aninhadas
-     */
     private formatNestedProperties(
         _parentName: string,
         propObj: any,
@@ -286,9 +266,8 @@ export class ToolParameterFormatter {
 
 export class ContextFormatter {
     formatAdditionalContext(agentContext: AgentContext): string {
-        const sections: string[] = ['## 🔍 ADDITIONAL INFO'];
+        const sections: string[] = ['## ADDITIONAL INFO'];
 
-        // Formatar valor de forma segura
         const formatValue = (value: unknown): string => {
             if (value === null) {
                 return 'null';
@@ -311,7 +290,7 @@ export class ContextFormatter {
         if (agentContext.agentExecutionOptions?.userContext) {
             const userCtx = agentContext.agentExecutionOptions
                 .userContext as Record<string, unknown>;
-            sections.push('### 👤 USER CONTEXT');
+            sections.push('### USER CONTEXT');
             this.formatContextFields(userCtx, sections, formatValue);
         }
 
@@ -341,9 +320,6 @@ export class ContextFormatter {
         return sections.join('\n');
     }
 
-    /**
-     * Formatar agent identity de forma específica
-     */
     formatAgentIdentity(identity: Record<string, unknown>): string {
         const sections: string[] = [];
 
@@ -361,7 +337,7 @@ export class ContextFormatter {
             return String(value);
         };
 
-        sections.push('### 🤖 AGENT IDENTITY');
+        sections.push('### AGENT IDENTITY');
 
         // Campos específicos do identity com formatação especial
         if (identity.name) {
@@ -392,13 +368,13 @@ export class ContextFormatter {
 
         if (identity.language) {
             sections.push(
-                `**🌐 Language Preference:** ${formatValue(identity.language)}`,
+                `** Language Preference:** ${formatValue(identity.language)}`,
             );
         }
 
         if (identity.languageInstructions) {
             sections.push(
-                `**📝 Language Instructions:** ${formatValue(identity.languageInstructions)}`,
+                `** Language Instructions:** ${formatValue(identity.languageInstructions)}`,
             );
         }
 
@@ -411,8 +387,8 @@ export class ContextFormatter {
                     'role',
                     'capabilities',
                     'personality',
-                    'language', // 🔥 Excluído para não duplicar
-                    'languageInstructions', // 🔥 Excluído para não duplicar
+                    'language',
+                    'languageInstructions',
                 ].includes(key),
         );
 
@@ -551,15 +527,12 @@ export class ContextFormatter {
                         if (typeof parsed === 'object' && parsed !== null) {
                             const keys = Object.keys(parsed);
 
-                            // Para objetos pequenos, mostra completo
                             if (keys.length <= 2) {
                                 return JSON.stringify(parsed);
                             }
 
-                            // 🔥 MODIFICADO: Mostrar dados completos para objetos importantes
-                            // Remove limite de 5 campos - mostra tudo
                             const preview = keys
-                                .slice(0, 5) // Mostra até 5 campos como preview
+                                .slice(0, 5)
                                 .map((k) => {
                                     const val = parsed[k];
                                     return `${k}: ${JSON.stringify(val)}`;
@@ -570,14 +543,10 @@ export class ContextFormatter {
                     } catch {}
                 }
 
-                // REMOVIDO: Sem truncagem para texto longo
-
-                // Show full content when truncate is false
                 if (!truncate) {
                     return value;
                 }
 
-                // REMOVIDO: Sem truncagem para strings
                 return value;
 
             case 'number':
@@ -668,9 +637,6 @@ export class ContextFormatter {
                 return true;
             }
 
-            // REMOVIDO: Sem limite para strings na detecção de complexidade
-
-            // Verificar recursivamente objetos aninhados
             if (typeof value === 'object' && value !== null) {
                 if (this.isObjectTooComplex(value, depth + 1, maxDepth)) {
                     return true;
@@ -715,7 +681,7 @@ export class ContextFormatter {
         const sections: string[] = [];
 
         // 1. Session Info - Identificação básica
-        sections.push(`## 🎯 SESSION CONTEXT
+        sections.push(`## SESSION CONTEXT
 **Session ID:** ${runtimeContext.sessionId}
 **Thread ID:** ${runtimeContext.threadId}
 **Execution ID:** ${runtimeContext.executionId}`);
@@ -748,7 +714,7 @@ export class ContextFormatter {
             );
         }
 
-        sections.push(`## 📊 CURRENT STATE\n${stateInfo.join('\n')}`);
+        sections.push(`## CURRENT STATE\n${stateInfo.join('\n')}`);
 
         // 3. Execution Progress - Ajuda o LLM a não repetir trabalho
         const execution = runtimeContext.execution;
@@ -791,16 +757,14 @@ export class ContextFormatter {
                 progressInfo.push(`**Last Error:** ${execution.lastError}`);
             }
 
-            sections.push(
-                `## ✅ EXECUTION PROGRESS\n${progressInfo.join('\n')}`,
-            );
+            sections.push(`## EXECUTION PROGRESS\n${progressInfo.join('\n')}`);
         }
 
         return sections.join('\n\n');
     }
 
     formatReplanContext(replanContext: Record<string, unknown>): string {
-        const sections: string[] = ['## 🔄 REPLAN CONTEXT'];
+        const sections: string[] = ['## REPLAN CONTEXT'];
 
         if (replanContext.executedPlan) {
             const executedPlan = replanContext.executedPlan as Record<
@@ -809,7 +773,7 @@ export class ContextFormatter {
             >;
             const plan = executedPlan.plan as Record<string, unknown>;
 
-            sections.push('### 📋 EXECUTED PLAN');
+            sections.push('### EXECUTED PLAN');
             if (plan.id) {
                 sections.push(`**Plan ID:** ${plan.id}`);
             }
@@ -834,7 +798,7 @@ export class ContextFormatter {
                             toolData.description || 'No description';
                         const result = toolData.result || 'No result';
 
-                        sections.push(`  - ✅ ${toolName}: ${description}`);
+                        sections.push(`  - ${toolName}: ${description}`);
                         sections.push(
                             `    Result: ${typeof result === 'string' ? result : JSON.stringify(result)}`,
                         );
@@ -846,7 +810,7 @@ export class ContextFormatter {
                     executionData.toolsThatFailed as unknown[];
                 if (toolsThatFailed?.length > 0) {
                     sections.push(
-                        `**❌ Failed Tools:** ${toolsThatFailed.length}`,
+                        `** Failed Tools:** ${toolsThatFailed.length}`,
                     );
                     toolsThatFailed.forEach((tool: unknown) => {
                         const toolData = tool as Record<string, unknown>;
@@ -868,7 +832,7 @@ export class ContextFormatter {
                 Record<string, unknown>
             >;
             if (history.length > 0) {
-                sections.push('### 📚 PLAN HISTORY');
+                sections.push('### PLAN HISTORY');
                 sections.push(`**Previous Attempts:** ${history.length}`);
 
                 history.forEach((planData, index) => {
@@ -882,12 +846,10 @@ export class ContextFormatter {
         }
 
         sections.push(
-            '\n**⚠️ REPLAN MODE:** Use previous results to improve the new plan.',
+            '\n** REPLAN MODE:** Use previous results to improve the new plan.',
         );
         return sections.join('\n');
     }
-
-    // 🔥 REMOVIDO: truncateResult foi inlineado acima
 }
 
 export class SchemaFormatter {
@@ -899,7 +861,6 @@ export class SchemaFormatter {
             return '';
         }
 
-        // Unwrap schema se necessário
         const unwrapped = this.unwrapOutputSchema(outputSchema);
 
         // Verifica se é vazio

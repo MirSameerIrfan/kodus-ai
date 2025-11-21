@@ -1476,8 +1476,10 @@ export abstract class AgentCore<
                 maxExecutionTime: 60000,
                 enableReasoning: true,
                 enableStreaming: false,
+                scratchpad: this.config.plannerOptions.scratchpad, // ✅ Refatorado para scratchpad
             },
             history: completeContext.history,
+            scratchpad: this.config.plannerOptions.scratchpad?.initialState, // ✅ Refatorado para scratchpad
             metadata: completeContext.metadata,
         };
 
@@ -1546,6 +1548,7 @@ export abstract class AgentCore<
                         enableLogging: true,
                         enableMetrics: true,
                         llmDefaults: this.config.llmDefaults,
+                        scratchpad: this.config.plannerOptions.scratchpad,
                     },
                 );
 

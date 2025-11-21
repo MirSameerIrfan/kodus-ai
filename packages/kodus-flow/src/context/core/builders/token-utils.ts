@@ -34,7 +34,7 @@ export class HeuristicTokenEstimator implements TokenEstimator {
     }
 
     estimateStructured(input: unknown): number {
-        if (input == null) {
+        if (input === null || input === undefined) {
             return 0;
         }
 
@@ -62,7 +62,7 @@ export function allocateEntries<T>(
     dropped: LayerEntry<T>[];
     total: number;
 } {
-    if (limit == null || limit <= 0) {
+    if (limit === null || limit === undefined || limit <= 0) {
         const total = entries.reduce((acc, entry) => acc + entry.tokens, 0);
         return { kept: entries, dropped: [], total };
     }
@@ -84,7 +84,9 @@ export function allocateEntries<T>(
     return { kept, dropped, total };
 }
 
-export function summarizeDropped(entries: LayerEntry<unknown>[]): string | undefined {
+export function summarizeDropped(
+    entries: LayerEntry<unknown>[],
+): string | undefined {
     if (!entries.length) {
         return undefined;
     }

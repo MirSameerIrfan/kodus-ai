@@ -52,8 +52,11 @@ export interface ActiveLayerBuilderConfig {
     maxSnippets?: number;
 }
 
-function stringifyStructured(input: unknown, estimator: TokenEstimator): string {
-    if (input == null) {
+function stringifyStructured(
+    input: unknown,
+    estimator: TokenEstimator,
+): string {
+    if (input === null || input === undefined) {
         return '';
     }
 
@@ -189,7 +192,9 @@ export class ActiveLayerBuilder implements ContextLayerBuilder {
         const diagnostics: LayerBuildDiagnostics = {
             tokensBefore: entries.reduce((acc, entry) => acc + entry.tokens, 0),
             tokensAfter: total,
-            compactionStrategy: dropped.length ? 'truncate-by-limit' : undefined,
+            compactionStrategy: dropped.length
+                ? 'truncate-by-limit'
+                : undefined,
             notes: summarizeDropped(dropped),
         };
 

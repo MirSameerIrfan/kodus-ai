@@ -16,7 +16,11 @@ import { ISuggestionByPR } from '@/core/domain/pullRequests/interfaces/pullReque
 import { IPullRequestMessages } from '@/core/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
 import { IClusterizedSuggestion } from '@/core/domain/kodyFineTuning/interfaces/kodyFineTuning.interface';
 import { IExternalPromptContext } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
-import type { ContextLayer, ContextPack } from '@context-os-core/interfaces';
+import type {
+    ContextLayer,
+    ContextPack,
+    ContextEvidence,
+} from '@context-os-core/interfaces';
 import type { ContextAugmentationsMap } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
 
 export interface CodeReviewPipelineContext extends PipelineContext {
@@ -119,10 +123,15 @@ export interface CodeReviewPipelineContext extends PipelineContext {
 
     /** ContextPack compartilhado entre os stages (instruções + camadas externas). */
     sharedContextPack?: ContextPack;
-    /** Resultados das execuções MCP agrupados por path/tool para complementar os prompts. */
-    sharedContextAugmentations?: ContextAugmentationsMap;
-    /** Overrides de prompt sanitizados (sem marcadores MCP) reutilizados entre os stages. */
-    sharedSanitizedOverrides?: CodeReviewConfig['v2PromptOverrides'];
+    /** Augmentations geradas dinamicamente durante o pipeline, mapeadas por nome de arquivo. */
+    augmentationsByFile?: Record<string, ContextAugmentationsMap>;
+
+    fileContextMap?: Record<string, FileContextAgentResult>;
 
     correlationId: string;
+}
+
+export interface FileContextAgentResult {
+    sandboxEvidences?: ContextEvidence[];
+    resolvedPromptOverrides?: CodeReviewConfig['v2PromptOverrides'];
 }

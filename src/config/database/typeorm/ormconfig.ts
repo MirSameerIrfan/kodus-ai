@@ -4,16 +4,8 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 import { SeederOptions } from 'typeorm-extension';
 import MainSeeder from './seed/main.seeder';
 
-const optionsDataBaseProd = {
-    ssl: true,
-    extra: {
-        ssl: {
-            rejectUnauthorized: false,
-        },
-    },
-};
-
 const env = process.env.API_DATABASE_ENV ?? process.env.API_NODE_ENV;
+const isProduction = !['development', 'test'].includes(env);
 
 const optionsDataBase: DataSourceOptions = {
     type: 'postgres',
@@ -39,12 +31,24 @@ const optionsDataBase: DataSourceOptions = {
         ),
     ],
     migrations: [join(__dirname, './migrations/*{.ts,.js}')],
+    ssl: isProduction,
+    extra: {
+        max: 40,
+        min: 1,
+        idleTimeoutMillis: 10000,
+        connectionTimeoutMillis: 2000,
+        keepAlive: true,
+        ...(isProduction
+            ? {
+                  ssl: {
+                      rejectUnauthorized: false,
+                  },
+              }
+            : {}),
+    },
 };
 
-const mergedConfig = {
-    ...optionsDataBase,
-    ...(['development', 'test'].includes(env) ? {} : optionsDataBaseProd),
-};
+const mergedConfig = optionsDataBase;
 
 const optionsSeeder: SeederOptions = {
     factories: [],

@@ -53,7 +53,16 @@ import { ObservabilityService } from '@/core/infrastructure/adapters/services/lo
 import { BYOKPromptRunnerService } from '@/shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
 import { ExternalReferenceLoaderService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceLoader.service';
 import type { ContextAugmentationsMap } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
-import type { ContextPack } from '@context-os-core/interfaces';
+import {
+    getAugmentationsFromPack,
+    getOverridesFromPack,
+} from '@/core/infrastructure/adapters/services/context/code-review-context.utils';
+import type {
+    ContextDependency,
+    ContextPack,
+} from '@context-os-core/interfaces';
+import { FileContextAugmentationService } from '@/core/infrastructure/adapters/services/context/file-context-augmentation.service';
+import { ContextReferenceService } from '@/core/infrastructure/adapters/services/context/context-reference.service';
 
 // Interface for extended context used in Kody Rules analysis
 interface KodyRulesExtendedContext {
@@ -98,6 +107,8 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
         private readonly logger: PinoLoggerService,
         private readonly observabilityService: ObservabilityService,
         private readonly externalReferenceLoaderService: ExternalReferenceLoaderService,
+        private readonly fileContextAugmentationService: FileContextAugmentationService,
+        private readonly contextReferenceService: ContextReferenceService,
     ) {}
 
     private async buildKodyRuleLinkAndRepalceIds(
@@ -106,7 +117,6 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
         organizationAndTeamData: OrganizationAndTeamData,
         prNumber: number,
     ): Promise<string> {
-        // Processar todos os IDs encontrados
         for (const ruleId of foundIds) {
             try {
                 const rule = await this.kodyRulesService.findById(ruleId);
@@ -386,6 +396,104 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
         return [];
     }
 
+    private buildMcpResultsFromAugmentations(
+        augmentationsByFile: Record<string, ContextAugmentationsMap>,
+        rules: Array<Partial<IKodyRule>>,
+        mcpDependencies: ContextDependency[],
+    ): Map<string, Record<string, unknown>> {
+        const mcpResultsMap = new Map<string, Record<string, unknown>>();
+        if (
+            !mcpDependencies ||
+            mcpDependencies.length === 0 ||
+            Object.keys(augmentationsByFile).length === 0
+        ) {
+            return mcpResultsMap;
+        }
+
+        const dependenciesByRule = new Map<string, ContextDependency[]>();
+        for (const rule of rules) {
+            if (rule.uuid && rule.contextReferenceId) {
+                const ruleDependencies = mcpDependencies.filter(
+                    (dep) =>
+                        dep.metadata?.contextReferenceId ===
+                        rule.contextReferenceId,
+                );
+                if (ruleDependencies.length > 0) {
+                    dependenciesByRule.set(rule.uuid, ruleDependencies);
+                }
+            }
+        }
+
+        for (const [ruleId, dependencies] of dependenciesByRule.entries()) {
+            const ruleAugmentations: Record<string, unknown> = {};
+            for (const dep of dependencies) {
+                for (const fileName in augmentationsByFile) {
+                    const fileAugmentations = augmentationsByFile[fileName];
+                    for (const pathKey in fileAugmentations) {
+                        if (!ruleAugmentations[pathKey]) {
+                            ruleAugmentations[pathKey] = { outputs: [] };
+                        }
+                        (ruleAugmentations[pathKey] as any).outputs.push(
+                            ...fileAugmentations[pathKey].outputs,
+                        );
+                    }
+                }
+            }
+            if (Object.keys(ruleAugmentations).length > 0) {
+                mcpResultsMap.set(ruleId, ruleAugmentations);
+            }
+        }
+
+        return mcpResultsMap;
+    }
+
+    private async getMcpDependenciesForRules(
+        rules: Array<Partial<IKodyRule>>,
+    ): Promise<ContextDependency[]> {
+        const uniqueContextReferenceIds = [
+            ...new Set(
+                rules
+                    .map((rule) => rule.contextReferenceId)
+                    .filter((id): id is string => !!id),
+            ),
+        ];
+
+        if (!uniqueContextReferenceIds.length) {
+            return [];
+        }
+
+        const references = await Promise.all(
+            uniqueContextReferenceIds.map((id) =>
+                this.contextReferenceService.findById(id),
+            ),
+        );
+
+        const mcpDependencies: ContextDependency[] = [];
+        const seenDependencies = new Set<string>();
+
+        for (const ref of references) {
+            if (!ref) continue;
+            const requirements = ref.requirements ?? [];
+            for (const requirement of requirements) {
+                const dependencies = requirement.dependencies ?? [];
+                for (const dep of dependencies) {
+                    if (dep.type === 'mcp' && !seenDependencies.has(dep.id)) {
+                        mcpDependencies.push({
+                            ...dep,
+                            metadata: {
+                                ...((dep.metadata ?? {}) as object),
+                                contextReferenceId: ref.uuid,
+                            },
+                        });
+                        seenDependencies.add(dep.id);
+                    }
+                }
+            }
+        }
+
+        return mcpDependencies;
+    }
+
     async analyzeCodeWithAI(
         organizationAndTeamData: OrganizationAndTeamData,
         prNumber: number,
@@ -401,13 +509,11 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
         const provider = LLMModelProvider.GEMINI_2_5_PRO;
         const fallbackProvider = LLMModelProvider.VERTEX_CLAUDE_3_5_SONNET;
 
-        // 1) Contexto base
         const baseContext = await this.prepareAnalysisContext(
             fileContext,
             context,
         );
 
-        // 2) Sem Kody Rules aplicáveis → retorno vazio (mesma lógica)
         if (!baseContext.kodyRules?.length) {
             this.logger.log({
                 message: `No Kody Rules applicable for file: ${fileContext?.file?.filename} from PR#${prNumber}`,
@@ -423,13 +529,28 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
             return { codeSuggestions: [] };
         }
 
-        const {
-            referencesMap: externalReferencesMap,
-            mcpResultsMap: externalMcpResultsMap,
-        } = await this.externalReferenceLoaderService.loadReferencesForRules(
+        const mcpDependencies = await this.getMcpDependenciesForRules(
             baseContext.kodyRules,
-            context,
         );
+
+        const augmentationsByFile =
+            await this.fileContextAugmentationService.augmentFiles(
+                [fileContext.file],
+                context as any,
+                mcpDependencies,
+            );
+
+        const mcpResultsMap = this.buildMcpResultsFromAugmentations(
+            augmentationsByFile,
+            baseContext.kodyRules,
+            mcpDependencies,
+        );
+
+        const { referencesMap: externalReferencesMap } =
+            await this.externalReferenceLoaderService.loadReferencesForRules(
+                baseContext.kodyRules,
+                context,
+            );
 
         const rulesWithLoadedReferences = baseContext.kodyRules.filter(
             (rule) => {
@@ -439,8 +560,10 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
                 }
 
                 if (fullRule.uuid) {
-                    const hasKnowledge = externalReferencesMap.has(fullRule.uuid);
-                    const hasMcp = externalMcpResultsMap.has(fullRule.uuid);
+                    const hasKnowledge = externalReferencesMap.has(
+                        fullRule.uuid,
+                    );
+                    const hasMcp = mcpResultsMap.has(fullRule.uuid);
 
                     if (hasKnowledge || hasMcp) {
                         return true;
@@ -477,11 +600,6 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
 
         baseContext.kodyRules = rulesWithLoadedReferences;
 
-        // 4) Execute MCPs for rules that have contextReferenceId
-        const mcpResultsMap = externalMcpResultsMap.size
-            ? externalMcpResultsMap
-            : new Map<string, Record<string, unknown>>();
-
         let extendedContext = {
             ...baseContext,
             standardSuggestions: hasCodeSuggestions ? suggestions : undefined,
@@ -514,7 +632,6 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
                 runName,
                 attrs: spanAttrs,
                 exec: async (callbacks) => {
-                    // Builders iguais, apenas sem callbacks fixos.
                     const classifier = this.getClassifier(
                         promptRunner,
                         provider,
@@ -556,7 +673,6 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
                         extendedContext,
                     );
 
-                    // Short-circuit preservando comportamento original
                     if (!classifiedRules || classifiedRules?.length === 0) {
                         if (updatedSuggestions) {
                             const out = this.addSeverityToSuggestions(
@@ -571,7 +687,6 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
                         };
                     }
 
-                    // Atualiza contexto e gera novas sugestões
                     extendedContext = {
                         ...extendedContext,
                         filteredKodyRules: classifiedRules,
@@ -598,12 +713,10 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
                 },
             });
 
-            // 4) Trata short-circuit (sem perder finalize do span)
             if (result?.shortCircuit) {
                 return result.output as AIAnalysisResult;
             }
 
-            // 5) Pós-processamento (mesma lógica de antes)
             const generatedKodyRulesSuggestions = this.processLLMResponse(
                 organizationAndTeamData,
                 prNumber,
@@ -947,12 +1060,14 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
             organizationAndTeamData: context?.organizationAndTeamData,
             kodyRules: kodyRulesFiltered,
             v2PromptOverrides:
-                context?.sharedSanitizedOverrides ??
+                context?.activeOverrides ??
+                getOverridesFromPack(context?.sharedContextPack) ??
                 context?.codeReviewConfig?.v2PromptOverrides,
             externalPromptLayers: context?.externalPromptLayers,
-            contextAugmentations: context?.sharedContextAugmentations as
-                | ContextAugmentationsMap
-                | undefined,
+            contextAugmentations: {
+                ...(getAugmentationsFromPack(context?.sharedContextPack) ?? {}),
+                ...(context?.fileAugmentations ?? {}),
+            } as ContextAugmentationsMap,
             contextPack: context?.sharedContextPack as ContextPack | undefined,
         };
 
@@ -1235,7 +1350,6 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
             return null;
         }
     }
-
 
     private buildTags(
         provider: LLMModelProvider,

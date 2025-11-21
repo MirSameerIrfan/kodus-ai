@@ -39,11 +39,13 @@ export class SequentialPackAssemblyPipeline implements PackAssemblyPipeline {
     private readonly packIdFactory?: (input: LayerInputContext) => string;
     private readonly versionFactory: () => string;
     private readonly createdBy: string;
-    private readonly telemetryRecorder?: (diagnostics: Record<string, unknown>) => void;
+    private readonly telemetryRecorder?: (
+        diagnostics: Record<string, unknown>,
+    ) => void;
     private readonly telemetryClient?: ContextTelemetry;
     private readonly telemetryEventFactory?: SequentialPipelineTelemetry['eventFactory'];
 
-    constructor(private readonly config: SequentialPipelineConfig) {
+    constructor(config: SequentialPipelineConfig) {
         this.steps = config.steps;
         this.packIdFactory = config.packIdFactory;
         this.versionFactory =
@@ -111,8 +113,7 @@ export class SequentialPackAssemblyPipeline implements PackAssemblyPipeline {
 
             const baseEvent: ContextEvent = {
                 type: 'SELECTION',
-                sessionId:
-                    input.runtimeContext?.sessionId ?? 'unknown-session',
+                sessionId: input.runtimeContext?.sessionId ?? 'unknown-session',
                 tenantId: input.runtimeContext?.tenantId ?? 'unknown-tenant',
                 packId: pack.id,
                 userId: runtimeUserId,

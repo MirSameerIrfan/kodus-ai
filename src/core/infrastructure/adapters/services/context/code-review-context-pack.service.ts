@@ -30,6 +30,11 @@ import {
     CODE_REVIEW_CONTEXT_PATTERNS,
     pathToKey,
     stripMarkersFromText,
+    tryParseJSON,
+    normalizeProviderToolKey,
+    resolveDependencyProvider,
+    resolveDependencyToolName,
+    deepClone,
 } from './code-review-context.utils';
 import {
     MCPToolMetadata,
@@ -74,6 +79,7 @@ interface BuildPackParams {
     externalLayers?: ContextLayer[];
     repository?: Partial<Repository>;
     pullRequest?: AnalysisContext['pullRequest'];
+    executeMCPDependencies?: boolean;
 }
 
 interface BuildPackResult {
@@ -221,8 +227,16 @@ export class CodeReviewContextPackService {
     ) {}
 
     async buildContextPack(params: BuildPackParams): Promise<BuildPackResult> {
-        const { organizationAndTeamData, contextReferenceId, overrides } =
-            params;
+        const {
+            organizationAndTeamData,
+            contextReferenceId,
+            overrides,
+            executeMCPDependencies,
+        } = params;
+        const shouldExecuteMCP =
+            typeof executeMCPDependencies === 'boolean'
+                ? executeMCPDependencies
+                : true;
 
         let processedOverrides = overrides
             ? (JSON.parse(
@@ -273,6 +287,7 @@ export class CodeReviewContextPackService {
         const metadata = metadataLoad.metadata;
 
         const syncErrors: IPromptReferenceSyncError[] = [];
+        const skippedDependencies: SkippedMCPTool[] = [];
 
         const tempPack = await this.assemblePackFromPipeline({
             contextReferenceId,
@@ -305,16 +320,24 @@ export class CodeReviewContextPackService {
             }
         }
 
-        const { resolvedDependencies } =
-            await this.resolveMCPDependenciesForPack({
+        let resolvedDependencies = mcpDependencies;
+        if (shouldExecuteMCP && mcpDependencies.length > 0) {
+            const resolution = await this.resolveMCPDependenciesForPack({
                 dependencies: mcpDependencies,
                 pack: tempPack,
                 organizationAndTeamData,
                 toolMetadata: metadata,
             });
+            resolvedDependencies = resolution.resolvedDependencies;
+            skippedDependencies.push(...resolution.skippedDependencies);
+        }
 
         let augmentations: ContextAugmentationsMap | undefined;
-        if (resolvedDependencies.length > 0 && connections?.length > 0) {
+        if (
+            shouldExecuteMCP &&
+            resolvedDependencies.length > 0 &&
+            connections?.length > 0
+        ) {
             const {
                 augmentations: execAugmentations,
                 syncErrors: execSyncErrors,
@@ -350,16 +373,18 @@ export class CodeReviewContextPackService {
                 this.logger.debug({
                     message: 'MCP marker replacement: replacement completed',
                     context: CodeReviewContextPackService.name,
-                    metadata: {
-                        resultPreview: processedOverrides
-                            ? JSON.stringify(processedOverrides).substring(
-                                  0,
-                                  500,
-                              )
-                            : 'undefined',
-                    },
                 });
             }
+        } else if (!shouldExecuteMCP && mcpDependencies.length > 0) {
+            this.logger.debug({
+                message:
+                    'Context pack has MCP dependencies but execution was skipped',
+                context: CodeReviewContextPackService.name,
+                metadata: {
+                    contextReferenceId,
+                    dependenciesCount: mcpDependencies.length,
+                },
+            });
         } else if (
             resolvedDependencies.length > 0 &&
             (!connections || !connections.length)
@@ -371,19 +396,26 @@ export class CodeReviewContextPackService {
                 context: CodeReviewContextPackService.name,
                 metadata: {
                     contextReferenceId,
-                    dependencies: resolvedDependencies.map((dep) => ({
-                        id: dep.id,
-                        provider: this.resolveProvider(dep),
-                        toolName: this.resolveToolName(dep),
-                        requirementId: this.resolveRequirementId(dep),
-                    })),
+                    dependencies: resolvedDependencies
+                        .slice(0, 10)
+                        .map((dep) => ({
+                            id: dep.id,
+                            provider: resolveDependencyProvider(dep),
+                            toolName: resolveDependencyToolName(dep),
+                            requirementId: this.resolveRequirementId(dep),
+                        })),
+                    totalDependencies: resolvedDependencies.length,
+                    omittedDependencies: Math.max(
+                        0,
+                        resolvedDependencies.length - 10,
+                    ),
                 },
             });
 
             for (const dependency of resolvedDependencies) {
                 syncErrors.push({
                     type: PromptReferenceErrorType.MCP_CONNECTION_FAILED,
-                    message: `${message} Tool=${this.resolveToolName(dependency) ?? 'unknown'} Provider=${this.resolveProvider(dependency) ?? 'unknown'} Requirement=${this.resolveRequirementId(dependency) ?? 'n/a'}`,
+                    message: `${message} Tool=${resolveDependencyToolName(dependency) ?? 'unknown'} Provider=${resolveDependencyProvider(dependency) ?? 'unknown'} Requirement=${this.resolveRequirementId(dependency) ?? 'n/a'}`,
                     details: {
                         timestamp: new Date(),
                     },
@@ -526,8 +558,8 @@ export class CodeReviewContextPackService {
 
         const dependencyMap = new Map<string, ContextDependency>();
         for (const dep of dependencies) {
-            const provider = this.resolveProvider(dep);
-            const toolName = this.resolveToolName(dep);
+            const provider = resolveDependencyProvider(dep);
+            const toolName = resolveDependencyToolName(dep);
             if (provider && toolName) {
                 dependencyMap.set(`${provider}|${toolName}`, dep);
             }
@@ -539,7 +571,7 @@ export class CodeReviewContextPackService {
         );
 
         const lookup = (provider: string, tool: string) => {
-            const normalized = this.normalizeProviderToolKey(provider, tool);
+            const normalized = normalizeProviderToolKey(provider, tool);
 
             let result = resultsMap.get(normalized);
             let error = errorsMap.get(normalized);
@@ -575,10 +607,10 @@ export class CodeReviewContextPackService {
                     }
                 }
 
-                const realProvider = this.resolveProvider(dep);
-                const realToolName = this.resolveToolName(dep);
+                const realProvider = resolveDependencyProvider(dep);
+                const realToolName = resolveDependencyToolName(dep);
                 if (realProvider && realToolName) {
-                    const realKey = this.normalizeProviderToolKey(
+                    const realKey = normalizeProviderToolKey(
                         realProvider,
                         realToolName,
                     );
@@ -595,7 +627,7 @@ export class CodeReviewContextPackService {
 
         const replaceRecursive = (node: unknown): unknown => {
             if (typeof node === 'string') {
-                const parsed = this.tryParseJSON(node);
+                const parsed = tryParseJSON(node);
                 if (parsed !== null) {
                     const processed = replaceRecursive(parsed);
                     if (processed !== parsed) {
@@ -656,27 +688,6 @@ export class CodeReviewContextPackService {
         return replaceRecursive(clone) as CodeReviewConfig['v2PromptOverrides'];
     }
 
-    private tryParseJSON(str: string): unknown | null {
-        if (!str || typeof str !== 'string') {
-            return null;
-        }
-
-        const trimmed = str.trim();
-        if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
-            return null;
-        }
-
-        try {
-            return JSON.parse(str);
-        } catch {
-            return null;
-        }
-    }
-
-    private normalizeProviderToolKey(provider: string, tool: string): string {
-        return `${provider.toLowerCase().trim()}|${tool.toLowerCase().trim()}`;
-    }
-
     private generateNormalizedKeys(
         provider: string,
         toolName: string,
@@ -685,20 +696,18 @@ export class CodeReviewContextPackService {
     ): Set<string> {
         const keys = new Set<string>();
 
-        keys.add(this.normalizeProviderToolKey(provider, toolName));
+        keys.add(normalizeProviderToolKey(provider, toolName));
 
         if (providerAlias) {
-            keys.add(this.normalizeProviderToolKey(providerAlias, toolName));
+            keys.add(normalizeProviderToolKey(providerAlias, toolName));
         }
 
         if (toolNameAlias) {
-            keys.add(this.normalizeProviderToolKey(provider, toolNameAlias));
+            keys.add(normalizeProviderToolKey(provider, toolNameAlias));
         }
 
         if (providerAlias && toolNameAlias) {
-            keys.add(
-                this.normalizeProviderToolKey(providerAlias, toolNameAlias),
-            );
+            keys.add(normalizeProviderToolKey(providerAlias, toolNameAlias));
         }
 
         return keys;
@@ -720,7 +729,7 @@ export class CodeReviewContextPackService {
                     continue;
                 }
 
-                const normalizedKey = this.normalizeProviderToolKey(
+                const normalizedKey = normalizeProviderToolKey(
                     output.provider,
                     output.toolName,
                 );
@@ -801,7 +810,7 @@ export class CodeReviewContextPackService {
         let result = text;
         for (let i = matches.length - 1; i >= 0; i--) {
             const { marker, provider, tool } = matches[i];
-            const normalized = this.normalizeProviderToolKey(provider, tool);
+            const normalized = normalizeProviderToolKey(provider, tool);
             const { result: replacement, error } = lookup(provider, tool);
 
             this.logger.debug({
@@ -823,7 +832,8 @@ export class CodeReviewContextPackService {
                     message: 'MCP marker replacement: SUCCESS',
                     context: CodeReviewContextPackService.name,
                     metadata: {
-                        marker,
+                        // Truncate sensitive or potentially large data
+                        marker: marker.substring(0, 100),
                         provider,
                         tool,
                         replacementLength: replacement.length,
@@ -859,7 +869,7 @@ export class CodeReviewContextPackService {
             return node;
         }
 
-        const normalized = this.normalizeProviderToolKey(provider, toolName);
+        const normalized = normalizeProviderToolKey(provider, toolName);
         const { result, error } = lookup(provider, toolName);
 
         this.logger.debug({
@@ -909,8 +919,8 @@ export class CodeReviewContextPackService {
                 }
 
                 if (dependency.type === 'mcp') {
-                    const provider = this.resolveProvider(dependency);
-                    const toolName = this.resolveToolName(dependency);
+                    const provider = resolveDependencyProvider(dependency);
+                    const toolName = resolveDependencyToolName(dependency);
                     if (!provider || !toolName) {
                         continue;
                     }
@@ -1070,8 +1080,8 @@ export class CodeReviewContextPackService {
                     continue;
                 }
 
-                const provider = this.resolveProvider(enrichedDependency);
-                const toolName = this.resolveToolName(enrichedDependency);
+                const provider = resolveDependencyProvider(enrichedDependency);
+                const toolName = resolveDependencyToolName(enrichedDependency);
                 const requirementId =
                     this.resolveRequirementId(enrichedDependency);
                 const path = this.resolveDependencyPath(enrichedDependency);
@@ -1105,8 +1115,8 @@ export class CodeReviewContextPackService {
                     message,
                 });
             } catch (error) {
-                const provider = this.resolveProvider(dependency);
-                const toolName = this.resolveToolName(dependency);
+                const provider = resolveDependencyProvider(dependency);
+                const toolName = resolveDependencyToolName(dependency);
 
                 this.logger.error({
                     message:
@@ -1436,8 +1446,8 @@ export class CodeReviewContextPackService {
         dependency: ContextDependency,
         metadataMap: Map<string, MCPToolMetadata>,
     ): ContextDependency {
-        const provider = this.resolveProvider(dependency);
-        const toolName = this.resolveToolName(dependency);
+        const provider = resolveDependencyProvider(dependency);
+        const toolName = resolveDependencyToolName(dependency);
 
         if (!provider || !toolName) {
             return dependency;
@@ -1567,8 +1577,8 @@ export class CodeReviewContextPackService {
 
         const requiredToolsByProvider = new Map<string, Set<string>>();
         for (const dependency of dependencies) {
-            const provider = this.resolveProvider(dependency)?.trim();
-            const toolName = this.resolveToolName(dependency)?.trim();
+            const provider = resolveDependencyProvider(dependency)?.trim();
+            const toolName = resolveDependencyToolName(dependency)?.trim();
             if (!provider || !toolName) {
                 continue;
             }
@@ -1759,9 +1769,8 @@ export class CodeReviewContextPackService {
                         record.result ??
                         record.error ??
                         'Unknown MCP error';
-                    const errorSummary = this.extractMCPErrorSummary(
-                        errorPayload,
-                    );
+                    const errorSummary =
+                        this.extractMCPErrorSummary(errorPayload);
 
                     outputEntry.error = this.formatToolOutput(errorPayload);
 
@@ -1876,7 +1885,7 @@ export class CodeReviewContextPackService {
             kind: 'core',
             priority: 1,
             tokens: 0,
-            content: this.deepClone(overrides),
+            content: deepClone(overrides),
             references: [],
             metadata: {
                 contextReferenceId,
@@ -1907,8 +1916,8 @@ export class CodeReviewContextPackService {
         >();
 
         for (const dependency of dependencies) {
-            const provider = this.resolveProvider(dependency);
-            const toolName = this.resolveToolName(dependency);
+            const provider = resolveDependencyProvider(dependency);
+            const toolName = resolveDependencyToolName(dependency);
             const path = this.resolveDependencyPath(dependency);
             const pathKey = this.resolveDependencyPathKey(dependency);
 
@@ -2018,23 +2027,8 @@ export class CodeReviewContextPackService {
     } {
         const metadata = dependency.metadata ?? {};
 
-        const provider =
-            (typeof metadata.provider === 'string'
-                ? (metadata.provider as string)
-                : undefined) ??
-            (typeof metadata.mcpId === 'string'
-                ? (metadata.mcpId as string)
-                : undefined) ??
-            dependency.id.split('|')[0];
-
-        const toolName =
-            (typeof metadata.toolName === 'string'
-                ? (metadata.toolName as string)
-                : undefined) ??
-            (typeof metadata.tool === 'string'
-                ? (metadata.tool as string)
-                : undefined) ??
-            dependency.id.split('|')[1];
+        const provider = resolveDependencyProvider(dependency);
+        const toolName = resolveDependencyToolName(dependency);
 
         const args =
             metadata.args && isPlainObject(metadata.args)
@@ -2042,30 +2036,6 @@ export class CodeReviewContextPackService {
                 : undefined;
 
         return { provider, toolName, args };
-    }
-
-    private resolveProvider(dependency: ContextDependency): string | undefined {
-        const metadata = dependency.metadata ?? {};
-        if (typeof metadata.provider === 'string') {
-            return metadata.provider as string;
-        }
-        if (typeof metadata.mcpId === 'string') {
-            return metadata.mcpId as string;
-        }
-        const [provider] = dependency.id.split('|', 2);
-        return provider || undefined;
-    }
-
-    private resolveToolName(dependency: ContextDependency): string | undefined {
-        const metadata = dependency.metadata ?? {};
-        if (typeof metadata.toolName === 'string') {
-            return metadata.toolName as string;
-        }
-        if (typeof metadata.tool === 'string') {
-            return metadata.tool as string;
-        }
-        const [, toolName] = dependency.id.split('|', 2);
-        return toolName || undefined;
     }
 
     private buildAugmentationKey(
@@ -2081,7 +2051,7 @@ export class CodeReviewContextPackService {
     }
 
     private formatToolOutput(result: unknown): string {
-        return formatMCPOutput(result, (value) => this.tryParseJSON(value));
+        return formatMCPOutput(result, (value) => tryParseJSON(value));
     }
 
     private extractMCPErrorSummary(error: unknown): string {
@@ -2111,23 +2081,9 @@ export class CodeReviewContextPackService {
     private cloneLayer(layer: ContextLayer): ContextLayer {
         return {
             ...layer,
-            content: this.deepClone(layer.content),
+            content: deepClone(layer.content),
             references: layer.references.map((ref) => ({ ...ref })),
-            metadata: layer.metadata
-                ? this.deepClone(layer.metadata)
-                : undefined,
+            metadata: layer.metadata ? deepClone(layer.metadata) : undefined,
         };
-    }
-
-    private deepClone<T>(value: T): T {
-        if (value === null || value === undefined) {
-            return value;
-        }
-
-        try {
-            return JSON.parse(JSON.stringify(value)) as T;
-        } catch {
-            return value;
-        }
     }
 }

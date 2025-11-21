@@ -3,6 +3,8 @@ import type {
     MCPStatus,
     MCPToolReference,
 } from '../interfaces.js';
+import { generateToolModuleMap } from './code-mode.js';
+import { VirtualFileSystem } from './virtual-file-system.js';
 
 export interface MCPRegistry {
     register(registration: MCPRegistration): void;
@@ -15,6 +17,7 @@ export interface MCPRegistry {
         toolName: string,
     ): { registration: MCPRegistration; tool: MCPToolReference } | undefined;
     markHeartbeat(id: string, status?: MCPStatus): void;
+    buildVirtualFileSystem(): Promise<VirtualFileSystem>;
 }
 
 export class InMemoryMCPRegistry implements MCPRegistry {
@@ -53,7 +56,10 @@ export class InMemoryMCPRegistry implements MCPRegistry {
 
             for (const candidate of candidates) {
                 const normalizedCandidate = this.normalizeId(candidate);
-                if (normalizedCandidate && normalizedCandidate === normalizedTarget) {
+                if (
+                    normalizedCandidate &&
+                    normalizedCandidate === normalizedTarget
+                ) {
                     return registration;
                 }
             }
@@ -127,5 +133,10 @@ export class InMemoryMCPRegistry implements MCPRegistry {
         }
 
         this.registrations.set(id, existing);
+    }
+
+    async buildVirtualFileSystem(): Promise<VirtualFileSystem> {
+        const files = await generateToolModuleMap(this);
+        return new VirtualFileSystem(files);
     }
 }

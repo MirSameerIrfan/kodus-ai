@@ -15,7 +15,7 @@ services:
         environment:
             - ENV=production
             - API_NODE_ENV=production
-            - NODE_OPTIONS=--max-old-space-size=4096 --max-semi-space-size=64
+            - NODE_OPTIONS=--max-old-space-size=8192 --max-semi-space-size=128
             - API_LOG_LEVEL=warn
             - API_LOG_PRETTY=false
         env_file:

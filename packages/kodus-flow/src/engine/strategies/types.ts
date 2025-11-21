@@ -56,6 +56,7 @@ export interface EarlyStopping {
 export interface AgentThought {
     reasoning: string;
     confidence: number;
+    scratchpadUpdate?: string; // Atualização do scratchpad (memória de trabalho)
     hypotheses?: Hypothesis[];
     reflection?: Reflection;
     earlyStopping?: EarlyStopping;
@@ -248,9 +249,11 @@ export interface StrategyExecutionContext {
     agentContext: AgentContext;
     config: StrategyConfig;
     history: ExecutionStep[];
+    scratchpad?: string; // Memória de trabalho atual
     replanContext?: Record<string, unknown>;
     evidences?: RewooEvidenceItem[];
     mode?: 'planner' | 'executor' | 'organizer';
+    emit?: (event: any) => Promise<void>;
     step?: any;
     collectedInfo?: string;
     currentIteration?: number;
@@ -380,7 +383,11 @@ export interface StrategyConfig {
         };
     };
 
-    // Configurações gerais
+    scratchpad?: {
+        enabled?: boolean;
+        initialState?: string;
+    };
+
     maxExecutionTime?: number; // Timeout geral
     enableReasoning?: boolean; // Mostrar reasoning
     enableStreaming?: boolean; // Streaming de steps

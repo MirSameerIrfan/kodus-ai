@@ -22,6 +22,10 @@ import {
 } from '@kodus/kodus-common/llm';
 import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
 import type { ContextAugmentationsMap } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
+import {
+    getAugmentationsFromPack,
+    getOverridesFromPack,
+} from '@/core/infrastructure/adapters/services/context/code-review-context.utils';
 import type { ContextPack } from '@context-os-core/interfaces';
 import { AxiosASTService } from '@/config/axios/microservices/ast.axios';
 
@@ -435,13 +439,14 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
                 ? Object.values(context?.impactASTAnalysis?.functionsAffect)
                 : [],
             v2PromptOverrides:
-                context?.sharedSanitizedOverrides ??
+                context?.activeOverrides ??
+                getOverridesFromPack(context?.sharedContextPack) ??
                 context?.codeReviewConfig?.v2PromptOverrides,
             externalPromptLayers: context?.externalPromptLayers,
-            contextAugmentations:
-                context?.sharedContextAugmentations as
-                    | ContextAugmentationsMap
-                    | undefined,
+            contextAugmentations: {
+                ...(getAugmentationsFromPack(context?.sharedContextPack) ?? {}),
+                ...(context?.fileAugmentations ?? {}),
+            } as ContextAugmentationsMap,
             contextPack: context?.sharedContextPack as ContextPack | undefined,
         };
 

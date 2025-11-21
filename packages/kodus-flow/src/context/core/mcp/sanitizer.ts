@@ -19,10 +19,13 @@ function redact(value: unknown): unknown {
         return value.map(() => '[redacted]');
     }
     if (isPlainObject(value)) {
-        return Object.keys(value).reduce<Record<string, unknown>>((acc, key) => {
-            acc[key] = '[redacted]';
-            return acc;
-        }, {});
+        return Object.keys(value).reduce<Record<string, unknown>>(
+            (acc, key) => {
+                acc[key] = '[redacted]';
+                return acc;
+            },
+            {},
+        );
     }
     return undefined;
 }
@@ -49,11 +52,14 @@ function sanitizeValue(key: string, value: unknown): unknown {
 }
 
 export function sanitizeMCPInput(input: MCPAllowedInput): MCPAllowedInput {
-    return Object.entries(input).reduce<MCPAllowedInput>((acc, [key, value]) => {
-        const sanitized = sanitizeValue(key, value);
-        if (sanitized !== undefined) {
-            acc[key] = sanitized;
-        }
-        return acc;
-    }, {});
+    return Object.entries(input).reduce<MCPAllowedInput>(
+        (acc, [key, value]) => {
+            const sanitized = sanitizeValue(key, value);
+            if (sanitized !== undefined) {
+                acc[key] = sanitized;
+            }
+            return acc;
+        },
+        {},
+    );
 }

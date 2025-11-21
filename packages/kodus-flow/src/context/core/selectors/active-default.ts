@@ -21,7 +21,7 @@ export class DefaultActiveSelector implements ActiveLayerSelector {
     private readonly maxSnippets: number;
     private readonly includeAttachments: boolean;
 
-    constructor(private readonly config: SelectorConfig = {}) {
+    constructor(config: SelectorConfig = {}) {
         this.maxSnippets =
             config.maxSnippets && config.maxSnippets > 0
                 ? config.maxSnippets

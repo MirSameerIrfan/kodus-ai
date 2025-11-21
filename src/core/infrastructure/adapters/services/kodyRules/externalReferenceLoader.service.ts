@@ -25,7 +25,10 @@ export class ExternalReferenceLoaderService {
     async loadReferences(
         rule: IKodyRule,
         context: AnalysisContext,
-    ): Promise<{ references: LoadedReference[]; augmentations: Map<string, Record<string, unknown>> }> {
+    ): Promise<{
+        references: LoadedReference[];
+        augmentations: Map<string, Record<string, unknown>>;
+    }> {
         if (!rule.contextReferenceId) {
             this.logger.debug({
                 message:
@@ -57,7 +60,10 @@ export class ExternalReferenceLoaderService {
     private async loadFromContextPack(
         rule: IKodyRule,
         context: AnalysisContext,
-    ): Promise<{ references: LoadedReference[]; augmentations: Map<string, Record<string, unknown>> }> {
+    ): Promise<{
+        references: LoadedReference[];
+        augmentations: Map<string, Record<string, unknown>>;
+    }> {
         if (!rule.contextReferenceId) {
             return { references: [], augmentations: new Map() };
         }
@@ -68,6 +74,7 @@ export class ExternalReferenceLoaderService {
                 contextReferenceId: rule.contextReferenceId,
                 repository: context.repository,
                 pullRequest: context.pullRequest,
+                executeMCPDependencies: false,
             });
 
             const layers = result.pack?.layers ?? [];
@@ -125,14 +132,11 @@ export class ExternalReferenceLoaderService {
                     const outputs = entry.outputs ?? [];
                     outputs.forEach((output, index) => {
                         if (output.success && output.output) {
-                            augmentations.set(
-                                `${pathKey}::${index}`,
-                                {
-                                    provider: output.provider,
-                                    toolName: output.toolName,
-                                    output: output.output,
-                                } as Record<string, unknown>,
-                            );
+                            augmentations.set(`${pathKey}::${index}`, {
+                                provider: output.provider,
+                                toolName: output.toolName,
+                                output: output.output,
+                            } as Record<string, unknown>);
                         }
                     });
                 }
@@ -161,8 +165,10 @@ export class ExternalReferenceLoaderService {
 
         for (const rule of rules) {
             if (rule.uuid) {
-                const { references, augmentations } =
-                    await this.loadReferences(rule as IKodyRule, context);
+                const { references, augmentations } = await this.loadReferences(
+                    rule as IKodyRule,
+                    context,
+                );
                 if (references.length > 0) {
                     referencesMap.set(rule.uuid, references);
                 }
@@ -174,22 +180,6 @@ export class ExternalReferenceLoaderService {
                 }
             }
         }
-
-        const totalLoaded = Array.from(referencesMap.values()).reduce(
-            (sum, refs) => sum + refs.length,
-            0,
-        );
-
-        this.logger.log({
-            message: 'Loaded external references for rules',
-            context: ExternalReferenceLoaderService.name,
-            metadata: {
-                totalRules: rules.length,
-                rulesWithReferences: referencesMap.size,
-                totalReferencesLoaded: totalLoaded,
-                organizationAndTeamData: context.organizationAndTeamData,
-            },
-        });
 
         return { referencesMap, mcpResultsMap };
     }
