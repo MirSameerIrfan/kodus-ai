@@ -47,4 +47,18 @@ export interface ILicenseService {
     getAllUsersWithLicense(
         organizationAndTeamData: OrganizationAndTeamData,
     ): Promise<UserWithLicense[]>;
+
+    /**
+     * Assign license to a user.
+     *
+     * @param organizationAndTeamData Organization ID and team ID.
+     * @param userGitId Git ID of the user to assign license to.
+     * @param provider The git provider (e.g., 'github', 'gitlab').
+     * @returns Promise with boolean indicating success.
+     */
+    assignLicense(
+        organizationAndTeamData: OrganizationAndTeamData,
+        userGitId: string,
+        provider: string,
+    ): Promise<boolean>;
 }

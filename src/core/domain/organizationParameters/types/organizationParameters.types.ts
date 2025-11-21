@@ -3,3 +3,7 @@ export type OrganizationParametersAutoJoinConfig = {
     domains: string[];
 };
 
+export type OrganizationParametersAutoAssignConfig = {
+    enabled: boolean;
+    ignoredUsers: string[];
+};

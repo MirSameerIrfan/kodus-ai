@@ -19,6 +19,7 @@ import {
 import { stripCurlyBracesFromUUIDs } from '@/core/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
+import { AutoAssignLicenseUseCase } from '@/ee/license/use-cases/auto-assign-license.use-case';
 import {
     PermissionValidationService,
     ValidationErrorType,
@@ -67,6 +68,7 @@ export class RunCodeReviewAutomationUseCase {
         private readonly codeManagement: CodeManagementService,
 
         private readonly permissionValidationService: PermissionValidationService,
+        private readonly autoAssignLicenseUseCase: AutoAssignLicenseUseCase,
 
         private logger: PinoLoggerService,
     ) {}
@@ -430,9 +432,68 @@ export class RunCodeReviewAutomationUseCase {
                             validationResult.errorType ===
                             ValidationErrorType.USER_NOT_LICENSED
                         ) {
+                            // Check if we can auto-assign or if it's a freebie
+                            const autoAssignResult =
+                                await this.autoAssignLicenseUseCase.execute({
+                                    organizationAndTeamData,
+                                    userGitId: params?.userGitId,
+                                    prNumber: params?.prNumber,
+                                    repositoryName: params?.repository?.name,
+                                    provider: params?.platformType,
+                                });
+
+                            if (autoAssignResult.shouldProceed) {
+                                this.logger.log({
+                                    message: `Proceeding with review after auto-assign check: ${autoAssignResult.reason}`,
+                                    context: RunCodeReviewAutomationUseCase.name,
+                                    metadata: {
+                                        organizationAndTeamData,
+                                        userGitId: params?.userGitId,
+                                        reason: autoAssignResult.reason,
+                                    },
+                                });
+                            } else {
+                                this.logger.warn({
+                                    message:
+                                        'User not licensed but company has licenses',
+                                    context: RunCodeReviewAutomationUseCase.name,
+                                    metadata: {
+                                        organizationAndTeamData,
+                                        repository: params?.repository,
+                                        prNumber: params?.prNumber,
+                                        userGitId: params?.userGitId,
+                                        autoAssignReason:
+                                            autoAssignResult.reason,
+                                    },
+                                });
+
+                                await this.addNoLicenseReaction({
+                                    organizationAndTeamData,
+                                    repository: params.repository,
+                                    prNumber: params.prNumber,
+                                    platformType: params.platformType,
+                                    triggerCommentId: params.triggerCommentId,
+                                });
+
+                                return null;
+                            }
+                        } else {
+                            const noActiveSubscriptionType =
+                                validationResult.errorType
+                                    ? ERROR_TO_MESSAGE_TYPE[
+                                          validationResult.errorType
+                                      ]
+                                    : 'general';
+
+                            await this.createNoActiveSubscriptionComment({
+                                organizationAndTeamData,
+                                repository: params.repository,
+                                prNumber: params?.prNumber,
+                                noActiveSubscriptionType,
+                            });
+
                             this.logger.warn({
-                                message:
-                                    'User not licensed but company has licenses',
+                                message: 'No active subscription found',
                                 context: RunCodeReviewAutomationUseCase.name,
                                 metadata: {
                                     organizationAndTeamData,
@@ -442,43 +503,8 @@ export class RunCodeReviewAutomationUseCase {
                                 },
                             });
 
-                            await this.addNoLicenseReaction({
-                                organizationAndTeamData,
-                                repository: params.repository,
-                                prNumber: params.prNumber,
-                                platformType: params.platformType,
-                                triggerCommentId: params.triggerCommentId,
-                            });
-
                             return null;
                         }
-
-                        const noActiveSubscriptionType =
-                            validationResult.errorType
-                                ? ERROR_TO_MESSAGE_TYPE[
-                                      validationResult.errorType
-                                  ]
-                                : 'general';
-
-                        await this.createNoActiveSubscriptionComment({
-                            organizationAndTeamData,
-                            repository: params.repository,
-                            prNumber: params?.prNumber,
-                            noActiveSubscriptionType,
-                        });
-
-                        this.logger.warn({
-                            message: 'No active subscription found',
-                            context: RunCodeReviewAutomationUseCase.name,
-                            metadata: {
-                                organizationAndTeamData,
-                                repository: params?.repository,
-                                prNumber: params?.prNumber,
-                                userGitId: params?.userGitId,
-                            },
-                        });
-
-                        return null;
                     } else if (
                         !validationResult.allowed &&
                         validationResult.errorType ===

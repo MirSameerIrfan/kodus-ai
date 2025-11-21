@@ -7,4 +7,5 @@ export enum OrganizationParametersKey {
     BYOK_CONFIG = 'byok_config',
     COCKPIT_METRICS_VISIBILITY = 'cockpit_metrics_visibility',
     DRY_RUN_LIMIT = 'dry_run_limit',
+    AUTO_LICENSE_ASSIGNMENT = 'auto_license_assignment',
 }
