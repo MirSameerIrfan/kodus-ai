@@ -1,90 +1,91 @@
+import {
+    GitHubReaction,
+    GitlabReaction,
+} from '@/core/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
 import { ICodeManagementService } from '@/core/domain/platformIntegrations/interfaces/code-management.interface';
 import {
+    PullRequest,
     PullRequestAuthor,
     PullRequestCodeReviewTime,
-    PullRequest,
     PullRequestReviewComment,
-    PullRequestWithFiles,
     PullRequestReviewState,
+    PullRequestWithFiles,
 } from '@/core/domain/platformIntegrations/types/codeManagement/pullRequests.type';
 import { Repositories } from '@/core/domain/platformIntegrations/types/codeManagement/repositories.type';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import {
-    GitlabReaction,
-    GitHubReaction,
-} from '@/core/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
 
 import { IntegrationServiceDecorator } from '@/shared/utils/decorators/integration-service.decorator';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 
 import {
+    Repository,
+    ReviewComment,
+} from '@/config/types/general/codeReview.type';
+import { Commit } from '@/config/types/general/commit.type';
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { TreeItem } from '@/config/types/general/tree.type';
+import {
+    AUTH_INTEGRATION_SERVICE_TOKEN,
+    IAuthIntegrationService,
+} from '@/core/domain/authIntegrations/contracts/auth-integration.service.contracts';
+import { GitlabAuthDetail } from '@/core/domain/authIntegrations/types/gitlab-auth-detail.type';
+import {
+    IIntegrationConfigService,
+    INTEGRATION_CONFIG_SERVICE_TOKEN,
+} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import { IntegrationConfigEntity } from '@/core/domain/integrationConfigs/entities/integration-config.entity';
+import {
+    IIntegrationService,
+    INTEGRATION_SERVICE_TOKEN,
+} from '@/core/domain/integrations/contracts/integration.service.contracts';
+import { IntegrationEntity } from '@/core/domain/integrations/entities/integration.entity';
+import {
+    IParametersService,
+    PARAMETERS_SERVICE_TOKEN,
+} from '@/core/domain/parameters/contracts/parameters.service.contract';
+import { AuthMode } from '@/core/domain/platformIntegrations/enums/codeManagement/authMode.enum';
+import { GitCloneParams } from '@/core/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
+import { RepositoryFile } from '@/core/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
+import { CreateAuthIntegrationStatus } from '@/shared/domain/enums/create-auth-integration-status.enum';
+import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
+import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
+import { LanguageValue } from '@/shared/domain/enums/language-parameter.enum';
+import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+import {
+    GitlabPullRequestState,
+    PullRequestState,
+} from '@/shared/domain/enums/pullRequestState.enum';
+import { CacheService } from '@/shared/utils/cache/cache.service';
+import { hasKodyMarker } from '@/shared/utils/codeManagement/codeCommentMarkers';
+import { getCodeReviewBadge } from '@/shared/utils/codeManagement/codeReviewBadge';
+import { getLabelShield } from '@/shared/utils/codeManagement/labels';
+import { getSeverityLevelShield } from '@/shared/utils/codeManagement/severityLevel';
+import { decrypt, encrypt } from '@/shared/utils/crypto';
+import { CodeManagementConnectionStatus } from '@/shared/utils/decorators/validate-code-management-integration.decorator';
+import {
+    isFileMatchingGlob,
+    isFileMatchingGlobCaseInsensitive,
+} from '@/shared/utils/glob-utils';
+import { safelyParseMessageContent } from '@/shared/utils/safelyParseMessageContent';
+import {
+    getTranslationsForLanguageByCategory,
+    TranslationsCategory,
+} from '@/shared/utils/translations/translations';
+import {
     CommitSchema,
-    ExpandedMergeRequestSchema,
     Gitlab,
     MergeRequestSchema,
     MergeRequestSchemaWithBasicLabels,
     RepositoryTreeSchema,
 } from '@gitbeaker/rest';
+import { LLMModelProvider, LLMProviderService } from '@kodus/kodus-common/llm';
+import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import {
-    IIntegrationConfigService,
-    INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { IntegrationEntity } from '@/core/domain/integrations/entities/integration.entity';
-import {
-    AUTH_INTEGRATION_SERVICE_TOKEN,
-    IAuthIntegrationService,
-} from '@/core/domain/authIntegrations/contracts/auth-integration.service.contracts';
+import * as moment from 'moment-timezone';
 import { v4 as uuidv4 } from 'uuid';
-import {
-    INTEGRATION_SERVICE_TOKEN,
-    IIntegrationService,
-} from '@/core/domain/integrations/contracts/integration.service.contracts';
-import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
-import { GitlabAuthDetail } from '@/core/domain/authIntegrations/types/gitlab-auth-detail.type';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import {
-    IParametersService,
-    PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { safelyParseMessageContent } from '@/shared/utils/safelyParseMessageContent';
+import { MCPManagerService } from '../mcp/services/mcp-manager.service';
 import { PinoLoggerService } from './logger/pino.service';
 import { PromptService } from './prompt.service';
-import * as moment from 'moment-timezone';
-import { Commit } from '@/config/types/general/commit.type';
-import { IntegrationConfigEntity } from '@/core/domain/integrationConfigs/entities/integration-config.entity';
-import {
-    GitlabPullRequestState,
-    PullRequestState,
-} from '@/shared/domain/enums/pullRequestState.enum';
-import { AuthMode } from '@/core/domain/platformIntegrations/enums/codeManagement/authMode.enum';
-import { decrypt, encrypt } from '@/shared/utils/crypto';
-import { CodeManagementConnectionStatus } from '@/shared/utils/decorators/validate-code-management-integration.decorator';
-import { LanguageValue } from '@/shared/domain/enums/language-parameter.enum';
-import {
-    getTranslationsForLanguageByCategory,
-    TranslationsCategory,
-} from '@/shared/utils/translations/translations';
-import { getLabelShield } from '@/shared/utils/codeManagement/labels';
-import { Repository } from '@/config/types/general/codeReview.type';
-import { CreateAuthIntegrationStatus } from '@/shared/domain/enums/create-auth-integration-status.enum';
-import { ReviewComment } from '@/config/types/general/codeReview.type';
-import { getSeverityLevelShield } from '@/shared/utils/codeManagement/severityLevel';
-import { getCodeReviewBadge } from '@/shared/utils/codeManagement/codeReviewBadge';
-import { hasKodyMarker } from '@/shared/utils/codeManagement/codeCommentMarkers';
-import { ConfigService } from '@nestjs/config';
-import { GitCloneParams } from '@/core/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
-import { LLMProviderService, LLMModelProvider } from '@kodus/kodus-common/llm';
-import { RepositoryFile } from '@/core/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
-import {
-    isFileMatchingGlob,
-    isFileMatchingGlobCaseInsensitive,
-} from '@/shared/utils/glob-utils';
-import { CacheService } from '@/shared/utils/cache/cache.service';
-import { MCPManagerService } from '../mcp/services/mcp-manager.service';
-import { TreeItem } from '@/config/types/general/tree.type';
 
 @Injectable()
 @IntegrationServiceDecorator(PlatformType.GITLAB, 'codeManagement')
@@ -126,6 +127,7 @@ export class GitlabService
 
     async getPullRequestAuthors(params: {
         organizationAndTeamData: OrganizationAndTeamData;
+        determineBots?: boolean;
     }): Promise<PullRequestAuthor[]> {
         try {
             if (!params?.organizationAndTeamData.organizationId) {
@@ -169,11 +171,21 @@ export class GitlabService
                         if (mr.author?.id) {
                             const userId = mr.author.id.toString();
 
+                            let type = 'user';
+                            if (params.determineBots) {
+                                const userInfo = await gitlabAPI.Users.show(
+                                    mr.author.id,
+                                );
+
+                                type = userInfo?.bot ? 'bot' : 'user';
+                            }
+
                             if (!authorsSet.has(userId)) {
                                 authorsSet.add(userId);
                                 authorsData.set(userId, {
                                     id: mr.author.id.toString(),
                                     name: mr.author.name || mr.author.username,
+                                    type,
                                 });
                             }
                         }
@@ -1065,7 +1077,7 @@ export class GitlabService
 
     async getListMembers(
         params: any,
-    ): Promise<{ name: string; id: string | number }[]> {
+    ): Promise<{ name: string; id: string | number; type?: string }[]> {
         const gitlabAuthDetail = await this.getAuthDetails(
             params.organizationAndTeamData,
         );
@@ -1103,7 +1115,17 @@ export class GitlabService
         const uniqueUsersMap = new Map();
         for (const user of users) {
             if (!uniqueUsersMap.has(user.id)) {
-                uniqueUsersMap.set(user.id, user);
+                let type = 'user';
+                if (params.determineBots) {
+                    const userInfo = await gitlabAPI.Users.show(user.id);
+
+                    type = userInfo?.bot ? 'bot' : 'user';
+                }
+
+                uniqueUsersMap.set(user.id, {
+                    ...user,
+                    type,
+                });
             }
         }
 
@@ -1113,6 +1135,7 @@ export class GitlabService
             return {
                 name: user.name,
                 id: user.id,
+                type: user.type,
             };
         });
     }
@@ -3555,7 +3578,7 @@ export class GitlabService
                 repository,
                 filters = {},
             } = params;
-    
+
             if (!repository?.id) {
                 this.logger.warn({
                     message: 'Repository ID is required to get all files',
@@ -3563,14 +3586,14 @@ export class GitlabService
                     serviceName: 'GitlabService getRepositoryAllFiles',
                     metadata: params,
                 });
-    
+
                 return [];
             }
-    
+
             const gitlabAuthDetail = await this.getAuthDetails(
                 organizationAndTeamData,
             );
-    
+
             if (!gitlabAuthDetail) {
                 this.logger.warn({
                     message: 'GitLab authentication details not found',
@@ -3578,26 +3601,26 @@ export class GitlabService
                     serviceName: 'GitlabService getRepositoryAllFiles',
                     metadata: params,
                 });
-    
+
                 return [];
             }
-    
+
             const gitlabAPI = this.instanceGitlabApi(gitlabAuthDetail);
-    
+
             const {
                 filePatterns,
                 excludePatterns,
                 maxFiles = 1000,
             } = filters ?? {};
-    
+
             let branch = filters?.branch;
-    
+
             if (!branch || branch.length === 0) {
                 branch = await this.getDefaultBranch({
                     organizationAndTeamData,
                     repository,
                 });
-    
+
                 if (!branch) {
                     this.logger.warn({
                         message: 'Default branch not found for repository',
@@ -3605,36 +3628,37 @@ export class GitlabService
                         serviceName: 'GitlabService getRepositoryAllFiles',
                         metadata: params,
                     });
-    
+
                     return [];
                 }
             }
-    
+
             // Extract base directories from filePatterns
             const baseDirectories = this.extractBaseDirectoriesFromPatterns(
                 filePatterns || [],
             );
-    
+
             let allFiles: RepositoryFile[] = [];
-    
+
             // If we have specific directories, search only them
             if (baseDirectories.length > 0) {
                 // Search files from each specific directory
                 for (const baseDir of baseDirectories) {
                     try {
-                        const trees = await gitlabAPI.Repositories.allRepositoryTrees(
-                            repository.id,
-                            {
-                                ref: branch,
-                                path: baseDir,
-                                recursive: true, // Only search within this directory
-                            },
-                        );
-    
+                        const trees =
+                            await gitlabAPI.Repositories.allRepositoryTrees(
+                                repository.id,
+                                {
+                                    ref: branch,
+                                    path: baseDir,
+                                    recursive: true, // Only search within this directory
+                                },
+                            );
+
                         const files = trees
                             .filter((file) => file.type === 'blob')
                             .map((file) => this.transformRepositoryFile(file));
-    
+
                         allFiles.push(...files);
                     } catch (dirError) {
                         this.logger.warn({
@@ -3655,19 +3679,19 @@ export class GitlabService
                         recursive: true,
                     },
                 );
-    
+
                 allFiles = trees
                     .filter((file) => file.type === 'blob')
                     .map((file) => this.transformRepositoryFile(file));
             }
-    
+
             // Filter files by patterns (if any pattern does not have a clear base directory)
             const filteredFiles: RepositoryFile[] = [];
             for (const file of allFiles) {
                 if (maxFiles > 0 && filteredFiles.length >= maxFiles) {
                     break;
                 }
-    
+
                 if (
                     filePatterns &&
                     filePatterns.length > 0 &&
@@ -3675,7 +3699,7 @@ export class GitlabService
                 ) {
                     continue;
                 }
-    
+
                 if (
                     excludePatterns &&
                     excludePatterns.length > 0 &&
@@ -3683,10 +3707,10 @@ export class GitlabService
                 ) {
                     continue;
                 }
-    
+
                 filteredFiles.push(file);
             }
-    
+
             this.logger.log({
                 message: `Retrieved ${filteredFiles.length} files from repository`,
                 context: GitlabService.name,
@@ -3697,7 +3721,7 @@ export class GitlabService
                     baseDirectoriesSearched: baseDirectories,
                 },
             });
-    
+
             return filteredFiles;
         } catch (error) {
             this.logger.error({
@@ -3707,22 +3731,18 @@ export class GitlabService
                 error: error.message,
                 metadata: params,
             });
-    
+
             return [];
         }
     }
-    
-    private extractBaseDirectoriesFromPatterns(
-        patterns: string[],
-    ): string[] {
+
+    private extractBaseDirectoriesFromPatterns(patterns: string[]): string[] {
         const globChars = ['*', '?', '{', '}', '[', ']', '!'];
         const baseDirs = new Set<string>();
-    
+
         for (const pattern of patterns) {
-            const normalized = pattern
-                .replace(/^\/+/, '')
-                .replace(/\\/g, '/');
-    
+            const normalized = pattern.replace(/^\/+/, '').replace(/\\/g, '/');
+
             if (!globChars.some((char) => normalized.includes(char))) {
                 const lastSlash = normalized.lastIndexOf('/');
                 if (lastSlash > 0) {
@@ -3730,23 +3750,23 @@ export class GitlabService
                 }
                 continue;
             }
-    
+
             const parts = normalized.split('/');
             const basePathParts: string[] = [];
-    
+
             for (const part of parts) {
                 if (globChars.some((char) => part.includes(char))) {
                     break;
                 }
                 basePathParts.push(part);
             }
-    
+
             if (basePathParts.length > 0) {
                 const basePath = basePathParts.join('/');
                 baseDirs.add(basePath.replace(/\/+$/, ''));
             }
         }
-    
+
         return Array.from(baseDirs)
             .filter((dir) => dir.length > 0)
             .sort();
@@ -4052,9 +4072,9 @@ export class GitlabService
                     return {
                         path: fullPath,
                         type: 'directory' as const,
-                        sha: item.id, 
+                        sha: item.id,
                         size: undefined,
-                        url: undefined, 
+                        url: undefined,
                         hasChildren: true,
                     };
                 });

@@ -16,6 +16,10 @@ import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
 } from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import {
+    IOrganizationParametersService,
+    ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
+} from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
 import { stripCurlyBracesFromUUIDs } from '@/core/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
@@ -29,6 +33,7 @@ import {
     IExecuteAutomationService,
 } from '@/shared/domain/contracts/execute.automation.service.contracts';
 import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
+import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 import { getMappedPlatform } from '@/shared/utils/webhooks';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
@@ -69,6 +74,9 @@ export class RunCodeReviewAutomationUseCase {
 
         private readonly permissionValidationService: PermissionValidationService,
         private readonly autoAssignLicenseUseCase: AutoAssignLicenseUseCase,
+
+        @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
+        private readonly organizationParametersService: IOrganizationParametersService,
 
         private logger: PinoLoggerService,
     ) {}
@@ -414,6 +422,24 @@ export class RunCodeReviewAutomationUseCase {
                         automationId: automations[0].uuid,
                     };
 
+                    // Check if user is ignored BEFORE validation (to handle Trial licenses)
+                    const isIgnored = await this.isUserIgnored(
+                        organizationAndTeamData,
+                        params?.userGitId,
+                    );
+
+                    if (isIgnored) {
+                        this.logger.log({
+                            message: 'User is ignored, skipping automation',
+                            context: RunCodeReviewAutomationUseCase.name,
+                            metadata: {
+                                organizationAndTeamData,
+                                userGitId: params?.userGitId,
+                            },
+                        });
+                        return null;
+                    }
+
                     // Validação centralizada de permissões usando PermissionValidationService
                     const validationResult =
                         await this.permissionValidationService.validateExecutionPermissions(
@@ -664,5 +690,28 @@ export class RunCodeReviewAutomationUseCase {
                 },
             });
         }
+    }
+
+    private async isUserIgnored(
+        organizationAndTeamData: OrganizationAndTeamData,
+        userGitId?: string,
+    ): Promise<boolean> {
+        if (!userGitId) {
+            return false;
+        }
+
+        const config = await this.organizationParametersService.findByKey(
+            OrganizationParametersKey.AUTO_LICENSE_ASSIGNMENT,
+            organizationAndTeamData,
+        );
+
+        if (
+            config?.configValue?.ignoredUsers?.length > 0 &&
+            config?.configValue?.ignoredUsers.includes(userGitId)
+        ) {
+            return true;
+        }
+
+        return false;
     }
 }

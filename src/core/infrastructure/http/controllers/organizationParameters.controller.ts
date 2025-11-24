@@ -8,31 +8,34 @@ import {
     Action,
     ResourceType,
 } from '@/core/domain/permissions/enums/permissions.enum';
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
 import { ProviderService } from '@/core/infrastructure/adapters/services/providers/provider.service';
+import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
 
+import { UserRequest } from '@/config/types/http/user-request.type';
+import { DeleteByokConfigUseCase } from '@/core/application/use-cases/organizationParameters/delete-byok-config.use-case';
 import {
+    GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN,
+    GetCockpitMetricsVisibilityUseCase,
+} from '@/core/application/use-cases/organizationParameters/get-cockpit-metrics-visibility.use-case';
+import { IgnoreBotsUseCase } from '@/core/application/use-cases/organizationParameters/ignore-bots.use-case';
+import { ICockpitMetricsVisibility } from '@/core/domain/organizationParameters/interfaces/cockpit-metrics-visibility.interface';
+import {
+    BadRequestException,
     Body,
     Controller,
     Delete,
     Get,
+    Inject,
     Post,
-    Put,
     Query,
     UseGuards,
 } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
 import {
-    PolicyGuard,
     CheckPolicies,
+    PolicyGuard,
 } from '../../adapters/services/permissions/policy.guard';
 import { checkPermissions } from '../../adapters/services/permissions/policy.handlers';
-import { DeleteByokConfigUseCase } from '@/core/application/use-cases/organizationParameters/delete-byok-config.use-case';
-import { 
-    GetCockpitMetricsVisibilityUseCase,
-    GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN
-} from '@/core/application/use-cases/organizationParameters/get-cockpit-metrics-visibility.use-case';
-import { ICockpitMetricsVisibility } from '@/core/domain/organizationParameters/interfaces/cockpit-metrics-visibility.interface';
-import { Inject } from '@nestjs/common';
 
 @Controller('organization-parameters')
 export class OrgnizationParametersController {
@@ -44,6 +47,10 @@ export class OrgnizationParametersController {
         private readonly deleteByokConfigUseCase: DeleteByokConfigUseCase,
         @Inject(GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN)
         private readonly getCockpitMetricsVisibilityUseCase: GetCockpitMetricsVisibilityUseCase,
+        private readonly ignoreBotsUseCase: IgnoreBotsUseCase,
+
+        @Inject(REQUEST)
+        private readonly request: UserRequest,
     ) {}
 
     @Post('/create-or-update')
@@ -116,7 +123,10 @@ export class OrgnizationParametersController {
         @Query('organizationId') organizationId: string,
         @Query('configType') configType: 'main' | 'fallback',
     ) {
-        return await this.deleteByokConfigUseCase.execute(organizationId, configType);
+        return await this.deleteByokConfigUseCase.execute(
+            organizationId,
+            configType,
+        );
     }
 
     @Get('/cockpit-metrics-visibility')
@@ -153,5 +163,28 @@ export class OrgnizationParametersController {
                 teamId: body.teamId,
             },
         );
+    }
+
+    @Post('/ignore-bots')
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(
+        checkPermissions(Action.Update, ResourceType.OrganizationSettings),
+    )
+    public async ignoreBots(
+        @Body()
+        body: {
+            teamId: string;
+        },
+    ) {
+        const organizationId = this.request?.user?.organization?.uuid;
+
+        if (!organizationId) {
+            throw new BadRequestException('Missing organizationId in request');
+        }
+
+        return await this.ignoreBotsUseCase.execute({
+            organizationId,
+            teamId: body.teamId,
+        });
     }
 }

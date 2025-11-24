@@ -1,8 +1,8 @@
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { PullRequestHandlerService } from '@/core/infrastructure/adapters/services/codeBase/pullRequestManager.service';
 import { PULL_REQUEST_MANAGER_SERVICE_TOKEN } from '@/core/domain/codeBase/contracts/PullRequestManagerService.contract';
+import { PullRequestHandlerService } from '@/core/infrastructure/adapters/services/codeBase/pullRequestManager.service';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
@@ -23,23 +23,20 @@ export class GetCodeManagementMemberListUseCase implements IUseCase {
         private readonly logger: PinoLoggerService,
     ) {}
 
-    public async execute(): Promise<
-        { name: string; id: string | number }[]
-    > {
+    public async execute(): Promise<{ name: string; id: string | number }[]> {
         const organizationAndTeamData: OrganizationAndTeamData = {
             organizationId: this.request.user.organization.uuid,
         };
 
-        const platformMembers =
-            await this.fetchMembersFromCodeIntegration(organizationAndTeamData);
+        const platformMembers = await this.fetchMembersFromCodeIntegration(
+            organizationAndTeamData,
+        );
 
         if (platformMembers.length > 0) {
             return platformMembers;
         }
 
-        return await this.fetchMembersFromPullRequests(
-            organizationAndTeamData,
-        );
+        return await this.fetchMembersFromPullRequests(organizationAndTeamData);
     }
 
     private async fetchMembersFromCodeIntegration(
@@ -67,7 +64,7 @@ export class GetCodeManagementMemberListUseCase implements IUseCase {
 
     private async fetchMembersFromPullRequests(
         organizationAndTeamData: OrganizationAndTeamData,
-    ): Promise<{ name: string; id: string | number }[]> {
+    ): Promise<{ name: string; id: string | number; type?: string }[]> {
         try {
             const authors =
                 await this.pullRequestHandlerService.getPullRequestAuthorsWithCache(
