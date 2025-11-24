@@ -67,6 +67,7 @@ import { TeamsModule } from './team.module';
         OrganizationParametersService,
         GetModelsByProviderUseCase,
         DeleteByokConfigUseCase,
+        IgnoreBotsUseCase,
         GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN,
     ],
 })
