@@ -43,8 +43,8 @@ import { TeamMembersModule } from './teamMembers.module';
         forwardRef(() => PullRequestsModule),
         forwardRef(() => OrganizationParametersModule),
         forwardRef(() => CodeReviewExecutionModule),
-        AuthIntegrationModule,
-        LicenseModule,
+        forwardRef(() => AuthIntegrationModule),
+        forwardRef(() => LicenseModule),
         forwardRef(() => PermissionValidationModule),
     ],
     providers: [

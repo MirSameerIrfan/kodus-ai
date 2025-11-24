@@ -44,7 +44,7 @@ import { WebhookLogModule } from './webhookLog.module';
         forwardRef(() => CodebaseModule),
         forwardRef(() => OrganizationParametersModule),
         forwardRef(() => WebhookLogModule),
-        LicenseModule,
+        forwardRef(() => LicenseModule),
         forwardRef(() => PermissionValidationModule),
     ],
     providers: [

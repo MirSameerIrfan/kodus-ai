@@ -23,7 +23,7 @@ import { WebhookLogModule } from './webhookLog.module';
         forwardRef(() => PlatformIntegrationModule),
         forwardRef(() => OrganizationParametersModule),
         forwardRef(() => WebhookLogModule),
-        LicenseModule,
+        forwardRef(() => LicenseModule),
         forwardRef(() => PermissionValidationModule),
     ],
     providers: [

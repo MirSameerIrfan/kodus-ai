@@ -29,7 +29,7 @@ import { TeamMembersModule } from './teamMembers.module';
         forwardRef(() => IntegrationConfigModule),
         forwardRef(() => TeamMembersModule),
         forwardRef(() => OrganizationModule),
-        ProfileConfigModule,
+        forwardRef(() => ProfileConfigModule),
     ],
     providers: [
         ...UseCases,
