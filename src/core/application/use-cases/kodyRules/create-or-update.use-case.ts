@@ -82,7 +82,6 @@ export class CreateOrUpdateKodyRulesUseCase {
                 );
             }
 
-            // ✅ Se tem repositoryId e rule text, processa referências
             if (result.uuid && kodyRule.repositoryId && kodyRule.rule) {
                 this.logger.log({
                     message:
@@ -98,7 +97,6 @@ export class CreateOrUpdateKodyRulesUseCase {
                     },
                 });
 
-                // ✅ Processa referências (status fica no Context OS)
                 this.detectAndSaveReferencesAsync(
                     result.uuid,
                     kodyRule.rule,
@@ -186,7 +184,6 @@ export class CreateOrUpdateKodyRulesUseCase {
 
                     let repositoryName: string;
                     try {
-                        // Para repositoryId "global", usar o próprio ID como nome
                         if (repositoryId === 'global') {
                             repositoryName = 'global';
                         } else {
@@ -235,8 +232,6 @@ export class CreateOrUpdateKodyRulesUseCase {
                         },
                     ];
 
-                    // ✅ Usa o serviço compartilhado para detecção e salvamento
-                    // KodyRules podem ser globais ou específicas de repositório
                     const contextReferenceId =
                         await this.contextReferenceDetectionService.detectAndSaveReferences(
                             {
@@ -249,7 +244,6 @@ export class CreateOrUpdateKodyRulesUseCase {
                             },
                         );
 
-                    // ✅ Atualiza apenas o contextReferenceId na kodyRule
                     await this.kodyRulesService.updateRuleReferences(
                         organizationAndTeamData.organizationId,
                         ruleId,

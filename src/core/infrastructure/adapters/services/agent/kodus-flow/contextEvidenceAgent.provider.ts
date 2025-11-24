@@ -22,6 +22,7 @@ import type {
     FileChange,
 } from '@/config/types/general/codeReview.type';
 import type { ContextEvidence } from '@context-os-core/interfaces';
+import { IKodyRule } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
 
 export interface ContextEvidenceAgentResult {
     evidences?: ContextEvidence[];
@@ -97,31 +98,31 @@ export class ContextEvidenceAgentProvider extends BaseAgentProvider {
         });
     }
 
-    private async createOrchestration() {
-        const llmAdapter = super.createLLMAdapter(
-            'ContextEvidenceAgent',
-            'contextEvidenceAgent',
-        );
+    // private async createOrchestration() {
+    //     const llmAdapter = super.createLLMAdapter(
+    //         'ContextEvidenceAgent',
+    //         'contextEvidenceAgent',
+    //     );
 
-        this.orchestration = await createOrchestration({
-            tenantId: 'kodus-context-evidence-agent',
-            llmAdapter,
-            mcpAdapter: this.mcpAdapter,
-            observability:
-                this.observabilityService.createAgentObservabilityConfig(
-                    this.config,
-                    'context-script-agent',
-                ),
-            storage: {
-                type: StorageEnum.MONGODB,
-                connectionString:
-                    this.observabilityService.buildConnectionString(
-                        this.config,
-                    ),
-                database: this.config.database,
-            },
-        });
-    }
+    //     this.orchestration = await createOrchestration({
+    //         tenantId: 'kodus-context-evidence-agent',
+    //         llmAdapter,
+    //         mcpAdapter: this.mcpAdapter,
+    //         observability:
+    //             this.observabilityService.createAgentObservabilityConfig(
+    //                 this.config,
+    //                 'context-script-agent',
+    //             ),
+    //         storage: {
+    //             type: StorageEnum.MONGODB,
+    //             connectionString:
+    //                 this.observabilityService.buildConnectionString(
+    //                     this.config,
+    //                 ),
+    //             database: this.config.database,
+    //         },
+    //     });
+    // }
 
     private buildPrompt(
         file: FileChange,
@@ -129,42 +130,20 @@ export class ContextEvidenceAgentProvider extends BaseAgentProvider {
         dependencies?: ContextMCPDependency[],
         promptOverrides?: CodeReviewConfig['v2PromptOverrides'],
         repoContext?: string,
+        kodyRule?: Partial<IKodyRule>,
     ): string {
         const linesChanged = file.patchWithLinesStr?.split('\n').length ?? 0;
         const dependencySection = this.formatDependencies(dependencies);
-        const overridesSection = this.formatOverrides(promptOverrides);
         const metadataSection =
             repoContext && repoContext.trim().length
                 ? repoContext.trim()
                 : '- Repository metadata not provided.';
-        return `You are a senior context analyst for code reviews. You must reason step by step, decide if any MCP tool should run, and publish structured evidences when acceleration data is valuable.
 
-### Mission Priority
-Your primary directive is to execute the specific instructions found in "Prompt Overrides".
-You are tool-agnostic: if an override explicitly mentions ANY MCP tool or action (e.g. "MCP read_file", "check vulnerabilities", "query database", "search docs"), you MUST evaluate if the current file diff warrants that action using the available tools.
+        const directiveSection = kodyRule
+            ? this.buildKodyRuleMission(kodyRule)
+            : this.buildOverridesMission(promptOverrides);
 
-1. Check "Prompt Overrides": Do they ask for specific tools/context for this type of change?
-2. Analyze Diff: Does this file change match the criteria in the overrides?
-   - IMPORTANT: Focus STRICTLY on the 'diff snippet' and 'filename' provided below. Do not hallucinate changes not present in the diff.
-   - Example A: User asks to "check security on deps changes". Diff is in 'package.json'. -> MATCH -> Execute Tool (e.g. security_scan).
-   - Example B: User asks to "query performance metrics". Diff is a SQL query. -> MATCH -> Execute Tool (e.g. db_query).
-   - Example C: User asks to "check security". Diff is 'styles.css'. -> NO MATCH -> Do nothing.
-
-### Mission
-1. Inspect the repository / PR context and the diff for this file.
-2. Determine whether invoking an MCP tool adds meaningful context for the configured categories/severities. Many diffs (formatting, comments, docs) do **not** require MCP execution—detect these and return an empty evidence list.
-3. If an MCP tool is justified, verify all required arguments. When any argument is unknown, attempt to discover it using the available tools; if still unavailable, skip the MCP and record the skip reason in the actions log.
-4. Execute only the MCP tools that match the diff impact; avoid redundant or irrelevant calls.
-5. Capture each successful tool execution as a ContextEvidence entry.
-6. IMPORTANT: Do not call the same tool with the same arguments twice. If a tool fails or returns insufficient info, try a different approach or stop.
-
-### Argument Resolution Strategy (Tool Agnostic)
-When a required tool needs an argument you don't have (e.g. an ID, URI, hash, or specific path):
-1. **Identify the Missing Argument:** Look at the tool's schema in <AVAILABLE TOOLS>.
-2. **Extract Context from Diff:** Analyze function names, variable names, library imports, and comments in both the old and new code within the diff to find specific keywords to use as arguments for your tool calls.
-3. **Search for a Resolver:** Check if any OTHER available tool can provide this information. Look for tools with verbs like 'get', 'list', 'resolve', 'find' or 'search' that might output the missing data.
-4. **Chain Execution:** Execute the resolver tool first, extract the data from its result, and THEN execute the main tool.
-   - *Generic Example:* Main tool 'fetch_data(id)' needs 'id'. Available tool 'find_id(name)' exists. -> Call 'find_id("target_name")' -> Get 'id' -> Call 'fetch_data(id)'.
+        return `You are an **Evidence Detective Agent**. Your sole mission is to analyze code changes and decide if external context from MCP tools is needed. You think step-by-step, trust only facts from your tools, and avoid making assumptions.
 
 ### How to Read the Diff Snippet
 The diff snippet uses a standard format to show changes. Pay close attention to both what was removed and what was added to understand the developer's intent.
@@ -200,9 +179,7 @@ ${diffSnippet ?? file.patchWithLinesStr ?? 'N/A'}
 ### MCP Dependencies (JSON)
 ${dependencySection}
 
-### Prompt Overrides (category / severity / generation style)
-${overridesSection}
-
+${directiveSection}
 ### Output Format
 When you have finished your analysis and tool executions (or decided no tools are needed), you MUST use the "final_answer" action.
 The content of your final_answer MUST be a JSON object with this structure:
@@ -211,6 +188,58 @@ The content of your final_answer MUST be a JSON object with this structure:
   "actionsLog": "optional step-by-step log"
 }
 `;
+    }
+
+    private buildKodyRuleMission(kodyRule: Partial<IKodyRule>): string {
+        return `
+### Core Mission: KodyRule Execution
+Your goal is to act as a **strict executor** for the pre-defined KodyRule. Follow these steps precisely:
+1.  **Analyze:** First, understand the **KodyRule Instruction** and the **File Context** diff. What is the rule's exact condition?
+2.  **Decide:** Does the code change trigger the rule's condition? A diff irrelevant to the rule requires **no action**.
+3.  **Execute & Report:** If justified, execute the **exact** tool from the dependencies. If no action is needed, state this in the \`actionsLog\`.
+
+### Guiding Principles for KodyRules
+1.  **Stop on Failure:** This is your most important rule. If the tool specified in \`MCP Dependencies\` is missing from \`<AVAILABLE TOOLS>\` or its execution fails, your task is complete. Report the error in the \`actionsLog\` and immediately call \`final_answer\`. Do not proceed. Do not try an alternative.
+2.  **Rule-Bound:** Your **only** goal is to enforce the KodyRule. Do not perform any action not described in it.
+3.  **Dependency-Driven:** The \`MCP Dependencies\` list contains the **only** tools you are allowed to use for this rule.
+
+### Argument Resolution Strategy for KodyRules
+-   Extract arguments by matching keywords from the **KodyRule Instruction** and the code diff.
+
+### Primary Directive: KodyRule Details
+**Title:** ${kodyRule.title}
+**Instruction:** ${kodyRule.rule}
+`;
+    }
+
+    private buildOverridesMission(
+        promptOverrides?: CodeReviewConfig['v2PromptOverrides'],
+    ): string {
+        const overridesContent = this.formatOverrides(promptOverrides);
+        if (
+            overridesContent.includes('No overrides provided') ||
+            overridesContent.includes('No relevant overrides provided')
+        ) {
+            return '';
+        }
+
+        return `
+### Core Mission: Custom Prompt Interpretation
+Your goal is to **intelligently interpret** a user's custom instructions (\`Prompt Overrides\`) and apply them to the code change. Follow these steps:
+1.  **Analyze:** Understand the **user's intent** in the \`Prompt Overrides\` and the code change in the **File Context** diff.
+2.  **Decide:** Based on the user's intent, which tool from your \`<AVAILABLE TOOLS>\` is the best fit? An irrelevant diff may require **no action**.
+3.  **Execute & Report:** If an action is justified, execute the chosen tool. If not, state this in the \`actionsLog\`.
+
+### Guiding Principles for Custom Prompts
+-   **Intent-Focused:** Your primary goal is to satisfy the user's intent, even if described in general terms.
+-   **Tool-Flexible:** You can use **any tool** from \`<AVAILABLE TOOLS>\` that seems relevant to the user's request.
+-   **Be Resourceful:** If a tool fails, you are encouraged to try an alternative to fulfill the user's request.
+
+### Argument Resolution Strategy for Custom Prompts
+-   Extract arguments by interpreting the user's request in the \`Prompt Overrides\` and finding corresponding data in the diff.
+
+### Primary Directive: Prompt Overrides
+${overridesContent}`;
     }
 
     private formatDependencies(dependencies?: ContextMCPDependency[]): string {
@@ -230,6 +259,7 @@ The content of your final_answer MUST be a JSON object with this structure:
                     dependency.metadata?.toolInputSchema ??
                     null,
             }));
+
             return JSON.stringify(summarized, null, 2);
         } catch {
             return dependencies
@@ -378,7 +408,9 @@ The content of your final_answer MUST be a JSON object with this structure:
         if (dependencies) {
             for (const dep of dependencies) {
                 const serverName =
-                    (dep.metadata as any)?.providerAlias || dep.provider;
+                    (dep.metadata as any)?.providerName ||
+                    (dep.metadata as any)?.providerAlias ||
+                    dep.provider;
                 if (serverName) {
                     requiredServerNames.add(serverName.toLowerCase());
                 }
@@ -476,9 +508,10 @@ Mindset:
                 scratchpad: {
                     enabled: true,
                     initialState: `# EXECUTION PLAN (Status: Initializing)
+_Instructions: At each step, update this plan in your internal "Thought" process. Mark completed items with [x] and detail your findings in the Context section._
 
 ## 1. TRIGGER ANALYSIS
-[ ] Check if "Prompt Overrides" request specific tools.
+[ ] Check if "Prompt Overrides" or "KodyRule" requests specific tools.
 [ ] Compare file diff with triggers.
 > Triggers Found: null
 
@@ -509,6 +542,7 @@ Mindset:
         dependencies?: ContextMCPDependency[];
         promptOverrides?: CodeReviewConfig['v2PromptOverrides'];
         repoContext?: string;
+        kodyRule?: Partial<IKodyRule>;
     }): Promise<ContextEvidenceAgentResult | null> {
         const {
             organizationAndTeamData,
@@ -516,6 +550,7 @@ Mindset:
             dependencies,
             promptOverrides,
             repoContext,
+            kodyRule,
         } = params;
 
         this.logger.log({
@@ -563,6 +598,7 @@ Mindset:
             dependencies,
             promptOverrides,
             repoContext,
+            kodyRule,
         );
 
         const result = await orchestration.callAgent(

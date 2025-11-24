@@ -40,6 +40,7 @@ import { GET_ADDITIONAL_INFO_HELPER_TOKEN } from '@/shared/domain/contracts/getA
 import { PullRequestsModule } from './pullRequests.module';
 import { PromptsModule } from './prompts.module';
 import { ContextReferenceModule } from './contextReference.module';
+import { KodyRuleDependencyService } from '@/core/infrastructure/adapters/services/kodyRules/kodyRulesDependency.service';
 
 @Module({
     imports: [
@@ -79,6 +80,7 @@ import { ContextReferenceModule } from './contextReference.module';
         },
         KodyRulesValidationService,
         KodyRulesSyncService,
+        KodyRuleDependencyService,
         ExternalReferenceLoaderService,
         {
             provide: GET_ADDITIONAL_INFO_HELPER_TOKEN,
@@ -97,6 +99,7 @@ import { ContextReferenceModule } from './contextReference.module';
         SendRulesNotificationUseCase,
         KodyRulesValidationService,
         KodyRulesSyncService,
+        KodyRuleDependencyService,
         ExternalReferenceLoaderService,
         SyncSelectedRepositoriesKodyRulesUseCase,
         ResyncRulesFromIdeUseCase,

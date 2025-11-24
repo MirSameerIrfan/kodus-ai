@@ -43,6 +43,7 @@ import { FileContextAugmentationService } from '@/core/infrastructure/adapters/s
 import { ContextAugmentationsMap } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
 import { ContextReferenceService } from '@/core/infrastructure/adapters/services/context/context-reference.service';
 import type { ContextDependency } from '@context-os-core/interfaces';
+import { KodyRuleDependencyService } from '@/core/infrastructure/adapters/services/kodyRules/kodyRulesDependency.service';
 
 //#region Interfaces
 // Interface for analyzer response
@@ -119,7 +120,7 @@ export class KodyRulesPrLevelAnalysisService
         private readonly observabilityService: ObservabilityService,
         private readonly externalReferenceLoaderService: ExternalReferenceLoaderService,
         private readonly fileContextAugmentationService: FileContextAugmentationService,
-        private readonly contextReferenceService: ContextReferenceService,
+        private readonly kodyRuleDependencyService: KodyRuleDependencyService,
     ) {}
 
     async analyzeCodeWithAI(
@@ -222,20 +223,47 @@ export class KodyRulesPrLevelAnalysisService
             filteredKodyRules = kodyRulesPrLevel;
         }
 
-        const mcpDependencies =
-            await this.getMcpDependenciesForRules(filteredKodyRules);
+        const augmentationsByFile: Record<string, ContextAugmentationsMap> = {};
+        for (const rule of filteredKodyRules) {
+            if (!rule.contextReferenceId) {
+                continue;
+            }
 
-        const augmentationsByFile =
-            await this.fileContextAugmentationService.augmentFiles(
-                changedFiles,
-                context as any,
-                mcpDependencies,
+            const ruleDependencies =
+                await this.kodyRuleDependencyService.getMcpDependenciesForRules(
+                    [rule],
+                );
+
+            if (ruleDependencies.length > 0) {
+                const ruleAugmentations =
+                    await this.fileContextAugmentationService.augmentFiles(
+                        changedFiles,
+                        context as any,
+                        ruleDependencies,
+                        rule,
+                    );
+
+                for (const fileName in ruleAugmentations) {
+                    if (!augmentationsByFile[fileName]) {
+                        augmentationsByFile[fileName] = {};
+                    }
+                    Object.assign(
+                        augmentationsByFile[fileName],
+                        ruleAugmentations[fileName],
+                    );
+                }
+            }
+        }
+
+        const allMcpDependencies =
+            await this.kodyRuleDependencyService.getMcpDependenciesForRules(
+                filteredKodyRules,
             );
 
         const mcpResultsMap = this.buildMcpResultsFromAugmentations(
             augmentationsByFile,
             filteredKodyRules,
-            mcpDependencies,
+            allMcpDependencies,
         );
 
         const { referencesMap: externalReferencesMap } =
@@ -583,7 +611,6 @@ export class KodyRulesPrLevelAnalysisService
                     continue;
                 }
 
-                // Verificar se o ID está entre blocos de código ```id```
                 const tripleBacktickPattern = new RegExp(
                     `\`\`\`${this.escapeRegex(ruleId)}\`\`\``,
                     'g',
@@ -816,61 +843,12 @@ export class KodyRulesPrLevelAnalysisService
         return allViolatedRules;
     }
 
-    private async getMcpDependenciesForRules(
-        rules: Array<Partial<IKodyRule>>,
-    ): Promise<ContextDependency[]> {
-        const uniqueContextReferenceIds = [
-            ...new Set(
-                rules
-                    .map((rule) => rule.contextReferenceId)
-                    .filter((id): id is string => !!id),
-            ),
-        ];
-
-        if (!uniqueContextReferenceIds.length) {
-            return [];
-        }
-
-        const references = await Promise.all(
-            uniqueContextReferenceIds.map((id) =>
-                this.contextReferenceService.findById(id),
-            ),
-        );
-
-        const mcpDependencies: ContextDependency[] = [];
-        const seenDependencies = new Set<string>();
-
-        for (const ref of references) {
-            if (!ref) {
-                continue;
-            }
-            const requirements = ref.requirements ?? [];
-            for (const requirement of requirements) {
-                const dependencies = requirement.dependencies ?? [];
-                for (const dep of dependencies) {
-                    if (dep.type === 'mcp' && !seenDependencies.has(dep.id)) {
-                        mcpDependencies.push({
-                            ...dep,
-                            metadata: {
-                                ...((dep.metadata ?? {}) as object),
-                                contextReferenceId: ref.uuid,
-                            },
-                        });
-                        seenDependencies.add(dep.id);
-                    }
-                }
-            }
-        }
-
-        return mcpDependencies;
-    }
-
     private buildMcpResultsFromAugmentations(
         augmentationsByFile: Record<string, ContextAugmentationsMap>,
         rules: Array<Partial<IKodyRule>>,
         mcpDependencies: ContextDependency[],
     ): Map<string, Record<string, unknown>> {
-        const mcpResultsMap = new Map<string, Record<string, unknown>>();
+        const mcpResultsMap = new Map<string, Record<string, any>>();
         if (
             !mcpDependencies ||
             mcpDependencies.length === 0 ||
@@ -894,22 +872,21 @@ export class KodyRulesPrLevelAnalysisService
         }
 
         for (const [ruleId, dependencies] of dependenciesByRule.entries()) {
-            const ruleAugmentations: Record<string, unknown> = {};
+            const allOutputs: any[] = [];
             for (const dep of dependencies) {
                 for (const fileName in augmentationsByFile) {
                     const fileAugmentations = augmentationsByFile[fileName];
                     for (const pathKey in fileAugmentations) {
-                        if (!ruleAugmentations[pathKey]) {
-                            ruleAugmentations[pathKey] = { outputs: [] };
+                        const augmentation = fileAugmentations[pathKey];
+                        if (augmentation && augmentation.outputs) {
+                            allOutputs.push(...augmentation.outputs);
                         }
-                        (ruleAugmentations[pathKey] as any).outputs.push(
-                            ...fileAugmentations[pathKey].outputs,
-                        );
                     }
                 }
             }
-            if (Object.keys(ruleAugmentations).length > 0) {
-                mcpResultsMap.set(ruleId, ruleAugmentations);
+
+            if (allOutputs.length > 0) {
+                mcpResultsMap.set(ruleId, { outputs: allOutputs });
             }
         }
 

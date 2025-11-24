@@ -497,12 +497,10 @@ export class ContextReferenceDetectionService {
                 byokConfig: params.byokConfig,
             });
 
-        const allDependencies: ContextDependency[] = [];
-        if (detection.requirements && detection.requirements.length > 0) {
-            allDependencies.push(
-                ...(detection.requirements[0].dependencies || []),
-            );
-        }
+        const allDependencies: ContextDependency[] =
+            detection.requirements && detection.requirements.length > 0
+                ? [...(detection.requirements[0].dependencies || [])]
+                : [];
 
         const references = allDependencies.map((dep) => {
             if (dep.type === 'mcp') {
@@ -658,6 +656,7 @@ export class ContextReferenceDetectionService {
             toolAliases,
             allowedTools,
             toolMetadata,
+            mcpConnections,
         );
 
         const allSyncErrors = [...syncErrors, ...normalizedDependencies.errors];
@@ -780,6 +779,7 @@ export class ContextReferenceDetectionService {
         toolAliases: Map<string, Map<string, string>>,
         allowedTools: Map<string, Set<string>>,
         toolMetadata: Map<string, MCPToolMetadata>,
+        mcpConnections: MCPServerConfig[],
     ): {
         dependencies: ContextDependency[];
         errors: IPromptReferenceSyncError[];
@@ -797,6 +797,7 @@ export class ContextReferenceDetectionService {
                 providerAliases,
                 toolAliases,
                 allowedTools,
+                mcpConnections,
             );
             if (normalized.errors.length) {
                 errors.push(...normalized.errors);
@@ -820,6 +821,7 @@ export class ContextReferenceDetectionService {
         providerAliases: Map<string, string>,
         toolAliases: Map<string, Map<string, string>>,
         allowedTools: Map<string, Set<string>>,
+        mcpConnections: MCPServerConfig[],
     ): {
         dependency?: ContextDependency;
         errors: IPromptReferenceSyncError[];
@@ -829,9 +831,11 @@ export class ContextReferenceDetectionService {
         }
 
         const originalProvider = this.resolveDependencyProvider(dependency);
-        const canonicalProvider = originalProvider
-            ? this.resolveCanonicalProvider(originalProvider, providerAliases)
+        const connection = originalProvider
+            ? this.findConnectionByAlias(originalProvider, mcpConnections)
             : undefined;
+
+        const canonicalProvider = connection?.provider?.trim();
 
         const errors: IPromptReferenceSyncError[] = [];
 
@@ -865,6 +869,10 @@ export class ContextReferenceDetectionService {
         const metadata: Record<string, unknown> = {
             ...(dependency.metadata ?? {}),
         };
+
+        if (connection?.name) {
+            metadata.providerName = connection.name;
+        }
 
         metadata.provider = finalProvider;
         if (
@@ -1198,6 +1206,31 @@ export class ContextReferenceDetectionService {
             .replace(/[^a-z0-9]/g, '');
 
         return normalized || undefined;
+    }
+
+    private findConnectionByAlias(
+        alias: string,
+        mcpConnections: MCPServerConfig[],
+    ): MCPServerConfig | undefined {
+        const normalizedAlias = this.normalizeProviderKey(alias);
+        if (!normalizedAlias) {
+            return undefined;
+        }
+
+        for (const connection of mcpConnections) {
+            const candidates = [
+                connection.name,
+                connection.provider,
+                connection.url,
+            ];
+            for (const candidate of candidates) {
+                if (this.normalizeProviderKey(candidate) === normalizedAlias) {
+                    return connection;
+                }
+            }
+        }
+
+        return undefined;
     }
 
     private buildScopePath(

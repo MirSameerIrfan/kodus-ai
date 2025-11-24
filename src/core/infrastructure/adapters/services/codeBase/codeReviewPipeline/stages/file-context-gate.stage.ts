@@ -34,9 +34,9 @@ export class FileContextGateStage extends BasePipelineStage<CodeReviewPipelineCo
         const augmentationsByFile =
             await this.fileContextAugmentationService.augmentFiles(
                 context.changedFiles,
-                context,
-                mcpDependencies,
-            );
+                        context,
+                        mcpDependencies,
+        );
 
         return this.updateContext(context, (draft) => {
             draft.augmentationsByFile = augmentationsByFile;

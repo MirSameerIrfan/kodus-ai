@@ -1,5 +1,6 @@
 import z from 'zod';
 import { getDefaultKodusConfigFile } from '../../validateCodeReviewConfigFile';
+import { getTextOrDefault } from './prompt.helpers';
 
 //#region classifier
 export const kodyRulesClassifierSchema = z.object({
@@ -79,7 +80,12 @@ If the panel is uncertain about a finding, treat it as non-violating and omit it
 };
 
 export const prompt_kodyrules_classifier_user = (payload: any) => {
-    const { patchWithLinesStr, kodyRules, externalReferencesMap, mcpResultsMap } = payload;
+    const {
+        patchWithLinesStr,
+        kodyRules,
+        externalReferencesMap,
+        mcpResultsMap,
+    } = payload;
 
     let externalReferencesSection = '';
     if (externalReferencesMap && externalReferencesMap.size > 0) {
@@ -103,13 +109,15 @@ export const prompt_kodyrules_classifier_user = (payload: any) => {
     let mcpResultsSection = '';
     if (mcpResultsMap && mcpResultsMap.size > 0) {
         mcpResultsSection = '\n<mcpResults>';
-        mcpResultsMap.forEach((results: Record<string, unknown>, ruleUuid: string) => {
-            const rule = kodyRules.find((r: any) => r.uuid === ruleUuid);
-            if (rule) {
-                mcpResultsSection += `\n\nRule: ${rule.title} (${ruleUuid})`;
-                mcpResultsSection += `\nMCP Tool Outputs:\n${JSON.stringify(results, null, 2)}`;
-            }
-        });
+        mcpResultsMap.forEach(
+            (results: Record<string, unknown>, ruleUuid: string) => {
+                const rule = kodyRules.find((r: any) => r.uuid === ruleUuid);
+                if (rule) {
+                    mcpResultsSection += `\n\nRule: ${rule.title} (${ruleUuid})`;
+                    mcpResultsSection += `\nMCP Tool Outputs:\n${JSON.stringify(results, null, 2)}`;
+                }
+            },
+        );
         mcpResultsSection += '\n</mcpResults>\n';
     }
 
@@ -328,20 +336,11 @@ export const prompt_kodyrules_suggestiongeneration_user = (payload: any) => {
         filteredKodyRules,
         updatedSuggestions,
         externalReferencesMap,
+        mcpResultsMap,
     } = payload;
     const overrides = payload?.v2PromptOverrides || {};
 
     const defaults = getDefaultKodusConfigFile()?.v2PromptOverrides;
-
-    const limitText = (text: string, max = 2000): string =>
-        text.length > max ? text.slice(0, max) : text;
-    const getTextOrDefault = (
-        text: string | undefined,
-        fallbackText: string,
-    ): string =>
-        text && typeof text === 'string' && text.trim().length
-            ? limitText(text.trim())
-            : fallbackText;
 
     const mainGenText = getTextOrDefault(
         overrides?.generation?.main,
@@ -357,7 +356,7 @@ export const prompt_kodyrules_suggestiongeneration_user = (payload: any) => {
                 (r: any) => r.uuid === ruleUuid,
             );
             if (rule && refs.length > 0) {
-                externalReferencesSection += `\nRule: ${rule.title} (${ruleUuid}):\n`;
+                externalReferencesSection += `\nRule: ${rule.title} (${rule.uuid}):\n`;
                 refs.forEach((ref: any) => {
                     externalReferencesSection += `  File: ${ref.filePath}\n`;
                     if (ref.description) {
@@ -367,6 +366,27 @@ export const prompt_kodyrules_suggestiongeneration_user = (payload: any) => {
                 });
             }
         });
+    }
+
+    let mcpResultsSection = '';
+    if (mcpResultsMap && mcpResultsMap.size > 0) {
+        mcpResultsSection = '\n\n<mcpResults>';
+        mcpResultsMap.forEach(
+            (results: Record<string, unknown>, ruleUuid: string) => {
+                const rule = filteredKodyRules.find(
+                    (r: any) => r.uuid === ruleUuid,
+                );
+                if (rule) {
+                    mcpResultsSection += `\n\nRule: ${rule.title} (${rule.uuid})`;
+                    mcpResultsSection += `\nMCP Tool Outputs:\n${JSON.stringify(
+                        results,
+                        null,
+                        2,
+                    )}`;
+                }
+            },
+        );
+        mcpResultsSection += '\n</mcpResults>\n';
     }
 
     return `
@@ -411,6 +431,7 @@ kodyRules:
 
 ${JSON.stringify(filteredKodyRules, null, 2)}
 ${externalReferencesSection}
+${mcpResultsSection}
 
 ### Panel Review of Code Review Suggestion Object
 

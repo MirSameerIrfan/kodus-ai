@@ -16,6 +16,7 @@ import type {
     ContextEvidence,
 } from '@context-os-core/interfaces';
 import { ContextAugmentationsMap } from './code-review-context-pack.service';
+import { IKodyRule } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
 
 @Injectable()
 export class FileContextAugmentationService {
@@ -30,6 +31,7 @@ export class FileContextAugmentationService {
         files: FileChange[],
         context: CodeReviewPipelineContext,
         mcpDependencies: ContextDependency[],
+        kodyRule?: Partial<IKodyRule>,
     ): Promise<Record<string, ContextAugmentationsMap>> {
         if (!files?.length || !mcpDependencies?.length) {
             return {};
@@ -59,6 +61,7 @@ export class FileContextAugmentationService {
                         context,
                         extractedDependencies,
                         dependencyLookup,
+                        kodyRule,
                     ),
                 ),
             ),
@@ -79,6 +82,7 @@ export class FileContextAugmentationService {
         context: CodeReviewPipelineContext,
         dependencies: ContextMCPDependency[],
         dependencyLookup: Map<string, ContextMCPDependency>,
+        kodyRule?: Partial<IKodyRule>,
     ) {
         try {
             const baseOverrides = this.getBasePromptOverrides(context);
@@ -91,6 +95,7 @@ export class FileContextAugmentationService {
                     dependencies,
                     promptOverrides: baseOverrides,
                     repoContext: this.buildRepositoryContext(context),
+                    kodyRule: kodyRule,
                 },
             );
 
