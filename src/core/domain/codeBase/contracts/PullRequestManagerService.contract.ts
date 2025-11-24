@@ -1,7 +1,7 @@
 import { FileChange } from '@/config/types/general/codeReview.type';
+import { Commit } from '@/config/types/general/commit.type';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { PullRequestAuthor } from '../../platformIntegrations/types/codeManagement/pullRequests.type';
-import { Commit } from '@/config/types/general/commit.type';
 
 export const PULL_REQUEST_MANAGER_SERVICE_TOKEN = Symbol(
     'PullRequestManagerService',
@@ -24,6 +24,7 @@ export interface IPullRequestManagerService {
 
     getPullRequestAuthorsWithCache(
         organizationAndTeamData: OrganizationAndTeamData,
+        determineBots?: boolean,
     ): Promise<PullRequestAuthor[]>;
 
     getNewCommitsSinceLastExecution(

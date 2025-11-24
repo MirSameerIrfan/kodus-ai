@@ -1,39 +1,38 @@
-import { Inject, Injectable, forwardRef } from '@nestjs/common';
-import { PlatformIntegrationFactory } from './platformIntegration.factory';
 import {
-    IIntegrationService,
-    INTEGRATION_SERVICE_TOKEN,
-} from '@/core/domain/integrations/contracts/integration.service.contracts';
-import {
-    PullRequestAuthor,
-    PullRequest,
-    PullRequestReviewComment,
-    PullRequestsWithChangesRequested,
-    PullRequestReviewState,
-} from '@/core/domain/platformIntegrations/types/codeManagement/pullRequests.type';
-import { Repositories } from '@/core/domain/platformIntegrations/types/codeManagement/repositories.type';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { Commit } from '@/config/types/general/commit.type';
-import { extractOrganizationAndTeamData } from '@/shared/utils/helpers';
-import { CodeManagementConnectionStatus } from '@/shared/utils/decorators/validate-code-management-integration.decorator';
-import {
-    CodeSuggestion,
     CommentResult,
     Repository,
 } from '@/config/types/general/codeReview.type';
-import { ICodeManagementService } from '@/core/domain/platformIntegrations/interfaces/code-management.interface';
-import { GitCloneParams } from '@/core/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
-import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
-import { RepositoryFile } from '@/core/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
+import { Commit } from '@/config/types/general/commit.type';
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { TreeItem } from '@/config/types/general/tree.type';
 import {
     GitHubReaction,
     GitlabReaction,
 } from '@/core/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
-import { TreeItem } from '@/config/types/general/tree.type';
-import { CodeReviewPipelineContext } from '../codeBase/codeReviewPipeline/context/code-review-pipeline.context';
+import {
+    IIntegrationService,
+    INTEGRATION_SERVICE_TOKEN,
+} from '@/core/domain/integrations/contracts/integration.service.contracts';
+import { ICodeManagementService } from '@/core/domain/platformIntegrations/interfaces/code-management.interface';
+import { GitCloneParams } from '@/core/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
+import {
+    PullRequest,
+    PullRequestAuthor,
+    PullRequestReviewComment,
+    PullRequestReviewState,
+    PullRequestsWithChangesRequested,
+} from '@/core/domain/platformIntegrations/types/codeManagement/pullRequests.type';
+import { Repositories } from '@/core/domain/platformIntegrations/types/codeManagement/repositories.type';
+import { RepositoryFile } from '@/core/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
 import { ISuggestionByPR } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
+import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
+import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
+import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
+import { CodeManagementConnectionStatus } from '@/shared/utils/decorators/validate-code-management-integration.decorator';
+import { extractOrganizationAndTeamData } from '@/shared/utils/helpers';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
+import { CodeReviewPipelineContext } from '../codeBase/codeReviewPipeline/context/code-review-pipeline.context';
+import { PlatformIntegrationFactory } from './platformIntegration.factory';
 
 @Injectable()
 export class CodeManagementService implements ICodeManagementService {
@@ -291,6 +290,7 @@ export class CodeManagementService implements ICodeManagementService {
     async getPullRequestAuthors(
         params: {
             organizationAndTeamData: OrganizationAndTeamData;
+            determineBots?: boolean;
         },
         type?: PlatformType,
     ): Promise<PullRequestAuthor[]> {

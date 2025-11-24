@@ -1,14 +1,13 @@
-import { Injectable } from '@nestjs/common';
 import { FileChange } from '@/config/types/general/codeReview.type';
+import { Commit } from '@/config/types/general/commit.type';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { CodeManagementService } from '../platformIntegration/codeManagement.service';
-import { PinoLoggerService } from '../logger/pino.service';
-import { IPullRequestManagerService } from '../../../../domain/codeBase/contracts/PullRequestManagerService.contract';
-import { isFileMatchingGlob } from '@/shared/utils/glob-utils';
 import { PullRequestAuthor } from '@/core/domain/platformIntegrations/types/codeManagement/pullRequests.type';
 import { CacheService } from '@/shared/utils/cache/cache.service';
-import { ICommit } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
-import { Commit } from '@/config/types/general/commit.type';
+import { isFileMatchingGlob } from '@/shared/utils/glob-utils';
+import { Injectable } from '@nestjs/common';
+import { IPullRequestManagerService } from '../../../../domain/codeBase/contracts/PullRequestManagerService.contract';
+import { PinoLoggerService } from '../logger/pino.service';
+import { CodeManagementService } from '../platformIntegration/codeManagement.service';
 
 @Injectable()
 export class PullRequestHandlerService implements IPullRequestManagerService {
@@ -142,6 +141,7 @@ export class PullRequestHandlerService implements IPullRequestManagerService {
 
     async getPullRequestAuthorsWithCache(
         organizationAndTeamData: OrganizationAndTeamData,
+        determineBots?: boolean,
     ): Promise<PullRequestAuthor[]> {
         const cacheKey = `pr_authors_60d_${organizationAndTeamData.organizationId}`;
         const TTL = 10 * 60 * 1000; // 10 minutos
@@ -159,6 +159,7 @@ export class PullRequestHandlerService implements IPullRequestManagerService {
             const authors =
                 await this.codeManagementService.getPullRequestAuthors({
                     organizationAndTeamData,
+                    determineBots,
                 });
 
             await this.cacheService.addToCache(cacheKey, authors, TTL);

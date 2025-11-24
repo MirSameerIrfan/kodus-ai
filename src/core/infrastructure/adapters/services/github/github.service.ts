@@ -1,37 +1,45 @@
-import { IGithubService } from '@/core/domain/github/contracts/github.service.contract';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { graphql } from '@octokit/graphql';
-import { Octokit, RestEndpointMethodTypes } from '@octokit/rest';
-import { retry } from '@octokit/plugin-retry';
-import { throttling } from '@octokit/plugin-throttling';
-import type { EndpointDefaults } from '@octokit/types';
-import { v4 as uuidv4 } from 'uuid';
-import { extractRepoData, extractRepoNames } from '@/shared/utils/helpers';
-import { createAppAuth } from '@octokit/auth-app';
-import { InstallationStatus } from '@/shared/domain/enums/github-installation-status.enum';
-import { IntegrationServiceDecorator } from '@/shared/utils/decorators/integration-service.decorator';
 import {
-    INTEGRATION_SERVICE_TOKEN,
-    IIntegrationService,
-} from '@/core/domain/integrations/contracts/integration.service.contracts';
+    CommentResult,
+    Repository,
+    ReviewComment,
+} from '@/config/types/general/codeReview.type';
+import { Commit } from '@/config/types/general/commit.type';
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { TreeItem } from '@/config/types/general/tree.type';
 import {
     AUTH_INTEGRATION_SERVICE_TOKEN,
     IAuthIntegrationService,
 } from '@/core/domain/authIntegrations/contracts/auth-integration.service.contracts';
-import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
+import { GithubAuthDetail } from '@/core/domain/authIntegrations/types/github-auth-detail.type';
+import {
+    GitHubReaction,
+    GitlabReaction,
+} from '@/core/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
+import { IGithubService } from '@/core/domain/github/contracts/github.service.contract';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
 } from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
+import { IntegrationConfigEntity } from '@/core/domain/integrationConfigs/entities/integration-config.entity';
+import {
+    IIntegrationService,
+    INTEGRATION_SERVICE_TOKEN,
+} from '@/core/domain/integrations/contracts/integration.service.contracts';
 import { IntegrationEntity } from '@/core/domain/integrations/entities/integration.entity';
-import { GithubAuthDetail } from '@/core/domain/authIntegrations/types/github-auth-detail.type';
+import {
+    IParametersService,
+    PARAMETERS_SERVICE_TOKEN,
+} from '@/core/domain/parameters/contracts/parameters.service.contract';
+import { AuthMode } from '@/core/domain/platformIntegrations/enums/codeManagement/authMode.enum';
+import { ICodeManagementService } from '@/core/domain/platformIntegrations/interfaces/code-management.interface';
+import { CommitLeadTimeForChange } from '@/core/domain/platformIntegrations/types/codeManagement/commitLeadTimeForChange.type';
+import { DeployFrequency } from '@/core/domain/platformIntegrations/types/codeManagement/deployFrequency.type';
+import { GitCloneParams } from '@/core/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
 import {
     OneSentenceSummaryItem,
+    PullRequest,
     PullRequestAuthor,
     PullRequestCodeReviewTime,
-    PullRequest,
     PullRequestFile,
     PullRequestReviewComment,
     PullRequestReviewState,
@@ -39,63 +47,55 @@ import {
     PullRequestWithFiles,
 } from '@/core/domain/platformIntegrations/types/codeManagement/pullRequests.type';
 import { Repositories } from '@/core/domain/platformIntegrations/types/codeManagement/repositories.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { safelyParseMessageContent } from '@/shared/utils/safelyParseMessageContent';
-import * as moment from 'moment-timezone';
-import {
-    IParametersService,
-    PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { PromptService } from '../prompt.service';
-import { PinoLoggerService } from '../logger/pino.service';
-import { DeployFrequency } from '@/core/domain/platformIntegrations/types/codeManagement/deployFrequency.type';
-import {
-    ITeamService,
-    TEAM_SERVICE_TOKEN,
-} from '@/core/domain/team/contracts/team.service.contract';
-import { ICodeManagementService } from '@/core/domain/platformIntegrations/interfaces/code-management.interface';
-import { CommitLeadTimeForChange } from '@/core/domain/platformIntegrations/types/codeManagement/commitLeadTimeForChange.type';
-import { Commit } from '@/config/types/general/commit.type';
-import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
-import { IntegrationConfigEntity } from '@/core/domain/integrationConfigs/entities/integration-config.entity';
-import { decrypt, encrypt } from '@/shared/utils/crypto';
-import { AuthMode } from '@/core/domain/platformIntegrations/enums/codeManagement/authMode.enum';
-import { CodeManagementConnectionStatus } from '@/shared/utils/decorators/validate-code-management-integration.decorator';
-import { CacheService } from '@/shared/utils/cache/cache.service';
-import {
-    GitHubReaction,
-    GitlabReaction,
-} from '@/core/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
-import {
-    getTranslationsForLanguageByCategory,
-    TranslationsCategory,
-} from '@/shared/utils/translations/translations';
-import { LanguageValue } from '@/shared/domain/enums/language-parameter.enum';
-import { getLabelShield } from '@/shared/utils/codeManagement/labels';
-import {
-    CommentResult,
-    Repository,
-} from '@/config/types/general/codeReview.type';
-import { CreateAuthIntegrationStatus } from '@/shared/domain/enums/create-auth-integration-status.enum';
-import { ReviewComment } from '@/config/types/general/codeReview.type';
-import { getSeverityLevelShield } from '@/shared/utils/codeManagement/severityLevel';
-import { getCodeReviewBadge } from '@/shared/utils/codeManagement/codeReviewBadge';
-import { IRepository } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
-import { ConfigService } from '@nestjs/config';
-import { GitCloneParams } from '@/core/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
-import { LLMProviderService, LLMModelProvider } from '@kodus/kodus-common/llm';
 import {
     RepositoryFile,
     RepositoryFileWithContent,
 } from '@/core/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
+import { IRepository } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
+import {
+    ITeamService,
+    TEAM_SERVICE_TOKEN,
+} from '@/core/domain/team/contracts/team.service.contract';
+import { CreateAuthIntegrationStatus } from '@/shared/domain/enums/create-auth-integration-status.enum';
+import { InstallationStatus } from '@/shared/domain/enums/github-installation-status.enum';
+import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
+import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
+import { LanguageValue } from '@/shared/domain/enums/language-parameter.enum';
+import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
+import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
+import { CacheService } from '@/shared/utils/cache/cache.service';
+import { getCodeReviewBadge } from '@/shared/utils/codeManagement/codeReviewBadge';
+import { getLabelShield } from '@/shared/utils/codeManagement/labels';
+import { getSeverityLevelShield } from '@/shared/utils/codeManagement/severityLevel';
+import { decrypt, encrypt } from '@/shared/utils/crypto';
+import { IntegrationServiceDecorator } from '@/shared/utils/decorators/integration-service.decorator';
+import { CodeManagementConnectionStatus } from '@/shared/utils/decorators/validate-code-management-integration.decorator';
 import {
     isFileMatchingGlob,
     isFileMatchingGlobCaseInsensitive,
 } from '@/shared/utils/glob-utils';
+import { extractRepoData, extractRepoNames } from '@/shared/utils/helpers';
+import { safelyParseMessageContent } from '@/shared/utils/safelyParseMessageContent';
+import {
+    getTranslationsForLanguageByCategory,
+    TranslationsCategory,
+} from '@/shared/utils/translations/translations';
+import { LLMModelProvider, LLMProviderService } from '@kodus/kodus-common/llm';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { createAppAuth } from '@octokit/auth-app';
+import { graphql } from '@octokit/graphql';
+import { retry } from '@octokit/plugin-retry';
+import { throttling } from '@octokit/plugin-throttling';
+import { Octokit, RestEndpointMethodTypes } from '@octokit/rest';
+import type { EndpointDefaults } from '@octokit/types';
+import * as moment from 'moment-timezone';
 import pLimit from 'p-limit';
+import { v4 as uuidv4 } from 'uuid';
 import { MCPManagerService } from '../../mcp/services/mcp-manager.service';
-import { TreeItem } from '@/config/types/general/tree.type';
+import { PinoLoggerService } from '../logger/pino.service';
+import { PromptService } from '../prompt.service';
 import {
     ALLOWLIST_TREES_ONLY,
     attachETagHooksAllowlist,
@@ -597,7 +597,7 @@ export class GithubService
 
     async getListMembers(
         params: any,
-    ): Promise<{ name: string; id: string | number }[]> {
+    ): Promise<{ name: string; id: string | number; type?: string }[]> {
         const members = await this.getAllMembersByOrg(
             params.organizationAndTeamData,
         );
@@ -606,6 +606,7 @@ export class GithubService
             return {
                 name: user.login,
                 id: user.id,
+                type: user?.type === 'Bot' ? 'bot' : 'user',
             };
         });
     }
@@ -1324,6 +1325,8 @@ export class GithubService
                                 authorsData.set(userId, {
                                     id: pr.user.id.toString(),
                                     name: pr.user.login,
+                                    type:
+                                        pr.user.type === 'Bot' ? 'bot' : 'user',
                                 });
                             }
                         }

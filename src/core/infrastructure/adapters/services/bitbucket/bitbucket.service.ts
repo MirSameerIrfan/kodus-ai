@@ -1,80 +1,80 @@
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { IBitbucketService } from '@/core/domain/bitbucket/contracts/bitbucket.service.contract';
-import { IntegrationConfigEntity } from '@/core/domain/integrationConfigs/entities/integration-config.entity';
-import { ICodeManagementService } from '@/core/domain/platformIntegrations/interfaces/code-management.interface';
-import {
-    PullRequestWithFiles,
-    PullRequestCodeReviewTime,
-    PullRequestFile,
-    PullRequestReviewComment,
-    OneSentenceSummaryItem,
-    PullRequestsWithChangesRequested,
-    PullRequestReviewState,
-    ReactionsInComments,
-    PullRequestAuthor,
-    PullRequest,
-} from '@/core/domain/platformIntegrations/types/codeManagement/pullRequests.type';
-import { Repositories } from '@/core/domain/platformIntegrations/types/codeManagement/repositories.type';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { IntegrationServiceDecorator } from '@/shared/utils/decorators/integration-service.decorator';
-import { CodeManagementConnectionStatus } from '@/shared/utils/decorators/validate-code-management-integration.decorator';
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { PinoLoggerService } from '../logger/pino.service';
-import {
-    IIntegrationConfigService,
-    INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import {
-    AUTH_INTEGRATION_SERVICE_TOKEN,
-    IAuthIntegrationService,
-} from '@/core/domain/authIntegrations/contracts/auth-integration.service.contracts';
-import {
-    INTEGRATION_SERVICE_TOKEN,
-    IIntegrationService,
-} from '@/core/domain/integrations/contracts/integration.service.contracts';
-import {
-    IParametersService,
-    PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { BitbucketAuthDetail } from '@/core/domain/authIntegrations/types/bitbucket-auth-detail.type';
-import { AuthMode } from '@/core/domain/platformIntegrations/enums/codeManagement/authMode.enum';
-import { APIClient, Bitbucket, Schema } from 'bitbucket';
-import { v4 } from 'uuid';
-import { IntegrationEntity } from '@/core/domain/integrations/entities/integration.entity';
-import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
-import { decrypt, encrypt } from '@/shared/utils/crypto';
-import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
-import { safelyParseMessageContent } from '@/shared/utils/safelyParseMessageContent';
-import { PromptService } from '../prompt.service';
-import { CacheService } from '@/shared/utils/cache/cache.service';
-import moment from 'moment';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { Commit } from '@/config/types/general/commit.type';
 import {
     CommentResult,
     FileChange,
     Repository,
 } from '@/config/types/general/codeReview.type';
-import { Response as BitbucketResponse } from 'bitbucket/src/request/types';
-import { CreateAuthIntegrationStatus } from '@/shared/domain/enums/create-auth-integration-status.enum';
-import { IRepository } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
-import { hasKodyMarker } from '@/shared/utils/codeManagement/codeCommentMarkers';
+import { Commit } from '@/config/types/general/commit.type';
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { TreeItem } from '@/config/types/general/tree.type';
 import {
-    MODEL_STRATEGIES,
-    LLMModelProvider,
-    LLMProviderService,
-} from '@kodus/kodus-common/llm';
-import { ConfigService } from '@nestjs/config';
-import { AuthorContribution } from '@/core/domain/pullRequests/interfaces/authorContributor.interface';
+    AUTH_INTEGRATION_SERVICE_TOKEN,
+    IAuthIntegrationService,
+} from '@/core/domain/authIntegrations/contracts/auth-integration.service.contracts';
+import { BitbucketAuthDetail } from '@/core/domain/authIntegrations/types/bitbucket-auth-detail.type';
+import { IBitbucketService } from '@/core/domain/bitbucket/contracts/bitbucket.service.contract';
+import {
+    IIntegrationConfigService,
+    INTEGRATION_CONFIG_SERVICE_TOKEN,
+} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import { IntegrationConfigEntity } from '@/core/domain/integrationConfigs/entities/integration-config.entity';
+import {
+    IIntegrationService,
+    INTEGRATION_SERVICE_TOKEN,
+} from '@/core/domain/integrations/contracts/integration.service.contracts';
+import { IntegrationEntity } from '@/core/domain/integrations/entities/integration.entity';
+import {
+    IParametersService,
+    PARAMETERS_SERVICE_TOKEN,
+} from '@/core/domain/parameters/contracts/parameters.service.contract';
+import { AuthMode } from '@/core/domain/platformIntegrations/enums/codeManagement/authMode.enum';
+import { ICodeManagementService } from '@/core/domain/platformIntegrations/interfaces/code-management.interface';
 import { GitCloneParams } from '@/core/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
+import {
+    OneSentenceSummaryItem,
+    PullRequest,
+    PullRequestAuthor,
+    PullRequestCodeReviewTime,
+    PullRequestFile,
+    PullRequestReviewComment,
+    PullRequestReviewState,
+    PullRequestsWithChangesRequested,
+    PullRequestWithFiles,
+    ReactionsInComments,
+} from '@/core/domain/platformIntegrations/types/codeManagement/pullRequests.type';
+import { Repositories } from '@/core/domain/platformIntegrations/types/codeManagement/repositories.type';
 import { RepositoryFile } from '@/core/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
+import { AuthorContribution } from '@/core/domain/pullRequests/interfaces/authorContributor.interface';
+import { IRepository } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
+import { CreateAuthIntegrationStatus } from '@/shared/domain/enums/create-auth-integration-status.enum';
+import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
+import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
+import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
+import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
+import { CacheService } from '@/shared/utils/cache/cache.service';
+import { hasKodyMarker } from '@/shared/utils/codeManagement/codeCommentMarkers';
+import { decrypt, encrypt } from '@/shared/utils/crypto';
+import { IntegrationServiceDecorator } from '@/shared/utils/decorators/integration-service.decorator';
+import { CodeManagementConnectionStatus } from '@/shared/utils/decorators/validate-code-management-integration.decorator';
 import {
     isFileMatchingGlob,
     isFileMatchingGlobCaseInsensitive,
 } from '@/shared/utils/glob-utils';
+import { safelyParseMessageContent } from '@/shared/utils/safelyParseMessageContent';
+import {
+    LLMModelProvider,
+    LLMProviderService,
+    MODEL_STRATEGIES,
+} from '@kodus/kodus-common/llm';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { APIClient, Bitbucket, Schema } from 'bitbucket';
+import { Response as BitbucketResponse } from 'bitbucket/src/request/types';
+import moment from 'moment';
+import { v4 } from 'uuid';
 import { MCPManagerService } from '../../mcp/services/mcp-manager.service';
-import { TreeItem } from '@/config/types/general/tree.type';
+import { PinoLoggerService } from '../logger/pino.service';
+import { PromptService } from '../prompt.service';
 
 @Injectable()
 @IntegrationServiceDecorator(PlatformType.BITBUCKET, 'codeManagement')
@@ -177,6 +177,7 @@ export class BitbucketService
             return sortedAuthors.map((author) => ({
                 id: this.sanitizeUUID(author.id.toString()),
                 name: author.name,
+                type: 'user',
             }));
         } catch (error) {
             this.logger.error({
@@ -1025,7 +1026,7 @@ export class BitbucketService
 
             const uniqueMembers = new Map<
                 string,
-                { name: string; id: string }
+                { name: string; id: string; type: string }
             >();
 
             allMembers.forEach((memberships) => {
@@ -1062,6 +1063,7 @@ export class BitbucketService
                     uniqueMembers.set(memberId, {
                         name: displayName ?? nickname ?? username ?? memberId,
                         id: memberId,
+                        type: 'user',
                     });
                 });
             });
