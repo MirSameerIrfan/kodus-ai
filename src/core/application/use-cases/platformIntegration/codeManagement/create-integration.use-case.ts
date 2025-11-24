@@ -1,18 +1,19 @@
-import { AuthMode } from '@/core/domain/platformIntegrations/enums/codeManagement/authMode.enum';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
-import { Inject, Injectable } from '@nestjs/common';
-import { REQUEST } from '@nestjs/core';
-import {
-    ICodeReviewSettingsLogService,
-    CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
-} from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
 import { ActionType } from '@/config/types/general/codeReviewSettingsLog.type';
 import {
     AUTH_INTEGRATION_SERVICE_TOKEN,
     IAuthIntegrationService,
 } from '@/core/domain/authIntegrations/contracts/auth-integration.service.contracts';
+import { AuthMode } from '@/core/domain/platformIntegrations/enums/codeManagement/authMode.enum';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
+import {
+    CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
+    ICodeReviewSettingsLogService,
+} from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
+import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+import { Inject, Injectable } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+import { IgnoreBotsUseCase } from '../../organizationParameters/ignore-bots.use-case';
 
 @Injectable()
 export class CreateIntegrationUseCase implements IUseCase {
@@ -33,6 +34,8 @@ export class CreateIntegrationUseCase implements IUseCase {
 
         @Inject(AUTH_INTEGRATION_SERVICE_TOKEN)
         private readonly authIntegrationService: IAuthIntegrationService,
+
+        private readonly ignoreBotsUseCase: IgnoreBotsUseCase,
 
         private readonly logger: PinoLoggerService,
     ) {}
@@ -55,6 +58,22 @@ export class CreateIntegrationUseCase implements IUseCase {
             },
             params.integrationType,
         );
+
+        this.ignoreBotsUseCase
+            .execute({
+                organizationId: organizationAndTeamData.organizationId,
+                teamId: organizationAndTeamData.teamId,
+            })
+            .catch((error) => {
+                this.logger.error({
+                    message: 'Error ignoring bots',
+                    error: error,
+                    context: CreateIntegrationUseCase.name,
+                    metadata: {
+                        organizationAndTeamData: organizationAndTeamData,
+                    },
+                });
+            });
 
         try {
             // Buscar a auth integration criada com os dados corretos de organização/team

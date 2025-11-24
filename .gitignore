@@ -47,11 +47,11 @@ lerna-debug.log*
 .yarn
 
 .cosine
+.bmad
 .vscode/settings.json
 .vscode/launch.json
 dev.env
 **/workflow-bundle.js
-/temporal-certs
 /kmeans_frames
 
 /temp
@@ -66,17 +66,16 @@ certs
 
 .yalc
 yalc.lock
+.env.test
 # packages
 # .packages
 #packages/kodus-flow/
+.test.json
 
 # Temporary JSON files
-test.json
-teste2.json
-lista.json
-add.json
-repositorios-novos.json
-todos-repositorios.json
-repositorios-por-prefixo.json
 MIGRATION-GRPC-TO-HTTP.md
 scripts/duplicate-prs
+
+# Custom
+test.json
+.cursor/rules/bmad/

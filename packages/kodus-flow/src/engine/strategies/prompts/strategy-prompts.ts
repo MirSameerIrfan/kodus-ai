@@ -276,7 +276,23 @@ export class ReActPrompts {
         this.formatters = formatters || new StrategyFormatters();
     }
 
-    getSystemPrompt(): string {
+    getSystemPrompt(useScratchpad: boolean = false): string {
+        const scratchpadSchema = useScratchpad
+            ? `  "scratchpadUpdate": "string (optional) - Update your working memory/notes",`
+            : ``;
+
+        const scratchpadInstructions = useScratchpad
+            ? `
+## 📝 SCRATCHPAD (WORKING MEMORY) RULES
+1. **SINGLE SOURCE OF TRUTH:** This field maintains the global state of your mission.
+2. **APPEND-ONLY LOGIC IS FORBIDDEN:** Do not just append logs. *Rewrite* the scratchpad to reflect the *current* state of the entire plan.
+3. **STRUCTURED FORMAT:** Maintain a structured format (e.g., Markdown headers, checklists [x], > key-values).
+   - **Status:** [Initializing | In Progress | Blocked | Complete]
+   - **Plan:** Checklist of steps (mark completed steps with [x])
+   - **Context:** Key variables/IDs found so far (e.g., \`fileId: 123\`, \`userIntent: 'fix bug'\`)
+4. **CRITICAL:** If you learn a new ID or fact, ADD it to the "Context" section of the scratchpad immediately so it's available for future steps.`
+            : ``;
+
         return `You are an expert AI assistant using the ReAct (Reasoning + Acting) pattern for complex problem-solving.
 
 ## 🎯 MISSION
@@ -287,6 +303,7 @@ Solve user tasks using systematic reasoning and precise tool execution.
 {
   "reasoning": "string (max 200 chars)",
   "confidence": "number (0.0-1.0)",
+${scratchpadSchema}
   "hypotheses": [{
     "approach": "string",
     "confidence": "number",
@@ -308,6 +325,7 @@ Solve user tasks using systematic reasoning and precise tool execution.
   }
 }
 \`\`\`
+${scratchpadInstructions}
 
 ## ⚖️ DECISION MATRIX
 | Confidence | Action | Rules |
@@ -368,16 +386,20 @@ Solve user tasks using systematic reasoning and precise tool execution.
 
     getTaskPrompt(context: StrategyExecutionContext): string {
         const sections: string[] = [];
-        const { input, agentContext, history } = context;
+        const { input, agentContext, history, scratchpad } = context;
 
-        // 🔥 MELHORADO: Estrutura hierárquica mais eficiente
         sections.push('## 🎯 TASK CONTEXT');
         sections.push(`**Objective:** ${input}`);
 
-        // 🔥 MELHORADO: Agent context compacto
+        if (scratchpad) {
+            sections.push(`## 📝 SCRATCHPAD (Working Memory)
+${scratchpad}
+---
+*UPDATE REQUIRED: Modify the checklist above to mark current progress and add new context findings.*`);
+        }
+
         sections.push(this.formatters.context.formatAgentContext(agentContext));
 
-        // 🔥 MELHORADO: Agent Identity ANTES das tools (prompt engineering)
         if (agentContext.agentIdentity) {
             sections.push(
                 this.formatters.context.formatAgentIdentity(
@@ -386,32 +408,27 @@ Solve user tasks using systematic reasoning and precise tool execution.
             );
         }
 
-        // 🔥 MELHORADO: Todas as tools (por enquanto - mais seguro)
         if (agentContext?.availableTools?.length > 0) {
             sections.push(
                 this.formatters.formatToolsList(agentContext.availableTools),
             );
         }
 
-        // 🔥 MELHORADO: Contexto adicional (se relevante)
         if (agentContext.agentExecutionOptions) {
             sections.push(
                 this.formatters.context.formatAdditionalContext(agentContext),
             );
         }
 
-        // 🔥 MELHORADO: Histórico mais conciso e útil
         if (history && history.length > 0) {
             const historyDetails = history
                 .map((step, index) => {
                     const stepInfo: string[] = [];
 
-                    // Thought completo (sem truncagem)
                     if (step.thought?.reasoning) {
                         stepInfo.push(`Thought: ${step.thought.reasoning}`);
                     }
 
-                    // Confidence simplificado
                     if ((step.thought as any)?.confidence !== undefined) {
                         const confidence = (step.thought as any).confidence;
                         stepInfo.push(
@@ -419,7 +436,6 @@ Solve user tasks using systematic reasoning and precise tool execution.
                         );
                     }
 
-                    // Action mais direto
                     if (step.action?.type === 'tool_call') {
                         const params = step.action.input
                             ? typeof step.action.input === 'object'
@@ -433,7 +449,6 @@ Solve user tasks using systematic reasoning and precise tool execution.
                         stepInfo.push(`Action: Final Answer`);
                     }
 
-                    // Result com status baseado em isSuccess
                     if (step.result?.type === 'error') {
                         stepInfo.push(
                             `Result: [ERROR] ${String(step.result.content || 'Unknown')}`,
@@ -597,7 +612,7 @@ For task "Analyze project structure":
         const sections: string[] = [];
         const { input, agentContext, history } = context;
 
-        sections.push('## 🎯 TASK');
+        sections.push('## TASK');
         sections.push(`${input}`);
 
         sections.push(this.formatters.context.formatAgentContext(agentContext));
@@ -616,7 +631,7 @@ For task "Analyze project structure":
 
         if (history && history.length > 0) {
             sections.push(
-                `## 📋 EXECUTION HISTORY\n${history.length} steps executed`,
+                `## EXECUTION HISTORY\n${history.length} steps executed`,
             );
         }
 
@@ -626,20 +641,20 @@ For task "Analyze project structure":
     }
 
     private getPlanningInstructions(): string {
-        return `## 📋 PLANNING TASK
+        return `## PLANNING TASK
 Create a step-by-step execution plan. For each step:
 - Choose one tool from the available list
 - Provide exact parameters required by that tool
 - Write a clear description of what the step accomplishes
 - Ensure steps can be executed in sequence
 
-## 📝 REQUIREMENTS
+## REQUIREMENTS
 - Start with data gathering/analysis steps
 - End with a final_answer step containing the user response
 - Keep plan focused and minimal
 - Use exact tool names as listed above
 
-## 📊 OUTPUT
+## OUTPUT
 **CRITICAL:** Return ONLY JSON with the plan structure.
 **NO explanations, comments, or additional text outside JSON.**
 **Your response must be valid JSON that can be parsed by JSON.parse()**`;
@@ -715,8 +730,9 @@ export class StrategyPromptFactory {
         systemPrompt: string;
         userPrompt: string;
     } {
+        const useScratchpad = context.config.scratchpad?.enabled ?? false;
         return {
-            systemPrompt: this.reactPrompts.getSystemPrompt(),
+            systemPrompt: this.reactPrompts.getSystemPrompt(useScratchpad),
             userPrompt: this.reactPrompts.getTaskPrompt(context),
         };
     }

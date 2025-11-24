@@ -1,6 +1,5 @@
 import { Repository } from '@/config/types/general/codeReview.type';
 import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
-import { RestEndpointMethodTypes } from '@octokit/rest';
 
 export type PullRequest = {
     id: string;
@@ -140,6 +139,7 @@ export type PullRequestAuthor = {
     id: string;
     name: string;
     contributions?: number;
+    type?: string;
 };
 
 export type AuthorContributions = {

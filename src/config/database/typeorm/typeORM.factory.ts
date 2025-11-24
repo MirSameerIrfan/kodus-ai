@@ -18,15 +18,7 @@ export class TypeORMFactory implements TypeOrmOptionsFactory {
 
     createTypeOrmOptions(): TypeOrmModuleOptions {
         const env = process.env.API_DATABASE_ENV ?? process.env.API_NODE_ENV;
-
-        const optionsDataBaseProd = {
-            ssl: true,
-            extra: {
-                ssl: {
-                    rejectUnauthorized: false,
-                },
-            },
-        };
+        const isProduction = !['development', 'test'].includes(env);
 
         const optionsTypeOrm: TypeOrmModuleOptions = {
             type: 'postgres',
@@ -49,26 +41,23 @@ export class TypeORMFactory implements TypeOrmOptionsFactory {
             synchronize: false,
             logging: false,
             logger: 'file',
-            // Add cache configurations, if necessary
-            // cache: {
-            //     duration: 30000, // 1 minute
-            // },
-
-            // Additional connection pool configurations
+            ssl: isProduction,
             extra: {
-                max: 40, // Maximum number of connections in the pool
-                min: 1, // Minimum number of connections in the pool
-                idleTimeoutMillis: 10000, // Time in milliseconds for an idle connection to be released
+                max: 40,
+                min: 1,
+                idleTimeoutMillis: 10000,
+                connectionTimeoutMillis: 2000,
+                keepAlive: true,
+                ...(isProduction
+                    ? {
+                          ssl: {
+                              rejectUnauthorized: false,
+                          },
+                      }
+                    : {}),
             },
         };
 
-        const mergedConfig = {
-            ...optionsTypeOrm,
-            ...(['development', 'test'].includes(env)
-                ? {}
-                : optionsDataBaseProd),
-        };
-
-        return mergedConfig;
+        return optionsTypeOrm;
     }
 }

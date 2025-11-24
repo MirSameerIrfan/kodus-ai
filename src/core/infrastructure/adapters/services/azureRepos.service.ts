@@ -7,51 +7,32 @@ import {
     INTEGRATION_CONFIG_SERVICE_TOKEN,
 } from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
 import {
-    IParametersService,
-    PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
+    OneSentenceSummaryItem,
+    PullRequest,
+    PullRequestAuthor,
+    PullRequestReviewComment,
+    PullRequestReviewState,
+    PullRequestWithFiles,
+    ReactionsInComments,
+} from '@/core/domain/platformIntegrations/types/codeManagement/pullRequests.type';
+import { Repositories } from '@/core/domain/platformIntegrations/types/codeManagement/repositories.type';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 import { IntegrationServiceDecorator } from '@/shared/utils/decorators/integration-service.decorator';
 import { BadRequestException, Inject, NotFoundException } from '@nestjs/common';
-import { PinoLoggerService } from './logger/pino.service';
-import {
-    PullRequestWithFiles,
-    PullRequestReviewComment,
-    OneSentenceSummaryItem,
-    ReactionsInComments,
-    PullRequestAuthor,
-    PullRequest,
-    PullRequestReviewState,
-} from '@/core/domain/platformIntegrations/types/codeManagement/pullRequests.type';
-import { Repositories } from '@/core/domain/platformIntegrations/types/codeManagement/repositories.type';
-import { v4 as uuidv4, v4 } from 'uuid';
 import { createTwoFilesPatch } from 'diff';
+import { v4 } from 'uuid';
+import { PinoLoggerService } from './logger/pino.service';
 
-import {
-    IIntegrationService,
-    INTEGRATION_SERVICE_TOKEN,
-} from '@/core/domain/integrations/contracts/integration.service.contracts';
-import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { Commit } from '@/config/types/general/commit.type';
-import { IntegrationConfigEntity } from '@/core/domain/integrationConfigs/entities/integration-config.entity';
-import { CodeManagementConnectionStatus } from '@/shared/utils/decorators/validate-code-management-integration.decorator';
-import { CreateAuthIntegrationStatus } from '@/shared/domain/enums/create-auth-integration-status.enum';
-import { AuthMode } from '@/core/domain/platformIntegrations/enums/codeManagement/authMode.enum';
-import { AzureReposAuthDetail } from '@/core/domain/authIntegrations/types/azure-repos-auth-detail';
-import { IntegrationEntity } from '@/core/domain/integrations/entities/integration.entity';
-import { AzureReposRequestHelper } from './azureRepos/azure-repos-request-helper';
-import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
 import {
     Comment,
     CommentResult,
     FileChange,
+    Repository,
 } from '@/config/types/general/codeReview.type';
-import { Repository } from '@/config/types/general/codeReview.type';
-import { decrypt, encrypt } from '@/shared/utils/crypto';
-import { generateWebhookToken } from '@/shared/utils/webhooks/webhookTokenCrypto';
-import { ICodeManagementService } from '@/core/domain/platformIntegrations/interfaces/code-management.interface';
+import { Commit } from '@/config/types/general/commit.type';
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { TreeItem } from '@/config/types/general/tree.type';
+import { AzureReposAuthDetail } from '@/core/domain/authIntegrations/types/azure-repos-auth-detail';
 import {
     AzurePullRequestVote,
     AzureRepoCommit,
@@ -59,28 +40,43 @@ import {
     AzureRepoPRThread,
     EventConfig,
 } from '@/core/domain/azureRepos/entities/azureRepoExtras.type';
-import { getSeverityLevelShield } from '@/shared/utils/codeManagement/severityLevel';
-import { getCodeReviewBadge } from '@/shared/utils/codeManagement/codeReviewBadge';
-import { getLabelShield } from '@/shared/utils/codeManagement/labels';
-import {
-    getTranslationsForLanguageByCategory,
-    TranslationsCategory,
-} from '@/shared/utils/translations/translations';
-import { LanguageValue } from '@/shared/domain/enums/language-parameter.enum';
-import { hasKodyMarker } from '@/shared/utils/codeManagement/codeCommentMarkers';
 import {
     AzurePRStatus,
     AzureRepoPullRequest,
 } from '@/core/domain/azureRepos/entities/azureRepoPullRequest.type';
-import { ConfigService } from '@nestjs/config';
+import { IntegrationConfigEntity } from '@/core/domain/integrationConfigs/entities/integration-config.entity';
+import {
+    IIntegrationService,
+    INTEGRATION_SERVICE_TOKEN,
+} from '@/core/domain/integrations/contracts/integration.service.contracts';
+import { IntegrationEntity } from '@/core/domain/integrations/entities/integration.entity';
+import { AuthMode } from '@/core/domain/platformIntegrations/enums/codeManagement/authMode.enum';
+import { ICodeManagementService } from '@/core/domain/platformIntegrations/interfaces/code-management.interface';
 import { GitCloneParams } from '@/core/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
 import { RepositoryFile } from '@/core/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
+import { CreateAuthIntegrationStatus } from '@/shared/domain/enums/create-auth-integration-status.enum';
+import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
+import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
+import { LanguageValue } from '@/shared/domain/enums/language-parameter.enum';
+import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
+import { hasKodyMarker } from '@/shared/utils/codeManagement/codeCommentMarkers';
+import { getCodeReviewBadge } from '@/shared/utils/codeManagement/codeReviewBadge';
+import { getLabelShield } from '@/shared/utils/codeManagement/labels';
+import { getSeverityLevelShield } from '@/shared/utils/codeManagement/severityLevel';
+import { decrypt, encrypt } from '@/shared/utils/crypto';
+import { CodeManagementConnectionStatus } from '@/shared/utils/decorators/validate-code-management-integration.decorator';
 import {
     isFileMatchingGlob,
     isFileMatchingGlobCaseInsensitive,
 } from '@/shared/utils/glob-utils';
+import {
+    getTranslationsForLanguageByCategory,
+    TranslationsCategory,
+} from '@/shared/utils/translations/translations';
+import { generateWebhookToken } from '@/shared/utils/webhooks/webhookTokenCrypto';
+import { ConfigService } from '@nestjs/config';
 import { MCPManagerService } from '../mcp/services/mcp-manager.service';
-import { TreeItem } from '@/config/types/general/tree.type';
+import { AzureReposRequestHelper } from './azureRepos/azure-repos-request-helper';
 
 @IntegrationServiceDecorator(PlatformType.AZURE_REPOS, 'codeManagement')
 export class AzureReposService
@@ -175,6 +171,7 @@ export class AzureReposService
                                         pr.user.name ??
                                         pr.user.login ??
                                         pr.user.id,
+                                    type: 'user',
                                 });
                             }
                         }
@@ -258,11 +255,17 @@ export class AzureReposService
                     return {
                         name,
                         id,
+                        type: 'user',
                     };
                 })
                 .filter(
-                    (member): member is { name: string; id: string | number } =>
-                        Boolean(member),
+                    (
+                        member,
+                    ): member is {
+                        name: string;
+                        id: string | number;
+                        type: string;
+                    } => Boolean(member),
                 );
 
             return normalizedMembers;
@@ -4062,7 +4065,7 @@ export class AzureReposService
             return [];
         }
     }
-    
+
     async getRepositoryAllFiles(params: {
         organizationAndTeamData: OrganizationAndTeamData;
         repository: { id: string; name: string };

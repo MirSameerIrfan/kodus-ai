@@ -39,6 +39,10 @@ import {
 import { BYOKPromptRunnerService } from '@/shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
 import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
 import { ExternalReferenceLoaderService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceLoader.service';
+import { FileContextAugmentationService } from '@/core/infrastructure/adapters/services/context/file-context-augmentation.service';
+import { ContextAugmentationsMap } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
+import { ContextReferenceService } from '@/core/infrastructure/adapters/services/context/context-reference.service';
+import type { ContextDependency } from '@context-os-core/interfaces';
 
 //#region Interfaces
 // Interface for analyzer response
@@ -114,6 +118,8 @@ export class KodyRulesPrLevelAnalysisService
         private readonly promptRunnerService: PromptRunnerService,
         private readonly observabilityService: ObservabilityService,
         private readonly externalReferenceLoaderService: ExternalReferenceLoaderService,
+        private readonly fileContextAugmentationService: FileContextAugmentationService,
+        private readonly contextReferenceService: ContextReferenceService,
     ) {}
 
     async analyzeCodeWithAI(
@@ -216,13 +222,27 @@ export class KodyRulesPrLevelAnalysisService
             filteredKodyRules = kodyRulesPrLevel;
         }
 
-        const {
-            referencesMap: externalReferencesMap,
-            mcpResultsMap,
-        } = await this.externalReferenceLoaderService.loadReferencesForRules(
+        const mcpDependencies =
+            await this.getMcpDependenciesForRules(filteredKodyRules);
+
+        const augmentationsByFile =
+            await this.fileContextAugmentationService.augmentFiles(
+                changedFiles,
+                context as any,
+                mcpDependencies,
+            );
+
+        const mcpResultsMap = this.buildMcpResultsFromAugmentations(
+            augmentationsByFile,
             filteredKodyRules,
-            context,
+            mcpDependencies,
         );
+
+        const { referencesMap: externalReferencesMap } =
+            await this.externalReferenceLoaderService.loadReferencesForRules(
+                filteredKodyRules,
+                context,
+            );
 
         const rulesWithLoadedReferences = filteredKodyRules.filter((rule) => {
             const fullRule = rule as Partial<IKodyRule>;
@@ -794,6 +814,106 @@ export class KodyRulesPrLevelAnalysisService
         }
 
         return allViolatedRules;
+    }
+
+    private async getMcpDependenciesForRules(
+        rules: Array<Partial<IKodyRule>>,
+    ): Promise<ContextDependency[]> {
+        const uniqueContextReferenceIds = [
+            ...new Set(
+                rules
+                    .map((rule) => rule.contextReferenceId)
+                    .filter((id): id is string => !!id),
+            ),
+        ];
+
+        if (!uniqueContextReferenceIds.length) {
+            return [];
+        }
+
+        const references = await Promise.all(
+            uniqueContextReferenceIds.map((id) =>
+                this.contextReferenceService.findById(id),
+            ),
+        );
+
+        const mcpDependencies: ContextDependency[] = [];
+        const seenDependencies = new Set<string>();
+
+        for (const ref of references) {
+            if (!ref) {
+                continue;
+            }
+            const requirements = ref.requirements ?? [];
+            for (const requirement of requirements) {
+                const dependencies = requirement.dependencies ?? [];
+                for (const dep of dependencies) {
+                    if (dep.type === 'mcp' && !seenDependencies.has(dep.id)) {
+                        mcpDependencies.push({
+                            ...dep,
+                            metadata: {
+                                ...((dep.metadata ?? {}) as object),
+                                contextReferenceId: ref.uuid,
+                            },
+                        });
+                        seenDependencies.add(dep.id);
+                    }
+                }
+            }
+        }
+
+        return mcpDependencies;
+    }
+
+    private buildMcpResultsFromAugmentations(
+        augmentationsByFile: Record<string, ContextAugmentationsMap>,
+        rules: Array<Partial<IKodyRule>>,
+        mcpDependencies: ContextDependency[],
+    ): Map<string, Record<string, unknown>> {
+        const mcpResultsMap = new Map<string, Record<string, unknown>>();
+        if (
+            !mcpDependencies ||
+            mcpDependencies.length === 0 ||
+            Object.keys(augmentationsByFile).length === 0
+        ) {
+            return mcpResultsMap;
+        }
+
+        const dependenciesByRule = new Map<string, ContextDependency[]>();
+        for (const rule of rules) {
+            if (rule.uuid && rule.contextReferenceId) {
+                const ruleDependencies = mcpDependencies.filter(
+                    (dep) =>
+                        dep.metadata?.contextReferenceId ===
+                        rule.contextReferenceId,
+                );
+                if (ruleDependencies.length > 0) {
+                    dependenciesByRule.set(rule.uuid, ruleDependencies);
+                }
+            }
+        }
+
+        for (const [ruleId, dependencies] of dependenciesByRule.entries()) {
+            const ruleAugmentations: Record<string, unknown> = {};
+            for (const dep of dependencies) {
+                for (const fileName in augmentationsByFile) {
+                    const fileAugmentations = augmentationsByFile[fileName];
+                    for (const pathKey in fileAugmentations) {
+                        if (!ruleAugmentations[pathKey]) {
+                            ruleAugmentations[pathKey] = { outputs: [] };
+                        }
+                        (ruleAugmentations[pathKey] as any).outputs.push(
+                            ...fileAugmentations[pathKey].outputs,
+                        );
+                    }
+                }
+            }
+            if (Object.keys(ruleAugmentations).length > 0) {
+                mcpResultsMap.set(ruleId, ruleAugmentations);
+            }
+        }
+
+        return mcpResultsMap;
     }
 
     /**
@@ -1460,11 +1580,7 @@ export class KodyRulesPrLevelAnalysisService
                     label: baseSuggestion.label,
                     brokenKodyRulesIds: baseSuggestion.brokenKodyRulesIds || [],
                     deliveryStatus: baseSuggestion.deliveryStatus,
-                    severity: baseSuggestion.severity,
-                    files: baseSuggestion.files || {
-                        violatedFileSha: [],
-                        relatedFileSha: [],
-                    },
+                    files: { violatedFileSha: [], relatedFileSha: [] },
                 };
             }
 

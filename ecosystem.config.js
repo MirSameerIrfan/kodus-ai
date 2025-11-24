@@ -2,7 +2,7 @@ module.exports = {
     apps: [
         {
             name: 'kodus-orchestrator',
-            script: './dist/main.js', // Caminho atualizado
+            script: './dist/src/main.js',
             out_file: '/app/logs/kodus-orchestrator/out.log',
             error_file: '/app/logs/kodus-orchestrator/error.log',
             env_homolog: {

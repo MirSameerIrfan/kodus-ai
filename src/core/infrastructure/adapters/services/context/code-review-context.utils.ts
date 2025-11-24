@@ -1,4 +1,7 @@
-import type { ContextDependency } from '@context-os-core/interfaces';
+import type {
+    ContextDependency,
+    ContextPack,
+} from '@context-os-core/interfaces';
 import { PromptSourceType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
 
 export interface ContextMarkerPattern {
@@ -235,4 +238,92 @@ export function resolveSourceTypeFromPath(
     }
     const key = pathToKey(path);
     return PATH_SOURCE_TYPE_MAP[key];
+}
+
+export function tryParseJSON(str: unknown): unknown | null {
+    if (!str || typeof str !== 'string') {
+        return null;
+    }
+
+    const trimmed = str.trim();
+    if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(str);
+    } catch {
+        return null;
+    }
+}
+
+export function normalizeProviderToolKey(
+    provider: string,
+    tool: string,
+): string {
+    return `${provider.toLowerCase().trim()}|${tool.toLowerCase().trim()}`;
+}
+
+export function resolveDependencyProvider(
+    dependency: ContextDependency,
+): string | undefined {
+    const metadata = dependency.metadata ?? {};
+    if (typeof metadata.provider === 'string') {
+        return metadata.provider as string;
+    }
+    if (typeof metadata.mcpId === 'string') {
+        return metadata.mcpId as string;
+    }
+    const [provider] = dependency.id.split('|', 2);
+    return provider || undefined;
+}
+
+export function resolveDependencyToolName(
+    dependency: ContextDependency,
+): string | undefined {
+    const metadata = dependency.metadata ?? {};
+    if (typeof metadata.toolName === 'string') {
+        return metadata.toolName as string;
+    }
+    if (typeof metadata.tool === 'string') {
+        return metadata.tool as string;
+    }
+    const [, toolName] = dependency.id.split('|', 2);
+    return toolName || undefined;
+}
+
+export function deepClone<T>(value: T): T {
+    if (value === null || value === undefined) {
+        return value;
+    }
+
+    try {
+        return JSON.parse(JSON.stringify(value)) as T;
+    } catch {
+        return value;
+    }
+}
+
+export function getOverridesFromPack<T = any>(
+    pack?: ContextPack,
+): T | undefined {
+    if (!pack) {
+        return undefined;
+    }
+    const layer = pack.layers.find(
+        (l) => l.metadata?.sourceType === 'instructions',
+    );
+    return layer?.content as T;
+}
+
+export function getAugmentationsFromPack<T = any>(
+    pack?: ContextPack,
+): T | undefined {
+    if (!pack) {
+        return undefined;
+    }
+    const layer = pack.layers.find(
+        (l) => l.metadata?.sourceType === 'augmentations',
+    );
+    return layer?.content as T;
 }

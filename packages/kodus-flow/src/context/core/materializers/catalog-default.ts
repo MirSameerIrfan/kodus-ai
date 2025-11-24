@@ -35,7 +35,9 @@ export class DefaultCatalogMaterializer implements CatalogLayerMaterializer {
             const summary =
                 candidate.slices?.map((slice) => slice.summary).join('\n') ??
                 candidate.item.payload.text ??
-                JSON.stringify(candidate.item.payload.structured ?? candidate.item);
+                JSON.stringify(
+                    candidate.item.payload.structured ?? candidate.item,
+                );
 
             const entities =
                 candidate.item.metadata.tags?.map((tag) => ({
@@ -69,7 +71,9 @@ export class DefaultCatalogMaterializer implements CatalogLayerMaterializer {
                 candidateCount: candidates.length,
                 generatedAt: Date.now(),
             },
-            references: limited.map((candidate) => ({ itemId: candidate.item.id })),
+            references: limited.map((candidate) => ({
+                itemId: candidate.item.id,
+            })),
             metadata: {
                 generator: 'default-catalog-materializer',
             },

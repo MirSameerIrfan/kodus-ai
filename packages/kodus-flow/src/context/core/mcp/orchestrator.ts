@@ -221,6 +221,10 @@ export class MCPOrchestrator {
                 }
 
                 const toolRef = required[currentIndex];
+                if (!toolRef) {
+                    continue;
+                }
+
                 const registration = this.registry.get(toolRef.mcpId);
 
                 if (!registration) {
@@ -269,6 +273,29 @@ export class MCPOrchestrator {
             }
 
             const tool = required[index];
+            if (!tool) {
+                return {
+                    request: {
+                        registry: {
+                            id: 'unknown',
+                            endpoint: '',
+                            status: 'unavailable',
+                            tools: [],
+                        } as MCPRegistration,
+                        tool: {
+                            mcpId: 'unknown',
+                            toolName: 'unknown',
+                        },
+                        input: {},
+                    },
+                    error: 'MCP invocation not executed',
+                    attempts: 0,
+                    tool: {
+                        mcpId: 'unknown',
+                        toolName: 'unknown',
+                    },
+                };
+            }
             return {
                 request: {
                     registry: {

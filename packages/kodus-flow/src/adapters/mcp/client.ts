@@ -644,7 +644,6 @@ export class SpecCompliantMCPClient extends EventEmitter<MCPClientEvents> {
                     tools: { listChanged: true },
                     resources: { listChanged: true, subscribe: true },
                     prompts: { listChanged: true },
-                    roots: { listChanged: true },
                 },
                 serverInfo: {
                     name: 'mcp-server',

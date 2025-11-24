@@ -39,6 +39,9 @@ import { ResolveConfigStage } from '@/core/infrastructure/adapters/services/code
 import { KodyFineTuningContextModule } from './kodyFineTuningContext.module';
 import { PromptsModule } from './prompts.module';
 import { DryRunModule } from './dryRun.module';
+import { FileContextGateStage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/file-context-gate.stage';
+import { McpAgentModule } from './mcpAgent.module';
+import { FileContextAugmentationService } from '@/core/infrastructure/adapters/services/context/file-context-augmentation.service';
 
 @Module({
     imports: [
@@ -57,6 +60,7 @@ import { DryRunModule } from './dryRun.module';
         forwardRef(() => PullRequestMessagesModule),
         forwardRef(() => PromptsModule),
         forwardRef(() => DryRunModule),
+        forwardRef(() => McpAgentModule),
     ],
     providers: [
         PipelineExecutor,
@@ -69,6 +73,7 @@ import { DryRunModule } from './dryRun.module';
         FetchChangedFilesStage,
         InitialCommentStage,
         BatchCreationStage,
+        FileContextGateStage,
         ProcessFilesReview,
         ProcessFilesPrLevelReviewStage,
         CreatePrLevelCommentsStage,
@@ -79,6 +84,7 @@ import { DryRunModule } from './dryRun.module';
         KodyFineTuningStage,
         CodeAnalysisASTStage,
         CodeAnalysisASTCleanupStage,
+        FileContextAugmentationService,
     ],
     exports: [
         PipelineExecutor,
@@ -99,6 +105,7 @@ import { DryRunModule } from './dryRun.module';
         RequestChangesOrApproveStage,
         CodeReviewPipelineStrategy,
         CodeReviewPipelineStrategyEE,
+        FileContextAugmentationService,
     ],
 })
 export class CodeReviewPipelineModule {}

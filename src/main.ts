@@ -58,6 +58,22 @@ async function bootstrap() {
         }),
     );
 
+    process.on('uncaughtException', (error) => {
+        pinoLogger.error({
+            message: `Uncaught Exception: ${error.message}`,
+            context: 'GlobalExceptionHandler',
+            error,
+        });
+    });
+
+    process.on('unhandledRejection', (reason: any) => {
+        pinoLogger.error({
+            message: `Unhandled Rejection: ${reason?.message || reason}`,
+            context: 'GlobalExceptionHandler',
+            error: reason instanceof Error ? reason : new Error(String(reason)),
+        });
+    });
+
     app.use(bodyParser.urlencoded({ extended: true }));
     app.set('trust proxy', '127.0.0.1');
 

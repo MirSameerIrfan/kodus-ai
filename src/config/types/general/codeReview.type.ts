@@ -92,10 +92,14 @@ export type AnalysisContext = {
     correlationId: string;
     /** ContextPack compartilhado com instruções e camadas externas para as etapas de análise. */
     sharedContextPack?: ContextPack;
-    /** Resultados das execuções MCP organizados por requirement/path para reutilização. */
-    sharedContextAugmentations?: ContextAugmentationsMap;
-    /** Overrides de prompt sanitizados (sem marcadores) usados por todas as requisições. */
-    sharedSanitizedOverrides?: CodeReviewConfig['v2PromptOverrides'];
+    /** Overrides resolvidos por arquivo, usados no preparo de contexto por file. */
+    filePromptOverrides?: Record<string, CodeReviewConfig['v2PromptOverrides']>;
+    /** Overrides ativos para a execução atual (ex: overrides específicos de arquivo). Tem precedência sobre o Pack. */
+    activeOverrides?: CodeReviewConfig['v2PromptOverrides'];
+    /** Augmentations geradas dinamicamente para o arquivo atual. */
+    fileAugmentations?: ContextAugmentationsMap;
+    /** Augmentations geradas dinamicamente durante o pipeline, mapeadas por nome de arquivo. */
+    augmentationsByFile?: Record<string, ContextAugmentationsMap>;
 };
 
 export type ASTAnalysisResult = {

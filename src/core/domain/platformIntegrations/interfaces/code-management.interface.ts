@@ -1,29 +1,29 @@
-import { Organization } from '../types/codeManagement/organization.type';
-import {
-    PullRequestAuthor,
-    PullRequestCodeReviewTime,
-    PullRequest,
-    PullRequestReviewComment,
-    PullRequestsWithChangesRequested,
-    PullRequestWithFiles,
-    PullRequestReviewState,
-} from '../types/codeManagement/pullRequests.type';
-import { Repositories } from '../types/codeManagement/repositories.type';
-import { ICommonPlatformIntegrationService } from './common.interface';
-import { IntegrationConfigEntity } from '../../integrationConfigs/entities/integration-config.entity';
-import { Workflow } from '../types/codeManagement/workflow.type';
-import { CodeManagementConnectionStatus } from '@/shared/utils/decorators/validate-code-management-integration.decorator';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { Repository } from '@/config/types/general/codeReview.type';
-import { GitCloneParams } from '../types/codeManagement/gitCloneParams.type';
 import { Commit } from '@/config/types/general/commit.type';
-import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
-import { RepositoryFile } from '../types/codeManagement/repositoryFile.type';
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { TreeItem } from '@/config/types/general/tree.type';
 import {
     GitHubReaction,
     GitlabReaction,
 } from '@/core/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
-import { TreeItem } from '@/config/types/general/tree.type';
+import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
+import { CodeManagementConnectionStatus } from '@/shared/utils/decorators/validate-code-management-integration.decorator';
+import { IntegrationConfigEntity } from '../../integrationConfigs/entities/integration-config.entity';
+import { GitCloneParams } from '../types/codeManagement/gitCloneParams.type';
+import { Organization } from '../types/codeManagement/organization.type';
+import {
+    PullRequest,
+    PullRequestAuthor,
+    PullRequestCodeReviewTime,
+    PullRequestReviewComment,
+    PullRequestReviewState,
+    PullRequestsWithChangesRequested,
+    PullRequestWithFiles,
+} from '../types/codeManagement/pullRequests.type';
+import { Repositories } from '../types/codeManagement/repositories.type';
+import { RepositoryFile } from '../types/codeManagement/repositoryFile.type';
+import { Workflow } from '../types/codeManagement/workflow.type';
+import { ICommonPlatformIntegrationService } from './common.interface';
 
 export interface ICodeManagementService
     extends ICommonPlatformIntegrationService {
@@ -176,6 +176,7 @@ export interface ICodeManagementService
 
     getPullRequestAuthors(params: {
         organizationAndTeamData: OrganizationAndTeamData;
+        determineBots?: boolean;
     }): Promise<PullRequestAuthor[]>;
 
     checkIfPullRequestShouldBeApproved(params: {

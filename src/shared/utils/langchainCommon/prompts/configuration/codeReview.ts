@@ -282,7 +282,9 @@ function injectExternalContext(
 
     if (!collectContext) {
         if (!hasReferences) {
-            return errorSection ? `${sanitizedBase}${errorSection}` : sanitizedBase;
+            return errorSection
+                ? `${sanitizedBase}${errorSection}`
+                : sanitizedBase;
         }
 
         const contextSection = formatReferenceSection(references);
@@ -411,7 +413,16 @@ function formatAugmentations(
         return `- ${label}: FAILED ${output.error ?? 'Unknown error'}`;
     });
 
-    return `\n\n### Context Insights (${pathKey})\n${lines.join('\n')}`;
+    return `\n\n### Context Insights & Knowledge Injection (${pathKey})
+The following sections provide **additional context** retrieved specifically to enhance your understanding of the code under review. This information serves as a knowledge base to bridge the gap between the isolated file changes and the broader system reality.
+
+**Guidance:**
+- **Clarification:** Use this data to clarify ambiguous logic, missing definitions, or external dependencies not visible in the diff.
+- **Grounding:** Ground your analysis in this provided context rather than making assumptions about unknown external behaviors.
+- **Relevance:** Use this information to make your review more accurate and aligned with the actual environment/project constraints.
+
+**Retrieved Context:**
+${lines.join('\n')}`;
 }
 
 /**

@@ -161,6 +161,24 @@ export interface ValidationReport {
     isValid: boolean;
 }
 
+/**
+ * Payload genérico entregue ao Context-OS. "type" identifica o domínio lógico
+ * (ex.: 'code_diff', 'incident', 'log'), enquanto data e metadata são agnósticos.
+ */
+export interface ContextPayload<
+    TData = unknown,
+    TMeta = Record<string, unknown>,
+> {
+    type: string;
+    data: TData;
+    metadata?: TMeta & {
+        tenantId?: string;
+        correlationId?: string;
+        labels?: string[];
+        createdAt?: number;
+    };
+}
+
 /** Pipeline de ingestão (normalização → validação → persistência). */
 export interface IngestionPipeline {
     normalize(change: RawChange): Promise<KnowledgeItem[]>;
@@ -197,6 +215,82 @@ export interface ContentSlice {
     summary?: string;
     weight: number;
     metadata?: Record<string, unknown>;
+}
+
+/** Evidência produzida por agentes/context layers (ex.: scans, traces, testes). */
+export interface ContextEvidence<TPayload = unknown> {
+    id: string;
+    provider: string; // ex.: 'sentry', 'snyk', 'playwright'
+    category?: string; // bug, security, performance, etc.
+    severity?: 'critical' | 'high' | 'medium' | 'low' | 'info';
+    confidence?: 'high' | 'medium' | 'low';
+    title?: string;
+    payload: TPayload;
+    source?: SourceRef;
+    attachments?: string[];
+    metadata?: Record<string, unknown>;
+    createdAt: number;
+    correlationId?: string;
+    toolName?: string;
+}
+
+export interface EvidenceBusSubscription {
+    unsubscribe(): Promise<void>;
+}
+
+export interface EvidenceBus {
+    publish(evidence: ContextEvidence | ContextEvidence[]): Promise<void>;
+    subscribe(
+        handler: (evidence: ContextEvidence) => Promise<void> | void,
+        filter?: (evidence: ContextEvidence) => boolean,
+    ): Promise<EvidenceBusSubscription>;
+}
+
+/** Contratos para execução sandboxed de scripts (code mode). */
+export interface SandboxExecutionRequest<TInput = Record<string, unknown>> {
+    id?: string;
+    code: string; // código JS/TS compilado ou referência
+    entryPoint?: string;
+    input?: TInput;
+    files?: Record<string, string>; // arquivos auxiliares (nome -> conteúdo)
+    helpers?: Record<string, unknown>;
+    timeoutMs?: number;
+    memoryLimitMb?: number;
+    metadata?: Record<string, unknown>;
+}
+
+export interface SandboxExecutionLog {
+    level: 'debug' | 'info' | 'warn' | 'error';
+    message: string;
+    timestamp: number;
+    metadata?: Record<string, unknown>;
+}
+
+export interface SandboxExecutionStats {
+    startedAt: number;
+    finishedAt: number;
+    cpuTimeMs?: number;
+    memoryPeakMb?: number;
+}
+
+export interface SandboxExecutionResult<TOutput = unknown> {
+    id: string;
+    success: boolean;
+    output?: TOutput;
+    error?: {
+        message: string;
+        stack?: string;
+        code?: string;
+    };
+    logs: SandboxExecutionLog[];
+    stats: SandboxExecutionStats;
+    evidences?: ContextEvidence[];
+}
+
+export interface SandboxRuntime {
+    run<TInput = Record<string, unknown>, TOutput = unknown>(
+        request: SandboxExecutionRequest<TInput>,
+    ): Promise<SandboxExecutionResult<TOutput>>;
 }
 
 /** Candidato retornado por um selector/indexer ao montar contexto. */
@@ -694,6 +788,7 @@ export interface MCPInvocationResult {
 /** Cliente responsável por orquestrar chamadas MCP. */
 export interface MCPClient {
     invoke(request: MCPInvocationRequest): Promise<MCPInvocationResult>;
+    invokeTool?(request: MCPInvocationRequest): Promise<MCPInvocationResult>;
     healthCheck?(mcpId: string): Promise<MCPStatus>;
 }
 

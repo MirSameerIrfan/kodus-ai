@@ -5,7 +5,6 @@ import {
     Thread,
     PlannerType,
     StorageEnum,
-    getExecutionTraceability,
     LLMAdapter,
 } from '@kodus/flow';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
@@ -72,7 +71,12 @@ export class ConversationAgentProvider extends BaseAgentProvider {
             defaultTimeout: 10_000,
             maxRetries: 1,
             onError: (err) => {
-                console.error('MCP error:', err.message);
+                this.logger.warn({
+                    message:
+                        'ConversationAgent: MCP execution failed, continuing.',
+                    context: ConversationAgentProvider.name,
+                    error: new Error(err.message),
+                });
             },
         });
     }
@@ -190,23 +194,6 @@ export class ConversationAgentProvider extends BaseAgentProvider {
                         additional_information: prepareContext,
                     },
                 },
-            );
-
-            const uri = this.observabilityService.buildConnectionString(
-                this.config,
-            );
-
-            const corr = (result?.context?.correlationId as string) ?? '';
-
-            const traceability = await getExecutionTraceability(
-                uri,
-                corr,
-                'kodus_db',
-            );
-
-            console.log(
-                'Conversation Agent Traceability:',
-                JSON.stringify(traceability, null, 2),
             );
 
             this.logger.log({

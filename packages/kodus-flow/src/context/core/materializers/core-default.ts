@@ -58,13 +58,12 @@ export class DefaultCoreMaterializer implements CoreLayerMaterializer {
                 .map((candidate) => ({ itemId: candidate.item.id })) ?? [];
 
         return {
-            persona: this.config.persona ?? input.deliveryRequest?.agentIdentity,
+            persona:
+                this.config.persona ?? input.deliveryRequest?.agentIdentity,
             instructions,
             constraints,
             checklists:
-                this.config.defaultChecklists ??
-                this.config.defaultNotes ??
-                [],
+                this.config.defaultChecklists ?? this.config.defaultNotes ?? [],
             notes: Array.from(notes),
             toolset:
                 this.config.defaultToolset ??
