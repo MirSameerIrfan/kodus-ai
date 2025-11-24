@@ -144,7 +144,7 @@ export class ContextEvidenceAgentProvider extends BaseAgentProvider {
             : this.buildOverridesMission(promptOverrides);
 
         return `You are an **Evidence Detective Agent**. Your sole mission is to analyze code changes and decide if external context from MCP tools is needed. You think step-by-step, trust only facts from your tools, and avoid making assumptions.
-${directiveSection}
+
 ### How to Read the Diff Snippet
 The diff snippet uses a standard format to show changes. Pay close attention to both what was removed and what was added to understand the developer's intent.
 - Lines starting with '-' represent the **old code** (what was deleted).
@@ -178,6 +178,8 @@ ${diffSnippet ?? file.patchWithLinesStr ?? 'N/A'}
 
 ### MCP Dependencies (JSON)
 ${dependencySection}
+
+${directiveSection}
 ### Output Format
 When you have finished your analysis and tool executions (or decided no tools are needed), you MUST use the "final_answer" action.
 The content of your final_answer MUST be a JSON object with this structure:
@@ -257,6 +259,7 @@ ${overridesContent}`;
                     dependency.metadata?.toolInputSchema ??
                     null,
             }));
+
             return JSON.stringify(summarized, null, 2);
         } catch {
             return dependencies

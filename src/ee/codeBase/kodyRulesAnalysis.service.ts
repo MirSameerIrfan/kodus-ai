@@ -482,7 +482,9 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
 
         const augmentationsByFile: Record<string, ContextAugmentationsMap> = {};
         for (const rule of baseContext.kodyRules) {
-            if (!rule.contextReferenceId) continue;
+            if (!rule.contextReferenceId) {
+                continue;
+            }
 
             const ruleDependencies =
                 await this.kodyRuleDependencyService.getMcpDependenciesForRules(

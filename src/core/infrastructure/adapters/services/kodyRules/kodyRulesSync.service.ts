@@ -366,7 +366,9 @@ export class KodyRulesSyncService {
                 );
             }
 
-            if (!ruleChanges.length) return;
+            if (!ruleChanges.length) {
+                return;
+            }
 
             for (const f of ruleChanges) {
                 if (f.status === 'removed') {
@@ -399,7 +401,6 @@ export class KodyRulesSyncService {
                 // 2) Try with default branch as head
                 let effectiveContent = contentResp;
                 if (!effectiveContent?.data?.content) {
-                    // Try base ref as head
                     const baseRef = pullRequestParam.base?.ref;
                     if (baseRef) {
                         try {
@@ -422,7 +423,6 @@ export class KodyRulesSyncService {
                     }
                 }
                 if (!effectiveContent?.data?.content) {
-                    // Try repository default branch as head
                     try {
                         const defaultBranch =
                             await this.codeManagementService.getDefaultBranch({
@@ -455,7 +455,9 @@ export class KodyRulesSyncService {
                 }
 
                 const rawContent = effectiveContent?.data?.content;
-                if (!rawContent) continue;
+                if (!rawContent) {
+                    continue;
+                }
 
                 const decoded =
                     contentResp?.data?.encoding === 'base64'
@@ -1157,8 +1159,7 @@ export class KodyRulesSyncService {
             return;
         }
 
-        let resolvedTeamId: string | undefined =
-            organizationAndTeamData.teamId;
+        let resolvedTeamId: string | undefined = organizationAndTeamData.teamId;
         if (!resolvedTeamId && repositoryId !== 'global') {
             try {
                 resolvedTeamId =

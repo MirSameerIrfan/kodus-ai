@@ -1,11 +1,7 @@
 import { LimitationType } from '@/config/types/general/codeReview.type';
 import type { ContextPack } from '@context-os-core/interfaces';
 import { getDefaultKodusConfigFile } from '@/shared/utils/validateCodeReviewConfigFile';
-import { convertTiptapJSONToMarkdown } from '@/core/utils/tiptap-json';
-import {
-    CODE_REVIEW_CONTEXT_PATTERNS,
-    stripMarkersFromText,
-} from '@/core/infrastructure/adapters/services/context/code-review-context.utils';
+import { getTextOrDefault, sanitizePromptText } from '../prompt.helpers';
 
 export interface CodeReviewPayload {
     limitationType?: LimitationType;
@@ -150,78 +146,6 @@ const SECTION_CONFIG: SectionConfig[] = [
 ];
 
 /**
- * Limits text length to a maximum number of characters.
- * @param text - The text to limit
- * @param max - Maximum character length (default: 2000)
- * @returns Truncated text if it exceeds max length, otherwise the original text
- */
-function limitText(text: string, max = 2000): string {
-    return text.length > max ? text.slice(0, max) : text;
-}
-
-/**
- * Extracts the raw value from a potentially nested structure.
- * Handles string values, objects with a 'value' property, or plain objects.
- * @param value - The value to extract (can be string, object, or undefined)
- * @returns Extracted string or object, or undefined if value is null/undefined
- */
-function extractRawValue(
-    value: unknown,
-): string | Record<string, unknown> | undefined {
-    if (value === null || value === undefined) {
-        return undefined;
-    }
-    if (typeof value === 'string') {
-        return value;
-    }
-    if (
-        typeof value === 'object' &&
-        typeof (value as Record<string, unknown>).value !== 'undefined'
-    ) {
-        return (value as Record<string, unknown>).value as
-            | string
-            | Record<string, unknown>;
-    }
-    return value as Record<string, unknown>;
-}
-
-/**
- * Sanitizes prompt text by removing MCP markers and trimming whitespace.
- * @param raw - The raw text to sanitize
- * @returns Sanitized text, or empty string if input is falsy
- */
-function sanitizePromptText(raw?: string): string {
-    if (!raw) {
-        return '';
-    }
-    return stripMarkersFromText(raw, CODE_REVIEW_CONTEXT_PATTERNS).trim();
-}
-
-/**
- * Gets text from primary source or falls back to default text.
- * Converts TipTap JSON to markdown, sanitizes, and limits length.
- * @param text - Primary text source (can be TipTap JSON or string)
- * @param fallbackText - Fallback text if primary is empty
- * @returns Processed text string, or empty string if both sources are empty
- */
-function getTextOrDefault(text: unknown, fallbackText?: unknown): string {
-    const primaryRaw = convertTiptapJSONToMarkdown(
-        extractRawValue(text),
-    ).trim();
-    const primary = sanitizePromptText(primaryRaw);
-    if (primary.length) {
-        return limitText(primary);
-    }
-
-    const fallbackRaw = convertTiptapJSONToMarkdown(
-        extractRawValue(fallbackText),
-    ).trim();
-    const fallback = sanitizePromptText(fallbackRaw);
-
-    return fallback.length ? limitText(fallback) : '';
-}
-
-/**
  * Formats synchronization errors into a readable string.
  * Handles both array of errors and single error string.
  * @param errors - Array of errors, single error string, or undefined
@@ -257,7 +181,7 @@ function formatSyncErrors(errors: unknown[] | string | undefined): string {
         return '';
     }
 
-    return `\n\n⚠ Reference issues\n${formatted.join('\n')}`;
+    return `### Source: System Messages\n**Reference issues detected:**\n${formatted.join('\n')}`;
 }
 
 /**
@@ -278,37 +202,26 @@ function injectExternalContext(
     const sanitizedBase = sanitizePromptText(baseText);
 
     const errorSection = formatSyncErrors(syncErrors);
-    const hasReferences = Boolean(references && references.length);
+    const referenceSection =
+        references && references.length
+            ? formatReferenceSection(references)
+            : '';
 
-    if (!collectContext) {
-        if (!hasReferences) {
-            return errorSection
-                ? `${sanitizedBase}${errorSection}`
-                : sanitizedBase;
-        }
+    const contextParts = [referenceSection, errorSection].filter(Boolean);
 
-        const contextSection = formatReferenceSection(references);
-        return `${sanitizedBase}\n\n## External Reference Context\n${contextSection}${errorSection}`;
+    if (!contextParts.length) {
+        return sanitizedBase;
     }
 
-    const contextParts: string[] = [];
-    if (hasReferences) {
-        contextParts.push(formatReferenceSection(references));
-    }
-    if (errorSection) {
-        contextParts.push(errorSection.trim());
-    }
+    const combinedContext = contextParts.join('\n\n---\n\n');
 
-    if (contextParts.length) {
-        const combined = contextParts.filter(Boolean).join('\n\n').trim();
-        if (combined.length) {
-            const dedupeKey = buildContextDedupeKey(
-                contextKey,
-                references,
-                syncErrors,
-            );
-            collectContext(dedupeKey, combined);
-        }
+    if (collectContext) {
+        const dedupeKey = buildContextDedupeKey(
+            contextKey,
+            references,
+            syncErrors,
+        );
+        collectContext(dedupeKey, combinedContext);
     }
 
     return sanitizedBase;
@@ -317,12 +230,13 @@ function injectExternalContext(
 function formatReferenceSection(references: unknown[]): string {
     return (references as Array<Record<string, unknown>>)
         .map((ref) => {
-            const header = ref.lineRange
-                ? `--- Content from ${ref.filePath} (lines ${(ref.lineRange as Record<string, unknown>).start}-${(ref.lineRange as Record<string, unknown>).end}) ---`
-                : `--- Content from ${ref.filePath} ---`;
-            return `${header}\n${ref.content}\n--- End of ${ref.filePath} ---`;
+            const lineRangeInfo = ref.lineRange
+                ? ` (lines ${(ref.lineRange as Record<string, unknown>).start}-${(ref.lineRange as Record<string, unknown>).end})`
+                : '';
+            const header = `### Source: File - ${ref.filePath}${lineRangeInfo}`;
+            return `${header}\n${ref.content}`;
         })
-        .join('\n');
+        .join('\n\n');
 }
 
 function buildContextDedupeKey(
@@ -372,57 +286,61 @@ function buildContextDedupeKey(
 }
 
 /**
- * Formats context augmentations (MCP tool outputs) into a readable section.
- * @param pathKey - The path key identifying the section (e.g., 'categories.descriptions.bug')
+ * Builds a single, consolidated block of context from all MCP tool outputs.
+ * This block is only generated if there are valid augmentations to display.
  * @param augmentations - Map of context augmentations by path key
  * @returns Formatted augmentation section string, or empty string if no augmentations
  */
-function formatAugmentations(
-    pathKey: string,
-    augmentations?: Record<
-        string,
-        {
-            path: string[];
-            requirementId?: string;
-            outputs: Array<{
-                provider?: string;
-                toolName: string;
-                success: boolean;
-                output?: string;
-                error?: string;
-            }>;
-        }
-    >,
+function buildAllAugmentationText(
+    augmentations?: CodeReviewPayload['contextAugmentations'],
 ): string {
-    const entry = augmentations?.[pathKey];
-    if (!entry?.outputs?.length) {
+    if (!augmentations) {
         return '';
     }
 
-    const lines = entry.outputs.map((output) => {
-        const parts = [output.toolName];
-        if (output.provider) {
-            parts.push(`(${output.provider})`);
-        }
-        const label = parts.filter(Boolean).join(' ');
+    const toolOutputs: string[] = [];
+    const processedOutputs = new Set<string>();
 
-        if (output.success) {
-            return `- ${label}: ${output.output ?? 'No output returned.'}`;
+    for (const config of SECTION_CONFIG) {
+        const entry = augmentations[config.pathKey];
+        if (!entry?.outputs?.length) {
+            continue;
         }
 
-        return `- ${label}: FAILED ${output.error ?? 'Unknown error'}`;
-    });
+        entry.outputs.forEach((output) => {
+            // Simple serialization to dedupe
+            const key = JSON.stringify(output);
+            if (processedOutputs.has(key)) {
+                return;
+            }
+            processedOutputs.add(key);
 
-    return `\n\n### Context Insights & Knowledge Injection (${pathKey})
-The following sections provide **additional context** retrieved specifically to enhance your understanding of the code under review. This information serves as a knowledge base to bridge the gap between the isolated file changes and the broader system reality.
+            const parts = [output.toolName];
+            if (output.provider) {
+                parts.push(`(${output.provider})`);
+            }
+            const label = parts.filter(Boolean).join(' ');
+            const outputContent = output.success
+                ? (output.output ?? 'No output returned.')
+                : `FAILED: ${output.error ?? 'Unknown error'}`;
 
-**Guidance:**
+            toolOutputs.push(`--- Tool: ${label} ---\n${outputContent}`);
+        });
+    }
+
+    if (!toolOutputs.length) {
+        return '';
+    }
+
+    const guidance = `### Source: MCP Tools
+**Guidance on this context:**
 - **Clarification:** Use this data to clarify ambiguous logic, missing definitions, or external dependencies not visible in the diff.
 - **Grounding:** Ground your analysis in this provided context rather than making assumptions about unknown external behaviors.
 - **Relevance:** Use this information to make your review more accurate and aligned with the actual environment/project constraints.
 
-**Retrieved Context:**
-${lines.join('\n')}`;
+**Retrieved Context:**`;
+
+    return `${guidance}\n\n${toolOutputs.join('\n\n')}`;
 }
 
 /**
@@ -672,7 +590,7 @@ function processSection(
     );
 
     return injectExternalContext(
-        `${textBase}${formatAugmentations(config.pathKey, augmentations)}`,
+        textBase,
         references,
         syncErrors,
         config.pathKey,
@@ -1564,6 +1482,14 @@ export const prompt_codereview_system_gemini_v2 = (
         processOptions,
     );
 
+    // Consolidated MCP tool context block
+    const augmentationBlock = buildAllAugmentationText(
+        payload?.contextAugmentations,
+    );
+    if (augmentationBlock) {
+        collectExternalContext('augmentations', augmentationBlock);
+    }
+
     const prompt = buildFinalPrompt(
         languageNote,
         bugText,
@@ -1584,7 +1510,7 @@ export const prompt_codereview_system_gemini_v2 = (
         return prompt;
     }
 
-    return `${prompt}\n\n## External Reference Context\n${contextBlocks.join('\n\n')}`;
+    return `${prompt}\n\n## External Context & Injected Knowledge\n\nThe following information is provided to ground your analysis in the broader system reality. Use this as your source of truth.\n\n---\n\n${contextBlocks.join('\n\n---\n\n')}`;
 };
 
 export const prompt_codereview_user_gemini_v2 = (

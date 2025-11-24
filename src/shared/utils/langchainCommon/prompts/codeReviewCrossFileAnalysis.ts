@@ -2,6 +2,7 @@ import z from 'zod';
 import { SeverityLevel } from '../../enums/severityLevel.enum';
 import { CodeReviewConfig } from '@/config/types/general/codeReview.type';
 import { getDefaultKodusConfigFile } from '../../validateCodeReviewConfigFile';
+import { getTextOrDefault } from './prompt.helpers';
 
 export interface CrossFileAnalysisPayload {
     files: {
@@ -45,16 +46,6 @@ export const prompt_codereview_cross_file_analysis = (
 ) => {
     const overrides = payload?.v2PromptOverrides || {};
     const defaults = getDefaultKodusConfigFile()?.v2PromptOverrides;
-
-    const limitText = (text: string, max = 2000): string =>
-        text.length > max ? text.slice(0, max) : text;
-    const getTextOrDefault = (
-        text: string | undefined,
-        fallbackText: string,
-    ): string =>
-        text && typeof text === 'string' && text.trim().length
-            ? limitText(text.trim())
-            : fallbackText;
 
     const defaultSeverity = defaults?.severity?.flags;
 
