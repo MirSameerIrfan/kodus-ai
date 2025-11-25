@@ -3146,10 +3146,10 @@
   resolved "https://registry.npmjs.org/@pkgr/core/-/core-0.2.9.tgz#d229a7b7f9dac167a156992ef23c7f023653f53b"
   integrity sha512-QNqXyfVS2wm9hweSYD2O7F0G06uurj9kZ96TRQE5Y9hU7+tgdZwIkbAKc5Ocy1HxEY2kuDQa6cQ1WRs/O5LFKA==
 
-"@posthog/core@1.5.5":
-  version "1.5.5"
-  resolved "https://registry.npmjs.org/@posthog/core/-/core-1.5.5.tgz#fc650389b4275cec73b2e64cc2642f709bd61c39"
-  integrity sha512-m7G1EQTgo9xrr3lZxCp9C2egP99MSRpIDD95wYzwUPxMesKxI0xEQ+TC5LS/XOXIdmsNvsx4UcxwmzhSwD2GWA==
+"@posthog/core@1.6.0":
+  version "1.6.0"
+  resolved "https://registry.npmjs.org/@posthog/core/-/core-1.6.0.tgz#a5b63a30950a8dfe87d4bf335ab24005c7ce1278"
+  integrity sha512-Tbh8UACwbb7jFdDC7wwXHtfNzO+4wKh3VbyMHmp2UBe6w1jliJixexTJNfkqdGZm+ht3M10mcKvGGPnoZ2zLBg==
   dependencies:
     cross-spawn "^7.0.6"
 
@@ -7817,7 +7817,20 @@ keyv@^5.5.4:
     yaml "^2.2.1"
     zod "^3.25.32"
 
-langsmith@0.3.80, langsmith@^0.3.67:
+langsmith@0.3.81:
+  version "0.3.81"
+  resolved "https://registry.npmjs.org/langsmith/-/langsmith-0.3.81.tgz#2094dafe5fb6ccde8112c277a5730db0adb2dd59"
+  integrity sha512-NFmp7TDrrbCE6TIfHqutN9xhdgvx0EOhULVo8bDW+ib5idprwjMTvmS0S1n9uVFwjN03zU2zVEWViXnwy5XPrw==
+  dependencies:
+    "@types/uuid" "^10.0.0"
+    chalk "^4.1.2"
+    console-table-printer "^2.12.1"
+    p-queue "^6.6.2"
+    p-retry "4"
+    semver "^7.6.3"
+    uuid "^10.0.0"
+
+langsmith@^0.3.67:
   version "0.3.80"
   resolved "https://registry.npmjs.org/langsmith/-/langsmith-0.3.80.tgz#703f9d047c028008bc51eeb49b9737942cf62871"
   integrity sha512-BWpbB9/Hkx06S5X4nJE3W5Wm1mH/j6SIqWcM/WAuT+yulohE9knstIJGmBpmSBULb46nCj+cfjRkyF1Nrc4UmA==
@@ -8985,12 +8998,12 @@ postgres-interval@^1.1.0:
   dependencies:
     xtend "^4.0.0"
 
-posthog-node@^5.13.2:
-  version "5.13.2"
-  resolved "https://registry.npmjs.org/posthog-node/-/posthog-node-5.13.2.tgz#c18f313291a335ad58f97039050ae7b7521eb738"
-  integrity sha512-KfFsiL4v+d723fKYV9vT6lt4GYtryL8FOK7LjlDQ/lJai/EEULkmGvQaNUzBW+4lK9fUaz+AhCyipNDUaXkZqA==
+posthog-node@^5.14.0:
+  version "5.14.0"
+  resolved "https://registry.npmjs.org/posthog-node/-/posthog-node-5.14.0.tgz#edce3a9a72a95a321d9ef0d9818e337cc0a248ea"
+  integrity sha512-cKY2Wdtjx5wlIWL9/Im5/FT+zeKaYjtG94rfrIFKTVoCdwV7S9PaU8frLD/8TpGx1SwOFgw7QTjhpa/vnxTlww==
   dependencies:
-    "@posthog/core" "1.5.5"
+    "@posthog/core" "1.6.0"
 
 prebuild-install@^7.1.3:
   version "7.1.3"

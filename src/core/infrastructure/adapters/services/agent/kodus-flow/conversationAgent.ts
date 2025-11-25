@@ -68,7 +68,7 @@ export class ConversationAgentProvider extends BaseAgentProvider {
 
         this.mcpAdapter = createMCPAdapter({
             servers,
-            defaultTimeout: 10_000,
+            defaultTimeout: 60_000,
             maxRetries: 1,
             onError: (err) => {
                 this.logger.warn({

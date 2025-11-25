@@ -661,17 +661,6 @@ export class ContextReferenceDetectionService {
 
         const allSyncErrors = [...syncErrors, ...normalizedDependencies.errors];
 
-        this.logger.log({
-            message: `Applied full MCP normalization for ${entityType}`,
-            context: ContextReferenceDetectionService.name,
-            metadata: {
-                entityType,
-                dependencyCount: references.length,
-                syncErrorsBefore: syncErrors.length,
-                syncErrorsAfter: allSyncErrors.length,
-            },
-        });
-
         return {
             dependencies: normalizedDependencies.dependencies,
             syncErrors: allSyncErrors,
