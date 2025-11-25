@@ -190,12 +190,36 @@ export class MCPManagerService {
             const limitedData = limited ? data.items.slice(0, 3) : data.items;
 
             if (format) {
-                const formattedConnections: MCPServerConfig[] = [];
-                for (const connection of limitedData) {
-                    const formattedConnection =
-                        await this.formatConnection(connection);
-                    formattedConnections.push(formattedConnection);
-                }
+                const results = await Promise.allSettled(
+                    limitedData.map((connection) =>
+                        this.formatConnection(connection),
+                    ),
+                );
+
+                const formattedConnections = results
+                    .filter(
+                        (
+                            result,
+                        ): result is PromiseFulfilledResult<MCPServerConfig> =>
+                            result.status === 'fulfilled',
+                    )
+                    .map((result) => result.value);
+
+                results.forEach((result, index) => {
+                    if (result.status === 'rejected') {
+                        this.logger.error({
+                            message: `Failed to format connection for app: ${limitedData[index]?.appName}`,
+                            context: MCPManagerService.name,
+                            error: result.reason,
+                            metadata: {
+                                organizationId:
+                                    limitedData[index]?.organizationId,
+                                connection: limitedData[index]?.appName,
+                            },
+                        });
+                    }
+                });
+
                 return formattedConnections;
             }
 
