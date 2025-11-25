@@ -305,7 +305,7 @@ export class MCPManagerService {
             url: connection.mcpUrl,
             headers,
             retries: 1,
-            timeout: 10_000,
+            timeout: 60_000,
             allowedTools: connection.allowedTools,
         };
     }
