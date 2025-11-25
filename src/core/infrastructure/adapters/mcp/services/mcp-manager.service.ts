@@ -208,9 +208,14 @@ export class MCPManagerService {
                 results.forEach((result, index) => {
                     if (result.status === 'rejected') {
                         this.logger.error({
-                            message: `Failed to format connection for app: ${limitedData[index].appName}`,
+                            message: `Failed to format connection for app: ${limitedData[index]?.appName}`,
                             context: MCPManagerService.name,
                             error: result.reason,
+                            metadata: {
+                                organizationId:
+                                    limitedData[index]?.organizationId,
+                                connection: limitedData[index]?.appName,
+                            },
                         });
                     }
                 });
