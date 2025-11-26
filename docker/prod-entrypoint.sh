@@ -5,10 +5,10 @@ echo "▶ Starting deployment entrypoint..."
 
 # Run Migrations
 echo "▶ Running Migrations..."
-npm run migration:run:internal
+npm run migration:run:prod
 
 echo "▶ Running Seeds..."
-npm run seed:internal
+npm run seed:prod
 
 echo "▶ Starting Application..."
 # exec "$@" executes the CMD defined in the Dockerfile (pm2-runtime ...)
