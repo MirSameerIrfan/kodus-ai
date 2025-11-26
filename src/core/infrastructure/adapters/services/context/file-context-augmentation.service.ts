@@ -190,6 +190,13 @@ export class FileContextAugmentationService {
         }
 
         for (const evidence of result.sandboxEvidences) {
+            if (
+                (evidence.metadata as Record<string, unknown>)
+                    ?.executionStatus !== 'success'
+            ) {
+                continue;
+            }
+
             if (evidence.metadata?.hidden || evidence.metadata?.internal) {
                 continue;
             }
@@ -219,22 +226,25 @@ export class FileContextAugmentationService {
                 provider: evidence.provider ?? 'unknown',
                 toolName: resolvedToolName ?? 'unknown',
                 success: true,
-                output: this.serializeEvidence(evidence),
+                output: this.serializeEvidencePayload(evidence.payload),
             });
         }
 
         return map;
     }
 
-    private serializeEvidence(evidence: ContextEvidence): string {
-        if (typeof evidence.payload === 'string') {
-            return evidence.payload;
+    private serializeEvidencePayload(payload: unknown): string {
+        if (payload === null || payload === undefined) {
+            return 'No output returned.';
+        }
+        if (typeof payload === 'string') {
+            return payload;
         }
 
         try {
-            return JSON.stringify(evidence.payload ?? evidence, null, 2);
+            return JSON.stringify(payload, null, 2);
         } catch {
-            return String(evidence.payload ?? '[unserializable payload]');
+            return String(payload ?? '[unserializable payload]');
         }
     }
 
