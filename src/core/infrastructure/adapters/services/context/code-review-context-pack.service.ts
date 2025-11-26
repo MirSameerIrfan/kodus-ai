@@ -1556,7 +1556,7 @@ export class CodeReviewContextPackService {
                 timeout: connection.timeout ?? 10_000,
                 retries: connection.retries ?? 1,
             })),
-            defaultTimeout: 10_000,
+            defaultTimeout: 60_000,
             maxRetries: 1,
             onError: (error, serverName) => {
                 this.logger.warn({

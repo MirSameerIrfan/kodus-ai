@@ -16,6 +16,7 @@ import type {
     ContextEvidence,
 } from '@context-os-core/interfaces';
 import { ContextAugmentationsMap } from './code-review-context-pack.service';
+import { IKodyRule } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
 
 @Injectable()
 export class FileContextAugmentationService {
@@ -30,6 +31,7 @@ export class FileContextAugmentationService {
         files: FileChange[],
         context: CodeReviewPipelineContext,
         mcpDependencies: ContextDependency[],
+        kodyRule?: Partial<IKodyRule>,
     ): Promise<Record<string, ContextAugmentationsMap>> {
         if (!files?.length || !mcpDependencies?.length) {
             return {};
@@ -59,6 +61,7 @@ export class FileContextAugmentationService {
                         context,
                         extractedDependencies,
                         dependencyLookup,
+                        kodyRule,
                     ),
                 ),
             ),
@@ -79,6 +82,7 @@ export class FileContextAugmentationService {
         context: CodeReviewPipelineContext,
         dependencies: ContextMCPDependency[],
         dependencyLookup: Map<string, ContextMCPDependency>,
+        kodyRule?: Partial<IKodyRule>,
     ) {
         try {
             const baseOverrides = this.getBasePromptOverrides(context);
@@ -91,6 +95,7 @@ export class FileContextAugmentationService {
                     dependencies,
                     promptOverrides: baseOverrides,
                     repoContext: this.buildRepositoryContext(context),
+                    kodyRule: kodyRule,
                 },
             );
 
@@ -185,6 +190,13 @@ export class FileContextAugmentationService {
         }
 
         for (const evidence of result.sandboxEvidences) {
+            if (
+                (evidence.metadata as Record<string, unknown>)
+                    ?.executionStatus !== 'success'
+            ) {
+                continue;
+            }
+
             if (evidence.metadata?.hidden || evidence.metadata?.internal) {
                 continue;
             }
@@ -214,22 +226,25 @@ export class FileContextAugmentationService {
                 provider: evidence.provider ?? 'unknown',
                 toolName: resolvedToolName ?? 'unknown',
                 success: true,
-                output: this.serializeEvidence(evidence),
+                output: this.serializeEvidencePayload(evidence.payload),
             });
         }
 
         return map;
     }
 
-    private serializeEvidence(evidence: ContextEvidence): string {
-        if (typeof evidence.payload === 'string') {
-            return evidence.payload;
+    private serializeEvidencePayload(payload: unknown): string {
+        if (payload === null || payload === undefined) {
+            return 'No output returned.';
+        }
+        if (typeof payload === 'string') {
+            return payload;
         }
 
         try {
-            return JSON.stringify(evidence.payload ?? evidence, null, 2);
+            return JSON.stringify(payload, null, 2);
         } catch {
-            return String(evidence.payload ?? '[unserializable payload]');
+            return String(payload ?? '[unserializable payload]');
         }
     }
 

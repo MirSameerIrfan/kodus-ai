@@ -55,7 +55,7 @@ export class ValidateNewCommitsStage extends BasePipelineStage<CodeReviewPipelin
             };
 
             this.logger.log({
-                message: `Found last analyzed commit: ${lastAnalyzedCommit}`,
+                message: `Found last analyzed commit: ${JSON.stringify(lastAnalyzedCommit)}`,
                 context: this.stageName,
                 metadata: {
                     organizationAndTeamData: context.organizationAndTeamData,

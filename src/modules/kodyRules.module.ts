@@ -39,6 +39,7 @@ import { PromptsModule } from './prompts.module';
 import { PullRequestsModule } from './pullRequests.module';
 import { RuleLikeModule } from './ruleLike.module';
 import { UsersModule } from './user.module';
+import { KodyRuleDependencyService } from '@/core/infrastructure/adapters/services/kodyRules/kodyRulesDependency.service';
 
 @Module({
     imports: [
@@ -78,6 +79,7 @@ import { UsersModule } from './user.module';
         },
         KodyRulesValidationService,
         KodyRulesSyncService,
+        KodyRuleDependencyService,
         ExternalReferenceLoaderService,
         {
             provide: GET_ADDITIONAL_INFO_HELPER_TOKEN,
@@ -96,6 +98,7 @@ import { UsersModule } from './user.module';
         SendRulesNotificationUseCase,
         KodyRulesValidationService,
         KodyRulesSyncService,
+        KodyRuleDependencyService,
         ExternalReferenceLoaderService,
         SyncSelectedRepositoriesKodyRulesUseCase,
         LicenseService,

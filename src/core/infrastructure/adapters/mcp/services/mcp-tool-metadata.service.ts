@@ -164,7 +164,7 @@ export class MCPToolMetadataService {
 
         const adapter = createMCPAdapter({
             servers: connections,
-            defaultTimeout: 10_000,
+            defaultTimeout: 60_000,
             maxRetries: 1,
             onError: (error, serverName) => {
                 this.logger.warn({
@@ -197,8 +197,7 @@ export class MCPToolMetadataService {
 
             const providerIndex = new Map<string, string>();
             for (const connection of connections) {
-                const providerId =
-                    this.resolveConnectionProviderId(connection);
+                const providerId = this.resolveConnectionProviderId(connection);
                 if (!providerId) continue;
 
                 const aliases = new Set<string>();
@@ -211,8 +210,7 @@ export class MCPToolMetadataService {
                 if (connection.url) {
                     aliases.add(connection.url.trim());
                 }
-                const metadataConn = (connection as any)?.metadata
-                    ?.connection;
+                const metadataConn = (connection as any)?.metadata?.connection;
                 if (metadataConn?.id) {
                     aliases.add(metadataConn.id.trim());
                 }

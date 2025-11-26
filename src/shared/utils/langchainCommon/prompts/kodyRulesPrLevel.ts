@@ -81,29 +81,41 @@ ${
         ? `
 ### External Tool Outputs
 ${Array.from(payload.mcpResultsMap.entries())
-    .map(([ruleUuid, augmentations]) => {
+    .map(([ruleUuid, data]) => {
         const rule = payload.rules?.find((r: any) => r.uuid === ruleUuid);
-        const entries = augmentations
-            ? Object.entries(augmentations as Record<string, any>)
-            : [];
-        if (!rule || !entries.length) return '';
+        const outputs = (data as any)?.outputs;
+
+        if (
+            !rule ||
+            !outputs ||
+            !Array.isArray(outputs) ||
+            outputs.length === 0
+        ) {
+            return '';
+        }
+
         return `
 Rule: ${rule.title} (${ruleUuid})
-${entries
-    .map(([pathKey, metadata]) => {
-        const augmentation = metadata as Record<string, any>;
-        const provider = augmentation?.provider ?? 'unknown';
-        const toolName = augmentation?.toolName ?? 'unknown';
-        const output =
-            augmentation?.output !== undefined &&
-            augmentation?.output !== null
-                ? JSON.stringify(augmentation.output, null, 2)
-                : 'No output provided';
-        return `  Context Path: ${pathKey}
-  Provider: ${provider}
-  Tool: ${toolName}
-  Output:
-${output}
+${outputs
+    .map((aug: any, index: number) => {
+        const provider = aug?.provider ?? 'unknown';
+        const toolName = aug?.toolName ?? 'unknown';
+        let outputContent = 'No output provided';
+
+        if (aug?.output) {
+            try {
+                const parsedOutput = JSON.parse(aug.output);
+                outputContent = JSON.stringify(parsedOutput, null, 2);
+            } catch (e) {
+                outputContent = aug.output;
+            }
+        }
+
+        return `  Tool Execution #${index + 1}:
+    Provider: ${provider}
+    Tool: ${toolName}
+    Output:
+${outputContent}
 `;
     })
     .join('\n')}`;

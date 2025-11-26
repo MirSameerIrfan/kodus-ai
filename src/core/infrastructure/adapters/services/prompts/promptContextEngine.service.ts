@@ -103,7 +103,10 @@ export class PromptContextEngineService implements IPromptContextEngineService {
 
         const skipPrefilter = params.detectionMode === 'rule';
 
-        if (!skipPrefilter && !this.hasLikelyExternalReferences(params.promptText)) {
+        if (
+            !skipPrefilter &&
+            !this.hasLikelyExternalReferences(params.promptText)
+        ) {
             this.logger.debug({
                 message:
                     'No external reference patterns detected (regex pre-filter)',
@@ -338,9 +341,12 @@ export class PromptContextEngineService implements IPromptContextEngineService {
                         },
                     });
 
+                const repositoryName =
+                    ref.repositoryName ?? params.repositoryName;
+
                 let targetRepo = {
                     id: params.repositoryId,
-                    name: ref.repositoryName,
+                    name: repositoryName,
                 };
 
                 if (
@@ -351,10 +357,10 @@ export class PromptContextEngineService implements IPromptContextEngineService {
                         integrationConfig?.configValue as Repositories[];
 
                     targetRepo = repositories?.find(
-                        (repo) => repo.name === ref.repositoryName,
+                        (repo) => repo.name === repositoryName,
                     ) ?? {
                         id: params.repositoryId,
-                        name: ref.repositoryName,
+                        name: repositoryName,
                     };
                 }
 

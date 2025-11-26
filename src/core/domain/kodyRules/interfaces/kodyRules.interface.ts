@@ -197,5 +197,4 @@ export const kodyRuleSchema = z.object({
     inheritance: kodyRulesInheritanceSchema.optional(),
     directoryId: z.string().optional(),
     contextReferenceId: z.string().optional(),
-    // Todos os outros campos de referência foram movidos para Context OS
 });

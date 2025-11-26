@@ -39,3 +39,19 @@ export interface DailyUsageByDeveloperResultContract
     extends UsageByDeveloperResultContract {
     date: string; // YYYY-MM-DD
 }
+
+export interface TokenUsageBreakdown {
+    inputTokens: number;
+    outputTokens: number;
+    reasoningTokens: number;
+    totalTokens: number;
+}
+
+export interface CostEstimateContract {
+    estimatedMonthlyCost: number;
+    costPerDeveloper: number;
+    developerCount: number;
+    tokenUsage: TokenUsageBreakdown;
+    periodDays: number;
+    projectionDays: number;
+}

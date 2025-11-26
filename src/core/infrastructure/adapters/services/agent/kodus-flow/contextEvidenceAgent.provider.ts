@@ -22,6 +22,7 @@ import type {
     FileChange,
 } from '@/config/types/general/codeReview.type';
 import type { ContextEvidence } from '@context-os-core/interfaces';
+import { IKodyRule } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
 
 export interface ContextEvidenceAgentResult {
     evidences?: ContextEvidence[];
@@ -97,122 +98,168 @@ export class ContextEvidenceAgentProvider extends BaseAgentProvider {
         });
     }
 
-    private async createOrchestration() {
-        const llmAdapter = super.createLLMAdapter(
-            'ContextEvidenceAgent',
-            'contextEvidenceAgent',
-        );
-
-        this.orchestration = await createOrchestration({
-            tenantId: 'kodus-context-evidence-agent',
-            llmAdapter,
-            mcpAdapter: this.mcpAdapter,
-            observability:
-                this.observabilityService.createAgentObservabilityConfig(
-                    this.config,
-                    'context-script-agent',
-                ),
-            storage: {
-                type: StorageEnum.MONGODB,
-                connectionString:
-                    this.observabilityService.buildConnectionString(
-                        this.config,
-                    ),
-                database: this.config.database,
-            },
-        });
-    }
-
     private buildPrompt(
         file: FileChange,
         diffSnippet?: string,
         dependencies?: ContextMCPDependency[],
         promptOverrides?: CodeReviewConfig['v2PromptOverrides'],
         repoContext?: string,
+        kodyRule?: Partial<IKodyRule>,
     ): string {
-        const linesChanged = file.patchWithLinesStr?.split('\n').length ?? 0;
         const dependencySection = this.formatDependencies(dependencies);
-        const overridesSection = this.formatOverrides(promptOverrides);
-        const metadataSection =
+        const repoSection =
             repoContext && repoContext.trim().length
                 ? repoContext.trim()
                 : '- Repository metadata not provided.';
-        return `You are a senior context analyst for code reviews. You must reason step by step, decide if any MCP tool should run, and publish structured evidences when acceleration data is valuable.
 
-### Mission Priority
-Your primary directive is to execute the specific instructions found in "Prompt Overrides".
-You are tool-agnostic: if an override explicitly mentions ANY MCP tool or action (e.g. "MCP read_file", "check vulnerabilities", "query database", "search docs"), you MUST evaluate if the current file diff warrants that action using the available tools.
+        const directiveSection = kodyRule
+            ? this.buildKodyRuleDirective(kodyRule)
+            : this.buildOverridesDirective(promptOverrides);
 
-1. Check "Prompt Overrides": Do they ask for specific tools/context for this type of change?
-2. Analyze Diff: Does this file change match the criteria in the overrides?
-   - IMPORTANT: Focus STRICTLY on the 'diff snippet' and 'filename' provided below. Do not hallucinate changes not present in the diff.
-   - Example A: User asks to "check security on deps changes". Diff is in 'package.json'. -> MATCH -> Execute Tool (e.g. security_scan).
-   - Example B: User asks to "query performance metrics". Diff is a SQL query. -> MATCH -> Execute Tool (e.g. db_query).
-   - Example C: User asks to "check security". Diff is 'styles.css'. -> NO MATCH -> Do nothing.
+        const toolNames =
+            dependencies?.map((d) => `\`${d.toolName}\``).join(', ') || 'none';
 
-### Mission
-1. Inspect the repository / PR context and the diff for this file.
-2. Determine whether invoking an MCP tool adds meaningful context for the configured categories/severities. Many diffs (formatting, comments, docs) do **not** require MCP execution—detect these and return an empty evidence list.
-3. If an MCP tool is justified, verify all required arguments. When any argument is unknown, attempt to discover it using the available tools; if still unavailable, skip the MCP and record the skip reason in the actions log.
-4. Execute only the MCP tools that match the diff impact; avoid redundant or irrelevant calls.
-5. Capture each successful tool execution as a ContextEvidence entry.
-6. IMPORTANT: Do not call the same tool with the same arguments twice. If a tool fails or returns insufficient info, try a different approach or stop.
+        // ============================================================
+        // PROMPT STRUCTURE (based on prompt engineering best practices)
+        // ============================================================
+        // Note: IDENTITY and SCRATCHPAD are injected by the orchestrator.
+        // This prompt contains only the task-specific instructions.
+        //
+        // Structure:
+        // 1. DIRECTIVE (what the user wants - critical context first)
+        // 2. TASK CONTEXT (file, diff, repo info)
+        // 3. REQUIRED TOOLS (dependencies with schemas)
+        // 4. STOPPING CRITERIA + OUTPUT FORMAT (recency bias)
+        //
+        // <AVAILABLE TOOLS> is injected by the orchestrator after this.
+        // ============================================================
 
-### Argument Resolution Strategy (Tool Agnostic)
-When a required tool needs an argument you don't have (e.g. an ID, URI, hash, or specific path):
-1. **Identify the Missing Argument:** Look at the tool's schema in <AVAILABLE TOOLS>.
-2. **Extract Context from Diff:** Analyze function names, variable names, library imports, and comments in both the old and new code within the diff to find specific keywords to use as arguments for your tool calls.
-3. **Search for a Resolver:** Check if any OTHER available tool can provide this information. Look for tools with verbs like 'get', 'list', 'resolve', 'find' or 'search' that might output the missing data.
-4. **Chain Execution:** Execute the resolver tool first, extract the data from its result, and THEN execute the main tool.
-   - *Generic Example:* Main tool 'fetch_data(id)' needs 'id'. Available tool 'find_id(name)' exists. -> Call 'find_id("target_name")' -> Get 'id' -> Call 'fetch_data(id)'.
+        return `${directiveSection}
 
-### How to Read the Diff Snippet
-The diff snippet uses a standard format to show changes. Pay close attention to both what was removed and what was added to understand the developer's intent.
-- Lines starting with '-' represent the **old code** (what was deleted).
-- Lines starting with '+' represent the **new code** (what was added).
-- Lines without a prefix are unchanged context lines.
-- **Your goal is to understand the transformation**: Compare the old code with the new code to identify the core logic change. For example, was a function call replaced? Was a variable renamed? Was a condition changed? This comparison is critical for your analysis.
-- Note: The diff may sometimes use markers like '__old hunk__' and '__new hunk__' to explicitly separate the code before and after the change. Treat these as structural delimiters.
+## 📋 TASK CONTEXT
 
-### ContextEvidence Schema
-When creating evidences, use this structure:
-{
-  "provider": "string", // The tool provider or 'unknown'
-  "toolName": "string", // The name of the tool executed
-  "pathKey": "string", // Optional path key from dependencies or default
-  "category": "string", // The category triggering this (e.g. 'bug', 'security')
-  "severity": "string", // The severity level (e.g. 'high', 'medium')
-  "payload": any // The actual result returned by the tool
-}
+### Repository / PR Info
+${repoSection}
 
-### Repository / PR Context
-${metadataSection}
+### File Change
+| Field | Value |
+|-------|-------|
+| File | \`${file.filename}\` |
+| Status | ${file.status} |
+| Lines | +${file.additions} / -${file.deletions} |
 
-### File Context
-- filename: ${file.filename}
-- status: ${file.status}
-- additions: ${file.additions}
-- deletions: ${file.deletions}
-- total_lines_in_patch: ${linesChanged}
-- diff snippet (may be truncated):
+### Diff
+\`\`\`diff
 ${diffSnippet ?? file.patchWithLinesStr ?? 'N/A'}
+\`\`\`
 
-### MCP Dependencies (JSON)
+> **Reading the diff:** \`-\` = deleted, \`+\` = added, no prefix = context
+
+## 🔧 REQUIRED TOOLS (${toolNames})
+
+For each tool below:
+1. **Check availability** in \`<AVAILABLE TOOLS>\` → if missing, skip with \`"tool_not_available"\`
+2. **Resolve arguments** using the schema and context
+3. **Execute** and capture result
+
+### How to Resolve Arguments (Tool-Agnostic)
+
+**IMPORTANT:** You don't know what tools will be available. Read each tool's **schema**, \`description\` and \`<hints>\` to understand its arguments.
+
+**Your process:**
+1. **Read the schema:** Look at \`required\` args, \`properties\`, and each property's \`description\` — it tells you exactly what the tool expects
+2. **Read instructions:** Check the tool's \`description\` and \`<hints>\` for specific usage patterns
+3. **Resolve missing args:** Use the suggested resolver tools if arguments are missing
+4. **Extract from context:** Use values from diff, file path, repo info, PR info
+
+**Key rules:**
+- Use **REAL values** from context — never invent terms
+- If a resolver tool returns no results with a query → try without query
+- Only skip with \`"args_unresolvable"\` after following the tool's hints
+
+### Tool Schemas
 ${dependencySection}
 
-### Prompt Overrides (category / severity / generation style)
-${overridesSection}
+## 🛑 STOPPING CRITERIA
 
-### Output Format
-When you have finished your analysis and tool executions (or decided no tools are needed), you MUST use the "final_answer" action.
-The content of your final_answer MUST be a JSON object with this structure:
+**STOP when:**
+- ✅ All required tools processed (executed or skipped)
+- ✅ No tools needed for this change
+- ✅ Tool failed → report and stop (no retry with same args)
+
+**SKIP when:**
+| Reason | skipReason |
+|--------|------------|
+| Not in \`<AVAILABLE TOOLS>\` | \`"tool_not_available"\` |
+| Can't resolve args | \`"args_unresolvable"\` |
+| Context wouldn't help | \`"not_needed_for_this_change"\` |
+| Directive doesn't apply | \`"change_unrelated_to_request"\` |
+
+**NEVER:** Retry same args, loop indefinitely, or execute tools blindly.
+
+## ✅ OUTPUT FORMAT
+
+\`\`\`json
 {
-  "evidences": [ { ...ContextEvidence } ],
-  "actionsLog": "optional step-by-step log"
+  "reasoning": "What is this change? Do I need context? Why/why not?",
+  "evidences": [
+    {
+      "provider": "string",
+      "toolName": "string",
+      "pathKey": "string",
+      "payload": "<result or null>",
+      "metadata": {
+        "executionStatus": "success" | "failed" | "skipped",
+        "skipReason": "string or null"
+      }
+    }
+  ],
+  "actionsLog": "Step-by-step log"
 }
+\`\`\`
 `;
     }
 
+    /**
+     * Builds the directive section for KodyRule context.
+     * KodyRule has title + rule fields.
+     */
+    private buildKodyRuleDirective(kodyRule: Partial<IKodyRule>): string {
+        return `## 📌 DIRECTIVE: KodyRule Validation
+
+You are validating this code change against a specific rule.
+
+**Rule:** ${kodyRule.title}
+**Description:** ${kodyRule.rule}
+
+Consider: Does this change touch anything related to this rule? Would external context help validate compliance?`;
+    }
+
+    /**
+     * Builds the directive section for PromptOverrides context.
+     * PromptOverrides contains user custom instructions (deserializes TipTap JSON).
+     */
+    private buildOverridesDirective(
+        promptOverrides?: CodeReviewConfig['v2PromptOverrides'],
+    ): string {
+        const overridesContent = this.formatOverrides(promptOverrides);
+        if (
+            overridesContent.includes('No overrides provided') ||
+            overridesContent.includes('No relevant overrides provided')
+        ) {
+            return `## 📌 DIRECTIVE: Standard Review
+
+No specific context request. Use your judgment as a senior engineer to decide if external context would help.`;
+        }
+
+        return `## 📌 DIRECTIVE: User Request
+
+The user is asking for specific context:
+
+${overridesContent}
+
+Consider: Does this request make sense for THIS particular change?`;
+    }
     private formatDependencies(dependencies?: ContextMCPDependency[]): string {
         if (!dependencies?.length) {
             return '[]';
@@ -230,6 +277,7 @@ The content of your final_answer MUST be a JSON object with this structure:
                     dependency.metadata?.toolInputSchema ??
                     null,
             }));
+
             return JSON.stringify(summarized, null, 2);
         } catch {
             return dependencies
@@ -253,16 +301,85 @@ The content of your final_answer MUST be a JSON object with this structure:
             if (!filtered || Object.keys(filtered).length === 0) {
                 return 'No relevant overrides provided.';
             }
-            return JSON.stringify(filtered, null, 2);
+            return this.deserializeNestedJson(filtered);
         } catch {
             return 'Failed to serialize overrides.';
         }
     }
 
+    private deserializeNestedJson(obj: unknown): string {
+        if (typeof obj === 'string') {
+            const trimmed = obj.trim();
+            if (
+                (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+                (trimmed.startsWith('[') && trimmed.endsWith(']'))
+            ) {
+                try {
+                    const parsed = JSON.parse(trimmed);
+                    return this.extractTextFromTipTap(parsed);
+                } catch {
+                    return obj;
+                }
+            }
+            return obj;
+        }
+
+        if (Array.isArray(obj)) {
+            return obj
+                .map((item) => this.deserializeNestedJson(item))
+                .join('\n');
+        }
+
+        if (obj && typeof obj === 'object') {
+            const lines: string[] = [];
+            for (const [key, value] of Object.entries(obj)) {
+                const deserializedValue = this.deserializeNestedJson(value);
+                if (deserializedValue.trim()) {
+                    lines.push(`**${key}:**\n${deserializedValue}`);
+                }
+            }
+            return lines.join('\n\n');
+        }
+
+        return String(obj);
+    }
+
+    private extractTextFromTipTap(node: unknown): string {
+        if (!node || typeof node !== 'object') {
+            return '';
+        }
+
+        const typedNode = node as Record<string, unknown>;
+
+        if (typedNode.type === 'text' && typeof typedNode.text === 'string') {
+            return typedNode.text;
+        }
+
+        if (typedNode.type === 'hardBreak') {
+            return '\n';
+        }
+
+        if (typedNode.type === 'mcpMention') {
+            const attrs = typedNode.attrs as Record<string, string> | undefined;
+            if (attrs?.app && attrs?.tool) {
+                return `→ Tool: ${attrs.app}/${attrs.tool}`;
+            }
+            return '';
+        }
+
+        if (Array.isArray(typedNode.content)) {
+            return typedNode.content
+                .map((child) => this.extractTextFromTipTap(child))
+                .join('');
+        }
+
+        return '';
+    }
+
     private filterRelevantOverrides(
-        obj: any,
+        obj: unknown,
         keywords = ['mcp', 'tool', 'context', 'execut', 'run'],
-    ): any {
+    ): unknown {
         if (typeof obj === 'string') {
             const lower = obj.toLowerCase();
             if (keywords.some((k) => lower.includes(k))) {
@@ -279,7 +396,7 @@ The content of your final_answer MUST be a JSON object with this structure:
         }
 
         if (obj && typeof obj === 'object') {
-            const result: Record<string, any> = {};
+            const result: Record<string, unknown> = {};
             for (const [key, value] of Object.entries(obj)) {
                 const filteredValue = this.filterRelevantOverrides(
                     value,
@@ -378,7 +495,9 @@ The content of your final_answer MUST be a JSON object with this structure:
         if (dependencies) {
             for (const dep of dependencies) {
                 const serverName =
-                    (dep.metadata as any)?.providerAlias || dep.provider;
+                    (dep.metadata as any)?.providerName ||
+                    (dep.metadata as any)?.providerAlias ||
+                    dep.provider;
                 if (serverName) {
                     requiredServerNames.add(serverName.toLowerCase());
                 }
@@ -443,59 +562,26 @@ The content of your final_answer MUST be a JSON object with this structure:
                 stop: this.defaultLLMConfig.stop,
             },
             identity: {
-                description: `Senior Context Intelligence Agent.
-Specialized in augmenting code review context by dynamically orchestrating MCP tools based on file changes and user-defined rules.
-
-Core Responsibilities:
-- Analyze file diffs against "Prompt Overrides" to detect trigger conditions.
-- Resolve dependencies: Identify missing arguments (e.g., URIs, IDs) and autonomously find them using available "resolver" tools.
-- Execute MCP Tools: Select and run the most appropriate tools to gather high-value context (docs, security checks, performance metrics).
-- Filter Noise: Distinguish between trivial changes (formatting) and significant logic changes that warrant deep context gathering.
-- Produce Evidence: Synthesize tool outputs into structured "ContextEvidence" JSON for downstream consumption.
-
-Mindset:
-- You are a detective, not just a script runner.
-- You assume nothing; you verify everything via tools.
-- You are persistent in resolving arguments but conservative in execution (avoiding redundant calls).`,
-                goal: 'Reason about each file, gather the needed arguments, invoke the appropriate MCP tools, and publish the evidences.',
-                expertise: [
-                    'Codebase Context Analysis',
-                    'Tool Orchestration and Chaining',
-                    'Dynamic Requirement Interpretation',
-                    'Gap Analysis and Information Retrieval',
-                ],
+                description:
+                    'Context Evidence Agent. Analyzes code diffs, resolves tool arguments from context, executes MCP tools to gather relevant external context for code reviews.',
+                goal: 'Fetch external context (issues, docs, security) that genuinely helps review this code change.',
+                expertise: ['Code Review', 'Tool Orchestration'],
                 personality:
-                    'Analytical, precise, tool-agnostic, and resource-efficient. You do not guess; you investigate using tools. You prioritize gathering concrete data over making assumptions.',
+                    'Analytical, precise. Verifies via tools, no assumptions.',
             },
             plannerOptions: {
                 type: PlannerType.REACT,
                 replanPolicy: {
-                    toolUnavailable: 'replan',
-                    maxReplans: 2,
+                    toolUnavailable: 'fail',
+                    maxReplans: 1,
                 },
                 scratchpad: {
                     enabled: true,
-                    initialState: `# EXECUTION PLAN (Status: Initializing)
-
-## 1. TRIGGER ANALYSIS
-[ ] Check if "Prompt Overrides" request specific tools.
-[ ] Compare file diff with triggers.
-> Triggers Found: null
-
-## 2. DEPENDENCY RESOLUTION
-[ ] List missing tool arguments (IDs, URIs, etc).
-[ ] Execute search/resolver tools to find these arguments.
-> Missing Arguments: []
-> Resolved Arguments: {}
-
-## 3. EVIDENCE COLLECTION
-[ ] Execute main tools.
-[ ] Validate if output is useful context.
-> Collected Evidences: []
-
-## 4. FINALIZATION
-[ ] Format output as JSON.
-[ ] Call final_answer.`,
+                    initialState: `**1. Change:** (what is this diff doing? trivial or significant?)
+**2. Directive:** (what context is requested? applies to this change?)
+**3. Tools:** execute=[] skip=[]
+**4. Args:** (how resolved each required arg)
+**5. Log:** (execution results)`,
                 },
             },
         });
@@ -509,6 +595,7 @@ Mindset:
         dependencies?: ContextMCPDependency[];
         promptOverrides?: CodeReviewConfig['v2PromptOverrides'];
         repoContext?: string;
+        kodyRule?: Partial<IKodyRule>;
     }): Promise<ContextEvidenceAgentResult | null> {
         const {
             organizationAndTeamData,
@@ -516,6 +603,7 @@ Mindset:
             dependencies,
             promptOverrides,
             repoContext,
+            kodyRule,
         } = params;
 
         this.logger.log({
@@ -563,6 +651,7 @@ Mindset:
             dependencies,
             promptOverrides,
             repoContext,
+            kodyRule,
         );
 
         const result = await orchestration.callAgent(

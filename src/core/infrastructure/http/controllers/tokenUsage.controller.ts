@@ -1,4 +1,9 @@
-import { BadRequestException, Inject, UseInterceptors } from '@nestjs/common';
+import {
+    BadRequestException,
+    Inject,
+    UseInterceptors,
+    Scope,
+} from '@nestjs/common';
 import {
     ITokenUsageService,
     TOKEN_USAGE_SERVICE_TOKEN,
@@ -16,20 +21,30 @@ import {
     UsageByPrResultContract,
     DailyUsageByDeveloperResultContract,
     UsageByDeveloperResultContract,
+    CostEstimateContract,
 } from '@/core/domain/tokenUsage/types/tokenUsage.types';
 import { TokensByDeveloperUseCase } from '@/core/application/use-cases/usage/tokens-developer.use-case';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { TokenPricingUseCase } from '@/core/application/use-cases/usage/token-pricing.use-case';
+import { CostEstimateUseCase } from '@/core/application/use-cases/usage/cost-estimate.use-case';
 import { PinoLoggerService } from '../../adapters/services/logger/pino.service';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
 
-@Controller('usage')
+@Controller({ path: 'usage', scope: Scope.REQUEST })
 export class TokenUsageController {
     constructor(
         @Inject(TOKEN_USAGE_SERVICE_TOKEN)
         private readonly tokenUsageService: ITokenUsageService,
 
+        @Inject(REQUEST)
+        private readonly request: Request & {
+            user: { organization: { uuid: string } };
+        },
+
         private readonly tokensByDeveloperUseCase: TokensByDeveloperUseCase,
         private readonly tokenPricingUseCase: TokenPricingUseCase,
+        private readonly costEstimateUseCase: CostEstimateUseCase,
         private readonly logger: PinoLoggerService,
     ) {}
 
@@ -146,7 +161,40 @@ export class TokenUsageController {
         return this.tokenPricingUseCase.execute(query.model, query.provider);
     }
 
-    // debug endpoint removed
+    @Get('cost-estimate')
+    async getCostEstimate(): Promise<CostEstimateContract> {
+        const organizationId = this.request?.user?.organization?.uuid;
+
+        if (!organizationId) {
+            throw new BadRequestException(
+                'organizationId not found in request',
+            );
+        }
+
+        try {
+            return await this.costEstimateUseCase.execute(organizationId);
+        } catch (error) {
+            this.logger.error({
+                message: 'Error fetching cost estimate',
+                error,
+                context: TokenUsageController.name,
+                metadata: { organizationId },
+            });
+            return {
+                estimatedMonthlyCost: 0,
+                costPerDeveloper: 0,
+                developerCount: 0,
+                tokenUsage: {
+                    inputTokens: 0,
+                    outputTokens: 0,
+                    reasoningTokens: 0,
+                    totalTokens: 0,
+                },
+                periodDays: 14,
+                projectionDays: 30,
+            };
+        }
+    }
 
     private mapDtoToContract(
         query: TokenUsageQueryDto,
