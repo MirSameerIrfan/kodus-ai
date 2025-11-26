@@ -1,9 +1,8 @@
-import { Entity, Column, OneToMany, JoinColumn } from 'typeorm';
-import { TeamAutomationModel } from './teamAutomation.model';
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
 import { AutomationType } from '@/core/domain/automation/enums/automation-type';
-import { OrganizationAutomationModel } from './organizationAutomation.model';
 import { AutomationLevel } from '@/shared/domain/enums/automations-level.enum';
+import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import { Column, Entity, JoinColumn, OneToMany } from 'typeorm';
+import { TeamAutomationModel } from './teamAutomation.model';
 
 @Entity('automation')
 export class AutomationModel extends CoreModel {
@@ -25,7 +24,11 @@ export class AutomationModel extends CoreModel {
     @Column({ type: 'enum', enum: AutomationType, unique: true })
     automationType: AutomationType;
 
-    @Column({ type: 'enum', enum: AutomationLevel, default: AutomationLevel.TEAM })
+    @Column({
+        type: 'enum',
+        enum: AutomationLevel,
+        default: AutomationLevel.TEAM,
+    })
     level: AutomationLevel;
 
     @OneToMany(
@@ -34,11 +37,4 @@ export class AutomationModel extends CoreModel {
     )
     @JoinColumn({ name: 'team_automation_id', referencedColumnName: 'uuid' })
     teamAutomations: TeamAutomationModel[];
-
-    @OneToMany(
-        () => OrganizationAutomationModel,
-        (organizationAutomation) => organizationAutomation.automation,
-    )
-    @JoinColumn({ name: 'organization_automation_id', referencedColumnName: 'uuid' })
-    organizationAutomations: OrganizationAutomationModel[];
 }

@@ -87,16 +87,6 @@ export class OrgnizationParametersController {
         });
     }
 
-    @Get('/byok-config')
-    public async getByokConfig(
-        @Query('organizationId') organizationId: string,
-    ) {
-        return await this.findByKeyOrganizationParametersUseCase.execute(
-            OrganizationParametersKey.BYOK_CONFIG,
-            { organizationId },
-        );
-    }
-
     @Get('/list-providers')
     public async listProviders() {
         const providers = this.providerService.getAllProviders();

@@ -5,20 +5,20 @@ import { IntegrationService } from '@/core/infrastructure/adapters/services/inte
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { INTEGRATION_SERVICE_TOKEN } from '@/core/domain/integrations/contracts/integration.service.contracts';
 import { UseCases } from '@/core/application/use-cases/integrations';
+import { INTEGRATION_SERVICE_TOKEN } from '@/core/domain/integrations/contracts/integration.service.contracts';
+import { IntegrationController } from '@/core/infrastructure/http/controllers/integrations/integration.controller';
+import { AuthIntegrationModule } from './authIntegration.module';
 import { IntegrationConfigModule } from './integrationConfig.module';
 import { PlatformIntegrationModule } from './platformIntegration.module';
 import { ProfileConfigModule } from './profileConfig.module';
-import { IntegrationController } from '@/core/infrastructure/http/controllers/integrations/integration.controller';
-import { AuthIntegrationModule } from './authIntegration.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([IntegrationModel]),
         forwardRef(() => IntegrationConfigModule),
         forwardRef(() => PlatformIntegrationModule),
-        ProfileConfigModule,
+        forwardRef(() => ProfileConfigModule),
         AuthIntegrationModule,
     ],
     providers: [

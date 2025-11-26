@@ -55,6 +55,9 @@ COPY --from=build /usr/src/app/dist ./dist
 COPY ecosystem.config.js ./
 COPY default-kodus-config.yml ./default-kodus-config.yml
 
+COPY --chmod=0755 docker/prod-entrypoint.sh /usr/local/bin/prod-entrypoint
+ENTRYPOINT ["/usr/local/bin/prod-entrypoint"]
+
 RUN mkdir -p /usr/src/app/certs
 RUN yarn global add pm2
 RUN pm2 install pm2-logrotate

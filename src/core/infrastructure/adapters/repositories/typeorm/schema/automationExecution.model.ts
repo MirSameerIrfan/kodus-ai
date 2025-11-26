@@ -1,10 +1,24 @@
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
-import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
-import { TeamAutomationModel } from './teamAutomation.model';
+import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import {
+    Column,
+    Entity,
+    Index,
+    JoinColumn,
+    ManyToOne,
+    OneToMany,
+} from 'typeorm';
 import { CodeReviewExecutionModel } from './codeReviewExecution.model';
+import { TeamAutomationModel } from './teamAutomation.model';
 
 @Entity('automation_execution')
+@Index('IDX_automation_exec_team_status', ['teamAutomation', 'status'], {
+    concurrent: true,
+})
+@Index('IDX_automation_exec_pr_repo', ['pullRequestNumber', 'repositoryId'], {
+    concurrent: true,
+})
+@Index('IDX_automation_exec_created_desc', { synchronize: false }) // Typeorm does not support DESC indexes natively, so we set synchronize to false and create it manually in migrations
 export class AutomationExecutionModel extends CoreModel {
     @Column({
         type: 'enum',

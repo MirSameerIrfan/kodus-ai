@@ -1,4 +1,3 @@
-import { GetIssuesByFiltersUseCase } from '@/core/application/use-cases/issues/get-issues-by-filters.use-case';
 import { IssuesEntity } from '@/core/domain/issues/entities/issues.entity';
 import {
     Body,
@@ -18,9 +17,7 @@ import {
     CheckPolicies,
     PolicyGuard,
 } from '../../adapters/services/permissions/policy.guard';
-import {
-    checkPermissions,
-} from '../../adapters/services/permissions/policy.handlers';
+import { checkPermissions } from '../../adapters/services/permissions/policy.handlers';
 import {
     Action,
     ResourceType,
@@ -29,7 +26,6 @@ import {
 @Controller('issues')
 export class IssuesController {
     constructor(
-        private readonly getIssuesByFiltersUseCase: GetIssuesByFiltersUseCase,
         private readonly getIssuesUseCase: GetIssuesUseCase,
         private readonly getTotalIssuesUseCase: GetTotalIssuesUseCase,
         private readonly getIssueByIdUseCase: GetIssueByIdUseCase,
@@ -41,13 +37,6 @@ export class IssuesController {
     @CheckPolicies(checkPermissions(Action.Read, ResourceType.Issues))
     async getIssues(@Query() query: GetIssuesByFiltersDto) {
         return this.getIssuesUseCase.execute(query);
-    }
-
-    @Get('filters')
-    @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Read, ResourceType.Issues))
-    async getIssuesByFilters(@Query() query: GetIssuesByFiltersDto) {
-        return this.getIssuesByFiltersUseCase.execute(query);
     }
 
     @Get('count')

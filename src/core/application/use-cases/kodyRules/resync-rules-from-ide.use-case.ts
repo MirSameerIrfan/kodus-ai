@@ -18,10 +18,7 @@ export class ResyncRulesFromIdeUseCase {
         },
     ) {}
 
-    async execute(params: {
-        teamId: string;
-        repositoriesIds: string[];
-    }) {
+    async execute(params: { teamId: string; repositoriesIds: string[] }) {
         const organizationAndTeamData: OrganizationAndTeamData = {
             organizationId: this.request.user?.organization?.uuid,
             teamId: params.teamId,

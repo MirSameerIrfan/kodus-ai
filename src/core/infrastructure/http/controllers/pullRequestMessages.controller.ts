@@ -1,20 +1,21 @@
+import { UserRequest } from '@/config/types/http/user-request.type';
 import { CreateOrUpdatePullRequestMessagesUseCase } from '@/core/application/use-cases/pullRequestMessages/create-or-update-pull-request-messages.use-case';
-import { FindByRepositoryIdPullRequestMessagesUseCase } from '@/core/application/use-cases/pullRequestMessages/find-by-repository-id.use-case';
-import { FindByIdPullRequestMessagesUseCase } from '@/core/application/use-cases/pullRequestMessages/find-by-id.use-case';
-import { FindByDirectoryIdPullRequestMessagesUseCase } from '@/core/application/use-cases/pullRequestMessages/find-by-directory-id.use-case';
+import { FindByRepositoryOrDirectoryIdPullRequestMessagesUseCase } from '@/core/application/use-cases/pullRequestMessages/find-by-repo-or-directory.use-case';
+import {
+    Action,
+    ResourceType,
+} from '@/core/domain/permissions/enums/permissions.enum';
 import { IPullRequestMessages } from '@/core/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
 import {
     Body,
     Controller,
     Get,
     Inject,
-    Param,
     Post,
     Query,
     UseGuards,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import { UserRequest } from '@/config/types/http/user-request.type';
 import {
     CheckPolicies,
     PolicyGuard,
@@ -23,20 +24,12 @@ import {
     checkPermissions,
     checkRepoPermissions,
 } from '../../adapters/services/permissions/policy.handlers';
-import {
-    Action,
-    ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import { FindByRepositoryOrDirectoryIdPullRequestMessagesUseCase } from '@/core/application/use-cases/pullRequestMessages/find-by-repo-or-directory.use-case';
-import { MigratePullRequestMessagesStatusUseCase } from '@/core/application/use-cases/pullRequestMessages/migrate-pull-request-messages-status.use-case';
 
 @Controller('pull-request-messages')
 export class PullRequestMessagesController {
     constructor(
         private readonly createOrUpdatePullRequestMessagesUseCase: CreateOrUpdatePullRequestMessagesUseCase,
-        private readonly findByIdPullRequestMessagesUseCase: FindByIdPullRequestMessagesUseCase,
         private readonly findByRepositoryOrDirectoryIdPullRequestMessagesUseCase: FindByRepositoryOrDirectoryIdPullRequestMessagesUseCase,
-        private readonly migratePullRequestMessagesStatusUseCase: MigratePullRequestMessagesStatusUseCase,
 
         @Inject(REQUEST)
         private readonly request: UserRequest,
@@ -75,19 +68,5 @@ export class PullRequestMessagesController {
             repositoryId,
             directoryId,
         );
-    }
-
-    @Get('/:id')
-    public async findById(@Param('id') id: string) {
-        return await this.findByIdPullRequestMessagesUseCase.execute(id);
-    }
-
-    @Post('/migrate-status')
-    @UseGuards(PolicyGuard)
-    @CheckPolicies(
-        checkPermissions(Action.Update, ResourceType.CodeReviewSettings),
-    )
-    public async migrateStatus() {
-        return await this.migratePullRequestMessagesStatusUseCase.execute();
     }
 }
