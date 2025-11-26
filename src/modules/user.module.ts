@@ -1,5 +1,3 @@
-import { Module, forwardRef } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { UseCases } from '@/core/application/use-cases/user';
 import { PASSWORD_SERVICE_TOKEN } from '@/core/domain/user/contracts/password.service.contract';
 import { USER_REPOSITORY_TOKEN } from '@/core/domain/user/contracts/user.repository.contract';
@@ -9,12 +7,14 @@ import { UserDatabaseRepository } from '@/core/infrastructure/adapters/repositor
 import { BcryptService } from '@/core/infrastructure/adapters/services/bcrypt.service';
 import { UsersService } from '@/core/infrastructure/adapters/services/users.service';
 import { UsersController } from '@/core/infrastructure/http/controllers/user.controller';
+import { Module, forwardRef } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth.module';
-import { CreateUserUseCase } from '@/core/application/use-cases/user/create.use-case';
+import { CodeReviewSettingsLogModule } from './codeReviewSettingsLog.module';
+import { OrganizationModule } from './organization.module';
 import { ProfilesModule } from './profiles.module';
 import { TeamsModule } from './team.module';
 import { TeamMembersModule } from './teamMembers.module';
-import { OrganizationModule } from './organization.module';
 
 @Module({
     imports: [
@@ -25,6 +25,7 @@ import { OrganizationModule } from './organization.module';
         forwardRef(() => TeamMembersModule),
         forwardRef(() => OrganizationModule),
         forwardRef(() => ProfilesModule),
+        forwardRef(() => CodeReviewSettingsLogModule)
     ],
     providers: [
         ...UseCases,
@@ -41,7 +42,7 @@ import { OrganizationModule } from './organization.module';
             useClass: BcryptService,
         },
     ],
-    exports: [USER_REPOSITORY_TOKEN, USER_SERVICE_TOKEN, CreateUserUseCase],
+    exports: [USER_REPOSITORY_TOKEN, USER_SERVICE_TOKEN],
     controllers: [UsersController],
 })
 export class UsersModule {}

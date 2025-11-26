@@ -1,12 +1,11 @@
 import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
-import { Column, Entity, JoinColumn, OneToMany } from 'typeorm';
-import { TeamModel } from './team.model';
-import { UserModel } from './user.model';
-import { IntegrationModel } from './integration.model';
+import { Column, Entity, OneToMany } from 'typeorm';
 import { AuthIntegrationModel } from './authIntegration.model';
+import { IntegrationModel } from './integration.model';
 import { OrganizationParametersModel } from './organizationParameters.model';
+import { TeamModel } from './team.model';
 import { TeamMemberModel } from './teamMember.model';
-import { OrganizationAutomationModel } from './organizationAutomation.model';
+import { UserModel } from './user.model';
 
 @Entity('organizations')
 export class OrganizationModel extends CoreModel {
@@ -45,11 +44,4 @@ export class OrganizationModel extends CoreModel {
         (config) => config.organization,
     )
     organizationParameters: OrganizationParametersModel[];
-
-    @OneToMany(
-        () => OrganizationAutomationModel,
-        (organizationAutomation) => organizationAutomation.organization,
-    )
-    @JoinColumn({ name: 'organization_id', referencedColumnName: 'uuid' })
-    organizationAutomations: OrganizationAutomationModel[];
 }

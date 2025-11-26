@@ -1,8 +1,6 @@
 import { GetOrganizationNameUseCase } from '@/core/application/use-cases/github/GetOrganizationName';
-import { CreateOrUpdateOrganizationNameUseCase } from '@/core/application/use-cases/github/createOrUpdateOrganizationName';
 import { GetIntegrationGithubUseCase } from '@/core/application/use-cases/github/get-integration-github';
 import {
-    Body,
     Controller,
     Get,
     HttpStatus,
@@ -16,7 +14,6 @@ import { Response } from 'express';
 import { PinoLoggerService } from '../../adapters/services/logger/pino.service';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 import { ReceiveWebhookUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/receiveWebhook.use-case';
-import * as jwt from 'jsonwebtoken';
 import {
     IWebhookLogService,
     WEBHOOK_LOG_SERVICE,
@@ -25,7 +22,6 @@ import {
 @Controller('github')
 export class GithubController {
     constructor(
-        private readonly createOrUpdateOrganizationNameUseCase: CreateOrUpdateOrganizationNameUseCase,
         private readonly getOrganizationNameUseCase: GetOrganizationNameUseCase,
         private readonly getIntegrationGithubUseCase: GetIntegrationGithubUseCase,
         private readonly receiveWebhookUseCase: ReceiveWebhookUseCase,
@@ -84,14 +80,5 @@ export class GithubController {
     @Get('/integration')
     public async getIntegration(@Query('installId') installId: string) {
         return this.getIntegrationGithubUseCase.execute(installId);
-    }
-
-    @Post('/organization-name')
-    public async createOrUpdateOrganizationName(
-        @Body() body: { organizationName: string },
-    ) {
-        return this.createOrUpdateOrganizationNameUseCase.execute(
-            body.organizationName,
-        );
     }
 }

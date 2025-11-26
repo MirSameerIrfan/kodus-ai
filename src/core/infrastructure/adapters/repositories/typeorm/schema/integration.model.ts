@@ -1,20 +1,26 @@
+import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
+import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
 import {
     Column,
     Entity,
+    Index,
     JoinColumn,
     ManyToOne,
     OneToMany,
     OneToOne,
 } from 'typeorm';
-import { IntegrationConfigModel } from './integrationConfig.model';
 import { AuthIntegrationModel } from './authIntegration.model';
+import { IntegrationConfigModel } from './integrationConfig.model';
 import { OrganizationModel } from './organization.model';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
 import { TeamModel } from './team.model';
 
 @Entity('integrations')
+@Index(
+    'IDX_integration_team_category_status',
+    ['team', 'integrationCategory', 'status'],
+    { concurrent: true },
+)
 export class IntegrationModel extends CoreModel {
     @Column({ type: 'boolean' })
     status: boolean;

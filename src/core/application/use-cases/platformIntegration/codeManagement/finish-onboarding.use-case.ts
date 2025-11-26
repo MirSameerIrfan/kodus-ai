@@ -1,19 +1,18 @@
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { FinishOnboardingDTO } from '@/core/infrastructure/http/dtos/finish-onboarding.dto';
-import { Inject, Injectable } from '@nestjs/common';
-import { CreatePRCodeReviewUseCase } from './create-prs-code-review.use-case';
-import { GenerateKodyRulesUseCase } from '../../kodyRules/generate-kody-rules.use-case';
-import { REQUEST } from '@nestjs/core';
-import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from '../../kodyRules/find-rules-in-organization-by-filter.use-case';
 import { KodyRulesStatus } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
-import { ChangeStatusKodyRulesUseCase } from '../../kodyRules/change-status-kody-rules.use-case';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@/core/domain/parameters/contracts/parameters.service.contract';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { FinishOnboardingDTO } from '@/core/infrastructure/http/dtos/finish-onboarding.dto';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+import { Inject, Injectable } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+import { ChangeStatusKodyRulesUseCase } from '../../kodyRules/change-status-kody-rules.use-case';
+import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from '../../kodyRules/find-rules-in-organization-by-filter.use-case';
+import { GenerateKodyRulesUseCase } from '../../kodyRules/generate-kody-rules.use-case';
 import { SyncSelectedRepositoriesKodyRulesUseCase } from '../../kodyRules/sync-selected-repositories.use-case';
-import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
+import { CreatePRCodeReviewUseCase } from './create-prs-code-review.use-case';
 
 @Injectable()
 export class FinishOnboardingUseCase {
@@ -34,8 +33,6 @@ export class FinishOnboardingUseCase {
         },
 
         private readonly syncSelectedReposKodyRulesUseCase: SyncSelectedRepositoriesKodyRulesUseCase,
-
-        private readonly authorizationService: AuthorizationService,
     ) {}
 
     async execute(params: FinishOnboardingDTO) {

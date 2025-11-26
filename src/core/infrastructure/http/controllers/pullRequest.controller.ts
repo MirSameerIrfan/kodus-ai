@@ -1,3 +1,10 @@
+import { UserRequest } from '@/config/types/http/user-request.type';
+import { BackfillHistoricalPRsUseCase } from '@/core/application/use-cases/pullRequests/backfill-historical-prs.use-case';
+import { GetEnrichedPullRequestsUseCase } from '@/core/application/use-cases/pullRequests/get-enriched-pull-requests.use-case';
+import {
+    Action,
+    ResourceType,
+} from '@/core/domain/permissions/enums/permissions.enum';
 import {
     Body,
     Controller,
@@ -7,49 +14,26 @@ import {
     Query,
     UseGuards,
 } from '@nestjs/common';
-import { GetPullRequestAuthorsUseCase } from '@/core/application/use-cases/pullRequests/get-pull-request-authors-orderedby-contributions.use-case';
-import { UpdatePullRequestToNewFormatUseCase } from '@/core/application/use-cases/pullRequests/update-pull-request-to-new-format.use-case';
-import { GetEnrichedPullRequestsUseCase } from '@/core/application/use-cases/pullRequests/get-enriched-pull-requests.use-case';
-import { BackfillHistoricalPRsUseCase } from '@/core/application/use-cases/pullRequests/backfill-historical-prs.use-case';
-import { EnrichedPullRequestsQueryDto } from '../dtos/enriched-pull-requests-query.dto';
-import { PaginatedEnrichedPullRequestsResponse } from '../dtos/paginated-enriched-pull-requests.dto';
-import { BackfillPRsDto } from '../dtos/backfill-prs.dto';
+import { REQUEST } from '@nestjs/core';
 import {
     CheckPolicies,
     PolicyGuard,
 } from '../../adapters/services/permissions/policy.guard';
 import { checkPermissions } from '../../adapters/services/permissions/policy.handlers';
-import {
-    Action,
-    ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import { REQUEST } from '@nestjs/core';
 import { CodeManagementService } from '../../adapters/services/platformIntegration/codeManagement.service';
+import { BackfillPRsDto } from '../dtos/backfill-prs.dto';
+import { EnrichedPullRequestsQueryDto } from '../dtos/enriched-pull-requests-query.dto';
+import { PaginatedEnrichedPullRequestsResponse } from '../dtos/paginated-enriched-pull-requests.dto';
 
 @Controller('pull-requests')
 export class PullRequestController {
     constructor(
-        private readonly getPullRequestAuthorsUseCase: GetPullRequestAuthorsUseCase,
-        private readonly updatePullRequestToNewFormatUseCase: UpdatePullRequestToNewFormatUseCase,
         private readonly getEnrichedPullRequestsUseCase: GetEnrichedPullRequestsUseCase,
-        private readonly backfillHistoricalPRsUseCase: BackfillHistoricalPRsUseCase,
         private readonly codeManagementService: CodeManagementService,
+        private readonly backfillHistoricalPRsUseCase: BackfillHistoricalPRsUseCase,
         @Inject(REQUEST)
-        private readonly request: Request & {
-            user: { organization: { uuid: string } };
-        },
+        private readonly request: UserRequest,
     ) {}
-
-    @Get('/get-pull-request-authors')
-    @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Read, ResourceType.Billing))
-    public async getPullRequestAuthors(
-        @Query() query: { organizationId: string },
-    ) {
-        return await this.getPullRequestAuthorsUseCase.execute(
-            query.organizationId,
-        );
-    }
 
     @Get('/executions')
     @UseGuards(PolicyGuard)
@@ -60,6 +44,7 @@ export class PullRequestController {
         return await this.getEnrichedPullRequestsUseCase.execute(query);
     }
 
+    // NOT USED IN WEB - INTERNAL USE ONLY
     @Post('/backfill')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Create, ResourceType.PullRequests))
