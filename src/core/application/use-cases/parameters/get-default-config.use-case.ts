@@ -1,10 +1,11 @@
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { createLogger } from "@kodus/flow";
 import { getDefaultKodusConfigFile } from '@/shared/utils/validateCodeReviewConfigFile';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class GetDefaultConfigUseCase {
-    constructor(private readonly logger: PinoLoggerService) {}
+    private readonly logger = createLogger(GetDefaultConfigUseCase.name);
+    constructor() {}
 
     async execute() {
         try {

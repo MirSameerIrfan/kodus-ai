@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import {
     Controller,
     Post,
@@ -14,7 +15,6 @@ import { Response, Request } from 'express';
 import { McpServerService } from '../services/mcp-server.service';
 import { McpEnabledGuard } from '../guards/mcp-enabled.guard';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
-import { PinoLoggerService } from '../../services/logger/pino.service';
 import { MCPManagerService } from '../services/mcp-manager.service';
 import { REQUEST } from '@nestjs/core';
 import { toJsonRpcError } from '../utils/serialize';
@@ -34,14 +34,14 @@ function accepts(req: Request, mime: string) {
 @Controller('mcp')
 @UseGuards(McpEnabledGuard)
 export class McpController {
+    private readonly logger = createLogger(McpController.name);
     constructor(
         private readonly mcpServerService: McpServerService,
-        private readonly logger: PinoLoggerService,
         private readonly mcpManagerService: MCPManagerService,
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };
-        },
+        }
     ) {}
 
     @Post()

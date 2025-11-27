@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Inject } from '@nestjs/common';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import {
@@ -10,20 +11,17 @@ import {
     IMembers,
     ITeamMember,
 } from '@/core/domain/teamMembers/interfaces/team-members.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { Role } from '@/core/domain/permissions/enums/permissions.enum';
 
 export class GetTeamMemberByRelationsUseCase implements IUseCase {
+    private readonly logger = createLogger(GetTeamMemberByRelationsUseCase.name);
     constructor(
         @Inject(TEAM_MEMBERS_SERVICE_TOKEN)
         private readonly teamMembersService: ITeamMemberService,
-
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };
-        },
-
-        private logger: PinoLoggerService,
+        }
     ) {}
 
     public async execute(

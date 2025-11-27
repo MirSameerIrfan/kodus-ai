@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { GenerateIssuesFromPrClosedUseCase } from '@/core/application/use-cases/issues/generate-issues-from-pr-closed.use-case';
 import { ChatWithKodyFromGitUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/chatWithKodyFromGit.use-case';
 import { SavePullRequestUseCase } from '@/core/application/use-cases/pullRequests/save.use-case';
@@ -5,7 +6,6 @@ import {
     IWebhookEventHandler,
     IWebhookEventParams,
 } from '@/core/domain/platformIntegrations/interfaces/webhook-event-handler.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { RunCodeReviewAutomationUseCase } from '@/ee/automation/runCodeReview.use-case';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
@@ -19,14 +19,14 @@ import { KodyRulesSyncService } from '../../services/kodyRules/kodyRulesSync.ser
  */
 @Injectable()
 export class GitHubPullRequestHandler implements IWebhookEventHandler {
+    private readonly logger = createLogger(GitHubPullRequestHandler.name);
     constructor(
-        private readonly logger: PinoLoggerService,
         private readonly savePullRequestUseCase: SavePullRequestUseCase,
         private readonly runCodeReviewAutomationUseCase: RunCodeReviewAutomationUseCase,
         private readonly chatWithKodyFromGitUseCase: ChatWithKodyFromGitUseCase,
         private readonly codeManagement: CodeManagementService,
         private readonly generateIssuesFromPrClosedUseCase: GenerateIssuesFromPrClosedUseCase,
-        private readonly kodyRulesSyncService: KodyRulesSyncService,
+        private readonly kodyRulesSyncService: KodyRulesSyncService
     ) {}
 
     public canHandle(params: IWebhookEventParams): boolean {

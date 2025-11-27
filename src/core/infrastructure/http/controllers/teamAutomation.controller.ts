@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import {
     BadRequestException,
     Body,
@@ -17,19 +18,17 @@ import { UpdateOrCreateTeamAutomationUseCase } from '@/core/application/use-case
 import { AutomationType } from '@/core/domain/automation/enums/automation-type';
 import { OrganizationAndTeamDataDto } from '../dtos/organizationAndTeamData.dto';
 import { RunTeamAutomationsUseCase } from '@/core/application/use-cases/teamAutomation/run-team-automations';
-import { PinoLoggerService } from '../../adapters/services/logger/pino.service';
 
 @Controller('team-automation')
 export class TeamAutomationController {
+    private readonly logger = createLogger(TeamAutomationController.name);
     constructor(
         private readonly updateOrCreateAutomationUseCase: UpdateOrCreateTeamAutomationUseCase,
         private readonly getTeamAutomationUseCase: GetTeamAutomationUseCase,
         private readonly listAllTeamAutomationUseCase: ListAllTeamAutomationUseCase,
         private readonly updateTeamAutomationStatusUseCase: UpdateTeamAutomationStatusUseCase,
         private readonly activeTeamAutomationsUseCase: ActiveTeamAutomationsUseCase,
-        private readonly runTeamAutomationsUseCase: RunTeamAutomationsUseCase,
-
-        private readonly logger: PinoLoggerService,
+        private readonly runTeamAutomationsUseCase: RunTeamAutomationsUseCase
     ) {}
 
     @Post('/')

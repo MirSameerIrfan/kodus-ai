@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import {
     AUTOMATION_SERVICE_TOKEN,
@@ -8,7 +9,6 @@ import {
     EXECUTE_AUTOMATION_SERVICE_TOKEN,
     IExecuteAutomationService,
 } from '@/shared/domain/contracts/execute.automation.service.contracts';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import {
     IOrganizationAutomationService,
     ORGANIZATION_AUTOMATION_SERVICE_TOKEN,
@@ -16,17 +16,14 @@ import {
 
 @Injectable()
 export class RunOrganizationAutomationsUseCase {
+    private readonly logger = createLogger(RunOrganizationAutomationsUseCase.name);
     constructor(
         @Inject(AUTOMATION_SERVICE_TOKEN)
         private readonly automationService: IAutomationService,
-
         @Inject(ORGANIZATION_AUTOMATION_SERVICE_TOKEN)
         private readonly organizationAutomationService: IOrganizationAutomationService,
-
         @Inject(EXECUTE_AUTOMATION_SERVICE_TOKEN)
-        private readonly executeAutomation: IExecuteAutomationService,
-
-        private logger: PinoLoggerService,
+        private readonly executeAutomation: IExecuteAutomationService
     ) {}
 
     async execute(params: {

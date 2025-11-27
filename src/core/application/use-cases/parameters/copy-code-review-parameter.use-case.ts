@@ -1,9 +1,9 @@
+import { createLogger } from "@kodus/flow";
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     PARAMETERS_SERVICE_TOKEN,
     IParametersService,
 } from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { CopyCodeReviewParameterDTO } from '@/core/infrastructure/http/dtos/copy-code-review-parameter.dto';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
 import { Inject, Injectable } from '@nestjs/common';
@@ -30,15 +30,12 @@ import { produce } from 'immer';
 
 @Injectable()
 export class CopyCodeReviewParameterUseCase {
+    private readonly logger = createLogger(CopyCodeReviewParameterUseCase.name);
     constructor(
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
-
         @Inject(CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN)
         private readonly codeReviewSettingsLogService: ICodeReviewSettingsLogService,
-
-        private readonly logger: PinoLoggerService,
-
         @Inject(REQUEST)
         private readonly request: Request & {
             user: {
@@ -47,8 +44,7 @@ export class CopyCodeReviewParameterUseCase {
                 email: string;
             };
         },
-
-        private readonly authorizationService: AuthorizationService,
+        private readonly authorizationService: AuthorizationService
     ) {}
 
     async execute(body: CopyCodeReviewParameterDTO) {

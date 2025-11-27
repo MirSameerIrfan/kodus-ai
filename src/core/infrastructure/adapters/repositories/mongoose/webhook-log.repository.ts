@@ -1,10 +1,10 @@
+import { createLogger } from "@kodus/flow";
 import { IWebhookLogRepository } from '@/core/domain/webhookLog/contracts/webhook-log.repository.contract';
 import { IWebhookLog } from '@/core/domain/webhookLog/interfaces/webhook-log.interface';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { WebhookLogModel } from './schema/webhook-log.model';
 import { Model } from 'mongoose';
-import { PinoLoggerService } from '../../services/logger/pino.service';
 import { WebhookLogEntity } from '@/core/domain/webhookLog/entities/webhook-log.entity';
 import {
     mapSimpleModelsToEntities,
@@ -13,11 +13,10 @@ import {
 
 @Injectable()
 export class WebhookLogRepository implements IWebhookLogRepository {
+    private readonly logger = createLogger(WebhookLogRepository.name);
     constructor(
         @InjectModel(WebhookLogModel.name)
-        private readonly webhookLogModel: Model<WebhookLogModel>,
-
-        private readonly logger: PinoLoggerService,
+        private readonly webhookLogModel: Model<WebhookLogModel>
     ) {}
 
     async create(

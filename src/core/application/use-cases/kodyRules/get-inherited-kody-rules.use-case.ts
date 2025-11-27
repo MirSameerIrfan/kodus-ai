@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     IKodyRulesService,
@@ -18,7 +19,6 @@ import {
     CONTEXT_REFERENCE_SERVICE_TOKEN,
     IContextReferenceService,
 } from '@/core/domain/contextReferences/contracts/context-reference.service.contract';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { enrichRulesWithContextReferences } from './utils/enrich-rules-with-context-references.util';
 
 type KodyRuleWithInheritance = Partial<IKodyRule> & {
@@ -28,19 +28,15 @@ type KodyRuleWithInheritance = Partial<IKodyRule> & {
 
 @Injectable()
 export class GetInheritedRulesKodyRulesUseCase {
+    private readonly logger = createLogger(GetInheritedRulesKodyRulesUseCase.name);
     constructor(
         private readonly kodyRulesValidationService: KodyRulesValidationService,
-
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
-
         @Inject(KODY_RULES_SERVICE_TOKEN)
         private readonly kodyRulesService: IKodyRulesService,
-
         @Inject(CONTEXT_REFERENCE_SERVICE_TOKEN)
-        private readonly contextReferenceService: IContextReferenceService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly contextReferenceService: IContextReferenceService
     ) {}
 
     async execute(

@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     IIntegrationConfigService,
@@ -9,7 +10,6 @@ import {
     PULL_REQUESTS_SERVICE_TOKEN,
 } from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
 import { IPullRequests } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
@@ -18,16 +18,13 @@ import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class SavePullRequestUseCase {
+    private readonly logger = createLogger(SavePullRequestUseCase.name);
     constructor(
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
         private readonly integrationConfigService: IIntegrationConfigService,
-
         @Inject(PULL_REQUESTS_SERVICE_TOKEN)
         private readonly pullRequestsService: IPullRequestsService,
-
-        private readonly codeManagement: CodeManagementService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly codeManagement: CodeManagementService
     ) {}
 
     public async execute(params: {

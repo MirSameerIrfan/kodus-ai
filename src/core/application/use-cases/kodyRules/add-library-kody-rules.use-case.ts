@@ -1,4 +1,4 @@
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { createLogger } from "@kodus/flow";
 import { AddLibraryKodyRulesDto } from '@/core/infrastructure/http/dtos/add-library-kody-rules.dto';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
@@ -16,17 +16,14 @@ import {
 
 @Injectable()
 export class AddLibraryKodyRulesUseCase {
+    private readonly logger = createLogger(AddLibraryKodyRulesUseCase.name);
     constructor(
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };
         },
-
         private readonly createOrUpdateKodyRulesUseCase: CreateOrUpdateKodyRulesUseCase,
-
-        private readonly logger: PinoLoggerService,
-
-        private readonly authorizationService: AuthorizationService,
+        private readonly authorizationService: AuthorizationService
     ) {}
 
     async execute(libraryKodyRules: AddLibraryKodyRulesDto) {

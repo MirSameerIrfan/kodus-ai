@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { STATUS } from '@/config/types/database/status.type';
 import {
     ORGANIZATION_SERVICE_TOKEN,
@@ -10,7 +11,6 @@ import {
 } from '@/core/domain/user/contracts/user.service.contract';
 import { Role } from '@/core/domain/permissions/enums/permissions.enum';
 import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { SignUpDTO } from '@/core/infrastructure/http/dtos/create-user-organization.dto';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { DuplicateRecordException } from '@/shared/infrastructure/filters/duplicate-record.exception';
@@ -33,23 +33,18 @@ import { ITeam } from '@/core/domain/team/interfaces/team.interface';
 
 @Injectable()
 export class SignUpUseCase implements IUseCase {
+    private readonly logger = createLogger(SignUpUseCase.name);
     constructor(
         @Inject(ORGANIZATION_SERVICE_TOKEN)
         private readonly organizationService: IOrganizationService,
-
         @Inject(USER_SERVICE_TOKEN)
         private readonly usersService: IUsersService,
-
         @Inject(TEAM_MEMBERS_SERVICE_TOKEN)
         private readonly teamMembersService: ITeamMemberService,
-
         @Inject(TEAM_SERVICE_TOKEN)
         private readonly teamService: ITeamService,
-
         private readonly createProfileUseCase: CreateProfileUseCase,
-        private readonly createTeamUseCase: CreateTeamUseCase,
-
-        private readonly logger: PinoLoggerService,
+        private readonly createTeamUseCase: CreateTeamUseCase
     ) {}
 
     public async execute(payload: SignUpDTO): Promise<Partial<IUser>> {

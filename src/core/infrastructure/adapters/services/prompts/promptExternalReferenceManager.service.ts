@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { randomUUID } from 'crypto';
@@ -15,7 +16,6 @@ import {
 } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
 import { CONTEXT_REFERENCE_SERVICE_TOKEN } from '@/core/domain/contextReferences/contracts/context-reference.service.contract';
 import { ContextReferenceService } from '@/core/infrastructure/adapters/services/context/context-reference.service';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { ContextReferenceEntity } from '@/core/domain/contextReferences/entities/context-reference.entity';
 import { computeRequirementsHash } from '@context-os-core/utils/context-requirements';
 import type {
@@ -48,10 +48,10 @@ type NormalizedSyncError = {
 export class PromptExternalReferenceManagerService
     implements IPromptExternalReferenceManagerService
 {
+    private readonly logger = createLogger(PromptExternalReferenceManagerService.name);
     constructor(
         @Inject(CONTEXT_REFERENCE_SERVICE_TOKEN)
-        private readonly contextReferenceService: ContextReferenceService,
-        private readonly logger: PinoLoggerService,
+        private readonly contextReferenceService: ContextReferenceService
     ) {}
 
     buildConfigKey(

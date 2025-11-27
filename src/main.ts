@@ -1,19 +1,19 @@
-import 'source-map-support/register';
 import { environment } from '@/ee/configs/environment';
+import 'source-map-support/register';
 
+import { createLogger } from '@kodus/flow';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import * as bodyParser from 'body-parser';
 import { useContainer } from 'class-validator';
 import expressRateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import * as volleyball from 'volleyball';
-import * as bodyParser from 'body-parser';
+import { setupSentryAndOpenTelemetry } from './config/log/otel';
 import { HttpServerConfiguration } from './config/types/http/http-server.type';
 import { AppModule } from './modules/app.module';
-import { PinoLoggerService } from './core/infrastructure/adapters/services/logger/pino.service';
-import { setupSentryAndOpenTelemetry } from './config/log/otel';
 
 async function bootstrap() {
     // Inicializa Sentry e OpenTelemetry antes de tudo
@@ -23,8 +23,9 @@ async function bootstrap() {
         snapshot: true,
     });
 
-    const pinoLogger = app.get(PinoLoggerService);
-    app.useLogger(pinoLogger);
+    const pinoLogger = createLogger('Main');
+    // const pinoLogger = app.get(PinoLoggerService);
+    // app.useLogger(pinoLogger);
 
     const configService: ConfigService = app.get(ConfigService);
     const config = configService.get<HttpServerConfiguration>('server');

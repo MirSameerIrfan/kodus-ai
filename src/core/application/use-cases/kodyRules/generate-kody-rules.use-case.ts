@@ -1,5 +1,5 @@
+import { createLogger } from "@kodus/flow";
 import { CommentAnalysisService } from '@/core/infrastructure/adapters/services/codeBase/commentAnalysis.service';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { GenerateKodyRulesDTO } from '@/core/infrastructure/http/dtos/generate-kody-rules.dto';
 import { Inject, Injectable } from '@nestjs/common';
@@ -34,27 +34,19 @@ import { SendRulesNotificationUseCase } from './send-rules-notification.use-case
 
 @Injectable()
 export class GenerateKodyRulesUseCase {
+    private readonly logger = createLogger(GenerateKodyRulesUseCase.name);
     constructor(
         @Inject(INTEGRATION_SERVICE_TOKEN)
         private readonly integrationService: IIntegrationService,
-
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
         private readonly integrationConfigService: IIntegrationConfigService,
-
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
-
         private readonly codeManagementService: CodeManagementService,
-
         private readonly commentAnalysisService: CommentAnalysisService,
-
         private readonly createOrUpdateKodyRulesUseCase: CreateOrUpdateKodyRulesUseCase,
-
         private readonly findRulesInOrganizationByRuleFilterKodyRulesUseCase: FindRulesInOrganizationByRuleFilterKodyRulesUseCase,
-
-        private readonly sendRulesNotificationUseCase: SendRulesNotificationUseCase,
-
-        private readonly logger: PinoLoggerService,
+        private readonly sendRulesNotificationUseCase: SendRulesNotificationUseCase
     ) {}
 
     async execute(body: GenerateKodyRulesDTO, organizationId: string) {

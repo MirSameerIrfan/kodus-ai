@@ -1,6 +1,6 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import {
     PULL_REQUESTS_REPOSITORY_TOKEN,
     IPullRequestsRepository,
@@ -13,19 +13,16 @@ import { ISuggestion } from '@/core/domain/pullRequests/interfaces/pullRequests.
 
 @Injectable()
 export class FindSuggestionsByRuleUseCase {
+    private readonly logger = createLogger(FindSuggestionsByRuleUseCase.name);
     constructor(
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };
         },
-
         @Inject(PULL_REQUESTS_REPOSITORY_TOKEN)
         private readonly pullRequestsRepository: IPullRequestsRepository,
-
         @Inject(KODY_RULES_SERVICE_TOKEN)
-        private readonly kodyRulesService: IKodyRulesService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly kodyRulesService: IKodyRulesService
     ) {}
 
     async execute(ruleId: string): Promise<ISuggestion[]> {

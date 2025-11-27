@@ -1,21 +1,20 @@
+import { createLogger } from "@kodus/flow";
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { KodyRulesSyncService } from '@/core/infrastructure/adapters/services/kodyRules/kodyRulesSync.service';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 
 @Injectable()
 export class ResyncRulesFromIdeUseCase {
+    private readonly logger = createLogger(ResyncRulesFromIdeUseCase.name);
     constructor(
         private readonly kodyRulesSyncService: KodyRulesSyncService,
         private readonly codeManagementService: CodeManagementService,
-        private readonly logger: PinoLoggerService,
-
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };
-        },
+        }
     ) {}
 
     async execute(params: {

@@ -1,9 +1,9 @@
+import { createLogger } from "@kodus/flow";
 import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
 } from '@/core/domain/auth/contracts/auth.service.contracts';
 import { sendForgotPasswordEmail } from '@/shared/utils/email/sendMail';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import {
     Inject,
     Injectable,
@@ -13,10 +13,10 @@ import {
 
 @Injectable()
 export class ForgotPasswordUseCase {
+    private readonly logger = createLogger(ForgotPasswordUseCase.name);
     constructor(
         @Inject(AUTH_SERVICE_TOKEN)
-        private readonly authService: IAuthService,
-        private readonly logger: PinoLoggerService,
+        private readonly authService: IAuthService
     ) {}
 
     async execute(email: string) {

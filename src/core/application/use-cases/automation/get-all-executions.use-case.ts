@@ -1,8 +1,8 @@
+import { createLogger } from "@kodus/flow";
 import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
     IAutomationExecutionService,
 } from '@/core/domain/automation/contracts/automation-execution.service';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { TeamQueryDto } from '@/core/infrastructure/http/dtos/teamId-query-dto';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
@@ -10,16 +10,14 @@ import { REQUEST } from '@nestjs/core';
 
 @Injectable()
 export class getAllAutomationExecutionsUseCase implements IUseCase {
+    private readonly logger = createLogger(getAllAutomationExecutionsUseCase.name);
     constructor(
-        private readonly logger: PinoLoggerService,
-
         @Inject(AUTOMATION_EXECUTION_SERVICE_TOKEN)
         private readonly automationExecutionService: IAutomationExecutionService,
-
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };
-        },
+        }
     ) {}
 
     async execute(data: TeamQueryDto) {

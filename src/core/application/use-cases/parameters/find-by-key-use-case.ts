@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
     IParametersService,
@@ -6,15 +7,14 @@ import {
 import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { IParameters } from '@/core/domain/parameters/interfaces/parameters.interface';
 
 @Injectable()
 export class FindByKeyParametersUseCase {
+    private readonly logger = createLogger(FindByKeyParametersUseCase.name);
     constructor(
         @Inject(PARAMETERS_SERVICE_TOKEN)
-        private readonly parametersService: IParametersService,
-        private readonly logger: PinoLoggerService,
+        private readonly parametersService: IParametersService
     ) {}
 
     async execute<K extends ParametersKey>(

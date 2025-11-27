@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { IntegrationConfigEntity } from '@/core/domain/integrationConfigs/entities/integration-config.entity';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { ConversationAgentUseCase } from '../../agent/conversation-agent.use-case';
 import { BusinessRulesValidationAgentUseCase } from '../../agent/business-rules-validation-agent.use-case';
-import { createThreadId } from '@kodus/flow';
+import { createThreadId, createLogger } from '@kodus/flow';
 import { PlatformResponsePolicyFactory } from './policies/platform-response.policy';
 
 // Constants
@@ -148,13 +147,13 @@ interface Comment {
 
 @Injectable()
 export class ChatWithKodyFromGitUseCase {
+    private readonly logger = createLogger(ChatWithKodyFromGitUseCase.name);
     private commandManager: CommandManager;
 
     constructor(
-        private readonly logger: PinoLoggerService,
         private readonly codeManagementService: CodeManagementService,
         private readonly conversationAgentUseCase: ConversationAgentUseCase,
-        private readonly businessRulesValidationAgentUseCase: BusinessRulesValidationAgentUseCase,
+        private readonly businessRulesValidationAgentUseCase: BusinessRulesValidationAgentUseCase
     ) {}
 
     async execute(params: WebhookParams): Promise<void> {

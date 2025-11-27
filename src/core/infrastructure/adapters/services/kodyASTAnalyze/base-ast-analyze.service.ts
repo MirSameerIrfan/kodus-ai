@@ -1,15 +1,15 @@
+import { createLogger } from '@kodus/flow';
 /**
  * @license
  * Kodus Tech. All rights reserved.
  */
 
-import { Injectable } from '@nestjs/common';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { IKodyASTAnalyzeContextPreparationService } from '@/shared/interfaces/kody-ast-analyze-context-preparation.interface';
 import {
     AIAnalysisResult,
     AnalysisContext,
 } from '@/config/types/general/codeReview.type';
+import { IKodyASTAnalyzeContextPreparationService } from '@/shared/interfaces/kody-ast-analyze-context-preparation.interface';
+import { Injectable } from '@nestjs/common';
 
 /**
  * Abstract base class for Kody AST analysis context preparation
@@ -20,7 +20,10 @@ import {
 export abstract class BaseKodyASTAnalyzeContextPreparation
     implements IKodyASTAnalyzeContextPreparationService
 {
-    constructor(protected readonly logger: PinoLoggerService) {}
+    protected readonly logger = createLogger(
+        BaseKodyASTAnalyzeContextPreparation.name,
+    );
+    constructor() {}
 
     async prepareKodyASTAnalyzeContext(
         context: AnalysisContext,

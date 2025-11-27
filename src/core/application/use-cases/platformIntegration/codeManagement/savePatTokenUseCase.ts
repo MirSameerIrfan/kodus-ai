@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
@@ -6,7 +7,6 @@ import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
 } from '@/core/domain/integrations/contracts/integration.service.contracts';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
 import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
@@ -17,20 +17,17 @@ import { Request } from 'express';
 
 @Injectable()
 export class SavePatTokenConfigUseCase implements IUseCase {
+    private readonly logger = createLogger(SavePatTokenConfigUseCase.name);
     constructor(
         @Inject(INTEGRATION_SERVICE_TOKEN)
         private readonly integrationService: IIntegrationService,
-
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
         private readonly integrationConfigService: IIntegrationConfigService,
-
         private readonly codeManagementService: CodeManagementService,
-        private readonly logger: PinoLoggerService,
-
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string }; uuid: string };
-        },
+        }
     ) {}
 
     async execute(params: { token: string; teamId: string }) {

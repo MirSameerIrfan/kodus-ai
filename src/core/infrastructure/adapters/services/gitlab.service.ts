@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import {
     GitHubReaction,
     GitlabReaction,
@@ -84,7 +85,6 @@ import axios from 'axios';
 import * as moment from 'moment-timezone';
 import { v4 as uuidv4 } from 'uuid';
 import { MCPManagerService } from '../mcp/services/mcp-manager.service';
-import { PinoLoggerService } from './logger/pino.service';
 import { PromptService } from './prompt.service';
 
 @Injectable()
@@ -103,26 +103,21 @@ export class GitlabService
             | 'requestChangesPullRequest'
         >
 {
+    private readonly logger = createLogger(GitlabService.name);
     constructor(
         @Inject(INTEGRATION_SERVICE_TOKEN)
         private readonly integrationService: IIntegrationService,
-
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
         private readonly integrationConfigService: IIntegrationConfigService,
-
         @Inject(AUTH_INTEGRATION_SERVICE_TOKEN)
         private readonly authIntegrationService: IAuthIntegrationService,
-
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parameterService: IParametersService,
-
         private readonly llmProviderService: LLMProviderService,
-
         private readonly promptService: PromptService,
-        private readonly logger: PinoLoggerService,
         private readonly configService: ConfigService,
         private readonly cacheService: CacheService,
-        private readonly mcpManagerService?: MCPManagerService,
+        private readonly mcpManagerService?: MCPManagerService
     ) {}
 
     async getPullRequestAuthors(params: {

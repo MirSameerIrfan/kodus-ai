@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import {
     IIssuesService,
     ISSUES_SERVICE_TOKEN,
@@ -6,7 +7,6 @@ import { GetIssuesByFiltersDto } from '@/core/infrastructure/http/dtos/get-issue
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { IIssue } from '@/core/domain/issues/interfaces/issues.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { KodyIssuesManagementService } from '@/core/infrastructure/adapters/services/kodyIssuesManagement/service/kodyIssuesManagement.service';
 import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@/core/domain/codeBase/contracts/KodyIssuesManagement.contract';
 import { CacheService } from '@/shared/utils/cache/cache.service';
@@ -19,17 +19,13 @@ import {
 
 @Injectable()
 export class GetIssuesByFiltersUseCase implements IUseCase {
+    private readonly logger = createLogger(GetIssuesByFiltersUseCase.name);
     constructor(
         @Inject(ISSUES_SERVICE_TOKEN)
         private readonly issuesService: IIssuesService,
-
-        private readonly logger: PinoLoggerService,
-
         @Inject(KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN)
         private readonly kodyIssuesManagementService: KodyIssuesManagementService,
-
         private readonly cacheService: CacheService,
-
         @Inject(REQUEST)
         private readonly request: Request & {
             user: {
@@ -37,8 +33,7 @@ export class GetIssuesByFiltersUseCase implements IUseCase {
                 organization: { uuid: string };
             };
         },
-
-        private readonly authorizationService: AuthorizationService,
+        private readonly authorizationService: AuthorizationService
     ) {}
 
     async execute(filters: GetIssuesByFiltersDto): Promise<IIssue[]> {

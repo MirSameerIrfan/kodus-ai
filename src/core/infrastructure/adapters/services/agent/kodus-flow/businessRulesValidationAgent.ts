@@ -6,6 +6,7 @@ import {
     PlannerType,
     StorageEnum,
     LLMAdapter,
+    createLogger,
 } from '@kodus/flow';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { MCPManagerService } from '../../../mcp/services/mcp-manager.service';
@@ -13,7 +14,6 @@ import { ConfigService } from '@nestjs/config';
 import { DatabaseConnection } from '@/config/types';
 import { LLMModelProvider, PromptRunnerService } from '@kodus/kodus-common/llm';
 import { SDKOrchestrator } from '@kodus/flow/dist/orchestration';
-import { PinoLoggerService } from '../../logger/pino.service';
 import { ObservabilityService } from '../../logger/observability.service';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
 import {
@@ -32,6 +32,7 @@ export interface ValidationResult {
 
 @Injectable()
 export class BusinessRulesValidationAgentProvider extends BaseAgentProvider {
+    private readonly logger = createLogger(BusinessRulesValidationAgentProvider.name);
     protected config: DatabaseConnection;
 
     private orchestration: SDKOrchestrator;
@@ -48,12 +49,11 @@ export class BusinessRulesValidationAgentProvider extends BaseAgentProvider {
     constructor(
         private readonly configService: ConfigService,
         promptRunnerService: PromptRunnerService,
-        private readonly logger: PinoLoggerService,
         permissionValidationService: PermissionValidationService,
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
         observabilityService: ObservabilityService,
-        private readonly mcpManagerService?: MCPManagerService,
+        private readonly mcpManagerService?: MCPManagerService
     ) {
         super(
             promptRunnerService,

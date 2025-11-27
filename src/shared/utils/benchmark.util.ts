@@ -1,8 +1,8 @@
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { SimpleLogger } from '@kodus/flow/dist/observability/logger';
 
 export async function benchmark<T>(
     payload: { label: string; metadata?: any },
-    logger: PinoLoggerService,
+    logger: SimpleLogger,
     fn: () => Promise<T>,
 ): Promise<T> {
     const start = performance.now();

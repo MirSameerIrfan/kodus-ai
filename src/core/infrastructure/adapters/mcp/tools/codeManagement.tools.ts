@@ -1,7 +1,7 @@
+import { createLogger } from "@kodus/flow";
 import { Injectable } from '@nestjs/common';
 import { z } from 'zod';
 import { CodeManagementService } from '../../services/platformIntegration/codeManagement.service';
-import { PinoLoggerService } from '../../services/logger/pino.service';
 import { wrapToolHandler } from '../utils/mcp-protocol.utils';
 import { BaseResponse, McpToolDefinition } from '../types/mcp-tool.interface';
 import { PullRequestState } from '../../../../../shared/domain/enums/pullRequestState.enum';
@@ -149,6 +149,7 @@ interface DiffForFileResponse {
 
 @Injectable()
 export class CodeManagementTools {
+    private readonly logger = createLogger(CodeManagementTools.name);
     private static readonly ERROR_MESSAGES = {
         ORGANIZATION_ID_REQUIRED: 'Organization ID is required',
         TEAM_ID_REQUIRED: 'Team ID is required',
@@ -167,10 +168,7 @@ export class CodeManagementTools {
             'An unexpected error occurred while retrieving Pull Request diff',
     } as const;
 
-    constructor(
-        private readonly codeManagementService: CodeManagementService,
-        private readonly logger: PinoLoggerService,
-    ) {}
+    constructor(private readonly codeManagementService: CodeManagementService) {}
 
     listRepositories(): McpToolDefinition {
         const inputSchema = z.object({

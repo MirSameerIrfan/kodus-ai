@@ -1,6 +1,6 @@
+import { createLogger } from "@kodus/flow";
 import { AxiosLicenseService } from '@/config/axios/microservices/license.axios';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import {
     ILicenseService,
     OrganizationLicenseValidationResult,
@@ -11,9 +11,10 @@ import {
  * LicenseService handles organization and user license validation via billing service endpoints.
  */
 export class LicenseService implements ILicenseService {
+    private readonly logger = createLogger(LicenseService.name);
     private readonly licenseRequest: AxiosLicenseService;
 
-    constructor(private readonly logger: PinoLoggerService) {
+    constructor() {
         this.licenseRequest = new AxiosLicenseService();
     }
 

@@ -1,27 +1,27 @@
+import { createLogger } from '@kodus/flow';
 /**
  * @license
  * © Kodus Tech. All rights reserved.
  */
 
-import { Inject, Injectable } from '@nestjs/common';
 import {
     AnalysisContext,
     FileChange,
     ReviewModeConfig,
     ReviewModeResponse,
 } from '@/config/types/general/codeReview.type';
+import { IAIAnalysisService } from '@/core/domain/codeBase/contracts/AIAnalysisService.contract';
 import {
     AST_ANALYSIS_SERVICE_TOKEN,
     IASTAnalysisService,
 } from '@/core/domain/codeBase/contracts/ASTAnalysisService.contract';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { BaseFileReviewContextPreparation } from '@/core/infrastructure/adapters/services/fileReviewContextPreparation/base-file-review-context-preparation.service';
-import { ReviewModeOptions } from '@/shared/interfaces/file-review-context-preparation.interface';
-import { IAIAnalysisService } from '@/core/domain/codeBase/contracts/AIAnalysisService.contract';
 import { LLM_ANALYSIS_SERVICE_TOKEN } from '@/core/infrastructure/adapters/services/codeBase/llmAnalysis.service';
+import { BaseFileReviewContextPreparation } from '@/core/infrastructure/adapters/services/fileReviewContextPreparation/base-file-review-context-preparation.service';
 import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
-import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';
+import { ReviewModeOptions } from '@/shared/interfaces/file-review-context-preparation.interface';
 import { BackoffPresets } from '@/shared/utils/polling';
+import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';
+import { Inject, Injectable } from '@nestjs/common';
 
 /**
  * Enterprise (cloud) implementation of the file review context preparation service
@@ -30,16 +30,14 @@ import { BackoffPresets } from '@/shared/utils/polling';
  */
 @Injectable()
 export class FileReviewContextPreparation extends BaseFileReviewContextPreparation {
+    protected readonly logger = createLogger(FileReviewContextPreparation.name);
     constructor(
         @Inject(AST_ANALYSIS_SERVICE_TOKEN)
         private readonly astService: IASTAnalysisService,
-
         @Inject(LLM_ANALYSIS_SERVICE_TOKEN)
         private readonly aiAnalysisService: IAIAnalysisService,
-
-        protected readonly logger: PinoLoggerService,
     ) {
-        super(logger);
+        super();
     }
 
     /**

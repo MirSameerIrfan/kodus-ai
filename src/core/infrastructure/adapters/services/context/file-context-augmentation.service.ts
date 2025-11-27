@@ -1,5 +1,5 @@
+import { createLogger } from "@kodus/flow";
 import { Injectable } from '@nestjs/common';
-import { PinoLoggerService } from '../logger/pino.service';
 import { ContextEvidenceAgentProvider } from '@/core/infrastructure/adapters/services/agent/kodus-flow/contextEvidenceAgent.provider';
 import pLimit from 'p-limit';
 import {
@@ -20,11 +20,11 @@ import { IKodyRule } from '@/core/domain/kodyRules/interfaces/kodyRules.interfac
 
 @Injectable()
 export class FileContextAugmentationService {
+    private readonly logger = createLogger(FileContextAugmentationService.name);
     private readonly concurrency = 5;
 
     constructor(
-        private readonly logger: PinoLoggerService,
-        private readonly contextEvidenceAgentProvider: ContextEvidenceAgentProvider,
+        private readonly contextEvidenceAgentProvider: ContextEvidenceAgentProvider
     ) {}
 
     async augmentFiles(

@@ -1,5 +1,5 @@
+import { createLogger } from "@kodus/flow";
 import { Injectable } from '@nestjs/common';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { tryParseJSONObject } from '@/shared/utils/transforms/json';
 import { Inject } from '@nestjs/common';
 import {
@@ -25,13 +25,13 @@ export const KODY_ISSUES_ANALYSIS_SERVICE_TOKEN = Symbol(
 
 @Injectable()
 export class KodyIssuesAnalysisService {
+    private readonly logger = createLogger(KodyIssuesAnalysisService.name);
     public readonly isCloud: boolean;
     public readonly isDevelopment: boolean;
 
     constructor(
-        private readonly logger: PinoLoggerService,
         private readonly promptRunnerService: PromptRunnerService,
-        private readonly observabilityService: ObservabilityService,
+        private readonly observabilityService: ObservabilityService
     ) {
         this.isCloud = environment.API_CLOUD_MODE;
         this.isDevelopment = environment.API_DEVELOPMENT_MODE;

@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { z } from 'zod';
 import { wrapToolHandler } from '../utils/mcp-protocol.utils';
@@ -9,7 +10,6 @@ import {
 import { LabelType } from '@/shared/utils/codeManagement/labels';
 import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
 import { IssueStatus } from '@/config/types/general/issues.type';
-import { PinoLoggerService } from '../../services/logger/pino.service';
 import { IIssue } from '@/core/domain/issues/interfaces/issues.interface';
 import { PullRequestsService } from '../../services/pullRequests/pullRequests.service';
 import {
@@ -21,14 +21,12 @@ import { DeliveryStatus } from '@/core/domain/pullRequests/enums/deliveryStatus.
 
 @Injectable()
 export class KodyIssuesTools {
+    private readonly logger = createLogger(KodyIssuesTools.name);
     constructor(
         @Inject(ISSUES_SERVICE_TOKEN)
         private readonly issuesService: IIssuesService,
-
         @Inject(PULL_REQUESTS_SERVICE_TOKEN)
-        private readonly pullRequestsService: IPullRequestsService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly pullRequestsService: IPullRequestsService
     ) {}
 
     createKodyIssue(): McpToolDefinition {

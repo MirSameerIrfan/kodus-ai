@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import {
     ORGANIZATION_SERVICE_TOKEN,
     IOrganizationService,
@@ -15,27 +16,22 @@ import {
     IUsersService,
 } from '@/core/domain/user/contracts/user.service.contract';
 import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { UpdateAnotherUserDto } from '@/core/infrastructure/http/dtos/update-another-user.dto';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class UpdateAnotherUserUseCase implements IUseCase {
+    private readonly logger = createLogger(UpdateAnotherUserUseCase.name);
     constructor(
         @Inject(USER_SERVICE_TOKEN)
         private readonly usersService: IUsersService,
-
         @Inject(ORGANIZATION_SERVICE_TOKEN)
         private readonly organizationService: IOrganizationService,
-
         @Inject(TEAM_SERVICE_TOKEN)
         private readonly teamService: ITeamService,
-
         @Inject(TEAM_MEMBERS_SERVICE_TOKEN)
-        private readonly teamMembersService: ITeamMemberService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly teamMembersService: ITeamMemberService
     ) {}
 
     async execute(

@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import {
     AlignmentLevel,
@@ -11,7 +12,6 @@ import {
     PromptRole,
     PromptRunnerService,
 } from '@kodus/kodus-common/llm';
-import { PinoLoggerService } from '../logger/pino.service';
 import {
     commentCategorizerSchema,
     commentIrrelevanceFilterSchema,
@@ -58,11 +58,11 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 
 @Injectable()
 export class CommentAnalysisService {
+    private readonly logger = createLogger(CommentAnalysisService.name);
     constructor(
-        private readonly logger: PinoLoggerService,
         private readonly promptRunnerService: PromptRunnerService,
         private readonly observabilityService: ObservabilityService,
-        private readonly permissionValidationService: PermissionValidationService,
+        private readonly permissionValidationService: PermissionValidationService
     ) {}
 
     async categorizeComments(params: {

@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
@@ -20,35 +21,25 @@ import {
 import { ActiveCodeReviewAutomationUseCase } from '../../teamAutomation/active-code-review-automation.use-case';
 import { SyncSelectedRepositoriesKodyRulesUseCase } from '../../kodyRules/sync-selected-repositories.use-case';
 import { BackfillHistoricalPRsUseCase } from '../../pullRequests/backfill-historical-prs.use-case';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 
 @Injectable()
 export class CreateRepositoriesUseCase implements IUseCase {
+    private readonly logger = createLogger(CreateRepositoriesUseCase.name);
     constructor(
         @Inject(TEAM_SERVICE_TOKEN)
         private readonly teamService: ITeamService,
-
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
-
         private readonly activeCodeManagementTeamAutomationsUseCase: ActiveCodeManagementTeamAutomationsUseCase,
-
         private readonly activeCodeReviewAutomationUseCase: ActiveCodeReviewAutomationUseCase,
-
         private readonly codeManagementService: CodeManagementService,
-
         private readonly createOrUpdateParametersUseCase: CreateOrUpdateParametersUseCase,
-
         private readonly syncSelectedRepositoriesKodyRulesUseCase: SyncSelectedRepositoriesKodyRulesUseCase,
-
         private readonly backfillHistoricalPRsUseCase: BackfillHistoricalPRsUseCase,
-
-        private readonly logger: PinoLoggerService,
-
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };
-        },
+        }
     ) {}
 
     public async execute(params: any) {

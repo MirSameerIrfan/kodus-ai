@@ -1,26 +1,25 @@
+import { createLogger } from '@kodus/flow';
 /**
  * @license
  * © Kodus Tech. All rights reserved.
  */
 
-import { Injectable } from '@nestjs/common';
-import { clone } from 'ramda';
-import {
-    IFileReviewContextPreparation,
-    ReviewModeOptions,
-} from '@/shared/interfaces/file-review-context-preparation.interface';
 import {
     AnalysisContext,
     FileChange,
     ReviewModeResponse,
 } from '@/config/types/general/codeReview.type';
-import { PinoLoggerService } from '../logger/pino.service';
+import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
+import {
+    IFileReviewContextPreparation,
+    ReviewModeOptions,
+} from '@/shared/interfaces/file-review-context-preparation.interface';
 import {
     convertToHunksWithLinesNumbers,
     handlePatchDeletions,
 } from '@/shared/utils/patch';
-import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
+import { Injectable } from '@nestjs/common';
 
 /**
  * Abstract base class for file review context preparation
@@ -31,7 +30,10 @@ import { BYOKConfig } from '@kodus/kodus-common/llm';
 export abstract class BaseFileReviewContextPreparation
     implements IFileReviewContextPreparation
 {
-    constructor(protected readonly logger: PinoLoggerService) {}
+    protected readonly logger = createLogger(
+        BaseFileReviewContextPreparation.name,
+    );
+    constructor() {}
 
     /**
      * Prepares the context for analyzing a file

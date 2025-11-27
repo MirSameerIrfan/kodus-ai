@@ -1,13 +1,12 @@
-import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { SimpleLogger } from '@kodus/flow/dist/observability/logger';
+import { EmailParams, MailerSend, Recipient, Sender } from 'mailersend';
 
 const sendInvite = async (
     user,
     adminUserEmail,
     invite,
-    logger?: PinoLoggerService,
+    logger?: SimpleLogger,
 ) => {
     try {
         const mailersend = new MailerSend({
@@ -70,7 +69,7 @@ const sendForgotPasswordEmail = async (
     email: string,
     name: string,
     token: string,
-    logger?: PinoLoggerService,
+    logger?: SimpleLogger,
 ) => {
     try {
         const webUrl = process.env.API_USER_INVITE_BASE_URL;
@@ -127,7 +126,7 @@ const sendKodyRulesNotification = async (
     users: Array<{ email: string; name: string }>,
     rules: Array<string>,
     organizationName: string,
-    logger?: PinoLoggerService,
+    logger?: SimpleLogger,
 ) => {
     try {
         const mailersend = new MailerSend({
@@ -198,7 +197,7 @@ const sendConfirmationEmail = async (
     email: string,
     organizationName: string,
     organizationAndTeamData: OrganizationAndTeamData,
-    logger?: PinoLoggerService,
+    logger?: SimpleLogger,
 ) => {
     try {
         const webUrl = process.env.API_USER_INVITE_BASE_URL;
@@ -250,8 +249,8 @@ const sendConfirmationEmail = async (
 };
 
 export {
-    sendInvite,
-    sendForgotPasswordEmail,
-    sendKodyRulesNotification,
     sendConfirmationEmail,
+    sendForgotPasswordEmail,
+    sendInvite,
+    sendKodyRulesNotification,
 };

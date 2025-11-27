@@ -1,23 +1,22 @@
+import { createLogger } from "@kodus/flow";
 import { Injectable, Inject } from '@nestjs/common';
 import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
 import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
 } from '@/core/domain/codeBase/contracts/CommentManagerService.contract';
-import { PinoLoggerService } from '../../../logger/pino.service';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 import { PullRequestMessageStatus } from '@/config/types/general/pullRequestMessages.type';
 import { BehaviourForNewCommits } from '@/config/types/general/codeReview.type';
 
 @Injectable()
 export class UpdateCommentsAndGenerateSummaryStage extends BasePipelineStage<CodeReviewPipelineContext> {
+    private readonly logger = createLogger(UpdateCommentsAndGenerateSummaryStage.name);
     readonly stageName = 'UpdateCommentsAndGenerateSummaryStage';
 
     constructor(
         @Inject(COMMENT_MANAGER_SERVICE_TOKEN)
-        private readonly commentManagerService: ICommentManagerService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly commentManagerService: ICommentManagerService
     ) {
         super();
     }

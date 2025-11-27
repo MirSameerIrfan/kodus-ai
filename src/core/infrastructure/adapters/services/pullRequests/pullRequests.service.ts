@@ -1,5 +1,5 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
-import { PinoLoggerService } from '../logger/pino.service';
 import {
     IPullRequestsRepository,
     PULL_REQUESTS_REPOSITORY_TOKEN,
@@ -25,13 +25,11 @@ import { Repository } from '@/config/types/general/codeReview.type';
 
 @Injectable()
 export class PullRequestsService implements IPullRequestsService {
+    private readonly logger = createLogger(PullRequestsService.name);
     constructor(
         @Inject(PULL_REQUESTS_REPOSITORY_TOKEN)
         private readonly pullRequestsRepository: IPullRequestsRepository,
-
-        private readonly codeManagement: CodeManagementService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly codeManagement: CodeManagementService
     ) {}
 
     getNativeCollection() {

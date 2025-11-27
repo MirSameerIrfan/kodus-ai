@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere } from 'typeorm';
@@ -5,7 +6,6 @@ import { IContextReferenceRepository } from '@/core/domain/contextReferences/con
 import { ContextReferenceEntity } from '@/core/domain/contextReferences/entities/context-reference.entity';
 import { IContextReference } from '@/core/domain/contextReferences/interfaces/context-reference.interface';
 import { ContextReferenceModel } from './schema/contextReference.model';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 
 function modelToEntity(model: ContextReferenceModel): ContextReferenceEntity {
     return ContextReferenceEntity.create({
@@ -56,10 +56,10 @@ function applyFilter(
 
 @Injectable()
 export class ContextReferenceRepository implements IContextReferenceRepository {
+    private readonly logger = createLogger(ContextReferenceRepository.name);
     constructor(
         @InjectRepository(ContextReferenceModel)
-        private readonly repository: Repository<ContextReferenceModel>,
-        private readonly logger: PinoLoggerService,
+        private readonly repository: Repository<ContextReferenceModel>
     ) {}
 
     async create(

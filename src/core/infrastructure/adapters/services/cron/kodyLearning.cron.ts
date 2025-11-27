@@ -1,6 +1,6 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { PinoLoggerService } from '../logger/pino.service';
 import {
     TEAM_SERVICE_TOKEN,
     ITeamService,
@@ -20,16 +20,13 @@ const CRON_KODY_LEARNING = process.env.API_CRON_KODY_LEARNING;
 
 @Injectable()
 export class KodyLearningCronProvider {
+    private readonly logger = createLogger(KodyLearningCronProvider.name);
     constructor(
-        private readonly logger: PinoLoggerService,
-
         @Inject(TEAM_SERVICE_TOKEN)
         private readonly teamService: ITeamService,
-
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
-
-        private readonly generateKodyRulesUseCase: GenerateKodyRulesUseCase,
+        private readonly generateKodyRulesUseCase: GenerateKodyRulesUseCase
     ) {}
 
     @Cron(CRON_KODY_LEARNING, {

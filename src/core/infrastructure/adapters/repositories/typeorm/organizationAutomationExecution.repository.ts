@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -14,16 +15,14 @@ import { IOrganizationAutomationExecutionRepository } from '@/core/domain/automa
 import { OrganizationAutomationExecutionModel } from './schema/organizationAutomationExecution.model';
 import { IOrganizationAutomationExecution } from '@/core/domain/automation/interfaces/organization-automation-execution.interface';
 import { OrganizationAutomationExecutionEntity } from '@/core/domain/automation/entities/organization-automation-execution.entity';
-import { PinoLoggerService } from '../../services/logger/pino.service';
 
 @Injectable()
 export class OrganizationAutomationExecutionRepository
     implements IOrganizationAutomationExecutionRepository {
+    private readonly logger = createLogger(OrganizationAutomationExecutionRepository.name);
     constructor(
         @InjectRepository(OrganizationAutomationExecutionModel)
-        private readonly organizationAutomationExecutionRepository: Repository<OrganizationAutomationExecutionModel>,
-
-        private readonly logger: PinoLoggerService
+        private readonly organizationAutomationExecutionRepository: Repository<OrganizationAutomationExecutionModel>
     ) { }
 
     async create(

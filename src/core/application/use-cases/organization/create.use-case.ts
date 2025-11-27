@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import {
     IOrganizationService,
     ORGANIZATION_SERVICE_TOKEN,
@@ -7,7 +8,6 @@ import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { CreateUserUseCase } from '../user/create.use-case';
 import { IUser } from '@/core/domain/user/interfaces/user.interface';
 import { Inject, Injectable } from '@nestjs/common';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { DuplicateRecordException } from '@/shared/infrastructure/filters/duplicate-record.exception';
 import {
     USER_SERVICE_TOKEN,
@@ -19,16 +19,13 @@ import posthogClient from '@/shared/utils/posthog';
 
 @Injectable()
 export class CreateOrganizationUseCase implements IUseCase {
+    private readonly logger = createLogger(CreateOrganizationUseCase.name);
     constructor(
         @Inject(ORGANIZATION_SERVICE_TOKEN)
         private readonly organizationService: IOrganizationService,
-
         @Inject(USER_SERVICE_TOKEN)
         private readonly usersService: IUsersService,
-
-        private readonly createUserUseCase: CreateUserUseCase,
-
-        private logger: PinoLoggerService,
+        private readonly createUserUseCase: CreateUserUseCase
     ) {}
 
     public async execute(

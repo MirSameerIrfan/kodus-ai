@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { KODY_RULES_SERVICE_TOKEN } from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
 import { IKodyRulesService } from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
@@ -5,7 +6,6 @@ import {
     Action,
     ResourceType,
 } from '@/core/domain/permissions/enums/permissions.enum';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
 import { CreateKodyRuleDto } from '@/core/infrastructure/http/dtos/create-kody-rule.dto';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
@@ -20,12 +20,10 @@ import type { ContextDetectionField } from '@/core/infrastructure/adapters/servi
 
 @Injectable()
 export class CreateOrUpdateKodyRulesUseCase {
+    private readonly logger = createLogger(CreateOrUpdateKodyRulesUseCase.name);
     constructor(
         @Inject(KODY_RULES_SERVICE_TOKEN)
         private readonly kodyRulesService: IKodyRulesService,
-
-        private readonly logger: PinoLoggerService,
-
         @Inject(REQUEST)
         private readonly request: Request & {
             user: {
@@ -34,11 +32,10 @@ export class CreateOrUpdateKodyRulesUseCase {
                 email: string;
             };
         },
-
         private readonly authorizationService: AuthorizationService,
         private readonly contextReferenceDetectionService: ContextReferenceDetectionService,
         @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
-        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
+        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper
     ) {}
 
     async execute(

@@ -1,8 +1,8 @@
+import { createLogger } from "@kodus/flow";
 import {
     IKodyRulesService,
     KODY_RULES_SERVICE_TOKEN,
 } from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { ChangeStatusKodyRulesDTO } from '@/core/infrastructure/http/dtos/change-status-kody-rules.dto';
 import { CreateKodyRuleDto } from '@/core/infrastructure/http/dtos/create-kody-rule.dto';
 import { Inject } from '@nestjs/common';
@@ -10,18 +10,15 @@ import { REQUEST } from '@nestjs/core';
 import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from './find-rules-in-organization-by-filter.use-case';
 
 export class ChangeStatusKodyRulesUseCase {
+    private readonly logger = createLogger(ChangeStatusKodyRulesUseCase.name);
     constructor(
         @Inject(KODY_RULES_SERVICE_TOKEN)
         private readonly kodyRulesService: IKodyRulesService,
-
-        private readonly logger: PinoLoggerService,
-
         private readonly findRulesInOrganizationByRuleFilterKodyRulesUseCase: FindRulesInOrganizationByRuleFilterKodyRulesUseCase,
-
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };
-        },
+        }
     ) {}
 
     async execute(body: ChangeStatusKodyRulesDTO) {

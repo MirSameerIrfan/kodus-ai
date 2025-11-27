@@ -1,6 +1,6 @@
+import { createLogger } from "@kodus/flow";
 import { Injectable } from '@nestjs/common';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     IFileReference,
@@ -18,10 +18,8 @@ import {
 
 @Injectable()
 export class PromptContextLoaderService implements IPromptContextLoaderService {
-    constructor(
-        private readonly codeManagementService: CodeManagementService,
-        private readonly logger: PinoLoggerService,
-    ) {}
+    private readonly logger = createLogger(PromptContextLoaderService.name);
+    constructor(private readonly codeManagementService: CodeManagementService) {}
 
     async loadExternalContext(
         params: LoadContextParams,

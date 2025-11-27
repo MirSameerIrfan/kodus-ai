@@ -1,23 +1,24 @@
+import { createLogger } from '@kodus/flow';
 /**
  * @license
  * © Kodus Tech. All rights reserved.
  */
 
-import { Injectable } from '@nestjs/common';
 import {
     FileChange,
     ReviewModeResponse,
 } from '@/config/types/general/codeReview.type';
-import { PinoLoggerService } from '../logger/pino.service';
-import { BaseFileReviewContextPreparation } from './base-file-review-context-preparation.service';
-import { ReviewModeOptions } from '@/shared/interfaces/file-review-context-preparation.interface';
 import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
+import { ReviewModeOptions } from '@/shared/interfaces/file-review-context-preparation.interface';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
+import { Injectable } from '@nestjs/common';
+import { BaseFileReviewContextPreparation } from './base-file-review-context-preparation.service';
 
 @Injectable()
 export class FileReviewContextPreparation extends BaseFileReviewContextPreparation {
-    constructor(protected readonly logger: PinoLoggerService) {
-        super(logger);
+    protected readonly logger = createLogger(FileReviewContextPreparation.name);
+    constructor() {
+        super();
     }
 
     protected async determineReviewMode(
@@ -27,9 +28,7 @@ export class FileReviewContextPreparation extends BaseFileReviewContextPreparati
         return ReviewModeResponse.LIGHT_MODE;
     }
 
-    protected getRelevantFileContent(
-        file: FileChange,
-    ): Promise<{
+    protected getRelevantFileContent(file: FileChange): Promise<{
         relevantContent: string | null;
         taskStatus?: TaskStatus;
         hasRelevantContent?: boolean;

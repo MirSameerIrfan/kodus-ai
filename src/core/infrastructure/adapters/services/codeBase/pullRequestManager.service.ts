@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { FileChange } from '@/config/types/general/codeReview.type';
 import { Commit } from '@/config/types/general/commit.type';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
@@ -6,15 +7,14 @@ import { CacheService } from '@/shared/utils/cache/cache.service';
 import { isFileMatchingGlob } from '@/shared/utils/glob-utils';
 import { Injectable } from '@nestjs/common';
 import { IPullRequestManagerService } from '../../../../domain/codeBase/contracts/PullRequestManagerService.contract';
-import { PinoLoggerService } from '../logger/pino.service';
 import { CodeManagementService } from '../platformIntegration/codeManagement.service';
 
 @Injectable()
 export class PullRequestHandlerService implements IPullRequestManagerService {
+    private readonly logger = createLogger(PullRequestHandlerService.name);
     constructor(
         private readonly codeManagementService: CodeManagementService,
-        private readonly logger: PinoLoggerService,
-        private readonly cacheService: CacheService,
+        private readonly cacheService: CacheService
     ) {}
 
     async getPullRequestDetails(

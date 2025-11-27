@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
@@ -7,7 +8,6 @@ import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
 } from '@/core/domain/integrations/contracts/integration.service.contracts';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
 import { IntegrationConfigKeyProjectManagement } from '@/shared/domain/enums/Integration-config-key.enum';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
@@ -18,19 +18,16 @@ import { Request } from 'express';
 export class GetIntegrationConfigsByIntegrationCategoryUseCase
     implements IUseCase
 {
+    private readonly logger = createLogger(GetIntegrationConfigsByIntegrationCategoryUseCase.name);
     constructor(
         @Inject(INTEGRATION_SERVICE_TOKEN)
         private readonly integrationService: IIntegrationService,
-
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
         private readonly integrationConfigService: IIntegrationConfigService,
-
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };
-        },
-
-        private logger: PinoLoggerService,
+        }
     ) {}
     public async execute(params: any): Promise<any> {
         try {

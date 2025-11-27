@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { DeleteIntegrationUseCase } from './delete-integration.use-case';
 import { PARAMETERS_SERVICE_TOKEN } from '@/core/domain/parameters/contracts/parameters.service.contract';
@@ -9,23 +10,18 @@ import { IKodyRulesService } from '@/core/domain/kodyRules/contracts/kodyRules.s
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
 import { KodyRulesStatus } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
 import { ConfigLevel } from '@/config/types/general/pullRequestMessages.type';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 
 @Injectable()
 export class DeleteIntegrationAndRepositoriesUseCase {
+    private readonly logger = createLogger(DeleteIntegrationAndRepositoriesUseCase.name);
     constructor(
         private readonly deleteIntegrationUseCase: DeleteIntegrationUseCase,
-
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
-
         @Inject(PULL_REQUEST_MESSAGES_SERVICE_TOKEN)
         private readonly pullRequestMessagesService: IPullRequestMessagesService,
-
         @Inject(KODY_RULES_SERVICE_TOKEN)
-        private readonly kodyRulesService: IKodyRulesService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly kodyRulesService: IKodyRulesService
     ) {}
 
     async execute(params: {

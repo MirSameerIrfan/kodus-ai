@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
@@ -12,7 +13,6 @@ import {
     CreateKodyRuleDto,
     KodyRuleSeverity,
 } from '@/core/infrastructure/http/dtos/create-kody-rule.dto';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import {
     IKodyRulesService,
     KODY_RULES_SERVICE_TOKEN,
@@ -57,6 +57,7 @@ type SyncTarget = {
 
 @Injectable()
 export class KodyRulesSyncService {
+    private readonly logger = createLogger(KodyRulesSyncService.name);
     private readonly systemUserInfo: UserInfo = {
         userId: 'kody-rules-sync',
         userEmail: 'kody@kodus.io',
@@ -68,14 +69,13 @@ export class KodyRulesSyncService {
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
         private readonly codeManagementService: CodeManagementService,
-        private readonly logger: PinoLoggerService,
         private readonly updateOrCreateCodeReviewParameterUseCase: UpdateOrCreateCodeReviewParameterUseCase,
         private readonly promptRunnerService: PromptRunnerService,
         private readonly permissionValidationService: PermissionValidationService,
         private readonly observabilityService: ObservabilityService,
         private readonly contextReferenceDetectionService: ContextReferenceDetectionService,
         @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
-        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
+        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper
     ) {}
 
     /**

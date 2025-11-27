@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import {
     Inject,
     Injectable,
@@ -14,7 +15,6 @@ import {
 } from '@/core/domain/user/contracts/user.service.contract';
 import { STATUS } from '@/config/types/database/status.type';
 import { sendConfirmationEmail } from '@/shared/utils/email/sendMail';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 
 interface DecodedPayload {
     readonly email: string;
@@ -22,12 +22,12 @@ interface DecodedPayload {
 
 @Injectable()
 export class ResendEmailUseCase {
+    private readonly logger = createLogger(ResendEmailUseCase.name);
     constructor(
         @Inject(AUTH_SERVICE_TOKEN)
         private readonly authService: IAuthService,
         @Inject(USER_SERVICE_TOKEN)
-        private readonly usersService: IUsersService,
-        private readonly logger: PinoLoggerService,
+        private readonly usersService: IUsersService
     ) {}
 
     async execute(email: string): Promise<{ message: string }> {

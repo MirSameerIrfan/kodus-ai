@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 /**
  * @license
  * Kodus Tech. All rights reserved.
@@ -5,7 +6,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { PipelineFactory } from '../pipeline/pipeline-factory.service';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { PinoLoggerService } from '../logger/pino.service';
 import { CodeReviewPipelineContext } from './codeReviewPipeline/context/code-review-pipeline.context';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
@@ -22,6 +22,7 @@ import {
 
 @Injectable()
 export class CodeReviewHandlerService {
+    private readonly logger = createLogger(CodeReviewHandlerService.name);
     private readonly config: DatabaseConnection;
 
     private readonly reactionMap = {
@@ -42,14 +43,9 @@ export class CodeReviewHandlerService {
     constructor(
         @Inject('PIPELINE_PROVIDER')
         private readonly pipelineFactory: PipelineFactory<CodeReviewPipelineContext>,
-
-        private readonly logger: PinoLoggerService,
-
         private readonly configService: ConfigService,
-
         private readonly observabilityService: ObservabilityService,
-
-        private readonly codeManagement: CodeManagementService,
+        private readonly codeManagement: CodeManagementService
     ) {
         this.config =
             this.configService.get<DatabaseConnection>('mongoDatabase');

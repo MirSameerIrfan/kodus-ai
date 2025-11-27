@@ -1,41 +1,49 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { ICommentManagerService } from '../../../../domain/codeBase/contracts/CommentManagerService.contract';
-import { CodeManagementService } from '../platformIntegration/codeManagement.service';
-import { PinoLoggerService } from '../logger/pino.service';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
+    BehaviourForExistingDescription,
+    BehaviourForNewCommits,
+    ClusteringType,
+    CodeReviewConfig,
+    CodeSuggestion,
     Comment,
+    CommentResult,
     FileChange,
     SummaryConfig,
-    BehaviourForExistingDescription,
-    CodeReviewConfig,
-    CommentResult,
-    CodeSuggestion,
-    ClusteringType,
-    BehaviourForNewCommits,
 } from '@/config/types/general/codeReview.type';
-import { prompt_repeated_suggestion_clustering_system } from '@/shared/utils/langchainCommon/prompts/repeatedCodeReviewSuggestionClustering';
-import { LLMResponseProcessor } from './utils/transforms/llmResponseProcessor.transform';
-import { LanguageValue } from '@/shared/domain/enums/language-parameter.enum';
-import {
-    getTranslationsForLanguageByCategory,
-    TranslationsCategory,
-} from '@/shared/utils/translations/translations';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@/core/domain/parameters/contracts/parameters.service.contract';
+import { IPullRequestMessages } from '@/core/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
 import { ISuggestionByPR } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
+import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
+import { LanguageValue } from '@/shared/domain/enums/language-parameter.enum';
+import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
+import { BYOKPromptRunnerService } from '@/shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { prompt_repeated_suggestion_clustering_system } from '@/shared/utils/langchainCommon/prompts/repeatedCodeReviewSuggestionClustering';
 import {
+    getTranslationsForLanguageByCategory,
+    TranslationsCategory,
+} from '@/shared/utils/translations/translations';
+import { createLogger } from '@kodus/flow';
+import {
+    BYOKConfig,
     LLMModelProvider,
     ParserType,
     PromptRole,
     PromptRunnerService,
-    BYOKConfig,
 } from '@kodus/kodus-common/llm';
-import { BYOKPromptRunnerService } from '@/shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { Inject, Injectable } from '@nestjs/common';
+import { ICommentManagerService } from '../../../../domain/codeBase/contracts/CommentManagerService.contract';
+import { ObservabilityService } from '../logger/observability.service';
+import { CodeManagementService } from '../platformIntegration/codeManagement.service';
+import { CodeReviewPipelineContext } from './codeReviewPipeline/context/code-review-pipeline.context';
+import {
+    MessageTemplateProcessor,
+    PlaceholderContext,
+} from './utils/services/messageTemplateProcessor.service';
+import { LLMResponseProcessor } from './utils/transforms/llmResponseProcessor.transform';
 
 interface ClusteredSuggestion {
     id: string;
@@ -43,17 +51,10 @@ interface ClusteredSuggestion {
     problemDescription?: string;
     actionStatement?: string;
 }
-import { IPullRequestMessages } from '@/core/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
-import {
-    MessageTemplateProcessor,
-    PlaceholderContext,
-} from './utils/services/messageTemplateProcessor.service';
-import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
-import { ObservabilityService } from '../logger/observability.service';
-import { CodeReviewPipelineContext } from './codeReviewPipeline/context/code-review-pipeline.context';
 
 @Injectable()
 export class CommentManagerService implements ICommentManagerService {
+    private readonly logger = createLogger(CommentManagerService.name);
     private readonly llmResponseProcessor: LLMResponseProcessor;
 
     constructor(
@@ -64,9 +65,8 @@ export class CommentManagerService implements ICommentManagerService {
         private readonly observabilityService: ObservabilityService,
         private readonly permissionValidationService: PermissionValidationService,
         private readonly codeManagementService: CodeManagementService,
-        private readonly logger: PinoLoggerService,
     ) {
-        this.llmResponseProcessor = new LLMResponseProcessor(logger);
+        this.llmResponseProcessor = new LLMResponseProcessor();
     }
 
     async generateSummaryPR(
@@ -196,15 +196,18 @@ export class CommentManagerService implements ICommentManagerService {
 
                 let userPrompt = '';
 
-                if (isCommitRun && summaryConfig?.behaviourForNewCommits === BehaviourForNewCommits.REPLACE) {
-                    userPrompt =  `
+                if (
+                    isCommitRun &&
+                    summaryConfig?.behaviourForNewCommits ===
+                        BehaviourForNewCommits.REPLACE
+                ) {
+                    userPrompt = `
                     This is the updated pull request summary:
                     <pullRequestSummaryContext>${updatedPR?.body || 'No pull request summary'}</pullRequestSummaryContext>
                     Use this summary to concatenate the existing pull request summary with the new changed files context:`;
                 }
 
-                const fallbackProvider = LLMModelProvider.OPENAI_GPT_4O
-                ;
+                const fallbackProvider = LLMModelProvider.OPENAI_GPT_4O;
                 userPrompt += `<changedFilesContext>${JSON.stringify(baseContext?.changedFiles, null, 2) || 'No files changed'}</changedFilesContext>`;
 
                 const promptRunner = new BYOKPromptRunnerService(

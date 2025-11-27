@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import {
     IPermissionsService,
     PERMISSIONS_SERVICE_TOKEN,
@@ -11,7 +12,6 @@ import {
     Subject,
 } from '@/core/domain/permissions/types/permissions.types';
 import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { PermissionsAbilityFactory } from '@/core/infrastructure/adapters/services/permissions/permissionsAbility.factory';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { MongoQuery } from '@casl/ability';
@@ -19,10 +19,8 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class GetPermissionsUseCase implements IUseCase {
-    constructor(
-        private readonly abilityFactory: PermissionsAbilityFactory,
-        private readonly logger: PinoLoggerService,
-    ) {}
+    private readonly logger = createLogger(GetPermissionsUseCase.name);
+    constructor(private readonly abilityFactory: PermissionsAbilityFactory) {}
 
     async execute(params: { user: Partial<IUser> }): Promise<{
         [K in ResourceType]?: {

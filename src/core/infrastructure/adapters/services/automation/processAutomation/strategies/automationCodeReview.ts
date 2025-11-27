@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
     IAutomationExecutionService,
@@ -17,7 +18,6 @@ import { MoreThanOrEqual } from 'typeorm';
 import { IAutomation } from '@/core/domain/automation/interfaces/automation.interface';
 import { ITeamAutomation } from '@/core/domain/automation/interfaces/team-automation.interface';
 import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
-import { PinoLoggerService } from '../../../logger/pino.service';
 import { CodeReviewHandlerService } from '../../../codeBase/codeReviewHandlerService.service';
 import { IAutomationExecution } from '@/core/domain/automation/interfaces/automation-execution.interface';
 import {
@@ -29,24 +29,19 @@ import {
 export class AutomationCodeReviewService
     implements Omit<IAutomationFactory, 'stop'>
 {
+    private readonly logger = createLogger(AutomationCodeReviewService.name);
     automationType = AutomationType.AUTOMATION_CODE_REVIEW;
 
     constructor(
         @Inject(TEAM_AUTOMATION_SERVICE_TOKEN)
         private readonly teamAutomationService: ITeamAutomationService,
-
         @Inject(AUTOMATION_SERVICE_TOKEN)
         private readonly automationService: IAutomationService,
-
         @Inject(AUTOMATION_EXECUTION_SERVICE_TOKEN)
         private readonly automationExecutionService: IAutomationExecutionService,
-
         @Inject(ORGANIZATION_SERVICE_TOKEN)
         private readonly organizationService: IOrganizationService,
-
-        private readonly codeReviewHandlerService: CodeReviewHandlerService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly codeReviewHandlerService: CodeReviewHandlerService
     ) {}
 
     async setup(payload?: any): Promise<any> {

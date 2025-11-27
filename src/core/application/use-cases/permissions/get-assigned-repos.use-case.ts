@@ -1,19 +1,18 @@
+import { createLogger } from "@kodus/flow";
 import {
     IPermissionsService,
     PERMISSIONS_SERVICE_TOKEN,
 } from '@/core/domain/permissions/contracts/permissions.service.contract';
 import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class GetAssignedReposUseCase implements IUseCase {
+    private readonly logger = createLogger(GetAssignedReposUseCase.name);
     constructor(
         @Inject(PERMISSIONS_SERVICE_TOKEN)
-        private readonly permissionsService: IPermissionsService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly permissionsService: IPermissionsService
     ) {}
 
     async execute(params: { userId: string }): Promise<string[]> {

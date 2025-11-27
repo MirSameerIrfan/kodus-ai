@@ -1,6 +1,6 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { PinoLoggerService } from '../logger/pino.service';
 import {
     TEAM_SERVICE_TOKEN,
     ITeamService,
@@ -55,39 +55,30 @@ const API_CRON_CHECK_IF_PR_SHOULD_BE_APPROVED =
 
 @Injectable()
 export class CheckIfPRCanBeApprovedCronProvider {
+    private readonly logger = createLogger(CheckIfPRCanBeApprovedCronProvider.name);
     private pullRequestMessagesCache = new Map<
         string,
         IPullRequestMessages | null
     >();
 
     constructor(
-        private readonly logger: PinoLoggerService,
-
         @Inject(TEAM_SERVICE_TOKEN)
         private readonly teamService: ITeamService,
-
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
-
         @Inject(PULL_REQUESTS_SERVICE_TOKEN)
         private readonly pullRequestService: IPullRequestsService,
-
         @Inject(CODE_BASE_CONFIG_SERVICE_TOKEN)
         private readonly codeBaseConfigService: ICodeBaseConfigService,
-
         private readonly codeManagementService: CodeManagementService,
-
         @Inject(AUTOMATION_EXECUTION_SERVICE_TOKEN)
         private readonly automationExecutionService: IAutomationExecutionService,
-
         @Inject(AUTOMATION_SERVICE_TOKEN)
         private readonly automationService: IAutomationService,
-
         @Inject(TEAM_AUTOMATION_SERVICE_TOKEN)
         private readonly teamAutomationService: ITeamAutomationService,
-
         @Inject(PULL_REQUEST_MESSAGES_SERVICE_TOKEN)
-        private readonly pullRequestMessagesService: IPullRequestMessagesService,
+        private readonly pullRequestMessagesService: IPullRequestMessagesService
     ) {}
 
     @Cron(API_CRON_CHECK_IF_PR_SHOULD_BE_APPROVED, {

@@ -154,5 +154,3 @@ const j = api.jscodeshift;
 
   return root.toSource();
 }
-
-module.exports.parser = "ts"

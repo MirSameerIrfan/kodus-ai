@@ -1,6 +1,6 @@
+import { createLogger } from "@kodus/flow";
 import { Controller, HttpStatus, Inject, Post, Req, Res } from '@nestjs/common';
 import { Response } from 'express';
-import { PinoLoggerService } from '../../adapters/services/logger/pino.service';
 import { ReceiveWebhookUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/receiveWebhook.use-case';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 import {
@@ -10,11 +10,11 @@ import {
 
 @Controller('bitbucket')
 export class BitbucketController {
+    private readonly logger = createLogger(BitbucketController.name);
     constructor(
         private readonly receiveWebhookUseCase: ReceiveWebhookUseCase,
-        private readonly logger: PinoLoggerService,
         @Inject(WEBHOOK_LOG_SERVICE)
-        private readonly webhookLogService: IWebhookLogService,
+        private readonly webhookLogService: IWebhookLogService
     ) {}
 
     @Post('/webhook')

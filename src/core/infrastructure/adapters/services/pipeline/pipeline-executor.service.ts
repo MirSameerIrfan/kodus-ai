@@ -1,11 +1,12 @@
+import { createLogger } from "@kodus/flow";
 import { v4 as uuid } from 'uuid';
 import { PipelineContext } from './interfaces/pipeline-context.interface';
 import { PipelineStage } from './interfaces/pipeline.interface';
-import { PinoLoggerService } from '../logger/pino.service';
 import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
 
 export class PipelineExecutor<TContext extends PipelineContext> {
-    constructor(private readonly logger: PinoLoggerService) {}
+    private readonly logger = createLogger(PipelineExecutor.name);
+    constructor() {}
 
     async execute(
         context: TContext,

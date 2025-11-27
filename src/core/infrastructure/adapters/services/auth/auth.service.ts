@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import {
     Inject,
     Injectable,
@@ -32,10 +33,10 @@ import {
 import { TeamMemberEntity } from '@/core/domain/teamMembers/entities/teamMember.entity';
 import { AuthProvider } from '@/shared/domain/enums/auth-provider.enum';
 import axios, { AxiosResponse } from 'axios';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 
 @Injectable()
 export class AuthService implements IAuthService {
+    private readonly logger = createLogger(AuthService.name);
     protected jwtConfig: JWT;
 
     constructor(
@@ -46,8 +47,7 @@ export class AuthService implements IAuthService {
         @Inject(USER_REPOSITORY_TOKEN)
         private readonly userRepository: IUserRepository,
         @Inject(TEAM_MEMBERS_SERVICE_TOKEN)
-        private readonly teamMemberService: ITeamMemberService,
-        private readonly logger: PinoLoggerService,
+        private readonly teamMemberService: ITeamMemberService
     ) {
         this.jwtConfig = this.configService.get<JWT>('jwtConfig');
     }

@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { STATUS } from '@/config/types/database/status.type';
 import {
     ORGANIZATION_SERVICE_TOKEN,
@@ -17,26 +18,21 @@ import {
 } from '@/core/domain/user/contracts/user.service.contract';
 import { UserEntity } from '@/core/domain/user/entities/user.entity';
 import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class GetUsersAwaitingApprovalUseCase implements IUseCase {
+    private readonly logger = createLogger(GetUsersAwaitingApprovalUseCase.name);
     constructor(
         @Inject(USER_SERVICE_TOKEN)
         private readonly usersService: IUsersService,
-
         @Inject(ORGANIZATION_SERVICE_TOKEN)
         private readonly organizationService: IOrganizationService,
-
         @Inject(TEAM_SERVICE_TOKEN)
         private readonly teamService: ITeamService,
-
         @Inject(TEAM_MEMBERS_SERVICE_TOKEN)
-        private readonly teamMembersService: ITeamMemberService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly teamMembersService: ITeamMemberService
     ) {}
 
     public async execute(

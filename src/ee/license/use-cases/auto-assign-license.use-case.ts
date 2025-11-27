@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     IOrganizationParametersService,
@@ -7,7 +8,6 @@ import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
 } from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
 import { Inject, Injectable } from '@nestjs/common';
 import {
@@ -17,14 +17,14 @@ import {
 
 @Injectable()
 export class AutoAssignLicenseUseCase {
+    private readonly logger = createLogger(AutoAssignLicenseUseCase.name);
     constructor(
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
         private readonly organizationParametersService: IOrganizationParametersService,
         @Inject(LICENSE_SERVICE_TOKEN)
         private readonly licenseService: ILicenseService,
         @Inject(PULL_REQUESTS_SERVICE_TOKEN)
-        private readonly pullRequestsService: IPullRequestsService,
-        private readonly logger: PinoLoggerService,
+        private readonly pullRequestsService: IPullRequestsService
     ) {}
 
     async execute(params: {

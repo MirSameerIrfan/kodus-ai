@@ -1,10 +1,10 @@
+import { createLogger } from "@kodus/flow";
 /**
  * @license
  * Kodus Tech. All rights reserved.
  */
 
 import { Injectable } from '@nestjs/common';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { KodyFineTuningService } from '@/core/infrastructure/adapters/services/kodyFineTuning/kodyFineTuning.service';
 import { CodeSuggestion } from '@/config/types/general/codeReview.type';
 import { CodeReviewPipelineContext } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/context/code-review-pipeline.context';
@@ -19,10 +19,8 @@ import { IKodyFineTuningContextPreparationService } from '@/shared/interfaces/ko
 export class KodyFineTuningContextPreparationService
     implements IKodyFineTuningContextPreparationService
 {
-    constructor(
-        private readonly kodyFineTuningService: KodyFineTuningService,
-        protected readonly logger: PinoLoggerService,
-    ) {}
+    private readonly logger = createLogger(KodyFineTuningContextPreparationService.name);
+    constructor(private readonly kodyFineTuningService: KodyFineTuningService) {}
 
     prepareKodyFineTuningContext(
         organizationId: string,

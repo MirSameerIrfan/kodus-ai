@@ -1,6 +1,6 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 
 import {
@@ -10,6 +10,7 @@ import {
 
 @Injectable()
 export class ReceiveWebhookUseCase implements IUseCase {
+    private readonly logger = createLogger(ReceiveWebhookUseCase.name);
     private readonly webhookHandlersMap: Map<
         PlatformType,
         IWebhookEventHandler
@@ -18,17 +19,12 @@ export class ReceiveWebhookUseCase implements IUseCase {
     constructor(
         @Inject('GITHUB_WEBHOOK_HANDLER')
         private readonly githubPullRequestHandler: IWebhookEventHandler,
-
         @Inject('GITLAB_WEBHOOK_HANDLER')
         private readonly gitlabMergeRequestHandler: IWebhookEventHandler,
-
         @Inject('BITBUCKET_WEBHOOK_HANDLER')
         private readonly bitbucketPullRequestHandler: IWebhookEventHandler,
-
         @Inject('AZURE_REPOS_WEBHOOK_HANDLER')
-        private readonly azureReposPullRequestHandler: IWebhookEventHandler,
-
-        private readonly logger: PinoLoggerService,
+        private readonly azureReposPullRequestHandler: IWebhookEventHandler
     ) {
         // Inicializar o mapa de handlers por tipo de plataforma
         this.webhookHandlersMap = new Map<PlatformType, IWebhookEventHandler>([

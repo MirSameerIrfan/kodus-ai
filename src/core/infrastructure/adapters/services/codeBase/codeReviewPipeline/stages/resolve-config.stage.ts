@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
@@ -9,7 +10,6 @@ import {
     PULL_REQUEST_MANAGER_SERVICE_TOKEN,
     IPullRequestManagerService,
 } from '@/core/domain/codeBase/contracts/PullRequestManagerService.contract';
-import { PinoLoggerService } from '../../../logger/pino.service';
 import {
     AutomationMessage,
     AutomationStatus,
@@ -32,6 +32,7 @@ import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
 
 @Injectable()
 export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineContext> {
+    private readonly logger = createLogger(ResolveConfigStage.name);
     readonly stageName = 'ResolveConfigStage';
 
     constructor(
@@ -43,10 +44,8 @@ export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineCont
         private readonly pullRequestMessagesService: IPullRequestMessagesService,
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
-
         @Inject(DRY_RUN_SERVICE_TOKEN)
-        private readonly dryRunService: IDryRunService,
-        private readonly logger: PinoLoggerService,
+        private readonly dryRunService: IDryRunService
     ) {
         super();
     }

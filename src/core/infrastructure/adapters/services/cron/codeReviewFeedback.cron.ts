@@ -1,8 +1,8 @@
+import { createLogger } from "@kodus/flow";
 import { IMessageBrokerService } from '@/shared/domain/contracts/message-broker.service.contracts';
 import { MESSAGE_BROKER_SERVICE_TOKEN } from '@/shared/domain/contracts/message-broker.service.contracts';
 import { Inject, Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { PinoLoggerService } from '../logger/pino.service';
 import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
 import { STATUS } from '@/config/types/database/status.type';
 import {
@@ -33,23 +33,18 @@ const API_CRON_SYNC_CODE_REVIEW_REACTIONS =
 
 @Injectable()
 export class CodeReviewFeedbackCronProvider {
+    private readonly logger = createLogger(CodeReviewFeedbackCronProvider.name);
     constructor(
         @Inject(MESSAGE_BROKER_SERVICE_TOKEN)
         private readonly messageBroker: IMessageBrokerService,
-
         @Inject(TEAM_SERVICE_TOKEN)
         private readonly teamService: ITeamService,
-
         @Inject(AUTOMATION_EXECUTION_SERVICE_TOKEN)
         private readonly automationExecutionService: IAutomationExecutionService,
-
         @Inject(AUTOMATION_SERVICE_TOKEN)
         private readonly automationService: IAutomationService,
-
         @Inject(TEAM_AUTOMATION_SERVICE_TOKEN)
-        private readonly teamAutomationService: ITeamAutomationService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly teamAutomationService: ITeamAutomationService
     ) {}
 
     @Cron(API_CRON_SYNC_CODE_REVIEW_REACTIONS, {

@@ -1,5 +1,5 @@
+import { createLogger } from "@kodus/flow";
 import { Injectable, Inject } from '@nestjs/common';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { IPullRequests } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
@@ -23,11 +23,11 @@ interface BackfillParams {
 
 @Injectable()
 export class BackfillHistoricalPRsUseCase {
+    private readonly logger = createLogger(BackfillHistoricalPRsUseCase.name);
     constructor(
         private readonly codeManagementService: CodeManagementService,
         @Inject(PULL_REQUESTS_REPOSITORY_TOKEN)
-        private readonly pullRequestsRepository: IPullRequestsRepository,
-        private readonly logger: PinoLoggerService,
+        private readonly pullRequestsRepository: IPullRequestsRepository
     ) {}
 
     public async execute(params: BackfillParams): Promise<void> {

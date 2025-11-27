@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { PULL_REQUEST_MANAGER_SERVICE_TOKEN } from '@/core/domain/codeBase/contracts/PullRequestManagerService.contract';
 import {
@@ -6,7 +7,6 @@ import {
 } from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
 import { PullRequestsEntity } from '@/core/domain/pullRequests/entities/pullRequests.entity';
 import { PullRequestHandlerService } from '@/core/infrastructure/adapters/services/codeBase/pullRequestManager.service';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { updatePullRequestDto } from '@/core/infrastructure/http/dtos/update-pull-request.dto';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
@@ -15,21 +15,17 @@ import { REQUEST } from '@nestjs/core';
 
 @Injectable()
 export class UpdatePullRequestToNewFormatUseCase {
+    private readonly logger = createLogger(UpdatePullRequestToNewFormatUseCase.name);
     constructor(
         @Inject(PULL_REQUEST_MANAGER_SERVICE_TOKEN)
         private readonly pullRequestHandlerService: PullRequestHandlerService,
-
         @Inject(PULL_REQUESTS_SERVICE_TOKEN)
         private readonly pullRequestService: IPullRequestsService,
-
         private readonly codeManagement: CodeManagementService,
-
-        private readonly logger: PinoLoggerService,
-
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };
-        },
+        }
     ) {}
 
     private successfullyUpdatedPRs: number = 0;

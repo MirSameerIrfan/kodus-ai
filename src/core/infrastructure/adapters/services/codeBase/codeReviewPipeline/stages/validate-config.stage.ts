@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
 import {
@@ -15,7 +16,6 @@ import {
     ReviewCadenceState,
     CodeReviewConfig,
 } from '@/config/types/general/codeReview.type';
-import { PinoLoggerService } from '../../../logger/pino.service';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 import {
     AutomationMessage,
@@ -32,6 +32,7 @@ import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 
 @Injectable()
 export class ValidateConfigStage extends BasePipelineStage<CodeReviewPipelineContext> {
+    private readonly logger = createLogger(ValidateConfigStage.name);
     stageName = 'ValidateConfigStage';
 
     constructor(
@@ -39,8 +40,7 @@ export class ValidateConfigStage extends BasePipelineStage<CodeReviewPipelineCon
         private automationExecutionService: IAutomationExecutionService,
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
         private organizationParametersService: IOrganizationParametersService,
-        private codeManagementService: CodeManagementService,
-        private logger: PinoLoggerService,
+        private codeManagementService: CodeManagementService
     ) {
         super();
     }

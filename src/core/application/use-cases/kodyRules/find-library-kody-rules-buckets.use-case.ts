@@ -1,18 +1,17 @@
+import { createLogger } from "@kodus/flow";
 import {
     KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,
 } from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
 import { BucketInfo } from '@/config/types/kodyRules.type';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class FindLibraryKodyRulesBucketsUseCase {
+    private readonly logger = createLogger(FindLibraryKodyRulesBucketsUseCase.name);
     constructor(
         @Inject(KODY_RULES_SERVICE_TOKEN)
-        private readonly kodyRulesService: IKodyRulesService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly kodyRulesService: IKodyRulesService
     ) { }
 
     async execute(): Promise<BucketInfo[]> {

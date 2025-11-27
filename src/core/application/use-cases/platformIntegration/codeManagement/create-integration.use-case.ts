@@ -1,10 +1,10 @@
+import { createLogger } from "@kodus/flow";
 import { ActionType } from '@/config/types/general/codeReviewSettingsLog.type';
 import {
     AUTH_INTEGRATION_SERVICE_TOKEN,
     IAuthIntegrationService,
 } from '@/core/domain/authIntegrations/contracts/auth-integration.service.contracts';
 import { AuthMode } from '@/core/domain/platformIntegrations/enums/codeManagement/authMode.enum';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
@@ -17,12 +17,11 @@ import { IgnoreBotsUseCase } from '../../organizationParameters/ignore-bots.use-
 
 @Injectable()
 export class CreateIntegrationUseCase implements IUseCase {
+    private readonly logger = createLogger(CreateIntegrationUseCase.name);
     constructor(
         private readonly codeManagementService: CodeManagementService,
-
         @Inject(CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN)
         private readonly codeReviewSettingsLogService: ICodeReviewSettingsLogService,
-
         @Inject(REQUEST)
         private readonly request: Request & {
             user: {
@@ -31,13 +30,9 @@ export class CreateIntegrationUseCase implements IUseCase {
                 email: string;
             };
         },
-
         @Inject(AUTH_INTEGRATION_SERVICE_TOKEN)
         private readonly authIntegrationService: IAuthIntegrationService,
-
-        private readonly ignoreBotsUseCase: IgnoreBotsUseCase,
-
-        private readonly logger: PinoLoggerService,
+        private readonly ignoreBotsUseCase: IgnoreBotsUseCase
     ) {}
 
     public async execute(params: any): Promise<any> {

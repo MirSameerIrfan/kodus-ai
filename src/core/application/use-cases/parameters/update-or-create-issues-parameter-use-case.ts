@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import {
     IParametersService,
@@ -6,7 +7,6 @@ import {
 import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
 import { REQUEST } from '@nestjs/core';
 import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
@@ -26,10 +26,10 @@ interface IssuesParameterBody {
 
 @Injectable()
 export class UpdateOrCreateIssuesParameterUseCase {
+    private readonly logger = createLogger(UpdateOrCreateIssuesParameterUseCase.name);
     constructor(
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
-
         @Inject(REQUEST)
         private readonly request: Request & {
             user: {
@@ -38,10 +38,7 @@ export class UpdateOrCreateIssuesParameterUseCase {
                 email: string;
             };
         },
-
-        private readonly logger: PinoLoggerService,
-
-        private readonly authorizationService: AuthorizationService,
+        private readonly authorizationService: AuthorizationService
     ) {}
 
     async execute(

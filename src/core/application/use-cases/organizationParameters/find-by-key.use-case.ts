@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     IOrganizationParametersService,
@@ -5,17 +6,16 @@ import {
 } from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
 import { OrganizationParametersEntity } from '@/core/domain/organizationParameters/entities/organizationParameters.entity';
 import { IOrganizationParameters } from '@/core/domain/organizationParameters/interfaces/organizationParameters.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
 import { decrypt } from '@/shared/utils/crypto';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class FindByKeyOrganizationParametersUseCase {
+    private readonly logger = createLogger(FindByKeyOrganizationParametersUseCase.name);
     constructor(
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
-        private readonly organizationParametersService: IOrganizationParametersService,
-        private readonly logger: PinoLoggerService,
+        private readonly organizationParametersService: IOrganizationParametersService
     ) {}
 
     async execute(

@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { GetPermissionsUseCase } from '@/core/application/use-cases/permissions/get-permissions.use-case';
 import { IUser } from '@/core/domain/user/interfaces/user.interface';
 import {
@@ -11,7 +12,6 @@ import {
     UseInterceptors,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import { PinoLoggerService } from '../../adapters/services/logger/pino.service';
 import {
     Action,
     ResourceType,
@@ -29,17 +29,16 @@ import { checkPermissions } from '../../adapters/services/permissions/policy.han
 
 @Controller('permissions')
 export class PermissionsController {
+    private readonly logger = createLogger(PermissionsController.name);
     constructor(
         @Inject(REQUEST)
         private readonly request: Request & {
             user: Partial<IUser>;
         },
-        private readonly logger: PinoLoggerService,
-
         private readonly getPermissionsUseCase: GetPermissionsUseCase,
         private readonly canAccessUseCase: CanAccessUseCase,
         private readonly getAssignedReposUseCase: GetAssignedReposUseCase,
-        private readonly assignReposUseCase: AssignReposUseCase,
+        private readonly assignReposUseCase: AssignReposUseCase
     ) {}
 
     @Get()

@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
@@ -47,7 +48,6 @@ import {
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
 } from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
 import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { ICodeBaseConfigService } from '@/core/domain/codeBase/contracts/CodeBaseConfigService.contract';
 import { KodyRulesValidationService } from '../kodyRules/service/kody-rules-validation.service';
@@ -64,29 +64,22 @@ import { deepMerge } from '@/shared/utils/deep';
 
 @Injectable()
 export default class CodeBaseConfigService implements ICodeBaseConfigService {
+    private readonly logger = createLogger(CodeBaseConfigService.name);
     private readonly DEFAULT_CONFIG: CodeReviewConfig;
 
     constructor(
         @Inject(INTEGRATION_SERVICE_TOKEN)
         private readonly integrationService: IIntegrationService,
-
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
         private readonly integrationConfigService: IIntegrationConfigService,
-
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
         private readonly organizationParametersService: IOrganizationParametersService,
-
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
-
         @Inject(KODY_RULES_SERVICE_TOKEN)
         private readonly kodyRulesService: IKodyRulesService,
-
         private readonly codeManagementService: CodeManagementService,
-
-        private readonly kodyRulesValidationService: KodyRulesValidationService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly kodyRulesValidationService: KodyRulesValidationService
     ) {
         this.DEFAULT_CONFIG = this.getDefaultConfigs();
     }

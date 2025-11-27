@@ -1,10 +1,10 @@
+import { createLogger } from "@kodus/flow";
 import { CodeReviewConfigWithoutLLMProvider } from '@/config/types/general/codeReview.type';
 import { CodeReviewParameter } from '@/config/types/general/codeReviewConfig.type';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
 import { deepDifference, deepMerge } from '@/shared/utils/deep';
 import { getDefaultKodusConfigFile } from '@/shared/utils/validateCodeReviewConfigFile';
@@ -31,11 +31,10 @@ type OldReviewConfig = {
 
 @Injectable()
 export class MigrateCodeReviewParametersUseCase {
+    private readonly logger = createLogger(MigrateCodeReviewParametersUseCase.name);
     constructor(
-        private readonly logger: PinoLoggerService,
-
         @Inject(PARAMETERS_SERVICE_TOKEN)
-        private readonly parametersService: IParametersService,
+        private readonly parametersService: IParametersService
     ) {}
 
     async execute() {

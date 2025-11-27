@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import {
@@ -16,7 +17,6 @@ import {
     IGetAdditionalInfoHelper,
     GET_ADDITIONAL_INFO_HELPER_TOKEN,
 } from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { PullRequestMessagesLogParams } from '@/ee/codeReviewSettingsLog/services/pullRequestMessageLog.handler';
 import { IUser } from '@/core/domain/user/interfaces/user.interface';
 import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
@@ -28,19 +28,15 @@ import { getDefaultKodusConfigFile } from '@/shared/utils/validateCodeReviewConf
 
 @Injectable()
 export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
+    private readonly logger = createLogger(CreateOrUpdatePullRequestMessagesUseCase.name);
     constructor(
         @Inject(PULL_REQUEST_MESSAGES_SERVICE_TOKEN)
         private readonly pullRequestMessagesService: IPullRequestMessagesService,
-
         @Inject(CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN)
         private readonly codeReviewSettingsLogService: ICodeReviewSettingsLogService,
-
         @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
         private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
-
-        private readonly logger: PinoLoggerService,
-
-        private readonly authorizationService: AuthorizationService,
+        private readonly authorizationService: AuthorizationService
     ) {}
 
     async execute(

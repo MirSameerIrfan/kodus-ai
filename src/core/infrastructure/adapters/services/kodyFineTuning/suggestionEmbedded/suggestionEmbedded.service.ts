@@ -1,6 +1,6 @@
+import { createLogger } from "@kodus/flow";
 import { Injectable } from '@nestjs/common';
 import { ISuggestionEmbeddedService } from '@/core/domain/kodyFineTuning/suggestionEmbedded/contracts/suggestionEmbedded.service.contract';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { ISuggestionEmbedded } from '@/core/domain/kodyFineTuning/suggestionEmbedded/interfaces/suggestionEmbedded.interface';
 import { SuggestionEmbeddedEntity } from '@/core/domain/kodyFineTuning/suggestionEmbedded/entities/suggestionEmbedded.entity';
 import { ISuggestionToEmbed } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
@@ -40,9 +40,9 @@ const UUID_REGEX =
 
 @Injectable()
 export class SuggestionEmbeddedService implements ISuggestionEmbeddedService {
+    private readonly logger = createLogger(SuggestionEmbeddedService.name);
     constructor(
-        private readonly SuggestionEmbeddedRepository: SuggestionEmbeddedDatabaseRepository,
-        private readonly logger: PinoLoggerService,
+        private readonly SuggestionEmbeddedRepository: SuggestionEmbeddedDatabaseRepository
     ) {}
 
     bulkInsert(

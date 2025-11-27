@@ -1,5 +1,5 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import {
     PULL_REQUEST_MESSAGES_REPOSITORY_TOKEN,
     IPullRequestMessagesRepository,
@@ -9,11 +9,10 @@ import { IPullRequestMessages } from '@/core/domain/pullRequestMessages/interfac
 
 @Injectable()
 export class MigratePullRequestMessagesStatusUseCase {
+    private readonly logger = createLogger(MigratePullRequestMessagesStatusUseCase.name);
     constructor(
-        private readonly logger: PinoLoggerService,
-
         @Inject(PULL_REQUEST_MESSAGES_REPOSITORY_TOKEN)
-        private readonly pullRequestMessagesRepository: IPullRequestMessagesRepository,
+        private readonly pullRequestMessagesRepository: IPullRequestMessagesRepository
     ) {}
 
     async execute(): Promise<{ totalMigrated: number; errors: number }> {

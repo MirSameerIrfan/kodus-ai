@@ -1,9 +1,9 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import pLimit from 'p-limit';
 
 import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
-import { PinoLoggerService } from '../../../logger/pino.service';
 import {
     AIAnalysisResult,
     AnalysisContext,
@@ -49,6 +49,7 @@ import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
 
 @Injectable()
 export class ProcessFilesReview extends BasePipelineStage<CodeReviewPipelineContext> {
+    private readonly logger = createLogger(ProcessFilesReview.name);
     readonly stageName = 'FileAnalysisStage';
 
     private readonly concurrencyLimit = 20;
@@ -56,21 +57,15 @@ export class ProcessFilesReview extends BasePipelineStage<CodeReviewPipelineCont
     constructor(
         @Inject(SUGGESTION_SERVICE_TOKEN)
         private readonly suggestionService: ISuggestionService,
-
         @Inject(PULL_REQUESTS_SERVICE_TOKEN)
         private readonly pullRequestService: IPullRequestsService,
-
         @Inject(FILE_REVIEW_CONTEXT_PREPARATION_TOKEN)
         private readonly fileReviewContextPreparation: IFileReviewContextPreparation,
-
         @Inject(KODY_FINE_TUNING_CONTEXT_PREPARATION_TOKEN)
         private readonly kodyFineTuningContextPreparation: IKodyFineTuningContextPreparationService,
-
         @Inject(KODY_AST_ANALYZE_CONTEXT_PREPARATION_TOKEN)
         private readonly kodyAstAnalyzeContextPreparation: IKodyASTAnalyzeContextPreparationService,
-
-        private readonly codeAnalysisOrchestrator: CodeAnalysisOrchestrator,
-        private logger: PinoLoggerService,
+        private readonly codeAnalysisOrchestrator: CodeAnalysisOrchestrator
     ) {
         super();
     }

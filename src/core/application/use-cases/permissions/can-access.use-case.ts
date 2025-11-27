@@ -1,20 +1,17 @@
+import { createLogger } from "@kodus/flow";
 import {
     Action,
     ResourceType,
 } from '@/core/domain/permissions/enums/permissions.enum';
 import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { PermissionsAbilityFactory } from '@/core/infrastructure/adapters/services/permissions/permissionsAbility.factory';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class CanAccessUseCase implements IUseCase {
-    constructor(
-        private readonly abilityFactory: PermissionsAbilityFactory,
-
-        private readonly logger: PinoLoggerService,
-    ) {}
+    private readonly logger = createLogger(CanAccessUseCase.name);
+    constructor(private readonly abilityFactory: PermissionsAbilityFactory) {}
 
     async execute(params: {
         user: Partial<IUser>;

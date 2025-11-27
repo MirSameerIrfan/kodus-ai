@@ -1,4 +1,4 @@
-import { PinoLoggerService } from '../../../logger/pino.service';
+import { createLogger } from "@kodus/flow";
 import {
     AIAnalysisResult,
     ReviewModeResponse,
@@ -7,7 +7,8 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import { tryParseJSONObject } from '@/shared/utils/transforms/json';
 
 export class LLMResponseProcessor {
-    constructor(private readonly logger: PinoLoggerService) {}
+    private readonly logger = createLogger(LLMResponseProcessor.name);
+    constructor() {}
 
     public processResponse(
         organizationAndTeamData: OrganizationAndTeamData,

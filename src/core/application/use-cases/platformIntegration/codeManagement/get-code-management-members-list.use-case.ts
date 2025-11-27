@@ -1,7 +1,7 @@
+import { createLogger } from "@kodus/flow";
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { PULL_REQUEST_MANAGER_SERVICE_TOKEN } from '@/core/domain/codeBase/contracts/PullRequestManagerService.contract';
 import { PullRequestHandlerService } from '@/core/infrastructure/adapters/services/codeBase/pullRequestManager.service';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
@@ -10,17 +10,15 @@ import { Request } from 'express';
 
 @Injectable()
 export class GetCodeManagementMemberListUseCase implements IUseCase {
+    private readonly logger = createLogger(GetCodeManagementMemberListUseCase.name);
     constructor(
         private readonly codeManagementService: CodeManagementService,
         @Inject(PULL_REQUEST_MANAGER_SERVICE_TOKEN)
         private readonly pullRequestHandlerService: PullRequestHandlerService,
-
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };
-        },
-
-        private readonly logger: PinoLoggerService,
+        }
     ) {}
 
     public async execute(): Promise<{ name: string; id: string | number }[]> {

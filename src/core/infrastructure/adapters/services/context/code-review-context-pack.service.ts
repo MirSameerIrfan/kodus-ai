@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { createMCPAdapter, type MCPServerConfig } from '@kodus/flow';
+import { createMCPAdapter, type MCPServerConfig, createLogger } from '@kodus/flow';
 import { createHash } from 'crypto';
 import type { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import type {
@@ -40,7 +40,6 @@ import {
     MCPToolMetadata,
     MCPToolMetadataService,
 } from '../../mcp/services/mcp-tool-metadata.service';
-import { PinoLoggerService } from '../logger/pino.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { PromptReferenceErrorType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
 import type { IPromptReferenceSyncError } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
@@ -218,12 +217,12 @@ class AdapterBackedMCPClient {
 
 @Injectable()
 export class CodeReviewContextPackService {
+    private readonly logger = createLogger(CodeReviewContextPackService.name);
     constructor(
         private readonly contextReferenceService: ContextReferenceService,
         private readonly mcpToolMetadataService: MCPToolMetadataService,
-        private readonly logger: PinoLoggerService,
         private readonly mcpToolArgResolver: MCPToolArgResolverAgentService,
-        private readonly codeManagementService: CodeManagementService,
+        private readonly codeManagementService: CodeManagementService
     ) {}
 
     async buildContextPack(params: BuildPackParams): Promise<BuildPackResult> {

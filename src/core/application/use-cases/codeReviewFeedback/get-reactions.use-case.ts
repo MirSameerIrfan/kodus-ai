@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
@@ -8,17 +9,14 @@ import {
     IPullRequestsService,
 } from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
 import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 
 @Injectable()
 export class GetReactionsUseCase implements IUseCase {
+    private readonly logger = createLogger(GetReactionsUseCase.name);
     constructor(
         private readonly codeManagementService: CodeManagementService,
-
         @Inject(PULL_REQUESTS_SERVICE_TOKEN)
-        private readonly pullRequestService: IPullRequestsService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly pullRequestService: IPullRequestsService
     ) {}
 
     async execute(

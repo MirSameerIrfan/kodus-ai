@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { ProgrammingLanguage } from '@/shared/domain/enums/programming-language.enum';
 import {
@@ -5,7 +6,6 @@ import {
     RULE_LIKE_SERVICE_TOKEN,
 } from '@/core/domain/kodyRules/contracts/ruleLike.service.contract';
 import { RuleLikeEntity } from '@/core/domain/kodyRules/entities/ruleLike.entity';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 
 interface FindRuleLikesFilter {
     ruleId?: string;
@@ -15,11 +15,10 @@ interface FindRuleLikesFilter {
 
 @Injectable()
 export class FindRuleLikesUseCase {
+    private readonly logger = createLogger(FindRuleLikesUseCase.name);
     constructor(
         @Inject(RULE_LIKE_SERVICE_TOKEN)
-        private readonly ruleLikeService: IRuleLikeService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly ruleLikeService: IRuleLikeService
     ) {}
 
     async execute(filter: FindRuleLikesFilter): Promise<RuleLikeEntity[]> {
