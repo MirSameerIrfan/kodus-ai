@@ -52,10 +52,15 @@ export class AgentEngine<
         // ✅ ADICIONAR: Inicializar MemoryManager se fornecido
         this.memoryManager = config?.memoryManager;
 
-        this.engineLogger.info('AgentEngine created', {
-            agentName: definition.name,
-            mode: 'direct-execution',
-            hasMemoryManager: !!this.memoryManager,
+        this.engineLogger.log({
+            message: 'AgentEngine created',
+            context: this.constructor.name,
+
+            metadata: {
+                agentName: definition.name,
+                mode: 'direct-execution',
+                hasMemoryManager: !!this.memoryManager,
+            },
         });
     }
 
@@ -88,10 +93,12 @@ export class AgentEngine<
             const definition = this.getDefinition();
 
             if (!definition) {
-                this.engineLogger.error(
-                    '❌ AGENT ENGINE - Agent definition not found',
-                    new Error('Agent definition not found'),
-                    {
+                this.engineLogger.error({
+                    message: '❌ AGENT ENGINE - Agent definition not found',
+                    context: this.constructor.name,
+                    error: new Error('Agent definition not found'),
+
+                    metadata: {
                         correlationId,
                         trace: {
                             source: 'agent-engine',
@@ -99,7 +106,7 @@ export class AgentEngine<
                             timestamp: Date.now(),
                         },
                     },
-                );
+                });
                 throw new EngineError(
                     'AGENT_ERROR',
                     'Agent definition not found',
@@ -119,21 +126,24 @@ export class AgentEngine<
                 },
             );
 
-            this.engineLogger.debug(
-                '📊 AGENT ENGINE - Core execution completed',
-                {
+            this.engineLogger.debug({
+                message: '📊 AGENT ENGINE - Core execution completed',
+                context: this.constructor.name,
+
+                metadata: {
                     agentName: definition.name,
                     correlationId,
                     success: result.success,
                     hasOutput: !!result.output,
                     hasReasoning: !!result.reasoning,
+
                     trace: {
                         source: 'agent-engine',
                         step: 'core-execution-done',
                         timestamp: Date.now(),
                     },
                 },
-            );
+            });
 
             // Format response if available
             if (definition.formatResponse) {
@@ -230,11 +240,17 @@ export class AgentEngine<
                 failExecutionTracking(this.executionTrackingId, error as Error);
             }
 
-            this.engineLogger.error('Agent execution failed', error as Error, {
-                agentName: this.getDefinition()?.name,
-                correlationId,
-                sessionId,
-                executionTrackingId: this.executionTrackingId,
+            this.engineLogger.error({
+                message: 'Agent execution failed',
+                context: this.constructor.name,
+                error: error as Error,
+
+                metadata: {
+                    agentName: this.getDefinition()?.name,
+                    correlationId,
+                    sessionId,
+                    executionTrackingId: this.executionTrackingId,
+                },
             });
 
             throw error;
@@ -260,7 +276,14 @@ export class AgentEngine<
     }
 
     async start(payload: AgentStartPayload): Promise<AgentLifecycleResult> {
-        this.engineLogger.info('Agent engine lifecycle started', { payload });
+        this.engineLogger.log({
+            message: 'Agent engine lifecycle started',
+            context: this.constructor.name,
+
+            metadata: {
+                payload,
+            },
+        });
         return {
             success: true,
             agentName: payload.agentName,
@@ -276,7 +299,14 @@ export class AgentEngine<
      * Stop agent lifecycle (direct execution - no workflow)
      */
     async stop(payload: AgentStopPayload): Promise<AgentLifecycleResult> {
-        this.engineLogger.info('Agent engine lifecycle stopped', { payload });
+        this.engineLogger.log({
+            message: 'Agent engine lifecycle stopped',
+            context: this.constructor.name,
+
+            metadata: {
+                payload,
+            },
+        });
         return {
             success: true,
             agentName: payload.agentName,
@@ -292,7 +322,14 @@ export class AgentEngine<
      * Pause agent lifecycle (direct execution - no workflow)
      */
     async pause(payload: AgentPausePayload): Promise<AgentLifecycleResult> {
-        this.engineLogger.info('Agent engine lifecycle paused', { payload });
+        this.engineLogger.log({
+            message: 'Agent engine lifecycle paused',
+            context: this.constructor.name,
+
+            metadata: {
+                payload,
+            },
+        });
         return {
             success: true,
             agentName: payload.agentName,
@@ -308,7 +345,14 @@ export class AgentEngine<
      * Resume agent lifecycle (direct execution - no workflow)
      */
     async resume(payload: AgentResumePayload): Promise<AgentLifecycleResult> {
-        this.engineLogger.info('Agent engine lifecycle resumed', { payload });
+        this.engineLogger.log({
+            message: 'Agent engine lifecycle resumed',
+            context: this.constructor.name,
+
+            metadata: {
+                payload,
+            },
+        });
         return {
             success: true,
             agentName: payload.agentName,
@@ -326,7 +370,14 @@ export class AgentEngine<
     async schedule(
         payload: AgentSchedulePayload,
     ): Promise<AgentLifecycleResult> {
-        this.engineLogger.info('Agent engine lifecycle scheduled', { payload });
+        this.engineLogger.log({
+            message: 'Agent engine lifecycle scheduled',
+            context: this.constructor.name,
+
+            metadata: {
+                payload,
+            },
+        });
         return {
             success: true,
             agentName: payload.agentName,

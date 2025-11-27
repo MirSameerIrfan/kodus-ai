@@ -71,9 +71,14 @@ export async function getExecutionTraceability(
     let client: MongoClient | null = null;
 
     try {
-        logger.info('🔍 Starting traceability search', {
-            correlationId,
-            databaseName,
+        logger.log({
+            message: '🔍 Starting traceability search',
+            context: 'getExecutionTraceability',
+
+            metadata: {
+                correlationId,
+                databaseName,
+            },
         });
 
         // Conectar ao MongoDB
@@ -117,8 +122,10 @@ export async function getExecutionTraceability(
                 executionData = executions[0];
             }
         } catch (error) {
-            logger.warn('Execution collection not found or error', {
-                error: (error as Error).message,
+            logger.warn({
+                message: 'Execution collection not found or error',
+                context: 'getExecutionTraceability',
+                error: error as Error,
             });
         }
 
@@ -221,17 +228,28 @@ export async function getExecutionTraceability(
             },
         };
 
-        logger.info('✅ Traceability search completed', {
-            correlationId,
-            totalItems: timeline.length,
-            status,
-            duration,
+        logger.log({
+            message: '✅ Traceability search completed',
+            context: 'getExecutionTraceability',
+
+            metadata: {
+                correlationId,
+                totalItems: timeline.length,
+                status,
+                duration,
+            },
         });
 
         return response;
     } catch (error) {
-        logger.error('❌ Error during traceability search', error as Error, {
-            correlationId,
+        logger.error({
+            message: '❌ Error during traceability search',
+            context: 'getExecutionTraceability',
+            error: error as Error,
+
+            metadata: {
+                correlationId,
+            },
         });
 
         // Retornar resposta de erro
@@ -331,8 +349,14 @@ export async function getExecutionSummary(
             status,
         };
     } catch (error) {
-        logger.error('Error getting execution summary', error as Error, {
-            correlationId,
+        logger.error({
+            message: 'Error getting execution summary',
+            context: 'getExecutionSummary',
+            error: error as Error,
+
+            metadata: {
+                correlationId,
+            },
         });
         return {
             correlationId,

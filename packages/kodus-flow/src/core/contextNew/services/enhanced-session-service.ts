@@ -84,10 +84,15 @@ export class EnhancedSessionService implements SessionManager {
             },
         });
 
-        logger.info('Enhanced Session Service configured', {
-            adapterType: this.config.adapterType,
-            database: databaseName,
-            sessionTTL: this.config.sessionTTL,
+        logger.log({
+            message: 'Enhanced Session Service configured',
+            context: 'constructor',
+
+            metadata: {
+                adapterType: this.config.adapterType,
+                database: databaseName,
+                sessionTTL: this.config.sessionTTL,
+            },
         });
     }
 
@@ -100,7 +105,10 @@ export class EnhancedSessionService implements SessionManager {
         await this.snapshotsAdapter.initialize();
 
         this.isInitialized = true;
-        logger.info('Enhanced Session Service initialized');
+        logger.log({
+            message: 'Enhanced Session Service initialized',
+            context: 'initialize',
+        });
     }
 
     private async ensureInitialized(): Promise<void> {
@@ -119,9 +127,10 @@ export class EnhancedSessionService implements SessionManager {
 
         const existingLock = this.sessionCreationLocks.get(threadId);
         if (existingLock) {
-            logger.info(
-                `Waiting for existing session creation for thread: ${threadId}`,
-            );
+            logger.log({
+                message: `Waiting for existing session creation for thread: ${threadId}`,
+                context: 'getOrCreateSession',
+            });
             return existingLock;
         }
 
@@ -152,9 +161,10 @@ export class EnhancedSessionService implements SessionManager {
             const ttl = this.config.sessionTTL!;
 
             if (sessionAge > ttl) {
-                logger.info(
-                    `Deleting expired session ${existingSession.sessionId} (age: ${Math.round(sessionAge / 1000 / 60)}min)`,
-                );
+                logger.log({
+                    message: `Deleting expired session ${existingSession.sessionId} (age: ${Math.round(sessionAge / 1000 / 60)}min)`,
+                    context: 'doGetOrCreateSession',
+                });
                 await this.sessionsAdapter.deleteContextSession(
                     existingSession.sessionId,
                 );
@@ -169,9 +179,10 @@ export class EnhancedSessionService implements SessionManager {
                     Date.now(), // Update last activity
                 );
 
-                logger.info(
-                    `Recovered session ${existingSession.sessionId} for thread: ${threadId}`,
-                );
+                logger.log({
+                    message: `Recovered session ${existingSession.sessionId} for thread: ${threadId}`,
+                    context: 'doGetOrCreateSession',
+                });
                 return existingSession.runtime;
             }
         }
@@ -221,9 +232,10 @@ export class EnhancedSessionService implements SessionManager {
             now, // lastActivityAt
         );
 
-        logger.info(
-            `🆕 Created session ${sessionId} for thread ${threadId} (tenant: ${tenantId})`,
-        );
+        logger.log({
+            message: `🆕 Created session ${sessionId} for thread ${threadId} (tenant: ${tenantId})`,
+            context: 'doGetOrCreateSession',
+        });
         return newRuntime;
     }
 
@@ -231,17 +243,28 @@ export class EnhancedSessionService implements SessionManager {
         await this.ensureInitialized();
 
         // 🔍 DEBUG: Log detalhado no enhanced-session-service
-        logger.info('🔍 ENHANCED SESSION - addMessage called', {
-            threadId,
-            role: message.role,
-            contentLength: message.content?.length || 0,
-            timestamp: message.timestamp,
-            hasMetadata: !!message.metadata,
+        logger.log({
+            message: '🔍 ENHANCED SESSION - addMessage called',
+            context: 'addMessage',
+
+            metadata: {
+                threadId,
+                role: message.role,
+                contentLength: message.content?.length || 0,
+                timestamp: message.timestamp,
+                hasMetadata: !!message.metadata,
+            },
         });
 
         if (!isValidChatMessage(message)) {
-            logger.error('❌ Invalid chat message format', undefined, {
-                message,
+            logger.error({
+                message: '❌ Invalid chat message format',
+                context: 'addMessage',
+                error: undefined,
+
+                metadata: {
+                    message,
+                },
             });
             throw new Error('Invalid chat message format');
         }
@@ -251,15 +274,23 @@ export class EnhancedSessionService implements SessionManager {
                 threadId,
             );
         if (!session) {
-            logger.error(`❌ Session for thread ${threadId} not found`);
+            logger.error({
+                message: `❌ Session for thread ${threadId} not found`,
+                context: 'addMessage',
+            });
             throw new Error(`Session for thread ${threadId} not found`);
         }
 
-        logger.info('🔍 ENHANCED SESSION - Session found, adding message', {
-            threadId,
-            sessionId: session.sessionId,
-            currentMessagesCount: session.runtime.messages.length,
-            newMessageRole: message.role,
+        logger.log({
+            message: '🔍 ENHANCED SESSION - Session found, adding message',
+            context: 'addMessage',
+
+            metadata: {
+                threadId,
+                sessionId: session.sessionId,
+                currentMessagesCount: session.runtime.messages.length,
+                newMessageRole: message.role,
+            },
         });
 
         let messages = [...session.runtime.messages, message];
@@ -331,12 +362,17 @@ export class EnhancedSessionService implements SessionManager {
         }
 
         // Store updated session
-        logger.info('🔍 ENHANCED SESSION - Storing session to MongoDB', {
-            threadId,
-            sessionId: session.sessionId,
-            messagesCount: updatedRuntime.messages.length,
-            messageRoles: updatedRuntime.messages.map((m) => m.role),
-            newMessageRole: message.role,
+        logger.log({
+            message: '🔍 ENHANCED SESSION - Storing session to MongoDB',
+            context: 'addMessage',
+
+            metadata: {
+                threadId,
+                sessionId: session.sessionId,
+                messagesCount: updatedRuntime.messages.length,
+                messageRoles: updatedRuntime.messages.map((m) => m.role),
+                newMessageRole: message.role,
+            },
         });
 
         await this.sessionsAdapter.storeContextSession(
@@ -350,13 +386,15 @@ export class EnhancedSessionService implements SessionManager {
             { expectedVersion: (session as any).version },
         );
 
-        logger.info(
-            `✅ ENHANCED SESSION - Successfully added ${message.role} message to thread ${threadId}`,
-            {
+        logger.log({
+            message: `✅ ENHANCED SESSION - Successfully added ${message.role} message to thread ${threadId}`,
+            context: 'addMessage',
+
+            metadata: {
                 finalMessagesCount: updatedRuntime.messages.length,
                 finalRoles: updatedRuntime.messages.map((m) => m.role),
             },
-        );
+        });
     }
 
     async updateMessage(
@@ -369,11 +407,16 @@ export class EnhancedSessionService implements SessionManager {
     ): Promise<void> {
         await this.ensureInitialized();
 
-        logger.info('🔄 ENHANCED SESSION - updateMessage called', {
-            threadId,
-            messageId,
-            hasContent: !!updates.content,
-            hasMetadata: !!updates.metadata,
+        logger.log({
+            message: '🔄 ENHANCED SESSION - updateMessage called',
+            context: 'updateMessage',
+
+            metadata: {
+                threadId,
+                messageId,
+                hasContent: !!updates.content,
+                hasMetadata: !!updates.metadata,
+            },
         });
 
         const session =
@@ -381,7 +424,10 @@ export class EnhancedSessionService implements SessionManager {
                 threadId,
             );
         if (!session) {
-            logger.error(`❌ Session for thread ${threadId} not found`);
+            logger.error({
+                message: `❌ Session for thread ${threadId} not found`,
+                context: 'updateMessage',
+            });
             throw new Error(`Session for thread ${threadId} not found`);
         }
 
@@ -392,18 +438,20 @@ export class EnhancedSessionService implements SessionManager {
         );
 
         if (messageIndex === -1) {
-            logger.error(
-                `❌ Message ${messageId} not found in thread ${threadId}`,
-            );
+            logger.error({
+                message: `❌ Message ${messageId} not found in thread ${threadId}`,
+                context: 'updateMessage',
+            });
             throw new Error(`Message ${messageId} not found`);
         }
 
         // Update the message
         const existingMessage = messages[messageIndex];
         if (!existingMessage) {
-            logger.error(
-                `❌ Message at index ${messageIndex} is undefined for thread ${threadId}`,
-            );
+            logger.error({
+                message: `❌ Message at index ${messageIndex} is undefined for thread ${threadId}`,
+                context: 'updateMessage',
+            });
             throw new Error(`Message at index ${messageIndex} is undefined`);
         }
 
@@ -421,11 +469,16 @@ export class EnhancedSessionService implements SessionManager {
 
         messages[messageIndex] = updatedMessage;
 
-        logger.info('🔄 ENHANCED SESSION - Message updated in array', {
-            threadId,
-            messageId,
-            messageIndex,
-            newContentLength: updatedMessage.content.length,
+        logger.log({
+            message: '🔄 ENHANCED SESSION - Message updated in array',
+            context: 'updateMessage',
+
+            metadata: {
+                threadId,
+                messageId,
+                messageIndex,
+                newContentLength: updatedMessage.content.length,
+            },
         });
 
         // Update runtime with modified messages
@@ -446,13 +499,15 @@ export class EnhancedSessionService implements SessionManager {
             Date.now(),
         );
 
-        logger.info(
-            `✅ ENHANCED SESSION - Successfully updated message ${messageId} in thread ${threadId}`,
-            {
+        logger.log({
+            message: `✅ ENHANCED SESSION - Successfully updated message ${messageId} in thread ${threadId}`,
+            context: 'updateMessage',
+
+            metadata: {
                 finalContentLength: updatedMessage.content.length,
                 messageIndex,
             },
-        );
+        });
     }
 
     async addEntities(
@@ -490,9 +545,10 @@ export class EnhancedSessionService implements SessionManager {
             Date.now(),
         );
 
-        logger.debug(
-            `🏷️ Updated entities for thread ${threadId}: ${Object.keys(entities).join(', ')}`,
-        );
+        logger.debug({
+            message: `🏷️ Updated entities for thread ${threadId}: ${Object.keys(entities).join(', ')}`,
+            context: 'addEntities',
+        });
     }
 
     async updateExecution(
@@ -615,16 +671,22 @@ export class EnhancedSessionService implements SessionManager {
             updatedExecution.lastToolsUsed &&
             updatedExecution.lastToolsUsed.length > 0
         ) {
-            logger.info('🔧 Tools tracked in session', {
-                threadId,
-                toolsUsed: updatedExecution.lastToolsUsed,
-                toolCallCount: updatedExecution.toolCallCount,
+            logger.log({
+                message: '🔧 Tools tracked in session',
+                context: 'updateExecution',
+
+                metadata: {
+                    threadId,
+                    toolsUsed: updatedExecution.lastToolsUsed,
+                    toolCallCount: updatedExecution.toolCallCount,
+                },
             });
         }
 
-        logger.debug(
-            `⚙️ Updated execution for thread ${threadId}: ${Object.keys(execution).join(', ')}`,
-        );
+        logger.debug({
+            message: `⚙️ Updated execution for thread ${threadId}: ${Object.keys(execution).join(', ')}`,
+            context: 'updateExecution',
+        });
     }
 
     async saveSnapshot(
@@ -644,13 +706,15 @@ export class EnhancedSessionService implements SessionManager {
             Math.ceil(SESSION_CONSTANTS.SNAPSHOT_TTL / (24 * 60 * 60 * 1000)), // Convert to days
         );
 
-        logger.debug(
-            `📸 Saved optimized execution snapshot: ${snapshot.executionId}`,
-            {
+        logger.debug({
+            message: `📸 Saved optimized execution snapshot: ${snapshot.executionId}`,
+            context: 'saveSnapshot',
+
+            metadata: {
                 originalSize: JSON.stringify(snapshot).length,
                 optimizedSize: JSON.stringify(optimizedSnapshot).length,
             },
-        );
+        });
     }
 
     /**
@@ -731,9 +795,10 @@ export class EnhancedSessionService implements SessionManager {
                 );
             }
 
-            logger.info(
-                `🔄 Session recovered after ${Math.round(gapDuration / 1000)}s gap`,
-            );
+            logger.log({
+                message: `🔄 Session recovered after ${Math.round(gapDuration / 1000)}s gap`,
+                context: 'recoverSession',
+            });
         }
 
         // Ensure runtime context is valid
@@ -886,11 +951,17 @@ export class EnhancedSessionService implements SessionManager {
             await this.snapshotsAdapter.cleanup();
 
             this.isInitialized = false;
-            logger.info('🧹 Enhanced Session Service cleanup completed');
+            logger.log({
+                message: '🧹 Enhanced Session Service cleanup completed',
+                context: 'cleanup',
+            });
         } catch (error) {
             const errorMessage =
                 error instanceof Error ? error.message : String(error);
-            logger.error(`❌ Cleanup failed: ${errorMessage}`);
+            logger.error({
+                message: `❌ Cleanup failed: ${errorMessage}`,
+                context: 'cleanup',
+            });
         }
     }
 }

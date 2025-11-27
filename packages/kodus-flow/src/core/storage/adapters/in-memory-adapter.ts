@@ -28,9 +28,14 @@ export class InMemoryStorageAdapter<T extends BaseStorageItem>
         this.startCleanupInterval();
 
         this.isInitialized = true;
-        logger.info('InMemoryStorageAdapter initialized', {
-            maxItems: this.config.maxItems,
-            enableCompression: this.config.enableCompression,
+        logger.log({
+            message: 'InMemoryStorageAdapter initialized',
+            context: 'initialize',
+
+            metadata: {
+                maxItems: this.config.maxItems,
+                enableCompression: this.config.enableCompression,
+            },
         });
     }
 
@@ -43,9 +48,14 @@ export class InMemoryStorageAdapter<T extends BaseStorageItem>
 
         this.items.set(item.id, item);
 
-        logger.debug('Item stored', {
-            id: item.id,
-            totalItems: this.items.size,
+        logger.debug({
+            message: 'Item stored',
+            context: 'store',
+
+            metadata: {
+                id: item.id,
+                totalItems: this.items.size,
+            },
         });
     }
 
@@ -75,7 +85,14 @@ export class InMemoryStorageAdapter<T extends BaseStorageItem>
         const deleted = this.items.delete(id);
 
         if (deleted) {
-            logger.debug('Item deleted', { id });
+            logger.debug({
+                message: 'Item deleted',
+                context: 'delete',
+
+                metadata: {
+                    id,
+                },
+            });
         }
 
         return deleted;
@@ -85,7 +102,10 @@ export class InMemoryStorageAdapter<T extends BaseStorageItem>
         await this.ensureInitialized();
 
         this.items.clear();
-        logger.info('All items cleared');
+        logger.log({
+            message: 'All items cleared',
+            context: 'clear',
+        });
     }
 
     async getStats(): Promise<BaseStorageStats> {
@@ -112,7 +132,10 @@ export class InMemoryStorageAdapter<T extends BaseStorageItem>
     async cleanup(): Promise<void> {
         this.items.clear();
         this.isInitialized = false;
-        logger.info('InMemoryStorageAdapter cleaned up');
+        logger.log({
+            message: 'InMemoryStorageAdapter cleaned up',
+            context: 'cleanup',
+        });
     }
 
     private async ensureInitialized(): Promise<void> {
@@ -144,9 +167,14 @@ export class InMemoryStorageAdapter<T extends BaseStorageItem>
             this.items.delete(id);
         }
 
-        logger.debug('Removed oldest items', {
-            removedCount: toRemove.length,
-            remainingCount: this.items.size,
+        logger.debug({
+            message: 'Removed oldest items',
+            context: 'removeOldestItems',
+
+            metadata: {
+                removedCount: toRemove.length,
+                remainingCount: this.items.size,
+            },
         });
     }
 
@@ -166,9 +194,14 @@ export class InMemoryStorageAdapter<T extends BaseStorageItem>
         }
 
         if (expiredCount > 0) {
-            logger.debug('Cleaned up expired items', {
-                expiredCount,
-                remainingCount: this.items.size,
+            logger.debug({
+                message: 'Cleaned up expired items',
+                context: 'cleanupExpiredItems',
+
+                metadata: {
+                    expiredCount,
+                    remainingCount: this.items.size,
+                },
             });
         }
     }

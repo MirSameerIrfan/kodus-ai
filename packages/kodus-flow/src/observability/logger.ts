@@ -1,5 +1,8 @@
+import { ExecutionContext } from '@nestjs/common';
+import { trace } from '@opentelemetry/api';
+import * as Sentry from '@sentry/node';
 import pino from 'pino';
-import { LogLevel, LogContext, LogProcessor } from './types.js';
+import { LogArguments, LogLevel, LogProcessor } from './types.js';
 
 /**
  * Simple and robust logger implementation
@@ -26,14 +29,29 @@ let observabilityContextProvider:
 function getPinoLogger(): pino.Logger {
     if (!pinoLogger) {
         // Determine if we should use pretty printing
-        const usePretty =
-            process.env.NODE_ENV === 'development' ||
-            process.env.LOG_FORMAT === 'pretty';
+        const shouldPrettyPrint =
+            (process.env.API_LOG_PRETTY || 'false') === 'true';
+        const isProduction =
+            (process.env.API_NODE_ENV || 'production') === 'production';
 
         const loggerConfig: pino.LoggerOptions = {
-            level: process.env.LOG_LEVEL || 'info',
+            level: process.env.API_LOG_LEVEL || 'info',
             formatters: {
                 level: (label) => ({ level: label }),
+                log(object) {
+                    if (isProduction && !shouldPrettyPrint) {
+                        // Cleaner log for production
+                        return {
+                            message: object.message,
+                            serviceName: object.serviceName,
+                            environment: object.environment,
+                            error: object.error
+                                ? { message: (object?.error as any)?.message }
+                                : undefined,
+                        };
+                    }
+                    return object;
+                },
             },
             serializers: {
                 error: pino.stdSerializers.err,
@@ -55,6 +73,8 @@ function getPinoLogger(): pino.Logger {
                     '*.authorization',
                     'req.headers.authorization',
                     'req.headers["x-api-key"]',
+                    'user.sensitiveInfo',
+                    'metadata.headers.authorization',
                 ],
                 censor: '[REDACTED]',
             },
@@ -62,28 +82,42 @@ function getPinoLogger(): pino.Logger {
         };
 
         // Use pretty printing in development
-        if (usePretty) {
-            pinoLogger = pino({
-                ...loggerConfig,
-                transport: {
-                    target: 'pino-pretty',
-                    options: {
-                        colorize: true,
-                        translateTime: 'SYS:standard',
-                        ignore: 'pid,hostname',
+        if (shouldPrettyPrint && !isProduction) {
+            pinoLogger = pino(
+                {
+                    ...loggerConfig,
+                    transport: {
+                        target: 'pino-pretty',
+                        options: {
+                            colorize: true,
+                            translateTime: 'SYS:standard',
+                            ignore: 'pid,hostname',
+                            levelFirst: true,
+                            errorProps: 'message,stack',
+                            messageFormat:
+                                '{level} - {serviceName} - {context} - {msg}',
+                        },
                     },
                 },
-            });
+                isProduction && !shouldPrettyPrint
+                    ? pino.destination({ sync: false, minLength: 4096 })
+                    : undefined,
+            );
         } else {
             // Production: JSON format with performance optimizations
-            pinoLogger = pino({
-                ...loggerConfig,
-                // Performance optimizations for production
-                base: {
-                    pid: process.pid,
-                    hostname: undefined, // Remove hostname for smaller logs
+            pinoLogger = pino(
+                {
+                    ...loggerConfig,
+                    // Performance optimizations for production
+                    base: {
+                        pid: process.pid,
+                        hostname: undefined, // Remove hostname for smaller logs
+                    },
                 },
-            });
+                isProduction && !shouldPrettyPrint
+                    ? pino.destination({ sync: false, minLength: 4096 })
+                    : undefined,
+            );
         }
     }
     return pinoLogger;
@@ -93,251 +127,180 @@ function getPinoLogger(): pino.Logger {
  * Simple logger class with Pino integration
  */
 export class SimpleLogger {
-    private logger: pino.Logger;
-    private component: string;
+    private defaultServiceName: string;
 
-    constructor(component: string) {
-        this.component = component;
-        this.logger = getPinoLogger().child({
-            component,
-            service: 'kodus-observability',
-        });
+    constructor(serviceName: string) {
+        this.defaultServiceName = serviceName;
     }
 
-    debug(message: string, context?: LogContext): void {
-        const mergedContext = this.mergeContext(context);
-        this.logger.debug(mergedContext, message);
-        this.processLog('debug', message, mergedContext);
+    public log(args: LogArguments) {
+        this.handleLog('info', args);
     }
 
-    info(message: string, context?: LogContext): void {
-        const mergedContext = this.mergeContext(context);
-        this.logger.info(mergedContext, message);
-        this.processLog('info', message, mergedContext);
+    public error(args: LogArguments) {
+        this.handleLog('error', args);
     }
 
-    warn(message: string, context?: LogContext): void {
-        const mergedContext = this.mergeContext(context);
-        this.logger.warn(mergedContext, message);
-        this.processLog('warn', message, mergedContext);
+    public warn(args: LogArguments) {
+        this.handleLog('warn', args);
     }
 
-    error(message: string, error?: Error, context?: LogContext): void {
-        const mergedContext = this.mergeContext(context);
-
-        if (error) {
-            const errorContext = {
-                ...mergedContext,
-                error: {
-                    name: error.name,
-                    message: error.message,
-                    stack: error.stack,
-                },
-            };
-            this.logger.error(errorContext, message);
-            this.processLog('error', message, errorContext, error);
-        } else {
-            this.logger.error(mergedContext, message);
-            this.processLog('error', message, mergedContext);
-        }
+    public debug(args: LogArguments) {
+        this.handleLog('debug', args);
     }
 
-    private mergeContext(context?: LogContext): LogContext | undefined {
-        if (!context) {
-            const base: LogContext = {} as any;
-            return this.attachTracingContext(base);
-        }
-
-        const sanitized = this.sanitizeContext(context);
-
-        const withDefaults: LogContext = {
-            ...sanitized,
-            ...(sanitized.component === undefined && this.component
-                ? { component: this.component }
-                : {}),
-        } as any;
-
-        return this.attachTracingContext(withDefaults);
+    public verbose(args: LogArguments) {
+        this.handleLog('verbose', args);
     }
 
-    private sanitizeContext(context: LogContext): LogContext {
-        const sanitized: any = {};
-        const sensitiveKeyPattern =
-            /pass(word)?|token|secret|api[-_]?key|authorization|access[-_]?key|refresh[-_]?token|cookie|set-cookie|cpf|cnpj/i;
-
-        for (const [key, value] of Object.entries(context)) {
-            if (sensitiveKeyPattern.test(key)) {
-                sanitized[key] = '[REDACTED]';
-                continue;
-            }
-
-            if (typeof value === 'object' && value !== null) {
-                if (key.toLowerCase() === 'headers') {
-                    sanitized[key] = this.sanitizeHeaders(value as any);
-                    continue;
-                }
-                sanitized[key] = this.truncateObject(value);
-            } else if (typeof value === 'string') {
-                sanitized[key] =
-                    value.length > 1000
-                        ? value.substring(0, 1000) + '...'
-                        : value;
-            } else {
-                sanitized[key] = value;
-            }
-        }
-
-        return sanitized;
-    }
-
-    private sanitizeHeaders(
-        headers: Record<string, unknown>,
-    ): Record<string, unknown> {
-        const out: Record<string, unknown> = {};
-        const redact = new Set([
-            'authorization',
-            'cookie',
-            'set-cookie',
-            'x-api-key',
-            'x-access-token',
-        ]);
-        for (const [h, v] of Object.entries(headers || {})) {
-            if (redact.has(h.toLowerCase())) {
-                out[h] = '[REDACTED]';
-            } else if (typeof v === 'string' && v.length > 500) {
-                out[h] = v.substring(0, 500) + '...';
-            } else {
-                out[h] = v;
-            }
-        }
-        return out;
-    }
-
-    private truncateObject(obj: any, depth = 0): any {
-        if (depth > 3) return '[Object too deep]';
-
-        if (Array.isArray(obj)) {
-            return obj
-                .slice(0, 10)
-                .map((item) =>
-                    typeof item === 'object'
-                        ? this.truncateObject(item, depth + 1)
-                        : item,
-                );
-        }
-
-        if (typeof obj === 'object' && obj !== null) {
-            const truncated: any = {};
-            let count = 0;
-            for (const [key, value] of Object.entries(obj)) {
-                if (count >= 20) break; // Limit number of properties
-                truncated[key] =
-                    typeof value === 'object'
-                        ? this.truncateObject(value, depth + 1)
-                        : value;
-                count++;
-            }
-            return truncated;
-        }
-
-        return obj;
-    }
-
-    private attachTracingContext(ctx: LogContext): LogContext {
-        const out: any = { ...ctx };
-
-        try {
-            const sc = spanContextProvider ? spanContextProvider() : undefined;
-
-            if (sc) {
-                if (out.traceId === undefined) out.traceId = sc.traceId;
-                if (out.spanId === undefined) out.spanId = sc.spanId;
-            }
-        } catch {}
-        try {
-            const oc = observabilityContextProvider
-                ? observabilityContextProvider()
-                : undefined;
-
-            if (oc) {
-                if (
-                    out.correlationId === undefined &&
-                    oc.correlationId !== undefined
-                ) {
-                    out.correlationId = oc.correlationId;
-
-                    if (
-                        out.tenantId === undefined &&
-                        oc.tenantId !== undefined
-                    ) {
-                        out.tenantId = oc.tenantId;
-                    }
-                }
-
-                if (out.sessionId === undefined && oc.sessionId !== undefined) {
-                    out.sessionId = oc.sessionId;
-                }
-            }
-        } catch {}
-        return out;
-    }
-
-    /**
-     * Log with structured performance timing
-     */
-    performance(
-        operation: string,
-        duration: number,
-        context?: LogContext,
-    ): void {
-        this.info(`Performance: ${operation}`, {
-            ...context,
-            performance: {
-                operation,
-                duration,
-                unit: 'ms',
-            },
-        });
-    }
-
-    /**
-     * Log security-related events
-     */
-    security(message: string, context?: LogContext): void {
-        this.warn(`SECURITY: ${message}`, {
-            ...context,
-            security: true,
-            timestamp: new Date().toISOString(),
-        });
-    }
-
-    /**
-     * Log business metrics
-     */
-    business(event: string, data: Record<string, any>): void {
-        this.info(`BUSINESS: ${event}`, {
-            business: {
-                event,
-                ...data,
-            },
-        });
-    }
-
-    private processLog(
+    private handleLog(
         level: LogLevel,
-        message: string,
-        context?: LogContext,
-        error?: Error,
-    ): void {
-        if (context && (context as any).skipProcessors === true) {
-            return; // allow internal logs without re-processing/exporting
+        { message, context, serviceName, error, metadata = {} }: LogArguments,
+    ) {
+        if (this.shouldSkipLog(context)) {
+            return;
         }
-        for (const processor of globalLogProcessors) {
-            try {
-                processor.process(level, message, context, error);
-            } catch (processorError) {
-                console.error('Log processor failed:', processorError);
+
+        const effectiveServiceName = serviceName || this.defaultServiceName;
+        const contextStr = this.extractContextInfo(context);
+
+        const baseLogger = getPinoLogger();
+
+        const childLogger = baseLogger.child({
+            serviceName: effectiveServiceName,
+            context: contextStr,
+        });
+
+        const logObject = this.buildLogObject(
+            effectiveServiceName,
+            metadata,
+            error,
+        );
+
+        if (error && level === 'error') {
+            this.captureExceptionToSentry(error, message, metadata, logObject);
+        }
+
+        childLogger[level](logObject, message);
+    }
+
+    private extractContextInfo(
+        context: ExecutionContext | string | undefined,
+    ): string {
+        if (!context) return 'unknown';
+        if (typeof context === 'string') {
+            return context;
+        }
+        try {
+            const request = context.switchToHttp().getRequest();
+            return request.url || 'unknown';
+        } catch {
+            return 'unknown';
+        }
+    }
+
+    private shouldSkipLog(context: ExecutionContext | string | undefined) {
+        return (
+            typeof context === 'undefined' ||
+            (typeof context === 'string' &&
+                ['RouterExplorer', 'RoutesResolver'].includes(context))
+        );
+    }
+
+    private buildLogObject(
+        serviceName: string,
+        metadata: Record<string, any>,
+        error?: Error,
+    ) {
+        const traceContext = this.getTraceContext();
+        const observabilityContext = this.getObservabilityContext();
+
+        return {
+            environment: process.env.API_NODE_ENV || 'unknown',
+            serviceName,
+            ...metadata,
+            metadata,
+            ...traceContext,
+            ...observabilityContext,
+            error: error
+                ? { message: error.message, stack: error.stack }
+                : undefined,
+        };
+    }
+
+    private getTraceContext() {
+        if (spanContextProvider) {
+            const sc = spanContextProvider();
+            if (sc) return sc;
+        }
+
+        const currentSpan = trace.getActiveSpan();
+        if (!currentSpan) {
+            return {
+                traceId: null,
+                spanId: null,
+            };
+        }
+
+        const context = currentSpan.spanContext();
+        return {
+            traceId: context.traceId,
+            spanId: context.spanId,
+        };
+    }
+
+    private getObservabilityContext() {
+        if (observabilityContextProvider) {
+            return observabilityContextProvider() || {};
+        }
+        return {};
+    }
+
+    private captureExceptionToSentry(
+        error: Error,
+        message: string,
+        metadata: Record<string, any>,
+        logObject: any,
+    ) {
+        const safeMetadata = this.safeSerialize({ ...metadata, ...logObject });
+
+        Sentry.withScope((scope) => {
+            scope.setTag('environment', process.env.API_NODE_ENV || 'unknown');
+            scope.setTag('level', 'error');
+            scope.setTag('type', error.name);
+
+            if (logObject?.traceId) {
+                scope.setTag('traceId', logObject.traceId);
             }
+
+            if (logObject?.spanId) {
+                scope.setTag('spanId', logObject.spanId);
+            }
+
+            scope.setExtras({
+                ...safeMetadata,
+                message,
+                stack: error.stack,
+                name: error.name,
+            });
+
+            Sentry.captureException(error, {
+                fingerprint: [error.name, error.message],
+            });
+
+            console.log('Sentry event captured:', {
+                error: error.message,
+                traceId: logObject?.traceId,
+                spanId: logObject?.spanId,
+            });
+        });
+    }
+
+    private safeSerialize(obj: Record<string, any>): Record<string, any> {
+        try {
+            return JSON.parse(JSON.stringify(obj));
+        } catch {
+            return { error: 'Failed to serialize metadata for Sentry' };
         }
     }
 }

@@ -17,8 +17,13 @@ export class SharedStrategyMethods {
 
     static setToolEngine(toolEngine: ToolEngine): void {
         this.toolEngine = toolEngine;
-        this.logger.info('🔧 ToolEngine configured for SharedStrategyMethods', {
-            hasToolEngine: !!toolEngine,
+        this.logger.log({
+            message: '🔧 ToolEngine configured for SharedStrategyMethods',
+            context: this.constructor.name,
+
+            metadata: {
+                hasToolEngine: !!toolEngine,
+            },
         });
     }
 
@@ -58,13 +63,15 @@ export class SharedStrategyMethods {
         context: StrategyExecutionContext,
     ): Promise<unknown> {
         if (action.type !== 'tool_call' || !action.toolName) {
-            this.logger.error(
-                'Invalid tool call action',
-                new Error(JSON.stringify(action)),
-                {
+            this.logger.error({
+                message: 'Invalid tool call action',
+                context: this.constructor.name,
+                error: new Error(JSON.stringify(action)),
+
+                metadata: {
                     source: 'shared-strategy-methods',
                 },
-            );
+            });
             throw new Error('Invalid tool call action');
         }
 
@@ -74,9 +81,14 @@ export class SharedStrategyMethods {
             );
         }
 
-        this.logger.debug('🔧 Delegating tool execution to ToolEngine', {
-            toolName: action.toolName,
-            threadId: context.agentContext.thread?.id,
+        this.logger.debug({
+            message: '🔧 Delegating tool execution to ToolEngine',
+            context: this.constructor.name,
+
+            metadata: {
+                toolName: action.toolName,
+                threadId: context.agentContext.thread?.id,
+            },
         });
 
         try {
@@ -92,23 +104,30 @@ export class SharedStrategyMethods {
                 },
             );
 
-            this.logger.debug('✅ Tool executed successfully via ToolEngine', {
-                toolName: action.toolName,
-                threadId: context.agentContext.thread?.id,
-                resultType: typeof result,
+            this.logger.debug({
+                message: '✅ Tool executed successfully via ToolEngine',
+                context: this.constructor.name,
+
+                metadata: {
+                    toolName: action.toolName,
+                    threadId: context.agentContext.thread?.id,
+                    resultType: typeof result,
+                },
             });
 
             return result;
         } catch (error) {
-            this.logger.error(
-                '❌ Tool execution failed (delegated to ToolEngine)',
-                error instanceof Error ? error : undefined,
-                {
+            this.logger.error({
+                message: '❌ Tool execution failed (delegated to ToolEngine)',
+                context: this.constructor.name,
+                error: error instanceof Error ? error : undefined,
+
+                metadata: {
                     toolName: action.toolName,
                     threadId: context.agentContext.thread?.id,
                     source: 'shared-strategy-methods',
                 },
-            );
+            });
 
             throw error;
         }

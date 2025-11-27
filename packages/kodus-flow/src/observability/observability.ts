@@ -113,10 +113,15 @@ export class ObservabilitySystem {
         // We'll call setupExporters after construction to avoid making constructor async
         this.setupExportersSync();
 
-        this.logger.info('Observability system initialized', {
-            environment: this.config.environment,
-            enabled: this.config.enabled,
-            serviceName: this.config.serviceName,
+        this.logger.log({
+            message: 'Observability system initialized',
+            context: this.constructor.name,
+
+            metadata: {
+                environment: this.config.environment,
+                enabled: this.config.enabled,
+                serviceName: this.config.serviceName,
+            },
         });
     }
 
@@ -130,8 +135,13 @@ export class ObservabilitySystem {
             startTime: Date.now(),
         };
 
-        this.logger.debug('Observability context created', {
-            correlationId: context.correlationId,
+        this.logger.debug({
+            message: 'Observability context created',
+            context: this.constructor.name,
+
+            metadata: {
+                correlationId: context.correlationId,
+            },
         });
 
         return context;
@@ -160,8 +170,13 @@ export class ObservabilitySystem {
      */
     clearContext(): void {
         if (this.currentContext) {
-            this.logger.debug('Observability context cleared', {
-                correlationId: this.currentContext.correlationId,
+            this.logger.debug({
+                message: 'Observability context cleared',
+                context: this.constructor.name,
+
+                metadata: {
+                    correlationId: this.currentContext.correlationId,
+                },
             });
         }
         this.currentContext = undefined;
@@ -283,11 +298,16 @@ export class ObservabilitySystem {
 
             completeExecutionTracking(executionId, result);
 
-            this.logger.debug('Agent execution completed', {
-                agentName,
-                executionId,
-                correlationId,
-                duration,
+            this.logger.debug({
+                message: 'Agent execution completed',
+                context: this.constructor.name,
+
+                metadata: {
+                    agentName,
+                    executionId,
+                    correlationId,
+                    duration,
+                },
             });
 
             return result;
@@ -311,11 +331,17 @@ export class ObservabilitySystem {
             }
             failExecutionTracking(executionId, error as Error);
 
-            this.logger.error('Agent execution failed', error as Error, {
-                agentName,
-                executionId,
-                correlationId,
-                duration,
+            this.logger.error({
+                message: 'Agent execution failed',
+                context: this.constructor.name,
+                error: error as Error,
+
+                metadata: {
+                    agentName,
+                    executionId,
+                    correlationId,
+                    duration,
+                },
             });
 
             throw error;
@@ -399,19 +425,40 @@ export class ObservabilitySystem {
         // Route to correct severity; logger handles processors (e.g., MongoDB)
         switch (level) {
             case 'debug':
-                this.logger.debug(message, mergedContext);
+                this.logger.debug({
+                    message: message,
+                    context: this.constructor.name,
+                    metadata: mergedContext,
+                });
                 break;
             case 'info':
-                this.logger.info(message, mergedContext);
+                this.logger.log({
+                    message: message,
+                    context: this.constructor.name,
+                    metadata: mergedContext,
+                });
                 break;
             case 'warn':
-                this.logger.warn(message, mergedContext);
+                this.logger.warn({
+                    message: message,
+                    context: this.constructor.name,
+                    metadata: mergedContext,
+                });
                 break;
             case 'error':
-                this.logger.error(message, undefined, mergedContext);
+                this.logger.error({
+                    message: message,
+                    context: this.constructor.name,
+                    error: undefined,
+                    metadata: mergedContext,
+                });
                 break;
             default:
-                this.logger.info(message, mergedContext);
+                this.logger.log({
+                    message: message,
+                    context: this.constructor.name,
+                    metadata: mergedContext,
+                });
         }
     }
 
@@ -453,7 +500,10 @@ export class ObservabilitySystem {
      * Shutdown the observability system
      */
     async shutdown(): Promise<void> {
-        this.logger.info('Shutting down observability system');
+        this.logger.log({
+            message: 'Shutting down observability system',
+            context: this.constructor.name,
+        });
 
         await Promise.allSettled([
             this.telemetry.flush(),
@@ -468,9 +518,14 @@ export class ObservabilitySystem {
      */
     updateContextWithExecution(executionId: string, agentName: string): void {
         // Implementation for compatibility
-        this.logger.debug('Context updated with execution', {
-            executionId,
-            agentName,
+        this.logger.debug({
+            message: 'Context updated with execution',
+            context: this.constructor.name,
+
+            metadata: {
+                executionId,
+                agentName,
+            },
         });
     }
 
@@ -479,9 +534,14 @@ export class ObservabilitySystem {
      */
     async saveAgentExecutionCycle(cycle: any): Promise<void> {
         // Implementation for compatibility
-        this.logger.info('Agent execution cycle saved', {
-            executionId: cycle.executionId,
-            agentName: cycle.agentName,
+        this.logger.log({
+            message: 'Agent execution cycle saved',
+            context: this.constructor.name,
+
+            metadata: {
+                executionId: cycle.executionId,
+                agentName: cycle.agentName,
+            },
         });
     }
 
@@ -523,11 +583,16 @@ export class ObservabilitySystem {
         this.telemetry.addTraceProcessor({
             process: async (item: TraceItem) => {
                 // Simple console export for traces using structured logging
-                this.logger.info(`[TRACE] ${item.name}`, {
-                    traceId: item.context.traceId,
-                    spanId: item.context.spanId,
-                    duration: `${item.duration}ms`,
-                    status: item.status.code,
+                this.logger.log({
+                    message: `[TRACE] ${item.name}`,
+                    context: this.constructor.name,
+
+                    metadata: {
+                        traceId: item.context.traceId,
+                        spanId: item.context.spanId,
+                        duration: `${item.duration}ms`,
+                        status: item.status.code,
+                    },
                 });
             },
         });
@@ -569,12 +634,12 @@ export class ObservabilitySystem {
                                     item,
                                 );
                             } catch (error) {
-                                this.logger.debug(
-                                    'MongoDB export failed (possibly not initialized)',
-                                    {
-                                        error: (error as Error).message,
-                                    },
-                                );
+                                this.logger.debug({
+                                    message:
+                                        'MongoDB export failed (possibly not initialized)',
+                                    context: this.constructor.name,
+                                    error: error as Error,
+                                });
                             }
                         }
                     },
@@ -583,12 +648,16 @@ export class ObservabilitySystem {
                 // Add MongoDB exporter as log processor
                 addLogProcessor(this.mongodbExporter);
 
-                this.logger.info(
-                    'MongoDB exporter configured (needs initialization)',
-                );
+                this.logger.log({
+                    message:
+                        'MongoDB exporter configured (needs initialization)',
+                    context: this.constructor.name,
+                });
             } catch (error) {
-                this.logger.warn('Failed to setup MongoDB exporter', {
-                    error: (error as Error).message,
+                this.logger.warn({
+                    message: 'Failed to setup MongoDB exporter',
+                    context: this.constructor.name,
+                    error: error as Error,
                 });
             }
         }
@@ -604,7 +673,10 @@ export class ObservabilitySystem {
         // Idempotent guard to avoid multiple handler registrations
         const anyProcess = process as any;
         if (anyProcess.__kodusObsHandlersInstalled) {
-            this.logger.debug('Error processors already configured');
+            this.logger.debug({
+                message: 'Error processors already configured',
+                context: this.constructor.name,
+            });
             return;
         }
         anyProcess.__kodusObsHandlersInstalled = true;
@@ -622,28 +694,39 @@ export class ObservabilitySystem {
 
         // Setup graceful shutdown
         process.on('SIGTERM', () => {
-            this.logger.info('SIGTERM received, shutting down gracefully');
+            this.logger.log({
+                message: 'SIGTERM received, shutting down gracefully',
+                context: this.constructor.name,
+            });
             this.shutdown().catch((error) => {
-                this.logger.error(
-                    'Error during SIGTERM shutdown',
-                    error as Error,
-                );
+                this.logger.error({
+                    message: 'Error during SIGTERM shutdown',
+                    context: this.constructor.name,
+                    error: error as Error,
+                });
                 process.exit(1);
             });
         });
 
         process.on('SIGINT', () => {
-            this.logger.info('SIGINT received, shutting down gracefully');
+            this.logger.log({
+                message: 'SIGINT received, shutting down gracefully',
+                context: this.constructor.name,
+            });
             this.shutdown().catch((error) => {
-                this.logger.error(
-                    'Error during SIGINT shutdown',
-                    error as Error,
-                );
+                this.logger.error({
+                    message: 'Error during SIGINT shutdown',
+                    context: this.constructor.name,
+                    error: error as Error,
+                });
                 process.exit(1);
             });
         });
 
-        this.logger.info('Error processors configured');
+        this.logger.log({
+            message: 'Error processors configured',
+            context: this.constructor.name,
+        });
     }
 
     private handleGlobalError(error: Error, type: string): void {
@@ -660,7 +743,12 @@ export class ObservabilitySystem {
             },
         };
 
-        this.logger.error(`Global ${type} caught`, error, errorContext);
+        this.logger.error({
+            message: `Global ${type} caught`,
+            context: this.constructor.name,
+            error: error,
+            metadata: errorContext,
+        });
 
         if (this.mongodbExporter) {
             this.mongodbExporter.exportError(error, {
@@ -674,12 +762,16 @@ export class ObservabilitySystem {
         if (this.mongodbExporter) {
             try {
                 await this.mongodbExporter.initialize();
-                this.logger.info('MongoDB exporter initialized successfully');
+                this.logger.log({
+                    message: 'MongoDB exporter initialized successfully',
+                    context: this.constructor.name,
+                });
             } catch (error) {
-                this.logger.error(
-                    'Failed to initialize MongoDB exporter',
-                    error as Error,
-                );
+                this.logger.error({
+                    message: 'Failed to initialize MongoDB exporter',
+                    context: this.constructor.name,
+                    error: error as Error,
+                });
                 throw error;
             }
         }

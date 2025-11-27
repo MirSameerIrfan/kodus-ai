@@ -45,10 +45,12 @@ export class SDKOrchestrator {
             getObservability()
                 .initialize()
                 .catch((error) => {
-                    this.logger.warn(
-                        'Failed to initialize observability components',
-                        { error: error.message },
-                    );
+                    this.logger.warn({
+                        message:
+                            'Failed to initialize observability components',
+                        context: this.constructor.name,
+                        error: error.message,
+                    });
                 });
         }
 
@@ -86,31 +88,45 @@ const orchestrator = new SDKOrchestrator({
         this.mcpAdapter = config.mcpAdapter;
         this.toolEngine = new ToolEngine();
 
-        this.logger.info(
-            'About to configure ContextBuilder with storage config',
-            {
+        this.logger.log({
+            message: 'About to configure ContextBuilder with storage config',
+            context: this.constructor.name,
+
+            metadata: {
                 hasStorageConfig: !!this.config.storage,
                 storageKeys: Object.keys(this.config.storage || {}),
             },
-        );
+        });
 
         this.configureEnhancedContext();
 
-        this.logger.info('Clean SDKOrchestrator initialized', {
-            tenantId: this.config.tenantId,
-            llmProvider:
-                this.config.llmAdapter.getProvider?.()?.name || 'unknown',
-            hasMCP: !!this.mcpAdapter,
+        this.logger.log({
+            message: 'Clean SDKOrchestrator initialized',
+            context: this.constructor.name,
+
+            metadata: {
+                tenantId: this.config.tenantId,
+
+                llmProvider:
+                    this.config.llmAdapter.getProvider?.()?.name || 'unknown',
+
+                hasMCP: !!this.mcpAdapter,
+            },
         });
     }
 
     async createAgent(
         config: AgentConfig,
     ): Promise<AgentDefinition<unknown, unknown, unknown>> {
-        this.logger.info('Creating agent', {
-            name: config.name,
-            planner: config.plannerOptions?.type || PlannerType.REACT,
-            executionMode: 'simple',
+        this.logger.log({
+            message: 'Creating agent',
+            context: this.constructor.name,
+
+            metadata: {
+                name: config.name,
+                planner: config.plannerOptions?.type || PlannerType.REACT,
+                executionMode: 'simple',
+            },
         });
 
         try {
@@ -167,9 +183,14 @@ const orchestrator = new SDKOrchestrator({
                 agentCoreConfig,
             );
 
-            this.logger.info('Agent created via AgentExecutor (workflow)', {
-                agentName: config.name,
-                planner: config?.plannerOptions?.type || PlannerType.REACT,
+            this.logger.log({
+                message: 'Agent created via AgentExecutor (workflow)',
+                context: this.constructor.name,
+
+                metadata: {
+                    agentName: config.name,
+                    planner: config?.plannerOptions?.type || PlannerType.REACT,
+                },
             });
         } else {
             agentInstance = new AgentEngine(
@@ -178,9 +199,14 @@ const orchestrator = new SDKOrchestrator({
                 agentCoreConfig,
             );
 
-            this.logger.info('Agent created via AgentEngine (simple)', {
-                agentName: config.name,
-                planner: config?.plannerOptions?.type || PlannerType.REACT,
+            this.logger.log({
+                message: 'Agent created via AgentEngine (simple)',
+                context: this.constructor.name,
+
+                metadata: {
+                    agentName: config.name,
+                    planner: config?.plannerOptions?.type || PlannerType.REACT,
+                },
             });
         }
 
@@ -193,9 +219,14 @@ const orchestrator = new SDKOrchestrator({
             },
         });
 
-        this.logger.info('Agent registered successfully', {
-            agentName: config.name,
-            totalAgents: this.agents.size,
+        this.logger.log({
+            message: 'Agent registered successfully',
+            context: this.constructor.name,
+
+            metadata: {
+                agentName: config.name,
+                totalAgents: this.agents.size,
+            },
         });
 
         return agentDefinition;
@@ -224,17 +255,23 @@ const orchestrator = new SDKOrchestrator({
         };
         obs.setContext(obsContext);
 
-        this.logger.info('🚀 SDK ORCHESTRATOR - Agent execution started', {
-            agentName,
-            correlationId,
-            inputType: typeof input,
-            hasContext: !!context,
-            hasThread: !!context?.thread,
-            tenantId: this.config.tenantId,
-            trace: {
-                source: 'sdk-orchestrator',
-                step: 'callAgent-start',
-                timestamp: Date.now(),
+        this.logger.log({
+            message: '🚀 SDK ORCHESTRATOR - Agent execution started',
+            context: this.constructor.name,
+
+            metadata: {
+                agentName,
+                correlationId,
+                inputType: typeof input,
+                hasContext: !!context,
+                hasThread: !!context?.thread,
+                tenantId: this.config.tenantId,
+
+                trace: {
+                    source: 'sdk-orchestrator',
+                    step: 'callAgent-start',
+                    timestamp: Date.now(),
+                },
             },
         });
 
@@ -243,24 +280,32 @@ const orchestrator = new SDKOrchestrator({
         let timeoutHandle: NodeJS.Timeout | null = null;
 
         try {
-            this.logger.debug('🔍 SDK ORCHESTRATOR - Looking up agent', {
-                agentName,
-                correlationId,
-                registeredAgents: Array.from(this.agents.keys()),
-                trace: {
-                    source: 'sdk-orchestrator',
-                    step: 'agent-lookup',
-                    timestamp: Date.now(),
+            this.logger.debug({
+                message: '🔍 SDK ORCHESTRATOR - Looking up agent',
+                context: this.constructor.name,
+
+                metadata: {
+                    agentName,
+                    correlationId,
+                    registeredAgents: Array.from(this.agents.keys()),
+
+                    trace: {
+                        source: 'sdk-orchestrator',
+                        step: 'agent-lookup',
+                        timestamp: Date.now(),
+                    },
                 },
             });
 
             const agentData = this.agents.get(agentName);
 
             if (!agentData) {
-                this.logger.error(
-                    '❌ SDK ORCHESTRATOR - Agent not found',
-                    new Error(`Agent '${agentName}' not found`),
-                    {
+                this.logger.error({
+                    message: '❌ SDK ORCHESTRATOR - Agent not found',
+                    context: this.constructor.name,
+                    error: new Error(`Agent '${agentName}' not found`),
+
+                    metadata: {
                         agentName,
                         correlationId,
                         availableAgents: Array.from(this.agents.keys()),
@@ -270,7 +315,7 @@ const orchestrator = new SDKOrchestrator({
                             timestamp: Date.now(),
                         },
                     },
-                );
+                });
                 throw new EngineError(
                     'AGENT_ERROR',
                     `Agent '${agentName}' not found`,
@@ -286,16 +331,22 @@ const orchestrator = new SDKOrchestrator({
                 },
             };
 
-            this.logger.info('🧵 SDK ORCHESTRATOR - Thread prepared', {
-                agentName,
-                correlationId,
-                threadId: thread.id,
-                threadType: thread.metadata?.type,
-                isAutoGenerated: !context?.thread,
-                trace: {
-                    source: 'sdk-orchestrator',
-                    step: 'thread-prepared',
-                    timestamp: Date.now(),
+            this.logger.log({
+                message: '🧵 SDK ORCHESTRATOR - Thread prepared',
+                context: this.constructor.name,
+
+                metadata: {
+                    agentName,
+                    correlationId,
+                    threadId: thread.id,
+                    threadType: thread.metadata?.type,
+                    isAutoGenerated: !context?.thread,
+
+                    trace: {
+                        source: 'sdk-orchestrator',
+                        step: 'thread-prepared',
+                        timestamp: Date.now(),
+                    },
                 },
             });
 
@@ -317,16 +368,23 @@ const orchestrator = new SDKOrchestrator({
                 }, configuredTimeout);
             }
 
-            this.logger.info('⚡ SDK ORCHESTRATOR - Starting agent execution', {
-                agentName,
-                correlationId,
-                executionMode: agentData.config.executionMode,
-                isAgentEngine: agentData.instance instanceof AgentEngine,
-                isAgentExecutor: agentData.instance instanceof AgentExecutor,
-                trace: {
-                    source: 'sdk-orchestrator',
-                    step: 'agent-execution-start',
-                    timestamp: Date.now(),
+            this.logger.log({
+                message: '⚡ SDK ORCHESTRATOR - Starting agent execution',
+                context: this.constructor.name,
+
+                metadata: {
+                    agentName,
+                    correlationId,
+                    executionMode: agentData.config.executionMode,
+                    isAgentEngine: agentData.instance instanceof AgentEngine,
+                    isAgentExecutor:
+                        agentData.instance instanceof AgentExecutor,
+
+                    trace: {
+                        source: 'sdk-orchestrator',
+                        step: 'agent-execution-start',
+                        timestamp: Date.now(),
+                    },
                 },
             });
 
@@ -334,36 +392,44 @@ const orchestrator = new SDKOrchestrator({
                 SPAN_NAMES.AGENT_EXECUTE,
                 async () => {
                     if (agentData.instance instanceof AgentEngine) {
-                        this.logger.debug(
-                            '🔧 SDK ORCHESTRATOR - Executing via AgentEngine',
-                            {
+                        this.logger.debug({
+                            message:
+                                '🔧 SDK ORCHESTRATOR - Executing via AgentEngine',
+                            context: this.constructor.name,
+
+                            metadata: {
                                 agentName,
                                 correlationId,
+
                                 trace: {
                                     source: 'sdk-orchestrator',
                                     step: 'agent-engine-execute',
                                     timestamp: Date.now(),
                                 },
                             },
-                        );
+                        });
                         return await agentData.instance.execute(
                             input,
                             executionOptions,
                         );
                     }
                     if (agentData.instance instanceof AgentExecutor) {
-                        this.logger.debug(
-                            '🔧 SDK ORCHESTRATOR - Executing via AgentExecutor (workflow)',
-                            {
+                        this.logger.debug({
+                            message:
+                                '🔧 SDK ORCHESTRATOR - Executing via AgentExecutor (workflow)',
+                            context: this.constructor.name,
+
+                            metadata: {
                                 agentName,
                                 correlationId,
+
                                 trace: {
                                     source: 'sdk-orchestrator',
                                     step: 'agent-executor-execute',
                                     timestamp: Date.now(),
                                 },
                             },
-                        );
+                        });
                         return await agentData.instance.executeViaWorkflow(
                             input,
                             executionOptions,
@@ -393,10 +459,15 @@ const orchestrator = new SDKOrchestrator({
                 !(agentData.instance instanceof AgentEngine) &&
                 !(agentData.instance instanceof AgentExecutor)
             ) {
-                this.logger.error(
-                    '❌ SDK ORCHESTRATOR - Unknown agent instance type',
-                    new Error(`Unknown agent instance type for '${agentName}'`),
-                    {
+                this.logger.error({
+                    message:
+                        '❌ SDK ORCHESTRATOR - Unknown agent instance type',
+                    context: this.constructor.name,
+                    error: new Error(
+                        `Unknown agent instance type for '${agentName}'`,
+                    ),
+
+                    metadata: {
                         agentName,
                         correlationId,
                         instanceType: typeof agentData.instance,
@@ -406,7 +477,7 @@ const orchestrator = new SDKOrchestrator({
                             timestamp: Date.now(),
                         },
                     },
-                );
+                });
                 throw new EngineError(
                     'AGENT_ERROR',
                     `Unknown agent instance type for '${agentName}'`,
@@ -415,22 +486,26 @@ const orchestrator = new SDKOrchestrator({
 
             const duration = Date.now() - startTime;
 
-            this.logger.info(
-                '✅ SDK ORCHESTRATOR - Agent execution completed successfully',
-                {
+            this.logger.log({
+                message:
+                    '✅ SDK ORCHESTRATOR - Agent execution completed successfully',
+                context: this.constructor.name,
+
+                metadata: {
                     agentName,
                     correlationId,
                     success: result.success,
                     duration,
                     resultType: typeof result.data,
                     hasData: !!result.data,
+
                     trace: {
                         source: 'sdk-orchestrator',
                         step: 'agent-execution-success',
                         timestamp: Date.now(),
                     },
                 },
-            );
+            });
 
             return {
                 success: true,
@@ -450,10 +525,12 @@ const orchestrator = new SDKOrchestrator({
         } catch (error) {
             const duration = Date.now() - startTime;
 
-            this.logger.error(
-                '❌ SDK ORCHESTRATOR - Agent execution failed',
-                error as Error,
-                {
+            this.logger.error({
+                message: '❌ SDK ORCHESTRATOR - Agent execution failed',
+                context: this.constructor.name,
+                error: error as Error,
+
+                metadata: {
                     agentName,
                     correlationId,
                     duration,
@@ -469,7 +546,7 @@ const orchestrator = new SDKOrchestrator({
                         timestamp: Date.now(),
                     },
                 },
-            );
+            });
 
             return {
                 success: false,
@@ -513,11 +590,16 @@ const orchestrator = new SDKOrchestrator({
 
         this.toolEngine.registerTool(toolDefinition);
 
-        this.logger.info('Tool created and registered', {
-            toolName: config.name,
-            description: config.description,
-            title: config.title,
-            hasAnnotations: !!config.annotations,
+        this.logger.log({
+            message: 'Tool created and registered',
+            context: this.constructor.name,
+
+            metadata: {
+                toolName: config.name,
+                description: config.description,
+                title: config.title,
+                hasAnnotations: !!config.annotations,
+            },
         });
 
         return toolDefinition;
@@ -541,10 +623,15 @@ const orchestrator = new SDKOrchestrator({
         obsContext.metadata = { toolName };
         obs.setContext(obsContext);
 
-        this.logger.info('Tool execution started', {
-            toolName,
-            correlationId,
-            tenantId: obsContext.tenantId,
+        this.logger.log({
+            message: 'Tool execution started',
+            context: this.constructor.name,
+
+            metadata: {
+                toolName,
+                correlationId,
+                tenantId: obsContext.tenantId,
+            },
         });
 
         try {
@@ -575,10 +662,16 @@ const orchestrator = new SDKOrchestrator({
         } catch (error) {
             const duration = Date.now() - startTime;
 
-            this.logger.error('Tool execution failed', error as Error, {
-                toolName,
-                correlationId,
-                tenantId: obsContext.tenantId,
+            this.logger.error({
+                message: 'Tool execution failed',
+                context: this.constructor.name,
+                error: error as Error,
+
+                metadata: {
+                    toolName,
+                    correlationId,
+                    tenantId: obsContext.tenantId,
+                },
             });
 
             return {
@@ -662,15 +755,19 @@ const orchestrator = new SDKOrchestrator({
 
     async registerMCPTools(): Promise<void> {
         if (!this.mcpAdapter) {
-            this.logger.warn(
-                'MCP adapter not configured - cannot register tools',
-            );
+            this.logger.warn({
+                message: 'MCP adapter not configured - cannot register tools',
+                context: this.constructor.name,
+            });
             return;
         }
 
         try {
             const mcpTools = await this.mcpAdapter.getTools();
-            this.logger.info(`Registering ${mcpTools.length} MCP tools`);
+            this.logger.log({
+                message: `Registering ${mcpTools.length} MCP tools`,
+                context: this.constructor.name,
+            });
 
             for (const mcpTool of mcpTools) {
                 const zodSchema = safeJsonSchemaToZod(mcpTool.inputSchema);
@@ -699,11 +796,16 @@ const orchestrator = new SDKOrchestrator({
                 });
             }
 
-            this.logger.info(
-                `Successfully registered ${mcpTools.length} MCP tools`,
-            );
+            this.logger.log({
+                message: `Successfully registered ${mcpTools.length} MCP tools`,
+                context: this.constructor.name,
+            });
         } catch (error) {
-            this.logger.error('Failed to register MCP tools', error as Error);
+            this.logger.error({
+                message: 'Failed to register MCP tools',
+                context: this.constructor.name,
+                error: error as Error,
+            });
             throw error;
         }
     }
@@ -733,15 +835,22 @@ const orchestrator = new SDKOrchestrator({
             const enhancedConfig = this.getEnhancedContextConfig();
             EnhancedContextBuilder.configure(enhancedConfig);
 
-            this.logger.info('✅ EnhancedContextBuilder configured', {
-                mode: enhancedConfig.adapterType,
-                hasConnectionString: !!enhancedConfig.connectionString,
+            this.logger.log({
+                message: '✅ EnhancedContextBuilder configured',
+                context: this.constructor.name,
+
+                metadata: {
+                    mode: enhancedConfig.adapterType,
+                    hasConnectionString: !!enhancedConfig.connectionString,
+                },
             });
         } catch (error) {
-            this.logger.error(
-                'Failed to configure EnhancedContextBuilder',
-                error instanceof Error ? error : new Error('Unknown error'),
-            );
+            this.logger.error({
+                message: 'Failed to configure EnhancedContextBuilder',
+                context: this.constructor.name,
+                error:
+                    error instanceof Error ? error : new Error('Unknown error'),
+            });
             throw error;
         }
     }
@@ -751,27 +860,38 @@ const orchestrator = new SDKOrchestrator({
             const enhancedConfig = this.getEnhancedContextConfig();
 
             if (enhancedConfig.adapterType === StorageEnum.MONGODB) {
-                this.logger.info(
-                    '🚀 Initializing ContextNew for MongoDB - creating collections...',
-                    enhancedConfig,
-                );
+                this.logger.log({
+                    message:
+                        '🚀 Initializing ContextNew for MongoDB - creating collections...',
+                    context: this.constructor.name,
+                    metadata: {
+                        mode: enhancedConfig.adapterType,
+                        hasConnectionString: !!enhancedConfig.connectionString,
+                    },
+                });
 
                 const builder = EnhancedContextBuilder.getInstance();
                 await builder.initialize();
 
-                this.logger.info(
-                    '✅ ContextNew initialization complete - MongoDB collections created',
-                );
+                this.logger.log({
+                    message:
+                        '✅ ContextNew initialization complete - MongoDB collections created',
+                    context: this.constructor.name,
+                });
             } else {
-                this.logger.info(
-                    'ℹ️ Using InMemory storage - no MongoDB collections to create',
-                );
+                this.logger.log({
+                    message:
+                        'ℹ️ Using InMemory storage - no MongoDB collections to create',
+                    context: this.constructor.name,
+                });
             }
         } catch (error) {
-            this.logger.error(
-                'Failed to initialize ContextNew collections',
-                error instanceof Error ? error : new Error('Unknown error'),
-            );
+            this.logger.error({
+                message: 'Failed to initialize ContextNew collections',
+                context: this.constructor.name,
+                error:
+                    error instanceof Error ? error : new Error('Unknown error'),
+            });
             throw error;
         }
     }
@@ -800,9 +920,14 @@ const orchestrator = new SDKOrchestrator({
             database: storage.database,
         };
 
-        this.logger.debug('Enhanced context config (SIMPLIFIED)', {
-            adapterType,
-            hasConnectionString: !!storage.connectionString,
+        this.logger.debug({
+            message: 'Enhanced context config (SIMPLIFIED)',
+            context: this.constructor.name,
+
+            metadata: {
+                adapterType,
+                hasConnectionString: !!storage.connectionString,
+            },
         });
 
         return enhancedConfig;
@@ -810,15 +935,25 @@ const orchestrator = new SDKOrchestrator({
 
     async connectMCP(): Promise<void> {
         if (!this.mcpAdapter) {
-            this.logger.warn('MCP adapter not configured, skipping connection');
+            this.logger.warn({
+                message: 'MCP adapter not configured, skipping connection',
+                context: this.constructor.name,
+            });
             return;
         }
 
         try {
             await this.mcpAdapter.connect();
-            this.logger.info('MCP adapter connected successfully');
+            this.logger.log({
+                message: 'MCP adapter connected successfully',
+                context: this.constructor.name,
+            });
         } catch (error) {
-            this.logger.error('Failed to connect MCP adapter', error as Error);
+            this.logger.error({
+                message: 'Failed to connect MCP adapter',
+                context: this.constructor.name,
+                error: error as Error,
+            });
             throw error;
         }
     }
@@ -830,12 +965,16 @@ const orchestrator = new SDKOrchestrator({
 
         try {
             await this.mcpAdapter.disconnect();
-            this.logger.info('MCP adapter disconnected successfully');
+            this.logger.log({
+                message: 'MCP adapter disconnected successfully',
+                context: this.constructor.name,
+            });
         } catch (error) {
-            this.logger.error(
-                'Failed to disconnect MCP adapter',
-                error as Error,
-            );
+            this.logger.error({
+                message: 'Failed to disconnect MCP adapter',
+                context: this.constructor.name,
+                error: error as Error,
+            });
         }
     }
 }

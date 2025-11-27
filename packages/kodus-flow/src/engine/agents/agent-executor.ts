@@ -52,9 +52,14 @@ export class AgentExecutor<
         // Inicializar o lifecycle handler existente
         this.lifecycleHandler = new AgentLifecycleHandler();
 
-        this.executorLogger.info('AgentExecutor created', {
-            agentName: definition.name,
-            mode: 'workflow-execution',
+        this.executorLogger.log({
+            message: 'AgentExecutor created',
+            context: this.constructor.name,
+
+            metadata: {
+                agentName: definition.name,
+                mode: 'workflow-execution',
+            },
         });
     }
 
@@ -100,13 +105,18 @@ export class AgentExecutor<
         }
 
         const agentName = this.getDefinition()?.name || 'unknown-agent';
-        this.executorLogger.info('Agent workflow execution started', {
-            agentName,
-            correlationId,
-            sessionId,
-            workflowExecutionId: this.workflowExecutionId,
-            executionTrackingId: this.executionTrackingId,
-            inputType: typeof input,
+        this.executorLogger.log({
+            message: 'Agent workflow execution started',
+            context: this.constructor.name,
+
+            metadata: {
+                agentName,
+                correlationId,
+                sessionId,
+                workflowExecutionId: this.workflowExecutionId,
+                executionTrackingId: this.executionTrackingId,
+                inputType: typeof input,
+            },
         });
 
         try {
@@ -251,8 +261,13 @@ export class AgentExecutor<
      * Start agent lifecycle (usa AgentLifecycleHandler)
      */
     async start(payload: AgentStartPayload): Promise<AgentLifecycleResult> {
-        this.executorLogger.info('Starting agent executor lifecycle', {
-            payload,
+        this.executorLogger.log({
+            message: 'Starting agent executor lifecycle',
+            context: this.constructor.name,
+
+            metadata: {
+                payload,
+            },
         });
 
         // Usar o AgentLifecycleHandler existente
@@ -289,8 +304,13 @@ export class AgentExecutor<
      * Stop agent lifecycle (usa AgentLifecycleHandler)
      */
     async stop(payload: AgentStopPayload): Promise<AgentLifecycleResult> {
-        this.executorLogger.info('Stopping agent executor lifecycle', {
-            payload,
+        this.executorLogger.log({
+            message: 'Stopping agent executor lifecycle',
+            context: this.constructor.name,
+
+            metadata: {
+                payload,
+            },
         });
 
         // Usar o AgentLifecycleHandler existente
@@ -329,8 +349,13 @@ export class AgentExecutor<
      * Pause agent lifecycle (usa AgentLifecycleHandler)
      */
     async pause(payload: AgentPausePayload): Promise<AgentLifecycleResult> {
-        this.executorLogger.info('Pausing agent executor lifecycle', {
-            payload,
+        this.executorLogger.log({
+            message: 'Pausing agent executor lifecycle',
+            context: this.constructor.name,
+
+            metadata: {
+                payload,
+            },
         });
 
         // Usar o AgentLifecycleHandler existente
@@ -368,8 +393,13 @@ export class AgentExecutor<
      * Resume agent lifecycle (usa AgentLifecycleHandler)
      */
     async resume(payload: AgentResumePayload): Promise<AgentLifecycleResult> {
-        this.executorLogger.info('Resuming agent executor lifecycle', {
-            payload,
+        this.executorLogger.log({
+            message: 'Resuming agent executor lifecycle',
+            context: this.constructor.name,
+
+            metadata: {
+                payload,
+            },
         });
 
         // Usar o AgentLifecycleHandler existente
@@ -408,8 +438,13 @@ export class AgentExecutor<
     async schedule(
         payload: AgentSchedulePayload,
     ): Promise<AgentLifecycleResult> {
-        this.executorLogger.info('Scheduling agent executor lifecycle', {
-            payload,
+        this.executorLogger.log({
+            message: 'Scheduling agent executor lifecycle',
+            context: this.constructor.name,
+
+            metadata: {
+                payload,
+            },
         });
 
         // Usar o AgentLifecycleHandler existente
@@ -458,10 +493,15 @@ export class AgentExecutor<
         // Create snapshot
         this.snapshotId = `snapshot-${Date.now()}`;
 
-        this.executorLogger.info('Workflow execution paused', {
-            workflowExecutionId: this.workflowExecutionId,
-            reason,
-            snapshotId: this.snapshotId,
+        this.executorLogger.log({
+            message: 'Workflow execution paused',
+            context: this.constructor.name,
+
+            metadata: {
+                workflowExecutionId: this.workflowExecutionId,
+                reason,
+                snapshotId: this.snapshotId,
+            },
         });
 
         return this.snapshotId;
@@ -489,17 +529,27 @@ export class AgentExecutor<
         const targetSnapshotId = snapshotId || this.snapshotId;
         if (targetSnapshotId) {
             // TODO: Implement actual snapshot restoration
-            this.executorLogger.debug('Snapshot restored', {
-                snapshotId: targetSnapshotId,
+            this.executorLogger.debug({
+                message: 'Snapshot restored',
+                context: this.constructor.name,
+
+                metadata: {
+                    snapshotId: targetSnapshotId,
+                },
             });
         }
 
         this.isPaused = false;
         this.pauseReason = undefined;
 
-        this.executorLogger.info('Workflow execution resumed', {
-            workflowExecutionId: this.workflowExecutionId,
-            snapshotId: targetSnapshotId,
+        this.executorLogger.log({
+            message: 'Workflow execution resumed',
+            context: this.constructor.name,
+
+            metadata: {
+                workflowExecutionId: this.workflowExecutionId,
+                snapshotId: targetSnapshotId,
+            },
         });
     }
 

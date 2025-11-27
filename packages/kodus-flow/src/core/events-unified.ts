@@ -95,9 +95,15 @@ export class UnifiedEventManager extends EventEmitter {
                     duration: Date.now() - startTime,
                 });
             } catch (error) {
-                this.logger.error('Event emission failed', error as Error, {
-                    eventType,
-                    eventId,
+                this.logger.error({
+                    message: 'Event emission failed',
+                    context: this.constructor.name,
+                    error: error as Error,
+
+                    metadata: {
+                        eventType,
+                        eventId,
+                    },
                 });
 
                 resolve({
@@ -204,7 +210,10 @@ export class UnifiedEventManager extends EventEmitter {
      */
     setObservabilityBus(bus: EventEmitter): void {
         this.observabilityBus = bus;
-        this.logger.debug('Observability bus connected');
+        this.logger.debug({
+            message: 'Observability bus connected',
+            context: this.constructor.name,
+        });
     }
 
     setKernelHandler(handler: {
@@ -219,7 +228,10 @@ export class UnifiedEventManager extends EventEmitter {
             options?: { correlationId?: string },
         ) => Promise<unknown>;
     }): void {
-        this.logger.debug('Kernel handler connected');
+        this.logger.debug({
+            message: 'Kernel handler connected',
+            context: this.constructor.name,
+        });
 
         // Bridge kernel handler with unified events
         if (handler.requestToolExecution && this.config.enableRequestResponse) {
@@ -302,7 +314,11 @@ export class UnifiedEventManager extends EventEmitter {
     private setupEventHandling(): void {
         // Global error handler
         this.on('error', (error) => {
-            this.logger.error('Unified event system error', error);
+            this.logger.error({
+                message: 'Unified event system error',
+                context: this.constructor.name,
+                error: error,
+            });
         });
 
         // Cleanup expired requests periodically
@@ -329,7 +345,14 @@ export class UnifiedEventManager extends EventEmitter {
         }
 
         if (cleanedCount > 0) {
-            this.logger.debug('Cleaned up expired requests', { cleanedCount });
+            this.logger.debug({
+                message: 'Cleaned up expired requests',
+                context: this.constructor.name,
+
+                metadata: {
+                    cleanedCount,
+                },
+            });
         }
     }
 
@@ -363,7 +386,10 @@ export class UnifiedEventManager extends EventEmitter {
         // Remove all listeners
         this.removeAllListeners();
 
-        this.logger.info('Unified event manager cleaned up');
+        this.logger.log({
+            message: 'Unified event manager cleaned up',
+            context: this.constructor.name,
+        });
     }
 }
 

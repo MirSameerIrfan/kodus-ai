@@ -79,9 +79,14 @@ export class StrategyFactory {
         // Register for reuse
         this.strategies.set(strategyKey, strategy);
 
-        this.logger.info('Strategy created', {
-            strategyType,
-            hasConfig: !!config,
+        this.logger.log({
+            message: 'Strategy created',
+            context: this.constructor.name,
+
+            metadata: {
+                strategyType,
+                hasConfig: !!config,
+            },
         });
         return strategy;
     }
@@ -94,7 +99,14 @@ export class StrategyFactory {
         strategy: ReActStrategy | ReWooStrategy | PlanExecuteStrategy,
     ): void {
         this.strategies.set(name, strategy);
-        this.logger.info('Custom strategy registered', { name });
+        this.logger.log({
+            message: 'Custom strategy registered',
+            context: this.constructor.name,
+
+            metadata: {
+                name,
+            },
+        });
     }
 
     /**
@@ -120,7 +132,14 @@ export class StrategyFactory {
     static removeStrategy(name: string): boolean {
         const removed = this.strategies.delete(name);
         if (removed) {
-            this.logger.info('Strategy removed', { name });
+            this.logger.log({
+                message: 'Strategy removed',
+                context: this.constructor.name,
+
+                metadata: {
+                    name,
+                },
+            });
         }
         return removed;
     }
@@ -143,6 +162,9 @@ export class StrategyFactory {
      */
     static clear(): void {
         this.strategies.clear();
-        this.logger.info('All strategies cleared');
+        this.logger.log({
+            message: 'All strategies cleared',
+            context: this.constructor.name,
+        });
     }
 }

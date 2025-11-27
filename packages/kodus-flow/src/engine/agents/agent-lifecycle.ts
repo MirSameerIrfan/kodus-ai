@@ -28,7 +28,10 @@ export class AgentLifecycleHandler {
     };
 
     constructor() {
-        this.logger.info('AgentLifecycleHandler initialized');
+        this.logger.log({
+            message: 'AgentLifecycleHandler initialized',
+            context: this.constructor.name,
+        });
     }
 
     /**
@@ -55,9 +58,15 @@ export class AgentLifecycleHandler {
             }
         } catch (error) {
             this.stats.totalErrors++;
-            this.logger.error('Lifecycle operation failed', error as Error, {
-                eventType: event.type,
-                eventData: event.data,
+            this.logger.error({
+                message: 'Lifecycle operation failed',
+                context: this.constructor.name,
+                error: error as Error,
+
+                metadata: {
+                    eventType: event.type,
+                    eventData: event.data,
+                },
             });
 
             // Create error event
@@ -95,7 +104,15 @@ export class AgentLifecycleHandler {
         const { agentName, tenantId, config, context } = payload;
         const agentKey = `${tenantId}:${agentName}`;
 
-        this.logger.info('Starting agent', { agentName, tenantId });
+        this.logger.log({
+            message: 'Starting agent',
+            context: this.constructor.name,
+
+            metadata: {
+                agentName,
+                tenantId,
+            },
+        });
 
         // Check if agent already exists
         const existing = this.agents.get(agentKey);
@@ -131,10 +148,15 @@ export class AgentLifecycleHandler {
             // Transition to running
             await this.transitionStatus(agentKey, 'running');
 
-            this.logger.info('Agent started successfully', {
-                agentName,
-                tenantId,
-                executionId: entry.executionId,
+            this.logger.log({
+                message: 'Agent started successfully',
+                context: this.constructor.name,
+
+                metadata: {
+                    agentName,
+                    tenantId,
+                    executionId: entry.executionId,
+                },
             });
 
             return agentLifecycleEvents.started({
@@ -162,11 +184,16 @@ export class AgentLifecycleHandler {
         const { agentName, tenantId, reason, force } = payload;
         const agentKey = `${tenantId}:${agentName}`;
 
-        this.logger.info('Stopping agent', {
-            agentName,
-            tenantId,
-            reason,
-            force,
+        this.logger.log({
+            message: 'Stopping agent',
+            context: this.constructor.name,
+
+            metadata: {
+                agentName,
+                tenantId,
+                reason,
+                force,
+            },
         });
 
         const entry = this.agents.get(agentKey);
@@ -178,7 +205,15 @@ export class AgentLifecycleHandler {
         }
 
         if (entry.status === 'stopped') {
-            this.logger.warn('Agent already stopped', { agentName, tenantId });
+            this.logger.warn({
+                message: 'Agent already stopped',
+                context: this.constructor.name,
+
+                metadata: {
+                    agentName,
+                    tenantId,
+                },
+            });
             return createEvent(EVENT_TYPES.AGENT_LIFECYCLE_STOPPED, {
                 agentName,
                 tenantId,
@@ -210,10 +245,15 @@ export class AgentLifecycleHandler {
 
             await this.transitionStatus(agentKey, 'stopped');
 
-            this.logger.info('Agent stopped successfully', {
-                agentName,
-                tenantId,
-                reason,
+            this.logger.log({
+                message: 'Agent stopped successfully',
+                context: this.constructor.name,
+
+                metadata: {
+                    agentName,
+                    tenantId,
+                    reason,
+                },
             });
 
             return createEvent(EVENT_TYPES.AGENT_LIFECYCLE_STOPPED, {
@@ -241,11 +281,16 @@ export class AgentLifecycleHandler {
         const { agentName, tenantId, reason, saveSnapshot = true } = payload;
         const agentKey = `${tenantId}:${agentName}`;
 
-        this.logger.info('Pausing agent', {
-            agentName,
-            tenantId,
-            reason,
-            saveSnapshot,
+        this.logger.log({
+            message: 'Pausing agent',
+            context: this.constructor.name,
+
+            metadata: {
+                agentName,
+                tenantId,
+                reason,
+                saveSnapshot,
+            },
         });
 
         const entry = this.agents.get(agentKey);
@@ -281,10 +326,15 @@ export class AgentLifecycleHandler {
             entry.pausedAt = Date.now();
             await this.transitionStatus(agentKey, 'paused');
 
-            this.logger.info('Agent paused successfully', {
-                agentName,
-                tenantId,
-                snapshotId,
+            this.logger.log({
+                message: 'Agent paused successfully',
+                context: this.constructor.name,
+
+                metadata: {
+                    agentName,
+                    tenantId,
+                    snapshotId,
+                },
             });
 
             return createEvent(EVENT_TYPES.AGENT_LIFECYCLE_PAUSED, {
@@ -313,7 +363,16 @@ export class AgentLifecycleHandler {
         const { agentName, tenantId, snapshotId, context } = payload;
         const agentKey = `${tenantId}:${agentName}`;
 
-        this.logger.info('Resuming agent', { agentName, tenantId, snapshotId });
+        this.logger.log({
+            message: 'Resuming agent',
+            context: this.constructor.name,
+
+            metadata: {
+                agentName,
+                tenantId,
+                snapshotId,
+            },
+        });
 
         const entry = this.agents.get(agentKey);
         if (!entry) {
@@ -337,10 +396,15 @@ export class AgentLifecycleHandler {
             if (entry.executionId && (snapshotId || entry.snapshotId)) {
                 const resumeSnapshotId = snapshotId || entry.snapshotId!;
                 // KernelHandler integration - funcionalidades migradas do ExecutionEngine
-                this.logger.info('Resuming agent from snapshot', {
-                    agentName,
-                    tenantId,
-                    snapshotId: resumeSnapshotId,
+                this.logger.log({
+                    message: 'Resuming agent from snapshot',
+                    context: this.constructor.name,
+
+                    metadata: {
+                        agentName,
+                        tenantId,
+                        snapshotId: resumeSnapshotId,
+                    },
                 });
             }
 
@@ -352,10 +416,15 @@ export class AgentLifecycleHandler {
             entry.pausedAt = undefined;
             await this.transitionStatus(agentKey, 'running');
 
-            this.logger.info('Agent resumed successfully', {
-                agentName,
-                tenantId,
-                snapshotId: snapshotId || entry.snapshotId,
+            this.logger.log({
+                message: 'Agent resumed successfully',
+                context: this.constructor.name,
+
+                metadata: {
+                    agentName,
+                    tenantId,
+                    snapshotId: snapshotId || entry.snapshotId,
+                },
             });
 
             return createEvent(EVENT_TYPES.AGENT_LIFECYCLE_RESUMED, {
@@ -383,7 +452,16 @@ export class AgentLifecycleHandler {
         const { agentName, tenantId, schedule, config } = payload;
         const agentKey = `${tenantId}:${agentName}`;
 
-        this.logger.info('Scheduling agent', { agentName, tenantId, schedule });
+        this.logger.log({
+            message: 'Scheduling agent',
+            context: this.constructor.name,
+
+            metadata: {
+                agentName,
+                tenantId,
+                schedule,
+            },
+        });
 
         // Create or update registry entry
         const entry: AgentRegistryEntry = this.agents.get(agentKey) || {
@@ -410,24 +488,31 @@ export class AgentLifecycleHandler {
             try {
                 await this.executeScheduledAgent(agentKey);
             } catch (error) {
-                this.logger.error(
-                    'Scheduled agent execution failed',
-                    error as Error,
-                    {
+                this.logger.error({
+                    message: 'Scheduled agent execution failed',
+                    context: this.constructor.name,
+                    error: error as Error,
+
+                    metadata: {
                         agentName,
                         tenantId,
                     },
-                );
+                });
             }
         }, scheduleTime - Date.now());
 
         await this.transitionStatus(agentKey, 'scheduled');
         this.agents.set(agentKey, entry);
 
-        this.logger.info('Agent scheduled successfully', {
-            agentName,
-            tenantId,
-            scheduleTime: new Date(scheduleTime),
+        this.logger.log({
+            message: 'Agent scheduled successfully',
+            context: this.constructor.name,
+
+            metadata: {
+                agentName,
+                tenantId,
+                scheduleTime: new Date(scheduleTime),
+            },
         });
 
         return createEvent(EVENT_TYPES.AGENT_LIFECYCLE_SCHEDULED, {
@@ -446,9 +531,14 @@ export class AgentLifecycleHandler {
         const entry = this.agents.get(agentKey);
         if (!entry) return;
 
-        this.logger.info('Executing scheduled agent', {
-            agentName: entry.agentName,
-            tenantId: entry.tenantId,
+        this.logger.log({
+            message: 'Executing scheduled agent',
+            context: this.constructor.name,
+
+            metadata: {
+                agentName: entry.agentName,
+                tenantId: entry.tenantId,
+            },
         });
 
         // Start agent - create event manually since we don't have a specific start event type
@@ -552,13 +642,18 @@ export class AgentLifecycleHandler {
         });
 
         // Log the status change and emit event
-        this.logger.debug('Agent status changed', {
-            agentName: entry.agentName,
-            tenantId: entry.tenantId,
-            from: previousStatus,
-            to: newStatus,
-            reason,
-            eventId: statusEvent.type,
+        this.logger.debug({
+            message: 'Agent status changed',
+            context: this.constructor.name,
+
+            metadata: {
+                agentName: entry.agentName,
+                tenantId: entry.tenantId,
+                from: previousStatus,
+                to: newStatus,
+                reason,
+                eventId: statusEvent.type,
+            },
         });
     }
 
@@ -569,12 +664,14 @@ export class AgentLifecycleHandler {
     private parseCronExpression(cronExpr: string): number {
         // Simplified: just handle basic time patterns
         // In production, use node-cron or similar library
-        this.logger.warn(
-            'Cron parsing not fully implemented, using 1 minute delay',
-            {
+        this.logger.warn({
+            message: 'Cron parsing not fully implemented, using 1 minute delay',
+            context: this.constructor.name,
+
+            metadata: {
                 expression: cronExpr,
             },
-        );
+        });
         return Date.now() + 60000; // 1 minute
     }
 
@@ -636,7 +733,10 @@ export class AgentLifecycleHandler {
      * Cleanup all agents and resources
      */
     async dispose(): Promise<void> {
-        this.logger.info('Disposing AgentLifecycleHandler');
+        this.logger.log({
+            message: 'Disposing AgentLifecycleHandler',
+            context: this.constructor.name,
+        });
 
         // Stop all running agents
         for (const [agentKey, entry] of this.agents) {
@@ -655,19 +755,24 @@ export class AgentLifecycleHandler {
                         ts: Date.now(),
                     });
                 } catch (error) {
-                    this.logger.error(
-                        'Error stopping agent during disposal',
-                        error as Error,
-                        {
+                    this.logger.error({
+                        message: 'Error stopping agent during disposal',
+                        context: this.constructor.name,
+                        error: error as Error,
+
+                        metadata: {
                             agentKey,
                         },
-                    );
+                    });
                 }
             }
         }
 
         this.agents.clear();
-        this.logger.info('AgentLifecycleHandler disposed');
+        this.logger.log({
+            message: 'AgentLifecycleHandler disposed',
+            context: this.constructor.name,
+        });
     }
 }
 

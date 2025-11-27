@@ -51,8 +51,13 @@ export class StorageMemoryAdapter implements MemoryAdapter {
         });
 
         this.isInitialized = true;
-        logger.info('StorageMemoryAdapter initialized', {
-            adapterType: this.config.adapterType,
+        logger.log({
+            message: 'StorageMemoryAdapter initialized',
+            context: 'initialize',
+
+            metadata: {
+                adapterType: this.config.adapterType,
+            },
         });
     }
 
@@ -76,7 +81,15 @@ export class StorageMemoryAdapter implements MemoryAdapter {
 
         await this.storage!.store(storageItem);
         this.inMemoryIndex.set(storageItem.id, storageItem);
-        logger.debug('Memory item stored', { id: item.id, type: item.type });
+        logger.debug({
+            message: 'Memory item stored',
+            context: 'store',
+
+            metadata: {
+                id: item.id,
+                type: item.type,
+            },
+        });
     }
 
     async retrieve(id: string): Promise<MemoryItem | null> {
@@ -182,7 +195,14 @@ export class StorageMemoryAdapter implements MemoryAdapter {
 
         const deleted = await this.storage!.delete(id);
         if (deleted) {
-            logger.debug('Memory item deleted', { id });
+            logger.debug({
+                message: 'Memory item deleted',
+                context: 'delete',
+
+                metadata: {
+                    id,
+                },
+            });
             this.inMemoryIndex.delete(id);
         }
         return deleted;
@@ -193,7 +213,10 @@ export class StorageMemoryAdapter implements MemoryAdapter {
 
         await this.storage!.clear();
         this.inMemoryIndex.clear();
-        logger.info('All memory items cleared');
+        logger.log({
+            message: 'All memory items cleared',
+            context: 'clear',
+        });
     }
 
     async getStats(): Promise<{
@@ -222,7 +245,10 @@ export class StorageMemoryAdapter implements MemoryAdapter {
             await this.storage.cleanup();
         }
         this.isInitialized = false;
-        logger.info('StorageMemoryAdapter cleaned up');
+        logger.log({
+            message: 'StorageMemoryAdapter cleaned up',
+            context: 'cleanup',
+        });
     }
 
     private async ensureInitialized(): Promise<void> {
