@@ -4,7 +4,7 @@
  */
 import { CodeReviewPipelineStrategyEE } from '@/ee/codeReview/strategies/code-review-pipeline.strategy.ee';
 import { environment } from '@/ee/configs/environment';
-import { SimpleLogger } from '@kodus/flow/dist/observability/logger';
+import { createLogger } from '@kodus/flow';
 import { Provider } from '@nestjs/common';
 import { CodeReviewPipelineContext } from '../adapters/services/codeBase/codeReviewPipeline/context/code-review-pipeline.context';
 import { CodeReviewPipelineStrategy } from '../adapters/services/codeBase/codeReviewPipeline/strategies/code-review-pipeline.strategy';
@@ -18,11 +18,11 @@ export const codeReviewPipelineProvider: Provider = {
     useFactory: (
         ceStrategy: CodeReviewPipelineStrategy,
         eeStrategy: CodeReviewPipelineStrategyEE,
-        logger: SimpleLogger,
     ): IPipeline<CodeReviewPipelineContext> => {
         const isCloud = environment.API_CLOUD_MODE;
         const strategy = isCloud ? eeStrategy : ceStrategy;
 
+        const logger = createLogger('CodeReviewPipelineProvider');
         logger.log({
             message: `🔁 Modo de execução: ${isCloud ? 'Cloud (EE)' : 'Self-Hosted (CE)'}`,
             context: 'CodeReviewPipelineProvider',
