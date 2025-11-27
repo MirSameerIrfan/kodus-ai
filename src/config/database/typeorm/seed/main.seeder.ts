@@ -21,7 +21,7 @@ async function seedAutomation(dataSource: DataSource) {
             ],
             status: true,
             automationType: AutomationType.AUTOMATION_ISSUES_DETAILS,
-            level: AutomationLevel.TEAM
+            level: AutomationLevel.TEAM,
         },
         {
             name: 'Creation of Detailed Tasks with Acceptance Criteria',
@@ -38,7 +38,7 @@ async function seedAutomation(dataSource: DataSource) {
             ],
             status: true,
             automationType: AutomationType.AUTOMATION_IMPROVE_TASK,
-            level: AutomationLevel.TEAM
+            level: AutomationLevel.TEAM,
         },
         {
             name: 'Tracking of Progress and Delays in Activities',
@@ -52,7 +52,7 @@ async function seedAutomation(dataSource: DataSource) {
             antiPatterns: [],
             status: true,
             automationType: AutomationType.AUTOMATION_INTERACTION_MONITOR,
-            level: AutomationLevel.TEAM
+            level: AutomationLevel.TEAM,
         },
         {
             name: 'Weekly Progress Report and Workflow Insights',
@@ -62,7 +62,7 @@ async function seedAutomation(dataSource: DataSource) {
             antiPatterns: [],
             status: true,
             automationType: AutomationType.AUTOMATION_TEAM_PROGRESS,
-            level: AutomationLevel.TEAM
+            level: AutomationLevel.TEAM,
         },
         {
             name: 'Ensure Tasks Have Assignees at the Beginning of WIP',
@@ -72,7 +72,7 @@ async function seedAutomation(dataSource: DataSource) {
             antiPatterns: ['Lack of defined WIP Limit'],
             status: false,
             automationType: AutomationType.AUTOMATION_ENSURE_ASSIGNEES,
-            level: AutomationLevel.TEAM
+            level: AutomationLevel.TEAM,
         },
         {
             name: 'Ensure Board Update through Commit Validation',
@@ -82,7 +82,7 @@ async function seedAutomation(dataSource: DataSource) {
             antiPatterns: ['Commits not linked to an issue'],
             status: false,
             automationType: AutomationType.AUTOMATION_COMMIT_VALIDATION,
-            level: AutomationLevel.TEAM
+            level: AutomationLevel.TEAM,
         },
         {
             name: 'Monitoring and Warning of WIP limits',
@@ -92,7 +92,7 @@ async function seedAutomation(dataSource: DataSource) {
             antiPatterns: ['Lack of defined WIP Limit'],
             status: false,
             automationType: AutomationType.AUTOMATION_WIP_LIMITS,
-            level: AutomationLevel.TEAM
+            level: AutomationLevel.TEAM,
         },
         {
             name: 'Identification and Warning of Constraints in Waiting Columns',
@@ -102,7 +102,7 @@ async function seedAutomation(dataSource: DataSource) {
             antiPatterns: ['Lack of defined WIP Limit'],
             status: false,
             automationType: AutomationType.AUTOMATION_WAITING_CONSTRAINTS,
-            level: AutomationLevel.TEAM
+            level: AutomationLevel.TEAM,
         },
         {
             name: 'Task Breakdown Assistance',
@@ -116,7 +116,7 @@ async function seedAutomation(dataSource: DataSource) {
             antiPatterns: ['Inconsistency in Issue Sizes'],
             status: false,
             automationType: AutomationType.AUTOMATION_TASK_BREAKDOWN,
-            level: AutomationLevel.TEAM
+            level: AutomationLevel.TEAM,
         },
         {
             name: 'User-requested Task Breakdown Assistance',
@@ -130,7 +130,7 @@ async function seedAutomation(dataSource: DataSource) {
             antiPatterns: ['Inconsistency in Issue Sizes'],
             status: false,
             automationType: AutomationType.AUTOMATION_USER_REQUESTED_BREAKDOWN,
-            level: AutomationLevel.TEAM
+            level: AutomationLevel.TEAM,
         },
         {
             name: 'Monitoring Retroactive Movement of Tasks on the Board',
@@ -140,7 +140,7 @@ async function seedAutomation(dataSource: DataSource) {
             antiPatterns: ['Team returning issues on the board'],
             status: false,
             automationType: AutomationType.AUTOMATION_RETROACTIVE_MOVEMENT,
-            level: AutomationLevel.TEAM
+            level: AutomationLevel.TEAM,
         },
         {
             name: 'Daily Check-In for Team Status Updates',
@@ -157,7 +157,7 @@ async function seedAutomation(dataSource: DataSource) {
             ],
             status: true,
             automationType: AutomationType.AUTOMATION_DAILY_CHECKIN,
-            level: AutomationLevel.TEAM
+            level: AutomationLevel.TEAM,
         },
         {
             name: 'Sprint Retro Check-In for Team Status Updates',
@@ -174,7 +174,7 @@ async function seedAutomation(dataSource: DataSource) {
             ],
             status: true,
             automationType: AutomationType.AUTOMATION_SPRINT_RETRO,
-            level: AutomationLevel.TEAM
+            level: AutomationLevel.TEAM,
         },
         {
             name: 'Executive Check-IN for Team information overview',
@@ -186,35 +186,28 @@ async function seedAutomation(dataSource: DataSource) {
                 'Highlight Recent Changes',
                 'Identify Impediments',
             ],
-            antiPatterns: [
-                'Summarize tasks that have changed',
-            ],
+            antiPatterns: ['Summarize tasks that have changed'],
             status: true,
             automationType: AutomationType.AUTOMATION_EXECUTIVE_CHECKIN,
-            level: AutomationLevel.ORGANIZATION
+            level: AutomationLevel.ORGANIZATION,
         },
         {
             name: 'Automated Code Review',
             description:
                 'Whenever a Pull Request is opened, Kody will perform an automated code review, highlighting improvements, issues, and suggestions to ensure code quality.',
-            tags: [
-                'Code Review',
-            ],
-            antiPatterns: [
-                'Code Review',
-            ],
+            tags: ['Code Review'],
+            antiPatterns: ['Code Review'],
             status: true,
             automationType: AutomationType.AUTOMATION_CODE_REVIEW,
-            level: AutomationLevel.TEAM
+            level: AutomationLevel.TEAM,
         },
-
     ];
 
     const repository = await dataSource.getRepository(AutomationModel);
 
     for (const dataItem of anotherTableDataList) {
         const existing = await repository.findOne({
-            where: { name: dataItem.name },
+            where: { automationType: dataItem.automationType },
         });
 
         if (!existing) {
