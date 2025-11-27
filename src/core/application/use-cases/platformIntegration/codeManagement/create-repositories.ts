@@ -1,26 +1,25 @@
-import { createLogger } from "@kodus/flow";
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
-import { BadRequestException, Inject } from '@nestjs/common';
-import { REQUEST } from '@nestjs/core';
-import { Request } from 'express';
-import { ActiveCodeManagementTeamAutomationsUseCase } from '../../teamAutomation/active-code-manegement-automations.use-case';
-import {
-    ITeamService,
-    TEAM_SERVICE_TOKEN,
-} from '@/core/domain/team/contracts/team.service.contract';
 import { STATUS } from '@/config/types/database/status.type';
-import { Injectable } from '@nestjs/common';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { CreateOrUpdateParametersUseCase } from '../../parameters/create-or-update-use-case';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { ActiveCodeReviewAutomationUseCase } from '../../teamAutomation/active-code-review-automation.use-case';
+import {
+    ITeamService,
+    TEAM_SERVICE_TOKEN,
+} from '@/core/domain/team/contracts/team.service.contract';
+import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
+import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
+import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+import { createLogger } from '@kodus/flow';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
 import { SyncSelectedRepositoriesKodyRulesUseCase } from '../../kodyRules/sync-selected-repositories.use-case';
+import { CreateOrUpdateParametersUseCase } from '../../parameters/create-or-update-use-case';
 import { BackfillHistoricalPRsUseCase } from '../../pullRequests/backfill-historical-prs.use-case';
+import { ActiveCodeManagementTeamAutomationsUseCase } from '../../teamAutomation/active-code-manegement-automations.use-case';
+import { ActiveCodeReviewAutomationUseCase } from '../../teamAutomation/active-code-review-automation.use-case';
 
 @Injectable()
 export class CreateRepositoriesUseCase implements IUseCase {
@@ -39,7 +38,7 @@ export class CreateRepositoriesUseCase implements IUseCase {
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };
-        }
+        },
     ) {}
 
     public async execute(params: any) {
@@ -96,9 +95,11 @@ export class CreateRepositoriesUseCase implements IUseCase {
                 this.savePlatformConfig(teamId, organizationId);
             }
 
-            const selectedRepositories = params.repositories?.filter(
-                (repo: any) => repo.selected === true || repo.isSelected === true,
-            ) || [];
+            const selectedRepositories =
+                params.repositories?.filter(
+                    (repo: any) =>
+                        repo.selected === true || repo.isSelected === true,
+                ) || [];
 
             if (selectedRepositories.length > 0) {
                 setImmediate(() => {
@@ -108,11 +109,16 @@ export class CreateRepositoriesUseCase implements IUseCase {
                                 organizationId,
                                 teamId,
                             },
-                            repositories: selectedRepositories.map((r: any) => ({
-                                id: String(r.id),
-                                name: r.name,
-                                fullName: r.fullName || r.full_name || `${r.organizationName || ''}/${r.name}`,
-                            })),
+                            repositories: selectedRepositories.map(
+                                (r: any) => ({
+                                    id: String(r.id),
+                                    name: r.name,
+                                    fullName:
+                                        r.fullName ||
+                                        r.full_name ||
+                                        `${r.organizationName || ''}/${r.name}`,
+                                }),
+                            ),
                         })
                         .catch((error) => {
                             this.logger.error({

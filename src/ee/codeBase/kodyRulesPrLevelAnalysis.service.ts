@@ -41,7 +41,6 @@ import { ObservabilityService } from '@/core/infrastructure/adapters/services/lo
 import { ExternalReferenceLoaderService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceLoader.service';
 import { FileContextAugmentationService } from '@/core/infrastructure/adapters/services/context/file-context-augmentation.service';
 import { ContextAugmentationsMap } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
-import { ContextReferenceService } from '@/core/infrastructure/adapters/services/context/context-reference.service';
 import type { ContextDependency } from '@context-os-core/interfaces';
 import { KodyRuleDependencyService } from '@/core/infrastructure/adapters/services/kodyRules/kodyRulesDependency.service';
 

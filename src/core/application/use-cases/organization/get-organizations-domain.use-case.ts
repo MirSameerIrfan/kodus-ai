@@ -3,7 +3,6 @@ import {
     IOrganizationService,
     ORGANIZATION_SERVICE_TOKEN,
 } from '@/core/domain/organization/contracts/organization.service.contract';
-import { OrganizationEntity } from '@/core/domain/organization/entities/organization.entity';
 import { IOrganization } from '@/core/domain/organization/interfaces/organization.interface';
 import {
     IOrganizationParametersService,

@@ -1,9 +1,13 @@
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
+import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { OrganizationModel } from './organization.model';
 
 @Entity('organization_parameters')
+@Index('IDX_org_params_key_org', ['configKey', 'organization'], {
+    concurrent: true,
+})
+@Index('IDX_org_params_config_value_gin', { synchronize: false }) // Typeorm does not support GIN indexes natively, so we set synchronize to false and create it manually in migrations
 export class OrganizationParametersModel extends CoreModel {
     @Column({
         type: 'enum',
@@ -14,7 +18,10 @@ export class OrganizationParametersModel extends CoreModel {
     @Column({ type: 'jsonb' })
     configValue: any;
 
-    @ManyToOne(() => OrganizationModel, (organization) => organization.organizationParameters)
+    @ManyToOne(
+        () => OrganizationModel,
+        (organization) => organization.organizationParameters,
+    )
     @JoinColumn({ name: 'organization_id', referencedColumnName: 'uuid' })
     organization: OrganizationModel;
 

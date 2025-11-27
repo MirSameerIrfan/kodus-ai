@@ -37,7 +37,6 @@ import { KodyRulesModule } from './kodyRules.module';
 import { LogModule } from './log.module';
 import { MSTeamsModule } from './msTeams.module';
 import { OrganizationModule } from './organization.module';
-import { OrganizationAutomationModule } from './organizationAutomation.module';
 import { OrganizationParametersModule } from './organizationParameters.module';
 import { ParametersModule } from './parameters.module';
 import { PermissionsModule } from './permissions.module';
@@ -90,7 +89,6 @@ import { WebhookLogModule } from './webhookLog.module';
         ProfileConfigModule,
         ParametersModule,
         OrganizationParametersModule,
-        OrganizationAutomationModule,
         CodebaseModule,
         SegmentModule,
         KodyRulesModule,

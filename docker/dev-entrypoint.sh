@@ -8,6 +8,12 @@ if [ ! -x node_modules/.bin/nest ]; then
   yarn install --frozen-lockfile
 fi
 
+echo "▶ Running Migrations..."
+npm run migration:run:internal
+
+echo "▶ Running Seeds..."
+npm run seed:internal
+
 [ -d ".yalc/@kodus/flow" ] && echo "▶ yalc detected: using .yalc/@kodus/flow"
 
 echo "▶ starting nodemon…"

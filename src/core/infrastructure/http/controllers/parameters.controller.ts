@@ -1,7 +1,5 @@
 import { CreateOrUpdateParametersUseCase } from '@/core/application/use-cases/parameters/create-or-update-use-case';
 import { FindByKeyParametersUseCase } from '@/core/application/use-cases/parameters/find-by-key-use-case';
-import { ListCodeReviewAutomationLabelsUseCase } from '@/core/application/use-cases/parameters/list-code-review-automation-labels-use-case';
-import { ListCodeReviewV2DefaultsUseCase } from '@/core/application/use-cases/parameters/list-code-review-v2-defaults.use-case';
 import { UpdateCodeReviewParameterRepositoriesUseCase } from '@/core/application/use-cases/parameters/update-code-review-parameter-repositories-use-case';
 import { UpdateOrCreateCodeReviewParameterUseCase } from '@/core/application/use-cases/parameters/update-or-create-code-review-parameter-use-case';
 
@@ -21,8 +19,6 @@ import { ListCodeReviewAutomationLabelsWithStatusUseCase } from '@/core/applicat
 
 import { CreateOrUpdateCodeReviewParameterDto } from '../dtos/create-or-update-code-review-parameter.dto';
 import { GenerateKodusConfigFileUseCase } from '@/core/application/use-cases/parameters/generate-kodus-config-file.use-case';
-import { CopyCodeReviewParameterDTO } from '../dtos/copy-code-review-parameter.dto';
-import { CopyCodeReviewParameterUseCase } from '@/core/application/use-cases/parameters/copy-code-review-parameter.use-case';
 import { DeleteRepositoryCodeReviewParameterDto } from '../dtos/delete-repository-code-review-parameter.dto';
 import { DeleteRepositoryCodeReviewParameterUseCase } from '@/core/application/use-cases/parameters/delete-repository-code-review-parameter.use-case';
 import { PreviewPrSummaryDto } from '../dtos/preview-pr-summary.dto';
@@ -40,13 +36,10 @@ import {
     Action,
     ResourceType,
 } from '@/core/domain/permissions/enums/permissions.enum';
-import { MigrateCodeReviewParametersUseCase } from '@/core/application/use-cases/parameters/migrate-code-review-parameters.use-case'; // TODO: Remove once all orgs have migrated
 import { GetDefaultConfigUseCase } from '@/core/application/use-cases/parameters/get-default-config.use-case';
 import { GetCodeReviewParameterUseCase } from '@/core/application/use-cases/parameters/get-code-review-parameter.use-case';
 import { REQUEST } from '@nestjs/core';
 import { UserRequest } from '@/config/types/http/user-request.type';
-import { UpdateOrCreateIssuesParameterBodyDto } from '../dtos/create-or-update-issues-parameter.dto';
-import { UpdateOrCreateIssuesParameterUseCase } from '@/core/application/use-cases/parameters/update-or-create-issues-parameter-use-case';
 
 @Controller('parameters')
 export class ParametersController {
@@ -57,17 +50,13 @@ export class ParametersController {
         private readonly createOrUpdateParametersUseCase: CreateOrUpdateParametersUseCase,
         private readonly findByKeyParametersUseCase: FindByKeyParametersUseCase,
         private readonly updateOrCreateCodeReviewParameterUseCase: UpdateOrCreateCodeReviewParameterUseCase,
-        private readonly updateOrCreateIssuesParameterUseCase: UpdateOrCreateIssuesParameterUseCase,
         private readonly updateCodeReviewParameterRepositoriesUseCase: UpdateCodeReviewParameterRepositoriesUseCase,
         private readonly generateKodusConfigFileUseCase: GenerateKodusConfigFileUseCase,
-        private readonly copyCodeReviewParameterUseCase: CopyCodeReviewParameterUseCase,
         private readonly deleteRepositoryCodeReviewParameterUseCase: DeleteRepositoryCodeReviewParameterUseCase,
         private readonly previewPrSummaryUseCase: PreviewPrSummaryUseCase,
-        private readonly listCodeReviewV2DefaultsUseCase: ListCodeReviewV2DefaultsUseCase,
         private readonly listCodeReviewAutomationLabelsWithStatusUseCase: ListCodeReviewAutomationLabelsWithStatusUseCase,
         private readonly getDefaultConfigUseCase: GetDefaultConfigUseCase,
         private readonly getCodeReviewParameterUseCase: GetCodeReviewParameterUseCase,
-        private readonly migrateCodeReviewParametersUseCase: MigrateCodeReviewParametersUseCase, // TODO: Remove once all orgs have migrated
     ) {}
 
     //#region Parameters
@@ -103,13 +92,6 @@ export class ParametersController {
         return await this.findByKeyParametersUseCase.execute(key, { teamId });
     }
 
-    @Get('/list-all')
-    @UseGuards(PolicyGuard)
-    @CheckPolicies(
-        checkPermissions(Action.Read, ResourceType.CodeReviewSettings),
-    )
-    public async listAll() {}
-
     //endregion
     //#region Code review routes
 
@@ -128,15 +110,6 @@ export class ParametersController {
             teamId,
             repositoryId,
         });
-    }
-
-    @Get('/list-code-review-v2-defaults')
-    @UseGuards(PolicyGuard)
-    @CheckPolicies(
-        checkPermissions(Action.Read, ResourceType.CodeReviewSettings),
-    )
-    public async listCodeReviewV2Defaults() {
-        return this.listCodeReviewV2DefaultsUseCase.execute();
     }
 
     @Post('/create-or-update-code-review')
@@ -216,27 +189,6 @@ export class ParametersController {
         return response.send(yamlString);
     }
 
-    @Post('/copy-code-review-parameter')
-    @UseGuards(PolicyGuard)
-    @CheckPolicies(
-        checkRepoPermissions(Action.Read, ResourceType.CodeReviewSettings, {
-            key: {
-                body: 'sourceRepositoryId',
-            },
-        }),
-        checkRepoPermissions(Action.Create, ResourceType.CodeReviewSettings, {
-            key: {
-                body: 'targetRepositoryId',
-            },
-        }),
-    )
-    public async copyCodeReviewParameter(
-        @Body()
-        body: CopyCodeReviewParameterDTO,
-    ) {
-        return this.copyCodeReviewParameterUseCase.execute(body);
-    }
-
     @Post('/delete-repository-code-review-parameter')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
@@ -264,15 +216,5 @@ export class ParametersController {
         body: PreviewPrSummaryDto,
     ) {
         return this.previewPrSummaryUseCase.execute(body);
-    }
-
-    @Post('/create-or-update-issues-config')
-    @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Create, ResourceType.Issues))
-    public async updateOrCreateIssuesParameter(
-        @Body()
-        body: UpdateOrCreateIssuesParameterBodyDto,
-    ) {
-        return await this.updateOrCreateIssuesParameterUseCase.execute(body);
     }
 }

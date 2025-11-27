@@ -1,14 +1,16 @@
-import { createLogger } from "@kodus/flow";
-import { Injectable, Inject, BadRequestException } from '@nestjs/common';
+import { createLogger } from '@kodus/flow';
+import { BadRequestException, Injectable } from '@nestjs/common';
 
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 
 @Injectable()
 export class GetWebhookStatusUseCase implements IUseCase {
     private readonly logger = createLogger(GetWebhookStatusUseCase.name);
-    constructor(private readonly codeManagementService: CodeManagementService) {}
+    constructor(
+        private readonly codeManagementService: CodeManagementService,
+    ) {}
 
     public async execute(params: {
         organizationAndTeamData: OrganizationAndTeamData;

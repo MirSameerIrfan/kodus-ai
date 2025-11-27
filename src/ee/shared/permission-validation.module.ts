@@ -1,10 +1,13 @@
-import { Module, forwardRef } from '@nestjs/common';
 import { LicenseModule } from '@/ee/license/license.module';
 import { OrganizationParametersModule } from '@/modules/organizationParameters.module';
+import { Module, forwardRef } from '@nestjs/common';
 import { PermissionValidationService } from './services/permissionValidation.service';
 
 @Module({
-    imports: [LicenseModule, forwardRef(() => OrganizationParametersModule)],
+    imports: [
+        forwardRef(() => LicenseModule),
+        forwardRef(() => OrganizationParametersModule),
+    ],
     providers: [PermissionValidationService],
     exports: [PermissionValidationService],
 })

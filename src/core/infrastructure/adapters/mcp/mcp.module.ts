@@ -1,17 +1,17 @@
-import { Module, DynamicModule, Provider, forwardRef } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { McpController } from './controllers/mcp.controller';
-import { McpServerService } from './services/mcp-server.service';
-import { McpEnabledGuard } from './guards/mcp-enabled.guard';
-import { PlatformIntegrationModule } from '../../../../modules/platformIntegration.module';
-import { CodeManagementTools, KodyRulesTools } from './tools';
-import { MCPManagerService } from './services/mcp-manager.service';
-import { JwtModule } from '@nestjs/jwt';
-import { KodyRulesModule } from '@/modules/kodyRules.module';
-import { KodyIssuesTools } from './tools/kodyIssues.tools';
-import { IssuesModule } from '@/modules/issues.module';
 import { PermissionValidationModule } from '@/ee/shared/permission-validation.module';
+import { IssuesModule } from '@/modules/issues.module';
+import { KodyRulesModule } from '@/modules/kodyRules.module';
 import { PullRequestsModule } from '@/modules/pullRequests.module';
+import { DynamicModule, Module, Provider, forwardRef } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+import { PlatformIntegrationModule } from '../../../../modules/platformIntegration.module';
+import { McpController } from './controllers/mcp.controller';
+import { McpEnabledGuard } from './guards/mcp-enabled.guard';
+import { MCPManagerService } from './services/mcp-manager.service';
+import { McpServerService } from './services/mcp-server.service';
+import { CodeManagementTools, KodyRulesTools } from './tools';
+import { KodyIssuesTools } from './tools/kodyIssues.tools';
 
 @Module({})
 export class McpModule {
@@ -31,7 +31,10 @@ export class McpModule {
         exports.push(MCPManagerService);
 
         // Always import required modules for MCPManagerService dependencies
-        imports.push(JwtModule, PermissionValidationModule);
+        imports.push(
+            JwtModule,
+            forwardRef(() => PermissionValidationModule),
+        );
 
         if (isEnabled) {
             imports.push(

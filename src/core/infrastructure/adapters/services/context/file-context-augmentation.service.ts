@@ -85,7 +85,10 @@ export class FileContextAugmentationService {
         kodyRule?: Partial<IKodyRule>,
     ) {
         try {
-            const baseOverrides = this.getBasePromptOverrides(context);
+            const baseOverrides = this.getBasePromptOverrides(
+                context,
+                dependencies,
+            );
 
             let sandboxEvidences: ContextEvidence[] = [];
             const agentResult = await this.contextEvidenceAgentProvider.execute(
@@ -94,7 +97,7 @@ export class FileContextAugmentationService {
                     file,
                     dependencies,
                     promptOverrides: baseOverrides,
-                    repoContext: this.buildRepositoryContext(context),
+                    additionalContext: this.buildAdditionalContext(context),
                     kodyRule: kodyRule,
                 },
             );
@@ -166,6 +169,7 @@ export class FileContextAugmentationService {
         files: FileChange[],
     ): Record<string, ContextAugmentationsMap> {
         const augmentationsMap: Record<string, ContextAugmentationsMap> = {};
+
         results.forEach((result, index) => {
             const file = files[index];
             if (!file || !result?.sandboxEvidences?.length) {
@@ -177,6 +181,7 @@ export class FileContextAugmentationService {
                 augmentationsMap[file.filename] = fileAugmentations;
             }
         });
+
         return augmentationsMap;
     }
 
@@ -306,45 +311,71 @@ export class FileContextAugmentationService {
 
     private getBasePromptOverrides(
         context: CodeReviewPipelineContext,
+        dependencies: ContextMCPDependency[],
     ): CodeReviewConfig['v2PromptOverrides'] | undefined {
-        return context.codeReviewConfig?.v2PromptOverrides;
+        const allOverrides = context.codeReviewConfig?.v2PromptOverrides;
+
+        if (!allOverrides || !dependencies?.length) {
+            return allOverrides;
+        }
+
+        const filteredOverrides: any = {};
+        const uniquePathKeys = [
+            ...new Set(
+                dependencies.map((d) => d.pathKey).filter(Boolean) as string[],
+            ),
+        ];
+
+        if (uniquePathKeys.length === 0) {
+            return {};
+        }
+
+        for (const pathKey of uniquePathKeys) {
+            const path = pathKey.replace(/^v2PromptOverrides\./, '').split('.');
+
+            const getValue = (obj: any, pathArr: string[]) =>
+                pathArr.reduce((acc, key) => acc && acc[key], obj);
+
+            const value = getValue(allOverrides, path);
+
+            if (value !== undefined) {
+                let current = filteredOverrides;
+                for (let i = 0; i < path.length - 1; i++) {
+                    const key = path[i];
+                    if (!current[key]) {
+                        current[key] = {};
+                    }
+                    current = current[key];
+                }
+                current[path[path.length - 1]] = value;
+            }
+        }
+
+        return Object.keys(filteredOverrides).length
+            ? (filteredOverrides as CodeReviewConfig['v2PromptOverrides'])
+            : undefined;
     }
 
-    private buildRepositoryContext(context: CodeReviewPipelineContext): string {
-        const lines: string[] = [];
-        const repo = context.repository;
+    private buildAdditionalContext(context: CodeReviewPipelineContext): any {
+        const { repository, pullRequest, correlationId } = context;
 
-        if (repo) {
-            const repoName = repo.fullName ?? repo.name ?? repo.id ?? 'unknown';
-            lines.push(`- Repository: ${repoName}`);
-            lines.push(`- Current branch: ${context.branch ?? 'unknown'}`);
-        }
-
-        const pr = context.pullRequest;
-        if (pr) {
-            if (pr.number !== undefined) {
-                lines.push(`- Pull Request #: ${pr.number}`);
-            }
-            if (pr.title) {
-                lines.push(`- Pull Request title: ${pr.title}`);
-            }
-            if (pr.base?.ref) {
-                lines.push(`- Pull Request base branch: ${pr.base.ref}`);
-            }
-        }
-
-        if (context.organizationAndTeamData?.organizationId) {
-            lines.push(
-                `- Organization ID: ${context.organizationAndTeamData.organizationId}`,
-            );
-        }
-        if (context.correlationId) {
-            lines.push(`- Correlation ID: ${context.correlationId}`);
-        }
-
-        return lines.length
-            ? lines.join('\n')
-            : '- Repository metadata not provided.';
+        return {
+            repository: {
+                name:
+                    repository?.fullName ?? repository?.name ?? repository?.id,
+                currentBranch: context.branch,
+            },
+            pullRequest: {
+                number: pullRequest?.number,
+                title: pullRequest?.title,
+                description: pullRequest?.body,
+                additions: pullRequest?.stats?.total_additions,
+                deletions: pullRequest?.stats?.total_deletions,
+                baseBranch: pullRequest?.base?.ref,
+                stats: pullRequest?.stats,
+            },
+            correlationId,
+        };
     }
 
     private normalizeProviderToolKey(

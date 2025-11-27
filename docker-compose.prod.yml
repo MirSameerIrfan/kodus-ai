@@ -4,7 +4,6 @@ services:
         container_name: ${CONTAINER_NAME}
         volumes:
             - log_volume:/app/logs
-            - ./certs:/usr/src/app/certs:ro
         logging:
             driver: json-file
             options:
