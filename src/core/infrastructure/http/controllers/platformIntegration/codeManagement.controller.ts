@@ -55,7 +55,10 @@ export class CodeManagementController {
     @Get('/repositories/org')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Read, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     public async getRepositories(
         @Query()
@@ -70,7 +73,12 @@ export class CodeManagementController {
 
     @Post('/auth-integration')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Create, ResourceType.GitSettings))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Create,
+            resource: ResourceType.GitSettings,
+        }),
+    )
     public async authIntegrationToken(@Body() body: any) {
         return this.createIntegrationUseCase.execute(body);
     }
@@ -78,7 +86,10 @@ export class CodeManagementController {
     @Post('/repositories')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Create, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Create,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     public async createRepositories(
         @Body()
@@ -93,14 +104,24 @@ export class CodeManagementController {
 
     @Get('/organization-members')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Read, ResourceType.UserSettings))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.UserSettings,
+        }),
+    )
     public async getOrganizationMembers() {
         return this.getCodeManagementMemberListUseCase.execute();
     }
 
     @Get('/get-prs')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Read, ResourceType.PullRequests))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.PullRequests,
+        }),
+    )
     public async getPRs(
         @Query()
         query: {
@@ -120,7 +141,12 @@ export class CodeManagementController {
 
     @Get('/get-prs-repo')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Read, ResourceType.PullRequests))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.PullRequests,
+        }),
+    )
     public async getPRsByRepo(
         @Query()
         query: {
@@ -146,7 +172,10 @@ export class CodeManagementController {
     @Post('/finish-onboarding')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Create, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Create,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     public async onboardingReviewPR(
         @Body()
@@ -157,7 +186,12 @@ export class CodeManagementController {
 
     @Delete('/delete-integration')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Delete, ResourceType.GitSettings))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Delete,
+            resource: ResourceType.GitSettings,
+        }),
+    )
     public async deleteIntegration(
         @Query() query: { organizationId: string; teamId: string },
     ) {
@@ -166,7 +200,12 @@ export class CodeManagementController {
 
     @Delete('/delete-integration-and-repositories')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Delete, ResourceType.GitSettings))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Delete,
+            resource: ResourceType.GitSettings,
+        }),
+    )
     public async deleteIntegrationAndRepositories(
         @Query() query: { organizationId: string; teamId: string },
     ) {
@@ -178,8 +217,12 @@ export class CodeManagementController {
     @Get('/get-repository-tree-by-directory')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkRepoPermissions(Action.Read, ResourceType.CodeReviewSettings, {
-            key: { query: 'repositoryId' },
+        checkRepoPermissions({
+            action: Action.Read,
+            resource: ResourceType.CodeReviewSettings,
+            repo: {
+                key: { query: 'repositoryId' },
+            },
         }),
     )
     public async getRepositoryTreeByDirectory(

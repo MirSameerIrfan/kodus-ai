@@ -29,7 +29,10 @@ export class OrganizationController {
     @Patch('/update-infos')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Update, ResourceType.OrganizationSettings),
+        checkPermissions({
+            action: Action.Update,
+            resource: ResourceType.OrganizationSettings
+        }),
     )
     public async updateInfoOrganizationAndPhone(
         @Body() body: UpdateInfoOrganizationAndPhoneDto,

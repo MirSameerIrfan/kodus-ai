@@ -56,7 +56,10 @@ export class OrgnizationParametersController {
     @Post('/create-or-update')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Create, ResourceType.OrganizationSettings),
+        checkPermissions({
+            action: Action.Create,
+            resource: ResourceType.OrganizationSettings
+        }),
     )
     public async createOrUpdate(
         @Body()
@@ -76,7 +79,10 @@ export class OrgnizationParametersController {
     @Get('/find-by-key')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Read, ResourceType.OrganizationSettings),
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.OrganizationSettings
+        }),
     )
     public async findByKey(
         @Query('key') key: OrganizationParametersKey,
@@ -122,7 +128,10 @@ export class OrgnizationParametersController {
     @Get('/cockpit-metrics-visibility')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Read, ResourceType.OrganizationSettings),
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.OrganizationSettings
+        }),
     )
     public async getCockpitMetricsVisibility(
         @Query('organizationId') organizationId: string,
@@ -135,7 +144,10 @@ export class OrgnizationParametersController {
     @Post('/cockpit-metrics-visibility')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Update, ResourceType.OrganizationSettings),
+        checkPermissions({
+            action: Action.Update,
+            resource: ResourceType.OrganizationSettings
+        }),
     )
     public async updateCockpitMetricsVisibility(
         @Body()
@@ -158,7 +170,10 @@ export class OrgnizationParametersController {
     @Post('/ignore-bots')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Update, ResourceType.OrganizationSettings),
+        checkPermissions({
+            action: Action.Update,
+            resource: ResourceType.OrganizationSettings
+        }),
     )
     public async ignoreBots(
         @Body()
