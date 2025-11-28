@@ -3,6 +3,7 @@
  * Kodus Tech. All rights reserved.
  */
 import { Provider } from '@nestjs/common';
+import { DryRunCodeReviewPipeline } from '../adapters/services/dryRun/dryRunPipeline';
 import { CodeReviewPipelineContext } from '../adapters/services/codeBase/codeReviewPipeline/context/code-review-pipeline.context';
 import { PipelineContext } from '../adapters/services/pipeline/interfaces/pipeline-context.interface';
 import { IPipeline } from '../adapters/services/pipeline/interfaces/pipeline.interface';
@@ -23,5 +24,5 @@ export const pipelineProvider: Provider = {
         ]);
         return factory;
     },
-    inject: [CODE_REVIEW_PIPELINE_TOKEN],
+    inject: [CODE_REVIEW_PIPELINE_TOKEN, DryRunCodeReviewPipeline],
 };

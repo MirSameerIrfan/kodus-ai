@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { AddLibraryKodyRulesDto } from '@/core/infrastructure/http/dtos/add-library-kody-rules.dto';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
@@ -23,7 +23,7 @@ export class AddLibraryKodyRulesUseCase {
             user: { organization: { uuid: string } };
         },
         private readonly createOrUpdateKodyRulesUseCase: CreateOrUpdateKodyRulesUseCase,
-        private readonly authorizationService: AuthorizationService
+        private readonly authorizationService: AuthorizationService,
     ) {}
 
     async execute(libraryKodyRules: AddLibraryKodyRulesDto) {

@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { AxiosLicenseService } from '@/config/axios/microservices/license.axios';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
@@ -109,7 +109,7 @@ export class LicenseService implements ILicenseService {
                 },
                 userName: 'System Auto-Assign',
             });
-            
+
             if (result?.failed?.length > 0) {
                 return false;
             }
