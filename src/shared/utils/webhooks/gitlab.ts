@@ -76,6 +76,7 @@ export class GitlabMappedPlatform implements IMappedPlatform {
                 'draft' in mergeRequest
                     ? (mergeRequest?.draft ?? false)
                     : false,
+            tags: mergeRequest?.labels?.map((label) => label.title) ?? [],
         };
     }
 

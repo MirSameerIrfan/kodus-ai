@@ -60,6 +60,10 @@ export class GithubMappedPlatform implements IMappedPlatform {
                 ref: payload?.pull_request?.base?.ref,
             },
             isDraft: payload?.pull_request?.draft ?? false,
+            tags:
+                (payload as any)?.issue?.labels?.map(
+                    (label: { name: string }) => label.name,
+                ) ?? [],
         };
     }
 

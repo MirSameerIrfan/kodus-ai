@@ -63,6 +63,7 @@ export interface AzureReposWebhookResource {
     url?: string;
     _links?: AzureReposWebhookLinks;
     isDraft?: boolean;
+    labels?: AzureReposWebhookLabel[];
 }
 
 /**
@@ -88,6 +89,13 @@ export interface AzureReposWebhookPullRequest {
     commits?: AzureReposWebhookCommit[];
     url: string;
     _links: AzureReposWebhookLinks;
+    labels?: AzureReposWebhookLabel[];
+}
+
+export interface AzureReposWebhookLabel {
+    id: string;
+    name: string;
+    active: boolean;
 }
 
 /**

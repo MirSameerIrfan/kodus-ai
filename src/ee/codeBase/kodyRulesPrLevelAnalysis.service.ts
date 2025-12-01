@@ -222,48 +222,10 @@ export class KodyRulesPrLevelAnalysisService
             filteredKodyRules = kodyRulesPrLevel;
         }
 
-        const augmentationsByFile: Record<string, ContextAugmentationsMap> = {};
-        for (const rule of filteredKodyRules) {
-            if (!rule.contextReferenceId) {
-                continue;
-            }
-
-            const ruleDependencies =
-                await this.kodyRuleDependencyService.getMcpDependenciesForRules(
-                    [rule],
-                );
-
-            if (ruleDependencies.length > 0) {
-                const ruleAugmentations =
-                    await this.fileContextAugmentationService.augmentFiles(
-                        changedFiles,
-                        context as any,
-                        ruleDependencies,
-                        rule,
-                    );
-
-                for (const fileName in ruleAugmentations) {
-                    if (!augmentationsByFile[fileName]) {
-                        augmentationsByFile[fileName] = {};
-                    }
-                    Object.assign(
-                        augmentationsByFile[fileName],
-                        ruleAugmentations[fileName],
-                    );
-                }
-            }
-        }
-
         const allMcpDependencies =
             await this.kodyRuleDependencyService.getMcpDependenciesForRules(
                 filteredKodyRules,
             );
-
-        const mcpResultsMap = this.buildMcpResultsFromAugmentations(
-            augmentationsByFile,
-            filteredKodyRules,
-            allMcpDependencies,
-        );
 
         const { referencesMap: externalReferencesMap } =
             await this.externalReferenceLoaderService.loadReferencesForRules(
@@ -279,7 +241,12 @@ export class KodyRulesPrLevelAnalysisService
 
             if (fullRule.uuid) {
                 const hasKnowledge = externalReferencesMap.has(fullRule.uuid);
-                const hasMcp = mcpResultsMap.has(fullRule.uuid);
+                const hasMcp = allMcpDependencies.some(
+                    (dep) =>
+                        dep.metadata?.contextReferenceId ===
+                        fullRule.contextReferenceId,
+                );
+
                 if (hasKnowledge || hasMcp) {
                     return true;
                 }
@@ -287,7 +254,7 @@ export class KodyRulesPrLevelAnalysisService
 
             this.logger.warn({
                 message:
-                    'Skipping PR-level rule with contextReferenceId that failed to load references or MCP results',
+                    'Skipping PR-level rule with contextReferenceId that failed to load references or MCP dependencies',
                 context: KodyRulesPrLevelAnalysisService.name,
                 metadata: {
                     ruleUuid: fullRule.uuid,
@@ -323,7 +290,7 @@ export class KodyRulesPrLevelAnalysisService
                 language,
                 provider,
                 externalReferencesMap,
-                mcpResultsMap,
+                allMcpDependencies,
             );
         } catch (error) {
             this.logger.error({
@@ -660,12 +627,10 @@ export class KodyRulesPrLevelAnalysisService
         language: string,
         provider: LLMModelProvider,
         externalReferencesMap?: Map<string, any[]>,
-        mcpResultsMap?: Map<string, Record<string, unknown>>,
+        mcpDependencies?: ContextDependency[],
     ): Promise<AIAnalysisResultPrLevel> {
-        // 1. Preparar dados para chunking
         const preparedFiles = this.prepareFilesForPayload(changedFiles);
 
-        // 2. Dividir arquivos em chunks
         const chunkingResult = this.tokenChunkingService.chunkDataByTokens({
             model: provider,
             data: preparedFiles,
@@ -685,7 +650,6 @@ export class KodyRulesPrLevelAnalysisService
             },
         });
 
-        // 3. Determinar configuração de batch baseada no número de chunks
         const batchConfig = this.determineBatchConfig(
             chunkingResult.totalChunks,
         );
@@ -701,7 +665,13 @@ export class KodyRulesPrLevelAnalysisService
             },
         });
 
-        // 4. Processar chunks em batches paralelos
+        const fullFilesMap = new Map<string, FileChange>();
+        changedFiles.forEach((file) => {
+            if (file.filename) {
+                fullFilesMap.set(file.filename, file);
+            }
+        });
+
         const allViolatedRules = await this.processChunksInBatches(
             chunkingResult.chunks,
             context,
@@ -712,7 +682,8 @@ export class KodyRulesPrLevelAnalysisService
             organizationAndTeamData,
             batchConfig,
             externalReferencesMap,
-            mcpResultsMap,
+            mcpDependencies,
+            fullFilesMap,
         );
 
         this.logger.log({
@@ -770,7 +741,8 @@ export class KodyRulesPrLevelAnalysisService
         organizationAndTeamData: OrganizationAndTeamData,
         batchConfig: BatchProcessingConfig,
         externalReferencesMap?: Map<string, any[]>,
-        mcpResultsMap?: Map<string, Record<string, unknown>>,
+        mcpDependencies?: ContextDependency[],
+        fullFilesMap?: Map<string, FileChange>,
     ): Promise<ExtendedKodyRule[]> {
         const allViolatedRules: ExtendedKodyRule[] = [];
         const totalChunks = chunks.length;
@@ -806,7 +778,8 @@ export class KodyRulesPrLevelAnalysisService
                 organizationAndTeamData,
                 batchConfig,
                 externalReferencesMap,
-                mcpResultsMap,
+                mcpDependencies,
+                fullFilesMap,
             );
 
             // Consolidar resultados do batch
@@ -906,7 +879,8 @@ export class KodyRulesPrLevelAnalysisService
         organizationAndTeamData: OrganizationAndTeamData,
         batchConfig: BatchProcessingConfig,
         externalReferencesMap?: Map<string, any[]>,
-        mcpResultsMap?: Map<string, Record<string, unknown>>,
+        mcpDependencies?: ContextDependency[],
+        fullFilesMap?: Map<string, FileChange>,
     ): Promise<ChunkProcessingResult[]> {
         // Criar promises para processar chunks em paralelo
         const chunkPromises = batchChunks.map(async (chunk, batchIndex) => {
@@ -923,7 +897,8 @@ export class KodyRulesPrLevelAnalysisService
                 organizationAndTeamData,
                 batchConfig,
                 externalReferencesMap,
-                mcpResultsMap,
+                mcpDependencies,
+                fullFilesMap,
             );
         });
 
@@ -945,7 +920,8 @@ export class KodyRulesPrLevelAnalysisService
         organizationAndTeamData: OrganizationAndTeamData,
         batchConfig: BatchProcessingConfig,
         externalReferencesMap?: Map<string, any[]>,
-        mcpResultsMap?: Map<string, Record<string, unknown>>,
+        mcpDependencies?: ContextDependency[],
+        fullFilesMap?: Map<string, FileChange>,
     ): Promise<ChunkProcessingResult> {
         const { retryAttempts, retryDelay } = batchConfig;
 
@@ -976,7 +952,8 @@ export class KodyRulesPrLevelAnalysisService
                     prNumber,
                     organizationAndTeamData,
                     externalReferencesMap,
-                    mcpResultsMap,
+                    mcpDependencies,
+                    fullFilesMap,
                 );
 
                 return {
@@ -1065,12 +1042,76 @@ export class KodyRulesPrLevelAnalysisService
         prNumber: number,
         organizationAndTeamData: OrganizationAndTeamData,
         externalReferencesMap?: Map<string, any[]>,
-        mcpResultsMap?: Map<string, Record<string, unknown>>,
+        mcpDependencies?: ContextDependency[],
+        fullFilesMap?: Map<string, FileChange>,
     ): Promise<ExtendedKodyRule[] | null> {
+        const augmentationsByFile: Record<string, ContextAugmentationsMap> = {};
+
+        if (mcpDependencies && mcpDependencies.length > 0) {
+            const filesForAugmentation = fullFilesMap
+                ? filesChunk.map((f) => fullFilesMap.get(f.filename) || f)
+                : filesChunk;
+
+            for (const rule of kodyRulesPrLevel) {
+                if (!rule.contextReferenceId) {
+                    continue;
+                }
+
+                const ruleDependencies = mcpDependencies.filter(
+                    (dep) =>
+                        dep.metadata?.contextReferenceId ===
+                        rule.contextReferenceId,
+                );
+
+                if (ruleDependencies.length > 0) {
+                    try {
+                        const ruleAugmentations =
+                            await this.fileContextAugmentationService.augmentFiles(
+                                filesForAugmentation,
+                                context as any,
+                                ruleDependencies,
+                                rule,
+                            );
+
+                        for (const fileName in ruleAugmentations) {
+                            if (!augmentationsByFile[fileName]) {
+                                augmentationsByFile[fileName] = {};
+                            }
+                            Object.assign(
+                                augmentationsByFile[fileName],
+                                ruleAugmentations[fileName],
+                            );
+                        }
+                    } catch (error) {
+                        this.logger.warn({
+                            message: `Failed to augment files for rule ${rule.title} in chunk ${chunkIndex}`,
+                            context: KodyRulesPrLevelAnalysisService.name,
+                            error,
+                            metadata: {
+                                ruleId: rule.uuid,
+                                chunkIndex,
+                                prNumber,
+                            },
+                        });
+                    }
+                }
+            }
+        }
+
+        const mcpResultsMap = this.buildMcpResultsFromAugmentations(
+            augmentationsByFile,
+            kodyRulesPrLevel,
+            mcpDependencies || [],
+        );
+
         // payload do chunk
         const analyzerPayload: KodyRulesPrLevelPayload = {
             pr_title: context.pullRequest.title,
             pr_description: context.pullRequest.body || '',
+            pr_author:
+                context.pullRequest.user?.login ??
+                context.pullRequest.user?.name,
+            tags: context.pullRequest.tags,
             stats: context.pullRequest.stats ?? {
                 total_additions: 0,
                 total_deletions: 0,
