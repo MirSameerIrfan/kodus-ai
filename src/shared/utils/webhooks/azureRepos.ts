@@ -66,6 +66,7 @@ export class AzureReposMappedPlatform implements IMappedPlatform {
                 },
             },
             isDraft: resource?.isDraft ?? false,
+            tags: pullRequest.labels?.map((label) => label.name) ?? [],
         };
     }
 

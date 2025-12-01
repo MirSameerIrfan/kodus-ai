@@ -61,6 +61,7 @@ export class BitbucketMappedPlatform implements IMappedPlatform {
                 ref: payload?.pullrequest?.destination?.branch?.name,
             },
             isDraft: payload?.pullrequest?.draft ?? false,
+            tags: [],
         };
     }
 
