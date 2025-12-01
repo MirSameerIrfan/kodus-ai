@@ -22,11 +22,6 @@ services:
         networks:
             - kodus-backend-services
             - shared-network
-        depends_on:
-            db_postgres:
-                condition: service_healthy
-            db_mongodb:
-                condition: service_healthy
 
     db_postgres:
         profiles:
