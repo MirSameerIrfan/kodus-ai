@@ -58,11 +58,46 @@ export class RabbitMQWrapperModule {
                             type: 'topic',
                             durable: true,
                         },
+                        {
+                            name: 'workflow.exchange',
+                            type: 'topic',
+                            durable: true,
+                        },
+                        {
+                            name: 'workflow.exchange.dlx',
+                            type: 'topic',
+                            durable: true,
+                        },
                     ],
                     queues: [
                         {
                             name: 'dlx.queue',
                             exchange: 'orchestrator.exchange.dlx',
+                            routingKey: '#',
+                            createQueueIfNotExists: true,
+                            queueOptions: {
+                                durable: true,
+                            },
+                        },
+                        {
+                            name: 'workflow.jobs.queue',
+                            exchange: 'workflow.exchange',
+                            routingKey: 'workflow.job.created',
+                            createQueueIfNotExists: true,
+                            queueOptions: {
+                                durable: true,
+                                arguments: {
+                                    'x-queue-type': 'quorum',
+                                    'x-dead-letter-exchange':
+                                        'workflow.exchange.dlx',
+                                    'x-dead-letter-routing-key':
+                                        'workflow.job.failed',
+                                },
+                            },
+                        },
+                        {
+                            name: 'workflow.dlx.queue',
+                            exchange: 'workflow.exchange.dlx',
                             routingKey: '#',
                             createQueueIfNotExists: true,
                             queueOptions: {

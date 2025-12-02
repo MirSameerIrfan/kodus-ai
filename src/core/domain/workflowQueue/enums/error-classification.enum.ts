@@ -1,0 +1,5 @@
+export enum ErrorClassification {
+    RETRYABLE = 'RETRYABLE',
+    NON_RETRYABLE = 'NON_RETRYABLE',
+    CIRCUIT_OPEN = 'CIRCUIT_OPEN',
+}

@@ -31,6 +31,8 @@ lerna-debug.log*
 *.launch
 .settings/
 *.sublime-workspace
+.cursor/
+.specify/
 
 # IDE - VSCode
 .vscode/*
@@ -78,4 +80,4 @@ scripts/duplicate-prs
 
 # Custom
 test.json
-.cursor/rules/bmad/
+specs
