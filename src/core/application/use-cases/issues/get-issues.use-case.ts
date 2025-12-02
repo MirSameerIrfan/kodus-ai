@@ -155,6 +155,7 @@ export class GetIssuesUseCase implements IUseCase {
                             issue.organizationId,
                         );
 
+                    issue.contributingSuggestions = enrichedSuggestions;
                     ruleIds = this.extractKodyRuleIds(enrichedSuggestions);
                 }
 
