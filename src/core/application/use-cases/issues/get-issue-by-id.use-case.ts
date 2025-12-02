@@ -27,6 +27,7 @@ import {
     INTEGRATION_CONFIG_SERVICE_TOKEN,
 } from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
 import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
+import { IIssue } from '@/core/domain/issues/interfaces/issues.interface';
 
 @Injectable()
 export class GetIssueByIdUseCase implements IUseCase {
