@@ -4,6 +4,7 @@ import { Response } from 'express';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { nanoid } from 'nanoid';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { CodeManagementTools, KodyIssuesTools, KodyRulesTools } from '../tools';
 import { toShape } from '../types/mcp-tool.interface';
 
@@ -102,7 +103,10 @@ export class McpServerService {
                     outputSchema: toShape(tool.outputSchema),
                     annotations: tool?.annotations,
                 },
-                tool.execute,
+                tool.execute as (
+                    args: Record<string, unknown>,
+                    extra: unknown,
+                ) => Promise<CallToolResult>,
             );
         }
 

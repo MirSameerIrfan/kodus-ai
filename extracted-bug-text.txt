@@ -1,0 +1,22 @@
+- Execution breaks: Code throws unhandled exceptions
+- Wrong results: Output doesn't match expected behavior
+- Resource leaks: Unclosed files, connections, memory accumulation
+- State corruption: Invalid object/data states
+- Logic errors: Control flow produces incorrect outcomes
+- Race conditions: Concurrent access causes inconsistent state or duplicates
+- Incorrect measurements: Metrics/timings that don't reflect actual operations
+- Invariant violations: Broken constraints (size limits, uniqueness, etc.)
+- Async timing bugs: Variables captured incorrectly in async closures
+- Conditional validation errors: Logic that checks for presence/absence of values using truthiness tests (e.g., `if dict.get("key")`) that fail with falsy values (0, None, False, ""), when membership tests (e.g., `if "key" in dict`) should be used
+- Dead computation: Code that computes/transforms values but never uses the result, instead using the original untransformed value - indicates copy-paste error or incomplete refactoring
+- Unbounded growth: Collections (lists, dicts, sets) that grow indefinitely within loops without size limits, potentially causing memory exhaustion
+- Duplicate operations: Same operation executed multiple times with identical inputs in sequence, wasting resources and potentially causing incorrect counts/metrics
+
+Search for Events:
+
+Use the [search_events] tool to find events from the past 30 days that contain the file path in stack.filename.
+
+Fetch Issue Details:
+
+Use the [get_issue_details] tool with the issue ID found in those events to retrieve the specific details.
+

@@ -33,47 +33,43 @@ export class KodyIssuesTools {
 
     createKodyIssue(): McpToolDefinition {
         const name = 'KODUS_CREATE_KODY_ISSUE';
-        const inputSchema = z
-            .object({
-                organizationId: z.string().describe('Organization ID'),
-                title: z.string(),
-                description: z.string(),
-                filePath: z.string(),
-                language: z.string(),
-                label: z.nativeEnum(LabelType),
-                severity: z.nativeEnum(SeverityLevel),
-                repository: z.object({
-                    id: z.string(),
-                    platformType: z.nativeEnum(PlatformType),
-                }),
-                owner: z
-                    .object({
-                        gitId: z
+        const inputSchema = z.strictObject({
+                        organizationId: z.string().describe('Organization ID'),
+                        title: z.string(),
+                        description: z.string(),
+                        filePath: z.string(),
+                        language: z.string(),
+                        label: z.enum(LabelType),
+                        severity: z.enum(SeverityLevel),
+                        repository: z.strictObject({
+                            id: z.string(),
+                            platformType: z.enum(PlatformType),
+                        }),
+                        owner: z.strictObject({
+                                gitId: z
+                                    .number()
+                                    .describe('userId of user from git provider'),
+                                username: z
+                                    .string()
+                                    .describe('username of user from git provider'),
+                            })
+                            .optional()
+                            .describe('Details of pull request author'),
+                        reporter: z.strictObject({
+                                gitId: z.number(),
+                                username: z.string(),
+                            })
+                            .optional()
+                            .describe('Details of user who is creating this issue'),
+                        originalKodyCommentId: z
                             .number()
-                            .describe('userId of user from git provider'),
-                        username: z
-                            .string()
-                            .describe('username of user from git provider'),
-                    })
-                    .optional()
-                    .describe('Details of pull request author'),
-                reporter: z
-                    .object({
-                        gitId: z.number(),
-                        username: z.string(),
-                    })
-                    .optional()
-                    .describe('Details of user who is creating this issue'),
-                originalKodyCommentId: z
-                    .number()
-                    .describe(
-                        'commentId of original Kody comment though which the discussion got started ',
-                    ),
-                pullRequestNumber: z
-                    .number()
-                    .describe('Pull request number to make issue for'),
-            })
-            .strict();
+                            .describe(
+                                'commentId of original Kody comment though which the discussion got started ',
+                            ),
+                        pullRequestNumber: z
+                            .number()
+                            .describe('Pull request number to make issue for'),
+                    });
         type InputType = z.infer<typeof inputSchema>;
 
         return {
@@ -82,7 +78,7 @@ export class KodyIssuesTools {
             inputSchema,
             outputSchema: z.object({
                 success: z.boolean(),
-                data: z.object({}).passthrough(),
+                data: z.looseObject({}),
             }),
             execute: wrapToolHandler(
                 async (args: InputType) => {
@@ -229,8 +225,8 @@ export class KodyIssuesTools {
         const inputSchema = z.object({
             organizationId: z.string(),
             repositoryName: z.string().optional(),
-            severity: z.nativeEnum(SeverityLevel).optional(),
-            label: z.nativeEnum(LabelType).optional(),
+            severity: z.enum(SeverityLevel).optional(),
+            label: z.enum(LabelType).optional(),
         });
 
         type InputType = z.infer<typeof inputSchema>;
@@ -242,7 +238,7 @@ export class KodyIssuesTools {
             outputSchema: z.object({
                 success: z.boolean(),
                 count: z.number(),
-                data: z.array(z.object({}).passthrough()),
+                data: z.array(z.looseObject({})),
             }),
             execute: wrapToolHandler(async (args: InputType) => {
                 const issues = await this.issuesService.findByFilters(args);
@@ -267,7 +263,7 @@ export class KodyIssuesTools {
             inputSchema,
             outputSchema: z.object({
                 success: z.boolean(),
-                data: z.object({}).passthrough().nullable(),
+                data: z.looseObject({}).nullable(),
             }),
             execute: wrapToolHandler(async (args: InputType) => {
                 const issue = await this.issuesService.findOne({
@@ -285,7 +281,7 @@ export class KodyIssuesTools {
     updateKodyIssueStatus(): McpToolDefinition {
         const inputSchema = z.object({
             issueId: z.string(),
-            status: z.nativeEnum(IssueStatus),
+            status: z.enum(IssueStatus),
         });
         type InputType = z.infer<typeof inputSchema>;
         return {
@@ -294,7 +290,7 @@ export class KodyIssuesTools {
             inputSchema,
             outputSchema: z.object({
                 success: z.boolean(),
-                data: z.object({}).passthrough().nullable(),
+                data: z.looseObject({}).nullable(),
             }),
             execute: wrapToolHandler(async (args: InputType) => {
                 const updated = await this.issuesService.updateStatus(
@@ -312,7 +308,7 @@ export class KodyIssuesTools {
     updateKodyIssueCategory(): McpToolDefinition {
         const inputSchema = z.object({
             issueId: z.string(),
-            label: z.nativeEnum(LabelType),
+            label: z.enum(LabelType),
         });
         type InputType = z.infer<typeof inputSchema>;
         return {
@@ -321,7 +317,7 @@ export class KodyIssuesTools {
             inputSchema,
             outputSchema: z.object({
                 success: z.boolean(),
-                data: z.object({}).passthrough().nullable(),
+                data: z.looseObject({}).nullable(),
             }),
             execute: wrapToolHandler(async (args: InputType) => {
                 const updated = await this.issuesService.updateLabel(
@@ -345,7 +341,7 @@ export class KodyIssuesTools {
             inputSchema,
             outputSchema: z.object({
                 success: z.boolean(),
-                data: z.object({}).passthrough().nullable(),
+                data: z.looseObject({}).nullable(),
             }),
             execute: wrapToolHandler(async (args: InputType) => {
                 const updated = await this.issuesService.updateStatus(

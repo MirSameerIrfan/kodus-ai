@@ -40,7 +40,7 @@ interface DependencyMetadata {
 }
 
 const ResolutionOutputSchema = z.object({
-    args: z.record(z.unknown()),
+    args: z.record(z.string(), z.unknown()),
     missingArgs: z.array(z.string()),
     confidence: z.number().min(0).max(1),
     reasoning: z.string(),

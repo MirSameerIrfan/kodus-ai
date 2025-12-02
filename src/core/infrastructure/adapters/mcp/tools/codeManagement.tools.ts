@@ -6,8 +6,7 @@ import { wrapToolHandler } from '../utils/mcp-protocol.utils';
 import { BaseResponse, McpToolDefinition } from '../types/mcp-tool.interface';
 import { PullRequestState } from '../../../../../shared/domain/enums/pullRequestState.enum';
 
-const RepositorySchema = z
-    .object({
+const RepositorySchema = z.looseObject({
         id: z.string(),
         name: z.string(),
         http_url: z.string(),
@@ -16,18 +15,15 @@ const RepositorySchema = z
         visibility: z.enum(['public', 'private']),
         selected: z.boolean(),
         default_branch: z.string().optional(),
-        project: z
-            .object({
+        project: z.looseObject({
                 id: z.string(),
                 name: z.string(),
             })
             .optional(),
         workspaceId: z.string().optional(),
-    })
-    .passthrough();
+    });
 
-const PullRequestSchema = z
-    .object({
+const PullRequestSchema = z.looseObject({
         id: z.string(),
         number: z.number(),
         pull_number: z.number(), // TODO: remove, legacy, use number
@@ -38,30 +34,30 @@ const PullRequestSchema = z
         organizationId: z.string(),
         repository: z.string(), // TODO: remove, legacy, use repositoryData
         repositoryId: z.string(), // TODO: remove, legacy, use repositoryData
-        repositoryData: z.object({
+        repositoryData: z.looseObject({
             // TODO: consider removing this, use HEAD and BASE instead
             id: z.string(),
             name: z.string(),
         }),
-        prURL: z.string().url(),
+        prURL: z.url(),
         created_at: z.string(),
         closed_at: z.string(),
         updated_at: z.string(),
         merged_at: z.string(),
         participants: z.array(
-            z.object({
+            z.looseObject({
                 id: z.string(),
             }),
         ),
         reviewers: z.array(
-            z.object({
+            z.looseObject({
                 id: z.string(),
             }),
         ),
         sourceRefName: z.string(), // TODO: remove, legacy, use head.ref
-        head: z.object({
+        head: z.looseObject({
             ref: z.string(),
-            repo: z.object({
+            repo: z.looseObject({
                 id: z.string(),
                 name: z.string(),
                 defaultBranch: z.string(),
@@ -69,22 +65,21 @@ const PullRequestSchema = z
             }),
         }),
         targetRefName: z.string(), // TODO: remove, legacy, use base.ref
-        base: z.object({
+        base: z.looseObject({
             ref: z.string(),
-            repo: z.object({
+            repo: z.looseObject({
                 id: z.string(),
                 name: z.string(),
                 defaultBranch: z.string(),
                 fullName: z.string(),
             }),
         }),
-        user: z.object({
+        user: z.looseObject({
             login: z.string(),
             name: z.string(),
             id: z.string(),
         }),
-    })
-    .passthrough();
+    });
 
 const PullRequestWithFilesSchema = PullRequestSchema.extend({
     modified_files: z
@@ -98,15 +93,13 @@ const PullRequestWithFilesSchema = PullRequestSchema.extend({
 
 const CommitSchema = z.any();
 
-const RepositoryFileSchema = z
-    .object({
+const RepositoryFileSchema = z.looseObject({
         path: z.string(),
         sha: z.string().optional(),
         size: z.number().optional(),
         type: z.string().optional(),
         filename: z.string().optional(),
-    })
-    .passthrough();
+    });
 
 interface RepositoriesResponse extends BaseResponse {
     data: z.infer<typeof RepositorySchema>[];
@@ -621,7 +614,7 @@ export class CodeManagementTools {
                 ),
             maxFiles: z
                 .number()
-                .default(1000)
+                .prefault(1000)
                 .describe(
                     'Maximum number of files to return (defaults to 1000 to prevent overwhelming responses)',
                 ),
