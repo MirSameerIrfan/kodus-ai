@@ -15,6 +15,19 @@ import {
     ResourceType,
 } from '@/core/domain/permissions/enums/permissions.enum';
 import { UserRequest } from '@/config/types/http/user-request.type';
+import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@/core/domain/codeBase/contracts/KodyIssuesManagement.contract';
+import { KodyIssuesManagementService } from '@/core/infrastructure/adapters/services/kodyIssuesManagement/service/kodyIssuesManagement.service';
+import {
+    IKodyRulesService,
+    KODY_RULES_SERVICE_TOKEN,
+} from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
+import { LabelType } from '@/shared/utils/codeManagement/labels';
+import { IContributingSuggestion } from '@/core/infrastructure/adapters/services/kodyIssuesManagement/domain/kodyIssuesManagement.interface';
+
+type KodyRuleMetadata = {
+    number: string;
+    title: string;
+};
 
 @Injectable()
 export class GetIssuesUseCase implements IUseCase {
@@ -30,6 +43,12 @@ export class GetIssuesUseCase implements IUseCase {
         private readonly cacheService: CacheService,
 
         private readonly authorizationService: AuthorizationService,
+
+        @Inject(KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN)
+        private readonly kodyIssuesManagementService: KodyIssuesManagementService,
+
+        @Inject(KODY_RULES_SERVICE_TOKEN)
+        private readonly kodyRulesService: IKodyRulesService,
     ) {}
 
     async execute(filters: GetIssuesByFiltersDto): Promise<IIssue[]> {
@@ -52,21 +71,9 @@ export class GetIssuesUseCase implements IUseCase {
                     return [];
                 }
 
-                for (const issue of allIssues) {
-                    const prNumbers = this.selectAllPrNumbers(issue);
+                await this.attachKodyRulesMetadata(allIssues, filters.organizationId);
 
-                    issue.prNumbers = prNumbers.map(
-                        (prNumber) => prNumber.number,
-                    );
-
-                    delete issue.contributingSuggestions;
-                }
-
-                allIssues.sort(
-                    (a, b) =>
-                        new Date(b.createdAt).getTime() -
-                        new Date(a.createdAt).getTime(),
-                );
+                this.finalizeIssues(allIssues);
 
                 await this.cacheService.addToCache(cacheKey, allIssues, 900000); //15 minutos
             }
@@ -102,6 +109,150 @@ export class GetIssuesUseCase implements IUseCase {
 
             return [];
         }
+    }
+
+    private finalizeIssues(issues: IIssue[]): IIssue[] {
+        for (const issue of issues) {
+            const prNumbers = this.selectAllPrNumbers(issue);
+
+            issue.prNumbers = prNumbers.map((prNumber) => prNumber.number);
+
+            delete issue.contributingSuggestions;
+        }
+
+        issues.sort(
+            (a, b) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime(),
+        );
+
+        return issues;
+    }
+
+    private async attachKodyRulesMetadata(
+        issues: IIssue[],
+        organizationId: string,
+    ): Promise<void> {
+        const issuesWithKodyRules = issues.filter(
+            (issue) =>
+                issue.label === LabelType.KODY_RULES &&
+                issue.contributingSuggestions?.length,
+        );
+
+        if (!issuesWithKodyRules.length) {
+            return;
+        }
+
+        const metadataCache = new Map<string, KodyRuleMetadata | null>();
+
+        for (const issue of issuesWithKodyRules) {
+            try {
+                let ruleIds = this.extractKodyRuleIds(
+                    issue.contributingSuggestions,
+                );
+
+                if (!ruleIds.length) {
+                    const enrichedSuggestions =
+                        await this.kodyIssuesManagementService.enrichContributingSuggestions(
+                            issue.contributingSuggestions,
+                            organizationId,
+                        );
+
+                    issue.contributingSuggestions = enrichedSuggestions;
+                    ruleIds = this.extractKodyRuleIds(enrichedSuggestions);
+                }
+
+                if (!ruleIds.length) {
+                    continue;
+                }
+
+                const metadata = await this.resolveRuleMetadata(
+                    ruleIds,
+                    metadataCache,
+                    organizationId,
+                );
+
+                if (metadata) {
+                    issue.kodyRule = {
+                        number: metadata.number,
+                        title: metadata.title,
+                    };
+                }
+            } catch (error) {
+                this.logger.warn({
+                    context: GetIssuesUseCase.name,
+                    message: 'Failed to resolve Kody Rule metadata for issue',
+                    error,
+                    metadata: {
+                        issueId: issue.uuid,
+                        organizationId,
+                    },
+                });
+            }
+        }
+    }
+
+    private extractKodyRuleIds(
+        suggestions?: IContributingSuggestion[],
+    ): string[] {
+        if (!suggestions?.length) {
+            return [];
+        }
+
+        const ruleIds = new Set<string>();
+
+        suggestions.forEach((suggestion) => {
+            suggestion.brokenKodyRulesIds?.forEach((ruleId) => {
+                if (ruleId) {
+                    ruleIds.add(ruleId);
+                }
+            });
+        });
+
+        return Array.from(ruleIds);
+    }
+
+    private async resolveRuleMetadata(
+        ruleIds: string[],
+        cache: Map<string, KodyRuleMetadata | null>,
+        organizationId: string,
+    ): Promise<KodyRuleMetadata | null> {
+        for (const ruleId of ruleIds) {
+            if (!ruleId) {
+                continue;
+            }
+
+            if (!cache.has(ruleId)) {
+                try {
+                    const rule = await this.kodyRulesService.findById(ruleId);
+
+                    cache.set(
+                        ruleId,
+                        rule
+                            ? {
+                                  number: rule.uuid || ruleId,
+                                  title: rule.title,
+                              }
+                            : null,
+                    );
+                } catch (error) {
+                    this.logger.warn({
+                        context: GetIssuesUseCase.name,
+                        message: 'Failed to fetch Kody Rule metadata',
+                        error,
+                        metadata: { ruleId, organizationId },
+                    });
+                    cache.set(ruleId, null);
+                }
+            }
+
+            const metadata = cache.get(ruleId);
+            if (metadata) {
+                return metadata;
+            }
+        }
+
+        return null;
     }
 
     private selectAllPrNumbers(issue: IIssue): {
