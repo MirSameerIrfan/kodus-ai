@@ -71,7 +71,7 @@ export class GetIssuesUseCase implements IUseCase {
                     return [];
                 }
 
-                await this.attachKodyRulesMetadata(allIssues);
+                await this.attachKodyRulesMetadata(allIssues, filters.organizationId);
 
                 this.finalizeIssues(allIssues);
 
@@ -129,7 +129,10 @@ export class GetIssuesUseCase implements IUseCase {
         return issues;
     }
 
-    private async attachKodyRulesMetadata(issues: IIssue[]): Promise<void> {
+    private async attachKodyRulesMetadata(
+        issues: IIssue[],
+        organizationId: string,
+    ): Promise<void> {
         const issuesWithKodyRules = issues.filter(
             (issue) =>
                 issue.label === LabelType.KODY_RULES &&
@@ -152,7 +155,7 @@ export class GetIssuesUseCase implements IUseCase {
                     const enrichedSuggestions =
                         await this.kodyIssuesManagementService.enrichContributingSuggestions(
                             issue.contributingSuggestions,
-                            issue.organizationId,
+                            organizationId,
                         );
 
                     issue.contributingSuggestions = enrichedSuggestions;
@@ -166,6 +169,7 @@ export class GetIssuesUseCase implements IUseCase {
                 const metadata = await this.resolveRuleMetadata(
                     ruleIds,
                     metadataCache,
+                    organizationId,
                 );
 
                 if (metadata) {
@@ -181,7 +185,7 @@ export class GetIssuesUseCase implements IUseCase {
                     error,
                     metadata: {
                         issueId: issue.uuid,
-                        organizationId: issue.organizationId,
+                        organizationId,
                     },
                 });
             }
@@ -211,6 +215,7 @@ export class GetIssuesUseCase implements IUseCase {
     private async resolveRuleMetadata(
         ruleIds: string[],
         cache: Map<string, KodyRuleMetadata | null>,
+        organizationId: string,
     ): Promise<KodyRuleMetadata | null> {
         for (const ruleId of ruleIds) {
             if (!ruleId) {
@@ -235,7 +240,7 @@ export class GetIssuesUseCase implements IUseCase {
                         context: GetIssuesUseCase.name,
                         message: 'Failed to fetch Kody Rule metadata',
                         error,
-                        metadata: { ruleId },
+                        metadata: { ruleId, organizationId },
                     });
                     cache.set(ruleId, null);
                 }
