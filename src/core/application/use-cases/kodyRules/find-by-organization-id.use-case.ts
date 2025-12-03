@@ -1,8 +1,8 @@
+import { createLogger } from "@kodus/flow";
 import {
     KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,
 } from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import {
@@ -13,19 +13,16 @@ import { enrichRulesWithContextReferences } from './utils/enrich-rules-with-cont
 
 @Injectable()
 export class FindByOrganizationIdKodyRulesUseCase {
+    private readonly logger = createLogger(FindByOrganizationIdKodyRulesUseCase.name);
     constructor(
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };
         },
-
         @Inject(KODY_RULES_SERVICE_TOKEN)
         private readonly kodyRulesService: IKodyRulesService,
-
         @Inject(CONTEXT_REFERENCE_SERVICE_TOKEN)
-        private readonly contextReferenceService: IContextReferenceService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly contextReferenceService: IContextReferenceService
     ) {}
 
     async execute() {
@@ -67,5 +64,4 @@ export class FindByOrganizationIdKodyRulesUseCase {
             throw error;
         }
     }
-
 }

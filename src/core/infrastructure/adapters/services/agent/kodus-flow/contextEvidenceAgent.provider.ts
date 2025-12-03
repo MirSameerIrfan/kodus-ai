@@ -6,13 +6,13 @@ import {
     PlannerType,
     StorageEnum,
     EnhancedJSONParser,
+    createLogger,
 } from '@kodus/flow';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { ConfigService } from '@nestjs/config';
 import { DatabaseConnection } from '@/config/types';
 import { LLMModelProvider, PromptRunnerService } from '@kodus/kodus-common/llm';
 import { SDKOrchestrator } from '@kodus/flow/dist/orchestration';
-import { PinoLoggerService } from '../../logger/pino.service';
 import { ObservabilityService } from '../../logger/observability.service';
 import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
 import { MCPManagerService } from '../../../mcp/services/mcp-manager.service';
@@ -45,6 +45,7 @@ export interface ContextMCPDependency {
 
 @Injectable()
 export class ContextEvidenceAgentProvider extends BaseAgentProvider {
+    private readonly logger = createLogger(ContextEvidenceAgentProvider.name);
     protected config: DatabaseConnection;
     private orchestration: SDKOrchestrator | null = null;
     private mcpAdapter: ReturnType<typeof createMCPAdapter>;
@@ -61,10 +62,9 @@ export class ContextEvidenceAgentProvider extends BaseAgentProvider {
     constructor(
         private readonly configService: ConfigService,
         promptRunnerService: PromptRunnerService,
-        private readonly logger: PinoLoggerService,
         permissionValidationService: PermissionValidationService,
         observabilityService: ObservabilityService,
-        private readonly mcpManagerService: MCPManagerService,
+        private readonly mcpManagerService: MCPManagerService
     ) {
         super(
             promptRunnerService,

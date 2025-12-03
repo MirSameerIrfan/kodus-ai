@@ -103,7 +103,14 @@ export class LangChainProvider implements LLMProvider {
     constructor(llm: LangChainLLM) {
         this.llm = llm;
         this.name = llm.name || 'langchain-llm';
-        this.logger.info('LangChain provider initialized', { name: this.name });
+        this.logger.log({
+            message: 'LangChain provider initialized',
+            context: this.constructor.name,
+
+            metadata: {
+                name: this.name,
+            },
+        });
     }
 
     // ──────────────────────────────────────────────────────────────────────────────
@@ -119,9 +126,14 @@ export class LangChainProvider implements LLMProvider {
             const langchainMessages = this.convertToLangChainMessages(messages);
             const langchainOptions = this.convertToLangChainOptions(options);
 
-            this.logger.debug('Calling LangChain LLM', {
-                messageCount: messages.length,
-                options: langchainOptions,
+            this.logger.debug({
+                message: 'Calling LangChain LLM',
+                context: this.constructor.name,
+
+                metadata: {
+                    messageCount: messages.length,
+                    options: langchainOptions,
+                },
             });
 
             // Call the LangChain LLM
@@ -134,18 +146,25 @@ export class LangChainProvider implements LLMProvider {
             const convertedResponse =
                 this.convertFromLangChainResponse(response);
 
-            this.logger.debug('LangChain LLM response received', {
-                hasContent: !!convertedResponse.content,
-                hasToolCalls: !!convertedResponse.toolCalls?.length,
-                usage: convertedResponse.usage,
+            this.logger.debug({
+                message: 'LangChain LLM response received',
+                context: this.constructor.name,
+
+                metadata: {
+                    hasContent: !!convertedResponse.content,
+                    hasToolCalls: !!convertedResponse.toolCalls?.length,
+                    usage: convertedResponse.usage,
+                },
             });
 
             return convertedResponse;
         } catch (error) {
-            this.logger.error(
-                'LangChain LLM call failed',
-                error instanceof Error ? error : new Error('Unknown error'),
-            );
+            this.logger.error({
+                message: 'LangChain LLM call failed',
+                context: this.constructor.name,
+                error:
+                    error instanceof Error ? error : new Error('Unknown error'),
+            });
             throw new EngineError(
                 'LLM_ERROR',
                 `LangChain call failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -168,9 +187,14 @@ export class LangChainProvider implements LLMProvider {
             const langchainMessages = this.convertToLangChainMessages(messages);
             const langchainOptions = this.convertToLangChainOptions(options);
 
-            this.logger.debug('Starting LangChain LLM stream', {
-                messageCount: messages.length,
-                options: langchainOptions,
+            this.logger.debug({
+                message: 'Starting LangChain LLM stream',
+                context: this.constructor.name,
+
+                metadata: {
+                    messageCount: messages.length,
+                    options: langchainOptions,
+                },
             });
 
             const stream = this.llm.stream(langchainMessages, langchainOptions);
@@ -180,10 +204,12 @@ export class LangChainProvider implements LLMProvider {
                 yield convertedChunk;
             }
         } catch (error) {
-            this.logger.error(
-                'LangChain LLM streaming failed',
-                error instanceof Error ? error : new Error('Unknown error'),
-            );
+            this.logger.error({
+                message: 'LangChain LLM streaming failed',
+                context: this.constructor.name,
+                error:
+                    error instanceof Error ? error : new Error('Unknown error'),
+            });
             throw new EngineError(
                 'LLM_ERROR',
                 `LangChain streaming failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -291,7 +317,14 @@ export class LangChainProvider implements LLMProvider {
 
     setLLM(llm: LangChainLLM): void {
         this.llm = llm;
-        this.logger.info('LangChain LLM updated', { name: llm.name });
+        this.logger.log({
+            message: 'LangChain LLM updated',
+            context: this.constructor.name,
+
+            metadata: {
+                name: llm.name,
+            },
+        });
     }
 
     supportsStreaming(): boolean {

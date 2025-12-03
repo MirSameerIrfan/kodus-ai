@@ -1,0 +1,179 @@
+services:
+    # Webhook Handler - Recebe webhooks e enfileira na fila
+    webhook-handler:
+        init: true
+        container_name: kodus-webhook-handler-dev
+        image: kodus-webhook-handler-dev
+        build:
+            context: .
+            dockerfile: DockerFiles/Dockerfile.webhook-handler.dev
+            args:
+                - API_CLOUD_MODE=${API_CLOUD_MODE:-false}
+        ports:
+            - '3332:3332'
+            - '9229:9229' # Debug port
+        env_file: [.env]
+        environment:
+            - CHOKIDAR_USEPOLLING=true
+            - API_DEVELOPMENT_MODE=${API_DEVELOPMENT_MODE:-true}
+            - COMPONENT_TYPE=webhook
+            - WEBHOOK_HANDLER_PORT=3332
+        restart: unless-stopped
+        volumes:
+            - .:/usr/src/app
+            - yalc_store:/root/.yalc
+        depends_on:
+            db_postgres:
+                condition: service_healthy
+            db_mongodb:
+                condition: service_healthy
+            rabbitmq:
+                condition: service_healthy
+        networks:
+            - kodus-backend-services
+            - shared-network
+
+    # API REST - Endpoints administrativos
+    api-rest:
+        init: true
+        container_name: kodus-api-rest-dev
+        image: kodus-api-rest-dev
+        build:
+            context: .
+            dockerfile: DockerFiles/Dockerfile.api-rest.dev
+            args:
+                - API_CLOUD_MODE=${API_CLOUD_MODE:-false}
+        ports:
+            - '3331:3331'
+            - '9230:9229' # Debug port (diferente do webhook-handler)
+        env_file: [.env]
+        environment:
+            - CHOKIDAR_USEPOLLING=true
+            - API_DEVELOPMENT_MODE=${API_DEVELOPMENT_MODE:-true}
+            - COMPONENT_TYPE=api
+            - API_PORT=3331
+        restart: unless-stopped
+        volumes:
+            - .:/usr/src/app
+            - yalc_store:/root/.yalc
+        depends_on:
+            db_postgres:
+                condition: service_healthy
+            db_mongodb:
+                condition: service_healthy
+        networks:
+            - kodus-backend-services
+            - shared-network
+
+    # Worker - Processa jobs da fila
+    worker:
+        init: true
+        container_name: kodus-worker-dev
+        image: kodus-worker-dev
+        build:
+            context: .
+            dockerfile: DockerFiles/Dockerfile.worker.dev
+            args:
+                - API_CLOUD_MODE=${API_CLOUD_MODE:-false}
+        env_file: [.env]
+        environment:
+            - CHOKIDAR_USEPOLLING=true
+            - API_DEVELOPMENT_MODE=${API_DEVELOPMENT_MODE:-true}
+            - COMPONENT_TYPE=worker
+            - WORKFLOW_QUEUE_WORKER_ENABLED=${WORKFLOW_QUEUE_WORKER_ENABLED:-true}
+        restart: unless-stopped
+        volumes:
+            - .:/usr/src/app
+            - yalc_store:/root/.yalc
+        depends_on:
+            db_postgres:
+                condition: service_healthy
+            db_mongodb:
+                condition: service_healthy
+            rabbitmq:
+                condition: service_healthy
+        networks:
+            - kodus-backend-services
+            - shared-network
+
+    # RabbitMQ - Message broker
+    rabbitmq:
+        image: rabbitmq:4.2.2.1-management-alpine
+        container_name: rabbitmq
+        ports:
+            - '5672:5672'
+            - '15672:15672' # Management UI
+        environment:
+            RABBITMQ_DEFAULT_USER: ${API_RABBITMQ_USER:-guest}
+            RABBITMQ_DEFAULT_PASS: ${API_RABBITMQ_PASSWORD:-guest}
+        volumes:
+            - rabbitmq_data:/var/lib/rabbitmq
+        healthcheck:
+            test: ['CMD', 'rabbitmq-diagnostics', 'ping']
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        networks:
+            - kodus-backend-services
+
+    db_postgres:
+        image: pgvector/pgvector:pg16
+        container_name: db_postgres
+        ports: ['5432:5432']
+        environment:
+            POSTGRES_USER: ${API_PG_DB_USERNAME}
+            POSTGRES_PASSWORD: ${API_PG_DB_PASSWORD}
+            POSTGRES_DB: ${API_PG_DB_DATABASE}
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+            - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'pg_isready -U ${API_PG_DB_USERNAME} -d ${API_PG_DB_DATABASE}',
+                ]
+            interval: 5s
+            timeout: 3s
+            retries: 20
+            start_period: 10s
+        networks:
+            - kodus-backend-services
+
+    db_mongodb:
+        image: mongo:8
+        container_name: mongodb
+        ports: ['27017:27017']
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: ${API_MG_DB_USERNAME}
+            MONGO_INITDB_ROOT_PASSWORD: ${API_MG_DB_PASSWORD}
+            MONGO_INITDB_DATABASE: ${API_MG_DB_DATABASE}
+        volumes:
+            - mongodbdata:/data/db
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    "echo 'db.runCommand({ ping: 1 }).ok' | mongosh --quiet mongodb://$${MONGO_INITDB_ROOT_USERNAME}:$${MONGO_INITDB_ROOT_PASSWORD}@localhost:27017/admin | grep -q 1",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 20
+            start_period: 20s
+        networks:
+            - kodus-backend-services
+
+volumes:
+    yalc_store: {}
+    pgdata: {}
+    mongodbdata: {}
+    rabbitmq_data: {}
+
+networks:
+    kodus-backend-services:
+        driver: bridge
+        name: kodus-backend-services
+        external: true
+    shared-network:
+        external: true
+

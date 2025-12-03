@@ -9,7 +9,13 @@ import {
 const logger = createLogger('persistor-factory');
 
 export function createPersistorFromConfig(config: PersistorConfig): Persistor {
-    logger.info('Creating persistor', { type: config.type });
+    logger.log({
+        message: 'Creating persistor',
+        context: 'persistor-factory',
+        metadata: {
+            type: config.type,
+        },
+    });
 
     const type = config.type;
 
@@ -84,7 +90,10 @@ let globalPersistor: Persistor | null = null;
 export function getGlobalPersistor(): Persistor {
     if (!globalPersistor) {
         globalPersistor = createPersistor('memory');
-        logger.info('Created global memory persistor');
+        logger.log({
+            message: 'Created global memory persistor',
+            context: 'persistor-factory',
+        });
     }
     return globalPersistor;
 }
@@ -94,8 +103,9 @@ export function getGlobalPersistor(): Persistor {
  */
 export function setGlobalPersistor(persistor: Persistor): void {
     globalPersistor = persistor;
-    logger.info('Set global persistor', {
-        type: persistor.constructor.name,
+    logger.log({
+        message: 'Set global persistor',
+        context: 'persistor-factory',
     });
 }
 
@@ -104,5 +114,8 @@ export function setGlobalPersistor(persistor: Persistor): void {
  */
 export function resetGlobalPersistor(): void {
     globalPersistor = null;
-    logger.info('Reset global persistor');
+    logger.log({
+        message: 'Reset global persistor',
+        context: 'persistor-factory',
+    });
 }

@@ -1,21 +1,25 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { z } from 'zod';
-import { createOrchestration, PlannerType, StorageEnum } from '@kodus/flow';
+import { DatabaseConnection } from '@/config/types';
+import type { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
 import type {
     ContextDependency,
     ContextPack,
     LayerInputContext,
     RuntimeContextSnapshot,
 } from '@context-os-core/interfaces';
-import type { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { DatabaseConnection } from '@/config/types';
-import { PinoLoggerService } from '../logger/pino.service';
+import {
+    createLogger,
+    createOrchestration,
+    createThreadId,
+    PlannerType,
+    StorageEnum,
+} from '@kodus/flow';
 import { LLMModelProvider, PromptRunnerService } from '@kodus/kodus-common/llm';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { z } from 'zod';
 import { BaseAgentProvider } from '../agent/kodus-flow/base-agent.provider';
-import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
 import { ObservabilityService } from '../logger/observability.service';
-import { createThreadId } from '@kodus/flow';
 
 type SDKOrchestrator = Awaited<ReturnType<typeof createOrchestration>>;
 
@@ -52,8 +56,8 @@ const MODULE_NAME = 'MCPToolArgResolver';
 
 @Injectable()
 export class MCPToolArgResolverAgentService extends BaseAgentProvider {
+    private readonly logger = createLogger(MCPToolArgResolverAgentService.name);
     protected config: DatabaseConnection;
-    private readonly logger: PinoLoggerService;
     protected readonly defaultLLMConfig = {
         llmProvider: LLMModelProvider.GEMINI_2_5_FLASH,
         temperature: 0,
@@ -65,7 +69,6 @@ export class MCPToolArgResolverAgentService extends BaseAgentProvider {
     constructor(
         private readonly configService: ConfigService,
         promptRunnerService: PromptRunnerService,
-        logger: PinoLoggerService,
         permissionValidationService: PermissionValidationService,
         observabilityService: ObservabilityService,
     ) {
@@ -74,7 +77,6 @@ export class MCPToolArgResolverAgentService extends BaseAgentProvider {
             permissionValidationService,
             observabilityService,
         );
-        this.logger = logger;
         this.config =
             this.configService.get<DatabaseConnection>('mongoDatabase');
     }

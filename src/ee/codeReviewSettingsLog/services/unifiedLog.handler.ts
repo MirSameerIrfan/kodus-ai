@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Injectable, Inject } from '@nestjs/common';
 import {
     CODE_REVIEW_SETTINGS_LOG_REPOSITORY_TOKEN,
@@ -13,7 +14,6 @@ import {
     IGetAdditionalInfoHelper,
     GET_ADDITIONAL_INFO_HELPER_TOKEN,
 } from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 
 export interface ChangedDataToExport {
     actionDescription: string;
@@ -41,12 +41,12 @@ export interface UnifiedLogParams extends BaseLogParams {
 
 @Injectable()
 export class UnifiedLogHandler {
+    private readonly logger = createLogger(UnifiedLogHandler.name);
     constructor(
         @Inject(CODE_REVIEW_SETTINGS_LOG_REPOSITORY_TOKEN)
         private readonly codeReviewSettingsLogRepository: ICodeReviewSettingsLogRepository,
         @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
-        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
-        private readonly logger: PinoLoggerService,
+        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper
     ) {}
 
     public async logAction(params: UnifiedLogParams): Promise<void> {

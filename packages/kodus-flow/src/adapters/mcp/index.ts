@@ -66,8 +66,13 @@ export function createMCPAdapter(config: MCPAdapterConfig): MCPAdapter {
         maxRetries: config.maxRetries,
         onToolsChanged: (serverName: string) => {
             toolIndexDirty = true;
-            logger.debug('Tool index marked dirty due to change', {
-                serverName,
+            logger.debug({
+                message: 'Tool index marked dirty due to change',
+                context: 'createMCPAdapter',
+
+                metadata: {
+                    serverName,
+                },
             });
         },
     });
@@ -97,12 +102,17 @@ export function createMCPAdapter(config: MCPAdapterConfig): MCPAdapter {
             );
 
             if (rejected.length > 0) {
-                logger.warn(
-                    `${rejected.length} MCP server(s) failed to connect.`,
-                );
+                logger.warn({
+                    message: `${rejected.length} MCP server(s) failed to connect.`,
+                    context: 'createMCPAdapter',
+                });
 
                 for (const result of rejected) {
-                    logger.error('MCP connection error:', result.reason);
+                    logger.error({
+                        message: 'MCP connection error:',
+                        context: 'createMCPAdapter',
+                        error: result.reason,
+                    });
                 }
             }
 
@@ -285,15 +295,13 @@ export function createMCPAdapter(config: MCPAdapterConfig): MCPAdapter {
                         await registry.listAllTools();
                         toolIndexDirty = false;
                     } catch (error) {
-                        logger.warn(
-                            'Failed to refresh tool list, reconnecting',
-                            {
-                                error:
-                                    error instanceof Error
-                                        ? error.message
-                                        : String(error),
-                            },
-                        );
+                        logger.warn({
+                            message:
+                                'Failed to refresh tool list, reconnecting',
+                            context: 'createMCPAdapter',
+
+                            error: error as Error,
+                        });
                         await this.disconnect();
                         await this.connect();
                         await registry.listAllTools();

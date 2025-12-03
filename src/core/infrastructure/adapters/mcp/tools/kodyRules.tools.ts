@@ -1,6 +1,6 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { z } from 'zod';
-import { PinoLoggerService } from '../../services/logger/pino.service';
 import { wrapToolHandler } from '../utils/mcp-protocol.utils';
 import { BaseResponse, McpToolDefinition } from '../types/mcp-tool.interface';
 import {
@@ -56,10 +56,10 @@ interface CreateKodyRuleResponse extends BaseResponse {
 
 @Injectable()
 export class KodyRulesTools {
+    private readonly logger = createLogger(KodyRulesTools.name);
     constructor(
         @Inject(KODY_RULES_SERVICE_TOKEN)
-        private readonly kodyRulesService: IKodyRulesService,
-        private readonly logger: PinoLoggerService,
+        private readonly kodyRulesService: IKodyRulesService
     ) {}
 
     getKodyRules(): McpToolDefinition {

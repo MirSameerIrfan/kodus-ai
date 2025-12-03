@@ -1,30 +1,31 @@
-import { Inject, Injectable } from '@nestjs/common';
-import {
-    IPromptContextEngineService,
-    PROMPT_CONTEXT_ENGINE_SERVICE_TOKEN,
-} from '@/core/domain/prompts/contracts/promptContextEngine.contract';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { PromptSourceType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
 import {
     CONTEXT_REFERENCE_SERVICE_TOKEN,
     IContextReferenceService,
 } from '@/core/domain/contextReferences/contracts/context-reference.service.contract';
-import { PinoLoggerService } from '../logger/pino.service';
-import { createHash } from 'crypto';
-import type {
-    ContextRequirement,
-    ContextDependency,
-    ContextConsumerKind,
-    ContextDomain,
-} from '@context-os-core/interfaces';
-import { BYOKConfig } from '@kodus/kodus-common/llm';
+import {
+    IPromptContextEngineService,
+    PROMPT_CONTEXT_ENGINE_SERVICE_TOKEN,
+} from '@/core/domain/prompts/contracts/promptContextEngine.contract';
 import type { IPromptReferenceSyncError } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
+import {
+    PromptReferenceErrorType,
+    PromptSourceType,
+} from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
 import {
     MCPToolMetadata,
     MCPToolMetadataService,
 } from '@/core/infrastructure/adapters/mcp/services/mcp-tool-metadata.service';
-import type { MCPServerConfig } from '@kodus/flow';
-import { PromptReferenceErrorType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
+import type {
+    ContextConsumerKind,
+    ContextDependency,
+    ContextDomain,
+    ContextRequirement,
+} from '@context-os-core/interfaces';
+import { MCPServerConfig, createLogger } from '@kodus/flow';
+import { BYOKConfig } from '@kodus/kodus-common/llm';
+import { Inject, Injectable } from '@nestjs/common';
+import { createHash } from 'crypto';
 
 export interface ContextDetectionField {
     fieldId?: string;
@@ -53,12 +54,14 @@ export interface ContextReferenceDetectionParams {
 
 @Injectable()
 export class ContextReferenceDetectionService {
+    private readonly logger = createLogger(
+        ContextReferenceDetectionService.name,
+    );
     constructor(
         @Inject(PROMPT_CONTEXT_ENGINE_SERVICE_TOKEN)
         private readonly promptContextEngine: IPromptContextEngineService,
         @Inject(CONTEXT_REFERENCE_SERVICE_TOKEN)
         private readonly contextReferenceService: IContextReferenceService,
-        private readonly logger: PinoLoggerService,
         private readonly mcpToolMetadataService: MCPToolMetadataService,
     ) {}
 

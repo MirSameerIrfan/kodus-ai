@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
@@ -11,24 +12,20 @@ import {
     IUsersService,
     USER_SERVICE_TOKEN,
 } from '@/core/domain/user/contracts/user.service.contract';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class AssignReposUseCase implements IUseCase {
+    private readonly logger = createLogger(AssignReposUseCase.name);
     constructor(
         @Inject(USER_SERVICE_TOKEN)
         private readonly userService: IUsersService,
-
         @Inject(PERMISSIONS_SERVICE_TOKEN)
         private readonly permissionsService: IPermissionsService,
-
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
-        private readonly integrationConfigService: IIntegrationConfigService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly integrationConfigService: IIntegrationConfigService
     ) {}
 
     async execute(params: {

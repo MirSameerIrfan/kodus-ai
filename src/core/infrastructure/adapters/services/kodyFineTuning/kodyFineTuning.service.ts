@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import {
     CODE_REVIEW_FEEDBACK_SERVICE_TOKEN,
     ICodeReviewFeedbackService,
@@ -22,7 +23,6 @@ import {
 } from '@/config/types/general/codeReview.type';
 
 import { kmeans } from 'ml-kmeans';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { FeedbackType } from '@/core/domain/kodyFineTuning/enums/feedbackType.enum';
 import { IClusterizedSuggestion } from '@/core/domain/kodyFineTuning/interfaces/kodyFineTuning.interface';
 import { FineTuningType } from '@/core/domain/kodyFineTuning/enums/fineTuningType.enum';
@@ -39,6 +39,7 @@ import { LabelType } from '@/shared/utils/codeManagement/labels';
 
 @Injectable()
 export class KodyFineTuningService {
+    private readonly logger = createLogger(KodyFineTuningService.name);
     private readonly MAX_CLUSTERS = 50;
     private readonly DIVISOR_FOR_CLUSTER_QUANTITY = 4;
     private readonly SIMILARITY_THRESHOLD_NEGATIVE = 0.6;
@@ -48,17 +49,12 @@ export class KodyFineTuningService {
     constructor(
         @Inject(PULL_REQUESTS_SERVICE_TOKEN)
         private readonly pullRequestsService: IPullRequestsService,
-
         @Inject(CODE_REVIEW_FEEDBACK_SERVICE_TOKEN)
         private readonly codeReviewFeedbackService: ICodeReviewFeedbackService,
-
         @Inject(SUGGESTION_EMBEDDED_SERVICE_TOKEN)
         private readonly suggestionEmbeddedService: ISuggestionEmbeddedService,
-
         @Inject(GLOBAL_PARAMETERS_SERVICE_TOKEN)
-        private readonly globalParametersService: IGlobalParametersService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly globalParametersService: IGlobalParametersService
     ) {}
 
     public async startAnalysis(

@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
@@ -9,7 +10,6 @@ import {
     PULL_REQUEST_MANAGER_SERVICE_TOKEN,
     IPullRequestManagerService,
 } from '@/core/domain/codeBase/contracts/PullRequestManagerService.contract';
-import { PinoLoggerService } from '../../../logger/pino.service';
 import {
     AutomationMessage,
     AutomationStatus,
@@ -17,6 +17,7 @@ import {
 
 @Injectable()
 export class ValidateNewCommitsStage extends BasePipelineStage<CodeReviewPipelineContext> {
+    private readonly logger = createLogger(ValidateNewCommitsStage.name);
     readonly stageName = 'ValidateNewCommitsStage';
     readonly dependsOn: string[] = []; // No dependencies - can run in parallel with other initial stages
 
@@ -24,9 +25,7 @@ export class ValidateNewCommitsStage extends BasePipelineStage<CodeReviewPipelin
         @Inject(AUTOMATION_EXECUTION_SERVICE_TOKEN)
         private readonly automationExecutionService: IAutomationExecutionService,
         @Inject(PULL_REQUEST_MANAGER_SERVICE_TOKEN)
-        private readonly pullRequestHandlerService: IPullRequestManagerService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly pullRequestHandlerService: IPullRequestManagerService
     ) {
         super();
     }

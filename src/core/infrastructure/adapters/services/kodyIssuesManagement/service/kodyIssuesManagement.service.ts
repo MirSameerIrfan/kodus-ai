@@ -1,5 +1,5 @@
+import { createLogger } from "@kodus/flow";
 import { Injectable, Inject } from '@nestjs/common';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { PULL_REQUESTS_SERVICE_TOKEN } from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
 import { IPullRequestsService } from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
 import { ImplementationStatus } from '@/core/domain/pullRequests/enums/implementationStatus.enum';
@@ -40,27 +40,20 @@ import { PermissionValidationService } from '@/ee/shared/services/permissionVali
 export class KodyIssuesManagementService
     implements IKodyIssuesManagementService
 {
+    private readonly logger = createLogger(KodyIssuesManagementService.name);
     constructor(
-        private readonly logger: PinoLoggerService,
-
         @Inject(ISSUES_SERVICE_TOKEN)
         private readonly issuesService: IssuesService,
-
         @Inject(PULL_REQUESTS_SERVICE_TOKEN)
         private readonly pullRequestsService: IPullRequestsService,
-
         @Inject(KODY_ISSUES_ANALYSIS_SERVICE_TOKEN)
         private readonly kodyIssuesAnalysisService: KodyIssuesAnalysisService,
-
         @Inject(PULL_REQUEST_MANAGER_SERVICE_TOKEN)
         private pullRequestHandlerService: IPullRequestManagerService,
-
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
-
         private readonly cacheService: CacheService,
-
-        private readonly permissionValidationService: PermissionValidationService,
+        private readonly permissionValidationService: PermissionValidationService
     ) {}
 
     async processClosedPr(params: contextToGenerateIssues): Promise<void> {

@@ -29,7 +29,10 @@ export class MCPRegistry {
             onToolsChanged: options.onToolsChanged,
         };
 
-        this.logger.info('MCPRegistry initialized');
+        this.logger.log({
+            message: 'MCPRegistry initialized',
+            context: this.constructor.name,
+        });
     }
 
     /**
@@ -45,8 +48,13 @@ export class MCPRegistry {
         // cria a promessa de registro e salva no map
         const job = (async () => {
             try {
-                this.logger.info('Registering MCP server', {
-                    serverName: config.name,
+                this.logger.log({
+                    message: 'Registering MCP server',
+                    context: this.constructor.name,
+
+                    metadata: {
+                        serverName: config.name,
+                    },
                 });
 
                 // ─── 1. Normalizar tipo de transporte ───────────────────────────────
@@ -80,15 +88,21 @@ export class MCPRegistry {
 
                 this.markToolsDirty(config.name);
 
-                this.logger.info('Successfully registered MCP server', {
-                    serverName: config.name,
+                this.logger.log({
+                    message: 'Successfully registered MCP server',
+                    context: this.constructor.name,
+
+                    metadata: {
+                        serverName: config.name,
+                    },
                 });
             } catch (error) {
-                this.logger.error(
-                    'Failed to register MCP server',
-                    error instanceof Error ? error : undefined,
-                    { serverName: config.name, config },
-                );
+                this.logger.error({
+                    message: 'Failed to register MCP server',
+                    context: this.constructor.name,
+                    error: error instanceof Error ? error : undefined,
+                    metadata: { serverName: config.name, config },
+                });
                 throw error;
             } finally {
                 // remove promessa pendente (sucesso ou erro)
@@ -121,79 +135,125 @@ export class MCPRegistry {
         const allTools: MCPToolRawWithServer[] = [];
         const refreshedIndex = new Map<string, Set<string>>();
 
-        this.logger.info('Listing all tools from MCP registry', {
-            totalClients: this.clients.size,
+        this.logger.log({
+            message: 'Listing all tools from MCP registry',
+            context: this.constructor.name,
+
+            metadata: {
+                totalClients: this.clients.size,
+            },
         });
 
         // Lista todas as tools
         for (const [serverName, client] of this.clients) {
             try {
-                this.logger.debug('Listing tools from server', { serverName });
+                this.logger.debug({
+                    message: 'Listing tools from server',
+                    context: this.constructor.name,
+
+                    metadata: {
+                        serverName,
+                    },
+                });
 
                 // Check if client is still connected
                 if (!client.isConnected()) {
-                    this.logger.warn(
-                        'Client not connected, attempting to reconnect',
-                        { serverName },
-                    );
+                    this.logger.warn({
+                        message:
+                            'Client not connected, attempting to reconnect',
+                        context: this.constructor.name,
+
+                        metadata: {
+                            serverName,
+                        },
+                    });
                     try {
                         await client.connect();
                     } catch (reconnectError) {
-                        this.logger.error(
-                            'Failed to reconnect to server',
-                            reconnectError instanceof Error
-                                ? reconnectError
-                                : undefined,
-                            { serverName },
-                        );
+                        this.logger.error({
+                            message: 'Failed to reconnect to server',
+                            context: this.constructor.name,
+
+                            error:
+                                reconnectError instanceof Error
+                                    ? reconnectError
+                                    : undefined,
+
+                            metadata: { serverName },
+                        });
                         continue; // Skip this server
                     }
                 }
 
                 const tools = await client.listTools();
-                this.logger.debug('Received tools from server', {
-                    serverName,
-                    toolCount: tools.length,
-                    toolNames: tools.map((t) => t.name),
+                this.logger.debug({
+                    message: 'Received tools from server',
+                    context: this.constructor.name,
+
+                    metadata: {
+                        serverName,
+                        toolCount: tools.length,
+                        toolNames: tools.map((t) => t.name),
+                    },
                 });
 
                 for (const tool of tools) {
                     // ✅ ADDED: Validate tool structure before processing
                     if (!tool || typeof tool !== 'object') {
-                        this.logger.warn('Invalid tool structure received', {
-                            serverName,
-                            tool,
+                        this.logger.warn({
+                            message: 'Invalid tool structure received',
+                            context: this.constructor.name,
+
+                            metadata: {
+                                serverName,
+                                tool,
+                            },
                         });
                         continue;
                     }
 
                     // ✅ ADDED: Validate tool name
                     if (!tool.name || typeof tool.name !== 'string') {
-                        this.logger.warn('Invalid tool name received', {
-                            serverName,
-                            tool,
+                        this.logger.warn({
+                            message: 'Invalid tool name received',
+                            context: this.constructor.name,
+
+                            metadata: {
+                                serverName,
+                                tool,
+                            },
                         });
                         continue;
                     }
 
                     // ✅ ADDED: Validate tool schema
                     if (!tool.inputSchema) {
-                        this.logger.warn('Tool missing inputSchema', {
-                            serverName,
-                            toolName: tool.name,
+                        this.logger.warn({
+                            message: 'Tool missing inputSchema',
+                            context: this.constructor.name,
+
+                            metadata: {
+                                serverName,
+                                toolName: tool.name,
+                            },
                         });
                         // Use fallback schema
                         tool.inputSchema = { type: 'object', properties: {} };
                     }
 
                     // ✅ ADDED: Log tool metadata for debugging
-                    this.logger.debug('Processing MCP tool', {
-                        serverName,
-                        toolName: tool.name,
-                        hasTitle: !!tool.title,
-                        hasDescription: !!tool.description,
-                        hasOutputSchema: !!tool.outputSchema,
-                        hasAnnotations: !!tool.annotations,
+                    this.logger.debug({
+                        message: 'Processing MCP tool',
+                        context: this.constructor.name,
+
+                        metadata: {
+                            serverName,
+                            toolName: tool.name,
+                            hasTitle: !!tool.title,
+                            hasDescription: !!tool.description,
+                            hasOutputSchema: !!tool.outputSchema,
+                            hasAnnotations: !!tool.annotations,
+                        },
                     });
 
                     if (!refreshedIndex.has(tool.name)) {
@@ -207,10 +267,15 @@ export class MCPRegistry {
                     });
                 }
             } catch (error) {
-                this.logger.error(
-                    'Error listing tools from server',
-                    error instanceof Error ? error : new Error(String(error)),
-                    {
+                this.logger.error({
+                    message: 'Error listing tools from server',
+                    context: this.constructor.name,
+                    error:
+                        error instanceof Error
+                            ? error
+                            : new Error(String(error)),
+
+                    metadata: {
                         serverName,
                         errorMessage:
                             error instanceof Error
@@ -221,7 +286,7 @@ export class MCPRegistry {
                         errorStack:
                             error instanceof Error ? error.stack : undefined,
                     },
-                );
+                });
 
                 // ✅ ADDED: Continue processing other servers instead of breaking
                 // This ensures one bad server doesn't break the entire registry
@@ -229,17 +294,24 @@ export class MCPRegistry {
             }
         }
 
-        this.logger.info('Finished listing tools', {
-            totalToolsFound: allTools.length,
-            toolsByServer: allTools.reduce(
-                (acc, tool) => {
-                    if (tool.serverName) {
-                        acc[tool.serverName] = (acc[tool.serverName] || 0) + 1;
-                    }
-                    return acc;
-                },
-                {} as Record<string, number>,
-            ),
+        this.logger.log({
+            message: 'Finished listing tools',
+            context: this.constructor.name,
+
+            metadata: {
+                totalToolsFound: allTools.length,
+
+                toolsByServer: allTools.reduce(
+                    (acc, tool) => {
+                        if (tool.serverName) {
+                            acc[tool.serverName] =
+                                (acc[tool.serverName] || 0) + 1;
+                        }
+                        return acc;
+                    },
+                    {} as Record<string, number>,
+                ),
+            },
         });
 
         this.toolIndex = refreshedIndex;
@@ -284,13 +356,16 @@ export class MCPRegistry {
                 try {
                     return await client.executeTool(toolName, args);
                 } catch (error) {
-                    this.logger.warn('Failed to execute tool on server', {
-                        serverName: candidate,
-                        toolName,
-                        error:
-                            error instanceof Error
-                                ? error.message
-                                : String(error),
+                    this.logger.warn({
+                        message: 'Failed to execute tool on server',
+                        context: this.constructor.name,
+
+                        error: error as Error,
+
+                        metadata: {
+                            serverName: candidate,
+                            toolName,
+                        },
                     });
                 }
             }
@@ -320,7 +395,9 @@ export class MCPRegistry {
         // Desconecta todos os clientes
         for (const [, client] of this.clients) {
             client.disconnect().catch((error) => {
-                this.logger.warn('Failed to disconnect MCP client', {
+                this.logger.warn({
+                    message: 'Failed to disconnect MCP client',
+                    context: this.constructor.name,
                     error: error.message,
                 });
             });

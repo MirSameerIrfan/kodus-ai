@@ -2,27 +2,25 @@
  * @license
  * © Kodus Tech. All rights reserved.
  */
-import { Provider } from '@nestjs/common';
-import { PinoLoggerService } from '../adapters/services/logger/pino.service';
-import {
-    FILE_REVIEW_CONTEXT_PREPARATION_TOKEN,
-    IFileReviewContextPreparation,
-} from '@/shared/interfaces/file-review-context-preparation.interface';
-import { FileReviewContextPreparation as CoreFileReviewContextPreparation } from '../adapters/services/fileReviewContextPreparation/file-review-context-preparation.service';
-import { FileReviewContextPreparation as ProFileReviewContextPreparation } from '@/ee/codeReview/fileReviewContextPreparation/file-review-context-preparation.service';
-import { LLM_ANALYSIS_SERVICE_TOKEN } from '../adapters/services/codeBase/llmAnalysis.service';
+import { IAIAnalysisService } from '@/core/domain/codeBase/contracts/AIAnalysisService.contract';
 import {
     AST_ANALYSIS_SERVICE_TOKEN,
     IASTAnalysisService,
 } from '@/core/domain/codeBase/contracts/ASTAnalysisService.contract';
-import { IAIAnalysisService } from '@/core/domain/codeBase/contracts/AIAnalysisService.contract';
+import { FileReviewContextPreparation as ProFileReviewContextPreparation } from '@/ee/codeReview/fileReviewContextPreparation/file-review-context-preparation.service';
 import { environment } from '@/ee/configs/environment';
+import {
+    FILE_REVIEW_CONTEXT_PREPARATION_TOKEN,
+    IFileReviewContextPreparation,
+} from '@/shared/interfaces/file-review-context-preparation.interface';
+import { Provider } from '@nestjs/common';
+import { LLM_ANALYSIS_SERVICE_TOKEN } from '../adapters/services/codeBase/llmAnalysis.service';
+import { FileReviewContextPreparation as CoreFileReviewContextPreparation } from '../adapters/services/fileReviewContextPreparation/file-review-context-preparation.service';
 
 export const FILE_REVIEW_CONTEXT_PREPARATION_PROVIDER: Provider = {
     provide: FILE_REVIEW_CONTEXT_PREPARATION_TOKEN,
     useFactory: (
         corePreparation: CoreFileReviewContextPreparation,
-        PinoLoggerService: PinoLoggerService,
         aiAnalysisService: IAIAnalysisService,
         astAnalysisService: IASTAnalysisService,
     ): IFileReviewContextPreparation => {
@@ -32,7 +30,6 @@ export const FILE_REVIEW_CONTEXT_PREPARATION_PROVIDER: Provider = {
             return new ProFileReviewContextPreparation(
                 astAnalysisService,
                 aiAnalysisService,
-                PinoLoggerService,
             );
         }
 
@@ -40,7 +37,6 @@ export const FILE_REVIEW_CONTEXT_PREPARATION_PROVIDER: Provider = {
     },
     inject: [
         CoreFileReviewContextPreparation,
-        PinoLoggerService,
         LLM_ANALYSIS_SERVICE_TOKEN,
         AST_ANALYSIS_SERVICE_TOKEN,
     ],

@@ -45,28 +45,40 @@ export class ContextService {
         threadId: string,
         tenantId: string,
     ): Promise<void> {
-        logger.debug('🚀 Initializing context session', {
-            threadId,
-            tenantId,
+        logger.debug({
+            message: '🚀 Initializing context session',
+            context: 'initializeSession',
+
+            metadata: {
+                threadId,
+                tenantId,
+            },
         });
 
         try {
             const builder = EnhancedContextBuilder.getInstance();
             await builder.initializeAgentSession(threadId, tenantId);
 
-            logger.info('✅ Context session initialized successfully', {
-                threadId,
-                tenantId,
-            });
-        } catch (error) {
-            logger.error(
-                '❌ Failed to initialize context session',
-                error instanceof Error ? error : undefined,
-                {
+            logger.log({
+                message: '✅ Context session initialized successfully',
+                context: 'initializeSession',
+
+                metadata: {
                     threadId,
                     tenantId,
                 },
-            );
+            });
+        } catch (error) {
+            logger.error({
+                message: '❌ Failed to initialize context session',
+                context: 'initializeSession',
+                error: error instanceof Error ? error : undefined,
+
+                metadata: {
+                    threadId,
+                    tenantId,
+                },
+            });
             throw new Error(
                 `Context session initialization failed: ${error instanceof Error ? error.message : String(error)}`,
             );
@@ -77,29 +89,43 @@ export class ContextService {
      * Get current runtime context by threadId
      */
     static async getContext(threadId: string): Promise<AgentRuntimeContext> {
-        logger.debug('📖 Getting runtime context', { threadId });
+        logger.debug({
+            message: '📖 Getting runtime context',
+            context: 'getContext',
+
+            metadata: {
+                threadId,
+            },
+        });
 
         try {
             const builder = EnhancedContextBuilder.getInstance();
             const contextBridge = builder.getContextBridge();
             const context = await contextBridge.getRuntimeContext(threadId);
 
-            logger.debug('✅ Runtime context retrieved', {
-                threadId,
-                sessionId: context.sessionId,
-                phase: context.state.phase,
-                messagesCount: context.messages.length,
+            logger.debug({
+                message: '✅ Runtime context retrieved',
+                context: 'getContext',
+
+                metadata: {
+                    threadId,
+                    sessionId: context.sessionId,
+                    phase: context.state.phase,
+                    messagesCount: context.messages.length,
+                },
             });
 
             return context;
         } catch (error) {
-            logger.error(
-                '❌ Failed to get runtime context',
-                error instanceof Error ? error : undefined,
-                {
+            logger.error({
+                message: '❌ Failed to get runtime context',
+                context: 'getContext',
+                error: error instanceof Error ? error : undefined,
+
+                metadata: {
                     threadId,
                 },
-            );
+            });
             throw new Error(
                 `Get context failed: ${error instanceof Error ? error.message : String(error)}`,
             );
@@ -154,11 +180,16 @@ export class ContextService {
             };
         },
     ): Promise<void> {
-        logger.debug('🔄 Updating execution state', {
-            threadId,
-            status: executionData.status,
-            completedSteps: executionData.completedSteps?.length,
-            failedSteps: executionData.failedSteps?.length,
+        logger.debug({
+            message: '🔄 Updating execution state',
+            context: 'updateExecution',
+
+            metadata: {
+                threadId,
+                status: executionData.status,
+                completedSteps: executionData.completedSteps?.length,
+                failedSteps: executionData.failedSteps?.length,
+            },
         });
 
         try {
@@ -170,19 +201,26 @@ export class ContextService {
                 executionData as any,
             );
 
-            logger.debug('✅ Execution state updated successfully', {
-                threadId,
-                status: executionData.status,
+            logger.debug({
+                message: '✅ Execution state updated successfully',
+                context: 'updateExecution',
+
+                metadata: {
+                    threadId,
+                    status: executionData.status,
+                },
             });
         } catch (error) {
-            logger.error(
-                '❌ Failed to update execution state',
-                error instanceof Error ? error : undefined,
-                {
+            logger.error({
+                message: '❌ Failed to update execution state',
+                context: 'updateExecution',
+                error: error instanceof Error ? error : undefined,
+
+                metadata: {
                     threadId,
                     executionData,
                 },
-            );
+            });
             // Don't throw - execution updates shouldn't break main flow
         }
     }
@@ -201,26 +239,38 @@ export class ContextService {
             metadata?: Record<string, unknown>;
         },
     ): Promise<string> {
-        logger.debug('💬 Adding message to conversation', {
-            threadId,
-            role: message.role,
-            contentLength: message.content.length,
-            hasToolCalls: !!message.toolCalls?.length,
+        logger.debug({
+            message: '💬 Adding message to conversation',
+            context: 'addMessage',
+
+            metadata: {
+                threadId,
+                role: message.role,
+                contentLength: message.content.length,
+                hasToolCalls: !!message.toolCalls?.length,
+            },
         });
 
         // 🔍 DEBUG: Log detalhado para todas as roles
-        logger.info('🔍 CONTEXT SERVICE - Adding message details', {
-            threadId,
-            role: message.role,
-            roleType: typeof message.role,
-            isUser: message.role === 'user',
-            isAssistant: message.role === 'assistant',
-            isTool: message.role === 'tool',
-            isSystem: message.role === 'system',
-            contentPreview:
-                message.content.substring(0, 300) +
-                (message.content.length > 300 ? '...' : ''),
-            metadata: message.metadata,
+        logger.log({
+            message: '🔍 CONTEXT SERVICE - Adding message details',
+            context: 'addMessage',
+
+            metadata: {
+                threadId,
+                role: message.role,
+                roleType: typeof message.role,
+                isUser: message.role === 'user',
+                isAssistant: message.role === 'assistant',
+                isTool: message.role === 'tool',
+                isSystem: message.role === 'system',
+
+                contentPreview:
+                    message.content.substring(0, 300) +
+                    (message.content.length > 300 ? '...' : ''),
+
+                metadata: message.metadata,
+            },
         });
 
         try {
@@ -243,22 +293,29 @@ export class ContextService {
 
             await sessionManager.addMessage(threadId, chatMessage);
 
-            logger.debug('✅ Message added successfully', {
-                threadId,
-                role: message.role,
-                messageId,
+            logger.debug({
+                message: '✅ Message added successfully',
+                context: 'addMessage',
+
+                metadata: {
+                    threadId,
+                    role: message.role,
+                    messageId,
+                },
             });
 
             return messageId;
         } catch (error) {
-            logger.error(
-                '❌ Failed to add message',
-                error instanceof Error ? error : undefined,
-                {
+            logger.error({
+                message: '❌ Failed to add message',
+                context: 'addMessage',
+                error: error instanceof Error ? error : undefined,
+
+                metadata: {
                     threadId,
                     messageRole: message.role,
                 },
-            );
+            });
             // Return generated ID even on error for consistency
             return IdGenerator.messageId();
         }
@@ -278,11 +335,16 @@ export class ContextService {
             totalIterations?: number;
         },
     ): Promise<void> {
-        logger.debug('🔄 Updating context state', {
-            threadId,
-            phase: stateUpdate.phase,
-            currentIteration: stateUpdate.currentIteration,
-            pendingActionsCount: stateUpdate.pendingActions?.length,
+        logger.debug({
+            message: '🔄 Updating context state',
+            context: 'updateState',
+
+            metadata: {
+                threadId,
+                phase: stateUpdate.phase,
+                currentIteration: stateUpdate.currentIteration,
+                pendingActionsCount: stateUpdate.pendingActions?.length,
+            },
         });
 
         try {
@@ -300,19 +362,26 @@ export class ContextService {
                 },
             });
 
-            logger.debug('✅ Context state updated successfully', {
-                threadId,
-                phase: stateUpdate.phase,
+            logger.debug({
+                message: '✅ Context state updated successfully',
+                context: 'updateState',
+
+                metadata: {
+                    threadId,
+                    phase: stateUpdate.phase,
+                },
             });
         } catch (error) {
-            logger.error(
-                '❌ Failed to update context state',
-                error instanceof Error ? error : undefined,
-                {
+            logger.error({
+                message: '❌ Failed to update context state',
+                context: 'updateState',
+                error: error instanceof Error ? error : undefined,
+
+                metadata: {
                     threadId,
                     stateUpdate,
                 },
-            );
+            });
             // Don't throw - state updates shouldn't break main flow
         }
     }
@@ -328,11 +397,16 @@ export class ContextService {
             metadata?: Record<string, unknown>;
         },
     ): Promise<void> {
-        logger.debug('🔄 Updating message', {
-            threadId,
-            messageId,
-            hasContent: !!updates.content,
-            hasMetadata: !!updates.metadata,
+        logger.debug({
+            message: '🔄 Updating message',
+            context: 'updateMessage',
+
+            metadata: {
+                threadId,
+                messageId,
+                hasContent: !!updates.content,
+                hasMetadata: !!updates.metadata,
+            },
         });
 
         try {
@@ -341,19 +415,26 @@ export class ContextService {
 
             await sessionManager.updateMessage(threadId, messageId, updates);
 
-            logger.debug('✅ Message updated successfully', {
-                threadId,
-                messageId,
-            });
-        } catch (error) {
-            logger.error(
-                '❌ Failed to update message',
-                error instanceof Error ? error : undefined,
-                {
+            logger.debug({
+                message: '✅ Message updated successfully',
+                context: 'updateMessage',
+
+                metadata: {
                     threadId,
                     messageId,
                 },
-            );
+            });
+        } catch (error) {
+            logger.error({
+                message: '❌ Failed to update message',
+                context: 'updateMessage',
+                error: error instanceof Error ? error : undefined,
+
+                metadata: {
+                    threadId,
+                    messageId,
+                },
+            });
             // Don't throw - message updates shouldn't break main flow
         }
     }
@@ -365,13 +446,19 @@ export class ContextService {
         threadId: string,
         entities: Record<string, any>,
     ): Promise<void> {
-        logger.debug('🏷️ Adding entities to context', {
-            threadId,
-            entityTypes: Object.keys(entities),
-            totalEntities: Object.values(entities).reduce(
-                (sum, arr) => sum + (Array.isArray(arr) ? arr.length : 1),
-                0,
-            ),
+        logger.debug({
+            message: '🏷️ Adding entities to context',
+            context: 'addEntities',
+
+            metadata: {
+                threadId,
+                entityTypes: Object.keys(entities),
+
+                totalEntities: Object.values(entities).reduce(
+                    (sum, arr) => sum + (Array.isArray(arr) ? arr.length : 1),
+                    0,
+                ),
+            },
         });
 
         try {
@@ -380,19 +467,26 @@ export class ContextService {
 
             await sessionManager.addEntities(threadId, entities);
 
-            logger.debug('✅ Entities added successfully', {
-                threadId,
-                entityTypes: Object.keys(entities),
-            });
-        } catch (error) {
-            logger.error(
-                '❌ Failed to add entities',
-                error instanceof Error ? error : undefined,
-                {
+            logger.debug({
+                message: '✅ Entities added successfully',
+                context: 'addEntities',
+
+                metadata: {
                     threadId,
                     entityTypes: Object.keys(entities),
                 },
-            );
+            });
+        } catch (error) {
+            logger.error({
+                message: '❌ Failed to add entities',
+                context: 'addEntities',
+                error: error instanceof Error ? error : undefined,
+
+                metadata: {
+                    threadId,
+                    entityTypes: Object.keys(entities),
+                },
+            });
             // Don't throw - entity updates shouldn't break main flow
         }
     }
@@ -404,10 +498,15 @@ export class ContextService {
         threadId: string,
         snapshot: ExecutionSnapshot,
     ): Promise<void> {
-        logger.debug('📸 Saving execution snapshot', {
-            threadId,
-            sessionId: snapshot.sessionId,
-            outcome: snapshot.outcome,
+        logger.debug({
+            message: '📸 Saving execution snapshot',
+            context: 'saveSnapshot',
+
+            metadata: {
+                threadId,
+                sessionId: snapshot.sessionId,
+                outcome: snapshot.outcome,
+            },
         });
 
         try {
@@ -416,20 +515,27 @@ export class ContextService {
 
             await sessionManager.saveSnapshot(threadId, snapshot);
 
-            logger.info('✅ Execution snapshot saved', {
-                threadId,
-                sessionId: snapshot.sessionId,
-                outcome: snapshot.outcome,
+            logger.log({
+                message: '✅ Execution snapshot saved',
+                context: 'saveSnapshot',
+
+                metadata: {
+                    threadId,
+                    sessionId: snapshot.sessionId,
+                    outcome: snapshot.outcome,
+                },
             });
         } catch (error) {
-            logger.error(
-                '❌ Failed to save execution snapshot',
-                error instanceof Error ? error : undefined,
-                {
+            logger.error({
+                message: '❌ Failed to save execution snapshot',
+                context: 'saveSnapshot',
+                error: error instanceof Error ? error : undefined,
+
+                metadata: {
                     threadId,
                     sessionId: snapshot.sessionId,
                 },
-            );
+            });
             // Don't throw - snapshots shouldn't break main flow
         }
     }
@@ -444,18 +550,29 @@ export class ContextService {
             plannerContext.agentContext?.thread?.id ||
             plannerContext.agentContext?.sessionId;
 
-        logger.debug('🌉 Building final response context', {
-            threadId,
-            hasAgentContext: !!plannerContext.agentContext,
+        logger.debug({
+            message: '🌉 Building final response context',
+            context: 'buildFinalResponseContext',
+
+            metadata: {
+                threadId,
+                hasAgentContext: !!plannerContext.agentContext,
+            },
         });
 
         if (!threadId) {
             const error = new Error(
                 'Missing threadId in plannerContext.agentContext',
             );
-            logger.error('❌ Cannot build final response context', error, {
-                plannerContext: {
-                    hasAgentContext: !!plannerContext.agentContext,
+            logger.error({
+                message: '❌ Cannot build final response context',
+                context: 'buildFinalResponseContext',
+                error: error,
+
+                metadata: {
+                    plannerContext: {
+                        hasAgentContext: !!plannerContext.agentContext,
+                    },
                 },
             });
             throw error;
@@ -466,27 +583,36 @@ export class ContextService {
             const finalContext =
                 await builder.buildFinalResponseContext(plannerContext);
 
-            logger.info('✅ Final response context built successfully', {
-                threadId,
-                messagesCount: finalContext.runtime.messages.length,
-                entitiesCount: Object.keys(finalContext.runtime.entities)
-                    .length,
-                successRate: finalContext.executionSummary.successRate,
-                wasRecovered: finalContext.recovery?.wasRecovered || false,
+            logger.log({
+                message: '✅ Final response context built successfully',
+                context: 'buildFinalResponseContext',
+
+                metadata: {
+                    threadId,
+                    messagesCount: finalContext.runtime.messages.length,
+
+                    entitiesCount: Object.keys(finalContext.runtime.entities)
+                        .length,
+
+                    successRate: finalContext.executionSummary.successRate,
+                    wasRecovered: finalContext.recovery?.wasRecovered || false,
+                },
             });
 
             return finalContext;
         } catch (error) {
-            logger.error(
-                '❌ Failed to build final response context',
-                error instanceof Error ? error : undefined,
-                {
+            logger.error({
+                message: '❌ Failed to build final response context',
+                context: 'buildFinalResponseContext',
+                error: error instanceof Error ? error : undefined,
+
+                metadata: {
                     threadId,
                     plannerContext: {
                         hasAgentContext: !!plannerContext.agentContext,
                     },
                 },
-            );
+            });
             throw new Error(
                 `Build final response context failed: ${error instanceof Error ? error.message : String(error)}`,
             );

@@ -2,14 +2,14 @@
  * @license
  * Kodus Tech. All rights reserved.
  */
-import { Provider } from '@nestjs/common';
-import { IPipeline } from '../adapters/services/pipeline/interfaces/pipeline.interface';
-import { CodeReviewPipelineStrategy } from '../adapters/services/codeBase/codeReviewPipeline/strategies/code-review-pipeline.strategy';
 import { CodeReviewPipelineStrategyEE } from '@/ee/codeReview/strategies/code-review-pipeline.strategy.ee';
-import { CodeReviewPipelineContext } from '../adapters/services/codeBase/codeReviewPipeline/context/code-review-pipeline.context';
-import { PipelineExecutor } from '../adapters/services/pipeline/pipeline-executor.service';
-import { PinoLoggerService } from '../adapters/services/logger/pino.service';
 import { environment } from '@/ee/configs/environment';
+import { createLogger } from '@kodus/flow';
+import { Provider } from '@nestjs/common';
+import { CodeReviewPipelineContext } from '../adapters/services/codeBase/codeReviewPipeline/context/code-review-pipeline.context';
+import { CodeReviewPipelineStrategy } from '../adapters/services/codeBase/codeReviewPipeline/strategies/code-review-pipeline.strategy';
+import { IPipeline } from '../adapters/services/pipeline/interfaces/pipeline.interface';
+import { PipelineExecutor } from '../adapters/services/pipeline/pipeline-executor.service';
 
 export const CODE_REVIEW_PIPELINE_TOKEN = 'CODE_REVIEW_PIPELINE';
 
@@ -18,11 +18,11 @@ export const codeReviewPipelineProvider: Provider = {
     useFactory: (
         ceStrategy: CodeReviewPipelineStrategy,
         eeStrategy: CodeReviewPipelineStrategyEE,
-        logger: PinoLoggerService,
     ): IPipeline<CodeReviewPipelineContext> => {
         const isCloud = environment.API_CLOUD_MODE;
         const strategy = isCloud ? eeStrategy : ceStrategy;
 
+        const logger = createLogger('CodeReviewPipelineProvider');
         logger.log({
             message: `🔁 Modo de execução: ${isCloud ? 'Cloud (EE)' : 'Self-Hosted (CE)'}`,
             context: 'CodeReviewPipelineProvider',
@@ -37,7 +37,7 @@ export const codeReviewPipelineProvider: Provider = {
                 context: CodeReviewPipelineContext,
             ): Promise<CodeReviewPipelineContext> => {
                 const stages = strategy.configureStages();
-                const executor = new PipelineExecutor(logger);
+                const executor = new PipelineExecutor();
                 return (await executor.execute(
                     context,
                     stages,
@@ -46,9 +46,5 @@ export const codeReviewPipelineProvider: Provider = {
             },
         };
     },
-    inject: [
-        CodeReviewPipelineStrategy,
-        CodeReviewPipelineStrategyEE,
-        PinoLoggerService,
-    ],
+    inject: [CodeReviewPipelineStrategy, CodeReviewPipelineStrategyEE],
 };

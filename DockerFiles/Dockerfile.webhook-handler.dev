@@ -1,0 +1,69 @@
+ARG API_CLOUD_MODE=false
+
+FROM node:22.14.0-slim AS deps
+
+ARG API_CLOUD_MODE
+ENV API_CLOUD_MODE=${API_CLOUD_MODE}
+
+WORKDIR /usr/src/app
+
+RUN apt-get update && apt-get install -y ca-certificates git make g++ python3 && rm -rf /var/lib/apt/lists/*
+
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
+COPY package.json yarn.lock ./
+COPY packages/kodus-flow ./packages/kodus-flow
+COPY packages/kodus-common/package.json ./packages/kodus-common/
+
+RUN yarn install --check-files --frozen-lockfile --production=false
+
+# -------------------------------------------------------------
+FROM deps AS build-code
+
+ARG API_CLOUD_MODE
+ENV API_CLOUD_MODE=${API_CLOUD_MODE}
+
+COPY tsconfig*.json ./
+COPY nest-cli.json ./
+COPY packages/kodus-flow ./packages/kodus-flow
+COPY packages/kodus-common ./packages/kodus-common
+COPY src ./src
+COPY apps/webhook-handler ./apps/webhook-handler
+
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
+# Build apenas o webhook-handler
+WORKDIR /usr/src/app
+RUN cd apps/webhook-handler && yarn nest build
+
+# -------------------------------------------------------------
+FROM node:22.14.0-slim AS development
+
+ARG API_CLOUD_MODE
+ENV API_CLOUD_MODE=${API_CLOUD_MODE}
+
+WORKDIR /usr/src/app
+EXPOSE 3332
+
+RUN apt-get update && \
+    apt-get install -y ca-certificates git python3 make g++ && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=deps /usr/src/app/node_modules ./node_modules
+COPY --from=deps /usr/src/app/packages ./packages
+
+COPY package.json yarn.lock ./
+COPY tsconfig*.json ./
+COPY nest-cli.json ./
+COPY apps/webhook-handler/package.json ./apps/webhook-handler/
+COPY apps/webhook-handler/nest-cli.json ./apps/webhook-handler/
+COPY apps/webhook-handler/tsconfig.json ./apps/webhook-handler/
+
+COPY --from=build-code /usr/src/app/apps/webhook-handler/dist ./apps/webhook-handler/dist
+COPY --from=build-code /usr/src/app/src ./src
+COPY --from=build-code /usr/src/app/packages ./packages
+RUN mkdir -p /usr/src/app/certs
+
+WORKDIR /usr/src/app
+CMD ["node", "apps/webhook-handler/dist/main.js"]
+

@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import {
     AUTH_INTEGRATION_SERVICE_TOKEN,
     IAuthIntegrationService,
@@ -21,7 +22,6 @@ import { IntegrationServiceDecorator } from '@/shared/utils/decorators/integrati
 import { BadRequestException, Inject, NotFoundException } from '@nestjs/common';
 import { createTwoFilesPatch } from 'diff';
 import { v4 } from 'uuid';
-import { PinoLoggerService } from './logger/pino.service';
 
 import {
     Comment,
@@ -95,6 +95,7 @@ export class AzureReposService
             | 'getUserById'
         >
 {
+    private readonly logger = createLogger(AzureReposService.name);
     constructor(
         @Inject(INTEGRATION_SERVICE_TOKEN)
         private readonly integrationService: IIntegrationService,
@@ -102,11 +103,9 @@ export class AzureReposService
         private readonly integrationConfigService: IIntegrationConfigService,
         @Inject(AUTH_INTEGRATION_SERVICE_TOKEN)
         private readonly authIntegrationService: IAuthIntegrationService,
-
-        private readonly logger: PinoLoggerService,
         private readonly azureReposRequestHelper: AzureReposRequestHelper,
         private readonly configService: ConfigService,
-        private readonly mcpManagerService?: MCPManagerService,
+        private readonly mcpManagerService?: MCPManagerService
     ) {}
 
     async getPullRequestAuthors(params: {

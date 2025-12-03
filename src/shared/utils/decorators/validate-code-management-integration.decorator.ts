@@ -1,7 +1,7 @@
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
 import { ConfigurationMissingException } from '@/shared/infrastructure/filters/configuration-missing.exception';
+import { SimpleLogger } from '@kodus/flow/dist/observability/logger';
 import { extractOrganizationAndTeamData } from './extractOrganizationAndTeamData.helper';
 
 export type CodeManagementConnectionStatus = {
@@ -51,7 +51,7 @@ export function ValidateCodeManagementIntegration(
             // Access services via `this`
             const codeManagementService: CodeManagementService =
                 this.codeManagementService;
-            const logger: PinoLoggerService = this.logger;
+            const logger: SimpleLogger = this.logger;
 
             if (!codeManagementService || !logger) {
                 throw new Error(

@@ -7,18 +7,11 @@ import { PipelineFactory } from '@/core/infrastructure/adapters/services/pipelin
 import { pipelineProvider } from '@/core/infrastructure/providers/pipeline.provider.ee';
 import { codeReviewPipelineProvider } from '@/core/infrastructure/providers/code-review-pipeline.provider.ee';
 import { CodeReviewPipelineModule } from './codeReviewPipeline.module';
+import { DryRunModule } from './dryRun.module';
 
 @Module({
-    imports: [
-        CodeReviewPipelineModule,
-    ],
-    providers: [
-        PipelineFactory,
-        pipelineProvider,
-        codeReviewPipelineProvider,
-    ],
-    exports: [
-        pipelineProvider,
-    ],
+    imports: [CodeReviewPipelineModule, DryRunModule],
+    providers: [PipelineFactory, pipelineProvider, codeReviewPipelineProvider],
+    exports: [pipelineProvider],
 })
 export class PipelineModule {}

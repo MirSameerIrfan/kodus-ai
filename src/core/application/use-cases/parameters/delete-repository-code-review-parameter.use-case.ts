@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import {
@@ -7,7 +8,6 @@ import {
 import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { DeleteRepositoryCodeReviewParameterDto } from '@/core/infrastructure/http/dtos/delete-repository-code-review-parameter.dto';
 import { ActionType } from '@/config/types/general/codeReviewSettingsLog.type';
 import { RepositoryWithDirectoriesException } from '@/shared/infrastructure/filters/repository-with-directories.exception';
@@ -27,22 +27,17 @@ import { UserRequest } from '@/config/types/http/user-request.type';
 
 @Injectable()
 export class DeleteRepositoryCodeReviewParameterUseCase {
+    private readonly logger = createLogger(DeleteRepositoryCodeReviewParameterUseCase.name);
     constructor(
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
-
         @Inject(CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN)
         private readonly codeReviewSettingsLogService: ICodeReviewSettingsLogService,
-
         private readonly deletePullRequestMessagesUseCase: DeleteByRepositoryOrDirectoryPullRequestMessagesUseCase,
-
         @Inject(KODY_RULES_SERVICE_TOKEN)
         private readonly kodyRulesService: IKodyRulesService,
-
-        private readonly logger: PinoLoggerService,
-
         @Inject(REQUEST)
-        private readonly request: UserRequest,
+        private readonly request: UserRequest
     ) {}
 
     async execute(

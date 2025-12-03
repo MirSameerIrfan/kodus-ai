@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { createHash } from 'crypto';
 import type {
@@ -12,7 +13,6 @@ import {
     PromptReferenceErrorType,
 } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
 import type { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { BYOKPromptRunnerService } from '@/shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
@@ -65,13 +65,13 @@ const DEFAULT_INTENT = 'review';
 
 @Injectable()
 export class PromptContextEngineService implements IPromptContextEngineService {
+    private readonly logger = createLogger(PromptContextEngineService.name);
     constructor(
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
         private readonly integrationConfigService: IIntegrationConfigService,
         private readonly promptRunnerService: PromptRunnerService,
         private readonly observabilityService: ObservabilityService,
-        private readonly codeManagementService: CodeManagementService,
-        private readonly logger: PinoLoggerService,
+        private readonly codeManagementService: CodeManagementService
     ) {}
 
     async detectAndResolveReferences(params: DetectReferencesParams): Promise<{

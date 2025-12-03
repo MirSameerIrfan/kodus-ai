@@ -1,10 +1,10 @@
+import { createLogger } from "@kodus/flow";
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
 } from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
 import { ICockpitMetricsVisibility, DEFAULT_COCKPIT_METRICS_VISIBILITY } from '@/core/domain/organizationParameters/interfaces/cockpit-metrics-visibility.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
 import { Inject, Injectable } from '@nestjs/common';
 
@@ -12,10 +12,10 @@ export const GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN = Symbol('GET_COCKPIT
 
 @Injectable()
 export class GetCockpitMetricsVisibilityUseCase {
+    private readonly logger = createLogger(GetCockpitMetricsVisibilityUseCase.name);
     constructor(
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
-        private readonly organizationParametersService: IOrganizationParametersService,
-        private readonly logger: PinoLoggerService,
+        private readonly organizationParametersService: IOrganizationParametersService
     ) {}
 
     async execute(

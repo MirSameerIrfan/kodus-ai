@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import {
     IOrganizationService,
     ORGANIZATION_SERVICE_TOKEN,
@@ -9,21 +10,18 @@ import {
 } from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
 import { OrganizationParametersAutoJoinConfig } from '@/core/domain/organizationParameters/types/organizationParameters.types';
 import { Role } from '@/core/domain/permissions/enums/permissions.enum';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class GetOrganizationsByDomainUseCase implements IUseCase {
+    private readonly logger = createLogger(GetOrganizationsByDomainUseCase.name);
     constructor(
         @Inject(ORGANIZATION_SERVICE_TOKEN)
         private readonly organizationService: IOrganizationService,
-
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
-        private readonly organizationParametersService: IOrganizationParametersService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly organizationParametersService: IOrganizationParametersService
     ) {}
 
     public async execute(domain: string): Promise<Partial<IOrganization>[]> {

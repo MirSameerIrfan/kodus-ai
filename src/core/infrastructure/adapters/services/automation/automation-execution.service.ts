@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import {
     AUTOMATION_EXECUTION_REPOSITORY_TOKEN,
     IAutomationExecutionRepository,
@@ -12,21 +13,18 @@ import {
 import { Inject, Injectable } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { PinoLoggerService } from '../logger/pino.service';
 import { CacheService } from '@/shared/utils/cache/cache.service';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 
 @Injectable()
 export class AutomationExecutionService implements IAutomationExecutionService {
+    private readonly logger = createLogger(AutomationExecutionService.name);
     constructor(
         @Inject(AUTOMATION_EXECUTION_REPOSITORY_TOKEN)
         private readonly automationExecutionRepository: IAutomationExecutionRepository,
-
         @Inject(CODE_REVIEW_EXECUTION_SERVICE)
         private readonly codeReviewExecutionService: ICodeReviewExecutionService,
-
-        private readonly logger: PinoLoggerService,
-        private readonly cacheService: CacheService,
+        private readonly cacheService: CacheService
     ) {}
 
     findLatestExecutionByFilters(

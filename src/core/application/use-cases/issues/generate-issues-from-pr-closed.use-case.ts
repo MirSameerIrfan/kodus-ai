@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@/core/domain/codeBase/contracts/KodyIssuesManagement.contract';
 import {
@@ -13,7 +14,6 @@ import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
 } from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import {
     contextToGenerateIssues,
     IRepositoryToIssues,
@@ -27,17 +27,14 @@ import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class GenerateIssuesFromPrClosedUseCase implements IUseCase {
+    private readonly logger = createLogger(GenerateIssuesFromPrClosedUseCase.name);
     constructor(
         @Inject(KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN)
         private readonly kodyIssuesManagementService: KodyIssuesManagementService,
-
         @Inject(PULL_REQUESTS_SERVICE_TOKEN)
         private readonly pullRequestService: IPullRequestsService,
-
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
-        private readonly integrationConfigService: IIntegrationConfigService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly integrationConfigService: IIntegrationConfigService
     ) {}
 
     async execute(params: any): Promise<void> {

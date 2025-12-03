@@ -1,10 +1,10 @@
+import { createLogger } from "@kodus/flow";
 import { Injectable, Inject } from '@nestjs/common';
 import {
     IPullRequestMessagesService,
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
 } from '@/core/domain/pullRequestMessages/contracts/pullRequestMessages.service.contract';
 import { ConfigLevel } from '@/config/types/general/pullRequestMessages.type';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 
 export interface DeletePullRequestMessagesParams {
@@ -15,11 +15,10 @@ export interface DeletePullRequestMessagesParams {
 
 @Injectable()
 export class DeleteByRepositoryOrDirectoryPullRequestMessagesUseCase implements IUseCase {
+    private readonly logger = createLogger(DeleteByRepositoryOrDirectoryPullRequestMessagesUseCase.name);
     constructor(
         @Inject(PULL_REQUEST_MESSAGES_SERVICE_TOKEN)
-        private readonly pullRequestMessagesService: IPullRequestMessagesService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly pullRequestMessagesService: IPullRequestMessagesService
     ) {}
 
     async execute(params: DeletePullRequestMessagesParams): Promise<boolean> {

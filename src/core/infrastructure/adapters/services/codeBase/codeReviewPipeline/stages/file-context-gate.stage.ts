@@ -1,17 +1,17 @@
+import { createLogger } from "@kodus/flow";
 import { Injectable } from '@nestjs/common';
 import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
-import { PinoLoggerService } from '../../../logger/pino.service';
 import { FileContextAugmentationService } from '../../../context/file-context-augmentation.service';
 
 @Injectable()
 export class FileContextGateStage extends BasePipelineStage<CodeReviewPipelineContext> {
+    private readonly logger = createLogger(FileContextGateStage.name);
     readonly stageName = 'FileContextGateStage';
     readonly dependsOn: string[] = ['LoadExternalContextStage']; // Depends on LoadExternalContextStage
 
     constructor(
-        private readonly logger: PinoLoggerService,
-        private readonly fileContextAugmentationService: FileContextAugmentationService,
+        private readonly fileContextAugmentationService: FileContextAugmentationService
     ) {
         super();
     }

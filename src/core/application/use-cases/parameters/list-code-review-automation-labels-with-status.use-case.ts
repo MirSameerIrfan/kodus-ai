@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { CodeReviewVersion } from '@/config/types/general/codeReview.type';
@@ -6,19 +7,18 @@ import {
     ICodeBaseConfigService,
 } from '@/core/domain/codeBase/contracts/CodeBaseConfigService.contract';
 import { ListCodeReviewAutomationLabelsUseCase } from './list-code-review-automation-labels-use-case';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 
 @Injectable()
 export class ListCodeReviewAutomationLabelsWithStatusUseCase {
+    private readonly logger = createLogger(ListCodeReviewAutomationLabelsWithStatusUseCase.name);
     constructor(
         private readonly listLabelsUseCase: ListCodeReviewAutomationLabelsUseCase,
         @Inject(CODE_BASE_CONFIG_SERVICE_TOKEN)
         private readonly codeBaseConfigService: ICodeBaseConfigService,
-        private readonly logger: PinoLoggerService,
         @Inject(REQUEST)
         private readonly request: Request & {
             user?: { organization?: { uuid: string } };
-        },
+        }
     ) {}
 
     async execute(params: {

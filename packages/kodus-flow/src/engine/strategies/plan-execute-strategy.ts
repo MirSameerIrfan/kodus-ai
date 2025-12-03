@@ -71,8 +71,13 @@ export class PlanExecuteStrategy extends BaseExecutionStrategy {
         this.config = { ...defaultConfig, ...options } as any;
         this.llmDefaults = (options as any)?.llmDefaults;
 
-        this.logger.info('🗓️ Plan-Execute Strategy initialized', {
-            config: this.config,
+        this.logger.log({
+            message: '🗓️ Plan-Execute Strategy initialized',
+            context: this.constructor.name,
+
+            metadata: {
+                config: this.config,
+            },
         });
     }
 
@@ -188,10 +193,15 @@ export class PlanExecuteStrategy extends BaseExecutionStrategy {
             throw new Error('Agent context is required');
         }
 
-        this.logger.debug('Context validation passed', {
-            inputLength: context.input.length,
-            toolsCount: context.agentContext?.availableTools?.length || 0,
-            hasAgentContext: !!context.agentContext,
+        this.logger.debug({
+            message: 'Context validation passed',
+            context: this.constructor.name,
+
+            metadata: {
+                inputLength: context.input.length,
+                toolsCount: context.agentContext?.availableTools?.length || 0,
+                hasAgentContext: !!context.agentContext,
+            },
         });
     }
 
@@ -247,7 +257,10 @@ export class PlanExecuteStrategy extends BaseExecutionStrategy {
         let toolCallsCount = 0;
 
         if (!plan.steps || plan.steps.length === 0) {
-            this.logger.warn('Plan has no steps to execute');
+            this.logger.warn({
+                message: 'Plan has no steps to execute',
+                context: this.constructor.name,
+            });
             return { steps: executedSteps, toolCallsCount };
         }
 
@@ -268,13 +281,19 @@ export class PlanExecuteStrategy extends BaseExecutionStrategy {
 
             // Verificar timeout
             if (Date.now() - startTime > this.config.maxExecutionTime) {
-                this.logger.warn('Plan execution timeout reached');
+                this.logger.warn({
+                    message: 'Plan execution timeout reached',
+                    context: this.constructor.name,
+                });
                 break;
             }
 
             // Verificar limite de tool calls
             if (toolCallsCount >= this.config.maxToolCalls) {
-                this.logger.warn('Max tool calls reached');
+                this.logger.warn({
+                    message: 'Max tool calls reached',
+                    context: this.constructor.name,
+                });
                 break;
             }
 
@@ -543,9 +562,10 @@ export class PlanExecuteStrategy extends BaseExecutionStrategy {
                 reasoning: parsed.reasoning,
             };
         } else {
-            this.logger.error(
-                `Enhanced JSON parse failed - invalid plan format: ${parseResult.error}`,
-            );
+            this.logger.error({
+                message: `Enhanced JSON parse failed - invalid plan format: ${parseResult.error}`,
+                context: this.constructor.name,
+            });
 
             throw new Error(
                 `Invalid JSON response from LLM: ${parseResult.error}. Expected format: {"goal": "...", "reasoning": "...", "steps": [...]} `,
@@ -588,11 +608,16 @@ export class PlanExecuteStrategy extends BaseExecutionStrategy {
         // Extrair resultado final
         const finalResult = this.extractFinalResult(steps);
 
-        this.logger.info('🎯 Plan-Execute execution completed successfully', {
-            planSteps: plan.steps?.length || 0,
-            executedSteps: steps.length,
-            executionTime,
-            toolCalls: toolCallsCount,
+        this.logger.log({
+            message: '🎯 Plan-Execute execution completed successfully',
+            context: this.constructor.name,
+
+            metadata: {
+                planSteps: plan.steps?.length || 0,
+                executedSteps: steps.length,
+                executionTime,
+                toolCalls: toolCallsCount,
+            },
         });
 
         return {
@@ -624,15 +649,17 @@ export class PlanExecuteStrategy extends BaseExecutionStrategy {
             error instanceof Error ? error.message : 'Unknown error';
         const executionTime = Date.now() - startTime;
 
-        this.logger.error(
-            '❌ Plan-Execute execution failed',
-            error instanceof Error ? error : undefined,
-            {
+        this.logger.error({
+            message: '❌ Plan-Execute execution failed',
+            context: this.constructor.name,
+            error: error instanceof Error ? error : undefined,
+
+            metadata: {
                 stepsCompleted: steps.length,
                 toolCalls: toolCallsCount,
                 executionTime,
             },
-        );
+        });
 
         return {
             output: null,
@@ -673,9 +700,11 @@ export class PlanExecuteStrategy extends BaseExecutionStrategy {
     async createFinalResponse(
         context: StrategyExecutionContext,
     ): Promise<string> {
-        this.logger.info(
-            '🗓️ Plan-Execute: Creating final response with ContextBridge',
-        );
+        this.logger.log({
+            message:
+                '🗓️ Plan-Execute: Creating final response with ContextBridge',
+            context: this.constructor.name,
+        });
 
         try {
             // Build PlannerExecutionContext for ContextBridge compatibility
@@ -731,24 +760,31 @@ export class PlanExecuteStrategy extends BaseExecutionStrategy {
             const finalContext =
                 await ContextService.buildFinalResponseContext(plannerContext);
 
-            this.logger.info(
-                '✅ ContextBridge: Complete context retrieved for Plan-Execute',
-                {
+            this.logger.log({
+                message:
+                    '✅ ContextBridge: Complete context retrieved for Plan-Execute',
+                context: this.constructor.name,
+
+                metadata: {
                     sessionId: finalContext.runtime.sessionId,
                     messagesCount: finalContext.runtime.messages.length,
+
                     entitiesCount: Object.keys(finalContext.runtime.entities)
                         .length,
+
                     executionSummary: {
                         totalExecutions:
                             finalContext.executionSummary.totalExecutions,
                         successRate: finalContext.executionSummary.successRate,
                         replanCount: finalContext.executionSummary.replanCount,
                     },
+
                     wasRecovered: finalContext.recovery?.wasRecovered,
+
                     inferencesCount: Object.keys(finalContext.inferences || {})
                         .length,
                 },
-            );
+            });
 
             // Build context-aware response using complete context
             const response = this.buildContextualResponse(
@@ -756,24 +792,30 @@ export class PlanExecuteStrategy extends BaseExecutionStrategy {
                 context.input,
             );
 
-            this.logger.info(
-                '🎯 Plan-Execute: Final response created with full context',
-                {
+            this.logger.log({
+                message:
+                    '🎯 Plan-Execute: Final response created with full context',
+                context: this.constructor.name,
+
+                metadata: {
                     responseLength: response.length,
                     contextSource: 'ContextBridge',
                 },
-            );
+            });
 
             return response;
         } catch (error) {
-            this.logger.error(
-                '❌ Plan-Execute: ContextBridge failed, using fallback response',
-                error instanceof Error ? error : undefined,
-                {
+            this.logger.error({
+                message:
+                    '❌ Plan-Execute: ContextBridge failed, using fallback response',
+                context: this.constructor.name,
+                error: error instanceof Error ? error : undefined,
+
+                metadata: {
                     input: context.input,
                     agentName: context.agentContext.agentName,
                 },
-            );
+            });
 
             // Fallback: Simple response without ContextBridge
             return this.buildFallbackResponse(context);

@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import {
     IParametersService,
@@ -6,7 +7,6 @@ import {
 import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
@@ -58,27 +58,20 @@ import {
 
 @Injectable()
 export class UpdateOrCreateCodeReviewParameterUseCase {
+    private readonly logger = createLogger(UpdateOrCreateCodeReviewParameterUseCase.name);
     constructor(
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
-
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
         private readonly integrationConfigService: IIntegrationConfigService,
-
         @Inject(CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN)
         private readonly codeReviewSettingsLogService: ICodeReviewSettingsLogService,
-
         @Inject(REQUEST)
         private readonly request: UserRequest,
-
-        private readonly logger: PinoLoggerService,
-
         private readonly authorizationService: AuthorizationService,
-
         private readonly contextReferenceDetectionService: ContextReferenceDetectionService,
-
         @Inject(PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN)
-        private readonly promptReferenceManager: IPromptExternalReferenceManagerService,
+        private readonly promptReferenceManager: IPromptExternalReferenceManagerService
     ) {}
 
     async execute(

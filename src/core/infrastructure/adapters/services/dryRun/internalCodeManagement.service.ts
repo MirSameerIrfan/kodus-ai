@@ -1,7 +1,7 @@
+import { createLogger } from "@kodus/flow";
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 import { IntegrationServiceDecorator } from '@/shared/utils/decorators/integration-service.decorator';
 import { Inject, Injectable } from '@nestjs/common';
-import { PinoLoggerService } from '../logger/pino.service';
 import { ICodeManagementService } from '@/core/domain/platformIntegrations/interfaces/code-management.interface';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
@@ -30,11 +30,10 @@ type PartialICodeManagementService = Pick<
 export class InternalCodeManagementService
     implements PartialICodeManagementService
 {
+    private readonly logger = createLogger(InternalCodeManagementService.name);
     constructor(
         @Inject(DRY_RUN_SERVICE_TOKEN)
-        private readonly dryRunService: IDryRunService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly dryRunService: IDryRunService
     ) {}
 
     minimizeComment(params: any): Promise<any | null> {

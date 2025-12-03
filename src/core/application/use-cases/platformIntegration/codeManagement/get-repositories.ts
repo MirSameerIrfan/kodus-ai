@@ -1,9 +1,9 @@
+import { createLogger } from "@kodus/flow";
 import { UserRequest } from '@/config/types/http/user-request.type';
 import {
     Action,
     ResourceType,
 } from '@/core/domain/permissions/enums/permissions.enum';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
@@ -12,14 +12,12 @@ import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 
 export class GetRepositoriesUseCase implements IUseCase {
+    private readonly logger = createLogger(GetRepositoriesUseCase.name);
     constructor(
         private readonly codeManagementService: CodeManagementService,
-
         @Inject(REQUEST)
         private readonly request: UserRequest,
-        private readonly logger: PinoLoggerService,
-
-        private readonly authorizationService: AuthorizationService,
+        private readonly authorizationService: AuthorizationService
     ) {}
 
     public async execute(params: {

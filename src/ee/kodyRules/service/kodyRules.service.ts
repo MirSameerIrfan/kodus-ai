@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import {
     IKodyRulesRepository,
     KODY_RULES_REPOSITORY_TOKEN,
@@ -39,7 +40,6 @@ import {
     ActionType,
     UserInfo,
 } from '@/config/types/general/codeReviewSettingsLog.type';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import {
     IRuleLikeService,
     RULE_LIKE_SERVICE_TOKEN,
@@ -48,19 +48,15 @@ import { KodyRulesValidationService } from './kody-rules-validation.service';
 
 @Injectable()
 export class KodyRulesService implements IKodyRulesService {
+    private readonly logger = createLogger(KodyRulesService.name);
     constructor(
         @Inject(KODY_RULES_REPOSITORY_TOKEN)
         private readonly kodyRulesRepository: IKodyRulesRepository,
-
         @Inject(CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN)
         private readonly codeReviewSettingsLogService: ICodeReviewSettingsLogService,
-
         @Inject(RULE_LIKE_SERVICE_TOKEN)
         private readonly ruleLikeService: IRuleLikeService,
-
-        private readonly logger: PinoLoggerService,
-
-        private readonly kodyRulesValidationService: KodyRulesValidationService,
+        private readonly kodyRulesValidationService: KodyRulesValidationService
     ) {}
 
     getNativeCollection() {

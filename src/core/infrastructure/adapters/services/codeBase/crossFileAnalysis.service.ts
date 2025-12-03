@@ -1,5 +1,5 @@
+import { createLogger } from "@kodus/flow";
 import { Injectable } from '@nestjs/common';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { TokenChunkingService } from '@/shared/utils/tokenChunking/tokenChunking.service';
 import {
     CrossFileAnalysisPayload,
@@ -55,6 +55,7 @@ interface PreparedFileData {
 
 @Injectable()
 export class CrossFileAnalysisService {
+    private readonly logger = createLogger(CrossFileAnalysisService.name);
     private readonly DEFAULT_USAGE_LLM_MODEL_PERCENTAGE = 70;
     private readonly DEFAULT_BATCH_CONFIG: BatchProcessingConfig = {
         maxConcurrentChunks: 10,
@@ -64,11 +65,9 @@ export class CrossFileAnalysisService {
     };
 
     constructor(
-        private readonly logger: PinoLoggerService,
         private readonly tokenChunkingService: TokenChunkingService,
-
         private readonly promptRunnerService: PromptRunnerService,
-        private readonly observabilityService: ObservabilityService,
+        private readonly observabilityService: ObservabilityService
     ) {}
 
     async analyzeCrossFileCode(

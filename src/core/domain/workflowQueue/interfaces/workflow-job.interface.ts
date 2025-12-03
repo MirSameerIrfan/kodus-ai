@@ -2,6 +2,7 @@ import { JobStatus } from '../enums/job-status.enum';
 import { ErrorClassification } from '../enums/error-classification.enum';
 import { WorkflowType } from '../enums/workflow-type.enum';
 import { HandlerType } from '../enums/handler-type.enum';
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 
 export interface IWorkflowJob {
     id: string;
@@ -9,12 +10,11 @@ export interface IWorkflowJob {
     workflowType: WorkflowType;
     handlerType: HandlerType;
     payload: Record<string, unknown>;
-    organizationId: string;
-    teamId?: string;
     status: JobStatus;
     priority: number;
     retryCount: number;
     maxRetries: number;
+    organizationAndTeam?: OrganizationAndTeamData;
     errorClassification?: ErrorClassification;
     lastError?: string;
     scheduledAt?: Date;

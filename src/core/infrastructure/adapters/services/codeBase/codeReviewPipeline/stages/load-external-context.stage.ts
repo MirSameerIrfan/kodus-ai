@@ -1,7 +1,7 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
-import { PinoLoggerService } from '../../../logger/pino.service';
 import type { ContextLayer } from '@context-os-core/interfaces';
 import {
     IPromptExternalReferenceManagerService,
@@ -19,6 +19,7 @@ export class LoadExternalContextStage
     extends BasePipelineStage<CodeReviewPipelineContext>
     implements ILoadExternalContextStage
 {
+    private readonly logger = createLogger(LoadExternalContextStage.name);
     readonly stageName = 'LoadExternalContextStage';
     readonly dependsOn: string[] = ['FetchChangedFilesStage']; // Depends on FetchChangedFilesStage
 
@@ -27,8 +28,7 @@ export class LoadExternalContextStage
         private readonly promptReferenceManager: IPromptExternalReferenceManagerService,
         @Inject(PROMPT_CONTEXT_LOADER_SERVICE_TOKEN)
         private readonly promptContextLoader: IPromptContextLoaderService,
-        private readonly contextPackService: CodeReviewContextPackService,
-        private readonly logger: PinoLoggerService,
+        private readonly contextPackService: CodeReviewContextPackService
     ) {
         super();
     }

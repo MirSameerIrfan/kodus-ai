@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { GenerateIssuesFromPrClosedUseCase } from '@/core/application/use-cases/issues/generate-issues-from-pr-closed.use-case';
 import { ChatWithKodyFromGitUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/chatWithKodyFromGit.use-case';
 import { SavePullRequestUseCase } from '@/core/application/use-cases/pullRequests/save.use-case';
@@ -14,7 +15,6 @@ import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
 } from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { RunCodeReviewAutomationUseCase } from '@/ee/automation/runCodeReview.use-case';
 import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
@@ -29,19 +29,18 @@ import { CodeManagementService } from '../../services/platformIntegration/codeMa
  */
 @Injectable()
 export class BitbucketPullRequestHandler implements IWebhookEventHandler {
+    private readonly logger = createLogger(BitbucketPullRequestHandler.name);
     constructor(
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
         private readonly integrationConfigService: IIntegrationConfigService,
         @Inject(PULL_REQUESTS_SERVICE_TOKEN)
         private readonly pullRequestsService: IPullRequestsService,
-
-        private readonly logger: PinoLoggerService,
         private readonly savePullRequestUseCase: SavePullRequestUseCase,
         private readonly runCodeReviewAutomationUseCase: RunCodeReviewAutomationUseCase,
         private readonly chatWithKodyFromGitUseCase: ChatWithKodyFromGitUseCase,
         private readonly codeManagement: CodeManagementService,
         private readonly generateIssuesFromPrClosedUseCase: GenerateIssuesFromPrClosedUseCase,
-        private readonly kodyRulesSyncService: KodyRulesSyncService,
+        private readonly kodyRulesSyncService: KodyRulesSyncService
     ) {}
 
     /**

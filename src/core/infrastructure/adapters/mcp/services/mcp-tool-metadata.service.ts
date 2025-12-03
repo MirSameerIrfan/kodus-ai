@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { createMCPAdapter, type MCPServerConfig } from '@kodus/flow';
+import { createMCPAdapter, type MCPServerConfig, createLogger } from '@kodus/flow';
 import type { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { MCPManagerService } from './mcp-manager.service';
-import { PinoLoggerService } from '../../services/logger/pino.service';
 import {
     markProviderHasMetadata,
     normalizeProviderKey,
@@ -21,10 +20,8 @@ interface MetadataLoadResult {
 
 @Injectable()
 export class MCPToolMetadataService {
-    constructor(
-        private readonly mcpManagerService: MCPManagerService,
-        private readonly logger: PinoLoggerService,
-    ) {}
+    private readonly logger = createLogger(MCPToolMetadataService.name);
+    constructor(private readonly mcpManagerService: MCPManagerService) {}
 
     async loadMetadataForOrganization(
         organizationAndTeamData?: OrganizationAndTeamData,

@@ -13,6 +13,7 @@ import {
 
 import { AcceptUserInvitationUseCase } from '@/core/application/use-cases/user/accept-user-invitation.use-case';
 import { CheckUserWithEmailUserUseCase } from '@/core/application/use-cases/user/check-user-email.use-case';
+import { GetUserUseCase } from '@/core/application/use-cases/user/get-user.use-case';
 import { JoinOrganizationUseCase } from '@/core/application/use-cases/user/join-organization.use-case';
 import { UpdateAnotherUserUseCase } from '@/core/application/use-cases/user/update-another.use-case';
 import {
@@ -33,6 +34,7 @@ import { UpdateAnotherUserDto } from '../dtos/update-another-user.dto';
 @Controller('user')
 export class UsersController {
     constructor(
+        private readonly getUserUseCase: GetUserUseCase,
         private readonly inviteDataUserUseCase: InviteDataUserUseCase,
         private readonly acceptUserInvitationUseCase: AcceptUserInvitationUseCase,
         private readonly checkUserWithEmailUserUseCase: CheckUserWithEmailUserUseCase,
@@ -51,6 +53,11 @@ export class UsersController {
         email: string,
     ) {
         return await this.checkUserWithEmailUserUseCase.execute(email);
+    }
+
+    @Get('/info')
+    public async show() {
+        return await this.getUserUseCase.execute();
     }
 
     @Get('/invite')

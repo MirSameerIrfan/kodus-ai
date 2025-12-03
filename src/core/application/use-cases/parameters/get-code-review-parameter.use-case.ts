@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { CodeReviewConfigWithoutLLMProvider } from '@/config/types/general/codeReview.type';
 import {
     FormattedCodeReviewConfig,
@@ -20,7 +21,6 @@ import {
     ResourceType,
 } from '@/core/domain/permissions/enums/permissions.enum';
 import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
 import { getDefaultKodusConfigFile } from '@/shared/utils/validateCodeReviewConfigFile';
@@ -34,19 +34,15 @@ import { PromptSourceType } from '@/core/domain/prompts/interfaces/promptExterna
 
 @Injectable()
 export class GetCodeReviewParameterUseCase {
+    private readonly logger = createLogger(GetCodeReviewParameterUseCase.name);
     constructor(
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
-
         @Inject(CODE_BASE_CONFIG_SERVICE_TOKEN)
         private readonly codeBaseConfigService: ICodeBaseConfigService,
-
         private readonly authorizationService: AuthorizationService,
-
         @Inject(PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN)
-        private readonly promptReferenceManager: IPromptExternalReferenceManagerService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly promptReferenceManager: IPromptExternalReferenceManagerService
     ) {}
 
     async execute(user: Partial<IUser>, teamId: string) {

@@ -1,7 +1,7 @@
+import { createLogger } from "@kodus/flow";
 import { Injectable, Inject } from '@nestjs/common';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
 import { environment } from '@/ee/configs/environment';
 import {
@@ -49,6 +49,7 @@ export interface ValidationResult {
 
 @Injectable()
 export class PermissionValidationService {
+    private readonly logger = createLogger(PermissionValidationService.name);
     private readonly isCloud: boolean;
     private readonly isDevelopment: boolean;
 
@@ -56,8 +57,7 @@ export class PermissionValidationService {
         @Inject(LICENSE_SERVICE_TOKEN)
         private readonly licenseService: ILicenseService,
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
-        private readonly organizationParametersService: IOrganizationParametersService,
-        private readonly logger: PinoLoggerService,
+        private readonly organizationParametersService: IOrganizationParametersService
     ) {
         this.isCloud = environment.API_CLOUD_MODE;
         this.isDevelopment = environment.API_DEVELOPMENT_MODE;

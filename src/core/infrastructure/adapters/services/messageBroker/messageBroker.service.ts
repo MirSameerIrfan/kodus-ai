@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Injectable, Optional } from '@nestjs/common';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import {
@@ -5,14 +6,11 @@ import {
     IMessageBrokerService,
     MessagePayload,
 } from '@/shared/domain/contracts/message-broker.service.contracts';
-import { PinoLoggerService } from '../logger/pino.service';
 
 @Injectable()
 export class MessageBrokerService implements IMessageBrokerService {
-    constructor(
-        @Optional() private readonly amqpConnection: AmqpConnection,
-        private readonly logger: PinoLoggerService,
-    ) {
+    private readonly logger = createLogger(MessageBrokerService.name);
+    constructor(@Optional() private readonly amqpConnection: AmqpConnection) {
         if (!amqpConnection) {
             this.logger.warn({
                 message: 'RabbitMQ is not configured or available.',

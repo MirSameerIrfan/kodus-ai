@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     DRY_RUN_REPOSITORY_TOKEN,
@@ -13,7 +14,6 @@ import {
     IDryRunPayloadMap,
 } from '@/core/domain/dryRun/interfaces/dryRun.interface';
 import { Inject, Injectable } from '@nestjs/common';
-import { PinoLoggerService } from '../logger/pino.service';
 import { createHash } from 'crypto';
 import { deepSort } from '@/shared/utils/deep';
 import { produce } from 'immer';
@@ -49,22 +49,17 @@ import { PullRequestsEntity } from '@/core/domain/pullRequests/entities/pullRequ
 
 @Injectable()
 export class DryRunService implements IDryRunService {
+    private readonly logger = createLogger(DryRunService.name);
     constructor(
         @Inject(DRY_RUN_REPOSITORY_TOKEN)
         private readonly dryRunRepository: IDryRunRepository,
-
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
-
         @Inject(PULL_REQUEST_MESSAGES_SERVICE_TOKEN)
         private readonly pullRequestMessagesService: IPullRequestMessagesService,
-
         @Inject(CODE_BASE_CONFIG_SERVICE_TOKEN)
         private readonly codeBaseConfigService: ICodeBaseConfigService,
-
-        private readonly logger: PinoLoggerService,
-
-        private readonly eventEmitter: EventEmitter2,
+        private readonly eventEmitter: EventEmitter2
     ) {}
 
     create(

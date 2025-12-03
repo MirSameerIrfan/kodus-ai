@@ -1,13 +1,14 @@
+import { createLogger } from "@kodus/flow";
 import {
     KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,
 } from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { Injectable, Inject } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 
 @Injectable()
 export class DeleteRuleInOrganizationByIdKodyRulesUseCase {
+    private readonly logger = createLogger(DeleteRuleInOrganizationByIdKodyRulesUseCase.name);
     constructor(
         @Inject(REQUEST)
         private readonly request: Request & {
@@ -17,11 +18,8 @@ export class DeleteRuleInOrganizationByIdKodyRulesUseCase {
                 email: string;
             };
         },
-
         @Inject(KODY_RULES_SERVICE_TOKEN)
-        private readonly kodyRulesService: IKodyRulesService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly kodyRulesService: IKodyRulesService
     ) {}
 
     async execute(ruleId: string) {

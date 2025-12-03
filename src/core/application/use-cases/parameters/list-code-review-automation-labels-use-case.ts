@@ -1,12 +1,13 @@
+import { createLogger } from "@kodus/flow";
 import { Injectable } from '@nestjs/common';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { CodeReviewVersion } from '@/config/types/general/codeReview.type';
 import * as labelsDataV2 from '@/core/infrastructure/adapters/services/automation/processAutomation/config/codeReview/labelsCodeReview_v2.json';
 import * as labelsDataLegacy from '@/core/infrastructure/adapters/services/automation/processAutomation/config/codeReview/labelsCodeReview_legacy.json';
 
 @Injectable()
 export class ListCodeReviewAutomationLabelsUseCase {
-    constructor(private readonly logger: PinoLoggerService) {}
+    private readonly logger = createLogger(ListCodeReviewAutomationLabelsUseCase.name);
+    constructor() {}
 
     execute(codeReviewVersion?: CodeReviewVersion) {
         try {

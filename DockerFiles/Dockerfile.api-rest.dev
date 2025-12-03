@@ -1,0 +1,69 @@
+ARG API_CLOUD_MODE=false
+
+FROM node:22.14.0-slim AS deps
+
+ARG API_CLOUD_MODE
+ENV API_CLOUD_MODE=${API_CLOUD_MODE}
+
+WORKDIR /usr/src/app
+
+RUN apt-get update && apt-get install -y ca-certificates git make g++ python3 && rm -rf /var/lib/apt/lists/*
+
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
+COPY package.json yarn.lock ./
+COPY packages/kodus-flow ./packages/kodus-flow
+COPY packages/kodus-common/package.json ./packages/kodus-common/
+
+RUN yarn install --check-files --frozen-lockfile --production=false
+
+# -------------------------------------------------------------
+FROM deps AS build-code
+
+ARG API_CLOUD_MODE
+ENV API_CLOUD_MODE=${API_CLOUD_MODE}
+
+COPY tsconfig*.json ./
+COPY nest-cli.json ./
+COPY packages/kodus-flow ./packages/kodus-flow
+COPY packages/kodus-common ./packages/kodus-common
+COPY src ./src
+COPY apps/api-rest ./apps/api-rest
+
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
+# Build apenas o api-rest
+WORKDIR /usr/src/app
+RUN cd apps/api-rest && yarn nest build
+
+# -------------------------------------------------------------
+FROM node:22.14.0-slim AS development
+
+ARG API_CLOUD_MODE
+ENV API_CLOUD_MODE=${API_CLOUD_MODE}
+
+WORKDIR /usr/src/app
+EXPOSE 3331
+
+RUN apt-get update && \
+    apt-get install -y ca-certificates git python3 make g++ && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=deps /usr/src/app/node_modules ./node_modules
+COPY --from=deps /usr/src/app/packages ./packages
+
+COPY package.json yarn.lock ./
+COPY tsconfig*.json ./
+COPY nest-cli.json ./
+COPY apps/api-rest/package.json ./apps/api-rest/
+COPY apps/api-rest/nest-cli.json ./apps/api-rest/
+COPY apps/api-rest/tsconfig.json ./apps/api-rest/
+
+COPY --from=build-code /usr/src/app/apps/api-rest/dist ./apps/api-rest/dist
+COPY --from=build-code /usr/src/app/src ./src
+COPY --from=build-code /usr/src/app/packages ./packages
+RUN mkdir -p /usr/src/app/certs
+
+WORKDIR /usr/src/app
+CMD ["node", "apps/api-rest/dist/main.js"]
+

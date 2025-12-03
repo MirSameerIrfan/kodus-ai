@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import {
     CommentResult,
     Repository,
@@ -94,7 +95,6 @@ import * as moment from 'moment-timezone';
 import pLimit from 'p-limit';
 import { v4 as uuidv4 } from 'uuid';
 import { MCPManagerService } from '../../mcp/services/mcp-manager.service';
-import { PinoLoggerService } from '../logger/pino.service';
 import { PromptService } from '../prompt.service';
 import {
     ALLOWLIST_TREES_ONLY,
@@ -158,33 +158,26 @@ export class GithubService
             | 'createSingleIssueComment'
         >
 {
+    private readonly logger = createLogger(GithubService.name);
     private readonly MAX_RETRY_ATTEMPTS = 2;
     private readonly TTL = 50 * 60 * 1000; // 50 minutes
 
     constructor(
         @Inject(INTEGRATION_SERVICE_TOKEN)
         private readonly integrationService: IIntegrationService,
-
         @Inject(AUTH_INTEGRATION_SERVICE_TOKEN)
         private readonly authIntegrationService: IAuthIntegrationService,
-
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
         private readonly integrationConfigService: IIntegrationConfigService,
-
         @Inject(TEAM_SERVICE_TOKEN)
         private readonly teamService: ITeamService,
-
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parameterService: IParametersService,
-
         private readonly llmProviderService: LLMProviderService,
-
         private readonly cacheService: CacheService,
-
         private readonly promptService: PromptService,
-        private readonly logger: PinoLoggerService,
         private readonly configService: ConfigService,
-        private readonly mcpManagerService?: MCPManagerService,
+        private readonly mcpManagerService?: MCPManagerService
     ) {}
 
     private async handleIntegration(

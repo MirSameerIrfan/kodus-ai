@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
@@ -14,27 +15,20 @@ import {
     ICodeReviewSettingsLogService,
 } from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
 import { ActionType } from '@/config/types/general/codeReviewSettingsLog.type';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 
 @Injectable()
 export class DeleteIntegrationUseCase {
+    private readonly logger = createLogger(DeleteIntegrationUseCase.name);
     constructor(
         private readonly codeManagementService: CodeManagementService,
-
         @Inject(INTEGRATION_SERVICE_TOKEN)
         private readonly integrationService: IntegrationService,
-
         @Inject(AUTH_INTEGRATION_SERVICE_TOKEN)
         private readonly authIntegrationService: AuthIntegrationService,
-
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
         private readonly integrationConfigService: IntegrationConfigService,
-
         @Inject(CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN)
         private readonly codeReviewSettingsLogService: ICodeReviewSettingsLogService,
-
-        private readonly logger: PinoLoggerService,
-
         @Inject(REQUEST)
         private readonly request: Request & {
             user: {
@@ -42,7 +36,7 @@ export class DeleteIntegrationUseCase {
                 uuid: string;
                 email: string;
             };
-        },
+        }
     ) {}
 
     async execute(params: {

@@ -2,7 +2,7 @@ module.exports = {
     apps: [
         {
             name: 'webhook-handler',
-            script: './dist/src/webhook-handler.js',
+            script: './apps/webhooks/dist/main.js',
             instances: 1, // Pode escalar horizontalmente conforme necessário
             exec_mode: 'fork', // Fork mode para webhook handler (stateless)
             env: {
@@ -29,7 +29,7 @@ module.exports = {
         },
         {
             name: 'kodus-orchestrator',
-            script: './dist/src/main.js',
+            script: './apps/api/dist/main.js',
             instances: 1,
             exec_mode: 'fork',
             env: {
@@ -56,7 +56,7 @@ module.exports = {
         },
         {
             name: 'workflow-worker',
-            script: './dist/src/worker.js',
+            script: './apps/worker/dist/main.js',
             instances: 1, // Aumentar conforme necessário
             exec_mode: 'cluster', // Cluster mode para workers (pode escalar)
             env: {

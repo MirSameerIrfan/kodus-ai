@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import {
     FileChangeContext,
@@ -30,7 +31,6 @@ import {
     IKodyRule,
     KodyRulesScope,
 } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { v4 as uuidv4, validate as uuidValidate } from 'uuid';
 import { KodyRulesService } from '../kodyRules/service/kodyRules.service';
 import { KODY_RULES_SERVICE_TOKEN } from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
@@ -95,6 +95,7 @@ export const KODY_RULES_ANALYSIS_SERVICE_TOKEN = Symbol(
 
 @Injectable()
 export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
+    private readonly logger = createLogger(KodyRulesAnalysisService.name);
     constructor(
         @Inject(KODY_RULES_SERVICE_TOKEN)
         private readonly kodyRulesService: KodyRulesService,
@@ -102,11 +103,10 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
         private readonly codeBaseConfigService: ICodeBaseConfigService,
         private readonly promptRunnerService: PromptRunnerService,
         private readonly kodyRulesValidationService: KodyRulesValidationService,
-        private readonly logger: PinoLoggerService,
         private readonly observabilityService: ObservabilityService,
         private readonly externalReferenceLoaderService: ExternalReferenceLoaderService,
         private readonly fileContextAugmentationService: FileContextAugmentationService,
-        private readonly kodyRuleDependencyService: KodyRuleDependencyService,
+        private readonly kodyRuleDependencyService: KodyRuleDependencyService
     ) {}
 
     private async buildKodyRuleLinkAndRepalceIds(

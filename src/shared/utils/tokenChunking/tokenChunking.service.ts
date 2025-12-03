@@ -1,5 +1,5 @@
+import { createLogger } from "@kodus/flow";
 import { Injectable } from '@nestjs/common';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { estimateTokenCount } from '@/shared/utils/langchainCommon/document';
 import { encoding_for_model, TiktokenModel } from 'tiktoken';
 import { LLMModelProvider, MODEL_STRATEGIES } from '@kodus/kodus-common/llm';
@@ -22,7 +22,8 @@ export interface TokenChunkingResult {
 
 @Injectable()
 export class TokenChunkingService {
-    constructor(private readonly logger: PinoLoggerService) {}
+    private readonly logger = createLogger(TokenChunkingService.name);
+    constructor() {}
 
     /**
      * Divide os dados em chunks baseado no limite de tokens do modelo LLM

@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     CODE_REVIEW_EXECUTION_REPOSITORY,
@@ -7,15 +8,13 @@ import { ICodeReviewExecutionService } from '@/core/domain/codeReviewExecutions/
 import { CodeReviewExecutionEntity } from '@/core/domain/codeReviewExecutions/entities/codeReviewExecution.entity';
 import { CodeReviewExecution } from '@/core/domain/codeReviewExecutions/interfaces/codeReviewExecution.interface';
 import { Inject, Injectable } from '@nestjs/common';
-import { PinoLoggerService } from '../logger/pino.service';
 
 @Injectable()
 export class CodeReviewExecutionService implements ICodeReviewExecutionService {
+    private readonly logger = createLogger(CodeReviewExecutionService.name);
     constructor(
         @Inject(CODE_REVIEW_EXECUTION_REPOSITORY)
-        private readonly codeReviewExecutionRepository: ICodeReviewExecutionRepository,
-
-        private readonly logger: PinoLoggerService,
+        private readonly codeReviewExecutionRepository: ICodeReviewExecutionRepository
     ) {}
 
     create(

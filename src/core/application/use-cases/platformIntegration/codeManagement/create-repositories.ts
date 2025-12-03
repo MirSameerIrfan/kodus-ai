@@ -7,14 +7,15 @@ import {
     ITeamService,
     TEAM_SERVICE_TOKEN,
 } from '@/core/domain/team/contracts/team.service.contract';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+import { createLogger } from '@kodus/flow';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
+import { SyncSelectedRepositoriesKodyRulesUseCase } from '../../kodyRules/sync-selected-repositories.use-case';
 import { CreateOrUpdateParametersUseCase } from '../../parameters/create-or-update-use-case';
 import { BackfillHistoricalPRsUseCase } from '../../pullRequests/backfill-historical-prs.use-case';
 import { ActiveCodeManagementTeamAutomationsUseCase } from '../../teamAutomation/active-code-manegement-automations.use-case';
@@ -22,25 +23,18 @@ import { ActiveCodeReviewAutomationUseCase } from '../../teamAutomation/active-c
 
 @Injectable()
 export class CreateRepositoriesUseCase implements IUseCase {
+    private readonly logger = createLogger(CreateRepositoriesUseCase.name);
     constructor(
         @Inject(TEAM_SERVICE_TOKEN)
         private readonly teamService: ITeamService,
-
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
-
         private readonly activeCodeManagementTeamAutomationsUseCase: ActiveCodeManagementTeamAutomationsUseCase,
-
         private readonly activeCodeReviewAutomationUseCase: ActiveCodeReviewAutomationUseCase,
-
         private readonly codeManagementService: CodeManagementService,
-
         private readonly createOrUpdateParametersUseCase: CreateOrUpdateParametersUseCase,
-
+        private readonly syncSelectedRepositoriesKodyRulesUseCase: SyncSelectedRepositoriesKodyRulesUseCase,
         private readonly backfillHistoricalPRsUseCase: BackfillHistoricalPRsUseCase,
-
-        private readonly logger: PinoLoggerService,
-
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };

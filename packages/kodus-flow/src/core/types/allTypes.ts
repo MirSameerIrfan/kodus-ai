@@ -2305,25 +2305,58 @@ export function createWorkflow(
             eventType: string,
             _handler: (event: unknown) => void | Promise<void>,
         ): void {
-            logger.info('Event handler registered', { eventType });
+            logger.log({
+                message: 'Event handler registered',
+                context: 'createWorkflow',
+
+                metadata: {
+                    eventType,
+                },
+            });
         },
 
         emit(eventType: string, data?: unknown): void {
-            logger.info('Event emitted', { eventType, data });
+            logger.log({
+                message: 'Event emitted',
+                context: 'createWorkflow',
+
+                metadata: {
+                    eventType,
+                    data,
+                },
+            });
         },
 
         async pause(reason?: string): Promise<string> {
             const snapshotId = `snapshot_${Date.now()}`;
-            logger.warn('Workflow paused', { reason, snapshotId });
+            logger.warn({
+                message: 'Workflow paused',
+                context: 'createWorkflow',
+
+                metadata: {
+                    reason,
+                    snapshotId,
+                },
+            });
             return snapshotId;
         },
 
         async resume(snapshotId?: string): Promise<void> {
-            logger.info('Workflow resumed', { snapshotId });
+            logger.log({
+                message: 'Workflow resumed',
+                context: 'createWorkflow',
+
+                metadata: {
+                    snapshotId,
+                },
+            });
         },
 
         async cleanup(): Promise<void> {
-            logger.info('Workflow cleanup completed');
+            logger.log({
+                message: 'Workflow cleanup completed',
+                context: 'createWorkflow',
+            });
         },
     };
 }

@@ -26,10 +26,16 @@ export class ResponseSynthesizer {
             stop?: string[];
         },
     ) {
-        this.logger.info('Response Synthesizer initialized', {
-            llmProvider: llmAdapter.getProvider?.()?.name || 'unknown',
-            supportsStructured:
-                llmAdapter.supportsStructuredGeneration?.() || false,
+        this.logger.log({
+            message: 'Response Synthesizer initialized',
+            context: this.constructor.name,
+
+            metadata: {
+                llmProvider: llmAdapter.getProvider?.()?.name || 'unknown',
+
+                supportsStructured:
+                    llmAdapter.supportsStructuredGeneration?.() || false,
+            },
         });
     }
 
@@ -39,12 +45,17 @@ export class ResponseSynthesizer {
     ): Promise<SynthesizedResponse> {
         const startTime = Date.now();
 
-        this.logger.info('Starting response synthesis', {
-            originalQuery: context.originalQuery.substring(0, 100),
-            plannerType: context.plannerType,
-            resultsCount: context.executionResults.length,
-            strategy,
-            stepsExecuted: context.metadata.completedSteps,
+        this.logger.log({
+            message: 'Starting response synthesis',
+            context: this.constructor.name,
+
+            metadata: {
+                originalQuery: context.originalQuery.substring(0, 100),
+                plannerType: context.plannerType,
+                resultsCount: context.executionResults.length,
+                strategy,
+                stepsExecuted: context.metadata.completedSteps,
+            },
         });
 
         const observability = getObservability();
@@ -80,17 +91,19 @@ export class ResponseSynthesizer {
 
                     return response;
                 } catch (error) {
-                    this.logger.error(
-                        'Response synthesis failed',
-                        error as Error,
-                        {
+                    this.logger.error({
+                        message: 'Response synthesis failed',
+                        context: this.constructor.name,
+                        error: error as Error,
+
+                        metadata: {
                             originalQuery: context.originalQuery.substring(
                                 0,
                                 100,
                             ),
                             strategy,
                         },
-                    );
+                    });
 
                     return this.createFallbackResponse(context, error as Error);
                 }
@@ -358,8 +371,10 @@ ${this.composeStructuredExecutionTrace(context, analysis)}
                 response.content || this.createBasicResponse(context, analysis)
             );
         } catch (error) {
-            this.logger.warn('LLM synthesis failed, using basic response', {
-                error: (error as Error).message,
+            this.logger.warn({
+                message: 'LLM synthesis failed, using basic response',
+                context: this.constructor.name,
+                error: error as Error,
             });
             return this.createBasicResponse(context, analysis);
         }
@@ -408,8 +423,10 @@ Response:`;
                 response.content || this.createBasicResponse(context, analysis)
             );
         } catch (error) {
-            this.logger.warn('LLM summary synthesis failed', {
-                error: (error as Error).message,
+            this.logger.warn({
+                message: 'LLM summary synthesis failed',
+                context: this.constructor.name,
+                error: error as Error,
             });
             return this.createBasicResponse(context, analysis);
         }
@@ -453,8 +470,10 @@ Response:`;
                 response.content || this.createBasicResponse(context, analysis)
             );
         } catch (error) {
-            this.logger.warn('LLM problem-solution synthesis failed', {
-                error: (error as Error).message,
+            this.logger.warn({
+                message: 'LLM problem-solution synthesis failed',
+                context: this.constructor.name,
+                error: error as Error,
             });
             return this.createBasicResponse(context, analysis);
         }
@@ -512,8 +531,10 @@ Response:`;
                 response.content || this.createBasicResponse(context, analysis)
             );
         } catch (error) {
-            this.logger.warn('LLM technical synthesis failed', {
-                error: (error as Error).message,
+            this.logger.warn({
+                message: 'LLM technical synthesis failed',
+                context: this.constructor.name,
+                error: error as Error,
             });
             return this.createBasicResponse(context, analysis);
         }

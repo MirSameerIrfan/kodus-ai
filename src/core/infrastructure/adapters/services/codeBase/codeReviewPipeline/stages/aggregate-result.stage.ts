@@ -1,14 +1,15 @@
+import { createLogger } from "@kodus/flow";
 import { Injectable } from '@nestjs/common';
 import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
-import { PinoLoggerService } from '../../../logger/pino.service';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 
 @Injectable()
 export class AggregateResultsStage extends BasePipelineStage<CodeReviewPipelineContext> {
+    private readonly logger = createLogger(AggregateResultsStage.name);
     readonly stageName = 'AggregateResultsStage';
     readonly dependsOn: string[] = ['CreatePrLevelCommentsStage', 'CreateFileCommentsStage']; // Depends on both comment stages
 
-    constructor(private readonly logger: PinoLoggerService) {
+    constructor() {
         super();
     }
 

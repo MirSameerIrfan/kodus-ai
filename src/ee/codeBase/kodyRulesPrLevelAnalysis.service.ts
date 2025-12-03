@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { KODY_RULES_SERVICE_TOKEN } from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
 import { KodyRulesService } from '../kodyRules/service/kodyRules.service';
 import { Inject, Injectable } from '@nestjs/common';
@@ -15,7 +16,6 @@ import {
     IKodyRule,
     KodyRulesScope,
 } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import {
     KodyRulesPrLevelPayload,
     prompt_kodyrules_prlevel_analyzer,
@@ -98,6 +98,7 @@ export const KODY_RULES_PR_LEVEL_ANALYSIS_SERVICE_TOKEN = Symbol(
 export class KodyRulesPrLevelAnalysisService
     implements IKodyRulesAnalysisService
 {
+    private readonly logger = createLogger(KodyRulesPrLevelAnalysisService.name);
     private readonly DEFAULT_USAGE_LLM_MODEL_PERCENTAGE = 70;
 
     private readonly DEFAULT_BATCH_CONFIG: BatchProcessingConfig = {
@@ -110,16 +111,12 @@ export class KodyRulesPrLevelAnalysisService
     constructor(
         @Inject(KODY_RULES_SERVICE_TOKEN)
         private readonly kodyRulesService: KodyRulesService,
-
-        private readonly logger: PinoLoggerService,
-
         private readonly tokenChunkingService: TokenChunkingService,
-
         private readonly promptRunnerService: PromptRunnerService,
         private readonly observabilityService: ObservabilityService,
         private readonly externalReferenceLoaderService: ExternalReferenceLoaderService,
         private readonly fileContextAugmentationService: FileContextAugmentationService,
-        private readonly kodyRuleDependencyService: KodyRuleDependencyService,
+        private readonly kodyRuleDependencyService: KodyRuleDependencyService
     ) {}
 
     async analyzeCodeWithAI(

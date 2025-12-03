@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Injectable, Inject } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -27,7 +28,6 @@ import {
     PULL_REQUESTS_SERVICE_TOKEN,
 } from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
 import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
-import { PinoLoggerService } from '../logger/pino.service';
 import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
@@ -39,17 +39,14 @@ import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';
 
 @Injectable()
 export class SuggestionService implements ISuggestionService {
+    private readonly logger = createLogger(SuggestionService.name);
     constructor(
         @Inject(LLM_ANALYSIS_SERVICE_TOKEN)
         private readonly aiAnalysisService: IAIAnalysisService,
-
         @Inject(PULL_REQUESTS_SERVICE_TOKEN)
         private readonly pullRequestService: IPullRequestsService,
-
         @Inject(COMMENT_MANAGER_SERVICE_TOKEN)
-        private readonly commentManagerService: ICommentManagerService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly commentManagerService: ICommentManagerService
     ) {}
 
     /**

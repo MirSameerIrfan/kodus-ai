@@ -17,13 +17,28 @@ export class StorageAdapterFactory {
     static async create<T extends BaseStorage<BaseStorageItem>>(
         config: StorageAdapterConfig,
     ): Promise<T> {
-        logger.info('Creating storage adapter', { type: config.type, config });
+        logger.log({
+            message: 'Creating storage adapter',
+            context: 'create',
+
+            metadata: {
+                type: config.type,
+                config,
+            },
+        });
 
         const collection = (config.options?.collection ?? 'default') as string;
         const adapterKey = `${config.type}_${config.connectionString || 'default'}_${collection}`;
 
         if (this.adapters.has(adapterKey)) {
-            logger.info('Returning cached adapter', { adapterKey });
+            logger.log({
+                message: 'Returning cached adapter',
+                context: 'create',
+
+                metadata: {
+                    adapterKey,
+                },
+            });
             return this.adapters.get(adapterKey) as T;
         }
 
@@ -58,16 +73,27 @@ export class StorageAdapterFactory {
 
             this.adapters.set(adapterKey, adapter);
 
-            logger.info('Storage adapter created', {
-                type: config.type,
-                adapterKey,
+            logger.log({
+                message: 'Storage adapter created',
+                context: 'create',
+
+                metadata: {
+                    type: config.type,
+                    adapterKey,
+                },
             });
 
             return adapter as T;
         } catch (error) {
-            logger.error('Failed to create storage adapter', error as Error, {
-                type: config.type,
-                adapterKey,
+            logger.error({
+                message: 'Failed to create storage adapter',
+                context: 'create',
+                error: error as Error,
+
+                metadata: {
+                    type: config.type,
+                    adapterKey,
+                },
             });
             throw error;
         }
@@ -85,7 +111,10 @@ export class StorageAdapterFactory {
         const adapters = Array.from(this.adapters.values());
         await Promise.all(adapters.map((adapter) => adapter.cleanup()));
         this.adapters.clear();
-        logger.info('Storage adapter cache cleared');
+        logger.log({
+            message: 'Storage adapter cache cleared',
+            context: 'clearCache',
+        });
     }
 
     static getCachedAdapters(): Map<string, BaseStorage<BaseStorageItem>> {
@@ -108,12 +137,20 @@ export function setGlobalStorageAdapter(
     adapter: BaseStorage<BaseStorageItem>,
 ): void {
     globalStorageAdapter = adapter;
-    logger.info('Set global storage adapter', {
-        type: adapter.constructor.name,
+    logger.log({
+        message: 'Set global storage adapter',
+        context: 'setGlobalStorageAdapter',
+
+        metadata: {
+            type: adapter.constructor.name,
+        },
     });
 }
 
 export function resetGlobalStorageAdapter(): void {
     globalStorageAdapter = null;
-    logger.info('Reset global storage adapter');
+    logger.log({
+        message: 'Reset global storage adapter',
+        context: 'resetGlobalStorageAdapter',
+    });
 }

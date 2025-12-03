@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import {
     FormattedConfig,
     FormattedConfigLevel,
@@ -10,7 +11,6 @@ import {
 } from '@/core/domain/pullRequestMessages/contracts/pullRequestMessages.service.contract';
 import { PullRequestMessagesEntity } from '@/core/domain/pullRequestMessages/entities/pullRequestMessages.entity';
 import { IPullRequestMessages } from '@/core/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { deepDifference, deepMerge } from '@/shared/utils/deep';
 import { getDefaultKodusConfigFile } from '@/shared/utils/validateCodeReviewConfigFile';
 import { Inject, Injectable } from '@nestjs/common';
@@ -25,11 +25,10 @@ export type FormattedCustomMessagesConfig =
 
 @Injectable()
 export class FindByRepositoryOrDirectoryIdPullRequestMessagesUseCase {
+    private readonly logger = createLogger(FindByRepositoryOrDirectoryIdPullRequestMessagesUseCase.name);
     constructor(
         @Inject(PULL_REQUEST_MESSAGES_SERVICE_TOKEN)
-        private readonly pullRequestMessagesService: IPullRequestMessagesService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly pullRequestMessagesService: IPullRequestMessagesService
     ) {}
 
     async execute(

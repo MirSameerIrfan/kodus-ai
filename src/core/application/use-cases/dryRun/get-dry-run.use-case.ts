@@ -1,18 +1,17 @@
+import { createLogger } from "@kodus/flow";
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     DRY_RUN_SERVICE_TOKEN,
     IDryRunService,
 } from '@/core/domain/dryRun/contracts/dryRun.service.contract';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class GetDryRunUseCase {
+    private readonly logger = createLogger(GetDryRunUseCase.name);
     constructor(
         @Inject(DRY_RUN_SERVICE_TOKEN)
-        private readonly dryRunService: IDryRunService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly dryRunService: IDryRunService
     ) {}
 
     async execute(params: {

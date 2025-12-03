@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Injectable, Inject } from '@nestjs/common';
 
 import {
@@ -14,23 +15,19 @@ import {
 } from '@/core/domain/codeBase/contracts/ASTAnalysisService.contract';
 import { IAIAnalysisService } from '@/core/domain/codeBase/contracts/AIAnalysisService.contract';
 import { LLM_ANALYSIS_SERVICE_TOKEN } from '@/core/infrastructure/adapters/services/codeBase/llmAnalysis.service';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { KODY_RULES_ANALYSIS_SERVICE_TOKEN } from './kodyRulesAnalysis.service';
 
 @Injectable()
 export class CodeAnalysisOrchestrator {
+    private readonly logger = createLogger(CodeAnalysisOrchestrator.name);
     constructor(
         @Inject(LLM_ANALYSIS_SERVICE_TOKEN)
         private readonly standardLLMAnalysisService: IAIAnalysisService,
-
         @Inject(KODY_RULES_ANALYSIS_SERVICE_TOKEN)
         private readonly kodyRulesAnalysisService: IAIAnalysisService,
-
         @Inject(AST_ANALYSIS_SERVICE_TOKEN)
-        private readonly codeASTAnalysisService: IASTAnalysisService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly codeASTAnalysisService: IASTAnalysisService
     ) {}
 
     async executeStandardAnalysis(

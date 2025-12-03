@@ -1,5 +1,5 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import {
     IUsersService,
     USER_SERVICE_TOKEN,
@@ -13,14 +13,12 @@ import { sendKodyRulesNotification } from '@/shared/utils/email/sendMail';
 
 @Injectable()
 export class SendRulesNotificationUseCase {
+    private readonly logger = createLogger(SendRulesNotificationUseCase.name);
     constructor(
         @Inject(USER_SERVICE_TOKEN)
         private readonly usersService: IUsersService,
-
         @Inject(ORGANIZATION_SERVICE_TOKEN)
-        private readonly organizationService: IOrganizationService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly organizationService: IOrganizationService
     ) {}
 
     async execute(

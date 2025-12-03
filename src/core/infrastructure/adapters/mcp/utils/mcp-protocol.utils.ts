@@ -1,7 +1,7 @@
+import { SimpleLogger } from '@kodus/flow/dist/observability/logger';
 import { z } from 'zod';
-import { PinoLoggerService } from '../../services/logger/pino.service';
-import { toJsonRpcError, toToolErrorPayload } from './serialize'; // ← novo
 import { JsonRpcCode } from './errors'; // ← novo
+import { toJsonRpcError, toToolErrorPayload } from './serialize'; // ← novo
 
 type TextBlock = { type: 'text'; text: string };
 type ResourceLink = {
@@ -69,7 +69,7 @@ export function wrapToolHandler<I = any, O = any>(
     handler: (args: I, extra?: any) => Promise<O>,
     toolName?: string,
     onErrorStructured?: (e: any, args: I) => any,
-    logger?: PinoLoggerService,
+    logger?: SimpleLogger,
 ) {
     return async (args: I, extra?: any) => {
         const start = Date.now();
@@ -189,7 +189,7 @@ export function logToolInvocation(
     toolName: string,
     args: any,
     extra: any,
-    logger: PinoLoggerService,
+    logger: SimpleLogger,
 ): number {
     logger.log({
         message: 'MCP tool invoked',
@@ -209,7 +209,7 @@ export function logToolInvocation(
 export function logToolCompletion(
     toolName: string,
     startTime: number,
-    logger: PinoLoggerService,
+    logger: SimpleLogger,
     error?: any,
 ): void {
     const duration = Date.now() - startTime;

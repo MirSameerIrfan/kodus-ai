@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     AUTOMATION_SERVICE_TOKEN,
@@ -21,7 +22,6 @@ import {
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
 } from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
 import { stripCurlyBracesFromUUIDs } from '@/core/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { AutoAssignLicenseUseCase } from '@/ee/license/use-cases/auto-assign-license.use-case';
 import {
@@ -57,28 +57,21 @@ const NO_LICENSE_REACTION_MAP = {
 
 @Injectable()
 export class RunCodeReviewAutomationUseCase {
+    private readonly logger = createLogger(RunCodeReviewAutomationUseCase.name);
     constructor(
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
         private readonly integrationConfigService: IIntegrationConfigService,
-
         @Inject(AUTOMATION_SERVICE_TOKEN)
         private readonly automationService: IAutomationService,
-
         @Inject(TEAM_AUTOMATION_SERVICE_TOKEN)
         private readonly teamAutomationService: ITeamAutomationService,
-
         @Inject(EXECUTE_AUTOMATION_SERVICE_TOKEN)
         private readonly executeAutomation: IExecuteAutomationService,
-
         private readonly codeManagement: CodeManagementService,
-
         private readonly permissionValidationService: PermissionValidationService,
         private readonly autoAssignLicenseUseCase: AutoAssignLicenseUseCase,
-
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
-        private readonly organizationParametersService: IOrganizationParametersService,
-
-        private logger: PinoLoggerService,
+        private readonly organizationParametersService: IOrganizationParametersService
     ) {}
 
     async execute(params: {

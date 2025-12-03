@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { GetOrganizationNameUseCase } from '@/core/application/use-cases/github/GetOrganizationName';
 import { GetIntegrationGithubUseCase } from '@/core/application/use-cases/github/get-integration-github';
 import {
@@ -11,7 +12,6 @@ import {
     Res,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { PinoLoggerService } from '../../adapters/services/logger/pino.service';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 import { ReceiveWebhookUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/receiveWebhook.use-case';
 import {
@@ -21,15 +21,13 @@ import {
 
 @Controller('github')
 export class GithubController {
+    private readonly logger = createLogger(GithubController.name);
     constructor(
         private readonly getOrganizationNameUseCase: GetOrganizationNameUseCase,
         private readonly getIntegrationGithubUseCase: GetIntegrationGithubUseCase,
         private readonly receiveWebhookUseCase: ReceiveWebhookUseCase,
-
         @Inject(WEBHOOK_LOG_SERVICE)
-        private readonly webhookLogService: IWebhookLogService,
-
-        private logger: PinoLoggerService,
+        private readonly webhookLogService: IWebhookLogService
     ) {}
 
     @Get('/organization-name')

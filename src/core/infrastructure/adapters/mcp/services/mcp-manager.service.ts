@@ -1,9 +1,8 @@
 import { AxiosMCPManagerService } from '@/config/axios/microservices/mcpManager.axios';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { MCPServerConfig } from '@kodus/flow';
+import { MCPServerConfig, createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { PinoLoggerService } from '../../services/logger/pino.service';
 import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
 import { TransportType } from '@kodus/flow/dist/core/types/allTypes';
 
@@ -116,12 +115,12 @@ export const KODUS_MCP_INTEGRATION_ID = 'kd_mcp_oTUrzqsaxTg';
 
 @Injectable()
 export class MCPManagerService {
+    private readonly logger = createLogger(MCPManagerService.name);
     private axiosMCPManagerService: AxiosMCPManagerService;
 
     constructor(
         private readonly jwt: JwtService,
-        private readonly logger: PinoLoggerService,
-        private readonly permissionValidationService: PermissionValidationService,
+        private readonly permissionValidationService: PermissionValidationService
     ) {
         this.axiosMCPManagerService = new AxiosMCPManagerService();
     }

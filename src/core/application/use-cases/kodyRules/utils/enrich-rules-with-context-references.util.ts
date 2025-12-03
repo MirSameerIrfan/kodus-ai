@@ -1,7 +1,6 @@
-import type { IKodyRule } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
 import type { IContextReferenceService } from '@/core/domain/contextReferences/contracts/context-reference.service.contract';
 import type { ContextReferenceEntity } from '@/core/domain/contextReferences/entities/context-reference.entity';
-import type { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { SimpleLogger } from '@kodus/flow/dist/observability/logger';
 
 type RuleWithContextId = {
     uuid?: string;
@@ -26,7 +25,7 @@ export async function enrichRulesWithContextReferences<
 >(
     rules: T[],
     contextReferenceService: IContextReferenceService,
-    logger: PinoLoggerService,
+    logger: SimpleLogger,
 ): Promise<Array<T & EnrichedFields>> {
     return await Promise.all(
         (rules || []).map(async (rule) => {
@@ -40,10 +39,9 @@ export async function enrichRulesWithContextReferences<
             }
 
             try {
-                const contextRef =
-                    await contextReferenceService.findById(
-                        rule.contextReferenceId,
-                    );
+                const contextRef = await contextReferenceService.findById(
+                    rule.contextReferenceId,
+                );
 
                 if (!contextRef) {
                     return {

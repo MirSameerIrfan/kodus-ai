@@ -1,8 +1,17 @@
 /**
  * Core types for the observability system
  */
+import { ExecutionContext } from '@nestjs/common';
 
-export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'verbose';
+
+export type LogArguments = {
+    message: string;
+    context: ExecutionContext | string;
+    serviceName?: string;
+    error?: Error;
+    metadata?: Record<string, any>;
+};
 
 export type SpanKind =
     | 'internal'

@@ -1,7 +1,7 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
-import { PinoLoggerService } from '../../../logger/pino.service';
 import { KodyRulesScope } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
 import {
     KODY_RULES_PR_LEVEL_ANALYSIS_SERVICE_TOKEN,
@@ -15,17 +15,15 @@ import {
 
 @Injectable()
 export class ProcessFilesPrLevelReviewStage extends BasePipelineStage<CodeReviewPipelineContext> {
+    private readonly logger = createLogger(ProcessFilesPrLevelReviewStage.name);
     readonly stageName = 'PRLevelReviewStage';
     readonly dependsOn: string[] = ['InitialCommentStage']; // Depends on InitialCommentStage
 
     constructor(
-        private readonly logger: PinoLoggerService,
-
         @Inject(KODY_RULES_PR_LEVEL_ANALYSIS_SERVICE_TOKEN)
         private readonly kodyRulesPrLevelAnalysisService: KodyRulesPrLevelAnalysisService,
-
         @Inject(CROSS_FILE_ANALYSIS_SERVICE_TOKEN)
-        private readonly crossFileAnalysisService: CrossFileAnalysisService,
+        private readonly crossFileAnalysisService: CrossFileAnalysisService
     ) {
         super();
     }

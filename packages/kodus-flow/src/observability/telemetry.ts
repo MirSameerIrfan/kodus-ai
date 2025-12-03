@@ -41,10 +41,15 @@ export class TelemetrySystem {
 
         this.tracer = new SimpleTracer();
 
-        this.logger.info('Telemetry system initialized', {
-            enabled: this.config.enabled,
-            serviceName: this.config.serviceName,
-            samplingRate: this.config.sampling?.rate ?? 1.0,
+        this.logger.log({
+            message: 'Telemetry system initialized',
+            context: this.constructor.name,
+
+            metadata: {
+                enabled: this.config.enabled,
+                serviceName: this.config.serviceName,
+                samplingRate: this.config.sampling?.rate ?? 1.0,
+            },
         });
     }
 
@@ -188,10 +193,16 @@ export class TelemetrySystem {
             try {
                 await processor.process(item);
             } catch (error) {
-                this.logger.error('Trace processor failed', error as Error, {
-                    processor: processor.constructor.name,
-                    traceId: item.context.traceId,
-                    spanId: item.context.spanId,
+                this.logger.error({
+                    message: 'Trace processor failed',
+                    context: this.constructor.name,
+                    error: error as Error,
+
+                    metadata: {
+                        processor: processor.constructor.name,
+                        traceId: item.context.traceId,
+                        spanId: item.context.spanId,
+                    },
                 });
             }
         }
@@ -207,8 +218,14 @@ export class TelemetrySystem {
                     await processor.flush();
                 }
             } catch (error) {
-                this.logger.error('Failed to flush processor', error as Error, {
-                    processor: processor.constructor.name,
+                this.logger.error({
+                    message: 'Failed to flush processor',
+                    context: this.constructor.name,
+                    error: error as Error,
+
+                    metadata: {
+                        processor: processor.constructor.name,
+                    },
                 });
             }
         }

@@ -1,17 +1,16 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import {
     IRuleLikeService,
     RULE_LIKE_SERVICE_TOKEN,
 } from '@/core/domain/kodyRules/contracts/ruleLike.service.contract';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 
 @Injectable()
 export class RemoveRuleLikeUseCase {
+    private readonly logger = createLogger(RemoveRuleLikeUseCase.name);
     constructor(
         @Inject(RULE_LIKE_SERVICE_TOKEN)
-        private readonly ruleLikeService: IRuleLikeService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly ruleLikeService: IRuleLikeService
     ) {}
 
     async execute(

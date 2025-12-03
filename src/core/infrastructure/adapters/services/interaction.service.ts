@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { IInteractionService } from '@/core/domain/interactions/contracts/interaction.service.contracts';
 import { Inject } from '@nestjs/common';
 import {
@@ -9,19 +10,15 @@ import {
     TEAM_SERVICE_TOKEN,
 } from '@/core/domain/team/contracts/team.service.contract';
 import { InteractionDto } from '@/shared/domain/dtos/interaction.dtos';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 
 export class InteractionService implements IInteractionService {
+    private readonly logger = createLogger(InteractionService.name);
     constructor(
         @Inject(INTERACTION_EXECUTION_REPOSITORY_TOKEN)
         private readonly interactionRepository: IInteractionExecutionRepository,
-
-        @Inject(PinoLoggerService)
-        private readonly logger: PinoLoggerService,
-
         @Inject(TEAM_SERVICE_TOKEN)
-        private readonly teamService: ITeamService,
+        private readonly teamService: ITeamService
     ) {}
 
     async createInteraction(interaction: InteractionDto): Promise<void> {

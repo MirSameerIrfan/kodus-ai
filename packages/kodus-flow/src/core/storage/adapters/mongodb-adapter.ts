@@ -102,19 +102,25 @@ export class MongoDBStorageAdapter<
             }
 
             this.isInitialized = true;
-            logger.info('MongoDBStorageAdapter initialized', {
-                database,
-                collection,
-                dataType,
-                maxItems: this.config.maxItems,
-                enableCompression: this.config.enableCompression,
-                timeout: this.config.timeout,
+            logger.log({
+                message: 'MongoDBStorageAdapter initialized',
+                context: 'initialize',
+
+                metadata: {
+                    database,
+                    collection,
+                    dataType,
+                    maxItems: this.config.maxItems,
+                    enableCompression: this.config.enableCompression,
+                    timeout: this.config.timeout,
+                },
             });
         } catch (error) {
-            logger.error(
-                'Failed to initialize MongoDB adapter',
-                error as Error,
-            );
+            logger.error({
+                message: 'Failed to initialize MongoDB adapter',
+                context: 'initialize',
+                error: error as Error,
+            });
             throw error;
         }
     }
@@ -162,15 +168,26 @@ export class MongoDBStorageAdapter<
                 upsert: true,
             });
 
-            logger.debug('Item stored in MongoDB', {
-                id: item.id,
-                timestamp: item.timestamp,
-                collection: this.collection.collectionName,
+            logger.debug({
+                message: 'Item stored in MongoDB',
+                context: 'store',
+
+                metadata: {
+                    id: item.id,
+                    timestamp: item.timestamp,
+                    collection: this.collection.collectionName,
+                },
             });
         } catch (error) {
-            logger.error('Failed to store item in MongoDB', error as Error, {
-                id: item.id,
-                collection: this.collection?.collectionName,
+            logger.error({
+                message: 'Failed to store item in MongoDB',
+                context: 'store',
+                error: error as Error,
+
+                metadata: {
+                    id: item.id,
+                    collection: this.collection?.collectionName,
+                },
             });
             throw error;
         }
@@ -188,14 +205,16 @@ export class MongoDBStorageAdapter<
 
             return document as unknown as T;
         } catch (error) {
-            logger.error(
-                'Failed to retrieve item from MongoDB',
-                error as Error,
-                {
+            logger.error({
+                message: 'Failed to retrieve item from MongoDB',
+                context: 'retrieve',
+                error: error as Error,
+
+                metadata: {
                     id,
                     collection: this.collection?.collectionName,
                 },
-            );
+            });
             throw error;
         }
     }
@@ -206,17 +225,28 @@ export class MongoDBStorageAdapter<
         try {
             const result = await this.collection!.deleteOne({ id });
 
-            logger.debug('Item deleted from MongoDB', {
-                id,
-                deletedCount: result.deletedCount,
-                collection: this.collection?.collectionName,
+            logger.debug({
+                message: 'Item deleted from MongoDB',
+                context: 'delete',
+
+                metadata: {
+                    id,
+                    deletedCount: result.deletedCount,
+                    collection: this.collection?.collectionName,
+                },
             });
 
             return result.deletedCount > 0;
         } catch (error) {
-            logger.error('Failed to delete item from MongoDB', error as Error, {
-                id,
-                collection: this.collection?.collectionName,
+            logger.error({
+                message: 'Failed to delete item from MongoDB',
+                context: 'delete',
+                error: error as Error,
+
+                metadata: {
+                    id,
+                    collection: this.collection?.collectionName,
+                },
             });
             throw error;
         }
@@ -228,12 +258,23 @@ export class MongoDBStorageAdapter<
         try {
             await this.collection!.deleteMany({});
 
-            logger.info('Collection cleared', {
-                collection: this.collection?.collectionName,
+            logger.log({
+                message: 'Collection cleared',
+                context: 'clear',
+
+                metadata: {
+                    collection: this.collection?.collectionName,
+                },
             });
         } catch (error) {
-            logger.error('Failed to clear collection', error as Error, {
-                collection: this.collection?.collectionName,
+            logger.error({
+                message: 'Failed to clear collection',
+                context: 'clear',
+                error: error as Error,
+
+                metadata: {
+                    collection: this.collection?.collectionName,
+                },
             });
             throw error;
         }
@@ -263,8 +304,14 @@ export class MongoDBStorageAdapter<
                 adapterType: 'mongodb',
             };
         } catch (error) {
-            logger.error('Failed to get stats from MongoDB', error as Error, {
-                collection: this.collection?.collectionName,
+            logger.error({
+                message: 'Failed to get stats from MongoDB',
+                context: 'getStats',
+                error: error as Error,
+
+                metadata: {
+                    collection: this.collection?.collectionName,
+                },
             });
             throw error;
         }
@@ -280,7 +327,11 @@ export class MongoDBStorageAdapter<
             await this.client.db().admin().ping();
             return true;
         } catch (error) {
-            logger.error('Health check failed', error as Error);
+            logger.error({
+                message: 'Health check failed',
+                context: 'isHealthy',
+                error: error as Error,
+            });
             return false;
         }
     }
@@ -294,10 +345,17 @@ export class MongoDBStorageAdapter<
                 this.collection = null;
                 this.isInitialized = false;
 
-                logger.info('MongoDB adapter cleaned up');
+                logger.log({
+                    message: 'MongoDB adapter cleaned up',
+                    context: 'cleanup',
+                });
             }
         } catch (error) {
-            logger.error('Failed to cleanup MongoDB adapter', error as Error);
+            logger.error({
+                message: 'Failed to cleanup MongoDB adapter',
+                context: 'cleanup',
+                error: error as Error,
+            });
             throw error;
         }
     }
@@ -319,8 +377,14 @@ export class MongoDBStorageAdapter<
             );
             return (doc as unknown as T) || null;
         } catch (error) {
-            logger.error('Failed to execute findOneByQuery', error as Error, {
-                query,
+            logger.error({
+                message: 'Failed to execute findOneByQuery',
+                context: 'findOneByQuery',
+                error: error as Error,
+
+                metadata: {
+                    query,
+                },
             });
             return null;
         }

@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     IOrganizationParametersRepository,
@@ -10,22 +11,18 @@ import { OrganizationParametersKey } from '@/shared/domain/enums/organization-pa
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { PromptService } from './prompt.service';
-import { PinoLoggerService } from './logger/pino.service';
 import { LLMProviderService, LLMModelProvider } from '@kodus/kodus-common/llm';
 
 @Injectable()
 export class OrganizationParametersService
     implements IOrganizationParametersService
 {
+    private readonly logger = createLogger(OrganizationParametersService.name);
     constructor(
         @Inject(ORGANIZATION_PARAMETERS_REPOSITORY_TOKEN)
         private readonly organizationParametersRepository: IOrganizationParametersRepository,
-
         private readonly promptService: PromptService,
-
-        private readonly llmProviderService: LLMProviderService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly llmProviderService: LLMProviderService
     ) {}
 
     find(

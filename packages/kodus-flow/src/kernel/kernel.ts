@@ -193,11 +193,16 @@ export class ExecutionKernel {
             pendingOperations: new Set<string>(),
         };
 
-        this.logger.info('Kernel initialized', {
-            id: this.state.id,
-            quotas: config.quotas,
-            performance: config.performance,
-            hasStateService: !!this.stateService,
+        this.logger.log({
+            message: 'Kernel initialized',
+            context: this.constructor.name,
+
+            metadata: {
+                id: this.state.id,
+                quotas: config.quotas,
+                performance: config.performance,
+                hasStateService: !!this.stateService,
+            },
         });
     }
 
@@ -209,9 +214,11 @@ export class ExecutionKernel {
 
         // Check if already initialized (idempotency)
         if (this.state.status === 'running' && this.runtime) {
-            this.logger.info(
-                'Kernel already initialized, returning existing context',
-            );
+            this.logger.log({
+                message:
+                    'Kernel already initialized, returning existing context',
+                context: this.constructor.name,
+            });
             return this.workflowContext!;
         }
 
@@ -331,12 +338,17 @@ export class ExecutionKernel {
                     // 7. Sincronizar estados
                     this.synchronizeStates();
 
-                    this.logger.info('Kernel initialized and running', {
-                        id: this.state.id,
-                        performance: this.config.performance,
-                        runtimeInitialized: !!this.runtime,
-                        isolation: this.config.isolation,
-                        idempotency: this.config.idempotency,
+                    this.logger.log({
+                        message: 'Kernel initialized and running',
+                        context: this.constructor.name,
+
+                        metadata: {
+                            id: this.state.id,
+                            performance: this.config.performance,
+                            runtimeInitialized: !!this.runtime,
+                            isolation: this.config.isolation,
+                            idempotency: this.config.idempotency,
+                        },
                     });
 
                     // 8. Emit kernel started event via runtime (AGORA SEGURO)
@@ -349,16 +361,17 @@ export class ExecutionKernel {
                     try {
                         await this.runtime.process(true);
                     } catch (procErr) {
-                        this.logger.warn(
-                            'Failed to process events after KERNEL_STARTED emit',
-                            {
-                                error:
-                                    procErr instanceof Error
-                                        ? procErr.message
-                                        : String(procErr),
+                        this.logger.warn({
+                            message:
+                                'Failed to process events after KERNEL_STARTED emit',
+                            context: this.constructor.name,
+
+                            error: procErr as Error,
+
+                            metadata: {
                                 kernelId: this.state.id,
                             },
-                        );
+                        });
                     }
 
                     return this.workflowContext;
@@ -368,10 +381,11 @@ export class ExecutionKernel {
                     this.runtime = null;
                     this.workflowContext = null;
 
-                    this.logger.error(
-                        'Failed to initialize kernel',
-                        error as Error,
-                    );
+                    this.logger.error({
+                        message: 'Failed to initialize kernel',
+                        context: this.constructor.name,
+                        error: error as Error,
+                    });
                     throw error;
                 }
             },
@@ -402,8 +416,14 @@ export class ExecutionKernel {
             // Send event - batching is now handled by Runtime if configured
             await this.sendEvent(event);
         } catch (error) {
-            this.logger.error('Failed to run workflow', error as Error, {
-                event,
+            this.logger.error({
+                message: 'Failed to run workflow',
+                context: this.constructor.name,
+                error: error as Error,
+
+                metadata: {
+                    event,
+                },
             });
             throw error;
         }
@@ -451,13 +471,24 @@ export class ExecutionKernel {
             // Check quotas after event processing
             await this.checkQuotas();
 
-            this.logger.debug('Event sent to runtime', {
-                eventType: event.type,
-                eventCount: this.state.eventCount,
+            this.logger.debug({
+                message: 'Event sent to runtime',
+                context: this.constructor.name,
+
+                metadata: {
+                    eventType: event.type,
+                    eventCount: this.state.eventCount,
+                },
             });
         } catch (error) {
-            this.logger.error('Failed to send event', error as Error, {
-                event,
+            this.logger.error({
+                message: 'Failed to send event',
+                context: this.constructor.name,
+                error: error as Error,
+
+                metadata: {
+                    event,
+                },
             });
             throw error;
         }
@@ -487,16 +518,27 @@ export class ExecutionKernel {
             // Update state
             this.state.status = 'paused';
 
-            this.logger.info('Kernel paused', {
-                snapshotId: snapshot.hash,
-                reason,
-                eventCount: this.state.eventCount,
+            this.logger.log({
+                message: 'Kernel paused',
+                context: this.constructor.name,
+
+                metadata: {
+                    snapshotId: snapshot.hash,
+                    reason,
+                    eventCount: this.state.eventCount,
+                },
             });
 
             return snapshot.hash;
         } catch (error) {
-            this.logger.error('Failed to pause kernel', error as Error, {
-                reason,
+            this.logger.error({
+                message: 'Failed to pause kernel',
+                context: this.constructor.name,
+                error: error as Error,
+
+                metadata: {
+                    reason,
+                },
             });
             throw error;
         }
@@ -529,13 +571,24 @@ export class ExecutionKernel {
             // Update state
             this.state.status = 'running';
 
-            this.logger.info('Kernel resumed', {
-                snapshotId,
-                eventCount: this.state.eventCount,
+            this.logger.log({
+                message: 'Kernel resumed',
+                context: this.constructor.name,
+
+                metadata: {
+                    snapshotId,
+                    eventCount: this.state.eventCount,
+                },
             });
         } catch (error) {
-            this.logger.error('Failed to resume kernel', error as Error, {
-                snapshotId,
+            this.logger.error({
+                message: 'Failed to resume kernel',
+                context: this.constructor.name,
+                error: error as Error,
+
+                metadata: {
+                    snapshotId,
+                },
             });
             throw error;
         }
@@ -559,12 +612,21 @@ export class ExecutionKernel {
             // Cleanup performance optimizations
             this.cleanupPerformanceOptimizations();
 
-            this.logger.info('Kernel completed', {
-                result,
-                eventCount: this.state.eventCount,
+            this.logger.log({
+                message: 'Kernel completed',
+                context: this.constructor.name,
+
+                metadata: {
+                    result,
+                    eventCount: this.state.eventCount,
+                },
             });
         } catch (error) {
-            this.logger.error('Failed to complete kernel', error as Error);
+            this.logger.error({
+                message: 'Failed to complete kernel',
+                context: this.constructor.name,
+                error: error as Error,
+            });
             throw error;
         }
     }
@@ -651,12 +713,17 @@ export class ExecutionKernel {
             this.contextCache.set(cacheKey, value);
         }
 
-        this.logger.debug('Context set with tenant isolation', {
-            tenantId,
-            threadId,
-            namespace,
-            key,
-            hasValue: value !== undefined,
+        this.logger.debug({
+            message: 'Context set with tenant isolation',
+            context: this.constructor.name,
+
+            metadata: {
+                tenantId,
+                threadId,
+                namespace,
+                key,
+                hasValue: value !== undefined,
+            },
         });
     }
 
@@ -813,9 +880,14 @@ export class ExecutionKernel {
             if (runtime) {
                 // Get recovery stats if available
                 const stats = runtime.getStats();
-                this.logger.info('Recovery triggered', {
-                    attempt: this.recoveryAttempts,
-                    stats: stats.persistence,
+                this.logger.log({
+                    message: 'Recovery triggered',
+                    context: this.constructor.name,
+
+                    metadata: {
+                        attempt: this.recoveryAttempts,
+                        stats: stats.persistence,
+                    },
                 });
             }
 
@@ -948,49 +1020,54 @@ export class ExecutionKernel {
                             },
                         };
 
-                        this.logger.info(
-                            '✅ Kernel context initialized via ContextService',
-                            {
+                        this.logger.log({
+                            message:
+                                '✅ Kernel context initialized via ContextService',
+                            context: this.constructor.name,
+
+                            metadata: {
                                 sessionId: runtimeContext.sessionId,
                                 threadId: runtimeContext.threadId,
                                 messagesCount: runtimeContext.messages.length,
+
                                 entitiesCount: Object.keys(
                                     runtimeContext.entities,
                                 ).length,
                             },
-                        );
+                        });
                     } catch (contextError) {
                         // Fallback to basic structure if ContextService fails
-                        this.logger.warn(
-                            '⚠️ ContextService unavailable, using basic structure',
-                            {
+                        this.logger.warn({
+                            message:
+                                '⚠️ ContextService unavailable, using basic structure',
+                            context: this.constructor.name,
+
+                            error: contextError as Error,
+
+                            metadata: {
                                 tenantId: this.config.tenantId,
-                                error:
-                                    contextError instanceof Error
-                                        ? contextError.message
-                                        : String(contextError),
                             },
-                        );
+                        });
                         this.initializeBasicContextData();
                     }
                 } else {
                     // No tenantId available, use basic structure
-                    this.logger.info(
-                        'ℹ️ No tenantId provided, using basic context structure',
-                    );
+                    this.logger.log({
+                        message:
+                            'ℹ️ No tenantId provided, using basic context structure',
+                        context: this.constructor.name,
+                    });
                     this.initializeBasicContextData();
                 }
             } catch (importError) {
                 // ContextService not available, fallback to basic structure
-                this.logger.warn(
-                    '⚠️ ContextService import failed, using basic structure',
-                    {
-                        error:
-                            importError instanceof Error
-                                ? importError.message
-                                : String(importError),
-                    },
-                );
+                this.logger.warn({
+                    message:
+                        '⚠️ ContextService import failed, using basic structure',
+                    context: this.constructor.name,
+
+                    error: importError as Error,
+                });
                 this.initializeBasicContextData();
             }
         }
@@ -1017,8 +1094,10 @@ export class ExecutionKernel {
         try {
             return JSON.parse(JSON.stringify(data));
         } catch (error) {
-            this.logger.warn('Failed to create safe context copy', {
-                error: String(error),
+            this.logger.warn({
+                message: 'Failed to create safe context copy',
+                context: this.constructor.name,
+                error: error as Error,
             });
             return {};
         }
@@ -1032,10 +1111,15 @@ export class ExecutionKernel {
 
         if (maxDuration) {
             const timer = setTimeout(async () => {
-                this.logger.warn('Duration quota exceeded', {
-                    maxDuration,
-                    kernelId: this.state.id,
-                    runtime: Date.now() - this.state.startTime,
+                this.logger.warn({
+                    message: 'Duration quota exceeded',
+                    context: this.constructor.name,
+
+                    metadata: {
+                        maxDuration,
+                        kernelId: this.state.id,
+                        runtime: Date.now() - this.state.startTime,
+                    },
                 });
                 await this.handleQuotaExceeded('duration');
             }, maxDuration);
@@ -1049,10 +1133,15 @@ export class ExecutionKernel {
                     // ✅ CORREÇÃO: Cleanup memory antes de pausar
                     await this.cleanupMemory();
 
-                    this.logger.warn('Memory quota exceeded', {
-                        memoryUsage,
-                        maxMemory,
-                        kernelId: this.state.id,
+                    this.logger.warn({
+                        message: 'Memory quota exceeded',
+                        context: this.constructor.name,
+
+                        metadata: {
+                            memoryUsage,
+                            maxMemory,
+                            kernelId: this.state.id,
+                        },
                     });
                     await this.handleQuotaExceeded('memory');
                 }
@@ -1068,7 +1157,10 @@ export class ExecutionKernel {
      */
     private setupEnhancedQueueFeatures(): void {
         // Enhanced queue features are now always enabled through EventQueue config
-        this.logger.info('Setting up queue features');
+        this.logger.log({
+            message: 'Setting up queue features',
+            context: this.constructor.name,
+        });
 
         // Setup DLQ auto-reprocessing
         this.setupDLQAutoReprocessing();
@@ -1088,17 +1180,23 @@ export class ExecutionKernel {
                 try {
                     await this.reprocessDLQItems();
                 } catch (error) {
-                    this.logger.error(
-                        'Error during DLQ auto-reprocessing',
-                        error as Error,
-                    );
+                    this.logger.error({
+                        message: 'Error during DLQ auto-reprocessing',
+                        context: this.constructor.name,
+                        error: error as Error,
+                    });
                 }
             },
             interval * 60 * 1000,
         );
 
-        this.logger.info('DLQ auto-reprocessing enabled', {
-            intervalMinutes: interval,
+        this.logger.log({
+            message: 'DLQ auto-reprocessing enabled',
+            context: this.constructor.name,
+
+            metadata: {
+                intervalMinutes: interval,
+            },
         });
     }
 
@@ -1110,8 +1208,13 @@ export class ExecutionKernel {
         setInterval(
             () => {
                 if (this.recoveryAttempts > 0) {
-                    this.logger.info('Recovery attempts reset', {
-                        previousAttempts: this.recoveryAttempts,
+                    this.logger.log({
+                        message: 'Recovery attempts reset',
+                        context: this.constructor.name,
+
+                        metadata: {
+                            previousAttempts: this.recoveryAttempts,
+                        },
                     });
                     this.recoveryAttempts = 0;
                 }
@@ -1129,10 +1232,15 @@ export class ExecutionKernel {
             await this.initializeContextStore();
         }
 
-        this.logger.info('Performance optimizations enabled', {
-            batching: this.config.performance?.enableBatching,
-            caching: this.config.performance?.enableCaching,
-            lazyLoading: this.config.performance?.enableLazyLoading,
+        this.logger.log({
+            message: 'Performance optimizations enabled',
+            context: this.constructor.name,
+
+            metadata: {
+                batching: this.config.performance?.enableBatching,
+                caching: this.config.performance?.enableCaching,
+                lazyLoading: this.config.performance?.enableLazyLoading,
+            },
         });
     }
 
@@ -1156,8 +1264,13 @@ export class ExecutionKernel {
             this.contextCache.set(key, value);
         }
 
-        this.logger.debug('Context updates flushed', {
-            updateCount: updates.length,
+        this.logger.debug({
+            message: 'Context updates flushed',
+            context: this.constructor.name,
+
+            metadata: {
+                updateCount: updates.length,
+            },
         });
 
         // Autosnapshot baseado em tempo
@@ -1184,16 +1297,26 @@ export class ExecutionKernel {
                 this.config.performance?.autoSnapshot?.useDelta !== false;
             await this.persistor.append(snapshot, { useDelta });
             this.lastSnapshotTs = Date.now();
-            this.logger.info('Context snapshot persisted', {
-                reason,
-                hash: snapshot.hash,
-                eventCount: this.state.eventCount,
-                tenantId: this.state.tenantId,
+            this.logger.log({
+                message: 'Context snapshot persisted',
+                context: this.constructor.name,
+
+                metadata: {
+                    reason,
+                    hash: snapshot.hash,
+                    eventCount: this.state.eventCount,
+                    tenantId: this.state.tenantId,
+                },
             });
         } catch (error) {
-            this.logger.warn('Failed to persist context snapshot', {
-                errorName: (error as Error)?.name,
-                errorMessage: (error as Error)?.message,
+            this.logger.warn({
+                message: 'Failed to persist context snapshot',
+                context: this.constructor.name,
+
+                metadata: {
+                    errorName: (error as Error)?.name,
+                    errorMessage: (error as Error)?.message,
+                },
             });
         }
     }
@@ -1204,7 +1327,10 @@ export class ExecutionKernel {
     private async reprocessDLQItems(): Promise<void> {
         const runtime = this.getRuntimeSafely();
         if (!runtime) {
-            this.logger.warn('No runtime available for DLQ reprocessing');
+            this.logger.warn({
+                message: 'No runtime available for DLQ reprocessing',
+                context: this.constructor.name,
+            });
             return;
         }
 
@@ -1212,16 +1338,22 @@ export class ExecutionKernel {
             // Check if runtime has enhanced queue
             const stats = runtime.getStats();
             if (!stats.dlq) {
-                this.logger.debug(
-                    'No DLQ stats available, skipping reprocessing',
-                );
+                this.logger.debug({
+                    message: 'No DLQ stats available, skipping reprocessing',
+                    context: this.constructor.name,
+                });
                 return;
             }
 
             // Log DLQ status
-            this.logger.info('DLQ reprocessing attempt', {
-                dlqStats: stats.dlq,
-                recoveryAttempts: this.recoveryAttempts,
+            this.logger.log({
+                message: 'DLQ reprocessing attempt',
+                context: this.constructor.name,
+
+                metadata: {
+                    dlqStats: stats.dlq,
+                    recoveryAttempts: this.recoveryAttempts,
+                },
             });
 
             // ✅ REFACTOR: DLQ reprocessing com critérios adaptativos
@@ -1239,12 +1371,17 @@ export class ExecutionKernel {
 
                 const result = await runtime.reprocessDLQByCriteria(criteria);
 
-                this.logger.info('DLQ reprocessing completed', {
-                    reprocessedCount: result.reprocessedCount,
-                    eventTypes: result.events.map((e) => e.type),
-                    recoveryAttempts: this.recoveryAttempts,
-                    criteria,
-                    memoryUsageMB: Math.round(memoryUsage / 1024 / 1024),
+                this.logger.log({
+                    message: 'DLQ reprocessing completed',
+                    context: this.constructor.name,
+
+                    metadata: {
+                        reprocessedCount: result.reprocessedCount,
+                        eventTypes: result.events.map((e) => e.type),
+                        recoveryAttempts: this.recoveryAttempts,
+                        criteria,
+                        memoryUsageMB: Math.round(memoryUsage / 1024 / 1024),
+                    },
                 });
 
                 // Update recovery metrics if any events were reprocessed
@@ -1252,13 +1389,21 @@ export class ExecutionKernel {
                     this.lastRecoveryTime = Date.now();
                 }
             } else {
-                this.logger.warn(
-                    'Enhanced DLQ reprocessing not available - runtime not using EnhancedEventQueue',
-                );
+                this.logger.warn({
+                    message:
+                        'Enhanced DLQ reprocessing not available - runtime not using EnhancedEventQueue',
+                    context: this.constructor.name,
+                });
             }
         } catch (error) {
-            this.logger.error('Error during DLQ reprocessing', error as Error, {
-                recoveryAttempts: this.recoveryAttempts,
+            this.logger.error({
+                message: 'Error during DLQ reprocessing',
+                context: this.constructor.name,
+                error: error as Error,
+
+                metadata: {
+                    recoveryAttempts: this.recoveryAttempts,
+                },
             });
         }
     }
@@ -1289,10 +1434,15 @@ export class ExecutionKernel {
         const { maxEvents } = this.state.quotas;
 
         if (maxEvents && this.state.eventCount >= maxEvents) {
-            this.logger.warn('Event quota exceeded', {
-                eventCount: this.state.eventCount,
-                maxEvents,
-                kernelId: this.state.id,
+            this.logger.warn({
+                message: 'Event quota exceeded',
+                context: this.constructor.name,
+
+                metadata: {
+                    eventCount: this.state.eventCount,
+                    maxEvents,
+                    kernelId: this.state.id,
+                },
             });
             await this.handleQuotaExceeded('events');
         }
@@ -1304,14 +1454,27 @@ export class ExecutionKernel {
     private async handleQuotaExceeded(
         type: 'events' | 'duration' | 'memory',
     ): Promise<void> {
-        this.logger.warn('Quota exceeded', { type, state: this.state });
+        this.logger.warn({
+            message: 'Quota exceeded',
+            context: this.constructor.name,
+
+            metadata: {
+                type,
+                state: this.state,
+            },
+        });
 
         // Create snapshot before stopping
         const snapshotId = await this.pause(`quota-exceeded-${type}`);
 
-        this.logger.info('Kernel paused due to quota exceeded', {
-            type,
-            snapshotId,
+        this.logger.log({
+            message: 'Kernel paused due to quota exceeded',
+            context: this.constructor.name,
+
+            metadata: {
+                type,
+                snapshotId,
+            },
         });
     }
 
@@ -1340,23 +1503,34 @@ export class ExecutionKernel {
         if (this.dlqReprocessTimer) {
             clearTimeout(this.dlqReprocessTimer);
             this.dlqReprocessTimer = null;
-            this.logger.debug('DLQ auto-reprocessing timer cleared');
+            this.logger.debug({
+                message: 'DLQ auto-reprocessing timer cleared',
+                context: this.constructor.name,
+            });
         }
 
         // Reset recovery counters
         this.recoveryAttempts = 0;
         this.lastRecoveryTime = 0;
 
-        this.logger.debug('Enhanced queue features cleaned up');
+        this.logger.debug({
+            message: 'Enhanced queue features cleaned up',
+            context: this.constructor.name,
+        });
     }
 
     /**
      * Reset kernel state
      */
     async reset(): Promise<void> {
-        this.logger.info('Starting kernel reset', {
-            currentStatus: this.state.status,
-            runtimeExists: !!this.runtime,
+        this.logger.log({
+            message: 'Starting kernel reset',
+            context: this.constructor.name,
+
+            metadata: {
+                currentStatus: this.state.status,
+                runtimeExists: !!this.runtime,
+            },
         });
 
         try {
@@ -1388,14 +1562,23 @@ export class ExecutionKernel {
             // 5. Sincronizar estados
             this.synchronizeStates();
 
-            this.logger.info('Kernel reset completed successfully', {
-                id: this.state.id,
-                newStatus: this.state.status,
-                runtimeExists: !!this.runtime,
+            this.logger.log({
+                message: 'Kernel reset completed successfully',
+                context: this.constructor.name,
+
+                metadata: {
+                    id: this.state.id,
+                    newStatus: this.state.status,
+                    runtimeExists: !!this.runtime,
+                },
             });
         } catch (error) {
             // ROLLBACK em caso de erro
-            this.logger.error('Kernel reset failed', error as Error);
+            this.logger.error({
+                message: 'Kernel reset failed',
+                context: this.constructor.name,
+                error: error as Error,
+            });
 
             // Forçar estado consistente
             this.state.status = 'failed';
@@ -1418,10 +1601,15 @@ export class ExecutionKernel {
 
         // Se estão dessincronizados, logar e corrigir
         if (runtimeExists !== statusRunning) {
-            this.logger.warn('State/Runtime desynchronization detected', {
-                runtimeExists,
-                statusRunning,
-                status: this.state.status,
+            this.logger.warn({
+                message: 'State/Runtime desynchronization detected',
+                context: this.constructor.name,
+
+                metadata: {
+                    runtimeExists,
+                    statusRunning,
+                    status: this.state.status,
+                },
             });
             this.synchronizeStates();
         }
@@ -1482,12 +1670,14 @@ export class ExecutionKernel {
                 if (this.config.isolation?.enableEventIsolation) {
                     // This would require runtime to support tenant filtering
                     // For now, we'll process all events but log tenant info
-                    this.logger.info(
-                        'Processing events with tenant isolation',
-                        {
+                    this.logger.log({
+                        message: 'Processing events with tenant isolation',
+                        context: this.constructor.name,
+
+                        metadata: {
                             tenantId: this.state.tenantId,
                         },
-                    );
+                    });
                 }
 
                 // Use stats-enabled processing to auto-ACK/NACK events
@@ -1622,9 +1812,14 @@ export class ExecutionKernel {
             this.config.idempotency?.enableEventIdempotency &&
             this.isIdempotentOperation(operationId, () => Promise.resolve())
         ) {
-            this.logger.info('Skipping idempotent event', {
-                operationId,
-                eventType,
+            this.logger.log({
+                message: 'Skipping idempotent event',
+                context: this.constructor.name,
+
+                metadata: {
+                    operationId,
+                    eventType,
+                },
             });
             return { success: true, eventId: operationId, queued: false };
         }
@@ -1701,13 +1896,20 @@ export class ExecutionKernel {
 
         // If runtime is already initialized, reapply configuration
         if (this.runtime) {
-            this.logger.warn(
-                'Runtime already initialized, configuration will be applied on next initialization',
-            );
+            this.logger.warn({
+                message:
+                    'Runtime already initialized, configuration will be applied on next initialization',
+                context: this.constructor.name,
+            });
         }
 
-        this.logger.info('Runtime configuration updated', {
-            newConfig: this.config.runtimeConfig,
+        this.logger.log({
+            message: 'Runtime configuration updated',
+            context: this.constructor.name,
+
+            metadata: {
+                newConfig: this.config.runtimeConfig,
+            },
         });
     }
 
@@ -1755,7 +1957,10 @@ export class ExecutionKernel {
      * Clear error history
      */
     clearErrorHistory(): void {
-        this.logger.info('Error history cleared');
+        this.logger.log({
+            message: 'Error history cleared',
+            context: this.constructor.name,
+        });
     }
 
     /**
@@ -1763,7 +1968,10 @@ export class ExecutionKernel {
      */
     async recoverFromError(): Promise<boolean> {
         try {
-            this.logger.info('Attempting error recovery');
+            this.logger.log({
+                message: 'Attempting error recovery',
+                context: this.constructor.name,
+            });
 
             // Reset runtime if it's in error state
             if (this.runtime) {
@@ -1782,7 +1990,11 @@ export class ExecutionKernel {
 
             return false;
         } catch (error) {
-            this.logger.error('Error recovery failed', error as Error);
+            this.logger.error({
+                message: 'Error recovery failed',
+                context: this.constructor.name,
+                error: error as Error,
+            });
             // Set state to failed if recovery fails
             this.state.status = 'failed';
             return false;
@@ -1804,7 +2016,14 @@ export class ExecutionKernel {
             (middleware as unknown as { displayName?: string }).displayName ||
             middleware.name ||
             'anonymous-middleware';
-        this.logger.info('Middleware added', { middleware: mwName });
+        this.logger.log({
+            message: 'Middleware added',
+            context: this.constructor.name,
+
+            metadata: {
+                middleware: mwName,
+            },
+        });
     }
 
     /**
@@ -1815,7 +2034,14 @@ export class ExecutionKernel {
             throw new Error('Runtime not initialized');
         }
 
-        this.logger.info('Middleware removed', { middleware: middlewareName });
+        this.logger.log({
+            message: 'Middleware removed',
+            context: this.constructor.name,
+
+            metadata: {
+                middleware: middlewareName,
+            },
+        });
         return true;
     }
 
@@ -1858,9 +2084,15 @@ export class ExecutionKernel {
     forceGarbageCollection(): void {
         if (global.gc) {
             global.gc();
-            this.logger.info('Garbage collection forced');
+            this.logger.log({
+                message: 'Garbage collection forced',
+                context: this.constructor.name,
+            });
         } else {
-            this.logger.warn('Garbage collection not available');
+            this.logger.warn({
+                message: 'Garbage collection not available',
+                context: this.constructor.name,
+            });
         }
     }
 
@@ -1881,7 +2113,10 @@ export class ExecutionKernel {
      * Enhanced cleanup with complete resource management
      */
     async enhancedCleanup(): Promise<void> {
-        this.logger.info('Starting enhanced cleanup');
+        this.logger.log({
+            message: 'Starting enhanced cleanup',
+            context: this.constructor.name,
+        });
 
         // Cleanup runtime
         if (this.runtime) {
@@ -1911,21 +2146,30 @@ export class ExecutionKernel {
         this.state.status = 'initialized';
         this.workflowContext = null;
 
-        this.logger.info('Enhanced cleanup completed');
+        this.logger.log({
+            message: 'Enhanced cleanup completed',
+            context: this.constructor.name,
+        });
     }
 
     /**
      * Clear events and resources (for testing or reset)
      */
     async clear(): Promise<void> {
-        this.logger.info('🔄 CLEARING KERNEL', {
-            kernelId: this.state.id,
-            status: this.state.status,
-            hasRuntime: !!this.runtime,
-            trace: {
-                source: 'kernel',
-                step: 'clear-start',
-                timestamp: Date.now(),
+        this.logger.log({
+            message: '🔄 CLEARING KERNEL',
+            context: this.constructor.name,
+
+            metadata: {
+                kernelId: this.state.id,
+                status: this.state.status,
+                hasRuntime: !!this.runtime,
+
+                trace: {
+                    source: 'kernel',
+                    step: 'clear-start',
+                    timestamp: Date.now(),
+                },
             },
         });
 
@@ -1960,16 +2204,26 @@ export class ExecutionKernel {
             this.contextUpdateQueue.clear();
             // Event batch queue cleanup removed - batching delegated to Runtime
 
-            this.logger.info('✅ KERNEL CLEARED', {
-                kernelId: this.state.id,
-                trace: {
-                    source: 'kernel',
-                    step: 'clear-complete',
-                    timestamp: Date.now(),
+            this.logger.log({
+                message: '✅ KERNEL CLEARED',
+                context: this.constructor.name,
+
+                metadata: {
+                    kernelId: this.state.id,
+
+                    trace: {
+                        source: 'kernel',
+                        step: 'clear-complete',
+                        timestamp: Date.now(),
+                    },
                 },
             });
         } catch (error) {
-            this.logger.error('Failed to clear kernel', error as Error);
+            this.logger.error({
+                message: 'Failed to clear kernel',
+                context: this.constructor.name,
+                error: error as Error,
+            });
             throw error;
         }
     }
@@ -2094,10 +2348,11 @@ export class ExecutionKernel {
                         }
                     ).cleanupOldSnapshots();
                 } catch (error) {
-                    this.logger.error(
-                        '[DEBUG] KERNEL: Snapshot cleanup failed',
-                        error as Error,
-                    );
+                    this.logger.error({
+                        message: '[DEBUG] KERNEL: Snapshot cleanup failed',
+                        context: this.constructor.name,
+                        error: error as Error,
+                    });
                 }
             }
 
@@ -2109,7 +2364,11 @@ export class ExecutionKernel {
                 global.gc();
             }
         } catch (error) {
-            this.logger.error('Memory cleanup failed', error as Error);
+            this.logger.error({
+                message: 'Memory cleanup failed',
+                context: this.constructor.name,
+                error: error as Error,
+            });
         }
     }
 }

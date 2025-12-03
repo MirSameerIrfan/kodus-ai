@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { UserRequest } from '@/config/types/http/user-request.type';
 import {
     KODY_RULES_SERVICE_TOKEN,
@@ -8,7 +9,6 @@ import {
     Action,
     ResourceType,
 } from '@/core/domain/permissions/enums/permissions.enum';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
@@ -20,19 +20,15 @@ import { enrichRulesWithContextReferences } from './utils/enrich-rules-with-cont
 
 @Injectable()
 export class FindRulesInOrganizationByRuleFilterKodyRulesUseCase {
+    private readonly logger = createLogger(FindRulesInOrganizationByRuleFilterKodyRulesUseCase.name);
     constructor(
         @Inject(KODY_RULES_SERVICE_TOKEN)
         private readonly kodyRulesService: IKodyRulesService,
-
-        private readonly logger: PinoLoggerService,
-
         @Inject(REQUEST)
         private readonly request: UserRequest,
-
         private readonly authorizationService: AuthorizationService,
-
         @Inject(CONTEXT_REFERENCE_SERVICE_TOKEN)
-        private readonly contextReferenceService: IContextReferenceService,
+        private readonly contextReferenceService: IContextReferenceService
     ) {}
 
     async execute(

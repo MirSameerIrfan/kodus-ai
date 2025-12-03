@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import {
     BadRequestException,
     Inject,
@@ -27,25 +28,22 @@ import { TokensByDeveloperUseCase } from '@/core/application/use-cases/usage/tok
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { TokenPricingUseCase } from '@/core/application/use-cases/usage/token-pricing.use-case';
 import { CostEstimateUseCase } from '@/core/application/use-cases/usage/cost-estimate.use-case';
-import { PinoLoggerService } from '../../adapters/services/logger/pino.service';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 
 @Controller({ path: 'usage', scope: Scope.REQUEST })
 export class TokenUsageController {
+    private readonly logger = createLogger(TokenUsageController.name);
     constructor(
         @Inject(TOKEN_USAGE_SERVICE_TOKEN)
         private readonly tokenUsageService: ITokenUsageService,
-
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };
         },
-
         private readonly tokensByDeveloperUseCase: TokensByDeveloperUseCase,
         private readonly tokenPricingUseCase: TokenPricingUseCase,
-        private readonly costEstimateUseCase: CostEstimateUseCase,
-        private readonly logger: PinoLoggerService,
+        private readonly costEstimateUseCase: CostEstimateUseCase
     ) {}
 
     @Get('tokens/summary')

@@ -1,4 +1,4 @@
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { createLogger } from "@kodus/flow";
 import { CacheService } from '@/shared/utils/cache/cache.service';
 import { BYOKProvider } from '@kodus/kodus-common/llm';
 import { Injectable } from '@nestjs/common';
@@ -15,12 +15,10 @@ type ModelInfo = {
 
 @Injectable()
 export class TokenPricingUseCase {
+    private readonly logger = createLogger(TokenPricingUseCase.name);
     private readonly axios: Axios;
 
-    constructor(
-        private readonly cacheService: CacheService,
-        private readonly logger: PinoLoggerService,
-    ) {
+    constructor(private readonly cacheService: CacheService) {
         this.axios = new Axios({
             baseURL: 'https://openrouter.ai/api/v1',
             headers: {

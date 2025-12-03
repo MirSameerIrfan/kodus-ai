@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Injectable, Inject } from '@nestjs/common';
 import {
     AST_ANALYSIS_SERVICE_TOKEN,
@@ -5,20 +6,18 @@ import {
 } from '@/core/domain/codeBase/contracts/ASTAnalysisService.contract';
 import { BasePipelineStage } from '@/core/infrastructure/adapters/services/pipeline/base-stage.abstract';
 import { CodeReviewPipelineContext } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/context/code-review-pipeline.context';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 
 const ENABLE_CODE_REVIEW_AST =
     process.env.API_ENABLE_CODE_REVIEW_AST === 'true';
 
 @Injectable()
 export class CodeAnalysisASTStage extends BasePipelineStage<CodeReviewPipelineContext> {
+    private readonly logger = createLogger(CodeAnalysisASTStage.name);
     stageName = 'CodeAnalysisASTStage';
 
     constructor(
         @Inject(AST_ANALYSIS_SERVICE_TOKEN)
-        private readonly codeASTAnalysisService: IASTAnalysisService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly codeASTAnalysisService: IASTAnalysisService
     ) {
         super();
     }

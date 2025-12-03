@@ -1,13 +1,16 @@
+import { createLogger } from '@kodus/flow';
 /**
  * @license
  * Kodus Tech. All rights reserved.
  */
 
-import { Injectable } from '@nestjs/common';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import {
+    AIAnalysisResult,
+    AnalysisContext,
+} from '@/config/types/general/codeReview.type';
 import { BaseKodyASTAnalyzeContextPreparation } from '@/core/infrastructure/adapters/services/kodyASTAnalyze/base-ast-analyze.service';
+import { Injectable } from '@nestjs/common';
 import { CodeAnalysisOrchestrator } from '../codeBase/codeAnalysisOrchestrator.service';
-import { AIAnalysisResult, AnalysisContext } from '@/config/types/general/codeReview.type';
 
 /**
  * Enterprise implementation of AST analysis service
@@ -16,13 +19,14 @@ import { AIAnalysisResult, AnalysisContext } from '@/config/types/general/codeRe
  */
 @Injectable()
 export class KodyASTAnalyzeContextPreparationServiceEE extends BaseKodyASTAnalyzeContextPreparation {
+    protected readonly logger = createLogger(
+        KodyASTAnalyzeContextPreparationServiceEE.name,
+    );
 
     constructor(
         private readonly codeAnalysisOrchestrator: CodeAnalysisOrchestrator,
-
-        protected readonly logger: PinoLoggerService,
     ) {
-        super(logger);
+        super();
     }
 
     /**
@@ -41,17 +45,15 @@ export class KodyASTAnalyzeContextPreparationServiceEE extends BaseKodyASTAnalyz
     ): Promise<AIAnalysisResult | null> {
         const { organizationAndTeamData, pullRequest } = context;
 
-
         try {
-            const kodyASTSuggestions = await this.codeAnalysisOrchestrator.executeASTAnalysis(
-                context.fileChangeContext,
-                context.reviewModeResponse,
-                context,
-            );
+            const kodyASTSuggestions =
+                await this.codeAnalysisOrchestrator.executeASTAnalysis(
+                    context.fileChangeContext,
+                    context.reviewModeResponse,
+                    context,
+                );
 
-            return kodyASTSuggestions
-                ? kodyASTSuggestions
-                : null;
+            return kodyASTSuggestions ? kodyASTSuggestions : null;
         } catch (error) {
             this.logger.error({
                 message: 'Error performing AST analysis',
@@ -59,7 +61,7 @@ export class KodyASTAnalyzeContextPreparationServiceEE extends BaseKodyASTAnalyz
                 context: KodyASTAnalyzeContextPreparationServiceEE.name,
                 metadata: {
                     organizationAndTeamData,
-                    prNumber: pullRequest?.prNumber
+                    prNumber: pullRequest?.prNumber,
                 },
             });
 

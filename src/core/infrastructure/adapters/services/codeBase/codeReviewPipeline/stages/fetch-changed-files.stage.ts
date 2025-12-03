@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
 import {
@@ -5,7 +6,6 @@ import {
     PULL_REQUEST_MANAGER_SERVICE_TOKEN,
 } from '@/core/domain/codeBase/contracts/PullRequestManagerService.contract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
-import { PinoLoggerService } from '../../../logger/pino.service';
 import {
     handlePatchDeletions,
     convertToHunksWithLinesNumbers,
@@ -18,6 +18,7 @@ import {
 
 @Injectable()
 export class FetchChangedFilesStage extends BasePipelineStage<CodeReviewPipelineContext> {
+    private readonly logger = createLogger(FetchChangedFilesStage.name);
     stageName = 'FetchChangedFilesStage';
     readonly dependsOn: string[] = ['ValidateNewCommitsStage', 'ValidateConfigStage']; // Depends on validation stages
 
@@ -25,8 +26,7 @@ export class FetchChangedFilesStage extends BasePipelineStage<CodeReviewPipeline
 
     constructor(
         @Inject(PULL_REQUEST_MANAGER_SERVICE_TOKEN)
-        private pullRequestHandlerService: IPullRequestManagerService,
-        private logger: PinoLoggerService,
+        private pullRequestHandlerService: IPullRequestManagerService
     ) {
         super();
     }

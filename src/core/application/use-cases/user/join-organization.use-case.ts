@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { STATUS } from '@/config/types/database/status.type';
 import {
     IOrganizationService,
@@ -22,7 +23,6 @@ import {
 } from '@/core/domain/user/contracts/user.service.contract';
 import { Role } from '@/core/domain/permissions/enums/permissions.enum';
 import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { JoinOrganizationDto } from '@/core/infrastructure/http/dtos/join-organization.dto';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
@@ -34,26 +34,20 @@ import {
 
 @Injectable()
 export class JoinOrganizationUseCase implements IUseCase {
+    private readonly logger = createLogger(JoinOrganizationUseCase.name);
     constructor(
         @Inject(USER_SERVICE_TOKEN)
         private readonly userService: IUsersService,
-
         @Inject(ORGANIZATION_SERVICE_TOKEN)
         private readonly organizationService: IOrganizationService,
-
         @Inject(TEAM_SERVICE_TOKEN)
         private readonly teamService: ITeamService,
-
         @Inject(TEAM_MEMBERS_SERVICE_TOKEN)
         private readonly teamMembersService: ITeamMemberService,
-
         @Inject(PROFILE_SERVICE_TOKEN)
         private readonly profileService: IProfileService,
-
         @Inject(AUTH_SERVICE_TOKEN)
-        private readonly authService: IAuthService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly authService: IAuthService
     ) {}
 
     public async execute(data: JoinOrganizationDto): Promise<IUser> {

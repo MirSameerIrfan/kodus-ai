@@ -1,18 +1,19 @@
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { isRabbitContext } from '@golevelup/nestjs-rabbitmq';
+import { createLogger } from '@kodus/flow';
 import {
+    CallHandler,
+    ExecutionContext,
     Injectable,
     NestInterceptor,
-    ExecutionContext,
-    CallHandler,
 } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { isRabbitContext } from '@golevelup/nestjs-rabbitmq';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
-    constructor(private readonly logService: PinoLoggerService) {}
+    private readonly logService = createLogger(LoggingInterceptor.name);
+    constructor() {}
 
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
         const shouldSkip = isRabbitContext(context);

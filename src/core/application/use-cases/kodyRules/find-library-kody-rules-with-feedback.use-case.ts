@@ -1,9 +1,9 @@
+import { createLogger } from "@kodus/flow";
 import { KodyRuleFilters } from '@/config/types/kodyRules.type';
 import {
     KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,
 } from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { FindLibraryKodyRulesDto } from '@/core/infrastructure/http/dtos/find-library-kody-rules.dto';
@@ -11,16 +11,14 @@ import { PaginatedLibraryKodyRulesResponse, PaginationMetadata } from '@/core/in
 
 @Injectable()
 export class FindLibraryKodyRulesWithFeedbackUseCase {
+    private readonly logger = createLogger(FindLibraryKodyRulesWithFeedbackUseCase.name);
     constructor(
         @Inject(KODY_RULES_SERVICE_TOKEN)
         private readonly kodyRulesService: IKodyRulesService,
-
-        private readonly logger: PinoLoggerService,
-
         @Inject(REQUEST)
         private readonly request: Request & {
             user?: { uuid: string; organization: { uuid: string } };
-        },
+        }
     ) { }
 
     async execute(filters: FindLibraryKodyRulesDto): Promise<PaginatedLibraryKodyRulesResponse> {

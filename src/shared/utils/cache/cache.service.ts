@@ -1,14 +1,12 @@
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { createLogger } from "@kodus/flow";
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 
 @Injectable()
 export class CacheService {
-    constructor(
-        @Inject(CACHE_MANAGER) private cacheManager: Cache,
-        private logger: PinoLoggerService,
-    ) {}
+    private readonly logger = createLogger(CacheService.name);
+    constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
     async addToCache<T>(
         key: string,

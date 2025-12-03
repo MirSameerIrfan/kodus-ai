@@ -1,6 +1,6 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { EnrichedPullRequestsQueryDto } from '@/core/infrastructure/http/dtos/enriched-pull-requests-query.dto';
 import { EnrichedPullRequestResponse } from '@/core/infrastructure/http/dtos/enriched-pull-request-response.dto';
@@ -31,22 +31,17 @@ import { DeliveryStatus } from '@/core/domain/pullRequests/enums/deliveryStatus.
 
 @Injectable()
 export class GetEnrichedPullRequestsUseCase implements IUseCase {
+    private readonly logger = createLogger(GetEnrichedPullRequestsUseCase.name);
     constructor(
-        private readonly logger: PinoLoggerService,
-
         @Inject(AUTOMATION_EXECUTION_SERVICE_TOKEN)
         private readonly automationExecutionService: IAutomationExecutionService,
-
         @Inject(PULL_REQUESTS_SERVICE_TOKEN)
         private readonly pullRequestsService: IPullRequestsService,
-
         @Inject(CODE_REVIEW_EXECUTION_SERVICE)
         private readonly codeReviewExecutionService: ICodeReviewExecutionService,
-
         @Inject(REQUEST)
         private readonly request: UserRequest,
-
-        private readonly authorizationService: AuthorizationService,
+        private readonly authorizationService: AuthorizationService
     ) {}
 
     async execute(

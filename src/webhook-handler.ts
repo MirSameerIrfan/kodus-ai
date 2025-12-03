@@ -10,7 +10,7 @@ import helmet from 'helmet';
 import * as volleyball from 'volleyball';
 import * as bodyParser from 'body-parser';
 import { HttpServerConfiguration } from './config/types/http/http-server.type';
-import { WebhookHandlerModule } from './modules/webhook-handler.module';
+import { WebhookHandlerModule } from './modules/webhook-handler/webhook-handler.module';
 import { PinoLoggerService } from './core/infrastructure/adapters/services/logger/pino.service';
 import { setupSentryAndOpenTelemetry } from './config/log/otel';
 

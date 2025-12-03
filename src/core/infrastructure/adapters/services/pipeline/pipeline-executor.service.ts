@@ -1,12 +1,13 @@
+import { createLogger } from "@kodus/flow";
 import { v4 as uuid } from 'uuid';
 import { PipelineContext } from './interfaces/pipeline-context.interface';
 import { PipelineStage } from './interfaces/pipeline.interface';
-import { PinoLoggerService } from '../logger/pino.service';
 import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
 import { WorkflowPausedError } from './errors/workflow-paused.error';
 
 export class PipelineExecutor<TContext extends PipelineContext> {
-    constructor(private readonly logger: PinoLoggerService) {}
+    private readonly logger = createLogger(PipelineExecutor.name);
+    constructor() {}
 
     /**
      * Builds a dependency graph from pipeline stages.

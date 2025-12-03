@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import {
     ITeamMemberRepository,
     TEAM_MEMBERS_REPOSITORY_TOKEN,
@@ -25,21 +26,17 @@ import { IUser } from '@/core/domain/user/interfaces/user.interface';
 import { Role } from '@/core/domain/permissions/enums/permissions.enum';
 import { sendInvite } from '@/shared/utils/email/sendMail';
 import { TeamMemberRole } from '@/core/domain/teamMembers/enums/teamMemberRole.enum';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 
 @Injectable()
 export class TeamMemberService implements ITeamMemberService {
+    private readonly logger = createLogger(TeamMemberService.name);
     constructor(
         @Inject(TEAM_MEMBERS_REPOSITORY_TOKEN)
         private readonly teamMembersRepository: ITeamMemberRepository,
-
         @Inject(forwardRef(() => MSTEAMS_SERVICE_TOKEN))
         private readonly msTeamsService: IMSTeamsService,
-
         @Inject(USER_SERVICE_TOKEN)
-        private readonly usersService: IUsersService,
-
-        private readonly logger: PinoLoggerService,
+        private readonly usersService: IUsersService
     ) {}
 
     findManyById(ids: string[]): Promise<TeamMemberEntity[]> {

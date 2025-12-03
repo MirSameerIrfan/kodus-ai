@@ -18,37 +18,29 @@ import { Repositories } from '@/core/domain/platformIntegrations/types/codeManag
 import { CodeReviewPipelineContext } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/context/code-review-pipeline.context';
 import { DryRunCodeReviewPipeline } from '@/core/infrastructure/adapters/services/dryRun/dryRunPipeline';
 import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
 import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
 import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { IdGenerator } from '@kodus/flow';
+import { IdGenerator, createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class ExecuteDryRunUseCase {
+    private readonly logger = createLogger(ExecuteDryRunUseCase.name);
     private readonly config: DatabaseConnection;
 
     constructor(
         private readonly dryRunPipeline: DryRunCodeReviewPipeline,
-
         private readonly observabilityService: ObservabilityService,
-
         private readonly configService: ConfigService,
-
         private readonly codeManagementService: CodeManagementService,
-
-        private readonly logger: PinoLoggerService,
-
         @Inject(DRY_RUN_SERVICE_TOKEN)
         private readonly dryRunService: IDryRunService,
-
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
         private readonly integrationConfigService: IIntegrationConfigService,
-
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
         private readonly organizationParametersService: IOrganizationParametersService,
     ) {

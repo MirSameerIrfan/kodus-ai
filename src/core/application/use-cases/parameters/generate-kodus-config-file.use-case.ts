@@ -1,10 +1,10 @@
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@/core/domain/parameters/contracts/parameters.service.contract';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { REQUEST } from '@nestjs/core';
 import { KodusConfigFile } from '@/config/types/general/codeReview.type';
 
@@ -22,21 +22,17 @@ import {
 
 @Injectable()
 export class GenerateKodusConfigFileUseCase {
+    private readonly logger = createLogger(GenerateKodusConfigFileUseCase.name);
     constructor(
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
-
         @Inject(CODE_BASE_CONFIG_SERVICE_TOKEN)
         private readonly codeBaseConfigService: ICodeBaseConfigService,
-
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string }; uuid: string };
         },
-
-        private readonly logger: PinoLoggerService,
-
-        private readonly authorizationService: AuthorizationService,
+        private readonly authorizationService: AuthorizationService
     ) {}
 
     async execute(

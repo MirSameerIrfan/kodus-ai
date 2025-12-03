@@ -1,5 +1,5 @@
+import { createLogger } from "@kodus/flow";
 import { Injectable } from '@nestjs/common';
-import { PinoLoggerService } from '../../services/logger/pino.service';
 import { Response } from 'express';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
@@ -17,13 +17,13 @@ interface McpSession {
 
 @Injectable()
 export class McpServerService {
+    private readonly logger = createLogger(McpServerService.name);
     private sessions: Map<string, McpSession> = new Map();
 
     constructor(
         private readonly codeManagementTools: CodeManagementTools,
         private readonly kodyRulesTools: KodyRulesTools,
-        private readonly kodyIssuesTools: KodyIssuesTools,
-        private readonly logger: PinoLoggerService,
+        private readonly kodyIssuesTools: KodyIssuesTools
     ) {}
 
     async createSession(): Promise<string> {

@@ -1,15 +1,15 @@
+import { createLogger } from '@kodus/flow';
 import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 
 @Injectable()
 export class GetWebhookStatusUseCase implements IUseCase {
+    private readonly logger = createLogger(GetWebhookStatusUseCase.name);
     constructor(
         private readonly codeManagementService: CodeManagementService,
-        private readonly logger: PinoLoggerService,
     ) {}
 
     public async execute(params: {

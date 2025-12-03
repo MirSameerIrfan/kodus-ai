@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     INTEGRATION_CONFIG_SERVICE_TOKEN,
@@ -5,7 +6,6 @@ import {
 } from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
 import { PullRequest } from '@/core/domain/platformIntegrations/types/codeManagement/pullRequests.type';
 import { Repositories } from '@/core/domain/platformIntegrations/types/codeManagement/repositories.type';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
@@ -17,15 +17,13 @@ import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
 
 @Injectable()
 export class GetPRsByRepoUseCase implements IUseCase {
+    private readonly logger = createLogger(GetPRsByRepoUseCase.name);
     constructor(
         private readonly codeManagementService: CodeManagementService,
-
         @Inject(REQUEST)
         private readonly request: Request & { user },
-        private readonly logger: PinoLoggerService,
-
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
-        private readonly integrationConfigService: IIntegrationConfigService,
+        private readonly integrationConfigService: IIntegrationConfigService
     ) {}
 
     public async execute(params: {

@@ -1,12 +1,12 @@
+import { createLogger } from '@kodus/flow';
 import {
     Catch,
     ExceptionFilter,
     ExecutionContext,
     HttpException,
 } from '@nestjs/common';
-import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import * as Sentry from '@sentry/nestjs';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 
 interface ExceptionResponse {
     statusCode?: number;
@@ -17,7 +17,8 @@ interface ExceptionResponse {
 
 @Catch()
 export class ExceptionsFilter implements ExceptionFilter {
-    constructor(private readonly loggerService: PinoLoggerService) { }
+    private readonly loggerService = createLogger(ExceptionsFilter.name);
+    constructor() {}
 
     catch(exception: unknown, context: ExecutionContext): void {
         const response = context.switchToHttp().getResponse();

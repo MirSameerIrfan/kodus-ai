@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import {
     AUTH_INTEGRATION_SERVICE_TOKEN,
     IAuthIntegrationService,
@@ -6,7 +7,6 @@ import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
 } from '@/core/domain/integrations/contracts/integration.service.contracts';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
@@ -21,19 +21,16 @@ import { or } from 'ramda';
 import { v4 as uuidv4 } from 'uuid';
 
 export class CloneIntegrationUseCase implements IUseCase {
+    private readonly logger = createLogger(CloneIntegrationUseCase.name);
     constructor(
         @Inject(AUTH_INTEGRATION_SERVICE_TOKEN)
         private readonly authIntegrationService: IAuthIntegrationService,
-
         @Inject(INTEGRATION_SERVICE_TOKEN)
         private readonly integrationService: IIntegrationService,
-
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };
-        },
-
-        private logger: PinoLoggerService,
+        }
     ) {}
     public async execute(params: any): Promise<{ status: boolean }> {
         try {

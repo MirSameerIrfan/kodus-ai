@@ -1,35 +1,34 @@
+import { AxiosASTService } from '@/config/axios/microservices/ast.axios';
 import {
+    AIAnalysisResult,
+    AnalysisContext,
+    CodeSuggestion,
     Repository,
     ReviewModeResponse,
-    AnalysisContext,
-    AIAnalysisResult,
-    CodeSuggestion,
 } from '@/config/types/general/codeReview.type';
-import { IASTAnalysisService } from '@/core/domain/codeBase/contracts/ASTAnalysisService.contract';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { prompt_detectBreakingChanges } from '@/shared/utils/langchainCommon/prompts/detectBreakingChanges';
-import { Injectable } from '@nestjs/common';
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
+import { IASTAnalysisService } from '@/core/domain/codeBase/contracts/ASTAnalysisService.contract';
 import { LLMResponseProcessor } from '@/core/infrastructure/adapters/services/codeBase/utils/transforms/llmResponseProcessor.transform';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { calculateBackoffInterval } from '@/shared/utils/polling/exponential-backoff';
-import {
-    LLMModelProvider,
-    PromptRunnerService,
-    PromptRole,
-    ParserType,
-} from '@kodus/kodus-common/llm';
-import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
 import type { ContextAugmentationsMap } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
 import {
     getAugmentationsFromPack,
     getOverridesFromPack,
 } from '@/core/infrastructure/adapters/services/context/code-review-context.utils';
+import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
+import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
+import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
+import { prompt_detectBreakingChanges } from '@/shared/utils/langchainCommon/prompts/detectBreakingChanges';
+import { calculateBackoffInterval } from '@/shared/utils/polling/exponential-backoff';
 import type { ContextPack } from '@context-os-core/interfaces';
-import { AxiosASTService } from '@/config/axios/microservices/ast.axios';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { Optional } from '@nestjs/common';
+import { createLogger } from '@kodus/flow';
+import {
+    LLMModelProvider,
+    ParserType,
+    PromptRole,
+    PromptRunnerService,
+} from '@kodus/kodus-common/llm';
+import { Injectable, Optional } from '@nestjs/common';
 
 export enum TaskStatus {
     /* Unspecified status, used for default initialization */
@@ -129,17 +128,17 @@ export interface GetImpactAnalysisResponse {
 
 @Injectable()
 export class CodeAstAnalysisService implements IASTAnalysisService {
+    private readonly logger = createLogger(CodeAstAnalysisService.name);
     private readonly llmResponseProcessor: LLMResponseProcessor;
     private readonly astAxios: AxiosASTService;
 
     constructor(
         private readonly codeManagementService: CodeManagementService,
-        private readonly logger: PinoLoggerService,
         private readonly promptRunnerService: PromptRunnerService,
         private readonly observabilityService: ObservabilityService,
         @Optional() private readonly amqpConnection?: AmqpConnection,
     ) {
-        this.llmResponseProcessor = new LLMResponseProcessor(logger);
+        this.llmResponseProcessor = new LLMResponseProcessor();
         this.astAxios = new AxiosASTService();
     }
 
@@ -640,10 +639,14 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
 
                     // Publish event if task completed successfully and RabbitMQ is available
                     if (
-                        taskStatus.task.status === TaskStatus.TASK_STATUS_COMPLETED &&
+                        taskStatus.task.status ===
+                            TaskStatus.TASK_STATUS_COMPLETED &&
                         this.amqpConnection
                     ) {
-                        await this.publishTaskCompletedEvent(taskId, taskStatus);
+                        await this.publishTaskCompletedEvent(
+                            taskId,
+                            taskStatus,
+                        );
                     }
 
                     return taskStatus;
@@ -706,7 +709,8 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
     ): Promise<void> {
         if (!this.amqpConnection) {
             this.logger.debug({
-                message: 'RabbitMQ not available, skipping AST completion event',
+                message:
+                    'RabbitMQ not available, skipping AST completion event',
                 context: CodeAstAnalysisService.name,
                 metadata: { taskId },
             });

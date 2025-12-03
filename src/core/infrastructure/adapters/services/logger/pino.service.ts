@@ -2,22 +2,17 @@ import {
     ILogService,
     LOG_SERVICE_TOKEN,
 } from '@/core/domain/log/contracts/log.service.contracts';
+import { ILog } from '@/core/domain/log/interfaces/log.interface';
+import { Inject, Injectable, LoggerService } from '@nestjs/common';
 import { trace } from '@opentelemetry/api';
 import * as Sentry from '@sentry/node';
-import { ILog } from '@/core/domain/log/interfaces/log.interface';
-import {
-    ExecutionContext,
-    Inject,
-    Injectable,
-    LoggerService,
-} from '@nestjs/common';
 import pino from 'pino';
 
 type LogLevel = 'info' | 'error' | 'warn' | 'debug' | 'verbose';
 
 interface LogArguments {
     message: string;
-    context: ExecutionContext | string;
+    context: string;
     serviceName?: string;
     error?: Error;
     metadata?: Record<string, any>;
@@ -83,19 +78,6 @@ export class PinoLoggerService implements LoggerService {
             ? pino.destination({ sync: false, minLength: 4096 })
             : undefined,
     );
-
-    private extractContextInfo(context: ExecutionContext | string): string {
-        if (typeof context === 'string') {
-            return context;
-        }
-        // Se for ExecutionContext, tenta extrair a URL da requisição
-        try {
-            const request = context.switchToHttp().getRequest();
-            return request.url || 'unknown';
-        } catch (error) {
-            return 'unknown';
-        }
-    }
 
     private createChildLogger(serviceName: string, context: string) {
         return this.baseLogger.child({
@@ -304,12 +286,10 @@ export class PinoLoggerService implements LoggerService {
             return;
         }
 
-        const contextStr = this.extractContextInfo(context);
-
         // Now we are correctly calling `createChildLogger`
         const childLogger = this.createChildLogger(
             serviceName || 'UnknownService',
-            contextStr,
+            context,
         );
 
         const logObject = this.buildLogObject(serviceName, metadata, error);
@@ -329,11 +309,10 @@ export class PinoLoggerService implements LoggerService {
         });
     }
 
-    private shouldSkipLog(context: ExecutionContext | string) {
+    private shouldSkipLog(context: string) {
         return (
             typeof context === 'undefined' ||
-            (typeof context === 'string' &&
-                ['RouterExplorer', 'RoutesResolver'].includes(context))
+            ['RouterExplorer', 'RoutesResolver'].includes(context)
         );
     }
 

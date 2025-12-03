@@ -87,26 +87,34 @@ export class MemoryManager {
                 retries: adapterConfig?.retries || 3,
             });
 
-            logger.info('Memory adapters initialized', {
-                primary: adapterType,
-                backup: options.backupAdapter?.type,
-                autoVectorizeText: this.options.autoVectorizeText,
+            logger.log({
+                message: 'Memory adapters initialized',
+                context: 'initializeAdapters',
+
+                metadata: {
+                    primary: adapterType,
+                    backup: options.backupAdapter?.type,
+                    autoVectorizeText: this.options.autoVectorizeText,
+                },
             });
         } catch (error) {
-            logger.warn(
-                'Failed to initialize memory storage - falling back to in-memory mode',
-                {
-                    error:
-                        error instanceof Error
-                            ? error.message
-                            : 'Unknown error',
+            logger.warn({
+                message:
+                    'Failed to initialize memory storage - falling back to in-memory mode',
+                context: 'initializeAdapters',
+
+                error: error as Error,
+
+                metadata: {
                     adapterType: options.adapterType || StorageEnum.INMEMORY,
+
                     connectionString: options.adapterConfig?.connectionString
                         ? '[CONFIGURED]'
                         : '[NOT SET]',
+
                     fallbackMode: 'in-memory',
                 },
-            );
+            });
 
             // Fallback to in-memory adapter
             this.primaryAdapter = new (
@@ -133,12 +141,17 @@ export class MemoryManager {
             await this.primaryAdapter.initialize();
 
             this.isInitialized = true;
-            logger.info('Memory manager initialized');
+            logger.log({
+                message: 'Memory manager initialized',
+                context: 'initialize',
+            });
         } catch (error) {
-            logger.error(
-                'Failed to initialize memory manager',
-                error instanceof Error ? error : new Error('Unknown error'),
-            );
+            logger.error({
+                message: 'Failed to initialize memory manager',
+                context: 'initialize',
+                error:
+                    error instanceof Error ? error : new Error('Unknown error'),
+            });
             throw error;
         }
     }
@@ -187,10 +200,15 @@ export class MemoryManager {
             await this.vectorizeItem(item);
         }
 
-        logger.debug('Memory item stored', {
-            id,
-            type: input.type,
-            hasVector: this.options.autoVectorizeText,
+        logger.debug({
+            message: 'Memory item stored',
+            context: 'store',
+
+            metadata: {
+                id,
+                type: input.type,
+                hasVector: this.options.autoVectorizeText,
+            },
         });
 
         return item;
@@ -274,10 +292,15 @@ export class MemoryManager {
         // Perform vector search
         const results = await this.vectorStore.search(vectorQuery);
 
-        logger.debug('Semantic search completed', {
-            query,
-            resultsCount: results.length,
-            topScore: results[0]?.score || 0,
+        logger.debug({
+            message: 'Semantic search completed',
+            context: 'search',
+
+            metadata: {
+                query,
+                resultsCount: results.length,
+                topScore: results[0]?.score || 0,
+            },
         });
 
         return results;
@@ -296,9 +319,14 @@ export class MemoryManager {
         try {
             await this.vectorStore.delete(id);
         } catch (error) {
-            logger.warn('Failed to delete vector for memory item', {
-                id,
-                error,
+            logger.warn({
+                message: 'Failed to delete vector for memory item',
+                context: 'delete',
+                error: error as Error,
+
+                metadata: {
+                    id,
+                },
             });
         }
 
@@ -317,7 +345,11 @@ export class MemoryManager {
         try {
             await this.vectorStore.clear();
         } catch (error) {
-            logger.warn('Failed to clear vector store', { error });
+            logger.warn({
+                message: 'Failed to clear vector store',
+                context: 'clear',
+                error: error as Error,
+            });
         }
     }
 
@@ -338,9 +370,14 @@ export class MemoryManager {
             // Sort by timestamp descending (most recent first)
             return results.sort((a, b) => b.timestamp - a.timestamp);
         } catch (error) {
-            logger.warn('Failed to get recent memories', {
-                error: error instanceof Error ? error.message : 'Unknown error',
-                limit,
+            logger.warn({
+                message: 'Failed to get recent memories',
+                context: 'getRecentMemories',
+                error: error as Error,
+
+                metadata: {
+                    limit,
+                },
             });
             return [];
         }

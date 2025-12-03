@@ -1,10 +1,8 @@
+import type { DatabaseConnection } from '@/config/types';
+import { getObservability, IdGenerator, createLogger } from '@kodus/flow';
+import { TokenTrackingHandler } from '@kodus/kodus-common/llm';
 import { Injectable } from '@nestjs/common';
 import { ConnectionString } from 'connection-string';
-import { getObservability, IdGenerator } from '@kodus/flow';
-import type { DatabaseConnection } from '@/config/types';
-import { TokenTrackingHandler } from '@kodus/kodus-common/llm';
-import { PinoLoggerService } from './pino.service';
-import { env } from 'process';
 
 export type TokenUsage = {
     input_tokens?: number;
@@ -38,13 +36,14 @@ export interface ObservabilityConfig {
 
 @Injectable()
 export class ObservabilityService {
+    private readonly logger = createLogger(ObservabilityService.name);
     private readonly instances = new Map<
         string,
         ReturnType<typeof getObservability>
     >();
 
     private static readonly DEFAULT_COLLECTIONS = {
-        logs: 'observability_logs',
+        logs: 'log',
         telemetry: 'observability_telemetry',
         errors: 'observability_errors',
     };
@@ -58,7 +57,7 @@ export class ObservabilityService {
     };
 
     // ---------- bootstrap ----------
-    constructor(private readonly logger: PinoLoggerService) {}
+    constructor() {}
 
     createObservabilityConfig(
         config: DatabaseConnection,

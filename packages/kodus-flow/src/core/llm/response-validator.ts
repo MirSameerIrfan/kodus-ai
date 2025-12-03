@@ -181,9 +181,14 @@ export function validatePlanningResponse(response: unknown): PlanningResult {
         // Validate with AJV
         if (validatePlanningResultSchema(planData)) {
             const validData = planData as unknown as PlanningResult;
-            logger.debug('Planning response validated successfully', {
-                strategy: validData.strategy,
-                stepsCount: validData.steps?.length || 0,
+            logger.debug({
+                message: 'Planning response validated successfully',
+                context: 'validatePlanningResponse',
+
+                metadata: {
+                    strategy: validData.strategy,
+                    stepsCount: validData.steps?.length || 0,
+                },
             });
             return validData;
         }
@@ -194,9 +199,14 @@ export function validatePlanningResponse(response: unknown): PlanningResult {
             ? [...validatePlanningResultSchema.errors]
             : [];
 
-        logger.warn('Planning response validation failed', {
-            errors: validationErrors,
-            parsedData: planData,
+        logger.warn({
+            message: 'Planning response validation failed',
+            context: 'validatePlanningResponse',
+
+            metadata: {
+                errors: validationErrors,
+                parsedData: planData,
+            },
         });
 
         // Attempt to recover with defaults
@@ -215,9 +225,14 @@ export function validatePlanningResponse(response: unknown): PlanningResult {
 
         // Validate recovered data
         if (validatePlanningResultSchema(recovered)) {
-            logger.info('Successfully recovered planning response', {
-                strategy: recovered.strategy,
-                stepsCount: recovered.steps.length,
+            logger.log({
+                message: 'Successfully recovered planning response',
+                context: 'validatePlanningResponse',
+
+                metadata: {
+                    strategy: recovered.strategy,
+                    stepsCount: recovered.steps.length,
+                },
             });
             return recovered;
         }
@@ -231,9 +246,15 @@ export function validatePlanningResponse(response: unknown): PlanningResult {
             `Validation failed after recovery: ${JSON.stringify(recoveryErrors)}`,
         );
     } catch (error) {
-        logger.error('Failed to validate planning response', error as Error, {
-            responseType: typeof response,
-            responsePreview: JSON.stringify(response).substring(0, 200),
+        logger.error({
+            message: 'Failed to validate planning response',
+            context: 'validatePlanningResponse',
+            error: error as Error,
+
+            metadata: {
+                responseType: typeof response,
+                responsePreview: JSON.stringify(response).substring(0, 200),
+            },
         });
 
         // Return minimal valid response
@@ -265,7 +286,11 @@ export function validateLLMResponse(response: unknown): LangChainResponse {
         const content = extractContent(response);
         return { content };
     } catch (error) {
-        logger.error('Failed to validate LLM response', error as Error);
+        logger.error({
+            message: 'Failed to validate LLM response',
+            context: 'validateLLMResponse',
+            error: error as Error,
+        });
         return { content: 'Failed to parse LLM response' };
     }
 }
@@ -293,9 +318,14 @@ export function validateCustomSchema(data: unknown, schema: object): boolean {
     const valid = validate(data);
 
     if (!valid) {
-        logger.warn('Custom schema validation failed', {
-            errors: validate.errors,
-            data,
+        logger.warn({
+            message: 'Custom schema validation failed',
+            context: 'validateCustomSchema',
+
+            metadata: {
+                errors: validate.errors,
+                data,
+            },
         });
     }
 

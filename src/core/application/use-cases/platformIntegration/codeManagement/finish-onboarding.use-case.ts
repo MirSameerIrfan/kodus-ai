@@ -3,9 +3,9 @@ import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { FinishOnboardingDTO } from '@/core/infrastructure/http/dtos/finish-onboarding.dto';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { ChangeStatusKodyRulesUseCase } from '../../kodyRules/change-status-kody-rules.use-case';
@@ -16,22 +16,18 @@ import { CreatePRCodeReviewUseCase } from './create-prs-code-review.use-case';
 
 @Injectable()
 export class FinishOnboardingUseCase {
+    private readonly logger = createLogger(FinishOnboardingUseCase.name);
     constructor(
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
-
         private readonly reviewPRUseCase: CreatePRCodeReviewUseCase,
         private readonly generateKodyRulesUseCase: GenerateKodyRulesUseCase,
         private readonly findKodyRulesUseCase: FindRulesInOrganizationByRuleFilterKodyRulesUseCase,
         private readonly changeStatusKodyRulesUseCase: ChangeStatusKodyRulesUseCase,
-
-        private readonly logger: PinoLoggerService,
-
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };
         },
-
         private readonly syncSelectedReposKodyRulesUseCase: SyncSelectedRepositoriesKodyRulesUseCase,
     ) {}
 

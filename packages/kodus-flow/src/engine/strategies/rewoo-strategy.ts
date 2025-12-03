@@ -69,8 +69,13 @@ export class ReWooStrategy extends BaseExecutionStrategy {
         this.config = { ...defaultConfig, ...options } as any;
         this.llmDefaults = (options as any)?.llmDefaults;
 
-        this.logger.info('🏗️ ReWoo Strategy initialized', {
-            config: this.config,
+        this.logger.log({
+            message: '🏗️ ReWoo Strategy initialized',
+            context: this.constructor.name,
+
+            metadata: {
+                config: this.config,
+            },
         });
     }
 
@@ -220,10 +225,11 @@ export class ReWooStrategy extends BaseExecutionStrategy {
                         },
                     };
                 } catch (error) {
-                    this.logger.error(
-                        '❌ ReWoo strategy execution failed',
-                        error instanceof Error ? error : undefined,
-                    );
+                    this.logger.error({
+                        message: '❌ ReWoo strategy execution failed',
+                        context: this.constructor.name,
+                        error: error instanceof Error ? error : undefined,
+                    });
                     return {
                         output: null,
                         success: false,
@@ -297,9 +303,11 @@ export class ReWooStrategy extends BaseExecutionStrategy {
         // Empty sketches array is valid for simple requests (greetings, etc.)
         // Only log when we get empty sketches to understand the model's decision
         if (!unique.length) {
-            this.logger?.debug(
-                "Model returned no sketches - likely simple request that doesn't need tools",
-            );
+            this.logger?.debug({
+                message:
+                    "Model returned no sketches - likely simple request that doesn't need tools",
+                context: this.constructor.name,
+            });
             return []; // Return empty array instead of throwing error
         }
         return unique;
@@ -312,9 +320,11 @@ export class ReWooStrategy extends BaseExecutionStrategy {
     ): Promise<RewooEvidenceItem[]> {
         // If no sketches, return empty array (no work to do)
         if (!sketches || sketches.length === 0) {
-            this.logger?.debug(
-                'No sketches to execute - returning empty evidence array',
-            );
+            this.logger?.debug({
+                message:
+                    'No sketches to execute - returning empty evidence array',
+                context: this.constructor.name,
+            });
             return [];
         }
 
@@ -519,9 +529,10 @@ export class ReWooStrategy extends BaseExecutionStrategy {
     async createFinalResponse(
         context: StrategyExecutionContext,
     ): Promise<string> {
-        this.logger.info(
-            '🌉 ReWoo: Creating final response with ContextBridge',
-        );
+        this.logger.log({
+            message: '🌉 ReWoo: Creating final response with ContextBridge',
+            context: this.constructor.name,
+        });
 
         try {
             // Build PlannerExecutionContext for ContextBridge compatibility
@@ -577,24 +588,31 @@ export class ReWooStrategy extends BaseExecutionStrategy {
             const finalContext =
                 await ContextService.buildFinalResponseContext(plannerContext);
 
-            this.logger.info(
-                '✅ ContextBridge: Complete context retrieved for ReWoo',
-                {
+            this.logger.log({
+                message:
+                    '✅ ContextBridge: Complete context retrieved for ReWoo',
+                context: this.constructor.name,
+
+                metadata: {
                     sessionId: finalContext.runtime.sessionId,
                     messagesCount: finalContext.runtime.messages.length,
+
                     entitiesCount: Object.keys(finalContext.runtime.entities)
                         .length,
+
                     executionSummary: {
                         totalExecutions:
                             finalContext.executionSummary.totalExecutions,
                         successRate: finalContext.executionSummary.successRate,
                         replanCount: finalContext.executionSummary.replanCount,
                     },
+
                     wasRecovered: finalContext.recovery?.wasRecovered,
+
                     inferencesCount: Object.keys(finalContext.inferences || {})
                         .length,
                 },
-            );
+            });
 
             // Build context-aware response using complete context
             const response = this.buildContextualResponse(
@@ -602,24 +620,29 @@ export class ReWooStrategy extends BaseExecutionStrategy {
                 context.input,
             );
 
-            this.logger.info(
-                '🎯 ReWoo: Final response created with full context',
-                {
+            this.logger.log({
+                message: '🎯 ReWoo: Final response created with full context',
+                context: this.constructor.name,
+
+                metadata: {
                     responseLength: response.length,
                     contextSource: 'ContextBridge',
                 },
-            );
+            });
 
             return response;
         } catch (error) {
-            this.logger.error(
-                '❌ ReWoo: ContextBridge failed, using fallback response',
-                error instanceof Error ? error : undefined,
-                {
+            this.logger.error({
+                message:
+                    '❌ ReWoo: ContextBridge failed, using fallback response',
+                context: this.constructor.name,
+                error: error instanceof Error ? error : undefined,
+
+                metadata: {
                     input: context.input,
                     agentName: context.agentContext.agentName,
                 },
-            );
+            });
 
             // Fallback: Simple response without ContextBridge
             return this.buildFallbackResponse(context);

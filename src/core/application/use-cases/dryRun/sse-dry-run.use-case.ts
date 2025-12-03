@@ -1,3 +1,4 @@
+import { createLogger } from "@kodus/flow";
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     DRY_RUN_SERVICE_TOKEN,
@@ -8,7 +9,6 @@ import {
     DryRunEventType,
     DryRunStatus,
 } from '@/core/domain/dryRun/interfaces/dryRun.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { Inject, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Observable, concat, from, fromEvent, merge, of } from 'rxjs';
@@ -16,13 +16,11 @@ import { map, take, first, filter, takeWhile, mergeMap } from 'rxjs/operators';
 
 @Injectable()
 export class SseDryRunUseCase {
+    private readonly logger = createLogger(SseDryRunUseCase.name);
     constructor(
         @Inject(DRY_RUN_SERVICE_TOKEN)
         private readonly dryRunService: IDryRunService,
-
-        private readonly logger: PinoLoggerService,
-
-        private readonly eventEmitter: EventEmitter2,
+        private readonly eventEmitter: EventEmitter2
     ) {}
 
     async execute(params: {

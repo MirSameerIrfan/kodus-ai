@@ -1,4 +1,4 @@
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { createLogger } from "@kodus/flow";
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { CacheService } from '@/shared/utils/cache/cache.service';
@@ -26,12 +26,12 @@ export interface RepositoryTreeByDirectoryResponse {
 
 @Injectable()
 export class GetRepositoryTreeByDirectoryUseCase implements IUseCase {
+    private readonly logger = createLogger(GetRepositoryTreeByDirectoryUseCase.name);
     constructor(
         private readonly codeManagementService: CodeManagementService,
-        private readonly logger: PinoLoggerService,
         @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
         private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
-        private readonly cacheService: CacheService,
+        private readonly cacheService: CacheService
     ) {}
 
     public async execute(

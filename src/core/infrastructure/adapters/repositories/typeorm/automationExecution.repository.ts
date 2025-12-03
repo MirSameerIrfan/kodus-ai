@@ -1,9 +1,9 @@
+import { createLogger } from "@kodus/flow";
 import { IAutomationExecutionRepository } from '@/core/domain/automation/contracts/automation-execution.repository';
 import { AutomationExecutionEntity } from '@/core/domain/automation/entities/automation-execution.entity';
 import { IAutomationExecution } from '@/core/domain/automation/interfaces/automation-execution.interface';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { AutomationExecutionModel } from './schema/automationExecution.model';
 import {
     FindManyOptions,
@@ -22,10 +22,10 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 export class AutomationExecutionRepository
     implements IAutomationExecutionRepository
 {
+    private readonly logger = createLogger(AutomationExecutionRepository.name);
     constructor(
         @InjectRepository(AutomationExecutionModel)
-        private readonly automationExecutionRepository: Repository<AutomationExecutionModel>,
-        private readonly logger: PinoLoggerService,
+        private readonly automationExecutionRepository: Repository<AutomationExecutionModel>
     ) {}
 
     async create(
