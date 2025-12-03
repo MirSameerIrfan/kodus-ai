@@ -100,12 +100,20 @@ export class ContextEvidenceAgentProvider extends BaseAgentProvider {
     }
 
     private buildPrompt(
-        file: FileChange,
+        files: FileChange[],
         dependencies?: ContextMCPDependency[],
         promptOverrides?: CodeReviewConfig['v2PromptOverrides'],
         kodyRule?: Partial<IKodyRule>,
     ): string {
-        const diffSnippet = file.patchWithLinesStr ?? file.patch ?? 'N/A';
+        const diffsSection = files.length
+            ? files
+                  .map((file) => {
+                      const snippet =
+                          file.patchWithLinesStr ?? file.patch ?? 'N/A';
+                      return `\`\`\`diff\n${snippet}\n\`\`\``;
+                  })
+                  .join('\n\n')
+            : 'N/A (PR Level Analysis)';
 
         const missionToolsSection = this.formatDependencies(dependencies);
 
@@ -118,35 +126,55 @@ export class ContextEvidenceAgentProvider extends BaseAgentProvider {
 
         return `${directiveSection}
 
-### Diff
-\`\`\`diff
-${diffSnippet}
-\`\`\`
+### Diffs
+${diffsSection}
 
 > **Reading the diff:** \`-\` = deleted, \`+\` = added, no prefix = context
 
 ## 🚀 YOUR MISSION & EXECUTION PLAN
-Your mission is to act as a senior engineering assistant. Your goal is to decide if external context is needed for this code review and, if so, to fetch it. Follow this exact plan:
+Your mission is to act as a **Lead Evidence Auditor**. First, validate if the code change warrants investigation based on the DIRECTIVE. If relevant, **AGGRESSIVELY GATHER CONTEXT**. If irrelevant (e.g., typo fix, formatting), skip tools.
 
-**Step 1: Triage & Initial Assessment**
--   **Analyze the code change ('Diff') and the user's request ('DIRECTIVE').**
--   **Make a critical decision:** Is external context *genuinely useful* for reviewing this specific code change?
-    -   *Example of USEFUL:* A bug fix that mentions an issue ID. The directive asks for Sentry logs. This is a good match.
-    -   *Example of NOT USEFUL:* A typo fix in a comment. The directive asks for performance metrics. This is unrelated.
--   **If context is NOT useful or the directive is unrelated, your mission is complete.** You will skip all tools and explain your reasoning in the final JSON output (\`skipReason: "not_needed_for_this_change"\` or \`"change_unrelated_to_request"\`).
+**Step 1: Triage & Scope (Analyze Inputs)**
+-   **SOURCE 1: The DIRECTIVE (The "Intent"):** This defines *what* to look for (e.g., "bugs", "security issues").
+-   **SOURCE 2: The DIFF (The "Subject"):** This defines the target entities (Files, Identifiers, Context).
+-   **SOURCE 3: ADDITIONAL INFO (The "Environment"):** Metadata (Org/Team IDs).
+-   **EVALUATE RELEVANCE (CRITICAL):** Does this specific change interact with the Directive's intent?
+    -   *Example:* Directive asks about "Security", but Diff only changes a CSS color -> **SKIP**.
+    -   *Example:* Directive asks about "Bugs", Diff changes core logic -> **EXECUTE**.
+-   **DECISION:** Only proceed to Step 2 if the change is RELEVANT. Otherwise, STOP and report the reason 'not_needed_for_this_change'.
 
-**Step 2: Plan your data collection (Only if Step 1 passed)**
--   Review the 'MISSION TOOLS' below. These are the pieces of evidence you need to collect.
--   For each tool, check if you have all the required arguments from the provided context (Repository Info, PR Details, etc.).
+**Step 2: Argument Resolution Matrix (MANDATORY)**
+-   Before executing, create a mental map for *each* MISSION TOOL:
+    1.  **Tool Name**: [Name]
+    2.  **Required Args**: [List args]
+    3.  **Source Strategy**:
+        -   **Primary:** Check \`Diff\` and \`DIRECTIVE\`.
+        -   **Secondary:** Check \`ADDITIONAL INFO\` (User Context, Repo Metadata) for environment IDs/Slugs.
+        -   **Tertiary (Discovery):** If missing, plan to run a "Discovery Tool" from <AVAILABLE TOOLS> first (e.g., use a "list" tool to get a slug, or "search" tool to get an ID).
+    4.  **Constraint Application**: Check the DIRECTIVE for specific conditions. Apply these conditions to relevant arguments to ensure the tool execution matches the specific intent.
 
-**Step 3: Execute & Recover (The main loop)**
--   For each 'MISSION TOOL':
-    -   If you have the arguments, execute it.
-    -   If an argument is missing, search the '<AVAILABLE TOOLS>' list for a helper tool. Execute it to find the missing value, then retry the mission tool.
-    -   If a tool fails, follow the 'ERROR HANDLING' protocol to diagnose and attempt recovery.
+**Step 3: Execution & Chaining (The Main Loop)**
+-   **PRIORITIZE MISSION TOOLS:** Your primary goal is to execute the tools listed in \`MISSION TOOLS\`. Use other tools *only* to unblock these.
+-   **CHAIN TOOLS:** If Tool A returns an ID, *immediately* use it in Tool B. Do not stop.
+-   **EXECUTE EXACTLY:** Use the tool name EXACTLY as listed in ${missionToolNames} or the '<AVAILABLE TOOLS>' definition. Do not modify, prefix, or suffix it. If the definition says "toolName": "X", you call "X".
+-   **EXTRACT & ADAPT:** Tools return structures (JSON). You need specific values for the next tool.
+    -   *Action:* Parse the response from Tool A. Locate the exact field required by Tool B.
+-   **MISSING ARGUMENTS (BLOCKER):** If you are missing an argument (like an ID) to run a Mission Tool:
+    1.  **DO NOT SKIP** the tool yet.
+    2.  **EXECUTE A HELPER:** Find a tool in <AVAILABLE TOOLS> that can return the missing data.
+    3.  **Example:** Need an ID? Run a search tool. Need a slug? Run a listing tool.
+-   **SMART RECOVERY (CRITICAL):** If a tool fails (e.g., 404, 400, Invalid Arg):
+    1.  **Assume the argument is wrong** (e.g., wrong slug, stale ID).
+    2.  **Scan <AVAILABLE TOOLS>** for a "Discovery Capability" (listing or searching).
+    3.  **Execute Broadly:** If searching for a specific name/ID failed, **DO NOT** repeat the search with the same value. Instead, execute the Discovery Tool **WITHOUT filters** (or with broad wildcards) to list ALL available entities.
+    4.  **Manual Match:** Look through the returned list to find the correct entity that matches the user's intent.
+    5.  **Retry** the original tool with the fresh, validated value.
+    6.  *Only* give up if the Broad Discovery also fails.
 
-**Step 4: Report your findings**
--   Once all necessary tools have been run or justifiably skipped, provide your final report in the 'OUTPUT FORMAT'.
+**Step 4: Comprehensive Reporting**
+-   **REPORT PARTIAL SUCCESS:** If you ran 3 tools and 1 failed, report the 2 successes. Do not discard valid data because of a partial failure.
+-   Report ALL findings. Even empty results are valuable context.
+-   Only use \`skipReason\` if you have *proven* that the data is unreachable or irrelevant.
 
 ## 🎯 MISSION TOOLS (${missionToolNames})
 If your initial assessment determines they are needed, your goal is to execute these tools.
@@ -169,11 +197,10 @@ ${missionToolsSection}
 
 ## 🚨 ERROR HANDLING
 - **If a tool fails:**
-    1.  **Analyze the error message.**
-    2.  Is it a resolvable issue (e.g., a "Not Found" error on an ID)?
-    3.  If YES → Your next action MUST be to use a different tool to find the correct value and then retry.
-    4.  If NO (e.g., authentication error, fatal bug) → Report the failure in your final output and STOP.
-- **NEVER** retry a tool with the exact same arguments that previously failed.
+    1.  **Analyze the error message.** Does it mention a specific parameter (e.g., "Invalid Organization", "Project not found")?
+    2.  **Locate a Discovery Tool.** Analyze <AVAILABLE TOOLS> descriptions/schemas to find a tool that can retrieve the missing/invalid entity. Focus on what the tool returns, not just its name.
+    3.  **Execute & Retry.** Use the Discovery Tool to get valid values, then retry the failed operation.
+    4.  **Do not retry blind.** Never retry the exact same failed request. Change the parameters based on new evidence.
 - **NEVER** loop indefinitely. If a recovery attempt fails, STOP.
 
 ## ✅ OUTPUT FORMAT
@@ -207,7 +234,7 @@ You are validating this code change against a specific rule.
 **Rule:** ${kodyRule.title}
 **Description:** ${kodyRule.rule}
 
-Consider: Does this change touch anything related to this rule? Would external context help validate compliance?`;
+Task: Use available tools to validate compliance with this rule against the provided code changes.`;
     }
 
     private buildOverridesDirective(
@@ -228,7 +255,7 @@ No specific context request. Use your judgment as a senior engineer to decide if
         return `## 📌 DIRECTIVE: User Request
 The user is asking for specific context:
 ${overridesContent}
-Consider: Does this request make sense for THIS particular change?`;
+Task: Fulfill this request using available tools based on the provided code changes.`;
     }
 
     private formatDependencies(dependencies?: ContextMCPDependency[]): string {
@@ -448,16 +475,16 @@ Consider: Does this request make sense for THIS particular change?`;
             },
             identity: {
                 description:
-                    'Specialist Code Analysis Engineer. Your role is to meticulously analyze code changes, determine if external information is necessary for a comprehensive review, and autonomously use tools to retrieve that information. You operate with precision and make decisions based on evidence.',
-                goal: 'Your primary objective is to enrich the code review process by fetching relevant external context (e.g., from issue trackers, documentation, or security dashboards). Your goal is to ensure that code reviewers have all the necessary information to make informed decisions, improving code quality and reducing risks. You will only provide the final JSON output when your mission is fully complete.',
+                    'Lead Evidence Auditor. Your role is to EXHAUSTIVELY gather external context for code reviews, but ONLY when relevant. You are an active investigator who uses every available tool to build a complete picture of the code changes, provided the changes warrant such investigation.',
+                goal: "First, assess the relevance of the DIRECTIVE to the provided DIFF. If the code changes intersect with the directive's concerns (e.g., security logic changed vs security directive), AGGRESSIVELY gather evidence. If the changes are trivial or unrelated (e.g., formatting, comments), skip execution.",
                 expertise: [
-                    'Code Review',
-                    'Static Analysis',
-                    'Tool Orchestration',
-                    'Contextual Data Retrieval',
+                    'Relevance Assessment',
+                    'Deep Context Retrieval',
+                    'Tool Chaining Strategy',
+                    'Log Analysis',
                 ],
                 personality:
-                    'Methodical, analytical, and autonomous. You do not make assumptions; you verify through tool-based evidence. You are proactive in identifying information gaps and relentless in filling them.',
+                    'Critical thinker, precise in execution, and resilient. You do not waste resources on irrelevant changes, but you leave no stone unturned when a change is significant.',
             },
             plannerOptions: {
                 type: PlannerType.REACT,
@@ -467,13 +494,13 @@ Consider: Does this request make sense for THIS particular change?`;
                 },
                 scratchpad: {
                     enabled: true,
-                    initialState: `Thought: I need to analyze the user's directive and the code changes to determine if external context is required. I will start by assessing the goal and the provided diff.
+                    initialState: `Thought: I need to validate if this change is relevant to the directive before gathering evidence. I will start by analyzing the intersection between the provided code changes and the directive's intent.
 
 My execution plan is:
-1. Triage & Initial Assessment (Current Focus)
-2. Plan data collection (if context is useful)
-3. Execute & Recover (fetch evidence)
-4. Report findings`,
+1. Triage & Scope (Validate Relevance & Define Constraints)
+2. Argument Resolution Matrix (Map tools to arguments with constraints)
+3. Execution & Chaining (Run tools, chain results, handle errors)
+4. Comprehensive Reporting`,
                 },
             },
         });
@@ -483,7 +510,7 @@ My execution plan is:
 
     async execute(params: {
         organizationAndTeamData: OrganizationAndTeamData;
-        file: FileChange;
+        files: FileChange[];
         dependencies?: ContextMCPDependency[];
         promptOverrides?: CodeReviewConfig['v2PromptOverrides'];
         additionalContext?: Record<string, unknown>;
@@ -491,7 +518,7 @@ My execution plan is:
     }): Promise<ContextEvidenceAgentResult | null> {
         const {
             organizationAndTeamData,
-            file,
+            files,
             dependencies,
             promptOverrides,
             additionalContext,
@@ -499,14 +526,15 @@ My execution plan is:
         } = params;
 
         this.logger.log({
-            message: 'Starting context evidence collection for file',
+            message: 'Starting context evidence collection',
             context: ContextEvidenceAgentProvider.name,
             serviceName: ContextEvidenceAgentProvider.name,
             metadata: {
                 organizationId: organizationAndTeamData?.organizationId,
                 teamId: organizationAndTeamData?.teamId,
-                fileName: file.filename,
+                filesCount: files.length,
                 dependenciesCount: dependencies?.length || 0,
+                mode: kodyRule ? 'PR-Level' : 'File-Level',
             },
         });
 
@@ -530,13 +558,16 @@ My execution plan is:
         const thread = createThreadId(
             {
                 organizationId: organizationAndTeamData.organizationId,
-                file: file.filename,
+                file:
+                    files.length === 1
+                        ? files[0].filename
+                        : `PR-Level-${kodyRule?.uuid || 'general'}`,
             },
             { prefix: 'csa' },
         );
 
         const prompt = this.buildPrompt(
-            file,
+            files,
             dependencies,
             promptOverrides,
             kodyRule,

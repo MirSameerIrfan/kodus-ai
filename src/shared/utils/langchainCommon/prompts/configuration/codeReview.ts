@@ -197,9 +197,14 @@ function injectExternalContext(
     references: unknown[] | undefined,
     syncErrors?: unknown[] | string | undefined,
     contextKey?: string,
-    collectContext?: (dedupeKey: string, section: string) => void,
+    options?: {
+        collectContext?: (dedupeKey: string, section: string) => void;
+        keepMcpMentions?: boolean;
+    },
 ): string {
-    const sanitizedBase = sanitizePromptText(baseText);
+    const sanitizedBase = options?.keepMcpMentions
+        ? baseText
+        : sanitizePromptText(baseText);
 
     const errorSection = formatSyncErrors(syncErrors);
     const referenceSection =
@@ -215,13 +220,13 @@ function injectExternalContext(
 
     const combinedContext = contextParts.join('\n\n---\n\n');
 
-    if (collectContext) {
+    if (options?.collectContext) {
         const dedupeKey = buildContextDedupeKey(
             contextKey,
             references,
             syncErrors,
         );
-        collectContext(dedupeKey, combinedContext);
+        options.collectContext(dedupeKey, combinedContext);
     }
 
     return sanitizedBase;
@@ -527,6 +532,7 @@ function resolveContextData(
  */
 interface ProcessSectionOptions {
     collectContext?: (dedupeKey: string, section: string) => void;
+    keepMcpMentions?: boolean;
 }
 
 function processSection(
@@ -581,7 +587,7 @@ function processSection(
         [...config.externalPath, 'error'],
     );
 
-    const textBase = getTextOrDefault(overrideText, defaultText);
+    const textBase = getTextOrDefault(overrideText, defaultText, options);
     const { references, syncErrors } = resolveContextData(
         config.pathKey,
         layerContextData,
@@ -594,7 +600,7 @@ function processSection(
         references,
         syncErrors,
         config.pathKey,
-        options?.collectContext,
+        options,
     );
 }
 
@@ -1452,6 +1458,7 @@ export const prompt_codereview_system_gemini_v2 = (
 
     const processOptions = {
         collectContext: collectExternalContext,
+        keepMcpMentions: true,
     };
 
     const { bugText, perfText, secText } = processCategorySections(
@@ -1482,7 +1489,6 @@ export const prompt_codereview_system_gemini_v2 = (
         processOptions,
     );
 
-    // Consolidated MCP tool context block
     const augmentationBlock = buildAllAugmentationText(
         payload?.contextAugmentations,
     );

@@ -6,6 +6,8 @@ import {
 export type KodyRulesPrLevelPayload = {
     pr_title: string;
     pr_description: string;
+    pr_author?: string;
+    tags?: string[];
     stats: AnalysisContext['pullRequest']['stats'];
     files: FileChange[];
     rules?: any;
@@ -33,7 +35,9 @@ You are a code review expert specialized in identifying cross-file rule violatio
 
 ### PR Information
 - **Title**: ${payload?.pr_title}
+- **Author**: ${payload?.pr_author || 'Unknown'}
 - **Description**: ${payload?.pr_description}
+- **Tags**: ${payload?.tags?.join(', ') || 'None'}
 - **Stats**:
     - Total Additions: ${payload?.stats?.total_additions ?? 0}
     - Total Deletions: ${payload?.stats?.total_deletions ?? 0}
@@ -43,7 +47,18 @@ You are a code review expert specialized in identifying cross-file rule violatio
 ### Files in PR
 \`\`\`json
 {
-  "files": ${JSON.stringify(payload?.files || [], null, 2)}
+  "files": ${JSON.stringify(
+      payload?.files.map((file: FileChange) => ({
+          status: file.status,
+          additions: file.additions,
+          deletions: file.deletions,
+          changes: file.changes,
+          filename: file.filename,
+          codeDiff: file.patch,
+      })) ?? [],
+      null,
+      2,
+  )}
 }
 \`\`\`
 
