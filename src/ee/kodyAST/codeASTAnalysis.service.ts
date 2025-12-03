@@ -28,6 +28,8 @@ import {
 } from '@/core/infrastructure/adapters/services/context/code-review-context.utils';
 import type { ContextPack } from '@context-os-core/interfaces';
 import { AxiosASTService } from '@/config/axios/microservices/ast.axios';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { Optional } from '@nestjs/common';
 
 export enum TaskStatus {
     /* Unspecified status, used for default initialization */
@@ -135,6 +137,7 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
         private readonly logger: PinoLoggerService,
         private readonly promptRunnerService: PromptRunnerService,
         private readonly observabilityService: ObservabilityService,
+        @Optional() private readonly amqpConnection?: AmqpConnection,
     ) {
         this.llmResponseProcessor = new LLMResponseProcessor(logger);
         this.astAxios = new AxiosASTService();
@@ -634,6 +637,15 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
                             totalTime: `${Math.floor(elapsedTime / 1000)}s`,
                         },
                     });
+
+                    // Publish event if task completed successfully and RabbitMQ is available
+                    if (
+                        taskStatus.task.status === TaskStatus.TASK_STATUS_COMPLETED &&
+                        this.amqpConnection
+                    ) {
+                        await this.publishTaskCompletedEvent(taskId, taskStatus);
+                    }
+
                     return taskStatus;
                 }
             } catch (error) {
@@ -681,6 +693,57 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
 
             await new Promise((resolve) => setTimeout(resolve, waitInterval));
             attempt++;
+        }
+    }
+
+    /**
+     * Publishes an event when an AST task completes.
+     * This allows workflows waiting for AST completion to resume.
+     */
+    private async publishTaskCompletedEvent(
+        taskId: string,
+        taskResult: GetTaskInfoResponse,
+    ): Promise<void> {
+        if (!this.amqpConnection) {
+            this.logger.debug({
+                message: 'RabbitMQ not available, skipping AST completion event',
+                context: CodeAstAnalysisService.name,
+                metadata: { taskId },
+            });
+            return;
+        }
+
+        try {
+            await this.amqpConnection.publish(
+                'workflow.events',
+                'ast.task.completed',
+                {
+                    taskId,
+                    result: taskResult,
+                },
+                {
+                    messageId: `ast-${taskId}`,
+                    persistent: true,
+                    headers: {
+                        'x-event-type': 'ast.task.completed',
+                        'x-task-id': taskId,
+                    },
+                },
+            );
+
+            this.logger.log({
+                message: `AST task ${taskId} completion event published`,
+                context: CodeAstAnalysisService.name,
+                metadata: { taskId },
+            });
+        } catch (error) {
+            this.logger.error({
+                message: `Failed to publish AST completion event for task ${taskId}`,
+                context: CodeAstAnalysisService.name,
+                error,
+                metadata: { taskId },
+            });
+            // Don't throw - event publishing failure shouldn't break task completion
         }
     }
 

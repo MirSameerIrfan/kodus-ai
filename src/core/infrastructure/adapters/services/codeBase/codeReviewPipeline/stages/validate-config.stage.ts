@@ -33,6 +33,7 @@ import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 @Injectable()
 export class ValidateConfigStage extends BasePipelineStage<CodeReviewPipelineContext> {
     stageName = 'ValidateConfigStage';
+    readonly dependsOn: string[] = ['ResolveConfigStage']; // Depends on ResolveConfigStage
 
     constructor(
         @Inject(AUTOMATION_EXECUTION_SERVICE_TOKEN)

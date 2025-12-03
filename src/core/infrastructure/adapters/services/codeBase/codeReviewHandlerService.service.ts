@@ -66,6 +66,7 @@ export class CodeReviewHandlerService {
         action: string,
         executionId: string,
         triggerCommentId?: number | string,
+        workflowJobId?: string, // Optional: ID of workflow job (for pausing/resuming)
     ) {
         let initialContext: CodeReviewPipelineContext;
 
@@ -79,6 +80,7 @@ export class CodeReviewHandlerService {
             );
 
             initialContext = {
+                workflowJobId, // Pass workflowJobId to context
                 dryRun: {
                     enabled: false,
                 },

@@ -12,6 +12,7 @@ import { BehaviourForNewCommits } from '@/config/types/general/codeReview.type';
 @Injectable()
 export class UpdateCommentsAndGenerateSummaryStage extends BasePipelineStage<CodeReviewPipelineContext> {
     readonly stageName = 'UpdateCommentsAndGenerateSummaryStage';
+    readonly dependsOn: string[] = ['AggregateResultsStage']; // Depends on AggregateResultsStage
 
     constructor(
         @Inject(COMMENT_MANAGER_SERVICE_TOKEN)

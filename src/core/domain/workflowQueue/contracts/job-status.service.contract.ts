@@ -1,13 +1,13 @@
-import { ICodeReviewJob } from '../interfaces/code-review-job.interface';
-import { IJobExecutionHistory } from '../interfaces/code-review-job.interface';
+import { IWorkflowJob } from '../interfaces/workflow-job.interface';
+import { IJobExecutionHistory } from '../interfaces/job-execution-history.interface';
 
 export const JOB_STATUS_SERVICE_TOKEN = Symbol('JobStatusService');
 
 export interface IJobStatusService {
-    getJobStatus(jobId: string): Promise<ICodeReviewJob | null>;
+    getJobStatus(jobId: string): Promise<IWorkflowJob | null>;
 
     getJobDetail(jobId: string): Promise<{
-        job: ICodeReviewJob;
+        job: IWorkflowJob;
         executionHistory: IJobExecutionHistory[];
     } | null>;
 

@@ -11,6 +11,7 @@ import { PullRequestReviewState } from '@/core/domain/platformIntegrations/types
 @Injectable()
 export class RequestChangesOrApproveStage extends BasePipelineStage<CodeReviewPipelineContext> {
     readonly stageName = 'RequestChangesOrApproveStage';
+    readonly dependsOn: string[] = ['UpdateCommentsAndGenerateSummaryStage']; // Depends on UpdateCommentsAndGenerateSummaryStage
 
     constructor(
         private readonly codeManagementService: CodeManagementService,

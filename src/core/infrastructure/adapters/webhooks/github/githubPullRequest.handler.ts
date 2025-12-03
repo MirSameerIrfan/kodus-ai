@@ -10,8 +10,10 @@ import { CodeManagementService } from '@/core/infrastructure/adapters/services/p
 import { RunCodeReviewAutomationUseCase } from '@/ee/automation/runCodeReview.use-case';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 import { getMappedPlatform } from '@/shared/utils/webhooks';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, Optional } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { KodyRulesSyncService } from '../../services/kodyRules/kodyRulesSync.service';
+import { EnqueueCodeReviewJobUseCase } from '@/core/application/use-cases/workflowQueue/enqueue-code-review-job.use-case';
 
 /**
  * Handler for GitHub webhook events.
@@ -27,6 +29,9 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
         private readonly codeManagement: CodeManagementService,
         private readonly generateIssuesFromPrClosedUseCase: GenerateIssuesFromPrClosedUseCase,
         private readonly kodyRulesSyncService: KodyRulesSyncService,
+        @Optional()
+        private readonly enqueueCodeReviewJobUseCase?: EnqueueCodeReviewJobUseCase,
+        private readonly configService?: ConfigService,
     ) {}
 
     public canHandle(params: IWebhookEventParams): boolean {
@@ -125,8 +130,50 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
             // Save the PR state
             await this.savePullRequestUseCase.execute(params);
 
-            // Execute code review automation if necessary
-            this.runCodeReviewAutomationUseCase.execute(params);
+            // Check if workflow queue is enabled for GitHub
+            const workflowQueueEnabled =
+                this.configService?.get<boolean>(
+                    'workflowQueueConfig.WORKFLOW_QUEUE_ENABLED',
+                ) || false;
+            const workflowQueueEnabledGitHub =
+                this.configService?.get<boolean>(
+                    'workflowQueueConfig.WORKFLOW_QUEUE_ENABLED_GITHUB',
+                ) || false;
+
+            if (
+                workflowQueueEnabled &&
+                workflowQueueEnabledGitHub &&
+                this.enqueueCodeReviewJobUseCase &&
+                organizationAndTeamData?.organizationAndTeamData
+            ) {
+                // Enqueue job for asynchronous processing
+                const jobId = await this.enqueueCodeReviewJobUseCase.execute({
+                    platformType: PlatformType.GITHUB,
+                    repositoryId: repository.id,
+                    repositoryName: repository.name,
+                    pullRequestNumber: prNumber,
+                    pullRequestData: payload,
+                    organizationId:
+                        organizationAndTeamData.organizationAndTeamData
+                            .organizationId,
+                    teamId: organizationAndTeamData.organizationAndTeamData
+                        .teamId,
+                });
+
+                this.logger.log({
+                    message:
+                        'Code review job enqueued for asynchronous processing',
+                    context: GitHubPullRequestHandler.name,
+                    metadata: {
+                        jobId,
+                        prNumber,
+                        repositoryId: repository.id,
+                    },
+                });
+            } else {
+                // Execute code review automation synchronously (legacy behavior)
+                this.runCodeReviewAutomationUseCase.execute(params);
+            }
 
             if (payload?.action === 'closed') {
                 await this.generateIssuesFromPrClosedUseCase.execute(params);

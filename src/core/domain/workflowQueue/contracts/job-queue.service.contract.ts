@@ -1,23 +1,25 @@
-import { ICodeReviewJob } from '../interfaces/code-review-job.interface';
+import { IWorkflowJob } from '../interfaces/workflow-job.interface';
+import { JobStatus } from '../enums/job-status.enum';
+import { WorkflowType } from '../enums/workflow-type.enum';
 
 export const JOB_QUEUE_SERVICE_TOKEN = Symbol('JobQueueService');
 
 export interface IJobQueueService {
     enqueue(
-        job: Omit<ICodeReviewJob, 'id' | 'createdAt' | 'updatedAt'>,
+        job: Omit<IWorkflowJob, 'id' | 'createdAt' | 'updatedAt'>,
     ): Promise<string>;
 
-    getStatus(jobId: string): Promise<ICodeReviewJob | null>;
+    getStatus(jobId: string): Promise<IWorkflowJob | null>;
 
     listJobs(filters: {
-        status?: string;
+        status?: JobStatus;
+        workflowType?: WorkflowType;
         organizationId?: string;
         teamId?: string;
-        platformType?: string;
         limit?: number;
         offset?: number;
     }): Promise<{
-        data: ICodeReviewJob[];
+        data: IWorkflowJob[];
         total: number;
         limit: number;
         offset: number;

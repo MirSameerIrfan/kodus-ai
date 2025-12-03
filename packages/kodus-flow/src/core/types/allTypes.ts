@@ -585,8 +585,9 @@ export type EventHandler<E extends AnyEvent = AnyEvent, R = AnyEvent | void> = (
 
 export type HandlerReturn = AnyEvent | void | Promise<AnyEvent | void>;
 
-export interface EventStream<T extends AnyEvent = AnyEvent>
-    extends AsyncIterable<T> {
+export interface EventStream<
+    T extends AnyEvent = AnyEvent,
+> extends AsyncIterable<T> {
     filter(predicate: (event: T) => boolean): EventStream<T>;
     map<U extends AnyEvent>(mapper: (event: T) => U): EventStream<U>;
     until(predicate: (event: T) => boolean): EventStream<T>;
@@ -1776,8 +1777,10 @@ export type ToolHandler<TInput = unknown, TOutput = unknown> = (
     context: ToolContext,
 ) => Promise<TOutput> | TOutput;
 
-export interface ToolDefinition<TInput = unknown, TOutput = unknown>
-    extends BaseDefinition {
+export interface ToolDefinition<
+    TInput = unknown,
+    TOutput = unknown,
+> extends BaseDefinition {
     execute: ToolHandler<TInput, TOutput>;
 
     inputSchema: z.ZodSchema<TInput>;
@@ -3808,8 +3811,9 @@ export interface Runtime {
     cleanup(): Promise<void>;
 }
 
-export interface TrackedEventHandler<TEvent extends AnyEvent = AnyEvent>
-    extends EventHandler<TEvent> {
+export interface TrackedEventHandler<
+    TEvent extends AnyEvent = AnyEvent,
+> extends EventHandler<TEvent> {
     _handlerId?: string;
     _lastUsed?: number;
     _isActive?: boolean;
@@ -5824,8 +5828,10 @@ export interface OrchestrationConfig {
     observability?: Partial<ObservabilityConfig>;
 }
 
-export interface OrchestrationConfigInternal
-    extends Omit<OrchestrationConfig, 'mcpAdapter'> {
+export interface OrchestrationConfigInternal extends Omit<
+    OrchestrationConfig,
+    'mcpAdapter'
+> {
     mcpAdapter: MCPAdapter | null;
 }
 

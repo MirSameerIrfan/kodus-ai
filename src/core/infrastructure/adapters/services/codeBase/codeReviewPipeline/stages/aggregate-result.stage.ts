@@ -6,6 +6,7 @@ import { CodeReviewPipelineContext } from '../context/code-review-pipeline.conte
 @Injectable()
 export class AggregateResultsStage extends BasePipelineStage<CodeReviewPipelineContext> {
     readonly stageName = 'AggregateResultsStage';
+    readonly dependsOn: string[] = ['CreatePrLevelCommentsStage', 'CreateFileCommentsStage']; // Depends on both comment stages
 
     constructor(private readonly logger: PinoLoggerService) {
         super();

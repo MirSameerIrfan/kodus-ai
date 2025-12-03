@@ -2,7 +2,6 @@ import { AZURE_REPOS_SERVICE_TOKEN } from '@/core/domain/azureRepos/contracts/az
 import { AzureReposService } from '@/core/infrastructure/adapters/services/azureRepos.service';
 import { AzureReposRequestHelper } from '@/core/infrastructure/adapters/services/azureRepos/azure-repos-request-helper';
 import { PromptService } from '@/core/infrastructure/adapters/services/prompt.service';
-import { AzureReposController } from '@/core/infrastructure/http/controllers/azureRepos.controller';
 import { RunCodeReviewAutomationUseCase } from '@/ee/automation/runCodeReview.use-case';
 import { LicenseModule } from '@/ee/license/license.module';
 import { PermissionValidationModule } from '@/ee/shared/permission-validation.module';
@@ -57,6 +56,7 @@ import { WebhookLogModule } from './webhookLog.module';
         },
     ],
     exports: [AZURE_REPOS_SERVICE_TOKEN],
-    controllers: [AzureReposController],
+    // Controllers moved to ApiModule and WebhookHandlerModule
+    // AzureReposController is registered in ApiModule and WebhookHandlerModule
 })
 export class AzureReposModule {}

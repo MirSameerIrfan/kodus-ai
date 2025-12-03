@@ -20,6 +20,18 @@ export class TypeORMFactory implements TypeOrmOptionsFactory {
         const env = process.env.API_DATABASE_ENV ?? process.env.API_NODE_ENV;
         const isProduction = !['development', 'test'].includes(env);
 
+        // Detecta tipo de componente para ajustar pool de conexões
+        const componentType = process.env.COMPONENT_TYPE || 'default';
+
+        // Configuração de pool por componente (otimização de escalabilidade)
+        const poolConfigs = {
+            webhook: { max: 8, min: 1 }, // Webhook handler: leve, só escreve logs
+            api: { max: 25, min: 2 }, // API REST: consultas variadas
+            worker: { max: 12, min: 2 }, // Workers: processamento pesado
+            default: { max: 40, min: 1 }, // Fallback: comportamento original
+        };
+        const poolConfig = poolConfigs[componentType] || poolConfigs.default;
+
         const optionsTypeOrm: TypeOrmModuleOptions = {
             type: 'postgres',
             host: this.config.host,
@@ -43,8 +55,8 @@ export class TypeORMFactory implements TypeOrmOptionsFactory {
             logger: 'file',
             ssl: isProduction,
             extra: {
-                max: 40,
-                min: 1,
+                max: poolConfig.max,
+                min: poolConfig.min,
                 idleTimeoutMillis: 10000,
                 connectionTimeoutMillis: 2000,
                 keepAlive: true,

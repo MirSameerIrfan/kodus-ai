@@ -18,6 +18,7 @@ import {
 @Injectable()
 export class ValidateNewCommitsStage extends BasePipelineStage<CodeReviewPipelineContext> {
     readonly stageName = 'ValidateNewCommitsStage';
+    readonly dependsOn: string[] = []; // No dependencies - can run in parallel with other initial stages
 
     constructor(
         @Inject(AUTOMATION_EXECUTION_SERVICE_TOKEN)

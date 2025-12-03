@@ -2,7 +2,6 @@ import { UseCases } from '@/core/application/use-cases/github';
 import { GITHUB_SERVICE_TOKEN } from '@/core/domain/github/contracts/github.service.contract';
 import { GithubService } from '@/core/infrastructure/adapters/services/github/github.service';
 import { PromptService } from '@/core/infrastructure/adapters/services/prompt.service';
-import { GithubController } from '@/core/infrastructure/http/controllers/github.controller';
 import { RunCodeReviewAutomationUseCase } from '@/ee/automation/runCodeReview.use-case';
 import { LicenseModule } from '@/ee/license/license.module';
 import { PermissionValidationModule } from '@/ee/shared/permission-validation.module';
@@ -57,6 +56,6 @@ import { WebhookLogModule } from './webhookLog.module';
         },
     ],
     exports: [GITHUB_SERVICE_TOKEN],
-    controllers: [GithubController],
+    // Controllers moved to ApiModule and WebhookHandlerModule
 })
 export class GithubModule {}

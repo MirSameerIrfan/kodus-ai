@@ -9,9 +9,9 @@ import {
 
 const logger = createLogger('in-memory-storage-adapter');
 
-export class InMemoryStorageAdapter<T extends BaseStorageItem>
-    implements BaseStorage<T>
-{
+export class InMemoryStorageAdapter<
+    T extends BaseStorageItem,
+> implements BaseStorage<T> {
     private items: Map<string, T> = new Map();
     private config: StorageAdapterConfig;
     private isInitialized = false;

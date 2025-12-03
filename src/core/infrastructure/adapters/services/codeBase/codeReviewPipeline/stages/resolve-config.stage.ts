@@ -33,6 +33,7 @@ import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
 @Injectable()
 export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineContext> {
     readonly stageName = 'ResolveConfigStage';
+    readonly dependsOn: string[] = []; // No dependencies - can run in parallel with ValidateNewCommitsStage
 
     constructor(
         @Inject(CODE_BASE_CONFIG_SERVICE_TOKEN)

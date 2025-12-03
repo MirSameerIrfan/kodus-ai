@@ -11,15 +11,18 @@ import helmet from 'helmet';
 import * as volleyball from 'volleyball';
 import * as bodyParser from 'body-parser';
 import { HttpServerConfiguration } from './config/types/http/http-server.type';
-import { AppModule } from './modules/app.module';
+import { ApiModule } from './modules/api.module';
 import { PinoLoggerService } from './core/infrastructure/adapters/services/logger/pino.service';
 import { setupSentryAndOpenTelemetry } from './config/log/otel';
 
 async function bootstrap() {
+    // Define tipo de componente para configuração de pool de DB
+    process.env.COMPONENT_TYPE = 'api';
+
     // Inicializa Sentry e OpenTelemetry antes de tudo
     setupSentryAndOpenTelemetry();
 
-    const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    const app = await NestFactory.create<NestExpressApplication>(ApiModule, {
         snapshot: true,
     });
 
@@ -78,14 +81,19 @@ async function bootstrap() {
     app.set('trust proxy', '127.0.0.1');
 
     app.useStaticAssets('static');
-    useContainer(app.select(AppModule), { fallbackOnErrors: true });
+    useContainer(app.select(ApiModule), { fallbackOnErrors: true });
+
+    // API REST runs on port 3331 (default server port)
+    const apiPort = process.env.API_PORT
+        ? parseInt(process.env.API_PORT, 10)
+        : port;
 
     console.log(
-        `[BOOT] - Running in ${environment.API_CLOUD_MODE ? 'CLOUD' : 'SELF-HOSTED'} mode`,
+        `[BOOT] - API REST running in ${environment.API_CLOUD_MODE ? 'CLOUD' : 'SELF-HOSTED'} mode`,
     );
-    await app.listen(port, host, () => {
+    await app.listen(apiPort, host, () => {
         console.log(
-            `[Server] - Ready on http://${host}:${port}`,
+            `[API REST] - Ready on http://${host}:${apiPort}`,
             'Application',
         );
     });

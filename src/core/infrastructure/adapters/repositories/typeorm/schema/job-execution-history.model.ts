@@ -2,17 +2,18 @@ import { JobStatus } from '@/core/domain/workflowQueue/enums/job-status.enum';
 import { ErrorClassification } from '@/core/domain/workflowQueue/enums/error-classification.enum';
 import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
-import { CodeReviewJobModel } from './code-review-job.model';
+import { WorkflowJobModel } from './workflow-job.model';
 
-@Entity('job_execution_history')
+@Entity('job_execution_history', { schema: 'workflow' })
 @Index('IDX_job_exec_history_job', ['job'], { concurrent: true })
 @Index('IDX_job_exec_history_attempt', ['job', 'attemptNumber'], {
     concurrent: true,
 })
+@Index('IDX_job_exec_history_status', ['status'], { concurrent: true })
 export class JobExecutionHistoryModel extends CoreModel {
-    @ManyToOne(() => CodeReviewJobModel, (job) => job.executionHistory)
-    @JoinColumn({ name: 'job_id', referencedColumnName: 'uuid' })
-    job: CodeReviewJobModel;
+    @ManyToOne(() => WorkflowJobModel, (job) => job.executionHistory)
+    @JoinColumn({ name: 'jobId', referencedColumnName: 'uuid' })
+    job: WorkflowJobModel;
 
     @Column({ type: 'integer' })
     attemptNumber: number;

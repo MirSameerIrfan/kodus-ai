@@ -37,6 +37,7 @@ import { McpAgentModule } from './mcpAgent.module';
 import { GetAdditionalInfoHelper } from '@/shared/utils/helpers/getAdditionalInfo.helper';
 import { GET_ADDITIONAL_INFO_HELPER_TOKEN } from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
 import { PullRequestMessagesModule } from './pullRequestMessages.module';
+import { WorkflowQueueModule } from './workflowQueue.module';
 @Module({
     imports: [
         forwardRef(() => IntegrationModule),
@@ -62,6 +63,7 @@ import { PullRequestMessagesModule } from './pullRequestMessages.module';
         forwardRef(() => PullRequestMessagesModule),
         PullRequestsModule,
         McpAgentModule,
+        forwardRef(() => WorkflowQueueModule),
     ],
     providers: [
         ...UseCases,

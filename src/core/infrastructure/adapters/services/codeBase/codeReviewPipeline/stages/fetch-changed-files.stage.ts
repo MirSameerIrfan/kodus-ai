@@ -19,6 +19,7 @@ import {
 @Injectable()
 export class FetchChangedFilesStage extends BasePipelineStage<CodeReviewPipelineContext> {
     stageName = 'FetchChangedFilesStage';
+    readonly dependsOn: string[] = ['ValidateNewCommitsStage', 'ValidateConfigStage']; // Depends on validation stages
 
     private maxFilesToAnalyze = 500;
 

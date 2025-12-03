@@ -10,9 +10,9 @@ import type { MongoClient, Db, Collection } from 'mongodb';
 
 const logger = createLogger('mongodb-storage-adapter');
 
-export class MongoDBStorageAdapter<T extends BaseStorageItem>
-    implements BaseStorage<T>
-{
+export class MongoDBStorageAdapter<
+    T extends BaseStorageItem,
+> implements BaseStorage<T> {
     private config: StorageAdapterConfig;
     private isInitialized = false;
     private client: MongoClient | null = null;

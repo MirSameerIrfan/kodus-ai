@@ -43,6 +43,7 @@
         "seed:enriched-prs": "ts-node -r tsconfig-paths/register scripts/seed-enriched-pull-requests.ts",
         "seed:prod": "TS_NODE_PROJECT=tsconfig.json node -r tsconfig-paths/register dist/src/config/database/typeorm/seed/seed.js",
         "script": "TS_NODE_PROJECT=tsconfig.json ts-node -r tsconfig-paths/register src/config/scripts/main.script.ts",
+        "mcp:auth-check": "ts-node -r tsconfig-paths/register scripts/mcp-auth-check.ts",
         "docker:build": "yarn docker:cache:clean && docker compose -f docker-compose.dev.small.yml build",
         "docker:build:complete": "docker compose -f docker-compose.dev.yml build",
         "docker:cache:clean": "docker compose -f docker-compose.dev.small.yml down && docker volume rm kodus-ai_yalc_store kodus-ai_node_modules_cache || true",

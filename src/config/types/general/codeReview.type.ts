@@ -65,6 +65,7 @@ export type Repository = {
 };
 
 export type AnalysisContext = {
+    workflowJobId?: string; // ID of the workflow job (for pausing/resuming)
     pullRequest: CodeReviewPipelineContext['pullRequest'];
     repository?: Partial<Repository>;
     organizationAndTeamData: OrganizationAndTeamData;

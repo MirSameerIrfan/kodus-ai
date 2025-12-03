@@ -5,9 +5,9 @@ const SENSITIVE_KEYWORDS = ['secret', 'token', 'password', 'key', 'credential'];
 function isPlainObject(value: unknown): value is Record<string, unknown> {
     return Boolean(
         value &&
-            typeof value === 'object' &&
-            !Array.isArray(value) &&
-            !(value instanceof Date),
+        typeof value === 'object' &&
+        !Array.isArray(value) &&
+        !(value instanceof Date),
     );
 }
 

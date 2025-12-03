@@ -50,6 +50,7 @@ import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
 @Injectable()
 export class ProcessFilesReview extends BasePipelineStage<CodeReviewPipelineContext> {
     readonly stageName = 'FileAnalysisStage';
+    readonly dependsOn: string[] = ['PRLevelReviewStage']; // Depends on PRLevelReviewStage
 
     private readonly concurrencyLimit = 20;
 

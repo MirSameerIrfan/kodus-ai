@@ -1,5 +1,4 @@
 import { PromptService } from '@/core/infrastructure/adapters/services/prompt.service';
-import { GitlabController } from '@/core/infrastructure/http/controllers/gitlab.controller';
 import { RunCodeReviewAutomationUseCase } from '@/ee/automation/runCodeReview.use-case';
 import { LicenseModule } from '@/ee/license/license.module';
 import { PermissionValidationModule } from '@/ee/shared/permission-validation.module';
@@ -43,6 +42,6 @@ import { WebhookLogModule } from './webhookLog.module';
         forwardRef(() => PermissionValidationModule),
     ],
     providers: [RunCodeReviewAutomationUseCase, PromptService],
-    controllers: [GitlabController],
+    // Controllers moved to ApiModule and WebhookHandlerModule
 })
 export class GitlabModule {}

@@ -7,6 +7,7 @@ import { FileContextAugmentationService } from '../../../context/file-context-au
 @Injectable()
 export class FileContextGateStage extends BasePipelineStage<CodeReviewPipelineContext> {
     readonly stageName = 'FileContextGateStage';
+    readonly dependsOn: string[] = ['LoadExternalContextStage']; // Depends on LoadExternalContextStage
 
     constructor(
         private readonly logger: PinoLoggerService,

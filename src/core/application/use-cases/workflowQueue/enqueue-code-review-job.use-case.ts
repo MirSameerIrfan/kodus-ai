@@ -7,6 +7,8 @@ import {
 } from '@/core/domain/workflowQueue/contracts/job-queue.service.contract';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 import { JobStatus } from '@/core/domain/workflowQueue/enums/job-status.enum';
+import { WorkflowType } from '@/core/domain/workflowQueue/enums/workflow-type.enum';
+import { HandlerType } from '@/core/domain/workflowQueue/enums/handler-type.enum';
 import { v4 as uuid } from 'uuid';
 
 export interface EnqueueCodeReviewJobInput {
@@ -42,13 +44,18 @@ export class EnqueueCodeReviewJobUseCase implements IUseCase {
                 },
             });
 
+            // Cria WorkflowJob genérico com dados do code review no payload
             const jobId = await this.jobQueueService.enqueue({
                 correlationId,
-                platformType: input.platformType,
-                repositoryId: input.repositoryId,
-                repositoryName: input.repositoryName,
-                pullRequestNumber: input.pullRequestNumber,
-                pullRequestData: input.pullRequestData,
+                workflowType: WorkflowType.CODE_REVIEW,
+                handlerType: HandlerType.PIPELINE_SYNC,
+                payload: {
+                    platformType: input.platformType,
+                    repositoryId: input.repositoryId,
+                    repositoryName: input.repositoryName,
+                    pullRequestNumber: input.pullRequestNumber,
+                    pullRequestData: input.pullRequestData,
+                },
                 organizationId: input.organizationId,
                 teamId: input.teamId,
                 status: JobStatus.PENDING,

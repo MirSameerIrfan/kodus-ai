@@ -22,6 +22,12 @@ export interface IWorkflowJob {
     completedAt?: Date;
     currentStage?: string;
     metadata?: Record<string, unknown>;
+    waitingForEvent?: {
+        eventType: string; // e.g., 'ast.task.completed'
+        eventKey: string; // e.g., taskId
+        timeout: number; // milliseconds
+        pausedAt: Date;
+    };
     createdAt: Date;
     updatedAt: Date;
 }

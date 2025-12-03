@@ -163,9 +163,7 @@ class ContextDateUtils {
 // 🏗️ CONTEXT SESSIONS ADAPTER
 // ===============================================
 
-export class StorageContextSessionAdapter
-    implements BaseStorage<ContextSessionStorageItem>
-{
+export class StorageContextSessionAdapter implements BaseStorage<ContextSessionStorageItem> {
     private storage: BaseStorage<ContextSessionStorageItem> | null = null;
     private config: StorageAdapterConfig;
     private isInitialized = false;
@@ -486,9 +484,7 @@ export class StorageContextSessionAdapter
 // 🏗️ EXECUTION SNAPSHOTS ADAPTER
 // ===============================================
 
-export class StorageSnapshotAdapter
-    implements BaseStorage<SnapshotStorageItem>
-{
+export class StorageSnapshotAdapter implements BaseStorage<SnapshotStorageItem> {
     private storage: BaseStorage<SnapshotStorageItem> | null = null;
     private config: StorageAdapterConfig;
     private isInitialized = false;

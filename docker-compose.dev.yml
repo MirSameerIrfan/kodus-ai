@@ -1,4 +1,8 @@
 services:
+    # Orchestrator: API HTTP server + Workers (via PM2)
+    # PM2 gerencia múltiplos processos no mesmo container:
+    # - kodus-orchestrator: API HTTP server (main.ts)
+    # - workflow-worker: Worker para processar jobs do RabbitMQ (worker.ts)
     kodus-orchestrator:
         container_name: ${GLOBAL_API_CONTAINER_NAME}
         image: kodus-orchestrator-dev
@@ -15,6 +19,8 @@ services:
         environment:
             - CHOKIDAR_USEPOLLING=true
             - API_DEVELOPMENT_MODE=${API_DEVELOPMENT_MODE:-true}
+            # Habilitar worker via PM2 (ecosystem.config.js)
+            - WORKFLOW_QUEUE_WORKER_ENABLED=${WORKFLOW_QUEUE_WORKER_ENABLED:-true}
         restart: unless-stopped
         volumes:
             - .:/usr/src/app:delegated

@@ -2,22 +2,25 @@ import { Injectable, Inject, Optional } from '@nestjs/common';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { IJobQueueService } from '@/core/domain/workflowQueue/contracts/job-queue.service.contract';
-import { ICodeReviewJob } from '@/core/domain/workflowQueue/interfaces/code-review-job.interface';
-import { CodeReviewJobRepository } from '@/core/infrastructure/adapters/repositories/typeorm/code-review-job.repository';
+import { IWorkflowJob } from '@/core/domain/workflowQueue/interfaces/workflow-job.interface';
+import { WorkflowJobRepository } from '@/core/infrastructure/adapters/repositories/typeorm/workflow-job.repository';
+import { TransactionalOutboxService } from './transactional-outbox.service';
 import { v4 as uuid } from 'uuid';
 import { DataSource } from 'typeorm';
+import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
 
 @Injectable()
 export class RabbitMQJobQueueService implements IJobQueueService {
-    private readonly exchange = 'code-review.exchange';
-    private readonly queue = 'code-review.jobs.queue';
-    private readonly routingKey = 'code-review.job.created';
+    private readonly exchange = 'workflow.exchange';
+    private readonly routingKey = 'workflow.jobs.created';
 
     constructor(
         @Optional() private readonly amqpConnection: AmqpConnection,
-        private readonly jobRepository: CodeReviewJobRepository,
+        private readonly jobRepository: WorkflowJobRepository,
+        private readonly outboxService: TransactionalOutboxService,
         private readonly dataSource: DataSource,
         private readonly logger: PinoLoggerService,
+        private readonly observability: ObservabilityService,
     ) {
         if (!amqpConnection) {
             this.logger.warn({
@@ -28,68 +31,90 @@ export class RabbitMQJobQueueService implements IJobQueueService {
     }
 
     async enqueue(
-        job: Omit<ICodeReviewJob, 'id' | 'createdAt' | 'updatedAt'>,
+        job: Omit<IWorkflowJob, 'id' | 'createdAt' | 'updatedAt'>,
     ): Promise<string> {
-        const jobId = uuid();
+        return await this.observability.runInSpan(
+            'workflow.job.enqueue',
+            async (span) => {
+                span.setAttributes({
+                    'workflow.job.type': job.workflowType,
+                    'workflow.job.handler': job.handlerType,
+                    'workflow.correlation.id': job.correlationId,
+                });
 
-        // Usa Transactional Outbox pattern
-        await this.dataSource.transaction(async (manager) => {
-            // 1. Salva job no banco
-            const savedJob = await this.jobRepository.create(job);
+                // Usa Transactional Outbox pattern
+                const savedJob = await this.dataSource.transaction(
+                    async (manager) => {
+                        // 1. Salva job no banco
+                        const jobToSave = await this.jobRepository.create(job);
 
-            // 2. Salva mensagem no outbox (mesma transação)
-            await manager.query(
-                `INSERT INTO outbox_messages (id, message_type, payload, status, created_at)
-                 VALUES ($1, $2, $3, $4, NOW())`,
-                [
-                    uuid(),
-                    this.routingKey,
-                    JSON.stringify({
+                        // 2. Salva mensagem no outbox (mesma transação)
+                        await this.outboxService.saveInTransaction(manager, {
+                            jobId: jobToSave.id,
+                            exchange: this.exchange,
+                            routingKey: `${this.routingKey}.${job.workflowType.toLowerCase()}`,
+                            payload: {
+                                jobId: jobToSave.id,
+                                correlationId: job.correlationId,
+                                workflowType: job.workflowType,
+                                handlerType: job.handlerType,
+                                organizationId: job.organizationId,
+                                teamId: job.teamId,
+                            },
+                        });
+
+                        return jobToSave;
+                    },
+                );
+
+                span.setAttributes({
+                    'workflow.job.id': savedJob.id,
+                });
+
+                this.logger.log({
+                    message: 'Workflow job enqueued via transactional outbox',
+                    context: RabbitMQJobQueueService.name,
+                    metadata: {
                         jobId: savedJob.id,
                         correlationId: job.correlationId,
-                        platformType: job.platformType,
-                        repositoryId: job.repositoryId,
-                        pullRequestNumber: job.pullRequestNumber,
-                        organizationId: job.organizationId,
-                        teamId: job.teamId,
-                    }),
-                    'pending',
-                ],
-            );
-        });
+                        workflowType: job.workflowType,
+                        handlerType: job.handlerType,
+                    },
+                });
 
-        this.logger.log({
-            message: 'Job enqueued via transactional outbox',
-            context: RabbitMQJobQueueService.name,
-            metadata: {
-                jobId,
-                correlationId: job.correlationId,
+                return savedJob.id;
             },
-        });
-
-        return jobId;
+            {
+                'workflow.component': 'queue',
+                'workflow.operation': 'enqueue',
+            },
+        );
     }
 
-    async getStatus(jobId: string): Promise<ICodeReviewJob | null> {
+    async getStatus(jobId: string): Promise<IWorkflowJob | null> {
         return await this.jobRepository.findOne(jobId);
     }
 
     async listJobs(filters: {
-        status?: string;
+        status?: any;
+        workflowType?: any;
         organizationId?: string;
         teamId?: string;
-        platformType?: string;
         limit?: number;
         offset?: number;
     }): Promise<{
-        data: ICodeReviewJob[];
+        data: IWorkflowJob[];
         total: number;
         limit: number;
         offset: number;
     }> {
         const result = await this.jobRepository.findMany({
-            ...filters,
-            status: filters.status as any,
+            status: filters.status,
+            workflowType: filters.workflowType,
+            organizationId: filters.organizationId,
+            teamId: filters.teamId,
+            limit: filters.limit,
+            offset: filters.offset,
         });
 
         return {

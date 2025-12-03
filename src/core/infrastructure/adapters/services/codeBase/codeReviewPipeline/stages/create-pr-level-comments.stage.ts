@@ -22,6 +22,7 @@ import {
 @Injectable()
 export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipelineContext> {
     readonly stageName = 'CreatePrLevelCommentsStage';
+    readonly dependsOn: string[] = ['FileAnalysisStage']; // Depends on FileAnalysisStage
 
     constructor(
         private readonly logger: PinoLoggerService,

@@ -24,6 +24,7 @@ import type {
 import type { ContextAugmentationsMap } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
 
 export interface CodeReviewPipelineContext extends PipelineContext {
+    workflowJobId?: string; // ID of the workflow job (for pausing/resuming)
     dryRun: {
         enabled: boolean;
         id?: string;

@@ -22,6 +22,7 @@ import { LLM_ANALYSIS_SERVICE_TOKEN } from '@/core/infrastructure/adapters/servi
 import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
 import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';
 import { BackoffPresets } from '@/shared/utils/polling';
+import { WorkflowPausedError } from '@/core/infrastructure/adapters/services/pipeline/errors/workflow-paused.error';
 
 /**
  * Enterprise (cloud) implementation of the file review context preparation service
@@ -120,7 +121,10 @@ export class FileReviewContextPreparation extends BaseFileReviewContextPreparati
             return null;
         }
 
-        let fileContext: AnalysisContext = baseContext.fileContext;
+        let fileContext: AnalysisContext = {
+            ...baseContext.fileContext,
+            workflowJobId: context.workflowJobId, // Pass workflowJobId from pipeline context
+        };
 
         const isHeavyMode =
             fileContext.reviewModeResponse !== ReviewModeResponse.HEAVY_MODE;
@@ -141,6 +145,22 @@ export class FileReviewContextPreparation extends BaseFileReviewContextPreparati
 
         if (shouldRunAST) {
             try {
+                // ✅ NOVO: Pausa workflow em vez de polling ativo
+                // Verifica se temos workflowJobId (executando via workflow queue)
+                if (fileContext.workflowJobId) {
+                    // Pausa workflow e espera evento AST
+                    throw new WorkflowPausedError(
+                        'ast.task.completed',
+                        fileContext.tasks.astAnalysis.taskId,
+                        720000, // 12 minutes timeout
+                        {
+                            filename: file.filename,
+                            taskId: fileContext.tasks.astAnalysis.taskId,
+                        },
+                    );
+                }
+
+                // Fallback: Se não temos workflowJobId, usa polling (compatibilidade com código existente)
                 // Heavy task: linear backoff 5s, 10s, 15s... up to 60s
                 const astTaskRes = await this.astService.awaitTask(
                     fileContext.tasks.astAnalysis.taskId,

@@ -20,6 +20,7 @@ export class LoadExternalContextStage
     implements ILoadExternalContextStage
 {
     readonly stageName = 'LoadExternalContextStage';
+    readonly dependsOn: string[] = ['FetchChangedFilesStage']; // Depends on FetchChangedFilesStage
 
     constructor(
         @Inject(PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN)

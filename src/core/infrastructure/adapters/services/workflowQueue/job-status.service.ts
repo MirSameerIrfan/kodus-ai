@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { IJobStatusService } from '@/core/domain/workflowQueue/contracts/job-status.service.contract';
-import { CodeReviewJobRepository } from '@/core/infrastructure/adapters/repositories/typeorm/code-review-job.repository';
+import { WorkflowJobRepository } from '@/core/infrastructure/adapters/repositories/typeorm/workflow-job.repository';
 import { JobStatus } from '@/core/domain/workflowQueue/enums/job-status.enum';
 import { DataSource } from 'typeorm';
 
 @Injectable()
 export class JobStatusService implements IJobStatusService {
     constructor(
-        private readonly jobRepository: CodeReviewJobRepository,
+        private readonly jobRepository: WorkflowJobRepository,
         private readonly dataSource: DataSource,
     ) {}
 
@@ -32,40 +32,40 @@ export class JobStatusService implements IJobStatusService {
     }
 
     async getMetrics() {
-        // Busca métricas agregadas do banco
+        // Busca métricas agregadas do banco (schema workflow)
         const queueSize = await this.dataSource.query(
-            `SELECT COUNT(*) as count FROM code_review_jobs WHERE status = $1`,
+            `SELECT COUNT(*) as count FROM workflow.workflow_jobs WHERE status = $1`,
             [JobStatus.PENDING],
         );
 
         const processingCount = await this.dataSource.query(
-            `SELECT COUNT(*) as count FROM code_review_jobs WHERE status = $1`,
+            `SELECT COUNT(*) as count FROM workflow.workflow_jobs WHERE status = $1`,
             [JobStatus.PROCESSING],
         );
 
         const completedToday = await this.dataSource.query(
-            `SELECT COUNT(*) as count FROM code_review_jobs
-             WHERE status = $1 AND completed_at >= CURRENT_DATE`,
+            `SELECT COUNT(*) as count FROM workflow.workflow_jobs
+             WHERE status = $1 AND "completedAt" >= CURRENT_DATE`,
             [JobStatus.COMPLETED],
         );
 
         const failedToday = await this.dataSource.query(
-            `SELECT COUNT(*) as count FROM code_review_jobs
-             WHERE status = $1 AND completed_at >= CURRENT_DATE`,
+            `SELECT COUNT(*) as count FROM workflow.workflow_jobs
+             WHERE status = $1 AND "completedAt" >= CURRENT_DATE`,
             [JobStatus.FAILED],
         );
 
         const avgProcessingTime = await this.dataSource.query(
-            `SELECT AVG(EXTRACT(EPOCH FROM (completed_at - started_at)) * 1000) as avg_ms
-             FROM code_review_jobs
-             WHERE status = $1 AND completed_at IS NOT NULL AND started_at IS NOT NULL
-             AND completed_at >= CURRENT_DATE`,
+            `SELECT AVG(EXTRACT(EPOCH FROM ("completedAt" - "startedAt")) * 1000) as avg_ms
+             FROM workflow.workflow_jobs
+             WHERE status = $1 AND "completedAt" IS NOT NULL AND "startedAt" IS NOT NULL
+             AND "completedAt" >= CURRENT_DATE`,
             [JobStatus.COMPLETED],
         );
 
         const byStatus = await this.dataSource.query(
             `SELECT status, COUNT(*) as count
-             FROM code_review_jobs
+             FROM workflow.workflow_jobs
              GROUP BY status`,
         );
 

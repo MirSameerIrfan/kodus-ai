@@ -54,32 +54,59 @@ import { TeamMembersModule } from './teamMembers.module';
 import { TokenChunkingModule } from './tokenChunking.module';
 import { UsageModule } from './usage.module';
 import { WebhookLogModule } from './webhookLog.module';
+import { WorkflowQueueModule } from './workflowQueue.module';
 
+/**
+ * AppModule - Base Shared Module
+ * 
+ * This module contains all shared infrastructure that is used by:
+ * - ApiModule (API REST - porta 3331)
+ * - WebhookHandlerModule (Webhook Handler - porta 3332)
+ * - WorkerModule (Workers - sem HTTP)
+ * 
+ * It includes:
+ * - Database connections (PostgreSQL, MongoDB)
+ * - RabbitMQ configuration
+ * - Logging and observability
+ * - All domain modules (users, organizations, teams, etc.)
+ * - Business logic modules (automation, codebase, etc.)
+ * 
+ * NO HTTP controllers are included here - they are added by specific modules.
+ * NO APP_GUARD is included here - authentication is handled by specific modules.
+ */
 @Module({
     imports: [
+        // Infrastructure
         EventEmitterModule.forRoot(),
         McpModule.forRoot(),
         GlobalCacheModule,
         RabbitMQWrapperModule.register(),
         ScheduleModule.forRoot(),
-        KodyASTModule,
-        PlatformIntegrationModule,
         LogModule,
-        CronModule,
         DatabaseModule,
         SharedModule,
+        // Domain Modules
         AuthModule,
         UsersModule,
         TeamMembersModule,
-        GithubModule,
-        GitlabModule,
         OrganizationModule,
-        HealthModule,
         ProfilesModule,
         TeamsModule,
+        // Platform Integration
+        PlatformIntegrationModule,
+        GithubModule,
+        GitlabModule,
+        BitbucketModule,
+        // Automation & Code Review
         AutomationModule,
         TeamAutomationModule,
         AutomationStrategyModule,
+        CodebaseModule,
+        CodeReviewExecutionModule,
+        KodyASTModule,
+        KodyASTAnalyzeContextModule,
+        FileReviewModule,
+        // Other Modules
         AgentModule,
         AuthIntegrationModule,
         IntegrationModule,
@@ -89,35 +116,33 @@ import { WebhookLogModule } from './webhookLog.module';
         ProfileConfigModule,
         ParametersModule,
         OrganizationParametersModule,
-        CodebaseModule,
         SegmentModule,
         KodyRulesModule,
-        BitbucketModule,
         SuggestionEmbeddedModule,
-        FileReviewModule,
-        KodyASTAnalyzeContextModule,
         GlobalParametersModule,
         LicenseModule,
         RuleLikeModule,
         IssuesModule,
         TokenChunkingModule,
         PullRequestMessagesModule,
-        LLMModule.forRoot({
-            logger: PinoLoggerService,
-            global: true,
-        }),
-        CodeReviewExecutionModule,
         PermissionsModule,
         WebhookLogModule,
         PermissionValidationModule,
         UsageModule,
         DryRunModule,
+        CronModule,
+        HealthModule,
+        // LLM Module
+        LLMModule.forRoot({
+            logger: PinoLoggerService,
+            global: true,
+        }),
+        // Workflow Queue Module (shared infrastructure, not workers)
+        // Workers are added by WorkerModule
+        WorkflowQueueModule,
     ],
-    providers: [
-        {
-            provide: APP_GUARD,
-            useClass: JwtAuthGuard,
-        },
-    ],
+    // No APP_GUARD here - authentication is handled by ApiModule
+    // No controllers here - controllers are added by ApiModule and WebhookHandlerModule
 })
 export class AppModule {}
+

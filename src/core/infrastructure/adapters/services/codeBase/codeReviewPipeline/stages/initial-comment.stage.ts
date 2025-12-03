@@ -12,6 +12,7 @@ import { PullRequestMessageStatus } from '@/config/types/general/pullRequestMess
 @Injectable()
 export class InitialCommentStage extends BasePipelineStage<CodeReviewPipelineContext> {
     stageName = 'InitialCommentStage';
+    readonly dependsOn: string[] = ['FileContextGateStage']; // Depends on FileContextGateStage
 
     constructor(
         @Inject(COMMENT_MANAGER_SERVICE_TOKEN)

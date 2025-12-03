@@ -1,6 +1,5 @@
 import { BITBUCKET_SERVICE_TOKEN } from '@/core/domain/bitbucket/contracts/bitbucket.service.contract';
 import { BitbucketService } from '@/core/infrastructure/adapters/services/bitbucket/bitbucket.service';
-import { BitbucketController } from '@/core/infrastructure/http/controllers/bitbucket.controller';
 import { LicenseModule } from '@/ee/license/license.module';
 import { PermissionValidationModule } from '@/ee/shared/permission-validation.module';
 import { forwardRef, Module } from '@nestjs/common';
@@ -32,7 +31,7 @@ import { WebhookLogModule } from './webhookLog.module';
             useClass: BitbucketService,
         },
     ],
-    controllers: [BitbucketController],
+    // Controllers moved to ApiModule and WebhookHandlerModule
     exports: [BITBUCKET_SERVICE_TOKEN],
 })
 export class BitbucketModule {}
