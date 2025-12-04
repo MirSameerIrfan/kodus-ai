@@ -2,6 +2,7 @@ import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
 } from '@/core/domain/auth/contracts/auth.service.contracts';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { AuthProvider } from '@/shared/domain/enums/auth-provider.enum';
 import { Inject, Injectable } from '@nestjs/common';
 import { randomBytes } from 'crypto';
@@ -13,6 +14,7 @@ export class SSOLoginUseCase {
         @Inject(AUTH_SERVICE_TOKEN)
         private readonly authService: IAuthService,
         private readonly signUpUseCase: SignUpUseCase,
+        private readonly logger: PinoLoggerService,
     ) {}
 
     async execute(profile: any, organizationId: string) {
@@ -41,6 +43,16 @@ export class SSOLoginUseCase {
                 refreshToken,
             };
         } catch (error) {
+            this.logger.error({
+                message: 'SSO login failed',
+                error,
+                context: SSOLoginUseCase.name,
+                metadata: {
+                    profile,
+                    organizationId,
+                },
+                serviceName: SSOLoginUseCase.name,
+            });
             throw error;
         }
     }

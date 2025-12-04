@@ -6,6 +6,7 @@ import {
     SSOProtocol,
     SSOProtocolConfigMap,
 } from '@/core/domain/auth/interfaces/ssoConfig.interface';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -13,6 +14,7 @@ export class CreateOrUpdateSSOConfigUseCase {
     constructor(
         @Inject(SSO_CONFIG_SERVICE_TOKEN)
         private readonly ssoConfigService: ISSOConfigService,
+        private readonly logger: PinoLoggerService,
     ) {}
 
     async execute(params: {
@@ -41,6 +43,11 @@ export class CreateOrUpdateSSOConfigUseCase {
             });
 
             if (!ssoConfig) {
+                this.logger.error({
+                    message: 'SSOConfig not found',
+                    context: CreateOrUpdateSSOConfigUseCase.name,
+                    metadata: { uuid, organizationId },
+                });
                 throw new Error('SSOConfig not found');
             }
 
@@ -51,10 +58,21 @@ export class CreateOrUpdateSSOConfigUseCase {
                 domains,
             });
 
+            this.logger.log({
+                message: 'SSO config updated successfully',
+                context: CreateOrUpdateSSOConfigUseCase.name,
+                metadata: { uuid: updated.uuid, organizationId },
+            });
+
             return updated.toJson();
         }
 
         if (!protocol || !providerConfig || !domains) {
+            this.logger.error({
+                message: 'Missing required fields for SSO config creation',
+                context: CreateOrUpdateSSOConfigUseCase.name,
+                metadata: { protocol, providerConfig, domains },
+            });
             throw new Error('Missing required fields');
         }
 
@@ -66,6 +84,12 @@ export class CreateOrUpdateSSOConfigUseCase {
                 uuid: organizationId,
             },
             domains,
+        });
+
+        this.logger.log({
+            message: 'SSO config created successfully',
+            context: CreateOrUpdateSSOConfigUseCase.name,
+            metadata: { uuid: created.uuid, organizationId },
         });
 
         return created.toJson();

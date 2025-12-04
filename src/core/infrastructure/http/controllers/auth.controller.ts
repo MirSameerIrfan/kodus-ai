@@ -126,9 +126,14 @@ export class AuthController {
 
         res.cookie('sso_handoff', payload, {
             httpOnly: false,
-            secure: false,
+            secure: process.env.API_NODE_ENV === 'production',
             sameSite: 'lax',
+            path: '/',
             maxAge: 15 * 1000,
+            domain:
+                process.env.API_NODE_ENV === 'production'
+                    ? '.kodus.io'
+                    : undefined,
         });
 
         return res.redirect(`${frontendUrl}/sso-callback`);

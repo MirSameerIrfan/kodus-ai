@@ -41,8 +41,8 @@ export class SSOConfigController {
         }
 
         return await this.createOrUpdateSSOConfigUseCase.execute({
-            organizationId,
             ...body,
+            organizationId,
         });
     }
 
