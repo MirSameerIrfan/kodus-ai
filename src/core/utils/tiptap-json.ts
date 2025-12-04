@@ -74,8 +74,7 @@ export function convertTiptapJSONToText(
                 if (resolved) {
                     result += resolved;
                 } else {
-                    const app =
-                        typeof attrs?.app === 'string' ? attrs.app : '';
+                    const app = typeof attrs?.app === 'string' ? attrs.app : '';
                     const tool =
                         typeof attrs?.tool === 'string' ? attrs.tool : '';
                     result += `@mcp<${app}|${tool}>`;
@@ -95,6 +94,7 @@ export function convertTiptapJSONToText(
 
 export function convertTiptapJSONToMarkdown(
     content: string | object | null | undefined,
+    options?: { keepMcpMentions?: boolean },
 ): string {
     const normalized = normalizeContent(content);
     if (normalized === undefined) {
@@ -116,29 +116,27 @@ export function convertTiptapJSONToMarkdown(
         if (!marks?.length) {
             return text;
         }
-        return [...marks]
-            .reverse()
-            .reduce((acc, mark) => {
-                switch (mark.type) {
-                    case 'bold':
-                        return `**${acc}**`;
-                    case 'italic':
-                        return `*${acc}*`;
-                    case 'code':
-                        return `\`${acc}\``;
-                    case 'strike':
-                        return `~~${acc}~~`;
-                    case 'link': {
-                        const href =
-                            typeof mark.attrs?.href === 'string'
-                                ? mark.attrs.href
-                                : '';
-                        return href ? `[${acc}](${href})` : acc;
-                    }
-                    default:
-                        return acc;
+        return [...marks].reverse().reduce((acc, mark) => {
+            switch (mark.type) {
+                case 'bold':
+                    return `**${acc}**`;
+                case 'italic':
+                    return `*${acc}*`;
+                case 'code':
+                    return `\`${acc}\``;
+                case 'strike':
+                    return `~~${acc}~~`;
+                case 'link': {
+                    const href =
+                        typeof mark.attrs?.href === 'string'
+                            ? mark.attrs.href
+                            : '';
+                    return href ? `[${acc}](${href})` : acc;
                 }
-            }, text);
+                default:
+                    return acc;
+            }
+        }, text);
     };
 
     const traverse = (node: TiptapNode, context?: ListContext): void => {
@@ -158,19 +156,21 @@ export function convertTiptapJSONToMarkdown(
                 markdown += '  \n';
                 return;
             case 'mcpMention': {
+                if (!options?.keepMcpMentions) {
+                    return;
+                }
                 const attrs = node.attrs as Record<string, unknown> | undefined;
                 const resolved =
                     typeof attrs?.resolvedOutput === 'string'
                         ? attrs.resolvedOutput
                         : undefined;
                 if (resolved) {
-                    markdown += resolved;
+                    markdown += `\`${resolved}\``;
                 } else {
-                    const app =
-                        typeof attrs?.app === 'string' ? attrs.app : '';
+                    const app = typeof attrs?.app === 'string' ? attrs.app : '';
                     const tool =
                         typeof attrs?.tool === 'string' ? attrs.tool : '';
-                    markdown += `@mcp<${app}|${tool}>`;
+                    markdown += `\`@mcp<${app}|${tool}>\``;
                 }
                 return;
             }
@@ -209,8 +209,7 @@ export function convertTiptapJSONToMarkdown(
             }
             case 'orderedList': {
                 const attrs = node.attrs as Record<string, unknown> | undefined;
-                let index =
-                    typeof attrs?.start === 'number' ? attrs.start : 1;
+                let index = typeof attrs?.start === 'number' ? attrs.start : 1;
                 (node.content as TiptapNode[] | undefined)?.forEach((child) =>
                     traverse(child, {
                         inList: true,
@@ -245,17 +244,14 @@ export function convertTiptapJSONToMarkdown(
                     const quoted = quote
                         .map((line) => (line.trim() ? `> ${line}` : ''))
                         .join('\n');
-                    markdown =
-                        markdown.substring(0, before) + quoted + '\n\n';
+                    markdown = markdown.substring(0, before) + quoted + '\n\n';
                 }
                 return;
             }
             case 'codeBlock': {
                 const attrs = node.attrs as Record<string, unknown> | undefined;
                 const language =
-                    typeof attrs?.language === 'string'
-                        ? attrs.language
-                        : '';
+                    typeof attrs?.language === 'string' ? attrs.language : '';
                 markdown += `\`\`\`${language}\n`;
                 (node.content as TiptapNode[] | undefined)?.forEach((child) => {
                     if (child.type === 'text') {

@@ -111,6 +111,7 @@ interface IWebhookGitlabMergeRequest {
     assignee: IWebhookGitlabUser;
     approved_by_ids?: number[];
     approver_ids?: number[];
+    labels?: IWebhookGitlabLabel[];
 }
 
 interface IWebhookGitlabUser {

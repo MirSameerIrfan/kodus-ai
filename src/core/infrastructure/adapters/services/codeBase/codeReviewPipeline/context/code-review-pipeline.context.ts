@@ -42,6 +42,7 @@ export interface CodeReviewPipelineContext extends PipelineContext {
         };
         repository: Repository;
         isDraft: boolean;
+        tags?: string[];
         stats: {
             total_additions: number;
             total_deletions: number;

@@ -62,19 +62,26 @@ export function sanitizePromptText(raw?: string): string {
 export function getTextOrDefault(
     text: unknown,
     fallbackText?: unknown,
+    options?: { keepMcpMentions?: boolean },
 ): string {
     const primaryRaw = convertTiptapJSONToMarkdown(
         extractRawValue(text),
+        options,
     ).trim();
-    const primary = sanitizePromptText(primaryRaw);
+    const primary = options?.keepMcpMentions
+        ? primaryRaw
+        : sanitizePromptText(primaryRaw);
     if (primary.length) {
         return limitText(primary);
     }
 
     const fallbackRaw = convertTiptapJSONToMarkdown(
         extractRawValue(fallbackText),
+        options,
     ).trim();
-    const fallback = sanitizePromptText(fallbackRaw);
+    const fallback = options?.keepMcpMentions
+        ? fallbackRaw
+        : sanitizePromptText(fallbackRaw);
 
     return fallback.length ? limitText(fallback) : '';
 }
