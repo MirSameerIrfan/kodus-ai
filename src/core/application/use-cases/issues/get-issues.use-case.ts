@@ -1,28 +1,28 @@
+import { UserRequest } from '@/config/types/http/user-request.type';
+import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@/core/domain/codeBase/contracts/KodyIssuesManagement.contract';
 import {
     IIssuesService,
     ISSUES_SERVICE_TOKEN,
 } from '@/core/domain/issues/contracts/issues.service.contract';
-import { GetIssuesByFiltersDto } from '@/core/infrastructure/http/dtos/get-issues-by-filters.dto';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
-import { Inject, Injectable } from '@nestjs/common';
 import { IIssue } from '@/core/domain/issues/interfaces/issues.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { CacheService } from '@/shared/utils/cache/cache.service';
-import { REQUEST } from '@nestjs/core';
-import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
-import {
-    Action,
-    ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import { UserRequest } from '@/config/types/http/user-request.type';
-import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@/core/domain/codeBase/contracts/KodyIssuesManagement.contract';
-import { KodyIssuesManagementService } from '@/core/infrastructure/adapters/services/kodyIssuesManagement/service/kodyIssuesManagement.service';
 import {
     IKodyRulesService,
     KODY_RULES_SERVICE_TOKEN,
 } from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
-import { LabelType } from '@/shared/utils/codeManagement/labels';
+import {
+    Action,
+    ResourceType,
+} from '@/core/domain/permissions/enums/permissions.enum';
 import { IContributingSuggestion } from '@/core/infrastructure/adapters/services/kodyIssuesManagement/domain/kodyIssuesManagement.interface';
+import { KodyIssuesManagementService } from '@/core/infrastructure/adapters/services/kodyIssuesManagement/service/kodyIssuesManagement.service';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
+import { GetIssuesByFiltersDto } from '@/core/infrastructure/http/dtos/get-issues-by-filters.dto';
+import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+import { CacheService } from '@/shared/utils/cache/cache.service';
+import { LabelType } from '@/shared/utils/codeManagement/labels';
+import { Inject, Injectable } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
 
 type KodyRuleMetadata = {
     number: string;
@@ -71,7 +71,10 @@ export class GetIssuesUseCase implements IUseCase {
                     return [];
                 }
 
-                await this.attachKodyRulesMetadata(allIssues, filters.organizationId);
+                await this.attachKodyRulesMetadata(
+                    allIssues,
+                    filters.organizationId,
+                );
 
                 this.finalizeIssues(allIssues);
 
@@ -83,11 +86,11 @@ export class GetIssuesUseCase implements IUseCase {
             }
 
             const assignedRepositoryIds =
-                await this.authorizationService.getRepositoryScope(
-                    this.request.user,
-                    Action.Read,
-                    ResourceType.Issues,
-                );
+                await this.authorizationService.getRepositoryScope({
+                    user: this.request.user,
+                    action: Action.Read,
+                    resource: ResourceType.Issues,
+                });
 
             if (assignedRepositoryIds !== null) {
                 allIssues = allIssues.filter((issue) =>

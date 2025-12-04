@@ -38,7 +38,10 @@ export class PullRequestMessagesController {
     @Post('/')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Create, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Create,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     public async createOrUpdatePullRequestMessages(
         @Body() body: IPullRequestMessages,
@@ -52,9 +55,13 @@ export class PullRequestMessagesController {
     @Get('/find-by-repository-or-directory')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkRepoPermissions(Action.Read, ResourceType.CodeReviewSettings, {
-            key: {
-                query: 'repositoryId',
+        checkRepoPermissions({
+            action: Action.Read,
+            resource: ResourceType.CodeReviewSettings,
+            repo: {
+                key: {
+                    query: 'repositoryId',
+                },
             },
         }),
     )
