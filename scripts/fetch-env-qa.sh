@@ -141,6 +141,9 @@ KEYS=(
     "/qa/kodus-orchestrator/API_KODUS_MCP_SERVER_URL"
 
     "/qa/kodus-orchestrator/API_OPENROUTER_KEY"
+
+    "/qa/kodus-orchestrator/API_URL"
+    "/qa/kodus-orchestrator/API_FRONTEND_URL"
 )
 
 # Lista de todas as chaves que você precisa
