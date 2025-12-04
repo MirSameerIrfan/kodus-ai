@@ -8,8 +8,25 @@ import {
     SSOProtocol,
     SSOProtocolConfigMap,
 } from '@/core/domain/auth/interfaces/ssoConfig.interface';
-import { Body, Controller, Get, Inject, Post, Query } from '@nestjs/common';
+import {
+    Action,
+    ResourceType,
+} from '@/core/domain/permissions/enums/permissions.enum';
+import {
+    Body,
+    Controller,
+    Get,
+    Inject,
+    Post,
+    Query,
+    UseGuards,
+} from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
+import {
+    CheckPolicies,
+    PolicyGuard,
+} from '../../adapters/services/permissions/policy.guard';
+import { checkPermissions } from '../../adapters/services/permissions/policy.handlers';
 
 @Controller('sso-config')
 export class SSOConfigController {
@@ -24,6 +41,13 @@ export class SSOConfigController {
     ) {}
 
     @Post()
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Create,
+            resource: ResourceType.OrganizationSettings,
+        }),
+    )
     async createOrUpdate(
         @Body()
         body: {
@@ -47,6 +71,13 @@ export class SSOConfigController {
     }
 
     @Get()
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.OrganizationSettings,
+        }),
+    )
     async getSSOConfigs(
         @Query('protocol') protocol?: SSOProtocol,
         @Query('active') active?: boolean,
