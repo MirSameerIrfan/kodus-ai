@@ -169,7 +169,32 @@ export class GetIssueByIdUseCase implements IUseCase {
             });
         }
 
-        const allRelevantFeedbacks = codeReviewFeedback?.filter(
+        const latestFeedbackBySuggestionId = new Map();
+        
+        codeReviewFeedback?.forEach((feedback) => {
+            if (!feedback?.suggestionId) return;
+
+            const existingFeedback = latestFeedbackBySuggestionId.get(
+                feedback.suggestionId,
+            );
+
+            if (
+                !existingFeedback ||
+                new Date(feedback.createdAt) >
+                    new Date(existingFeedback.createdAt)
+            ) {
+                latestFeedbackBySuggestionId.set(
+                    feedback.suggestionId,
+                    feedback,
+                );
+            }
+        });
+
+        const uniqueFeedbacks = Array.from(
+            latestFeedbackBySuggestionId.values(),
+        );
+
+        const allRelevantFeedbacks = uniqueFeedbacks.filter(
             (feedback) =>
                 feedback?.suggestionId &&
                 suggestionIds.has(feedback.suggestionId),
