@@ -1472,6 +1472,11 @@ export class GitlabService
             const filters = params?.filters ?? {};
             const { startDate, endDate } = filters?.period || {};
             const prStatus = filters?.prStatus || 'all';
+            const perRepoLimit = Math.min(Math.max(filters?.limit || 5, 1), 10);
+            const repoFilter = filters?.repositoryId
+                ? new Set([String(filters.repositoryId)])
+                : null;
+            const useFastPath = Boolean(filters?.repositoryId || filters?.limit);
 
             const gitlabAuthDetail = await this.getAuthDetails(
                 params?.organizationAndTeamData,
@@ -1492,7 +1497,15 @@ export class GitlabService
             const pullRequestsWithFiles: PullRequestWithFiles[] = [];
 
             for (const repo of repositories) {
-                const mergeRequests = await this.getMergeRequestFromRepository(
+                if (
+                    repoFilter &&
+                    !repoFilter.has(String(repo.id)) &&
+                    !repoFilter.has(String(repo.name))
+                ) {
+                    continue;
+                }
+
+                let mergeRequests = await this.getMergeRequestFromRepository(
                     gitlabAPI,
                     repo.id,
                     startDate,
@@ -1500,14 +1513,25 @@ export class GitlabService
                     prStatus,
                 );
 
+                if (useFastPath) {
+                    mergeRequests = mergeRequests
+                        .sort(
+                            (a, b) =>
+                                new Date(b.created_at).getTime() -
+                                new Date(a.created_at).getTime(),
+                        )
+                        .slice(0, perRepoLimit);
+                }
+
                 const pullRequestDetails = await Promise.all(
                     mergeRequests.map(async (pullRequest) => {
-                        const filesWithChanges =
-                            await this.countChangesInMergeRequest(
-                                gitlabAPI,
-                                repo.id,
-                                pullRequest.iid,
-                            );
+                        const filesWithChanges = filters?.skipFiles
+                            ? []
+                            : await this.countChangesInMergeRequest(
+                                  gitlabAPI,
+                                  repo.id,
+                                  pullRequest.iid,
+                              );
 
                         return {
                             id: pullRequest.id,

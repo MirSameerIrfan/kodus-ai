@@ -15,10 +15,15 @@ import { GetInheritedRulesKodyRulesUseCase } from '@/core/application/use-cases/
 import { GetRulesLimitStatusUseCase } from '@/core/application/use-cases/kodyRules/get-rules-limit-status.use-case';
 import { ResyncRulesFromIdeUseCase } from '@/core/application/use-cases/kodyRules/resync-rules-from-ide.use-case';
 import { SyncSelectedRepositoriesKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/sync-selected-repositories.use-case';
+import { FastSyncIdeRulesUseCase } from '@/core/application/use-cases/kodyRules/fast-sync-ide-rules.use-case';
+import { ImportFastKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/import-fast-kody-rules.use-case';
+import { ImportFastKodyRulesDto } from '../dtos/import-fast-kody-rules.dto';
+import { ReviewFastKodyRulesDto } from '../dtos/review-fast-kody-rules.dto';
 import {
     Action,
     ResourceType,
 } from '@/core/domain/permissions/enums/permissions.enum';
+import { KodyRulesStatus } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
 import { CacheService } from '@/shared/utils/cache/cache.service';
 import {
     Body,
@@ -66,6 +71,8 @@ export class KodyRulesController {
         private readonly getRulesLimitStatusUseCase: GetRulesLimitStatusUseCase,
         private readonly findSuggestionsByRuleUseCase: FindSuggestionsByRuleUseCase,
         private readonly resyncRulesFromIdeUseCase: ResyncRulesFromIdeUseCase,
+        private readonly fastSyncIdeRulesUseCase: FastSyncIdeRulesUseCase,
+        private readonly importFastKodyRulesUseCase: ImportFastKodyRulesUseCase,
         @Inject(REQUEST)
         private readonly request: UserRequest,
     ) {}
@@ -232,6 +239,69 @@ export class KodyRulesController {
             teamId: body.teamId,
             repositoriesIds: respositories,
         });
+    }
+
+    @Post('/fast-sync-ide-rules')
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(checkPermissions(Action.Create, ResourceType.KodyRules))
+    public async fastSyncIdeRules(
+        @Body()
+        body: {
+            teamId: string;
+            repositoryId: string;
+            maxFiles?: number;
+            maxFileSizeBytes?: number;
+            maxTotalBytes?: number;
+        },
+    ) {
+        return this.fastSyncIdeRulesUseCase.execute(body);
+    }
+
+    @Get('/pending-ide-rules')
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(checkPermissions(Action.Read, ResourceType.KodyRules))
+    public async listPendingIdeRules(
+        @Query('teamId') teamId: string,
+        @Query('repositoryId') repositoryId?: string,
+    ) {
+        const organizationId = this.request.user.organization.uuid;
+        return this.findRulesInOrganizationByRuleFilterKodyRulesUseCase.execute(
+            organizationId,
+            { status: KodyRulesStatus.PENDING },
+            repositoryId,
+        );
+    }
+
+    @Post('/import-fast-ide-rules')
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(checkPermissions(Action.Create, ResourceType.KodyRules))
+    public async importFastIdeRules(@Body() body: ImportFastKodyRulesDto) {
+        return this.importFastKodyRulesUseCase.execute(body);
+    }
+
+    @Post('/review-fast-ide-rules')
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(checkPermissions(Action.Update, ResourceType.KodyRules))
+    public async reviewFastIdeRules(@Body() body: ReviewFastKodyRulesDto) {
+        const results: any = {};
+
+        if (body.activateRuleIds?.length) {
+            results.activated = await this.changeStatusKodyRulesUseCase.execute(
+                {
+                    ruleIds: body.activateRuleIds,
+                    status: KodyRulesStatus.ACTIVE,
+                },
+            );
+        }
+
+        if (body.deleteRuleIds?.length) {
+            results.deleted = await this.changeStatusKodyRulesUseCase.execute({
+                ruleIds: body.deleteRuleIds,
+                status: KodyRulesStatus.DELETED,
+            });
+        }
+
+        return results;
     }
 
     @Get('/inherited-rules')

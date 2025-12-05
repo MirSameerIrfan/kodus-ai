@@ -1319,6 +1319,11 @@ export class BitbucketService
 
             const filters = params?.filters ?? {};
             const { prStatus } = filters ?? 'OPEN';
+            const perRepoLimit = Math.min(Math.max(filters?.limit || 5, 1), 10);
+            const repoFilter = filters?.repositoryId
+                ? new Set([String(filters.repositoryId)])
+                : null;
+            const useFastPath = Boolean(filters?.repositoryId || filters?.limit);
 
             const stateMap = {
                 open: PullRequestState.OPENED.toUpperCase(),
@@ -1351,6 +1356,14 @@ export class BitbucketService
 
             const reposWithPrs = await Promise.all(
                 repositories.map(async (repo) => {
+                    if (
+                        repoFilter &&
+                        !repoFilter.has(String(repo.id)) &&
+                        !repoFilter.has(String(repo.name))
+                    ) {
+                        return { repo, prs: [] };
+                    }
+
                     let prs = await bitbucketAPI.pullrequests
                         .list({
                             repo_slug: `{${repo.id}}`,
@@ -1372,6 +1385,16 @@ export class BitbucketService
                         });
                     }
 
+                    if (useFastPath) {
+                        prs = prs
+                            .sort(
+                                (a, b) =>
+                                    new Date(b.created_on).getTime() -
+                                    new Date(a.created_on).getTime(),
+                            )
+                            .slice(0, perRepoLimit);
+                    }
+
                     return { repo, prs };
                 }),
             );
@@ -1381,8 +1404,12 @@ export class BitbucketService
             await Promise.all(
                 reposWithPrs.map(async ({ repo, prs }) => {
                     const prsWithDiffs = await Promise.all(
-                        prs.map((pr) =>
-                            bitbucketAPI.pullrequests
+                        prs.map((pr) => {
+                            if (useFastPath && filters?.skipFiles) {
+                                return Promise.resolve({ pr, diffs: [] });
+                            }
+
+                            return bitbucketAPI.pullrequests
                                 .getDiffStat({
                                     pull_request_id: pr.id,
                                     repo_slug: `{${repo.id}}`,
@@ -1394,8 +1421,8 @@ export class BitbucketService
                                         res,
                                     ),
                                 )
-                                .then((res) => ({ pr, diffs: res })),
-                        ),
+                                .then((res) => ({ pr, diffs: res }));
+                        }),
                     );
 
                     const prsWithFiles: PullRequestWithFiles[] =

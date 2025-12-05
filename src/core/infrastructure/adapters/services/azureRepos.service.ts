@@ -2292,6 +2292,9 @@ export class AzureReposService
         filters?: {
             period?: { startDate?: string; endDate?: string };
             prStatus?: string;
+            repositoryId?: string;
+            limit?: number;
+            skipFiles?: boolean;
         };
     }): Promise<PullRequestWithFiles[] | null> {
         try {
@@ -2299,6 +2302,11 @@ export class AzureReposService
             const filters = params.filters ?? {};
 
             const { prStatus } = filters;
+            const perRepoLimit = Math.min(Math.max(filters?.limit || 5, 1), 10);
+            const repoFilter = filters?.repositoryId
+                ? new Set([String(filters.repositoryId)])
+                : null;
+            const useFastPath = Boolean(filters?.repositoryId || filters?.limit);
 
             const stateMap = {
                 open: AzurePRStatus.ACTIVE,
@@ -2329,6 +2337,14 @@ export class AzureReposService
 
             const reposWithPRs = await Promise.all(
                 repositories.map(async (repo) => {
+                    if (
+                        repoFilter &&
+                        !repoFilter.has(String(repo.id)) &&
+                        !repoFilter.has(String(repo.name))
+                    ) {
+                        return { repo, prs: [] };
+                    }
+
                     const prs =
                         await this.azureReposRequestHelper.getPullRequestsByRepo(
                             {
@@ -2343,7 +2359,19 @@ export class AzureReposService
                                 },
                             },
                         );
-                    return { repo, prs };
+                    let filteredPrs = prs;
+
+                    if (useFastPath) {
+                        filteredPrs = prs
+                            .sort(
+                                (a, b) =>
+                                    new Date(b.creationDate).getTime() -
+                                    new Date(a.creationDate).getTime(),
+                            )
+                            .slice(0, perRepoLimit);
+                    }
+
+                    return { repo, prs: filteredPrs };
                 }),
             );
 
@@ -2353,6 +2381,24 @@ export class AzureReposService
                 reposWithPRs.map(async ({ repo, prs }) => {
                     const prsWithDiffs = await Promise.all(
                         prs.map(async (pr) => {
+                            if (useFastPath && filters?.skipFiles) {
+                                const prWithFileChanges: PullRequestWithFiles =
+                                    {
+                                        id: pr.pullRequestId,
+                                        pull_number: pr.pullRequestId,
+                                        state: pr.status,
+                                        title: pr.title,
+                                        repository: {
+                                            id: repo.id,
+                                            name: repo.name,
+                                        },
+                                        repositoryData: repo as any,
+                                        pullRequestFiles: [],
+                                    };
+
+                                return prWithFileChanges;
+                            }
+
                             const iterations =
                                 await this.azureReposRequestHelper.getIterations(
                                     {
