@@ -825,6 +825,209 @@ export class KodyRulesSyncService {
         }
     }
 
+    /**
+     * Fast, non-persisting sync used for onboarding.
+     * - Scans only known rule patterns (same list as full sync)
+     * - Uses Groq (OpenAI-compatible) via the existing PromptRunner/BYOK wrapper
+     * - Returns parsed rules without saving them
+     */
+    async syncRepositoryMainFast(
+        params: SyncTarget & {
+            maxFiles?: number;
+            maxFileSizeBytes?: number;
+            maxTotalBytes?: number;
+        },
+    ): Promise<{
+        rules: Array<Partial<CreateKodyRuleDto>>;
+        skippedFiles: Array<{ file: string; reason: string }>;
+        errors: Array<{ file?: string; message: string }>;
+    }> {
+        const { organizationAndTeamData, repository } = params;
+        const response = {
+            rules: [] as Array<Partial<CreateKodyRuleDto>>,
+            skippedFiles: [] as Array<{ file: string; reason: string }>,
+            errors: [] as Array<{ file?: string; message: string }>,
+        };
+
+        const maxFiles = params.maxFiles ?? 20;
+        const maxFileSizeBytes = params.maxFileSizeBytes ?? 200_000; // ~200KB
+        const maxTotalBytes = params.maxTotalBytes ?? 2_000_000; // ~2MB aggregate
+
+        try {
+            const branch = await this.codeManagementService.getDefaultBranch({
+                organizationAndTeamData,
+                repository,
+            });
+
+            const directoryPatterns = await this.getDirectoryPatterns(
+                organizationAndTeamData,
+                repository.id,
+            );
+            const patterns = [...RULE_FILE_PATTERNS, ...directoryPatterns];
+
+            const allFiles =
+                await this.codeManagementService.getRepositoryAllFiles({
+                    organizationAndTeamData,
+                    repository: { id: repository.id, name: repository.name },
+                    filters: {
+                        branch,
+                        filePatterns: patterns,
+                    },
+                });
+
+            let processed = 0;
+            let totalBytes = 0;
+            const candidates: Array<{ path: string; content: string }> = [];
+            const directoryByPath: Record<string, string | undefined> = {};
+
+            for (const file of allFiles) {
+                if (processed >= maxFiles) {
+                    response.skippedFiles.push({
+                        file: file.path,
+                        reason: 'max files cap reached',
+                    });
+                    continue;
+                }
+
+                try {
+                    const content = await this.getFileContent({
+                        organizationAndTeamData,
+                        repository: {
+                            id: repository.id,
+                            name: repository.name,
+                        },
+                        filename: file.path,
+                        branch,
+                    });
+
+                    if (!content) {
+                        response.skippedFiles.push({
+                            file: file.path,
+                            reason: 'empty content',
+                        });
+                        continue;
+                    }
+
+                    if (content.length > maxFileSizeBytes) {
+                        response.skippedFiles.push({
+                            file: file.path,
+                            reason: 'file too large',
+                        });
+                        continue;
+                    }
+
+                    if (totalBytes + content.length > maxTotalBytes) {
+                        response.skippedFiles.push({
+                            file: file.path,
+                            reason: 'max aggregate size reached',
+                        });
+                        continue;
+                    }
+
+                    if (this.shouldIgnoreFile(content)) {
+                        response.skippedFiles.push({
+                            file: file.path,
+                            reason: 'ignored via @kody-ignore',
+                        });
+                        continue;
+                    }
+
+                    const directoryId = (
+                        await this.resolveDirectoryForFile({
+                            organizationAndTeamData,
+                            repositoryId: repository.id,
+                            filePath: file.path,
+                        })
+                    )?.id;
+
+                    directoryByPath[file.path] = directoryId;
+                    candidates.push({ path: file.path, content });
+
+                    processed += 1;
+                    totalBytes += content.length;
+                } catch (error) {
+                    response.errors.push({
+                        file: file.path,
+                        message: error?.message || 'unexpected error',
+                    });
+                }
+            }
+
+            if (!candidates.length) {
+                return response;
+            }
+
+            const rules = await this.convertFilesToKodyRulesFastBatch({
+                files: candidates,
+                repositoryId: repository.id,
+                organizationAndTeamData,
+            });
+
+            if (Array.isArray(rules)) {
+                for (const rule of rules) {
+                    if (!rule?.title || !rule?.rule) continue;
+
+                    const sourcePath =
+                        (rule.sourcePath as string) ||
+                        (rule.path as string) ||
+                        '';
+                    const directoryId =
+                        sourcePath && directoryByPath[sourcePath]
+                            ? directoryByPath[sourcePath]
+                            : undefined;
+
+                    const dto: CreateKodyRuleDto = {
+                        title: rule.title as string,
+                        rule: rule.rule as string,
+                        path: (rule.path as string) || sourcePath,
+                        sourcePath: sourcePath,
+                        repositoryId: repository.id,
+                        directoryId,
+                        severity:
+                            ((
+                                rule.severity as any
+                            )?.toLowerCase?.() as KodyRuleSeverity) ||
+                            KodyRuleSeverity.MEDIUM,
+                        scope:
+                            (rule.scope as KodyRulesScope) ||
+                            KodyRulesScope.FILE,
+                        origin: KodyRulesOrigin.USER,
+                        status: (rule.status as any) || KodyRulesStatus.PENDING,
+                        examples: Array.isArray(rule.examples)
+                            ? (rule.examples as any)
+                            : [],
+                    };
+
+                    try {
+                        const created =
+                            await this.kodyRulesService.createOrUpdate(
+                                organizationAndTeamData,
+                                dto,
+                                this.systemUserInfo,
+                            );
+                        response.rules.push(created as any);
+                    } catch (err) {
+                        response.errors.push({
+                            file: sourcePath,
+                            message: err?.message || 'failed to save rule',
+                        });
+                    }
+                }
+            } else {
+                response.errors.push({
+                    message: 'Failed to parse rules from batch',
+                });
+            }
+        } catch (error) {
+            response.errors.push({
+                message:
+                    error instanceof Error ? error.message : 'unexpected error',
+            });
+        }
+
+        return response;
+    }
+
     private async isIdeRulesSyncEnabled(
         organizationAndTeamData: OrganizationAndTeamData,
         repositoryId?: string,
@@ -882,12 +1085,20 @@ export class KodyRulesSyncService {
         return { head, base };
     }
 
-    private async convertFileToKodyRules(params: {
-        filePath: string;
-        repositoryId: string;
-        content: string;
-        organizationAndTeamData: OrganizationAndTeamData;
-    }): Promise<Array<Partial<CreateKodyRuleDto>>> {
+    private async convertFileToKodyRules(
+        params: {
+            filePath: string;
+            repositoryId: string;
+            content: string;
+            organizationAndTeamData: OrganizationAndTeamData;
+        },
+        options?: {
+            mainProvider?: LLMModelProvider;
+            fallbackProvider?: LLMModelProvider;
+            runName?: string;
+            defaultStatus?: KodyRulesStatus;
+        },
+    ): Promise<Array<Partial<CreateKodyRuleDto>>> {
         const validationResult =
             await this.permissionValidationService.validateBasicLicense(
                 params.organizationAndTeamData,
@@ -903,9 +1114,11 @@ export class KodyRulesSyncService {
                 params.organizationAndTeamData,
             );
 
-        const mainProvider = LLMModelProvider.GEMINI_2_5_FLASH;
-        const mainFallback = LLMModelProvider.GEMINI_2_5_PRO;
-        const mainRun = 'kodyRulesFileToRules';
+        const mainProvider =
+            options?.mainProvider ?? LLMModelProvider.GEMINI_2_5_FLASH;
+        const mainFallback =
+            options?.fallbackProvider ?? LLMModelProvider.GEMINI_2_5_PRO;
+        const mainRun = options?.runName ?? 'kodyRulesFileToRules';
 
         const promptRunner = new BYOKPromptRunnerService(
             this.promptRunnerService,
@@ -994,8 +1207,9 @@ export class KodyRulesSyncService {
                 scope: (rule?.scope as any) || KodyRulesScope.FILE,
                 path: rule?.path || params.filePath,
                 sourcePath: rule?.sourcePath || params.filePath,
+                repositoryId: rule?.repositoryId || params.repositoryId,
                 origin: KodyRulesOrigin.USER,
-                status: KodyRulesStatus.ACTIVE,
+                status: options?.defaultStatus || KodyRulesStatus.ACTIVE,
                 examples: Array.isArray(rule?.examples)
                     ? rule.examples.map((example: any) => ({
                           snippet: example?.snippet || '',
@@ -1006,10 +1220,13 @@ export class KodyRulesSyncService {
 
             return result.rules.map(normalizeRule);
         } catch (error) {
-            const fbRun = 'kodyRulesFileToRulesRaw';
+            const fbRun = `${mainRun}Raw`;
             try {
-                const fbProvider = LLMModelProvider.GEMINI_2_5_FLASH;
-                const fbFallback = LLMModelProvider.GEMINI_2_5_PRO;
+                const fbProvider =
+                    options?.mainProvider ?? LLMModelProvider.GEMINI_2_5_FLASH;
+                const fbFallback =
+                    options?.fallbackProvider ??
+                    LLMModelProvider.GEMINI_2_5_PRO;
 
                 const promptRunner = new BYOKPromptRunnerService(
                     this.promptRunnerService,
@@ -1067,8 +1284,9 @@ export class KodyRulesSyncService {
                     scope: (rule?.scope as any) || KodyRulesScope.FILE,
                     path: rule?.path || params.filePath,
                     sourcePath: rule?.sourcePath || params.filePath,
+                    repositoryId: rule?.repositoryId || params.repositoryId,
                     origin: KodyRulesOrigin.USER,
-                    status: KodyRulesStatus.ACTIVE,
+                    status: options?.defaultStatus || KodyRulesStatus.ACTIVE,
                     examples: Array.isArray(rule?.examples)
                         ? rule.examples.map((example: any) => ({
                               snippet: example?.snippet || '',
@@ -1084,6 +1302,183 @@ export class KodyRulesSyncService {
                     context: KodyRulesSyncService.name,
                     metadata: {
                         ...params,
+                        organizationAndTeamData: params.organizationAndTeamData,
+                    },
+                    error: fallbackError,
+                });
+                return [];
+            }
+        }
+    }
+
+    private convertFileToKodyRulesFast(params: {
+        filePath: string;
+        repositoryId: string;
+        content: string;
+        organizationAndTeamData: OrganizationAndTeamData;
+    }): Promise<Array<Partial<CreateKodyRuleDto>>> {
+        return this.convertFileToKodyRules(params, {
+            mainProvider: LLMModelProvider.GROQ_MOONSHOTAI_KIMI_K2_,
+            fallbackProvider: LLMModelProvider.GROQ_GPT_OSS_120B,
+            runName: 'kodyRulesFileToRulesFast',
+            defaultStatus: KodyRulesStatus.PENDING,
+        });
+    }
+
+    private async convertFilesToKodyRulesFastBatch(params: {
+        files: Array<{ path: string; content: string }>;
+        repositoryId: string;
+        organizationAndTeamData: OrganizationAndTeamData;
+    }): Promise<Array<Partial<CreateKodyRuleDto>>> {
+        const byokConfigValue =
+            await this.permissionValidationService.getBYOKConfig(
+                params.organizationAndTeamData,
+            );
+
+        const mainProvider = LLMModelProvider.GROQ_MOONSHOTAI_KIMI_K2_;
+        const mainFallback = LLMModelProvider.GROQ_GPT_OSS_120B;
+        const mainRun = 'kodyRulesFilesToRulesFastBatch';
+
+        const promptRunner = new BYOKPromptRunnerService(
+            this.promptRunnerService,
+            mainProvider,
+            mainFallback,
+            byokConfigValue,
+        );
+
+        const userPrompt = params.files
+            .map(
+                (file) =>
+                    `### FILE: ${file.path}\n<content>\n${file.content}\n</content>`,
+            )
+            .join('\n\n');
+
+        try {
+            const { result } = await this.observabilityService.runLLMInSpan({
+                spanName: `${KodyRulesSyncService.name}::${mainRun}`,
+                runName: mainRun,
+                attrs: {
+                    repositoryId: params.repositoryId,
+                    filesCount: params.files.length,
+                    type: promptRunner.executeMode,
+                    fallback: false,
+                },
+                exec: async (callbacks) => {
+                    return await promptRunner
+                        .builder()
+                        .setParser(
+                            ParserType.ZOD,
+                            kodyRulesIDEGeneratorSchema,
+                            {
+                                provider:
+                                    LLMModelProvider.GROQ_MOONSHOTAI_KIMI_K2_,
+                                fallbackProvider:
+                                    LLMModelProvider.GROQ_GPT_OSS_120B,
+                            },
+                        )
+                        .setLLMJsonMode(true)
+                        .setPayload({
+                            repositoryId: params.repositoryId,
+                            filesCount: params.files.length,
+                        })
+                        .addPrompt({
+                            role: PromptRole.SYSTEM,
+                            prompt: [
+                                'You will receive multiple repository rule files. Produce a SINGLE JSON array with up to 5 MOST IMPORTANT Kody Rules across all files (prioritize critical/high impact, security/compliance, or broad applicability).',
+                                'Output ONLY valid JSON (no code fences). If none, output [].',
+                                'Each rule must follow:',
+                                '{"title": string, "rule": string, "path": string, "sourcePath": string, "repositoryId": string, "severity": "low"|"medium"|"high"|"critical", "scope"?: "file"|"pull-request", "examples": [{ "snippet": string, "isCorrect": boolean }], "sourceSnippet"?: string}',
+                                'For each file, if multiple candidate rules exist, merge them into one comprehensive rule for that file, then select only the top 5 overall.',
+                                'sourcePath MUST be the file path from input. Use the same for path unless the file declares specific globs.',
+                                'If a file has zero rules, skip it (do not emit placeholder).',
+                                'Severity map: must/required/security/blocker → "high"/"critical"; should/warn → "medium"; tip/info/optional → "low".',
+                                'Scope: "file" for code/content; "pull-request" for PR titles/descriptions/commits/reviewers/labels.',
+                                'Include sourceSnippet when you can copy an exact excerpt that triggered the rule.',
+                                'Keep language consistent with source (EN or PT-BR).',
+                                'Do NOT include extra keys (repositoryId, origin, uuid, timestamps).',
+                                'Be exhaustive: preserve specific APIs, steps, anti-patterns, and examples from each file.',
+                            ].join(' '),
+                        })
+                        .addPrompt({
+                            role: PromptRole.USER,
+                            prompt: `Repository: ${params.repositoryId}\nFiles:\n\n${userPrompt}`,
+                        })
+                        .addCallbacks(callbacks)
+                        .addMetadata({ runName: mainRun })
+                        .setRunName(mainRun)
+                        .execute();
+                },
+            });
+
+            if (!result?.rules || result.rules.length === 0) return [];
+
+            return (result.rules as Array<Partial<CreateKodyRuleDto>>)
+                .slice(0, 5)
+                .map((rule) => ({
+                    ...rule,
+                    repositoryId:
+                        (rule as any)?.repositoryId || params.repositoryId,
+                    status: KodyRulesStatus.PENDING,
+                }));
+        } catch (error) {
+            const fbRun = `${mainRun}Raw`;
+            try {
+                const promptRunner = new BYOKPromptRunnerService(
+                    this.promptRunnerService,
+                    mainProvider,
+                    mainFallback,
+                    byokConfigValue,
+                );
+
+                const { result: raw } =
+                    await this.observabilityService.runLLMInSpan({
+                        spanName: `${KodyRulesSyncService.name}::${fbRun}`,
+                        runName: fbRun,
+                        attrs: {
+                            repositoryId: params.repositoryId,
+                            filesCount: params.files.length,
+                            type: promptRunner.executeMode,
+                            fallback: true,
+                        },
+                        exec: async (callbacks) => {
+                            return await promptRunner
+                                .builder()
+                                .setParser(ParserType.STRING)
+                                .addPrompt({
+                                    role: PromptRole.SYSTEM,
+                                    prompt: 'Return ONLY the JSON array of rules (no code fences, no text), capped at 5 most important (critical/high impact). Each item must include sourcePath copied from the provided file path.',
+                                })
+                                .addPrompt({
+                                    role: PromptRole.USER,
+                                    prompt: `Repository: ${params.repositoryId}\nFiles:\n\n${userPrompt}`,
+                                })
+                                .addCallbacks(callbacks)
+                                .addMetadata({ runName: fbRun })
+                                .setRunName(fbRun)
+                                .execute();
+                        },
+                    });
+
+                const parsed = this.extractJsonArray(raw);
+                if (!Array.isArray(parsed)) {
+                    return [];
+                }
+
+                return (parsed as Array<Partial<CreateKodyRuleDto>>)
+                    .slice(0, 5)
+                    .map((rule) => ({
+                        ...rule,
+                        repositoryId:
+                            (rule as any)?.repositoryId || params.repositoryId,
+                        status: KodyRulesStatus.PENDING,
+                    }));
+            } catch (fallbackError) {
+                this.logger.error({
+                    message: 'LLM batch conversion failed for rule files',
+                    context: KodyRulesSyncService.name,
+                    metadata: {
+                        repositoryId: params.repositoryId,
+                        filesCount: params.files.length,
                         organizationAndTeamData: params.organizationAndTeamData,
                     },
                     error: fallbackError,
