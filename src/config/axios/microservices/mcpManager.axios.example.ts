@@ -1,8 +1,8 @@
 /**
  * EXEMPLO DE MIGRAÇÃO - AxiosMCPManagerService
- * 
+ *
  * Este arquivo mostra como migrar o serviço para usar BaseSecureAxiosService
- * 
+ *
  * Para aplicar: substituir o conteúdo de mcpManager.axios.ts por este código
  */
 
@@ -11,10 +11,9 @@ import { BaseSecureAxiosService } from '@/config/axios/base-secure-axios.service
 
 export class AxiosMCPManagerService extends BaseSecureAxiosService {
     constructor() {
-        super(
-            process.env.API_KODUS_SERVICE_MCP_MANAGER || '',
-            { 'Content-Type': 'application/json' }
-        );
+        super(process.env.API_KODUS_SERVICE_MCP_MANAGER || '', {
+            'Content-Type': 'application/json',
+        });
     }
 
     // Métodos públicos com validação automática via interceptor
@@ -33,10 +32,9 @@ export class AxiosMCPManagerService extends BaseSecureAxiosService {
     public async post(
         url: string,
         body: Record<string, unknown> = {},
-        config: AxiosRequestConfig = {}
+        config: AxiosRequestConfig = {},
     ) {
         // Validação automática + explícita
         return await this.securePost(url, body, config);
     }
 }
-

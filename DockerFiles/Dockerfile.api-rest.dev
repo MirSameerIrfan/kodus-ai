@@ -28,13 +28,13 @@ COPY nest-cli.json ./
 COPY packages/kodus-flow ./packages/kodus-flow
 COPY packages/kodus-common ./packages/kodus-common
 COPY src ./src
-COPY apps/api-rest ./apps/api-rest
+COPY apps/api ./apps/api
 
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
-# Build apenas o api-rest
+# Build apenas o api
 WORKDIR /usr/src/app
-RUN cd apps/api-rest && yarn nest build
+RUN yarn build:api
 
 # -------------------------------------------------------------
 FROM node:22.14.0-slim AS development
@@ -55,15 +55,14 @@ COPY --from=deps /usr/src/app/packages ./packages
 COPY package.json yarn.lock ./
 COPY tsconfig*.json ./
 COPY nest-cli.json ./
-COPY apps/api-rest/package.json ./apps/api-rest/
-COPY apps/api-rest/nest-cli.json ./apps/api-rest/
-COPY apps/api-rest/tsconfig.json ./apps/api-rest/
+COPY apps/api/package.json ./apps/api/
+COPY apps/api/tsconfig.json ./apps/api/
 
-COPY --from=build-code /usr/src/app/apps/api-rest/dist ./apps/api-rest/dist
+COPY --from=build-code /usr/src/app/dist/apps/api ./dist/apps/api
 COPY --from=build-code /usr/src/app/src ./src
 COPY --from=build-code /usr/src/app/packages ./packages
 RUN mkdir -p /usr/src/app/certs
 
 WORKDIR /usr/src/app
-CMD ["node", "apps/api-rest/dist/main.js"]
+CMD ["node", "dist/apps/api/main.js"]
 

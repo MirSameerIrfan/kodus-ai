@@ -14,7 +14,6 @@ import { HttpServerConfiguration } from '@/config/types';
 import { environment } from '@/ee/configs/environment';
 
 async function bootstrap() {
-    // Define tipo de componente para configuração de pool de DB
     process.env.COMPONENT_TYPE = 'webhook';
 
     // Inicializa Sentry e OpenTelemetry antes de tudo

@@ -1,0 +1,156 @@
+import { createLogger } from "@kodus/flow";
+import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+import { Inject, Injectable } from '@nestjs/common';
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
+import { IPullRequestWithDeliveredSuggestions } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
+import {
+    PULL_REQUESTS_SERVICE_TOKEN,
+    IPullRequestsService,
+} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
+import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
+
+@Injectable()
+export class GetReactionsUseCase implements IUseCase {
+    private readonly logger = createLogger(GetReactionsUseCase.name);
+    constructor(
+        private readonly codeManagementService: CodeManagementService,
+        @Inject(PULL_REQUESTS_SERVICE_TOKEN)
+        private readonly pullRequestService: IPullRequestsService
+    ) {}
+
+    async execute(
+        organizationAndTeamData: OrganizationAndTeamData,
+        automationExecutionsPRs: number[],
+    ) {
+        if (!automationExecutionsPRs?.length) {
+            return [];
+        }
+
+        const pullRequests =
+            await this.pullRequestService.findPullRequestsWithDeliveredSuggestions(
+                organizationAndTeamData.organizationId,
+                automationExecutionsPRs,
+                [PullRequestState.MERGED, PullRequestState.CLOSED],
+            );
+
+        if (!pullRequests?.length) {
+            return [];
+        }
+
+        return await this.getReactions(pullRequests, organizationAndTeamData);
+    }
+
+    private async getReactions(
+        pullRequests: IPullRequestWithDeliveredSuggestions[],
+        organizationAndTeamData: OrganizationAndTeamData,
+    ) {
+        const reactionsPromises = pullRequests.map(async (pr) => {
+            if (!pr.suggestions?.length) {
+                return [];
+            }
+
+            const suggestionsByCommentId = new Map(
+                pr.suggestions.map((s) => [s.comment?.id, s]),
+            );
+
+            const comments =
+                await this.codeManagementService.getPullRequestReviewComment({
+                    organizationAndTeamData,
+                    filters: {
+                        repository: pr.repository.name,
+                        pullRequestNumber: pr.number,
+                    },
+                });
+
+            const commentsLinkedToSuggestions = comments.filter((comment) => {
+                const commentId = comment?.threadId
+                    ? comment.threadId
+                    : comment?.notes?.[0]?.id || comment?.id;
+                return suggestionsByCommentId.has(commentId);
+            });
+
+            if (!commentsLinkedToSuggestions.length) {
+                return [];
+            }
+
+            const reactionsInComments =
+                await this.codeManagementService.countReactions({
+                    organizationAndTeamData,
+                    comments: commentsLinkedToSuggestions,
+                    pr: {
+                        pull_number: pr.number,
+                        repository: pr.repository.name,
+                    },
+                });
+
+            if (!reactionsInComments?.length) {
+                return [];
+            }
+
+            return reactionsInComments
+                .map((reaction) => {
+                    const suggestion = suggestionsByCommentId.get(
+                        reaction.comment.id,
+                    );
+                    if (!suggestion) {
+                        return null;
+                    }
+
+                    return {
+                        reactions: reaction.reactions,
+                        comment: {
+                            id: reaction.comment.id,
+                            pullRequestReviewId:
+                                reaction.comment?.pull_request_review_id,
+                        },
+                        suggestionId: suggestion.id,
+                        pullRequest: {
+                            id: reaction.pullRequest.id,
+                            number: reaction.pullRequest.number,
+                            repository: {
+                                id:
+                                    reaction?.pullRequest?.repository?.id ||
+                                    pr.repository.id,
+                                fullName:
+                                    reaction?.pullRequest?.repository
+                                        ?.fullName || pr.repository.name,
+                            },
+                        },
+                        organizationId: organizationAndTeamData.organizationId,
+                    };
+                })
+                .filter((reaction) => reaction !== null);
+        });
+
+        const reactionsResults = await Promise.all(reactionsPromises);
+        const flattenedReactions = reactionsResults.flat();
+
+        const prsWithoutReactions = pullRequests.filter((pr, index) => {
+            return reactionsResults[index].length === 0;
+        });
+
+        if (prsWithoutReactions.length > 0) {
+            this.logger.log({
+                message: 'PRs without reactions summary',
+                context: GetReactionsUseCase.name,
+                metadata: {
+                    organizationId: organizationAndTeamData.organizationId,
+                    totalPRs: pullRequests.length,
+                    prsWithReactions:
+                        pullRequests.length - prsWithoutReactions.length,
+                    prsWithoutReactions: prsWithoutReactions.length,
+                    prsWithoutReactionsDetails: prsWithoutReactions.map(
+                        (pr) => ({
+                            prNumber: pr.number,
+                            repository: pr.repository.name,
+                            suggestionsCount: pr.suggestions?.length || 0,
+                        }),
+                    ),
+                },
+            });
+        }
+
+        return flattenedReactions;
+    }
+}

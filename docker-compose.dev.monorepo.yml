@@ -1,12 +1,12 @@
 services:
-    # Webhook Handler - Recebe webhooks e enfileira na fila
-    webhook-handler:
+    # Webhooks - Recebe webhooks e enfileira na fila
+    webhooks:
         init: true
-        container_name: kodus-webhook-handler-dev
-        image: kodus-webhook-handler-dev
+        container_name: kodus-webhooks-dev
+        image: kodus-webhooks-dev
         build:
             context: .
-            dockerfile: DockerFiles/Dockerfile.webhook-handler.dev
+            dockerfile: DockerFiles/Dockerfile.webhooks.dev
             args:
                 - API_CLOUD_MODE=${API_CLOUD_MODE:-false}
         ports:
@@ -27,20 +27,18 @@ services:
                 condition: service_healthy
             db_mongodb:
                 condition: service_healthy
-            rabbitmq:
-                condition: service_healthy
         networks:
             - kodus-backend-services
             - shared-network
 
-    # API REST - Endpoints administrativos
-    api-rest:
+    # API - Endpoints administrativos
+    api:
         init: true
-        container_name: kodus-api-rest-dev
-        image: kodus-api-rest-dev
+        container_name: kodus-api-dev
+        image: kodus-api-dev
         build:
             context: .
-            dockerfile: DockerFiles/Dockerfile.api-rest.dev
+            dockerfile: DockerFiles/Dockerfile.api.dev
             args:
                 - API_CLOUD_MODE=${API_CLOUD_MODE:-false}
         ports:
@@ -90,31 +88,9 @@ services:
                 condition: service_healthy
             db_mongodb:
                 condition: service_healthy
-            rabbitmq:
-                condition: service_healthy
         networks:
             - kodus-backend-services
             - shared-network
-
-    # RabbitMQ - Message broker
-    rabbitmq:
-        image: rabbitmq:4.2.2.1-management-alpine
-        container_name: rabbitmq
-        ports:
-            - '5672:5672'
-            - '15672:15672' # Management UI
-        environment:
-            RABBITMQ_DEFAULT_USER: ${API_RABBITMQ_USER:-guest}
-            RABBITMQ_DEFAULT_PASS: ${API_RABBITMQ_PASSWORD:-guest}
-        volumes:
-            - rabbitmq_data:/var/lib/rabbitmq
-        healthcheck:
-            test: ['CMD', 'rabbitmq-diagnostics', 'ping']
-            interval: 10s
-            timeout: 5s
-            retries: 5
-        networks:
-            - kodus-backend-services
 
     db_postgres:
         image: pgvector/pgvector:pg16
@@ -167,7 +143,6 @@ volumes:
     yalc_store: {}
     pgdata: {}
     mongodbdata: {}
-    rabbitmq_data: {}
 
 networks:
     kodus-backend-services:

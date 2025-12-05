@@ -28,13 +28,13 @@ COPY nest-cli.json ./
 COPY packages/kodus-flow ./packages/kodus-flow
 COPY packages/kodus-common ./packages/kodus-common
 COPY src ./src
-COPY apps/webhook-handler ./apps/webhook-handler
+COPY apps/webhooks ./apps/webhooks
 
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
-# Build apenas o webhook-handler
+# Build apenas o webhooks
 WORKDIR /usr/src/app
-RUN cd apps/webhook-handler && yarn nest build
+RUN yarn build:webhooks
 
 # -------------------------------------------------------------
 FROM node:22.14.0-slim AS development
@@ -55,15 +55,14 @@ COPY --from=deps /usr/src/app/packages ./packages
 COPY package.json yarn.lock ./
 COPY tsconfig*.json ./
 COPY nest-cli.json ./
-COPY apps/webhook-handler/package.json ./apps/webhook-handler/
-COPY apps/webhook-handler/nest-cli.json ./apps/webhook-handler/
-COPY apps/webhook-handler/tsconfig.json ./apps/webhook-handler/
+COPY apps/webhooks/package.json ./apps/webhooks/
+COPY apps/webhooks/tsconfig.json ./apps/webhooks/
 
-COPY --from=build-code /usr/src/app/apps/webhook-handler/dist ./apps/webhook-handler/dist
+COPY --from=build-code /usr/src/app/dist/apps/webhooks ./dist/apps/webhooks
 COPY --from=build-code /usr/src/app/src ./src
 COPY --from=build-code /usr/src/app/packages ./packages
 RUN mkdir -p /usr/src/app/certs
 
 WORKDIR /usr/src/app
-CMD ["node", "apps/webhook-handler/dist/main.js"]
+CMD ["node", "dist/apps/webhooks/main.js"]
 

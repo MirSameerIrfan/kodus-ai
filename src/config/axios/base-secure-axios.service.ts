@@ -3,7 +3,7 @@ import { AxiosUrlValidator } from '@/shared/utils/axios-url-validator';
 
 /**
  * Base class for secure Axios services
- * 
+ *
  * Provides URL validation to prevent SSRF attacks when baseURL is configured.
  * All axios microservices should extend this class.
  */
@@ -40,7 +40,7 @@ export abstract class BaseSecureAxiosService {
                                 : 'Invalid URL format';
                         throw new Error(
                             `[SSRF Protection] ${errorMessage}. ` +
-                            `URL: ${config.url}, BaseURL: ${this.axiosInstance.defaults.baseURL}`,
+                                `URL: ${config.url}, BaseURL: ${this.axiosInstance.defaults.baseURL}`,
                         );
                     }
                 }
@@ -108,4 +108,3 @@ export abstract class BaseSecureAxiosService {
         return this.axiosInstance;
     }
 }
-
