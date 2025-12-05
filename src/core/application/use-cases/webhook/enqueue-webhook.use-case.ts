@@ -42,12 +42,13 @@ export class EnqueueWebhookUseCase implements IUseCase {
             });
 
             // Enfileira o payload bruto do webhook para processamento posterior pelo worker
-            // organizationId e teamId serão identificados pelo worker ao processar o webhook
+            // organizationAndTeam será identificado pelo worker ao processar o webhook
             await this.jobQueueService.enqueue({
                 correlationId,
                 workflowType: WorkflowType.WEBHOOK_PROCESSING,
                 handlerType: HandlerType.WEBHOOK_RAW,
                 payload: input.payload,
+                organizationAndTeam: undefined, // Será identificado pelo worker
                 metadata: {
                     platformType: input.platformType,
                     event: input.event,

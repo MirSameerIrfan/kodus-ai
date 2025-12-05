@@ -1,19 +1,19 @@
 import { createLogger } from "@kodus/flow";
 import { Injectable } from '@nestjs/common';
-import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
+import { BaseStage } from './base/base-stage.abstract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 
 @Injectable()
-export class AggregateResultsStage extends BasePipelineStage<CodeReviewPipelineContext> {
+export class AggregateResultsStage extends BaseStage {
     private readonly logger = createLogger(AggregateResultsStage.name);
-    readonly stageName = 'AggregateResultsStage';
+    readonly name = 'AggregateResultsStage';
     readonly dependsOn: string[] = ['CreatePrLevelCommentsStage', 'CreateFileCommentsStage']; // Depends on both comment stages
 
     constructor() {
         super();
     }
 
-    protected async executeStage(
+    async execute(
         context: CodeReviewPipelineContext,
     ): Promise<CodeReviewPipelineContext> {
         if (
@@ -22,7 +22,7 @@ export class AggregateResultsStage extends BasePipelineStage<CodeReviewPipelineC
         ) {
             this.logger.warn({
                 message: `No file analysis results to aggregate for PR#${context.pullRequest.number}`,
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     organizationAndTeamData: context.organizationAndTeamData,
                     prNumber: context.pullRequest.number,
@@ -45,7 +45,7 @@ export class AggregateResultsStage extends BasePipelineStage<CodeReviewPipelineC
 
             this.logger.log({
                 message: `Aggregated ${validSuggestions.length} valid suggestions, ${discardedSuggestions.length} discarded suggestions`,
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     organizationAndTeamData: context.organizationAndTeamData,
                     prNumber: context.pullRequest.number,
@@ -66,7 +66,7 @@ export class AggregateResultsStage extends BasePipelineStage<CodeReviewPipelineC
         ) {
             this.logger.warn({
                 message: `No valid suggestions to aggregate for PR#${context.pullRequest.number}`,
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     organizationAndTeamData: context.organizationAndTeamData,
                     prNumber: context.pullRequest.number,
@@ -96,7 +96,7 @@ export class AggregateResultsStage extends BasePipelineStage<CodeReviewPipelineC
 
             this.logger.log({
                 message: `Aggregated ${validSuggestionsByPR.length} valid suggestions by PR, ${validCrossFileSuggestions.length} valid cross-file suggestions`,
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     organizationAndTeamData: context.organizationAndTeamData,
                     prNumber: context.pullRequest.number,

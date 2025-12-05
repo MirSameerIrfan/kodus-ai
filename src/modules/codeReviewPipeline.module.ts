@@ -3,7 +3,9 @@
  * © Kodus Tech. All rights reserved.
  */
 import { Module, forwardRef } from '@nestjs/common';
-import { PipelineExecutor } from '@/core/infrastructure/adapters/services/pipeline/pipeline-executor.service';
+import { CodeReviewPipelineExecutor } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/pipeline/pipeline-executor.service';
+import { PipelineStateManager } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/pipeline/pipeline-state-manager.service';
+import { StateSerializerService } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/pipeline/state-serializer.service';
 
 import { ValidateConfigStage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/validate-config.stage';
 import { FetchChangedFilesStage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/fetch-changed-files.stage';
@@ -40,8 +42,12 @@ import { KodyFineTuningContextModule } from './kodyFineTuningContext.module';
 import { PromptsModule } from './prompts.module';
 import { DryRunModule } from './dryRun.module';
 import { FileContextGateStage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/file-context-gate.stage';
+import { LoadExternalContextStage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/load-external-context.stage';
 import { McpAgentModule } from './mcpAgent.module';
 import { FileContextAugmentationService } from '@/core/infrastructure/adapters/services/context/file-context-augmentation.service';
+import { WorkflowQueueModule } from './workflowQueue.module';
+import { CodeBaseConfigCacheService } from '@/core/infrastructure/adapters/services/codeBase/code-base-config-cache.service';
+import { CODE_BASE_CONFIG_CACHE_SERVICE_TOKEN } from '@/core/domain/codeBase/contracts/CodeBaseConfigCacheService.contract';
 
 @Module({
     imports: [
@@ -61,9 +67,12 @@ import { FileContextAugmentationService } from '@/core/infrastructure/adapters/s
         forwardRef(() => PromptsModule),
         forwardRef(() => DryRunModule),
         forwardRef(() => McpAgentModule),
+        forwardRef(() => WorkflowQueueModule), // Para WorkflowJobRepository
     ],
     providers: [
-        PipelineExecutor,
+        StateSerializerService,
+        PipelineStateManager,
+        CodeReviewPipelineExecutor,
         CodeReviewPipelineStrategy,
         CodeReviewPipelineStrategyEE,
         // Stages
@@ -71,6 +80,7 @@ import { FileContextAugmentationService } from '@/core/infrastructure/adapters/s
         ValidateNewCommitsStage,
         ResolveConfigStage,
         FetchChangedFilesStage,
+        LoadExternalContextStage,
         InitialCommentStage,
         BatchCreationStage,
         FileContextGateStage,
@@ -85,9 +95,15 @@ import { FileContextAugmentationService } from '@/core/infrastructure/adapters/s
         CodeAnalysisASTStage,
         CodeAnalysisASTCleanupStage,
         FileContextAugmentationService,
+        CodeBaseConfigCacheService,
+        {
+            provide: CODE_BASE_CONFIG_CACHE_SERVICE_TOKEN,
+            useClass: CodeBaseConfigCacheService,
+        },
     ],
     exports: [
-        PipelineExecutor,
+        CodeReviewPipelineExecutor,
+        PipelineStateManager,
         ValidateConfigStage,
         ResolveConfigStage,
         FetchChangedFilesStage,

@@ -1,6 +1,6 @@
 import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
-import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
+import { BaseStage } from './base/base-stage.abstract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
@@ -16,9 +16,9 @@ import {
 } from '@/core/domain/automation/enums/automation-status';
 
 @Injectable()
-export class ValidateNewCommitsStage extends BasePipelineStage<CodeReviewPipelineContext> {
+export class ValidateNewCommitsStage extends BaseStage {
     private readonly logger = createLogger(ValidateNewCommitsStage.name);
-    readonly stageName = 'ValidateNewCommitsStage';
+    readonly name = 'ValidateNewCommitsStage';
     readonly dependsOn: string[] = []; // No dependencies - can run in parallel with other initial stages
 
     constructor(
@@ -30,7 +30,7 @@ export class ValidateNewCommitsStage extends BasePipelineStage<CodeReviewPipelin
         super();
     }
 
-    protected override async executeStage(
+    async execute(
         context: CodeReviewPipelineContext,
     ): Promise<CodeReviewPipelineContext> {
         // Buscar execução anterior para verificar se há commits novos
@@ -56,7 +56,7 @@ export class ValidateNewCommitsStage extends BasePipelineStage<CodeReviewPipelin
 
             this.logger.log({
                 message: `Found last analyzed commit: ${JSON.stringify(lastAnalyzedCommit)}`,
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     organizationAndTeamData: context.organizationAndTeamData,
                     repository: context.repository.name,
@@ -66,7 +66,7 @@ export class ValidateNewCommitsStage extends BasePipelineStage<CodeReviewPipelin
         } else {
             this.logger.log({
                 message: 'No last analyzed commit found, analyzing all commits',
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     organizationAndTeamData: context.organizationAndTeamData,
                     repository: context.repository.name,
@@ -87,7 +87,7 @@ export class ValidateNewCommitsStage extends BasePipelineStage<CodeReviewPipelin
         if (!commits || commits?.length === 0) {
             this.logger.warn({
                 message: 'No new commits found since last execution',
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     organizationAndTeamData: context.organizationAndTeamData,
                     repository: context.repository.name,
@@ -108,7 +108,7 @@ export class ValidateNewCommitsStage extends BasePipelineStage<CodeReviewPipelin
 
         this.logger.log({
             message: `Fetched ${commits.length} new commits for PR#${context.pullRequest.number}`,
-            context: this.stageName,
+            context: this.name,
             metadata: {
                 organizationAndTeamData: context.organizationAndTeamData,
                 repository: context.repository.name,
@@ -176,7 +176,7 @@ export class ValidateNewCommitsStage extends BasePipelineStage<CodeReviewPipelin
         if (isOnlyMerge) {
             this.logger.warn({
                 message: `Skipping code review for PR#${context.pullRequest.number} - Only merge commits found`,
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     organizationAndTeamData: context.organizationAndTeamData,
                     repository: context.repository.name,
@@ -197,7 +197,7 @@ export class ValidateNewCommitsStage extends BasePipelineStage<CodeReviewPipelin
 
         this.logger.log({
             message: `Processing ${commits.length} commits for PR#${context.pullRequest.number}`,
-            context: this.stageName,
+            context: this.name,
             metadata: {
                 organizationAndTeamData: context.organizationAndTeamData,
                 repository: context.repository.name,

@@ -4,16 +4,17 @@ import {
     AST_ANALYSIS_SERVICE_TOKEN,
     IASTAnalysisService,
 } from '@/core/domain/codeBase/contracts/ASTAnalysisService.contract';
-import { BasePipelineStage } from '@/core/infrastructure/adapters/services/pipeline/base-stage.abstract';
+import { BaseStage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/base/base-stage.abstract';
 import { CodeReviewPipelineContext } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/context/code-review-pipeline.context';
 
 const ENABLE_CODE_REVIEW_AST =
     process.env.API_ENABLE_CODE_REVIEW_AST === 'true';
 
 @Injectable()
-export class CodeAnalysisASTCleanupStage extends BasePipelineStage<CodeReviewPipelineContext> {
+export class CodeAnalysisASTCleanupStage extends BaseStage {
     private readonly logger = createLogger(CodeAnalysisASTCleanupStage.name);
-    stageName = 'CodeAnalysisASTCleanupStage';
+    readonly name = 'CodeAnalysisASTCleanupStage';
+    readonly dependsOn: string[] = ['CodeAnalysisASTStage']; // Depends on CodeAnalysisASTStage
 
     constructor(
         @Inject(AST_ANALYSIS_SERVICE_TOKEN)
@@ -22,7 +23,7 @@ export class CodeAnalysisASTCleanupStage extends BasePipelineStage<CodeReviewPip
         super();
     }
 
-    protected async executeStage(
+    async execute(
         context: CodeReviewPipelineContext,
     ): Promise<CodeReviewPipelineContext> {
         if (
@@ -38,7 +39,7 @@ export class CodeAnalysisASTCleanupStage extends BasePipelineStage<CodeReviewPip
                 context.pullRequest,
                 context.platformType,
                 context.organizationAndTeamData,
-                context.tasks.astAnalysis.taskId,
+                context.tasks?.astAnalysis?.taskId || '',
             );
 
             return context;
@@ -46,7 +47,7 @@ export class CodeAnalysisASTCleanupStage extends BasePipelineStage<CodeReviewPip
             this.logger.error({
                 message: 'Error during AST analysis cleanup',
                 error,
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     ...context.organizationAndTeamData,
                     pullRequestNumber: context.pullRequest.number,

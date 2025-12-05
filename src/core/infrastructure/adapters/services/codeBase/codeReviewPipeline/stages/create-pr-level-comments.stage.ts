@@ -1,6 +1,6 @@
 import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
-import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
+import { BaseStage } from './base/base-stage.abstract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 import {
     COMMENT_MANAGER_SERVICE_TOKEN,
@@ -20,9 +20,9 @@ import {
 } from '@/core/domain/dryRun/contracts/dryRun.service.contract';
 
 @Injectable()
-export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipelineContext> {
+export class CreatePrLevelCommentsStage extends BaseStage {
     private readonly logger = createLogger(CreatePrLevelCommentsStage.name);
-    readonly stageName = 'CreatePrLevelCommentsStage';
+    readonly name = 'CreatePrLevelCommentsStage';
     readonly dependsOn: string[] = ['FileAnalysisStage']; // Depends on FileAnalysisStage
 
     constructor(
@@ -38,7 +38,7 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
         super();
     }
 
-    protected async executeStage(
+    async execute(
         context: CodeReviewPipelineContext,
     ): Promise<CodeReviewPipelineContext> {
         try {
@@ -46,7 +46,7 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
             if (!context?.organizationAndTeamData) {
                 this.logger.error({
                     message: 'Missing organizationAndTeamData in context',
-                    context: this.stageName,
+                    context: this.name,
                 });
                 return context;
             }
@@ -54,7 +54,7 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
             if (!context?.pullRequest?.number) {
                 this.logger.error({
                     message: 'Missing pullRequest data in context',
-                    context: this.stageName,
+                    context: this.name,
                     metadata: {
                         organizationAndTeamData:
                             context.organizationAndTeamData,
@@ -66,7 +66,7 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
             if (!context?.repository?.name || !context?.repository?.id) {
                 this.logger.error({
                     message: 'Missing repository data in context',
-                    context: this.stageName,
+                    context: this.name,
                     metadata: {
                         organizationAndTeamData:
                             context.organizationAndTeamData,
@@ -82,7 +82,7 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
             if (prLevelSuggestions.length === 0) {
                 this.logger.log({
                     message: `No PR-level suggestions to process for PR#${context.pullRequest.number}`,
-                    context: this.stageName,
+                    context: this.name,
                     metadata: {
                         organizationAndTeamData:
                             context.organizationAndTeamData,
@@ -95,7 +95,7 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
             try {
                 this.logger.log({
                     message: `Starting PR-level comments creation for PR#${context.pullRequest.number}`,
-                    context: this.stageName,
+                    context: this.name,
                     metadata: {
                         suggestionsCount: prLevelSuggestions.length,
                         organizationAndTeamData:
@@ -126,7 +126,7 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
 
                     this.logger.log({
                         message: `Successfully created ${commentResults.length} PR-level comments for PR#${context.pullRequest.number}`,
-                        context: this.stageName,
+                        context: this.name,
                         metadata: {
                             prNumber: context.pullRequest.number,
                             organizationAndTeamData:
@@ -138,7 +138,7 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
                 } catch (error) {
                     this.logger.error({
                         message: `Error creating PR level comments for PR#${context.pullRequest.number}`,
-                        context: this.stageName,
+                        context: this.name,
                         error,
                         metadata: {
                             prNumber: context.pullRequest.number,
@@ -182,7 +182,7 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
 
                                 this.logger.log({
                                     message: `Saved ${transformedPrLevelSuggestions.length} PR level suggestions to database`,
-                                    context: this.stageName,
+                                    context: this.name,
                                     metadata: {
                                         prNumber: context.pullRequest.number,
                                         repositoryName: context.repository.name,
@@ -195,7 +195,7 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
                             } catch (error) {
                                 this.logger.error({
                                     message: `Error saving PR level suggestions to database`,
-                                    context: this.stageName,
+                                    context: this.name,
                                     error,
                                     metadata: {
                                         prNumber: context.pullRequest.number,
@@ -210,7 +210,7 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
                     } catch (error) {
                         this.logger.error({
                             message: `Error transforming comment results to PR level suggestions`,
-                            context: this.stageName,
+                            context: this.name,
                             error,
                             metadata: {
                                 prNumber: context.pullRequest.number,
@@ -239,7 +239,7 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
             } catch (error) {
                 this.logger.error({
                     message: `Error during PR-level comments creation for PR#${context.pullRequest.number}`,
-                    context: this.stageName,
+                    context: this.name,
                     error,
                     metadata: {
                         organizationAndTeamData:
@@ -261,6 +261,64 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
                 },
             });
             return context;
+        }
+    }
+
+    /**
+     * Compensate: Delete PR-level comments created by this stage
+     */
+    async compensate(context: CodeReviewPipelineContext): Promise<void> {
+        try {
+            const prLevelCommentResults = context.prLevelCommentResults || [];
+            
+            if (prLevelCommentResults.length === 0) {
+                return;
+            }
+
+            this.logger.log({
+                message: `Compensating: Deleting ${prLevelCommentResults.length} PR-level comments for PR#${context.pullRequest.number}`,
+                context: this.name,
+                metadata: {
+                    prNumber: context.pullRequest.number,
+                    commentsCount: prLevelCommentResults.length,
+                },
+            });
+
+            // Delete each comment created
+            for (const commentResult of prLevelCommentResults) {
+                try {
+                    if (commentResult.comment?.id) {
+                        await this.commentManagerService.deleteComment(
+                            context.organizationAndTeamData,
+                            context.pullRequest.number,
+                            context.repository,
+                            commentResult.comment.id,
+                            context.platformType,
+                        );
+                    }
+                } catch (error) {
+                    this.logger.warn({
+                        message: `Failed to delete PR-level comment during compensation`,
+                        context: this.name,
+                        error,
+                        metadata: {
+                            commentId: commentResult.comment?.id,
+                            prNumber: context.pullRequest.number,
+                        },
+                    });
+                    // Continue deleting other comments even if one fails
+                }
+            }
+        } catch (error) {
+            this.logger.error({
+                message: `Error during compensation for CreatePrLevelCommentsStage`,
+                context: this.name,
+                error,
+                metadata: {
+                    prNumber: context.pullRequest.number,
+                },
+            });
+            // Don't throw - compensation failures shouldn't break the workflow
         }
     }
 }

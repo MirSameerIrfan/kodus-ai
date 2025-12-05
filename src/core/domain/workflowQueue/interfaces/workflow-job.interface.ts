@@ -28,6 +28,7 @@ export interface IWorkflowJob {
         timeout: number; // milliseconds
         pausedAt: Date;
     };
+    pipelineState?: Record<string, unknown>;
     createdAt: Date;
     updatedAt: Date;
 }

@@ -104,7 +104,9 @@ export class WorkflowJobModel extends CoreModel {
         pausedAt: Date;
     };
 
+    @Column({ type: 'jsonb', nullable: true })
+    pipelineState?: Record<string, unknown>;
+
     @OneToMany(() => JobExecutionHistoryModel, (history) => history.job)
     executionHistory: JobExecutionHistoryModel[];
 }
-

@@ -28,8 +28,12 @@ export class WorkflowJobRepository {
                 workflowType: job.workflowType,
                 handlerType: job.handlerType,
                 payload: job.payload,
-                organization: { uuid: job.organizationId },
-                team: job.teamId ? { uuid: job.teamId } : undefined,
+                organization: job.organizationAndTeam?.organizationId
+                    ? { uuid: job.organizationAndTeam.organizationId }
+                    : undefined,
+                team: job.organizationAndTeam?.teamId
+                    ? { uuid: job.organizationAndTeam.teamId }
+                    : undefined,
                 status: job.status,
                 priority: job.priority,
                 retryCount: job.retryCount,
@@ -65,28 +69,42 @@ export class WorkflowJobRepository {
         return job ? this.mapToInterface(job) : null;
     }
 
-           async update(
-               jobId: string,
-               updates: Partial<IWorkflowJob>,
-           ): Promise<IWorkflowJob | null> {
-               await this.jobRepository.update(
-                   { uuid: jobId },
-                   {
-                       status: updates.status,
-                       retryCount: updates.retryCount,
-                       errorClassification: updates.errorClassification,
-                       lastError: updates.lastError,
-                       startedAt: updates.startedAt,
-                       completedAt: updates.completedAt,
-                       scheduledAt: updates.scheduledAt,
-                       currentStage: updates.currentStage,
-                       metadata: updates.metadata,
-                       waitingForEvent: updates.waitingForEvent,
-                   },
-               );
+    async update(
+        jobId: string,
+        updates: Partial<IWorkflowJob>,
+    ): Promise<IWorkflowJob | null> {
+        await this.jobRepository.update(
+            { uuid: jobId },
+            {
+                status: updates.status,
+                retryCount: updates.retryCount,
+                errorClassification: updates.errorClassification,
+                lastError: updates.lastError,
+                startedAt: updates.startedAt,
+                completedAt: updates.completedAt,
+                scheduledAt: updates.scheduledAt,
+                currentStage: updates.currentStage,
+                metadata: updates.metadata,
+                waitingForEvent: updates.waitingForEvent,
+                pipelineState: updates.pipelineState,
+            },
+        );
 
-               return this.findOne(jobId);
-           }
+        return this.findOne(jobId);
+    }
+
+    /**
+     * Update pipeline state for a workflow job
+     */
+    async updatePipelineState(
+        jobId: string,
+        pipelineState: Record<string, unknown>,
+    ): Promise<void> {
+        await this.jobRepository.update(
+            { uuid: jobId },
+            { pipelineState },
+        );
+    }
 
     async findMany(filters: {
         status?: JobStatus;
@@ -204,8 +222,15 @@ export class WorkflowJobRepository {
             workflowType: job.workflowType,
             handlerType: job.handlerType,
             payload: job.payload,
-            organizationId: job.organization?.uuid || '',
-            teamId: job.team?.uuid,
+            organizationAndTeam:
+                job.organization || job.team
+                    ? {
+                          organizationId: job.organization?.uuid,
+                          organizationName: job.organization?.name,
+                          teamId: job.team?.uuid,
+                          teamName: job.team?.name,
+                      }
+                    : undefined,
             status: job.status,
             priority: job.priority,
             retryCount: job.retryCount,
@@ -218,9 +243,9 @@ export class WorkflowJobRepository {
             currentStage: job.currentStage,
             metadata: job.metadata,
             waitingForEvent: job.waitingForEvent,
+            pipelineState: job.pipelineState,
             createdAt: job.createdAt,
             updatedAt: job.updatedAt,
         };
     }
 }
-

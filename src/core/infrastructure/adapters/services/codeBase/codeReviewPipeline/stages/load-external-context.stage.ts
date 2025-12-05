@@ -1,6 +1,6 @@
 import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
-import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
+import { BaseStage } from './base/base-stage.abstract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 import type { ContextLayer } from '@context-os-core/interfaces';
 import {
@@ -16,11 +16,11 @@ import { CodeReviewContextPackService } from '@/core/infrastructure/adapters/ser
 
 @Injectable()
 export class LoadExternalContextStage
-    extends BasePipelineStage<CodeReviewPipelineContext>
+    extends BaseStage
     implements ILoadExternalContextStage
 {
     private readonly logger = createLogger(LoadExternalContextStage.name);
-    readonly stageName = 'LoadExternalContextStage';
+    readonly name = 'LoadExternalContextStage';
     readonly dependsOn: string[] = ['FetchChangedFilesStage']; // Depends on FetchChangedFilesStage
 
     constructor(
@@ -33,7 +33,7 @@ export class LoadExternalContextStage
         super();
     }
 
-    protected async executeStage(
+    async execute(
         context: CodeReviewPipelineContext,
     ): Promise<CodeReviewPipelineContext> {
         try {
@@ -124,7 +124,7 @@ export class LoadExternalContextStage
                 } catch (error) {
                     this.logger.warn({
                         message: 'Failed to build context pack',
-                        context: this.stageName,
+                        context: this.name,
                         error,
                         metadata: {
                             organizationId,

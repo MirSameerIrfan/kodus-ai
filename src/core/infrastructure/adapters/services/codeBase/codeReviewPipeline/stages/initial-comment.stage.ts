@@ -1,6 +1,6 @@
 import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
-import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
+import { BaseStage } from './base/base-stage.abstract';
 import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
@@ -10,9 +10,9 @@ import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 import { PullRequestMessageStatus } from '@/config/types/general/pullRequestMessages.type';
 
 @Injectable()
-export class InitialCommentStage extends BasePipelineStage<CodeReviewPipelineContext> {
+export class InitialCommentStage extends BaseStage {
     private readonly logger = createLogger(InitialCommentStage.name);
-    stageName = 'InitialCommentStage';
+    readonly name = 'InitialCommentStage';
     readonly dependsOn: string[] = ['FileContextGateStage']; // Depends on FileContextGateStage
 
     constructor(
@@ -22,7 +22,7 @@ export class InitialCommentStage extends BasePipelineStage<CodeReviewPipelineCon
         super();
     }
 
-    protected async executeStage(
+    async execute(
         context: CodeReviewPipelineContext,
     ): Promise<CodeReviewPipelineContext> {
         const pullRequestMessagesConfig = context.pullRequestMessagesConfig;
@@ -34,7 +34,7 @@ export class InitialCommentStage extends BasePipelineStage<CodeReviewPipelineCon
         ) {
             this.logger.log({
                 message: `Minimizing previous review comment for subsequent review on PR#${context.pullRequest.number}`,
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     organizationAndTeamData: context.organizationAndTeamData,
                     prNumber: context.pullRequest.number,
@@ -53,7 +53,7 @@ export class InitialCommentStage extends BasePipelineStage<CodeReviewPipelineCon
             } catch (error) {
                 this.logger.warn({
                     message: `Failed to minimize previous review comment for PR#${context.pullRequest.number}, continuing with new review`,
-                    context: this.stageName,
+                    context: this.name,
                     error: error.message,
                     metadata: {
                         organizationAndTeamData:
@@ -73,7 +73,7 @@ export class InitialCommentStage extends BasePipelineStage<CodeReviewPipelineCon
         ) {
             this.logger.log({
                 message: `Skipping initial comment for PR#${context.pullRequest.number} because start review message is off or inactive`,
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     organizationAndTeamData: context.organizationAndTeamData,
                     prNumber: context.pullRequest.number,
@@ -94,7 +94,7 @@ export class InitialCommentStage extends BasePipelineStage<CodeReviewPipelineCon
         ) {
             this.logger.log({
                 message: `Skipping initial comment for PR#${context.pullRequest.number} because it's a subsequent review (ONLY_WHEN_OPENED mode)`,
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     organizationAndTeamData: context.organizationAndTeamData,
                     prNumber: context.pullRequest.number,

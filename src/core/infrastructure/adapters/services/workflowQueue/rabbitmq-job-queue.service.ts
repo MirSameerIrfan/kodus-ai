@@ -58,8 +58,9 @@ export class RabbitMQJobQueueService implements IJobQueueService {
                                 correlationId: job.correlationId,
                                 workflowType: job.workflowType,
                                 handlerType: job.handlerType,
-                                organizationId: job.organizationId,
-                                teamId: job.teamId,
+                                organizationId:
+                                    job.organizationAndTeam?.organizationId,
+                                teamId: job.organizationAndTeam?.teamId,
                             },
                         });
 

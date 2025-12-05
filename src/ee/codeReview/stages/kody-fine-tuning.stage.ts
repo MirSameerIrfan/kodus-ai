@@ -1,17 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { KodyFineTuningService } from '@/core/infrastructure/adapters/services/kodyFineTuning/kodyFineTuning.service';
-import { BasePipelineStage } from '@/core/infrastructure/adapters/services/pipeline/base-stage.abstract';
+import { BaseStage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/base/base-stage.abstract';
 import { CodeReviewPipelineContext } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/context/code-review-pipeline.context';
 
 @Injectable()
-export class KodyFineTuningStage extends BasePipelineStage<CodeReviewPipelineContext> {
-    stageName = 'KodyFineTuningStage';
+export class KodyFineTuningStage extends BaseStage {
+    readonly name = 'KodyFineTuningStage';
+    readonly dependsOn: string[] = []; // No dependencies
 
     constructor(private readonly kodyFineTuningService: KodyFineTuningService) {
         super();
     }
 
-    protected async executeStage(
+    async execute(
         context: CodeReviewPipelineContext,
     ): Promise<CodeReviewPipelineContext> {
         if (!context.codeReviewConfig.kodyFineTuningConfig?.enabled) {

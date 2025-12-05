@@ -51,8 +51,8 @@
     },
     "dependencies": {},
     "devDependencies": {
-        "@eslint/eslintrc": "^3.3.1",
-        "@eslint/js": "^9.37.0",
+        "@eslint/eslintrc": "^3.3.3",
+        "@eslint/js": "^9.39.1",
         "@langchain/anthropic": "^0.3.30",
         "@langchain/cohere": "^0.3.4",
         "@langchain/community": "^0.3.57",

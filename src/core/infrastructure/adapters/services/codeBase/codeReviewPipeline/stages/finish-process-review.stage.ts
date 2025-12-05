@@ -1,6 +1,6 @@
 import { createLogger } from "@kodus/flow";
 import { Injectable } from '@nestjs/common';
-import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
+import { BaseStage } from './base/base-stage.abstract';
 import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
 import { CodeManagementService } from '../../../platformIntegration/codeManagement.service';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
@@ -9,16 +9,16 @@ import { CodeReviewPipelineContext } from '../context/code-review-pipeline.conte
 import { PullRequestReviewState } from '@/core/domain/platformIntegrations/types/codeManagement/pullRequests.type';
 
 @Injectable()
-export class RequestChangesOrApproveStage extends BasePipelineStage<CodeReviewPipelineContext> {
+export class RequestChangesOrApproveStage extends BaseStage {
     private readonly logger = createLogger(RequestChangesOrApproveStage.name);
-    readonly stageName = 'RequestChangesOrApproveStage';
+    readonly name = 'RequestChangesOrApproveStage';
     readonly dependsOn: string[] = ['UpdateCommentsAndGenerateSummaryStage']; // Depends on UpdateCommentsAndGenerateSummaryStage
 
     constructor(private readonly codeManagementService: CodeManagementService) {
         super();
     }
 
-    protected async executeStage(
+    async execute(
         context: CodeReviewPipelineContext,
     ): Promise<CodeReviewPipelineContext> {
         const {
@@ -32,7 +32,7 @@ export class RequestChangesOrApproveStage extends BasePipelineStage<CodeReviewPi
         if (!lineComments) {
             this.logger.warn({
                 message: `No line comments available for PR#${pullRequest.number}, skipping request changes/approve`,
-                context: this.stageName,
+                context: this.name,
             });
             return context;
         }
@@ -95,7 +95,7 @@ export class RequestChangesOrApproveStage extends BasePipelineStage<CodeReviewPi
 
             this.logger.log({
                 message: `Requesting changes for PR#${prNumber} due to ${criticalComments.length} critical comments`,
-                context: this.stageName,
+                context: this.name,
             });
 
             await this.codeManagementService.requestChangesPullRequest({
@@ -108,7 +108,7 @@ export class RequestChangesOrApproveStage extends BasePipelineStage<CodeReviewPi
             this.logger.error({
                 message: `Error requesting changes for PR#${prNumber}`,
                 error,
-                context: this.stageName,
+                context: this.name,
             });
         }
     }
@@ -137,7 +137,7 @@ export class RequestChangesOrApproveStage extends BasePipelineStage<CodeReviewPi
                 this.logger.log({
                     message: `PR#${prNumber} is already approved, skipping approval`,
                     metadata: { currentStatus: status, prNumber, repository },
-                    context: this.stageName,
+                    context: this.name,
                 });
                 return;
             }
@@ -150,7 +150,7 @@ export class RequestChangesOrApproveStage extends BasePipelineStage<CodeReviewPi
             this.logger.log({
                 message,
                 metadata: { currentStatus: status, prNumber, repository },
-                context: this.stageName,
+                context: this.name,
             });
 
             await this.codeManagementService.approvePullRequest({
@@ -162,7 +162,7 @@ export class RequestChangesOrApproveStage extends BasePipelineStage<CodeReviewPi
             this.logger.error({
                 message: `Error approving PR#${prNumber}`,
                 error,
-                context: this.stageName,
+                context: this.name,
             });
         }
     }

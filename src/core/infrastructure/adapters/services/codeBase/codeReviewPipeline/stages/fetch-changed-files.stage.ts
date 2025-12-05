@@ -1,6 +1,6 @@
 import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
-import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
+import { BaseStage } from './base/base-stage.abstract';
 import {
     IPullRequestManagerService,
     PULL_REQUEST_MANAGER_SERVICE_TOKEN,
@@ -17,9 +17,9 @@ import {
 } from '@/core/domain/automation/enums/automation-status';
 
 @Injectable()
-export class FetchChangedFilesStage extends BasePipelineStage<CodeReviewPipelineContext> {
+export class FetchChangedFilesStage extends BaseStage {
     private readonly logger = createLogger(FetchChangedFilesStage.name);
-    stageName = 'FetchChangedFilesStage';
+    readonly name = 'FetchChangedFilesStage';
     readonly dependsOn: string[] = ['ValidateNewCommitsStage', 'ValidateConfigStage']; // Depends on validation stages
 
     private maxFilesToAnalyze = 500;
@@ -31,13 +31,13 @@ export class FetchChangedFilesStage extends BasePipelineStage<CodeReviewPipeline
         super();
     }
 
-    protected async executeStage(
+    async execute(
         context: CodeReviewPipelineContext,
     ): Promise<CodeReviewPipelineContext> {
         if (!context.codeReviewConfig) {
             this.logger.error({
                 message: 'No config found in context',
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     prNumber: context?.pullRequest?.number,
                     repositoryName: context?.repository?.name,
@@ -67,7 +67,7 @@ export class FetchChangedFilesStage extends BasePipelineStage<CodeReviewPipeline
 
             this.logger.warn({
                 message: `Skipping code review for PR#${context.pullRequest.number} - ${msg}`,
-                context: FetchChangedFilesStage.name,
+                context: this.name,
                 metadata: {
                     organizationAndTeamData: context?.organizationAndTeamData,
                     filesCount: files?.length || 0,
@@ -84,7 +84,7 @@ export class FetchChangedFilesStage extends BasePipelineStage<CodeReviewPipeline
 
         this.logger.log({
             message: `Found ${files.length} files to analyze for PR#${context.pullRequest.number}`,
-            context: this.stageName,
+            context: this.name,
             metadata: {
                 organizationAndTeamData: context.organizationAndTeamData,
                 repository: context.repository.name,
@@ -140,7 +140,7 @@ export class FetchChangedFilesStage extends BasePipelineStage<CodeReviewPipeline
                 this.logger.error({
                     message: `Error preparing line numbers for file "${file?.filename}"`,
                     error,
-                    context: FetchChangedFilesStage.name,
+                    context: this.name,
                     metadata: {
                         filename: file?.filename,
                     },

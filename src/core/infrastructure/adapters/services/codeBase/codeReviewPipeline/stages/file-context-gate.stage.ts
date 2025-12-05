@@ -1,13 +1,13 @@
 import { createLogger } from "@kodus/flow";
 import { Injectable } from '@nestjs/common';
-import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
+import { BaseStage } from './base/base-stage.abstract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 import { FileContextAugmentationService } from '../../../context/file-context-augmentation.service';
 
 @Injectable()
-export class FileContextGateStage extends BasePipelineStage<CodeReviewPipelineContext> {
+export class FileContextGateStage extends BaseStage {
     private readonly logger = createLogger(FileContextGateStage.name);
-    readonly stageName = 'FileContextGateStage';
+    readonly name = 'FileContextGateStage';
     readonly dependsOn: string[] = ['LoadExternalContextStage']; // Depends on LoadExternalContextStage
 
     constructor(
@@ -16,7 +16,7 @@ export class FileContextGateStage extends BasePipelineStage<CodeReviewPipelineCo
         super();
     }
 
-    protected async executeStage(
+    async execute(
         context: CodeReviewPipelineContext,
     ): Promise<CodeReviewPipelineContext> {
         if (!context.changedFiles?.length) {

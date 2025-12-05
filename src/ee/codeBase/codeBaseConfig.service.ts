@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
@@ -79,7 +79,7 @@ export default class CodeBaseConfigService implements ICodeBaseConfigService {
         @Inject(KODY_RULES_SERVICE_TOKEN)
         private readonly kodyRulesService: IKodyRulesService,
         private readonly codeManagementService: CodeManagementService,
-        private readonly kodyRulesValidationService: KodyRulesValidationService
+        private readonly kodyRulesValidationService: KodyRulesValidationService,
     ) {
         this.DEFAULT_CONFIG = this.getDefaultConfigs();
     }

@@ -1,6 +1,6 @@
 import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
-import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
+import { BaseStage } from './base/base-stage.abstract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 import {
     CODE_BASE_CONFIG_SERVICE_TOKEN,
@@ -29,16 +29,22 @@ import {
     PARAMETERS_SERVICE_TOKEN,
 } from '@/core/domain/parameters/contracts/parameters.service.contract';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+import {
+    CODE_BASE_CONFIG_CACHE_SERVICE_TOKEN,
+} from '@/core/domain/codeBase/contracts/CodeBaseConfigCacheService.contract';
+import { CodeBaseConfigCacheService } from '@/core/infrastructure/adapters/services/codeBase/code-base-config-cache.service';
 
 @Injectable()
-export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineContext> {
+export class ResolveConfigStage extends BaseStage {
     private readonly logger = createLogger(ResolveConfigStage.name);
-    readonly stageName = 'ResolveConfigStage';
+    readonly name = 'ResolveConfigStage';
     readonly dependsOn: string[] = []; // No dependencies - can run in parallel with ValidateNewCommitsStage
 
     constructor(
         @Inject(CODE_BASE_CONFIG_SERVICE_TOKEN)
         private readonly codeBaseConfigService: ICodeBaseConfigService,
+        @Inject(CODE_BASE_CONFIG_CACHE_SERVICE_TOKEN)
+        private readonly configCacheService: CodeBaseConfigCacheService,
         @Inject(PULL_REQUEST_MANAGER_SERVICE_TOKEN)
         private readonly pullRequestHandlerService: IPullRequestManagerService,
         @Inject(PULL_REQUEST_MESSAGES_SERVICE_TOKEN)
@@ -51,7 +57,7 @@ export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineCont
         super();
     }
 
-    protected override async executeStage(
+    async execute(
         context: CodeReviewPipelineContext,
     ): Promise<CodeReviewPipelineContext> {
         try {
@@ -67,7 +73,7 @@ export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineCont
             if (!preliminaryFiles || preliminaryFiles.length === 0) {
                 this.logger.warn({
                     message: 'No files found in PR',
-                    context: this.stageName,
+                    context: this.name,
                     metadata: {
                         organizationAndTeamData:
                             context.organizationAndTeamData,
@@ -84,7 +90,8 @@ export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineCont
                 });
             }
 
-            const config = await this.codeBaseConfigService.getConfig(
+            // Usar cache service para buscar configuração
+            const config = await this.configCacheService.getConfig(
                 context.organizationAndTeamData,
                 context.repository,
                 preliminaryFiles,
@@ -119,7 +126,7 @@ export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineCont
             this.logger.error({
                 message: `Error in ResolveConfigStage for PR#${context?.pullRequest?.number}`,
                 error,
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     organizationAndTeamData: context?.organizationAndTeamData,
                     prNumber: context?.pullRequest?.number,

@@ -1,6 +1,6 @@
 import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
-import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
+import { BaseStage } from './base/base-stage.abstract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 import {
     ClusteringType,
@@ -46,9 +46,9 @@ import {
 } from '@/core/domain/dryRun/contracts/dryRun.service.contract';
 
 @Injectable()
-export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelineContext> {
+export class CreateFileCommentsStage extends BaseStage {
     private readonly logger = createLogger(CreateFileCommentsStage.name);
-    readonly stageName = 'CreateFileCommentsStage';
+    readonly name = 'CreateFileCommentsStage';
     readonly dependsOn: string[] = ['FileAnalysisStage']; // Depends on FileAnalysisStage - can run in parallel with CreatePrLevelCommentsStage
 
     constructor(
@@ -69,7 +69,7 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
         super();
     }
 
-    protected async executeStage(
+    async execute(
         context: CodeReviewPipelineContext,
     ): Promise<CodeReviewPipelineContext> {
         // Validações fundamentais de segurança
@@ -511,7 +511,7 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
             if (!pr) {
                 this.logger.warn({
                     message: `PR #${prNumber} not found, skipping comment resolution.`,
-                    context: this.stageName,
+                    context: this.name,
                     metadata: {
                         organizationAndTeamData,
                         prNumber,
@@ -546,7 +546,7 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
             if (reviewComments?.length === 0) {
                 this.logger.warn({
                     message: `No review comments found for PR#${prNumber}`,
-                    context: this.stageName,
+                    context: this.name,
                     metadata: {
                         organizationAndTeamData,
                         prNumber,
@@ -635,5 +635,63 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
         });
 
         return implementedSuggestionsCommentIds;
+    }
+
+    /**
+     * Compensate: Delete file-level comments created by this stage
+     */
+    async compensate(context: CodeReviewPipelineContext): Promise<void> {
+        try {
+            const lineComments = context.lineComments || [];
+            
+            if (lineComments.length === 0) {
+                return;
+            }
+
+            this.logger.log({
+                message: `Compensating: Deleting ${lineComments.length} file-level comments for PR#${context.pullRequest.number}`,
+                context: this.name,
+                metadata: {
+                    prNumber: context.pullRequest.number,
+                    commentsCount: lineComments.length,
+                },
+            });
+
+            // Delete each comment created
+            for (const commentResult of lineComments) {
+                try {
+                    if (commentResult.comment?.id) {
+                        await this.commentManagerService.deleteComment(
+                            context.organizationAndTeamData,
+                            context.pullRequest.number,
+                            context.repository,
+                            commentResult.comment.id,
+                            context.platformType,
+                        );
+                    }
+                } catch (error) {
+                    this.logger.warn({
+                        message: `Failed to delete file-level comment during compensation`,
+                        context: this.name,
+                        error,
+                        metadata: {
+                            commentId: commentResult.comment?.id,
+                            prNumber: context.pullRequest.number,
+                        },
+                    });
+                    // Continue deleting other comments even if one fails
+                }
+            }
+        } catch (error) {
+            this.logger.error({
+                message: `Error during compensation for CreateFileCommentsStage`,
+                context: this.name,
+                error,
+                metadata: {
+                    prNumber: context.pullRequest.number,
+                },
+            });
+            // Don't throw - compensation failures shouldn't break the workflow
+        }
     }
 }

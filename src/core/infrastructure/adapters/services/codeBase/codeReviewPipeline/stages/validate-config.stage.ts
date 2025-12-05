@@ -1,6 +1,6 @@
 import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
-import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
+import { BaseStage } from './base/base-stage.abstract';
 import {
     processExpression,
     shouldReviewBranches,
@@ -31,9 +31,9 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 
 @Injectable()
-export class ValidateConfigStage extends BasePipelineStage<CodeReviewPipelineContext> {
+export class ValidateConfigStage extends BaseStage {
     private readonly logger = createLogger(ValidateConfigStage.name);
-    stageName = 'ValidateConfigStage';
+    readonly name = 'ValidateConfigStage';
     readonly dependsOn: string[] = ['ResolveConfigStage']; // Depends on ResolveConfigStage
 
     constructor(
@@ -46,14 +46,14 @@ export class ValidateConfigStage extends BasePipelineStage<CodeReviewPipelineCon
         super();
     }
 
-    protected async executeStage(
+    async execute(
         context: CodeReviewPipelineContext,
     ): Promise<CodeReviewPipelineContext> {
         try {
             if (!context.codeReviewConfig) {
                 this.logger.error({
                     message: 'No config found in context',
-                    context: this.stageName,
+                    context: this.name,
                     metadata: {
                         prNumber: context?.pullRequest?.number,
                         repositoryName: context?.repository?.name,
@@ -85,7 +85,7 @@ export class ValidateConfigStage extends BasePipelineStage<CodeReviewPipelineCon
                 this.logger.warn({
                     message: cadenceResult.reason,
                     serviceName: ValidateConfigStage.name,
-                    context: this.stageName,
+                    context: this.name,
                     metadata: {
                         prNumber: context?.pullRequest?.number,
                         repositoryName: context?.repository?.name,

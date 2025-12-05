@@ -13,43 +13,22 @@ import { OutboxMessageRepository } from '@/core/infrastructure/adapters/reposito
 import { TransactionalOutboxService } from '@/core/infrastructure/adapters/services/workflowQueue/transactional-outbox.service';
 import { EnqueueWebhookUseCase } from '@/core/application/use-cases/webhook/enqueue-webhook.use-case';
 
-/**
- * WebhookEnqueueModule - Módulo Mínimo para Enfileirar Webhooks
- *
- * Este módulo contém apenas o necessário para enfileirar webhooks:
- * - EnqueueWebhookUseCase (enfileira payload bruto na fila)
- * - RabbitMQWrapperModule (conexão RabbitMQ)
- * - LogModule (logging)
- * - Dependências para Transactional Outbox (WorkflowJobRepository, OutboxMessageRepository, TransactionalOutboxService)
- *
- * NÃO inclui:
- * - Processamento de webhooks (workers fazem isso)
- * - Validação de organização/team (workers fazem isso)
- * - Decisão de qual handler usar (workers fazem isso)
- * - Lógica de negócio (workers fazem isso)
- *
- * Tamanho: ~2-3MB
- */
 @Module({
     imports: [
         ConfigModule.forFeature(WorkflowQueueLoader),
         TypeOrmModule.forFeature([WorkflowJobModel, OutboxMessageModel]),
-        RabbitMQWrapperModule.register(), // Para AmqpConnection
-        LogModule, // Para PinoLoggerService (@Global)
+        RabbitMQWrapperModule.register(),
+        LogModule,
     ],
     providers: [
-        // Repositories
         WorkflowJobRepository,
         OutboxMessageRepository,
-        // Services
         TransactionalOutboxService,
         RabbitMQJobQueueService,
-        // Token provider
         {
             provide: JOB_QUEUE_SERVICE_TOKEN,
             useClass: RabbitMQJobQueueService,
         },
-        // Use Case
         EnqueueWebhookUseCase,
     ],
     exports: [EnqueueWebhookUseCase],

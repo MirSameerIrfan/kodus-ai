@@ -1,9 +1,14 @@
 import { createLogger } from "@kodus/flow";
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import pLimit from 'p-limit';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 
-import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
+import { BaseStage } from './base/base-stage.abstract';
+import { HeavyStage } from './base/heavy-stage.interface';
+import { EventType } from '@/core/domain/workflowQueue/enums/event-type.enum';
+import { StageCompletedEvent } from '@/core/domain/workflowQueue/interfaces/stage-completed-event.interface';
+import { WorkflowPausedError } from '@/core/domain/workflowQueue/errors/workflow-paused.error';
 import {
     AIAnalysisResult,
     AnalysisContext,
@@ -48,12 +53,19 @@ import { CodeAnalysisOrchestrator } from '@/ee/codeBase/codeAnalysisOrchestrator
 import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
 
 @Injectable()
-export class ProcessFilesReview extends BasePipelineStage<CodeReviewPipelineContext> {
+export class ProcessFilesReview extends BaseStage implements HeavyStage {
     private readonly logger = createLogger(ProcessFilesReview.name);
-    readonly stageName = 'FileAnalysisStage';
+    readonly name = 'FileAnalysisStage';
     readonly dependsOn: string[] = ['PRLevelReviewStage']; // Depends on PRLevelReviewStage
 
+    // HeavyStage properties
+    readonly timeout = 15 * 60 * 1000; // 15 minutes
+    readonly eventType = EventType.FILES_REVIEW_COMPLETED;
+
     private readonly concurrencyLimit = 20;
+    
+    // Store results temporarily (in production, this would be in a database/cache)
+    private readonly resultsCache = new Map<string, CodeReviewPipelineContext>();
 
     constructor(
         @Inject(SUGGESTION_SERVICE_TOKEN)
@@ -66,41 +78,67 @@ export class ProcessFilesReview extends BasePipelineStage<CodeReviewPipelineCont
         private readonly kodyFineTuningContextPreparation: IKodyFineTuningContextPreparationService,
         @Inject(KODY_AST_ANALYZE_CONTEXT_PREPARATION_TOKEN)
         private readonly kodyAstAnalyzeContextPreparation: IKodyASTAnalyzeContextPreparationService,
-        private readonly codeAnalysisOrchestrator: CodeAnalysisOrchestrator
+        private readonly codeAnalysisOrchestrator: CodeAnalysisOrchestrator,
+        @Optional()
+        private readonly amqpConnection?: AmqpConnection,
     ) {
         super();
     }
 
-    protected async executeStage(
-        context: CodeReviewPipelineContext,
-    ): Promise<CodeReviewPipelineContext> {
+    /**
+     * Check if this is a light stage
+     * Returns false - this is a heavy stage
+     */
+    isLight(): boolean {
+        return false;
+    }
+
+    /**
+     * Start the heavy stage execution
+     * For now, executes synchronously but returns taskId for future async implementation
+     */
+    async start(context: CodeReviewPipelineContext): Promise<string> {
+        const taskId = uuidv4();
+        
+        this.logger.log({
+            message: `Starting file review for PR#${context.pullRequest.number}`,
+            context: this.name,
+            metadata: {
+                taskId,
+                prNumber: context.pullRequest.number,
+                filesCount: context.changedFiles?.length || 0,
+                correlationId: context.correlationId,
+            },
+        });
+
         if (!context.changedFiles || context.changedFiles.length === 0) {
             this.logger.warn({
                 message: `No files to analyze for PR#${context.pullRequest.number}`,
-                context: this.stageName,
+                context: this.name,
             });
-            return context;
+            // Store empty result
+            this.resultsCache.set(taskId, context);
+            await this.publishCompletionEvent(taskId, context, context);
+            return taskId;
         }
 
         try {
-            const {
-                validSuggestions,
-                discardedSuggestions,
-                fileMetadata,
-                tasks,
-            } = await this.analyzeChangedFilesInBatches(context);
-
-            return this.updateContext(context, (draft) => {
-                draft.validSuggestions = validSuggestions;
-                draft.discardedSuggestions = discardedSuggestions;
-                draft.fileMetadata = fileMetadata;
-                draft.tasks = tasks;
-            });
+            // TODO: In future, this should enqueue the analysis and return immediately
+            // For now, execute synchronously but store result for getResult/resume
+            const result = await this.executeAnalysis(context);
+            
+            // Store result temporarily
+            this.resultsCache.set(taskId, result);
+            
+            // Publish completion event (simulating async completion)
+            await this.publishCompletionEvent(taskId, result, context);
+            
+            return taskId;
         } catch (error) {
             this.logger.error({
                 message: 'Error analyzing files in batches',
                 error,
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     pullRequestNumber: context.pullRequest.number,
                     repositoryName: context.repository.name,
@@ -108,12 +146,162 @@ export class ProcessFilesReview extends BasePipelineStage<CodeReviewPipelineCont
                 },
             });
 
-            // Mesmo em caso de erro, retornamos o contexto para que o pipeline continue
-            return this.updateContext(context, (draft) => {
+            // Store error result (empty suggestions)
+            const errorResult = this.updateContext(context, (draft) => {
                 draft.validSuggestions = [];
                 draft.discardedSuggestions = [];
                 draft.fileMetadata = new Map();
             });
+            this.resultsCache.set(taskId, errorResult);
+            await this.publishCompletionEvent(taskId, errorResult, context);
+            return taskId;
+        }
+    }
+
+    /**
+     * Get result of heavy stage execution
+     * Retrieves the completed result from cache/storage
+     */
+    async getResult(
+        context: CodeReviewPipelineContext,
+        taskId: string,
+    ): Promise<CodeReviewPipelineContext> {
+        const result = this.resultsCache.get(taskId);
+        if (!result) {
+            throw new Error(`No result found for taskId: ${taskId}`);
+        }
+        
+        // Remove from cache after retrieval
+        this.resultsCache.delete(taskId);
+        
+        return result;
+    }
+
+    /**
+     * Resume heavy stage execution after pause
+     * Since analysis was already done in start(), just return the context
+     */
+    async resume(
+        context: CodeReviewPipelineContext,
+        taskId: string,
+    ): Promise<CodeReviewPipelineContext> {
+        // Result was already applied in getResult(), just return context
+        return context;
+    }
+
+    /**
+     * Execute method - calls start() and throws WorkflowPausedError
+     */
+    async execute(
+        context: CodeReviewPipelineContext,
+    ): Promise<CodeReviewPipelineContext> {
+        // Start heavy stage and get taskId
+        const taskId = await this.start(context);
+
+        // Throw WorkflowPausedError to pause workflow
+        // Worker will be freed and workflow will resume when event arrives
+        throw new WorkflowPausedError(
+            this.eventType,
+            taskId, // eventKey is the taskId
+            this.name,
+            taskId,
+            this.timeout,
+            {
+                workflowJobId: context.workflowJobId,
+                correlationId: context.correlationId,
+            },
+        );
+    }
+
+    /**
+     * Execute the actual analysis (extracted from original executeStage)
+     * TODO: This should be moved to an async service that publishes events when done
+     */
+    private async executeAnalysis(
+        context: CodeReviewPipelineContext,
+    ): Promise<CodeReviewPipelineContext> {
+        const {
+            validSuggestions,
+            discardedSuggestions,
+            fileMetadata,
+            tasks,
+        } = await this.analyzeChangedFilesInBatches(context);
+
+        return this.updateContext(context, (draft) => {
+            draft.validSuggestions = validSuggestions;
+            draft.discardedSuggestions = discardedSuggestions;
+            draft.fileMetadata = fileMetadata;
+            draft.tasks = tasks;
+        });
+    }
+
+    /**
+     * Publish completion event to RabbitMQ
+     */
+    private async publishCompletionEvent(
+        taskId: string,
+        result: CodeReviewPipelineContext,
+        context: CodeReviewPipelineContext,
+    ): Promise<void> {
+        if (!this.amqpConnection) {
+            this.logger.debug({
+                message: 'RabbitMQ not available, skipping files review completion event',
+                context: this.name,
+                metadata: { taskId },
+            });
+            return;
+        }
+
+        try {
+            const event: StageCompletedEvent = {
+                stageName: this.name,
+                eventType: this.eventType,
+                eventKey: taskId,
+                taskId,
+                result: {
+                    validSuggestions: result.validSuggestions || [],
+                    discardedSuggestions: result.discardedSuggestions || [],
+                    fileMetadata: result.fileMetadata ? Array.from(result.fileMetadata.entries()) : [],
+                    tasks: result.tasks,
+                },
+                metadata: {
+                    workflowJobId: context.workflowJobId,
+                    correlationId: context.correlationId,
+                    prNumber: context.pullRequest.number,
+                    filesCount: context.changedFiles?.length || 0,
+                },
+            };
+
+            await this.amqpConnection.publish(
+                'workflow.events',
+                `stage.completed.${this.eventType}`,
+                event,
+                {
+                    messageId: `files-review-${taskId}`,
+                    correlationId: context.correlationId,
+                    persistent: true,
+                    headers: {
+                        'x-event-type': this.eventType,
+                        'x-task-id': taskId,
+                        'x-stage-name': this.name,
+                        'x-correlation-id': context.correlationId || '',
+                    },
+                },
+            );
+
+            this.logger.log({
+                message: `Files review completion event published for task ${taskId}`,
+                context: this.name,
+                metadata: { taskId, prNumber: context.pullRequest.number },
+            });
+        } catch (error) {
+            this.logger.error({
+                message: `Failed to publish files review completion event for task ${taskId}`,
+                context: this.name,
+                error,
+                metadata: { taskId },
+            });
+            // Don't throw - event publishing failure shouldn't break stage execution
         }
     }
 
@@ -139,7 +327,7 @@ export class ProcessFilesReview extends BasePipelineStage<CodeReviewPipelineCont
                 try {
                     this.logger.log({
                         message: `Starting batch analysis of ${changedFiles.length} files`,
-                        context: ProcessFilesReview.name,
+                        context: this.name,
                         metadata: {
                             organizationId:
                                 organizationAndTeamData.organizationId,
@@ -162,7 +350,7 @@ export class ProcessFilesReview extends BasePipelineStage<CodeReviewPipelineCont
 
                     this.logger.log({
                         message: `Finished all batches - Analysis complete for PR#${pullRequest.number}`,
-                        context: ProcessFilesReview.name,
+                        context: this.name,
                         metadata: {
                             validSuggestionsCount:
                                 execution.validSuggestions.length,
@@ -402,7 +590,7 @@ export class ProcessFilesReview extends BasePipelineStage<CodeReviewPipelineCont
                         this.logger.error({
                             message: `Error processing file in batch ${batchIndex + 1}`,
                             error: result.reason,
-                            context: ProcessFilesReview.name,
+                            context: this.name,
                             metadata: {
                                 organizationId:
                                     organizationAndTeamData.organizationId,

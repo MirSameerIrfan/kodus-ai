@@ -9,6 +9,6 @@
             "@context-os-core/*": ["packages/kodus-flow/src/context/core/*"]
         }
     },
-    "include": ["src/**/*"],
+    "include": ["src/**/*", "../../src/**/*"],
     "exclude": ["node_modules", "dist"]
 }

@@ -25,6 +25,7 @@ import type { ContextAugmentationsMap } from '@/core/infrastructure/adapters/ser
 
 export interface CodeReviewPipelineContext extends PipelineContext {
     workflowJobId?: string; // ID of the workflow job (for pausing/resuming)
+    currentStage?: string; // Current stage being executed
     dryRun: {
         enabled: boolean;
         id?: string;
@@ -136,4 +137,36 @@ export interface CodeReviewPipelineContext extends PipelineContext {
 export interface FileContextAgentResult {
     sandboxEvidences?: ContextEvidence[];
     resolvedPromptOverrides?: CodeReviewConfig['v2PromptOverrides'];
+}
+
+/**
+ * Serialize context to JSON string for persistence
+ */
+export function serializeContext(
+    context: CodeReviewPipelineContext,
+): string {
+    // Convert Map to object for serialization
+    const serializableContext = {
+        ...context,
+        fileMetadata: context.fileMetadata
+            ? Object.fromEntries(context.fileMetadata)
+            : undefined,
+    };
+    return JSON.stringify(serializableContext);
+}
+
+/**
+ * Deserialize JSON string back to CodeReviewPipelineContext
+ */
+export function deserializeContext(
+    data: string,
+): CodeReviewPipelineContext {
+    const parsed = JSON.parse(data);
+    // Convert object back to Map
+    if (parsed.fileMetadata) {
+        parsed.fileMetadata = new Map(
+            Object.entries(parsed.fileMetadata),
+        );
+    }
+    return parsed as CodeReviewPipelineContext;
 }

@@ -1,6 +1,6 @@
 import { createLogger } from "@kodus/flow";
 import { Injectable, Inject } from '@nestjs/common';
-import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
+import { BaseStage } from './base/base-stage.abstract';
 import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
@@ -10,9 +10,9 @@ import { PullRequestMessageStatus } from '@/config/types/general/pullRequestMess
 import { BehaviourForNewCommits } from '@/config/types/general/codeReview.type';
 
 @Injectable()
-export class UpdateCommentsAndGenerateSummaryStage extends BasePipelineStage<CodeReviewPipelineContext> {
+export class UpdateCommentsAndGenerateSummaryStage extends BaseStage {
     private readonly logger = createLogger(UpdateCommentsAndGenerateSummaryStage.name);
-    readonly stageName = 'UpdateCommentsAndGenerateSummaryStage';
+    readonly name = 'UpdateCommentsAndGenerateSummaryStage';
     readonly dependsOn: string[] = ['AggregateResultsStage']; // Depends on AggregateResultsStage
 
     constructor(
@@ -22,7 +22,7 @@ export class UpdateCommentsAndGenerateSummaryStage extends BasePipelineStage<Cod
         super();
     }
 
-    protected async executeStage(
+    async execute(
         context: CodeReviewPipelineContext,
     ): Promise<CodeReviewPipelineContext> {
         const {
@@ -53,7 +53,7 @@ export class UpdateCommentsAndGenerateSummaryStage extends BasePipelineStage<Cod
         ) {
             this.logger.warn({
                 message: `Missing initialCommentData for PR#${pullRequest.number}`,
-                context: this.stageName,
+                context: this.name,
             });
             return context;
         }
@@ -61,7 +61,7 @@ export class UpdateCommentsAndGenerateSummaryStage extends BasePipelineStage<Cod
         if (shouldGenerateOrUpdateSummary) {
             this.logger.log({
                 message: `Generating summary for PR#${pullRequest.number}`,
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     organizationAndTeamData,
                     prNumber: context.pullRequest.number,
@@ -201,5 +201,41 @@ export class UpdateCommentsAndGenerateSummaryStage extends BasePipelineStage<Cod
         }
 
         return context;
+    }
+
+    /**
+     * Compensate: Revert summary comment update
+     * Note: This is a best-effort compensation - we can't fully revert summary updates
+     */
+    async compensate(context: CodeReviewPipelineContext): Promise<void> {
+        try {
+            if (!context.initialCommentData?.commentId) {
+                return;
+            }
+
+            this.logger.log({
+                message: `Compensating: Attempting to revert summary update for PR#${context.pullRequest.number}`,
+                context: this.name,
+                metadata: {
+                    prNumber: context.pullRequest.number,
+                    commentId: context.initialCommentData.commentId,
+                },
+            });
+
+            // Note: Full compensation would require storing the previous comment body
+            // For now, we log the compensation attempt
+            // In a production system, you might want to store the previous state
+            // and restore it here
+        } catch (error) {
+            this.logger.error({
+                message: `Error during compensation for UpdateCommentsAndGenerateSummaryStage`,
+                context: this.name,
+                error,
+                metadata: {
+                    prNumber: context.pullRequest.number,
+                },
+            });
+            // Don't throw - compensation failures shouldn't break the workflow
+        }
     }
 }
