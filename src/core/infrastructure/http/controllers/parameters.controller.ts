@@ -73,13 +73,22 @@ export class ParametersController {
         body: {
             key: ParametersKey;
             configValue: any;
-            organizationAndTeamData: { organizationId: string; teamId: string };
+            organizationAndTeamData: { teamId: string };
         },
     ) {
+        const organizationId = this.request?.user?.organization?.uuid;
+
+        if (!organizationId) {
+            throw new Error('Organization ID is missing from request');
+        }
+
         return await this.createOrUpdateParametersUseCase.execute(
             body.key,
             body.configValue,
-            body.organizationAndTeamData,
+            {
+                organizationId,
+                teamId: body.organizationAndTeamData.teamId,
+            },
         );
     }
 
@@ -133,9 +142,19 @@ export class ParametersController {
         @Body()
         body: CreateOrUpdateCodeReviewParameterDto,
     ) {
-        return await this.updateOrCreateCodeReviewParameterUseCase.execute(
-            body,
-        );
+        const organizationId = this.request?.user?.organization?.uuid;
+
+        if (!organizationId) {
+            throw new Error('Organization ID is missing from request');
+        }
+
+        return await this.updateOrCreateCodeReviewParameterUseCase.execute({
+            ...body,
+            organizationAndTeamData: {
+                ...body.organizationAndTeamData,
+                organizationId,
+            },
+        });
     }
 
     @Post('/update-code-review-parameter-repositories')
@@ -149,12 +168,22 @@ export class ParametersController {
     public async UpdateCodeReviewParameterRepositories(
         @Body()
         body: {
-            organizationAndTeamData: { organizationId: string; teamId: string };
+            organizationAndTeamData: { teamId: string };
         },
     ) {
-        return await this.updateCodeReviewParameterRepositoriesUseCase.execute(
-            body,
-        );
+        const organizationId = this.request?.user?.organization?.uuid;
+
+        if (!organizationId) {
+            throw new Error('Organization ID is missing from request');
+        }
+
+        return await this.updateCodeReviewParameterRepositoriesUseCase.execute({
+            ...body,
+            organizationAndTeamData: {
+                ...body.organizationAndTeamData,
+                organizationId,
+            },
+        });
     }
 
     @Get('/code-review-parameter')
@@ -246,6 +275,15 @@ export class ParametersController {
         @Body()
         body: PreviewPrSummaryDto,
     ) {
-        return this.previewPrSummaryUseCase.execute(body);
+        const organizationId = this.request?.user?.organization?.uuid;
+
+        if (!organizationId) {
+            throw new Error('Organization ID is missing from request');
+        }
+
+        return this.previewPrSummaryUseCase.execute({
+            ...body,
+            organizationId,
+        });
     }
 }
