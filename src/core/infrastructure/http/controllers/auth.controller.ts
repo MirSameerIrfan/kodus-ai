@@ -126,12 +126,12 @@ export class AuthController {
 
         res.cookie('sso_handoff', payload, {
             httpOnly: false,
-            secure: process.env.API_NODE_ENV === 'production',
+            secure: process.env.API_NODE_ENV !== 'development',
             sameSite: 'lax',
             path: '/',
             maxAge: 15 * 1000,
             domain:
-                process.env.API_NODE_ENV === 'production'
+                process.env.API_NODE_ENV !== 'development'
                     ? '.kodus.io'
                     : undefined,
         });
