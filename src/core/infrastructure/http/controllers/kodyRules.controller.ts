@@ -298,7 +298,12 @@ export class KodyRulesController {
 
     @Post('/fast-sync-ide-rules')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Create, ResourceType.KodyRules))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Create,
+            resource: ResourceType.KodyRules,
+        }),
+    )
     public async fastSyncIdeRules(
         @Body()
         body: {
@@ -314,7 +319,12 @@ export class KodyRulesController {
 
     @Get('/pending-ide-rules')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Read, ResourceType.KodyRules))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.KodyRules,
+        }),
+    )
     public async listPendingIdeRules(
         @Query('teamId') teamId: string,
         @Query('repositoryId') repositoryId?: string,
@@ -329,14 +339,24 @@ export class KodyRulesController {
 
     @Post('/import-fast-ide-rules')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Create, ResourceType.KodyRules))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Create,
+            resource: ResourceType.KodyRules,
+        }),
+    )
     public async importFastIdeRules(@Body() body: ImportFastKodyRulesDto) {
         return this.importFastKodyRulesUseCase.execute(body);
     }
 
     @Post('/review-fast-ide-rules')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Update, ResourceType.KodyRules))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Update,
+            resource: ResourceType.KodyRules,
+        }),
+    )
     public async reviewFastIdeRules(@Body() body: ReviewFastKodyRulesDto) {
         const results: any = {};
 

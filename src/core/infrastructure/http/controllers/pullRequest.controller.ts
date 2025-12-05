@@ -44,10 +44,12 @@ export class PullRequestController {
 
     @Get('/executions')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions({
-        action: Action.Read,
-        resource: ResourceType.PullRequests
-    }))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.PullRequests,
+        }),
+    )
     public async getPullRequestExecutions(
         @Query() query: EnrichedPullRequestsQueryDto,
     ): Promise<PaginatedEnrichedPullRequestsResponse> {
@@ -56,7 +58,12 @@ export class PullRequestController {
 
     @Get('/onboarding-signals')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Read, ResourceType.PullRequests))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.PullRequests,
+        }),
+    )
     public async getOnboardingSignals(
         @Query() query: OnboardingReviewModeSignalsQueryDto,
     ) {
@@ -82,10 +89,12 @@ export class PullRequestController {
     // NOT USED IN WEB - INTERNAL USE ONLY
     @Post('/backfill')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions({
-        action: Action.Create,
-        resource: ResourceType.PullRequests
-    }))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Create,
+            resource: ResourceType.PullRequests,
+        }),
+    )
     public async backfillHistoricalPRs(@Body() body: BackfillPRsDto) {
         const { teamId, repositoryIds, startDate, endDate } = body;
         const organizationId = this.request.user?.organization?.uuid;
