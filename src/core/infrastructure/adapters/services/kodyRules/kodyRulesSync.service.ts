@@ -33,7 +33,11 @@ import * as path from 'path';
 import { ObservabilityService } from '../logger/observability.service';
 import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
 import { BYOKPromptRunnerService } from '@/shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { kodyRulesIDEGeneratorSchema, kodyRulesIDEGeneratorSchemaOnboarding, kodyRulesManifestGeneratorSchemaOnboarding } from '@/shared/utils/langchainCommon/prompts/kodyRules';
+import {
+    kodyRulesIDEGeneratorSchema,
+    kodyRulesIDEGeneratorSchemaOnboarding,
+    kodyRulesManifestGeneratorSchemaOnboarding,
+} from '@/shared/utils/langchainCommon/prompts/kodyRules';
 import {
     ContextDetectionField,
     ContextReferenceDetectionService,
@@ -1531,14 +1535,12 @@ export class KodyRulesSyncService {
                         .addPrompt({
                             role: PromptRole.SYSTEM,
                             prompt: [
-                                'You will receive multiple repository rule files. Produce a SINGLE JSON array with up to 5 MOST IMPORTANT Kody Rules across all files (prioritize critical/high impact, security/compliance, or broad applicability).',
-                                'Output ONLY valid JSON (no code fences). If none, output [].',
-                                'Each rule must follow:',
-                                '{ "rules": [{"title": string, "rule": string, "path": string, "sourcePath": string, "repositoryId": string, "severity": "low"|"medium"|"high"|"critical", "scope"?: "file"|"pull-request", "examples": [{ "snippet": string, "isCorrect": boolean }], "sourceSnippet"?: string}] }',
-                                'For each file, if multiple candidate rules exist, merge them into one comprehensive rule for that file, then select only the top 5 overall.',
+                                'You will receive multiple repository rule files. Return ONLY a JSON object { "rules": [...] } (no code fences) with up to 3 MOST IMPORTANT Kody Rules across all files (prioritize critical/high impact, security/compliance, or broad applicability). If none, return { "rules": [] }.',
+                                'Each rule must include: title, rule, path, sourcePath, severity ("low"|"medium"|"high"|"critical"), optional scope ("file"|"pull-request"), examples: [{ "snippet": string, "isCorrect": boolean }], and optional sourceSnippet.',
+                                'For each file, if multiple candidate rules exist, merge them into one comprehensive rule for that file, then select only the top rules overall.',
                                 'sourcePath MUST be the file path from input. Use the same for path unless the file declares specific globs.',
                                 'If a file has zero rules, skip it (do not emit placeholder).',
-                                'If a file is a dependency manifest (package.json, requirements.txt, pyproject.toml, go.mod, Cargo.toml, pom.xml, build.gradle(.kts), csproj, Gemfile, mix.exs, etc.), infer up to 5 high-impact rules for that stack (security, auth, logging, testing, linting, secrets) based on dependencies/frameworks present.',
+                                'If a file is a dependency manifest (package.json, requirements.txt, pyproject.toml, go.mod, Cargo.toml, pom.xml, build.gradle(.kts), csproj, Gemfile, mix.exs, etc.), infer up to 3 high-impact rules for that stack (security, auth, logging, testing, linting, secrets) based on dependencies/frameworks present.',
                                 'Severity map: must/required/security/blocker → "high"/"critical"; should/warn → "medium"; tip/info/optional → "low".',
                                 'Scope: "file" for code/content; "pull-request" for PR titles/descriptions/commits/reviewers/labels.',
                                 'Include sourceSnippet when you can copy an exact excerpt that triggered the rule.',
@@ -1594,7 +1596,13 @@ export class KodyRulesSyncService {
                                 .setParser(ParserType.STRING)
                                 .addPrompt({
                                     role: PromptRole.SYSTEM,
-                                    prompt: 'Return ONLY the JSON array of rules (no code fences, no text), capped at 3 most important (critical/high impact). Each item must include sourcePath copied from the provided file path. Do NOT translate; keep each rule in the same language as its source file. If a file is a dependency manifest (package.json, requirements.txt, pyproject.toml, go.mod, Cargo.toml, pom.xml, build.gradle(.kts), csproj, Gemfile, mix.exs, etc.), infer rules for that stack based on dependencies (security, auth, logging, testing, linting, secrets).',
+                                    prompt: [
+                                        'Return ONLY a JSON object { "rules": [...] } (no code fences, no text), capped at 3 rules.',
+                                        'Each rule must include: title, rule, path, sourcePath, severity ("low"|"medium"|"high"|"critical"), optional scope ("file"|"pull-request"), examples: [{ "snippet": string, "isCorrect": boolean }], and optional sourceSnippet.',
+                                        'Keep the language the same as the source file; do NOT translate.',
+                                        'If a file is a dependency manifest (package.json, requirements.txt, pyproject.toml, go.mod, Cargo.toml, pom.xml, build.gradle(.kts), csproj, Gemfile, mix.exs, etc.), infer rules for that stack based on dependencies (security, auth, logging, testing, linting, secrets).',
+                                        'Do NOT include extra keys (repositoryId, origin, uuid, timestamps).',
+                                    ].join(' '),
                                 })
                                 .addPrompt({
                                     role: PromptRole.USER,
@@ -1697,11 +1705,10 @@ export class KodyRulesSyncService {
                                 'You will receive dependency manifests (package.json, requirements.txt, pyproject.toml, go.mod, Cargo.toml, pom.xml, build.gradle(.kts), csproj, Gemfile, mix.exs, etc.). Use them ONLY to infer stack, frameworks, and tooling.',
                                 'Produce up to 3 HIGH-IMPACT Kody Rules tailored to this stack. Prioritize security/auth, secrets handling, logging/observability, testing/linting/type-check, dependency hygiene. Avoid generic style nits.',
                                 'Do NOT propose rules that depend on CI/CD, bots, or specific version pinning/patch enforcement. Rules must be actionable via code/config only.',
-                                'Output ONLY valid JSON array (no code fences). If none, output [].',
-                                'Each rule must follow:',
-                                '{ "rules": [{"title": string, "rule": string, "path": string, "repositoryId": string, "severity": "low"|"medium"|"high"|"critical", "scope"?: "file"|"pull-request", "examples": [{ "snippet": string, "isCorrect": boolean }]}] }',
+                                'Return ONLY a JSON object { "rules": [...] } with no code fences. If none, return { "rules": [] }.',
+                                'Each rule must include: title, rule, path (use the manifest path or glob inferred from it), severity ("low"|"medium"|"high"|"critical"), optional scope ("file"|"pull-request"), and examples: [{ "snippet": string, "isCorrect": boolean }].',
                                 'Keep language consistent with the source (do NOT translate).',
-                                'Do NOT include extra keys (repositoryId, origin, uuid, timestamps).',
+                                'Do NOT include extra keys such as repositoryId, sourcePath, origin, uuid, or timestamps.',
                             ].join(' '),
                         })
                         .addPrompt({
@@ -1752,10 +1759,11 @@ export class KodyRulesSyncService {
                                 .addPrompt({
                                     role: PromptRole.SYSTEM,
                                     prompt: [
-                                        'Return ONLY the JSON array of inferred rules (no code fences, no text), capped at 3 most important.',
+                                        'Return ONLY a JSON object { "rules": [...] } (no code fences, no text), capped at 3 rules.',
                                         'Rules must be HIGH-IMPACT and actionable in code/config only (security/auth, secrets handling, logging/observability, testing/linting/type-check, dependency hygiene). Avoid generic style nits.',
                                         'Do NOT propose rules that depend on CI/CD, bots, or pinning/enforcing specific library versions/patches.',
-                                        'Each item must include sourcePath (manifest path), path, and repositoryId. Keep the language consistent with the manifest. Do NOT translate.',
+                                        'Each rule must include: title, rule, path (manifest path or derived glob), severity ("low"|"medium"|"high"|"critical"), optional scope ("file"|"pull-request"), and examples: [{ "snippet": string, "isCorrect": boolean }]. Keep the language consistent with the manifest. Do NOT translate.',
+                                        'Do NOT include repositoryId, sourcePath, origin, uuid, or timestamps.',
                                     ].join(' '),
                                 })
                                 .addPrompt({

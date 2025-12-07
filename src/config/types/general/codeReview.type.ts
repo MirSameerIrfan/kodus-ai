@@ -417,6 +417,12 @@ export enum ReviewModeConfig {
     HEAVY_MODE = 'heavy_mode',
 }
 
+export enum ReviewPreset {
+    SPEED = 'speed',
+    SAFETY = 'safety',
+    COACH = 'coach',
+}
+
 export type KodyFineTuningConfig = {
     enabled: boolean;
 };
