@@ -5,15 +5,15 @@ import { CodeReviewPipelineContext } from '../context/code-review-pipeline.conte
 import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
     IAutomationExecutionService,
-} from '@/core/domain/automation/contracts/automation-execution.service';
+} from '@libs/automation/domain/contracts/automation-execution.service';
 import {
     PULL_REQUEST_MANAGER_SERVICE_TOKEN,
     IPullRequestManagerService,
-} from '@/core/domain/codeBase/contracts/PullRequestManagerService.contract';
+} from '@libs/code-review/domain/contracts/PullRequestManagerService.contract';
 import {
     AutomationMessage,
     AutomationStatus,
-} from '@/core/domain/automation/enums/automation-status';
+} from '@libs/automation/domain/enums/automation-status';
 
 @Injectable()
 export class ValidateNewCommitsStage extends BaseStage {

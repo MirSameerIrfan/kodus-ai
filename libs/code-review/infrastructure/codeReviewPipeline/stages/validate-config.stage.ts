@@ -9,7 +9,7 @@ import {
 import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
     IAutomationExecutionService,
-} from '@/core/domain/automation/contracts/automation-execution.service';
+} from '@libs/automation/domain/contracts/automation-execution.service';
 import {
     AutomaticReviewStatus,
     ReviewCadenceType,
@@ -20,15 +20,15 @@ import { CodeReviewPipelineContext } from '../context/code-review-pipeline.conte
 import {
     AutomationMessage,
     AutomationStatus,
-} from '@/core/domain/automation/enums/automation-status';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
+} from '@libs/automation/domain/enums/automation-status';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
+import { OrganizationParametersKey } from '@shared/domain/enums/organization-parameters-key.enum';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
+} from '@libs/organization/domain/org-parameters/contracts/organizationParameters.service.contract';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
 
 @Injectable()
 export class ValidateConfigStage extends BaseStage {

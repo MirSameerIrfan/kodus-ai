@@ -3,12 +3,12 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import {
     DRY_RUN_SERVICE_TOKEN,
     IDryRunService,
-} from '@/core/domain/dryRun/contracts/dryRun.service.contract';
+} from '@libs/dry-run/domain/contracts/dryRun.service.contract';
 import {
     IDryRunEvent,
     DryRunEventType,
     DryRunStatus,
-} from '@/core/domain/dryRun/interfaces/dryRun.interface';
+} from '@libs/dry-run/domain/interfaces/dryRun.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Observable, concat, from, fromEvent, merge, of } from 'rxjs';

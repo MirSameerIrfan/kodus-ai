@@ -23,8 +23,8 @@ import { v4 as uuidv4 } from 'uuid';
 import {
     PolicyGuard,
     CheckPolicies,
-} from '../../adapters/services/permissions/policy.guard';
-import { checkPermissions } from '../../adapters/services/permissions/policy.handlers';
+} from '@libs/identity/infrastructure/permissions/policy.guard';
+import { checkPermissions } from '@libs/identity/infrastructure/permissions/policy.handlers';
 import { BackoffPresets } from '@/shared/utils/polling';
 
 function replacer(key: any, value: any) {

@@ -1,19 +1,19 @@
 import { IssueStatus } from '@/config/types/general/issues.type';
-import { ISSUES_SERVICE_TOKEN } from '@/core/domain/issues/contracts/issues.service.contract';
-import { IssuesEntity } from '@/core/domain/issues/entities/issues.entity';
-import { IssuesService } from '@/core/infrastructure/adapters/services/issues/issues.service';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
-import { LabelType } from '@/shared/utils/codeManagement/labels';
+import { ISSUES_SERVICE_TOKEN } from '@libs/issues/domain/contracts/issues.service.contract';
+import { IssuesEntity } from '@libs/issues/domain/entities/issues.entity';
+import { IssuesService } from '@libs/issues/infrastructure/issues.service';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { LabelType } from '@shared/utils/codeManagement/labels';
 import { Injectable, Inject } from '@nestjs/common';
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
-import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@/core/domain/codeBase/contracts/KodyIssuesManagement.contract';
-import { KodyIssuesManagementService } from '@/core/infrastructure/adapters/services/kodyIssuesManagement/service/kodyIssuesManagement.service';
-import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
+import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
+import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/KodyIssuesManagement.contract';
+import { KodyIssuesManagementService } from '@libs/issues/infrastructure/service/kodyIssuesManagement.service';
+import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
 import { REQUEST } from '@nestjs/core';
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 
 @Injectable()
 export class UpdateIssuePropertyUseCase implements IUseCase {

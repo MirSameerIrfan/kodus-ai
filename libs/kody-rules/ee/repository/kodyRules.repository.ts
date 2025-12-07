@@ -1,18 +1,18 @@
-import { IKodyRulesRepository } from '@/core/domain/kodyRules/contracts/kodyRules.repository.contract';
+import { IKodyRulesRepository } from '@libs/kody-rules/domain/contracts/kodyRules.repository.contract';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { KodyRulesEntity } from '@/core/domain/kodyRules/entities/kodyRules.entity';
+import { KodyRulesEntity } from '@libs/kody-rules/domain/entities/kodyRules.entity';
 import {
     IKodyRule,
     IKodyRules,
     KodyRulesStatus,
-} from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+} from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
-} from '@/shared/infrastructure/repositories/mappers';
-import { KodyRulesModel } from '@/core/infrastructure/adapters/repositories/mongoose/schema/kodyRules.model';
+} from '@shared/infrastructure/repositories/mappers';
+import { KodyRulesModel } from '@core/database/mongoose/schemas/kodyRules.model';
 import { KodyRulesValidationService } from '../service/kody-rules-validation.service';
 
 @Injectable()

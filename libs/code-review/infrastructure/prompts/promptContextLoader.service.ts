@@ -1,20 +1,20 @@
 import { createLogger } from "@kodus/flow";
 import { Injectable } from '@nestjs/common';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     IFileReference,
     ILoadedFileReference,
     IExternalPromptContext,
     PromptSourceType,
-} from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
-import { PromptExternalReferenceEntity } from '@/core/domain/prompts/entities/promptExternalReference.entity';
+} from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
+import { PromptExternalReferenceEntity } from '@libs/code-review/domain/prompts/entities/promptExternalReference.entity';
 import type { ContextLayer } from '@context-os-core/interfaces';
 import { createHash } from 'crypto';
 import {
     IPromptContextLoaderService,
     LoadContextParams,
-} from '@/core/domain/prompts/contracts/promptContextLoader.contract';
+} from '@libs/code-review/domain/prompts/contracts/promptContextLoader.contract';
 
 @Injectable()
 export class PromptContextLoaderService implements IPromptContextLoaderService {

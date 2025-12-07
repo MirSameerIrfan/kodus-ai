@@ -1,18 +1,18 @@
 import { createLogger } from '@kodus/flow';
-import { AddLibraryKodyRulesDto } from '@/core/infrastructure/http/dtos/add-library-kody-rules.dto';
+import { AddLibraryKodyRulesDto } from '@shared/dtos/add-library-kody-rules.dto';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { CreateOrUpdateKodyRulesUseCase } from './create-or-update.use-case';
-import { CreateKodyRuleDto } from '@/core/infrastructure/http/dtos/create-kody-rule.dto';
+import { CreateKodyRuleDto } from '@shared/dtos/create-kody-rule.dto';
 import {
     IKodyRule,
     KodyRulesOrigin,
-} from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
-import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
+} from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
+import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 
 @Injectable()
 export class AddLibraryKodyRulesUseCase {

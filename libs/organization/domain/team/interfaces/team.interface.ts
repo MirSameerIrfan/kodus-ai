@@ -1,5 +1,5 @@
 import { STATUS } from '@/config/types/database/status.type';
-import { IOrganization } from '@/core/domain/organization/interfaces/organization.interface';
+import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
 
 export interface ITeam {

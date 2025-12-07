@@ -18,9 +18,9 @@ import { REQUEST } from '@nestjs/core';
 import {
     CheckPolicies,
     PolicyGuard,
-} from '../../adapters/services/permissions/policy.guard';
-import { checkPermissions } from '../../adapters/services/permissions/policy.handlers';
-import { CodeManagementService } from '../../adapters/services/platformIntegration/codeManagement.service';
+} from '@libs/identity/infrastructure/permissions/policy.guard';
+import { checkPermissions } from '@libs/identity/infrastructure/permissions/policy.handlers';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import { BackfillPRsDto } from '../dtos/backfill-prs.dto';
 import { EnrichedPullRequestsQueryDto } from '../dtos/enriched-pull-requests-query.dto';
 import { PaginatedEnrichedPullRequestsResponse } from '../dtos/paginated-enriched-pull-requests.dto';

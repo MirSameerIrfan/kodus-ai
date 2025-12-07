@@ -12,18 +12,18 @@ import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 import { IAIAnalysisService } from '../../../../domain/codeBase/contracts/AIAnalysisService.contract';
 
-import { BYOKPromptRunnerService } from '@/shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { prompt_codeReviewSafeguard_system } from '@/shared/utils/langchainCommon/prompts';
+import { BYOKPromptRunnerService } from '@shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { prompt_codeReviewSafeguard_system } from '@shared/utils/langchainCommon/prompts';
 import {
     prompt_codereview_system_gemini,
     prompt_codereview_system_gemini_v2,
     prompt_codereview_user_deepseek,
     prompt_codereview_user_gemini,
     prompt_codereview_user_gemini_v2,
-} from '@/shared/utils/langchainCommon/prompts/configuration/codeReview';
-import { prompt_selectorLightOrHeavyMode_system } from '@/shared/utils/langchainCommon/prompts/seletorLightOrHeavyMode';
-import { prompt_severity_analysis_user } from '@/shared/utils/langchainCommon/prompts/severityAnalysis';
-import { prompt_validateImplementedSuggestions } from '@/shared/utils/langchainCommon/prompts/validateImplementedSuggestions';
+} from '@shared/utils/langchainCommon/prompts/configuration/codeReview';
+import { prompt_selectorLightOrHeavyMode_system } from '@shared/utils/langchainCommon/prompts/seletorLightOrHeavyMode';
+import { prompt_severity_analysis_user } from '@shared/utils/langchainCommon/prompts/severityAnalysis';
+import { prompt_validateImplementedSuggestions } from '@shared/utils/langchainCommon/prompts/validateImplementedSuggestions';
 import type { ContextPack } from '@context-os-core/interfaces';
 import {
     BYOKConfig,
@@ -39,7 +39,7 @@ import {
     getAugmentationsFromPack,
     getOverridesFromPack,
 } from '../context/code-review-context.utils';
-import { ObservabilityService } from '../logger/observability.service';
+import { ObservabilityService } from '@shared/logging/observability.service';
 import { LLMResponseProcessor } from './utils/transforms/llmResponseProcessor.transform';
 
 export const LLM_ANALYSIS_SERVICE_TOKEN = Symbol('LLMAnalysisService');

@@ -3,10 +3,10 @@ import { KodyRuleFilters } from '@/config/types/kodyRules.type';
 import {
     KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,
-} from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
+} from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
 import { Inject, Injectable } from '@nestjs/common';
-import { FindLibraryKodyRulesDto } from '@/core/infrastructure/http/dtos/find-library-kody-rules.dto';
-import { PaginatedLibraryKodyRulesResponse, PaginationMetadata } from '@/core/infrastructure/http/dtos/paginated-library-kody-rules.dto';
+import { FindLibraryKodyRulesDto } from '@shared/dtos/find-library-kody-rules.dto';
+import { PaginatedLibraryKodyRulesResponse, PaginationMetadata } from '@shared/dtos/paginated-library-kody-rules.dto';
 
 @Injectable()
 export class FindLibraryKodyRulesUseCase {

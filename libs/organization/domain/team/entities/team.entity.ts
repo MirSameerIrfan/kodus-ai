@@ -1,6 +1,6 @@
-import { Entity } from '@/shared/domain/interfaces/entity';
+import { Entity } from '@shared/domain/interfaces/entity';
 import { ITeam } from '../interfaces/team.interface';
-import { IOrganization } from '@/core/domain/organization/interfaces/organization.interface';
+import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 import { STATUS } from '@/config/types/database/status.type';
 
 export class TeamEntity implements Entity<ITeam> {

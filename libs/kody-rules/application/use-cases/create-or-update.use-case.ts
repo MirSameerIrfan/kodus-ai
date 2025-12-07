@@ -1,22 +1,22 @@
 import { createLogger } from "@kodus/flow";
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { KODY_RULES_SERVICE_TOKEN } from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
-import { IKodyRulesService } from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
+import { KODY_RULES_SERVICE_TOKEN } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
+import { IKodyRulesService } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
-import { CreateKodyRuleDto } from '@/core/infrastructure/http/dtos/create-kody-rule.dto';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
+import { CreateKodyRuleDto } from '@shared/dtos/create-kody-rule.dto';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import {
     IGetAdditionalInfoHelper,
     GET_ADDITIONAL_INFO_HELPER_TOKEN,
-} from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
-import { PromptSourceType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
-import { ContextReferenceDetectionService } from '@/core/infrastructure/adapters/services/context/context-reference-detection.service';
-import type { ContextDetectionField } from '@/core/infrastructure/adapters/services/context/context-reference-detection.service';
+} from '@shared/domain/contracts/getAdditionalInfo.helper.contract';
+import { PromptSourceType } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
+import { ContextReferenceDetectionService } from '@libs/code-review/infrastructure/context/context-reference-detection.service';
+import type { ContextDetectionField } from '@libs/code-review/infrastructure/context/context-reference-detection.service';
 
 @Injectable()
 export class CreateOrUpdateKodyRulesUseCase {

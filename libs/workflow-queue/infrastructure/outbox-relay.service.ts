@@ -1,9 +1,9 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { OutboxMessageRepository } from '@/core/infrastructure/adapters/repositories/typeorm/outbox-message.repository';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
+import { OutboxMessageRepository } from '@core/database/typeorm/repositories/outbox-message.repository';
+import { PinoLoggerService } from '@shared/logging/pino.service';
+import { ObservabilityService } from '@shared/logging/observability.service';
 
 @Injectable()
 export class OutboxRelayService implements OnModuleInit, OnModuleDestroy {

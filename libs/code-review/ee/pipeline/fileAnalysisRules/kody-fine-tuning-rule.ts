@@ -8,7 +8,7 @@
 // import { CodeSuggestion } from '@/config/types/general/codeReview.type';
 // import { IClusterizedSuggestion } from '@/ee/kodyFineTuning/domain/interfaces/kodyFineTuning.interface';
 // import { KodyFineTuningService } from '@/ee/kodyFineTuning/kodyFineTuning.service';
-// import { SuggestionService } from '@/core/infrastructure/adapters/services/codeBase/suggestion.service';
+// import { SuggestionService } from '@libs/code-review/infrastructure/suggestion.service';
 
 // @Injectable()
 // export class KodyFineTuningRule extends BaseFileAnalysisRule {

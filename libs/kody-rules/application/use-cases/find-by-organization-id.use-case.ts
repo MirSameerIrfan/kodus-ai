@@ -2,13 +2,13 @@ import { createLogger } from "@kodus/flow";
 import {
     KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,
-} from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
+} from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import {
     CONTEXT_REFERENCE_SERVICE_TOKEN,
     IContextReferenceService,
-} from '@/core/domain/contextReferences/contracts/context-reference.service.contract';
+} from '@libs/code-review/domain/context/contracts/context-reference.service.contract';
 import { enrichRulesWithContextReferences } from './utils/enrich-rules-with-context-references.util';
 
 @Injectable()

@@ -1,28 +1,28 @@
 import { DatabaseConnection } from '@/config/types';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
+import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
 import {
     DRY_RUN_SERVICE_TOKEN,
     IDryRunService,
-} from '@/core/domain/dryRun/contracts/dryRun.service.contract';
-import { DryRunStatus } from '@/core/domain/dryRun/interfaces/dryRun.interface';
+} from '@libs/dry-run/domain/contracts/dryRun.service.contract';
+import { DryRunStatus } from '@libs/dry-run/domain/interfaces/dryRun.interface';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
+} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
-import { Repositories } from '@/core/domain/platformIntegrations/types/codeManagement/repositories.type';
-import { CodeReviewPipelineContext } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/context/code-review-pipeline.context';
-import { DryRunCodeReviewPipeline } from '@/core/infrastructure/adapters/services/dryRun/dryRunPipeline';
-import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
+} from '@libs/organization/domain/org-parameters/contracts/organizationParameters.service.contract';
+import { Repositories } from '@libs/platform/domain/types/codeManagement/repositories.type';
+import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/codeReviewPipeline/context/code-review-pipeline.context';
+import { DryRunCodeReviewPipeline } from '@libs/dry-run/infrastructure/dryRunPipeline';
+import { ObservabilityService } from '@shared/logging/observability.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
+import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
+import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
+import { OrganizationParametersKey } from '@shared/domain/enums/organization-parameters-key.enum';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
 import { IdGenerator, createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';

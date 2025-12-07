@@ -2,7 +2,7 @@ import type {
     ContextDependency,
     ContextPack,
 } from '@context-os-core/interfaces';
-import { PromptSourceType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
+import { PromptSourceType } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
 
 export interface ContextMarkerPattern {
     name: string;

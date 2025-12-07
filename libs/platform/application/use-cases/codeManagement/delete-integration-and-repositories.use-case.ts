@@ -1,14 +1,14 @@
 import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { DeleteIntegrationUseCase } from './delete-integration.use-case';
-import { PARAMETERS_SERVICE_TOKEN } from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { IParametersService } from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { PULL_REQUEST_MESSAGES_SERVICE_TOKEN } from '@/core/domain/pullRequestMessages/contracts/pullRequestMessages.service.contract';
-import { IPullRequestMessagesService } from '@/core/domain/pullRequestMessages/contracts/pullRequestMessages.service.contract';
-import { KODY_RULES_SERVICE_TOKEN } from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
-import { IKodyRulesService } from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { KodyRulesStatus } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+import { PARAMETERS_SERVICE_TOKEN } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { IParametersService } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { PULL_REQUEST_MESSAGES_SERVICE_TOKEN } from '@libs/code-review/domain/pr-messages/contracts/pullRequestMessages.service.contract';
+import { IPullRequestMessagesService } from '@libs/code-review/domain/pr-messages/contracts/pullRequestMessages.service.contract';
+import { KODY_RULES_SERVICE_TOKEN } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
+import { IKodyRulesService } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
+import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
+import { KodyRulesStatus } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import { ConfigLevel } from '@/config/types/general/pullRequestMessages.type';
 
 @Injectable()

@@ -1,5 +1,5 @@
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { PullRequestState } from '@shared/domain/enums/pullRequestState.enum';
 import { PullRequestsEntity } from '../entities/pullRequests.entity';
 import {
     ICommit,

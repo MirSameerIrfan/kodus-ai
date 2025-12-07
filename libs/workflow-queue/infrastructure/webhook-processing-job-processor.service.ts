@@ -1,28 +1,26 @@
 import { Injectable, Inject, Optional } from '@nestjs/common';
 import { createLogger } from '@kodus/flow';
-import { IJobProcessorService } from '@/core/domain/workflowQueue/contracts/job-processor.service.contract';
-import { WorkflowJobRepository } from '@/core/infrastructure/adapters/repositories/typeorm/workflow-job.repository';
-import { WorkflowType } from '@/core/domain/workflowQueue/enums/workflow-type.enum';
-import { JobStatus } from '@/core/domain/workflowQueue/enums/job-status.enum';
-import { ErrorClassification } from '@/core/domain/workflowQueue/enums/error-classification.enum';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
+import { IJobProcessorService } from '@libs/workflow-queue/domain/contracts/job-processor.service.contract';
+import { WorkflowType } from '@libs/workflow-queue/domain/enums/workflow-type.enum';
+import { JobStatus } from '@libs/workflow-queue/domain/enums/job-status.enum';
+import { ErrorClassification } from '@libs/workflow-queue/domain/enums/error-classification.enum';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
 import {
     IWebhookEventHandler,
     IWebhookEventParams,
-} from '@/core/domain/platformIntegrations/interfaces/webhook-event-handler.interface';
-import { CodeReviewValidationService } from '@/core/infrastructure/adapters/services/codeReview/code-review-validation.service';
-import { EnqueueCodeReviewJobUseCase } from '@/core/application/use-cases/workflowQueue/enqueue-code-review-job.use-case';
-import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
+} from '@libs/platform/domain/interfaces/webhook-event-handler.interface';
+import { CodeReviewValidationService } from '@libs/code-review/infrastructure/code-review-validation.service';
+import { EnqueueCodeReviewJobUseCase } from '@libs/workflow-queue/application/use-cases/enqueue-code-review-job.use-case';
+import { ObservabilityService } from '@shared/logging/observability.service';
 import { ConfigService } from '@nestjs/config';
+import { WorkflowJobRepository } from '@core/database/typeorm/repositories/workflow-job.repository';
 
 /**
  * Processor for WEBHOOK_PROCESSING jobs
  * Processes raw webhook payloads, saves PRs, validates, and enqueues CODE_REVIEW jobs
  */
 @Injectable()
-export class WebhookProcessingJobProcessorService
-    implements IJobProcessorService
-{
+export class WebhookProcessingJobProcessorService implements IJobProcessorService {
     private readonly logger = createLogger(
         WebhookProcessingJobProcessorService.name,
     );
@@ -104,7 +102,9 @@ export class WebhookProcessingJobProcessorService
                     // Extract event from metadata
                     const event = job.metadata?.event as string | undefined;
                     if (!event) {
-                        throw new Error(`Job ${jobId} missing event in metadata`);
+                        throw new Error(
+                            `Job ${jobId} missing event in metadata`,
+                        );
                     }
 
                     // Get handler for platform
@@ -205,4 +205,3 @@ export class WebhookProcessingJobProcessorService
         });
     }
 }
-

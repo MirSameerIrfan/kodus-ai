@@ -5,7 +5,7 @@
 import { FileChange } from '@/config/types/general/codeReview.type';
 import { AnalysisContext } from '@/config/types/general/codeReview.type';
 import { CodeSuggestion } from '@/config/types/general/codeReview.type';
-import { IClusterizedSuggestion } from '@/core/domain/kodyFineTuning/interfaces/kodyFineTuning.interface';
+import { IClusterizedSuggestion } from '@libs/code-review/ee/fine-tuning/domain/interfaces/kodyFineTuning.interface';
 
 export interface IFileAnalysisRule {
     /**

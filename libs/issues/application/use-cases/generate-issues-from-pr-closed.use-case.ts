@@ -1,28 +1,28 @@
 import { createLogger } from "@kodus/flow";
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@/core/domain/codeBase/contracts/KodyIssuesManagement.contract';
+import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/KodyIssuesManagement.contract';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { stripCurlyBracesFromUUIDs } from '@/core/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
+} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
+import { stripCurlyBracesFromUUIDs } from '@libs/platform/domain/types/webhooks/webhooks-bitbucket.type';
 import {
     IMappedPullRequest,
     IMappedRepository,
-} from '@/core/domain/platformIntegrations/types/webhooks/webhooks-common.type';
+} from '@libs/platform/domain/types/webhooks/webhooks-common.type';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
-} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
+} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
 import {
     contextToGenerateIssues,
     IRepositoryToIssues,
-} from '@/core/infrastructure/adapters/services/kodyIssuesManagement/domain/kodyIssuesManagement.interface';
-import { KodyIssuesManagementService } from '@/core/infrastructure/adapters/services/kodyIssuesManagement/service/kodyIssuesManagement.service';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
-import { getMappedPlatform } from '@/shared/utils/webhooks';
+} from '@libs/issues/infrastructure/domain/kodyIssuesManagement.interface';
+import { KodyIssuesManagementService } from '@libs/issues/infrastructure/service/kodyIssuesManagement.service';
+import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { getMappedPlatform } from '@shared/utils/webhooks';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

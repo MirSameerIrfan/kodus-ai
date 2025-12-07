@@ -2,18 +2,18 @@ import { createLogger } from "@kodus/flow";
 import {
     AUTH_INTEGRATION_SERVICE_TOKEN,
     IAuthIntegrationService,
-} from '@/core/domain/authIntegrations/contracts/auth-integration.service.contracts';
+} from '@libs/integrations/domain/auth/contracts/auth-integration.service.contracts';
 import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
-} from '@/core/domain/integrations/contracts/integration.service.contracts';
-import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+} from '@libs/integrations/domain/contracts/integration.service.contracts';
+import { IntegrationCategory } from '@shared/domain/enums/integration-category.enum';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import {
     toIntegrationCategory,
     toPlatformType,
-} from '@/shared/utils/enum-utils';
+} from '@shared/utils/enum-utils';
 import { Inject } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';

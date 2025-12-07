@@ -1,5 +1,5 @@
 import { KodusConfigFile } from '@/config/types/general/codeReview.type';
-import * as codereviewConfigSchema from '@/shared/schemas/codereview.json';
+import * as codereviewConfigSchema from '@shared/schemas/codereview.json';
 import Ajv, { ErrorObject } from 'ajv';
 
 import * as yaml from 'js-yaml';

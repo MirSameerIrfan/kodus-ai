@@ -7,18 +7,18 @@ import {
     ReviewModeResponse,
 } from '@/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { IASTAnalysisService } from '@/core/domain/codeBase/contracts/ASTAnalysisService.contract';
-import { LLMResponseProcessor } from '@/core/infrastructure/adapters/services/codeBase/utils/transforms/llmResponseProcessor.transform';
-import type { ContextAugmentationsMap } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
+import { IASTAnalysisService } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
+import { LLMResponseProcessor } from '@libs/code-review/infrastructure/utils/transforms/llmResponseProcessor.transform';
+import type { ContextAugmentationsMap } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';
 import {
     getAugmentationsFromPack,
     getOverridesFromPack,
-} from '@/core/infrastructure/adapters/services/context/code-review-context.utils';
-import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
-import { prompt_detectBreakingChanges } from '@/shared/utils/langchainCommon/prompts/detectBreakingChanges';
-import { calculateBackoffInterval } from '@/shared/utils/polling/exponential-backoff';
+} from '@libs/code-review/infrastructure/context/code-review-context.utils';
+import { ObservabilityService } from '@shared/logging/observability.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
+import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
+import { prompt_detectBreakingChanges } from '@shared/utils/langchainCommon/prompts/detectBreakingChanges';
+import { calculateBackoffInterval } from '@shared/utils/polling/exponential-backoff';
 import type { ContextPack } from '@context-os-core/interfaces';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { createLogger } from '@kodus/flow';

@@ -1,5 +1,5 @@
 import { createLogger } from "@kodus/flow";
-import { IExecuteAutomationService } from '@/shared/domain/contracts/execute.automation.service.contracts';
+import { IExecuteAutomationService } from '@shared/domain/contracts/execute.automation.service.contracts';
 import { Injectable } from '@nestjs/common';
 import { AutomationRegistry } from './register.automation';
 

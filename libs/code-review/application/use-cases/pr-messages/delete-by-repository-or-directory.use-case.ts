@@ -3,9 +3,9 @@ import { Injectable, Inject } from '@nestjs/common';
 import {
     IPullRequestMessagesService,
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
-} from '@/core/domain/pullRequestMessages/contracts/pullRequestMessages.service.contract';
+} from '@libs/code-review/domain/pr-messages/contracts/pullRequestMessages.service.contract';
 import { ConfigLevel } from '@/config/types/general/pullRequestMessages.type';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 
 export interface DeletePullRequestMessagesParams {
     organizationId: string;

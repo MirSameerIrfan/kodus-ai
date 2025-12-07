@@ -1,10 +1,10 @@
 import {
     AUTOMATION_REPOSITORY_TOKEN,
     IAutomationRepository,
-} from '@/core/domain/automation/contracts/automation.repository';
-import { IAutomationService } from '@/core/domain/automation/contracts/automation.service';
-import { AutomationEntity } from '@/core/domain/automation/entities/automation.entity';
-import { IAutomation } from '@/core/domain/automation/interfaces/automation.interface';
+} from '@libs/automation/domain/contracts/automation.repository';
+import { IAutomationService } from '@libs/automation/domain/contracts/automation.service';
+import { AutomationEntity } from '@libs/automation/domain/entities/automation.entity';
+import { IAutomation } from '@libs/automation/domain/interfaces/automation.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

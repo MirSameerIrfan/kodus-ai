@@ -3,7 +3,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import {
     CODE_REVIEW_SETTINGS_LOG_REPOSITORY_TOKEN,
     ICodeReviewSettingsLogRepository,
-} from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.repository.contract';
+} from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.repository.contract';
 import {
     ActionType,
     ConfigLevel,
@@ -13,7 +13,7 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import {
     IGetAdditionalInfoHelper,
     GET_ADDITIONAL_INFO_HELPER_TOKEN,
-} from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
+} from '@shared/domain/contracts/getAdditionalInfo.helper.contract';
 
 export interface ChangedDataToExport {
     actionDescription: string;

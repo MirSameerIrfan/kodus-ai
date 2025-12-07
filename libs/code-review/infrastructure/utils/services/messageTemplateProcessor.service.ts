@@ -3,12 +3,12 @@ import { Injectable } from '@nestjs/common';
 import { FileChange, ReviewCadenceType } from '@/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { CodeReviewConfig } from '@/config/types/general/codeReview.type';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { LanguageValue } from '@/shared/domain/enums/language-parameter.enum';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { LanguageValue } from '@shared/domain/enums/language-parameter.enum';
 import {
     getTranslationsForLanguageByCategory,
     TranslationsCategory,
-} from '@/shared/utils/translations/translations';
+} from '@shared/utils/translations/translations';
 
 export interface PlaceholderContext {
     changedFiles?: FileChange[];

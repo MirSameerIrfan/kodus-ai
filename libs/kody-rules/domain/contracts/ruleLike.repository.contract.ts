@@ -1,6 +1,6 @@
 import { RuleLikeEntity, RuleFeedbackType } from '../entities/ruleLike.entity';
 import { FilterQuery } from 'mongoose';
-import { RuleLikeModel } from '@/core/infrastructure/adapters/repositories/mongoose/schema/rulesLikes.model';
+import { RuleLikeModel } from '@core/database/mongoose/schemas/rulesLikes.model';
 
 export interface IRuleLike {
     _id?: string;

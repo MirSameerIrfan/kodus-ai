@@ -1,4 +1,4 @@
-import { Entity } from '@/shared/domain/interfaces/entity';
+import { Entity } from '@shared/domain/interfaces/entity';
 import { CodeReviewExecution } from '../interfaces/codeReviewExecution.interface';
 
 export class CodeReviewExecutionEntity implements Entity<CodeReviewExecution> {

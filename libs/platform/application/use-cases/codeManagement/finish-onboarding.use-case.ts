@@ -1,10 +1,10 @@
-import { KodyRulesStatus } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+import { KodyRulesStatus } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { FinishOnboardingDTO } from '@/core/infrastructure/http/dtos/finish-onboarding.dto';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { FinishOnboardingDTO } from '@shared/dtos/finish-onboarding.dto';
+import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';

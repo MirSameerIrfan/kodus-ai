@@ -3,12 +3,12 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
+} from '@libs/organization/domain/org-parameters/contracts/organizationParameters.service.contract';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
-} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
+} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
+import { OrganizationParametersKey } from '@shared/domain/enums/organization-parameters-key.enum';
 import { Inject, Injectable } from '@nestjs/common';
 import {
     ILicenseService,

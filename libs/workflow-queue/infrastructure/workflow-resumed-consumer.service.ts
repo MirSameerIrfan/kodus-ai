@@ -1,15 +1,15 @@
 import { Injectable, UseFilters } from '@nestjs/common';
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { RabbitmqConsumeErrorFilter } from '@/shared/infrastructure/filters/rabbitmq-consume-error.exception';
-import { ProcessWorkflowJobUseCase } from '@/core/application/use-cases/workflowQueue/process-workflow-job.use-case';
+import { PinoLoggerService } from '@shared/logging/pino.service';
+import { RabbitmqConsumeErrorFilter } from '@shared/infrastructure/filters/rabbitmq-consume-error.exception';
+import { ProcessWorkflowJobUseCase } from '@libs/workflow-queue/application/use-cases/process-workflow-job.use-case';
 import { TransactionalInboxService } from './transactional-inbox.service';
 import { DataSource } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { WorkflowQueueConfig } from '@/config/types/environment/workflow-queue.type';
-import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
-import { WorkflowJobRepository } from '@/core/infrastructure/adapters/repositories/typeorm/workflow-job.repository';
-import { JobStatus } from '@/core/domain/workflowQueue/enums/job-status.enum';
+import { ObservabilityService } from '@shared/logging/observability.service';
+import { WorkflowJobRepository } from '@core/database/typeorm/repositories/workflow-job.repository';
+import { JobStatus } from '@libs/workflow-queue/domain/enums/job-status.enum';
 
 interface WorkflowResumedMessage {
     jobId: string;

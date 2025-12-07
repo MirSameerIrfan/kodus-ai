@@ -8,8 +8,8 @@ import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import {
     CheckPolicies,
     PolicyGuard,
-} from '../../adapters/services/permissions/policy.guard';
-import { checkPermissions } from '../../adapters/services/permissions/policy.handlers';
+} from '@libs/identity/infrastructure/permissions/policy.guard';
+import { checkPermissions } from '@libs/identity/infrastructure/permissions/policy.handlers';
 import { CodeReviewSettingsLogFiltersDto } from '../dtos/code-review-settings-log-filters.dto';
 import { UserStatusDto } from '../dtos/user-status-change.dto';
 

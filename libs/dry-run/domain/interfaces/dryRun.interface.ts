@@ -1,6 +1,6 @@
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
-import { IPullRequestMessages } from '../../pullRequestMessages/interfaces/pullRequestMessages.interface';
-import { IPullRequests } from '../../pullRequests/interfaces/pullRequests.interface';
+import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
+import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
+import { IPullRequests } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import { CodeReviewParameter } from '@/config/types/general/codeReviewConfig.type';
 import { string } from 'joi';
 

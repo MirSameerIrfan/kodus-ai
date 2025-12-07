@@ -11,7 +11,7 @@ import {
     CodeReviewConfig,
 } from '@/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { tryParseJSONObject } from '@/shared/utils/transforms/json';
+import { tryParseJSONObject } from '@shared/utils/transforms/json';
 import {
     KodyRulesClassifierSchema,
     kodyRulesClassifierSchema,
@@ -26,17 +26,17 @@ import {
     prompt_kodyrules_suggestiongeneration_user,
     prompt_kodyrules_updatestdsuggestions_system,
     prompt_kodyrules_updatestdsuggestions_user,
-} from '@/shared/utils/langchainCommon/prompts/kodyRules';
+} from '@shared/utils/langchainCommon/prompts/kodyRules';
 import {
     IKodyRule,
     KodyRulesScope,
-} from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+} from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import { v4 as uuidv4, validate as uuidValidate } from 'uuid';
-import { KodyRulesService } from '../kodyRules/service/kodyRules.service';
-import { KODY_RULES_SERVICE_TOKEN } from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
-import { LabelType } from '@/shared/utils/codeManagement/labels';
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
-import { IKodyRulesAnalysisService } from '@/core/domain/codeBase/contracts/KodyRulesAnalysisService.contract';
+import { KodyRulesService } from '@libs/kody-rules/infrastructure/services/kodyRules.service';
+import { KODY_RULES_SERVICE_TOKEN } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
+import { LabelType } from '@shared/utils/codeManagement/labels';
+import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
+import { IKodyRulesAnalysisService } from '@libs/code-review/domain/contracts/KodyRulesAnalysisService.contract';
 import {
     LLMModelProvider,
     PromptRunnerService,
@@ -44,26 +44,26 @@ import {
     PromptRole,
     BYOKConfig,
 } from '@kodus/kodus-common/llm';
-import { KodyRulesValidationService } from '../kodyRules/service/kody-rules-validation.service';
+import { KodyRulesValidationService } from '@libs/kody-rules/infrastructure/services/kody-rules-validation.service';
 import {
     CODE_BASE_CONFIG_SERVICE_TOKEN,
     ICodeBaseConfigService,
-} from '@/core/domain/codeBase/contracts/CodeBaseConfigService.contract';
-import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
-import { BYOKPromptRunnerService } from '@/shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { ExternalReferenceLoaderService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceLoader.service';
-import type { ContextAugmentationsMap } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
+} from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
+import { ObservabilityService } from '@shared/logging/observability.service';
+import { BYOKPromptRunnerService } from '@shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { ExternalReferenceLoaderService } from '@libs/kody-rules/infrastructure/externalReferenceLoader.service';
+import type { ContextAugmentationsMap } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';
 import {
     getAugmentationsFromPack,
     getOverridesFromPack,
-} from '@/core/infrastructure/adapters/services/context/code-review-context.utils';
+} from '@libs/code-review/infrastructure/context/code-review-context.utils';
 import type {
     ContextDependency,
     ContextPack,
 } from '@context-os-core/interfaces';
-import { FileContextAugmentationService } from '@/core/infrastructure/adapters/services/context/file-context-augmentation.service';
-import { ContextReferenceService } from '@/core/infrastructure/adapters/services/context/context-reference.service';
-import { KodyRuleDependencyService } from '@/core/infrastructure/adapters/services/kodyRules/kodyRulesDependency.service';
+import { FileContextAugmentationService } from '@libs/code-review/infrastructure/context/file-context-augmentation.service';
+import { ContextReferenceService } from '@libs/code-review/infrastructure/context/context-reference.service';
+import { KodyRuleDependencyService } from '@libs/kody-rules/infrastructure/kodyRulesDependency.service';
 
 interface KodyRulesExtendedContext {
     pullRequest: any;

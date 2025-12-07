@@ -5,10 +5,10 @@
 
 import { forwardRef, Module } from '@nestjs/common';
 
-import { CodebaseModule } from '@/modules/codeBase.module';
-import { KODY_AST_ANALYZE_CONTEXT_PREPARATION_PROVIDER } from '@/core/infrastructure/providers/kody-ast-analyze-context-preparation.provider.ee';
-import { KODY_AST_ANALYZE_CONTEXT_PREPARATION_TOKEN } from '@/shared/interfaces/kody-ast-analyze-context-preparation.interface';
-import { KodyASTAnalyzeContextPreparationService } from '@/core/infrastructure/adapters/services/kodyASTAnalyze/kody-ast-analyze-context-preparation.service';
+import { CodebaseModule } from '@libs/code-review/code-review.module';
+import { KODY_AST_ANALYZE_CONTEXT_PREPARATION_PROVIDER } from '@libs/code-review/providers/kody-ast-analyze-context-preparation.provider.ee';
+import { KODY_AST_ANALYZE_CONTEXT_PREPARATION_TOKEN } from '@shared/interfaces/kody-ast-analyze-context-preparation.interface';
+import { KodyASTAnalyzeContextPreparationService } from '@libs/code-review/ee/ast-analyze/kody-ast-analyze-context-preparation.service';
 
 @Module({
     imports: [forwardRef(() => CodebaseModule)],

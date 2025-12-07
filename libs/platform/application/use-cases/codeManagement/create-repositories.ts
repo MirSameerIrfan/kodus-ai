@@ -2,15 +2,15 @@ import { STATUS } from '@/config/types/database/status.type';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import {
     ITeamService,
     TEAM_SERVICE_TOKEN,
-} from '@/core/domain/team/contracts/team.service.contract';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+} from '@libs/organization/domain/team/contracts/team.service.contract';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
+import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
+import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { createLogger } from '@kodus/flow';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';

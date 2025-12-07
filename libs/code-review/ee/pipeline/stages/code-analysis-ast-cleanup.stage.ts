@@ -3,9 +3,9 @@ import { Injectable, Inject } from '@nestjs/common';
 import {
     AST_ANALYSIS_SERVICE_TOKEN,
     IASTAnalysisService,
-} from '@/core/domain/codeBase/contracts/ASTAnalysisService.contract';
-import { BaseStage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/base/base-stage.abstract';
-import { CodeReviewPipelineContext } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/context/code-review-pipeline.context';
+} from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
+import { BaseStage } from '@libs/code-review/infrastructure/codeReviewPipeline/stages/base/base-stage.abstract';
+import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/codeReviewPipeline/context/code-review-pipeline.context';
 
 const ENABLE_CODE_REVIEW_AST =
     process.env.API_ENABLE_CODE_REVIEW_AST === 'true';

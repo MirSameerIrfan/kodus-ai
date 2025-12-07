@@ -4,9 +4,9 @@ import { BaseStage } from './base/base-stage.abstract';
 import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
-} from '@/core/domain/codeBase/contracts/CommentManagerService.contract';
+} from '@libs/code-review/domain/contracts/CommentManagerService.contract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
 import { PullRequestMessageStatus } from '@/config/types/general/pullRequestMessages.type';
 
 @Injectable()

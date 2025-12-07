@@ -1,4 +1,4 @@
-import { LanguageValue } from '@/shared/domain/enums/language-parameter.enum';
+import { LanguageValue } from '@shared/domain/enums/language-parameter.enum';
 
 export const prompt_generate_conversation_title = (params: {
     userMessage: string;

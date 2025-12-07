@@ -3,10 +3,10 @@ import { UserRequest } from '@/config/types/http/user-request.type';
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { Inject } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';

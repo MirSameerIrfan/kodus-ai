@@ -1,16 +1,16 @@
-import { IParametersService, PARAMETERS_SERVICE_TOKEN } from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+import { IParametersService, PARAMETERS_SERVICE_TOKEN } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
 import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
-} from '@/core/domain/integrations/contracts/integration.service.contracts';
+} from '@libs/integrations/domain/contracts/integration.service.contracts';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
+} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
+import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
 import { Inject, Injectable } from '@nestjs/common';
-import { IGetAdditionalInfoHelper } from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
+import { IGetAdditionalInfoHelper } from '@shared/domain/contracts/getAdditionalInfo.helper.contract';
 
 @Injectable()
 export class GetAdditionalInfoHelper implements IGetAdditionalInfoHelper {

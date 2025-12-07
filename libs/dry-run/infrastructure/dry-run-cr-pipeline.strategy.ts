@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { CodeReviewPipelineContext } from '../codeBase/codeReviewPipeline/context/code-review-pipeline.context';
+import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/context/code-review-pipeline.context';
 import { AggregateResultsStage } from '../codeBase/codeReviewPipeline/stages/aggregate-result.stage';
 import {
     LOAD_EXTERNAL_CONTEXT_STAGE_TOKEN,
@@ -14,8 +14,8 @@ import { ProcessFilesPrLevelReviewStage } from '../codeBase/codeReviewPipeline/s
 import { ProcessFilesReview } from '../codeBase/codeReviewPipeline/stages/process-files-review.stage';
 import { ResolveConfigStage } from '../codeBase/codeReviewPipeline/stages/resolve-config.stage';
 import { ValidateConfigStage } from '../codeBase/codeReviewPipeline/stages/validate-config.stage';
-import { IPipelineStrategy } from '../pipeline/interfaces/pipeline-strategy.interface';
-import { PipelineStage } from '../pipeline/interfaces/pipeline.interface';
+import { IPipelineStrategy } from '@libs/code-review/infrastructure/pipeline/interfaces/pipeline-strategy.interface';
+import { PipelineStage } from '@libs/code-review/infrastructure/pipeline/interfaces/pipeline.interface';
 
 @Injectable()
 export class DryRunCodeReviewPipelineStrategy

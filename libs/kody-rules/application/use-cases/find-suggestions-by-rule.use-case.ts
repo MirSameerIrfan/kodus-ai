@@ -4,12 +4,12 @@ import { REQUEST } from '@nestjs/core';
 import {
     PULL_REQUESTS_REPOSITORY_TOKEN,
     IPullRequestsRepository,
-} from '@/core/domain/pullRequests/contracts/pullRequests.repository';
+} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.repository';
 import {
     KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,
-} from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
-import { ISuggestion } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
+} from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
+import { ISuggestion } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 
 @Injectable()
 export class FindSuggestionsByRuleUseCase {

@@ -4,10 +4,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
     CONTEXT_REFERENCE_REPOSITORY_TOKEN,
     IContextReferenceRepository,
-} from '@/core/domain/contextReferences/contracts/context-reference.repository.contract';
-import { IContextReferenceService } from '@/core/domain/contextReferences/contracts/context-reference.service.contract';
-import { ContextReferenceEntity } from '@/core/domain/contextReferences/entities/context-reference.entity';
-import { IContextReference } from '@/core/domain/contextReferences/interfaces/context-reference.interface';
+} from '@libs/code-review/domain/context/contracts/context-reference.repository.contract';
+import { IContextReferenceService } from '@libs/code-review/domain/context/contracts/context-reference.service.contract';
+import { ContextReferenceEntity } from '@libs/code-review/domain/context/entities/context-reference.entity';
+import { IContextReference } from '@libs/code-review/domain/context/interfaces/context-reference.interface';
 import {
     ContextRevisionScope,
     ContextRequirement,

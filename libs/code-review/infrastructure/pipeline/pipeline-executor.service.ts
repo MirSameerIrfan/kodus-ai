@@ -2,7 +2,7 @@ import { createLogger } from "@kodus/flow";
 import { v4 as uuid } from 'uuid';
 import { PipelineContext } from './interfaces/pipeline-context.interface';
 import { PipelineStage } from './interfaces/pipeline.interface';
-import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
+import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
 import { WorkflowPausedError } from './errors/workflow-paused.error';
 
 export class PipelineExecutor<TContext extends PipelineContext> {

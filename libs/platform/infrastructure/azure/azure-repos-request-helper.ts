@@ -1,11 +1,11 @@
 import axios, { AxiosInstance } from 'axios';
 import { Injectable } from '@nestjs/common';
-import { AzureReposRepository } from '@/core/domain/azureRepos/entities/azureReposRepository.type';
-import { AzureReposProject } from '@/core/domain/azureRepos/entities/azureReposProject.type';
+import { AzureReposRepository } from '@libs/platform/domain/azure/entities/azureReposRepository.type';
+import { AzureReposProject } from '@libs/platform/domain/azure/entities/azureReposProject.type';
 import {
     AzurePRStatus,
     AzureRepoPullRequest,
-} from '@/core/domain/azureRepos/entities/azureRepoPullRequest.type';
+} from '@libs/platform/domain/azure/entities/azureRepoPullRequest.type';
 import {
     AzureRepoIteration,
     AzureRepoChange,
@@ -16,8 +16,8 @@ import {
     AzureRepoCommentType,
     AzureRepoReviewerWithVote,
     AzureRepoFileItem,
-} from '@/core/domain/azureRepos/entities/azureRepoExtras.type';
-import { decrypt } from '@/shared/utils/crypto';
+} from '@libs/platform/domain/azure/entities/azureRepoExtras.type';
+import { decrypt } from '@shared/utils/crypto';
 import { FileChange } from '@/config/types/general/codeReview.type';
 
 @Injectable()

@@ -1,12 +1,12 @@
 import {
     IOrganizationService,
     ORGANIZATION_SERVICE_TOKEN,
-} from '@/core/domain/organization/contracts/organization.service.contract';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+} from '@libs/organization/domain/organization/contracts/organization.service.contract';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { Inject } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { UpdateProfileUseCase } from '../profile/update.use-case';
-import posthogClient from '@/shared/utils/posthog';
+import posthogClient from '@shared/utils/posthog';
 
 export class UpdateInfoOrganizationAndPhoneUseCase implements IUseCase {
     constructor(

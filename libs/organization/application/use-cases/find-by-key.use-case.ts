@@ -3,11 +3,11 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
-import { OrganizationParametersEntity } from '@/core/domain/organizationParameters/entities/organizationParameters.entity';
-import { IOrganizationParameters } from '@/core/domain/organizationParameters/interfaces/organizationParameters.interface';
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
-import { decrypt } from '@/shared/utils/crypto';
+} from '@libs/organization/domain/org-parameters/contracts/organizationParameters.service.contract';
+import { OrganizationParametersEntity } from '@libs/organization/domain/org-parameters/entities/organizationParameters.entity';
+import { IOrganizationParameters } from '@libs/organization/domain/org-parameters/interfaces/organizationParameters.interface';
+import { OrganizationParametersKey } from '@shared/domain/enums/organization-parameters-key.enum';
+import { decrypt } from '@shared/utils/crypto';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 
 @Injectable()

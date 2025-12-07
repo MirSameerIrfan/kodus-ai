@@ -2,12 +2,12 @@ import { createLogger } from "@kodus/flow";
 import { FileChange } from '@/config/types/general/codeReview.type';
 import { Commit } from '@/config/types/general/commit.type';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { PullRequestAuthor } from '@/core/domain/platformIntegrations/types/codeManagement/pullRequests.type';
-import { CacheService } from '@/shared/utils/cache/cache.service';
-import { isFileMatchingGlob } from '@/shared/utils/glob-utils';
+import { PullRequestAuthor } from '@libs/platform/domain/types/codeManagement/pullRequests.type';
+import { CacheService } from '@shared/utils/cache/cache.service';
+import { isFileMatchingGlob } from '@shared/utils/glob-utils';
 import { Injectable } from '@nestjs/common';
 import { IPullRequestManagerService } from '../../../../domain/codeBase/contracts/PullRequestManagerService.contract';
-import { CodeManagementService } from '../platformIntegration/codeManagement.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 
 @Injectable()
 export class PullRequestHandlerService implements IPullRequestManagerService {

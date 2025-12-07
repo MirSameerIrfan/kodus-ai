@@ -1,10 +1,10 @@
 import {
     ITeamAutomationRepository,
     TEAM_AUTOMATION_REPOSITORY_TOKEN,
-} from '@/core/domain/automation/contracts/team-automation.repository';
-import { ITeamAutomationService } from '@/core/domain/automation/contracts/team-automation.service';
-import { TeamAutomationEntity } from '@/core/domain/automation/entities/team-automation.entity';
-import { ITeamAutomation } from '@/core/domain/automation/interfaces/team-automation.interface';
+} from '@libs/automation/domain/contracts/team-automation.repository';
+import { ITeamAutomationService } from '@libs/automation/domain/contracts/team-automation.service';
+import { TeamAutomationEntity } from '@libs/automation/domain/entities/team-automation.entity';
+import { ITeamAutomation } from '@libs/automation/domain/interfaces/team-automation.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 

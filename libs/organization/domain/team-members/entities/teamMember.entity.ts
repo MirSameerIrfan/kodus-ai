@@ -1,11 +1,11 @@
-import { Entity } from '@/shared/domain/interfaces/entity';
+import { Entity } from '@shared/domain/interfaces/entity';
 import { IMembers, ITeamMember } from '../interfaces/team-members.interface';
-import { IOrganization } from '../../organization/interfaces/organization.interface';
-import { ITeam } from '../../team/interfaces/team.interface';
+import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
+import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';
 import { ICodeManagementMemberConfig } from '../interfaces/codeManagementMemberConfig.interface';
 import { ICommuminicationMemberConfig } from '../interfaces/communicationMemberConfig.interface';
 import { IProjectManagementMemberConfig } from '../interfaces/projectManagementMemberConfig';
-import { IUser } from '../../user/interfaces/user.interface';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import { TeamMemberRole } from '../enums/teamMemberRole.enum';
 
 export class TeamMemberEntity implements Entity<ITeamMember> {

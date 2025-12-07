@@ -3,11 +3,11 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
+import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { IParameters } from '@/core/domain/parameters/interfaces/parameters.interface';
+import { IParameters } from '@libs/organization/domain/parameters/interfaces/parameters.interface';
 
 @Injectable()
 export class FindByKeyParametersUseCase {

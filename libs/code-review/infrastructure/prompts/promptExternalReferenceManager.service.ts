@@ -5,18 +5,18 @@ import { randomUUID } from 'crypto';
 import {
     IPromptExternalReferenceManagerService,
     PromptReferenceLookupOptions,
-} from '@/core/domain/prompts/contracts/promptExternalReferenceManager.contract';
-import { PromptExternalReferenceEntity } from '@/core/domain/prompts/entities/promptExternalReference.entity';
+} from '@libs/code-review/domain/prompts/contracts/promptExternalReferenceManager.contract';
+import { PromptExternalReferenceEntity } from '@libs/code-review/domain/prompts/entities/promptExternalReference.entity';
 import {
     IFileReference,
     IPromptReferenceSyncError,
     PromptProcessingStatus,
     PromptReferenceErrorType,
     PromptSourceType,
-} from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
-import { CONTEXT_REFERENCE_SERVICE_TOKEN } from '@/core/domain/contextReferences/contracts/context-reference.service.contract';
-import { ContextReferenceService } from '@/core/infrastructure/adapters/services/context/context-reference.service';
-import { ContextReferenceEntity } from '@/core/domain/contextReferences/entities/context-reference.entity';
+} from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
+import { CONTEXT_REFERENCE_SERVICE_TOKEN } from '@libs/code-review/domain/context/contracts/context-reference.service.contract';
+import { ContextReferenceService } from '@libs/code-review/infrastructure/context/context-reference.service';
+import { ContextReferenceEntity } from '@libs/code-review/domain/context/entities/context-reference.entity';
 import { computeRequirementsHash } from '@context-os-core/utils/context-requirements';
 import type {
     ContextRequirement,

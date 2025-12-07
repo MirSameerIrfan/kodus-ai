@@ -5,34 +5,34 @@ import { CodeReviewPipelineContext } from '../context/code-review-pipeline.conte
 import {
     CODE_BASE_CONFIG_SERVICE_TOKEN,
     ICodeBaseConfigService,
-} from '@/core/domain/codeBase/contracts/CodeBaseConfigService.contract';
+} from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
 import {
     PULL_REQUEST_MANAGER_SERVICE_TOKEN,
     IPullRequestManagerService,
-} from '@/core/domain/codeBase/contracts/PullRequestManagerService.contract';
+} from '@libs/code-review/domain/contracts/PullRequestManagerService.contract';
 import {
     AutomationMessage,
     AutomationStatus,
-} from '@/core/domain/automation/enums/automation-status';
+} from '@libs/automation/domain/enums/automation-status';
 import {
     DRY_RUN_SERVICE_TOKEN,
     IDryRunService,
-} from '@/core/domain/dryRun/contracts/dryRun.service.contract';
-import { IPullRequestMessages } from '@/core/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
+} from '@libs/dry-run/domain/contracts/dryRun.service.contract';
+import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
 import { ConfigLevel } from '@/config/types/general/pullRequestMessages.type';
 import {
     IPullRequestMessagesService,
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
-} from '@/core/domain/pullRequestMessages/contracts/pullRequestMessages.service.contract';
+} from '@libs/code-review/domain/pr-messages/contracts/pullRequestMessages.service.contract';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
 import {
     CODE_BASE_CONFIG_CACHE_SERVICE_TOKEN,
-} from '@/core/domain/codeBase/contracts/CodeBaseConfigCacheService.contract';
-import { CodeBaseConfigCacheService } from '@/core/infrastructure/adapters/services/codeBase/code-base-config-cache.service';
+} from '@libs/code-review/domain/contracts/CodeBaseConfigCacheService.contract';
+import { CodeBaseConfigCacheService } from '@libs/code-review/infrastructure/code-base-config-cache.service';
 
 @Injectable()
 export class ResolveConfigStage extends BaseStage {

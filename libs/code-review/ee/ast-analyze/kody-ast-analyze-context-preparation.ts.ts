@@ -8,7 +8,7 @@ import {
     AIAnalysisResult,
     AnalysisContext,
 } from '@/config/types/general/codeReview.type';
-import { BaseKodyASTAnalyzeContextPreparation } from '@/core/infrastructure/adapters/services/kodyASTAnalyze/base-ast-analyze.service';
+import { BaseKodyASTAnalyzeContextPreparation } from '@libs/code-review/ee/ast-analyze/base-ast-analyze.service';
 import { Injectable } from '@nestjs/common';
 import { CodeAnalysisOrchestrator } from '../codeBase/codeAnalysisOrchestrator.service';
 

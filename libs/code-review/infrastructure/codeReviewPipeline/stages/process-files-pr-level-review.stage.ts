@@ -5,19 +5,19 @@ import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { BaseStage } from './base/base-stage.abstract';
 import { HeavyStage } from './base/heavy-stage.interface';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
-import { KodyRulesScope } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+import { KodyRulesScope } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import {
     KODY_RULES_PR_LEVEL_ANALYSIS_SERVICE_TOKEN,
     KodyRulesPrLevelAnalysisService,
-} from '@/ee/codeBase/kodyRulesPrLevelAnalysis.service';
+} from '@libs/code-review/ee/analysis/kodyRulesPrLevelAnalysis.service';
 import { ReviewModeResponse } from '@/config/types/general/codeReview.type';
 import {
     CROSS_FILE_ANALYSIS_SERVICE_TOKEN,
     CrossFileAnalysisService,
 } from '../../crossFileAnalysis.service';
-import { EventType } from '@/core/domain/workflowQueue/enums/event-type.enum';
-import { StageCompletedEvent } from '@/core/domain/workflowQueue/interfaces/stage-completed-event.interface';
-import { WorkflowPausedError } from '@/core/domain/workflowQueue/errors/workflow-paused.error';
+import { EventType } from '@libs/workflow-queue/domain/enums/event-type.enum';
+import { StageCompletedEvent } from '@libs/workflow-queue/domain/interfaces/stage-completed-event.interface';
+import { WorkflowPausedError } from '@libs/workflow-queue/domain/errors/workflow-paused.error';
 
 @Injectable()
 export class ProcessFilesPrLevelReviewStage extends BaseStage implements HeavyStage {

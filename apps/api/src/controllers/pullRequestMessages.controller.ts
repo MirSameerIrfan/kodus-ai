@@ -19,11 +19,11 @@ import { REQUEST } from '@nestjs/core';
 import {
     CheckPolicies,
     PolicyGuard,
-} from '../../adapters/services/permissions/policy.guard';
+} from '@libs/identity/infrastructure/permissions/policy.guard';
 import {
     checkPermissions,
     checkRepoPermissions,
-} from '../../adapters/services/permissions/policy.handlers';
+} from '@libs/identity/infrastructure/permissions/policy.handlers';
 
 @Controller('pull-request-messages')
 export class PullRequestMessagesController {

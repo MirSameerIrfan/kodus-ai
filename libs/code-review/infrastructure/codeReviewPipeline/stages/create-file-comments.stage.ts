@@ -14,36 +14,36 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
-} from '@/core/domain/codeBase/contracts/CommentManagerService.contract';
+} from '@libs/code-review/domain/contracts/CommentManagerService.contract';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
-} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
+} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
 import {
     ISuggestionService,
     SUGGESTION_SERVICE_TOKEN,
-} from '@/core/domain/codeBase/contracts/SuggestionService.contract';
+} from '@libs/code-review/domain/contracts/SuggestionService.contract';
 import { CodeManagementService } from '../../../platformIntegration/codeManagement.service';
-import { DeliveryStatus } from '@/core/domain/pullRequests/enums/deliveryStatus.enum';
-import { ImplementationStatus } from '@/core/domain/pullRequests/enums/implementationStatus.enum';
-import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
-import { AutomationExecutionEntity } from '@/core/domain/automation/entities/automation-execution.entity';
+import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
+import { ImplementationStatus } from '@libs/code-review/domain/pull-requests/enums/implementationStatus.enum';
+import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
+import { AutomationExecutionEntity } from '@libs/automation/domain/entities/automation-execution.entity';
 import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
     IAutomationExecutionService,
-} from '@/core/domain/automation/contracts/automation-execution.service';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { PullRequestsEntity } from '@/core/domain/pullRequests/entities/pullRequests.entity';
-import { PullRequestReviewComment } from '@/core/domain/platformIntegrations/types/codeManagement/pullRequests.type';
+} from '@libs/automation/domain/contracts/automation-execution.service';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { PullRequestsEntity } from '@libs/code-review/domain/pull-requests/entities/pullRequests.entity';
+import { PullRequestReviewComment } from '@libs/platform/domain/types/codeManagement/pullRequests.type';
 import {
     ITeamAutomationService,
     TEAM_AUTOMATION_SERVICE_TOKEN,
-} from '@/core/domain/automation/contracts/team-automation.service';
-import { AutomationType } from '@/core/domain/automation/enums/automation-type';
+} from '@libs/automation/domain/contracts/team-automation.service';
+import { AutomationType } from '@libs/automation/domain/enums/automation-type';
 import {
     DRY_RUN_SERVICE_TOKEN,
     IDryRunService,
-} from '@/core/domain/dryRun/contracts/dryRun.service.contract';
+} from '@libs/dry-run/domain/contracts/dryRun.service.contract';
 
 @Injectable()
 export class CreateFileCommentsStage extends BaseStage {

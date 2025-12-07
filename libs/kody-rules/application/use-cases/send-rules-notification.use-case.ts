@@ -3,13 +3,13 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
     IUsersService,
     USER_SERVICE_TOKEN,
-} from '@/core/domain/user/contracts/user.service.contract';
+} from '@libs/identity/domain/user/contracts/user.service.contract';
 import {
     IOrganizationService,
     ORGANIZATION_SERVICE_TOKEN,
-} from '@/core/domain/organization/contracts/organization.service.contract';
+} from '@libs/organization/domain/organization/contracts/organization.service.contract';
 import { STATUS } from '@/config/types/database/status.type';
-import { sendKodyRulesNotification } from '@/shared/utils/email/sendMail';
+import { sendKodyRulesNotification } from '@shared/utils/email/sendMail';
 
 @Injectable()
 export class SendRulesNotificationUseCase {

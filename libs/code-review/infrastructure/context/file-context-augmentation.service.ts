@@ -1,6 +1,6 @@
 import { createLogger } from "@kodus/flow";
 import { Injectable } from '@nestjs/common';
-import { ContextEvidenceAgentProvider } from '@/core/infrastructure/adapters/services/agent/kodus-flow/contextEvidenceAgent.provider';
+import { ContextEvidenceAgentProvider } from '@libs/agents/infrastructure/kodus-flow/kodus-flow/contextEvidenceAgent.provider';
 import pLimit from 'p-limit';
 import {
     CodeReviewConfig,
@@ -9,14 +9,14 @@ import {
 import {
     CodeReviewPipelineContext,
     FileContextAgentResult,
-} from '../codeBase/codeReviewPipeline/context/code-review-pipeline.context';
-import { ContextMCPDependency } from '@/core/infrastructure/adapters/services/agent/kodus-flow/contextEvidenceAgent.provider';
+} from '@libs/code-review/infrastructure/context/code-review-pipeline.context';
+import { ContextMCPDependency } from '@libs/agents/infrastructure/kodus-flow/kodus-flow/contextEvidenceAgent.provider';
 import type {
     ContextDependency,
     ContextEvidence,
 } from '@context-os-core/interfaces';
 import { ContextAugmentationsMap } from './code-review-context-pack.service';
-import { IKodyRule } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+import { IKodyRule } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 
 @Injectable()
 export class FileContextAugmentationService {

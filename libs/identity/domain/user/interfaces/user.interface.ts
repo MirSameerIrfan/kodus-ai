@@ -1,5 +1,5 @@
 import { STATUS } from '@/config/types/database/status.type';
-import { IOrganization } from '../../organization/interfaces/organization.interface';
+import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 import { ITeamMember } from '../../teamMembers/interfaces/team-members.interface';
 import { Role } from '../../permissions/enums/permissions.enum';
 import { IPermissions } from '../../permissions/types/permissions.types';

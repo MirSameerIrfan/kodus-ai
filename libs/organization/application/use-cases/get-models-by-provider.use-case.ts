@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import axios from 'axios';
-import { ProviderService } from '@/core/infrastructure/adapters/services/providers/provider.service';
+import { ProviderService } from '@libs/integrations/infrastructure/providers/provider.service';
 import {
     BYOKProvider,
     getModelCapabilities,

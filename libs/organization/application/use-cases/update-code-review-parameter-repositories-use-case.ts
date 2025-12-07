@@ -3,19 +3,19 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
+import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
+} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
+import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
 import {
     ICodeReviewSettingsLogService,
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
-} from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
+} from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
 import { REQUEST } from '@nestjs/core';
 import {
     ActionType,

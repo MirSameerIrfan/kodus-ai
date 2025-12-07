@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { ICodeReviewSettingsLogRepository } from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.repository.contract';
-import { CodeReviewSettingsLogEntity } from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/entities/codeReviewSettingsLog.entity';
+import { ICodeReviewSettingsLogRepository } from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.repository.contract';
+import { CodeReviewSettingsLogEntity } from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/entities/codeReviewSettingsLog.entity';
 import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
-} from '@/shared/infrastructure/repositories/mappers';
-import { ICodeReviewSettingsLog } from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/interfaces/codeReviewSettingsLog.interface';
-import { CodeReviewSettingsLogModel } from '@/core/infrastructure/adapters/repositories/mongoose/schema/codeReviewSettingsLog.model';
+} from '@shared/infrastructure/repositories/mappers';
+import { ICodeReviewSettingsLog } from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/interfaces/codeReviewSettingsLog.interface';
+import { CodeReviewSettingsLogModel } from '@core/database/mongoose/schemas/codeReviewSettingsLog.model';
 
 @Injectable()
 export class CodeReviewSettingsLogRepository

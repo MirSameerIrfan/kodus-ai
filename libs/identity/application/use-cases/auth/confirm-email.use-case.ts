@@ -8,11 +8,11 @@ import {
 import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
-} from '@/core/domain/auth/contracts/auth.service.contracts';
+} from '@libs/identity/domain/auth/contracts/auth.service.contracts';
 import {
     IUsersService,
     USER_SERVICE_TOKEN,
-} from '@/core/domain/user/contracts/user.service.contract';
+} from '@libs/identity/domain/user/contracts/user.service.contract';
 import { STATUS } from '@/config/types/database/status.type';
 
 interface DecodedPayload {

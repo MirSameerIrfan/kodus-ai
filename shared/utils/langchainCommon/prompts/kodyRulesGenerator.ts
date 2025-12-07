@@ -2,8 +2,8 @@ import { LibraryKodyRule } from '@/config/types/kodyRules.type';
 import {
     IKodyRule,
     kodyRuleSchema,
-} from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
-import { UncategorizedComment } from '@/core/infrastructure/adapters/services/codeBase/types/commentAnalysis.type';
+} from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
+import { UncategorizedComment } from '@libs/code-review/infrastructure/types/commentAnalysis.type';
 import z from 'zod';
 
 export const kodyRulesGeneratorSchema = z.object({

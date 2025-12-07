@@ -1,13 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ICodeReviewSettingsLogService } from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
+import { ICodeReviewSettingsLogService } from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
 import {
     CODE_REVIEW_SETTINGS_LOG_REPOSITORY_TOKEN,
     ICodeReviewSettingsLogRepository,
-} from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.repository.contract';
-import { CodeReviewSettingsLogEntity } from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/entities/codeReviewSettingsLog.entity';
-import { ICodeReviewSettingsLog } from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/interfaces/codeReviewSettingsLog.interface';
+} from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.repository.contract';
+import { CodeReviewSettingsLogEntity } from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/entities/codeReviewSettingsLog.entity';
+import { ICodeReviewSettingsLog } from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/interfaces/codeReviewSettingsLog.interface';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
+import { PermissionValidationService } from '@shared/ee/services/permissionValidation.service';
 
 // Handlers
 import { KodyRuleLogParams, KodyRulesLogHandler } from './kodyRulesLog.handler';

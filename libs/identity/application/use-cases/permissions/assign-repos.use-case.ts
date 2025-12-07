@@ -2,18 +2,18 @@ import { createLogger } from "@kodus/flow";
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
+} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
 import {
     IPermissionsService,
     PERMISSIONS_SERVICE_TOKEN,
-} from '@/core/domain/permissions/contracts/permissions.service.contract';
-import { Repositories } from '@/core/domain/platformIntegrations/types/codeManagement/repositories.type';
+} from '@libs/identity/domain/permissions/contracts/permissions.service.contract';
+import { Repositories } from '@libs/platform/domain/types/codeManagement/repositories.type';
 import {
     IUsersService,
     USER_SERVICE_TOKEN,
-} from '@/core/domain/user/contracts/user.service.contract';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+} from '@libs/identity/domain/user/contracts/user.service.contract';
+import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

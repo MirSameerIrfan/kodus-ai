@@ -1,6 +1,6 @@
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { Injectable } from '@nestjs/common';
-import { BusinessRulesValidationAgentProvider } from '@/core/infrastructure/adapters/services/agent/kodus-flow/businessRulesValidationAgent';
+import { BusinessRulesValidationAgentProvider } from '@libs/agents/infrastructure/kodus-flow/kodus-flow/businessRulesValidationAgent';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { Thread } from '@kodus/flow';
 

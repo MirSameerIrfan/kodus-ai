@@ -1,12 +1,12 @@
 import { createLogger } from "@kodus/flow";
 import { Injectable } from '@nestjs/common';
-import { TokenChunkingService } from '@/shared/utils/tokenChunking/tokenChunking.service';
+import { TokenChunkingService } from '@shared/utils/tokenChunking/tokenChunking.service';
 import {
     CrossFileAnalysisPayload,
     CrossFileAnalysisSchema,
     CrossFileAnalysisSchemaType,
     prompt_codereview_cross_file_analysis,
-} from '@/shared/utils/langchainCommon/prompts/codeReviewCrossFileAnalysis';
+} from '@shared/utils/langchainCommon/prompts/codeReviewCrossFileAnalysis';
 import {
     AnalysisContext,
     CodeSuggestion,
@@ -22,9 +22,9 @@ import {
     TokenTrackingHandler,
     TokenUsage,
 } from '@kodus/kodus-common/llm';
-import { LabelType } from '@/shared/utils/codeManagement/labels';
-import { BYOKPromptRunnerService } from '@/shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { ObservabilityService } from '../logger/observability.service';
+import { LabelType } from '@shared/utils/codeManagement/labels';
+import { BYOKPromptRunnerService } from '@shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { ObservabilityService } from '@shared/logging/observability.service';
 
 //#region Interfaces
 interface BatchProcessingConfig {

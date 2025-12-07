@@ -2,22 +2,22 @@ import { createLogger } from "@kodus/flow";
 import {
     ORGANIZATION_SERVICE_TOKEN,
     IOrganizationService,
-} from '@/core/domain/organization/contracts/organization.service.contract';
+} from '@libs/organization/domain/organization/contracts/organization.service.contract';
 import {
     TEAM_SERVICE_TOKEN,
     ITeamService,
-} from '@/core/domain/team/contracts/team.service.contract';
+} from '@libs/organization/domain/team/contracts/team.service.contract';
 import {
     TEAM_MEMBERS_SERVICE_TOKEN,
     ITeamMemberService,
-} from '@/core/domain/teamMembers/contracts/teamMembers.service.contracts';
+} from '@libs/organization/domain/team-members/contracts/teamMembers.service.contracts';
 import {
     USER_SERVICE_TOKEN,
     IUsersService,
-} from '@/core/domain/user/contracts/user.service.contract';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { UpdateAnotherUserDto } from '@/core/infrastructure/http/dtos/update-another-user.dto';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+} from '@libs/identity/domain/user/contracts/user.service.contract';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
+import { UpdateAnotherUserDto } from '@shared/dtos/update-another-user.dto';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

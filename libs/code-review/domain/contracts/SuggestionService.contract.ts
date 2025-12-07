@@ -11,8 +11,8 @@ import {
     CodeReviewVersion,
     AnalysisContext,
 } from '@/config/types/general/codeReview.type';
-import { PriorityStatus } from '@/core/domain/pullRequests/enums/priorityStatus.enum';
-import { ISuggestionByPR } from '../../pullRequests/interfaces/pullRequests.interface';
+import { PriorityStatus } from '@libs/code-review/domain/pull-requests/enums/priorityStatus.enum';
+import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 
 /**

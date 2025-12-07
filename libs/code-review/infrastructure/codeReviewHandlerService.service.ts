@@ -7,18 +7,18 @@ import { Injectable, Inject } from '@nestjs/common';
 import { PipelineFactory } from '../pipeline/pipeline-factory.service';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { CodeReviewPipelineContext } from './codeReviewPipeline/context/code-review-pipeline.context';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
-import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
+import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
 import { ConfigService } from '@nestjs/config';
 import { DatabaseConnection } from '@/config/types';
-import { ObservabilityService } from '../logger/observability.service';
-import { CodeManagementService } from '../platformIntegration/codeManagement.service';
+import { ObservabilityService } from '@shared/logging/observability.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import {
     GitHubReaction,
     GitlabReaction,
     ReviewStatusReaction,
-} from '@/core/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
+} from '@libs/code-review/domain/feedback/enums/codeReviewCommentReaction.enum';
 
 @Injectable()
 export class CodeReviewHandlerService {

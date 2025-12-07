@@ -19,12 +19,12 @@ import {
     prompt_CommentCategorizerUser,
     prompt_CommentIrrelevanceFilterSystem,
     prompt_CommentIrrelevanceFilterUser,
-} from '@/shared/utils/langchainCommon/prompts/commentAnalysis';
+} from '@shared/utils/langchainCommon/prompts/commentAnalysis';
 import {
     IKodyRule,
     KodyRulesOrigin,
     KodyRulesStatus,
-} from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+} from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import {
     kodyRulesGeneratorDuplicateFilterSchema,
     kodyRulesGeneratorQualityFilterSchema,
@@ -35,25 +35,25 @@ import {
     prompt_KodyRulesGeneratorQualityFilterUser,
     prompt_KodyRulesGeneratorSystem,
     prompt_KodyRulesGeneratorUser,
-} from '@/shared/utils/langchainCommon/prompts/kodyRulesGenerator';
+} from '@shared/utils/langchainCommon/prompts/kodyRulesGenerator';
 import {
     BehaviourForExistingDescription,
     CodeReviewConfig,
     ReviewOptions,
 } from '@/config/types/general/codeReview.type';
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
+import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
 import * as filteredLibraryKodyRules from './data/filtered-rules.json';
-import { KodyRuleSeverity } from '@/core/infrastructure/http/dtos/create-kody-rule.dto';
+import { KodyRuleSeverity } from '@shared/dtos/create-kody-rule.dto';
 import {
     CODE_BASE_CONFIG_SERVICE_TOKEN,
     ICodeBaseConfigService,
-} from '@/core/domain/codeBase/contracts/CodeBaseConfigService.contract';
+} from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
 import { v4 } from 'uuid';
-import { SUPPORTED_LANGUAGES } from '@/core/domain/codeBase/contracts/SupportedLanguages';
+import { SUPPORTED_LANGUAGES } from '@libs/code-review/domain/contracts/SupportedLanguages';
 import { LibraryKodyRule } from '@/config/types/kodyRules.type';
-import { ObservabilityService } from '../logger/observability.service';
-import { BYOKPromptRunnerService } from '@/shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
+import { ObservabilityService } from '@shared/logging/observability.service';
+import { BYOKPromptRunnerService } from '@shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { PermissionValidationService } from '@shared/ee/services/permissionValidation.service';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 
 @Injectable()

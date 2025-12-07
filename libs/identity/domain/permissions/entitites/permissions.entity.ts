@@ -1,4 +1,4 @@
-import { Entity } from '@/shared/domain/interfaces/entity';
+import { Entity } from '@shared/domain/interfaces/entity';
 import { IPermissions } from '../types/permissions.types';
 
 export class PermissionsEntity implements Entity<IPermissions> {

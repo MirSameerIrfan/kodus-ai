@@ -1,7 +1,7 @@
 import {
     categorizedCommentSchema,
     UncategorizedComment,
-} from '@/core/infrastructure/adapters/services/codeBase/types/commentAnalysis.type';
+} from '@libs/code-review/infrastructure/types/commentAnalysis.type';
 import { z } from 'zod';
 
 export const commentCategorizerSchema = z.object({

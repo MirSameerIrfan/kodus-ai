@@ -1,39 +1,39 @@
 import { Injectable, Inject, Optional } from '@nestjs/common';
-import { IJobProcessorService } from '@/core/domain/workflowQueue/contracts/job-processor.service.contract';
-import { WorkflowJobRepository } from '@/core/infrastructure/adapters/repositories/typeorm/workflow-job.repository';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { JobStatus } from '@/core/domain/workflowQueue/enums/job-status.enum';
-import { ErrorClassification } from '@/core/domain/workflowQueue/enums/error-classification.enum';
-import { WorkflowType } from '@/core/domain/workflowQueue/enums/workflow-type.enum';
-import { HandlerType } from '@/core/domain/workflowQueue/enums/handler-type.enum';
-import { ERROR_CLASSIFIER_SERVICE_TOKEN } from '@/core/domain/workflowQueue/contracts/error-classifier.service.contract';
-import { IErrorClassifierService } from '@/core/domain/workflowQueue/contracts/error-classifier.service.contract';
-import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { getMappedPlatform } from '@/shared/utils/webhooks';
-import { CodeReviewValidationService } from '@/core/infrastructure/adapters/services/codeReview/code-review-validation.service';
-import { CodeReviewPipelineExecutor } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/pipeline/pipeline-executor.service';
-import { PipelineStateManager } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/pipeline/pipeline-state-manager.service';
-import { CodeReviewPipelineStrategy } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/strategies/code-review-pipeline.strategy';
-import { CodeReviewPipelineStrategyEE } from '@/ee/codeReview/strategies/code-review-pipeline.strategy.ee';
-import { CodeReviewPipelineContext } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/context/code-review-pipeline.context';
-import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
+import { IJobProcessorService } from '@libs/workflow-queue/domain/contracts/job-processor.service.contract';
+import { WorkflowJobRepository } from '@core/database/typeorm/repositories/workflow-job.repository';
+import { PinoLoggerService } from '@shared/logging/pino.service';
+import { JobStatus } from '@libs/workflow-queue/domain/enums/job-status.enum';
+import { ErrorClassification } from '@libs/workflow-queue/domain/enums/error-classification.enum';
+import { WorkflowType } from '@libs/workflow-queue/domain/enums/workflow-type.enum';
+import { HandlerType } from '@libs/workflow-queue/domain/enums/handler-type.enum';
+import { ERROR_CLASSIFIER_SERVICE_TOKEN } from '@libs/workflow-queue/domain/contracts/error-classifier.service.contract';
+import { IErrorClassifierService } from '@libs/workflow-queue/domain/contracts/error-classifier.service.contract';
+import { ObservabilityService } from '@shared/logging/observability.service';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { getMappedPlatform } from '@shared/utils/webhooks';
+import { CodeReviewValidationService } from '@libs/code-review/infrastructure/code-review-validation.service';
+import { CodeReviewPipelineExecutor } from '@libs/code-review/infrastructure/codeReviewPipeline/pipeline/pipeline-executor.service';
+import { PipelineStateManager } from '@libs/code-review/infrastructure/codeReviewPipeline/pipeline/pipeline-state-manager.service';
+import { CodeReviewPipelineStrategy } from '@libs/code-review/infrastructure/codeReviewPipeline/strategies/code-review-pipeline.strategy';
+import { CodeReviewPipelineStrategyEE } from '@libs/code-review/ee/pipeline/strategies/code-review-pipeline.strategy.ee';
+import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/codeReviewPipeline/context/code-review-pipeline.context';
+import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
 import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
     IAutomationExecutionService,
-} from '@/core/domain/automation/contracts/automation-execution.service';
+} from '@libs/automation/domain/contracts/automation-execution.service';
 import {
     AUTOMATION_EXECUTION_REPOSITORY_TOKEN,
     IAutomationExecutionRepository,
-} from '@/core/domain/automation/contracts/automation-execution.repository';
+} from '@libs/automation/domain/contracts/automation-execution.repository';
 import {
     CODE_REVIEW_EXECUTION_SERVICE,
     ICodeReviewExecutionService,
-} from '@/core/domain/codeReviewExecutions/contracts/codeReviewExecution.service.contract';
-import { WorkflowPausedError } from '@/core/domain/workflowQueue/errors/workflow-paused.error';
+} from '@libs/code-review/domain/executions/contracts/codeReviewExecution.service.contract';
+import { WorkflowPausedError } from '@libs/workflow-queue/domain/errors/workflow-paused.error';
 import { MoreThanOrEqual } from 'typeorm';
-import { environment } from '@/ee/configs/environment';
-import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
+import { environment } from '@config/ee/environment/environment.dev';
+import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
 import { Repository } from '@/config/types/general/codeReview.type';
 import { RetryPolicyService } from './retry-policy.service';
 import { DEFAULT_RETRY_POLICY } from './retry-policy.config';

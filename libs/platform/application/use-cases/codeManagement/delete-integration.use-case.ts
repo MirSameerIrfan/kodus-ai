@@ -1,19 +1,19 @@
 import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
-import { AuthIntegrationService } from '@/core/infrastructure/adapters/services/integrations/authIntegration.service';
-import { INTEGRATION_SERVICE_TOKEN } from '@/core/domain/integrations/contracts/integration.service.contracts';
-import { IntegrationConfigService } from '@/core/infrastructure/adapters/services/integrations/integrationConfig.service';
-import { IntegrationService } from '@/core/infrastructure/adapters/services/integrations/integration.service';
-import { AUTH_INTEGRATION_SERVICE_TOKEN } from '@/core/domain/authIntegrations/contracts/auth-integration.service.contracts';
-import { INTEGRATION_CONFIG_SERVICE_TOKEN } from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
+import { IntegrationCategory } from '@shared/domain/enums/integration-category.enum';
+import { AuthIntegrationService } from '@libs/integrations/infrastructure/authIntegration.service';
+import { INTEGRATION_SERVICE_TOKEN } from '@libs/integrations/domain/contracts/integration.service.contracts';
+import { IntegrationConfigService } from '@libs/integrations/infrastructure/integrationConfig.service';
+import { IntegrationService } from '@libs/integrations/infrastructure/integration.service';
+import { AUTH_INTEGRATION_SERVICE_TOKEN } from '@libs/integrations/domain/auth/contracts/auth-integration.service.contracts';
+import { INTEGRATION_CONFIG_SERVICE_TOKEN } from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
+import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
 import { REQUEST } from '@nestjs/core';
 import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
     ICodeReviewSettingsLogService,
-} from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
+} from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
 import { ActionType } from '@/config/types/general/codeReviewSettingsLog.type';
 
 @Injectable()

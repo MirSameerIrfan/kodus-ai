@@ -1,4 +1,4 @@
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
 import { SetMetadata } from '@nestjs/common';
 
 export const IntegrationServiceDecorator = (

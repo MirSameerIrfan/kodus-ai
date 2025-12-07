@@ -2,9 +2,9 @@ import { createLogger } from "@kodus/flow";
 import {
     IPermissionsService,
     PERMISSIONS_SERVICE_TOKEN,
-} from '@/core/domain/permissions/contracts/permissions.service.contract';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+} from '@libs/identity/domain/permissions/contracts/permissions.service.contract';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

@@ -4,17 +4,17 @@ import { BaseStage } from './base/base-stage.abstract';
 import {
     IPullRequestManagerService,
     PULL_REQUEST_MANAGER_SERVICE_TOKEN,
-} from '@/core/domain/codeBase/contracts/PullRequestManagerService.contract';
+} from '@libs/code-review/domain/contracts/PullRequestManagerService.contract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 import {
     handlePatchDeletions,
     convertToHunksWithLinesNumbers,
-} from '@/shared/utils/patch';
+} from '@shared/utils/patch';
 import { FileChange } from '@/config/types/general/codeReview.type';
 import {
     AutomationMessage,
     AutomationStatus,
-} from '@/core/domain/automation/enums/automation-status';
+} from '@libs/automation/domain/enums/automation-status';
 
 @Injectable()
 export class FetchChangedFilesStage extends BaseStage {

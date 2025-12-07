@@ -3,33 +3,33 @@ import { STATUS } from '@/config/types/database/status.type';
 import {
     ORGANIZATION_SERVICE_TOKEN,
     IOrganizationService,
-} from '@/core/domain/organization/contracts/organization.service.contract';
-import { IOrganization } from '@/core/domain/organization/interfaces/organization.interface';
+} from '@libs/organization/domain/organization/contracts/organization.service.contract';
+import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 import {
     USER_SERVICE_TOKEN,
     IUsersService,
-} from '@/core/domain/user/contracts/user.service.contract';
-import { Role } from '@/core/domain/permissions/enums/permissions.enum';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { SignUpDTO } from '@/core/infrastructure/http/dtos/create-user-organization.dto';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
-import { DuplicateRecordException } from '@/shared/infrastructure/filters/duplicate-record.exception';
-import { generateRandomOrgName } from '@/shared/utils/helpers';
+} from '@libs/identity/domain/user/contracts/user.service.contract';
+import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
+import { SignUpDTO } from '@shared/dtos/create-user-organization.dto';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { DuplicateRecordException } from '@shared/infrastructure/filters/duplicate-record.exception';
+import { generateRandomOrgName } from '@shared/utils/helpers';
 import { Inject, Injectable } from '@nestjs/common';
 import { CreateProfileUseCase } from '../profile/create.use-case';
-import { CreateTeamUseCase } from '../team/create.use-case';
-import { identify, track } from '@/shared/utils/segment';
-import posthogClient from '@/shared/utils/posthog';
+import { CreateTeamUseCase } from '@libs/organization/application/use-cases/team/create.use-case';
+import { identify, track } from '@shared/utils/segment';
+import posthogClient from '@shared/utils/posthog';
 import {
     ITeamMemberService,
     TEAM_MEMBERS_SERVICE_TOKEN,
-} from '@/core/domain/teamMembers/contracts/teamMembers.service.contracts';
+} from '@libs/organization/domain/team-members/contracts/teamMembers.service.contracts';
 import {
     ITeamService,
     TEAM_SERVICE_TOKEN,
-} from '@/core/domain/team/contracts/team.service.contract';
-import { TeamMemberRole } from '@/core/domain/teamMembers/enums/teamMemberRole.enum';
-import { ITeam } from '@/core/domain/team/interfaces/team.interface';
+} from '@libs/organization/domain/team/contracts/team.service.contract';
+import { TeamMemberRole } from '@libs/organization/domain/team-members/enums/teamMemberRole.enum';
+import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';
 
 @Injectable()
 export class SignUpUseCase implements IUseCase {

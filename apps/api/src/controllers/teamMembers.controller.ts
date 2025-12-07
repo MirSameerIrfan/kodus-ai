@@ -21,8 +21,8 @@ import {
 import {
     CheckPolicies,
     PolicyGuard,
-} from '../../adapters/services/permissions/policy.guard';
-import { checkPermissions } from '../../adapters/services/permissions/policy.handlers';
+} from '@libs/identity/infrastructure/permissions/policy.guard';
+import { checkPermissions } from '@libs/identity/infrastructure/permissions/policy.handlers';
 import { TeamQueryDto } from '../dtos/teamId-query-dto';
 
 @Controller('team-members')

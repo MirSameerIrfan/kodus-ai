@@ -2,9 +2,9 @@ import { createLogger } from "@kodus/flow";
 import {
     IKodyRulesRepository,
     KODY_RULES_REPOSITORY_TOKEN,
-} from '@/core/domain/kodyRules/contracts/kodyRules.repository.contract';
-import { IKodyRulesService } from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
-import { KodyRulesEntity } from '@/core/domain/kodyRules/entities/kodyRules.entity';
+} from '@libs/kody-rules/domain/contracts/kodyRules.repository.contract';
+import { IKodyRulesService } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
+import { KodyRulesEntity } from '@libs/kody-rules/domain/entities/kodyRules.entity';
 import {
     IKodyRule,
     IKodyRules,
@@ -14,14 +14,14 @@ import {
     KodyRulesOrigin,
     KodyRulesScope,
     KodyRulesStatus,
-} from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+} from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import {
     BadRequestException,
     Inject,
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
-import { CreateKodyRuleDto } from '@/core/infrastructure/http/dtos/create-kody-rule.dto';
+import { CreateKodyRuleDto } from '@shared/dtos/create-kody-rule.dto';
 import { v4 } from 'uuid';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import * as libraryKodyRules from './data/library-kody-rules.json';
@@ -31,11 +31,11 @@ import {
     LibraryKodyRule,
     BucketInfo,
 } from '@/config/types/kodyRules.type';
-import { ProgrammingLanguage } from '@/shared/domain/enums/programming-language.enum';
+import { ProgrammingLanguage } from '@shared/domain/enums/programming-language.enum';
 import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
     ICodeReviewSettingsLogService,
-} from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
+} from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
 import {
     ActionType,
     UserInfo,
@@ -43,7 +43,7 @@ import {
 import {
     IRuleLikeService,
     RULE_LIKE_SERVICE_TOKEN,
-} from '@/core/domain/kodyRules/contracts/ruleLike.service.contract';
+} from '@libs/kody-rules/domain/contracts/ruleLike.service.contract';
 import { KodyRulesValidationService } from './kody-rules-validation.service';
 
 @Injectable()

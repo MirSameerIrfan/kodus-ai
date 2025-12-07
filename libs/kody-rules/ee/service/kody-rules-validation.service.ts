@@ -7,10 +7,10 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import {
     IKodyRule,
     KodyRulesStatus,
-} from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
-import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
-import { environment } from '@/ee/configs/environment';
-import { isFileMatchingGlob } from '@/shared/utils/glob-utils';
+} from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
+import { PermissionValidationService } from '@shared/ee/services/permissionValidation.service';
+import { environment } from '@config/ee/environment/environment.dev';
+import { isFileMatchingGlob } from '@shared/utils/glob-utils';
 import { Injectable } from '@nestjs/common';
 
 /**

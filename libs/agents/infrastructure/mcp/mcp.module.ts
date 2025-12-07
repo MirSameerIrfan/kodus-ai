@@ -1,17 +1,17 @@
-import { PermissionValidationModule } from '@/ee/shared/permission-validation.module';
-import { IssuesModule } from '@/modules/issues.module';
-import { KodyRulesModule } from '@/modules/kodyRules.module';
-import { PullRequestsModule } from '@/modules/pullRequests.module';
+import { PermissionValidationModule } from '@shared/ee/permission-validation.module';
+import { IssuesModule } from '@libs/issues/issues.module';
+import { KodyRulesModule } from '@libs/kody-rules/kody-rules.module';
+import { PullRequestsModule } from '@libs/code-review/code-review.module';
 import { DynamicModule, Module, Provider, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
-import { McpController } from './controllers/mcp.controller';
-import { McpEnabledGuard } from './guards/mcp-enabled.guard';
-import { MCPManagerService } from './services/mcp-manager.service';
-import { McpServerService } from './services/mcp-server.service';
-import { CodeManagementTools, KodyRulesTools } from './tools';
-import { KodyIssuesTools } from './tools/kodyIssues.tools';
-import { PlatformIntegrationModule } from '@/modules/platformIntegration.module';
+import { McpController } from '@libs/controllers/mcp.controller';
+import { McpEnabledGuard } from '@libs/guards/mcp-enabled.guard';
+import { MCPManagerService } from '@libs/services/mcp-manager.service';
+import { McpServerService } from '@libs/services/mcp-server.service';
+import { CodeManagementTools, KodyRulesTools } from '@libs/tools';
+import { KodyIssuesTools } from '@libs/tools/kodyIssues.tools';
+import { PlatformIntegrationModule } from '@libs/platform/platform.module';
 
 @Module({})
 export class McpModule {

@@ -2,7 +2,7 @@ import { createLogger } from "@kodus/flow";
 import {
     KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,
-} from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
+} from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
 import { BucketInfo } from '@/config/types/kodyRules.type';
 import { Inject, Injectable } from '@nestjs/common';
 

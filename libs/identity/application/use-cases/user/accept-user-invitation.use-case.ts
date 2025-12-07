@@ -1,16 +1,16 @@
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { Inject, NotFoundException } from '@nestjs/common';
 
 import {
     IUsersService,
     USER_SERVICE_TOKEN,
-} from '@/core/domain/user/contracts/user.service.contract';
+} from '@libs/identity/domain/user/contracts/user.service.contract';
 import { STATUS } from '@/config/types/database/status.type';
-import { AcceptUserInvitationDto } from '@/core/infrastructure/http/dtos/accept-user-invitation.dto';
+import { AcceptUserInvitationDto } from '@shared/dtos/accept-user-invitation.dto';
 import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
-} from '@/core/domain/auth/contracts/auth.service.contracts';
+} from '@libs/identity/domain/auth/contracts/auth.service.contracts';
 import { CreateProfileUseCase } from '../profile/create.use-case';
 
 // @Case()

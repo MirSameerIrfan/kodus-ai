@@ -10,17 +10,17 @@ import {
     ReviewModeConfig,
     ReviewModeResponse,
 } from '@/config/types/general/codeReview.type';
-import { IAIAnalysisService } from '@/core/domain/codeBase/contracts/AIAnalysisService.contract';
+import { IAIAnalysisService } from '@libs/code-review/domain/contracts/AIAnalysisService.contract';
 import {
     AST_ANALYSIS_SERVICE_TOKEN,
     IASTAnalysisService,
-} from '@/core/domain/codeBase/contracts/ASTAnalysisService.contract';
-import { LLM_ANALYSIS_SERVICE_TOKEN } from '@/core/infrastructure/adapters/services/codeBase/llmAnalysis.service';
-import { BaseFileReviewContextPreparation } from '@/core/infrastructure/adapters/services/fileReviewContextPreparation/base-file-review-context-preparation.service';
-import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
-import { ReviewModeOptions } from '@/shared/interfaces/file-review-context-preparation.interface';
-import { BackoffPresets } from '@/shared/utils/polling';
-import { WorkflowPausedError } from '@/core/infrastructure/adapters/services/pipeline/errors/workflow-paused.error';
+} from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
+import { LLM_ANALYSIS_SERVICE_TOKEN } from '@libs/code-review/infrastructure/llmAnalysis.service';
+import { BaseFileReviewContextPreparation } from '@libs/code-review/infrastructure/file-review/base-file-review-context-preparation.service';
+import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
+import { ReviewModeOptions } from '@shared/interfaces/file-review-context-preparation.interface';
+import { BackoffPresets } from '@shared/utils/polling';
+import { WorkflowPausedError } from '@libs/code-review/infrastructure/pipeline/errors/workflow-paused.error';
 import { Inject, Injectable } from '@nestjs/common';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 

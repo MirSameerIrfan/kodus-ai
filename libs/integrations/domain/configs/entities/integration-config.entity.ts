@@ -1,7 +1,7 @@
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { IIntegration } from '../../integrations/interfaces/integration.interface';
+import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
+import { IIntegration } from '@libs/integrations/domain/interfaces/integration.interface';
 import { IIntegrationConfig } from '../interfaces/integration-config.interface';
-import { ITeam } from '../../team/interfaces/team.interface';
+import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';
 
 export class IntegrationConfigEntity implements IIntegrationConfig {
     private _uuid: string;

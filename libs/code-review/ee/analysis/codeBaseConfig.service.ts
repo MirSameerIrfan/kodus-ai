@@ -1,11 +1,11 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import {
     CodeReviewConfig,
     CodeReviewConfigWithoutLLMProvider,
@@ -21,36 +21,36 @@ import {
 import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
-} from '@/core/domain/integrations/contracts/integration.service.contracts';
+} from '@libs/integrations/domain/contracts/integration.service.contracts';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { ValidateCodeManagementIntegration } from '@/shared/utils/decorators/validate-code-management-integration.decorator';
-import { decrypt } from '@/shared/utils/crypto';
-import { AuthMode } from '@/core/domain/platformIntegrations/enums/codeManagement/authMode.enum';
-import { LanguageValue } from '@/shared/domain/enums/language-parameter.enum';
+} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
+import { IntegrationCategory } from '@shared/domain/enums/integration-category.enum';
+import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
+import { ValidateCodeManagementIntegration } from '@shared/utils/decorators/validate-code-management-integration.decorator';
+import { decrypt } from '@shared/utils/crypto';
+import { AuthMode } from '@libs/platform/domain/enums/codeManagement/authMode.enum';
+import { LanguageValue } from '@shared/domain/enums/language-parameter.enum';
 import {
     IKodyRulesService,
     KODY_RULES_SERVICE_TOKEN,
-} from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
-import * as globalIgnorePathsJson from '@/shared/utils/codeBase/ignorePaths/generated/paths.json';
+} from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
+import * as globalIgnorePathsJson from '@shared/utils/codeBase/ignorePaths/generated/paths.json';
 import * as yaml from 'js-yaml';
 import validateKodusConfigFile, {
     getDefaultKodusConfigFile,
     isParameterValidInConfigFile,
-} from '@/shared/utils/validateCodeReviewConfigFile';
+} from '@shared/utils/validateCodeReviewConfigFile';
 import { ErrorObject } from 'ajv';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { ICodeBaseConfigService } from '@/core/domain/codeBase/contracts/CodeBaseConfigService.contract';
-import { KodyRulesValidationService } from '../kodyRules/service/kody-rules-validation.service';
+} from '@libs/organization/domain/org-parameters/contracts/organizationParameters.service.contract';
+import { OrganizationParametersKey } from '@shared/domain/enums/organization-parameters-key.enum';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
+import { ICodeBaseConfigService } from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
+import { KodyRulesValidationService } from '@libs/kody-rules/infrastructure/services/kody-rules-validation.service';
 import { ReviewCadenceType } from '@/config/types/general/codeReview.type';
 import { ConfigLevel } from '@/config/types/general/pullRequestMessages.type';
 import {
@@ -60,7 +60,7 @@ import {
     CodeReviewParameterBaseConfig,
     DirectoryCodeReviewConfig,
 } from '@/config/types/general/codeReviewConfig.type';
-import { deepMerge } from '@/shared/utils/deep';
+import { deepMerge } from '@shared/utils/deep';
 
 @Injectable()
 export default class CodeBaseConfigService implements ICodeBaseConfigService {

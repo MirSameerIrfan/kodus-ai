@@ -1,11 +1,11 @@
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { Inject } from '@nestjs/common';
 
 import {
     IProfileService,
     PROFILE_SERVICE_TOKEN,
-} from '@/core/domain/profile/contracts/profile.service.contract';
-import { IProfile } from '@/core/domain/profile/interfaces/profile.interface';
+} from '@libs/identity/domain/profile/contracts/profile.service.contract';
+import { IProfile } from '@libs/identity/domain/profile/interfaces/profile.interface';
 
 export class UpdateProfileUseCase implements IUseCase {
     constructor(

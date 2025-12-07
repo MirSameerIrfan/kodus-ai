@@ -4,7 +4,7 @@ import {
     ReviewModeResponse,
 } from '@/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { tryParseJSONObject } from '@/shared/utils/transforms/json';
+import { tryParseJSONObject } from '@shared/utils/transforms/json';
 
 export class LLMResponseProcessor {
     private readonly logger = createLogger(LLMResponseProcessor.name);

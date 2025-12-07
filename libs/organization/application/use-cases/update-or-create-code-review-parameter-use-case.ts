@@ -3,19 +3,19 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
+import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
+} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
+import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
 import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
     ICodeReviewSettingsLogService,
-} from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
+} from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
 import { REQUEST } from '@nestjs/core';
 import {
     ActionType,
@@ -27,34 +27,34 @@ import {
     DirectoryCodeReviewConfig,
     RepositoryCodeReviewConfig,
 } from '@/config/types/general/codeReviewConfig.type';
-import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
+import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { UserRequest } from '@/config/types/http/user-request.type';
-import { getDefaultKodusConfigFile } from '@/shared/utils/validateCodeReviewConfigFile';
+import { getDefaultKodusConfigFile } from '@shared/utils/validateCodeReviewConfigFile';
 import { produce } from 'immer';
-import { deepDifference, deepMerge } from '@/shared/utils/deep';
-import { CreateOrUpdateCodeReviewParameterDto } from '@/core/infrastructure/http/dtos/create-or-update-code-review-parameter.dto';
+import { deepDifference, deepMerge } from '@shared/utils/deep';
+import { CreateOrUpdateCodeReviewParameterDto } from '@shared/dtos/create-or-update-code-review-parameter.dto';
 import { v4 as uuidv4 } from 'uuid';
-import { PromptSourceType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
+import { PromptSourceType } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
 import {
     IPromptExternalReferenceManagerService,
     PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
-} from '@/core/domain/prompts/contracts/promptExternalReferenceManager.contract';
+} from '@libs/code-review/domain/prompts/contracts/promptExternalReferenceManager.contract';
 import { CodeReviewVersion } from '@/config/types/general/codeReview.type';
 import {
     CODE_REVIEW_CONTEXT_PATTERNS,
     pathToKey,
     resolveSourceTypeFromPath,
     extractDependenciesFromValue,
-} from '@/core/infrastructure/adapters/services/context/code-review-context.utils';
-import { convertTiptapJSONToText } from '@/core/utils/tiptap-json';
+} from '@libs/code-review/infrastructure/context/code-review-context.utils';
+import { convertTiptapJSONToText } from '@shared/utils/tiptap-json';
 import {
     ContextReferenceDetectionService,
     type ContextDetectionField,
-} from '@/core/infrastructure/adapters/services/context/context-reference-detection.service';
+} from '@libs/code-review/infrastructure/context/context-reference-detection.service';
 
 @Injectable()
 export class UpdateOrCreateCodeReviewParameterUseCase {

@@ -1,9 +1,9 @@
 import { Inject } from '@nestjs/common';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import {
     ITeamMemberService,
     TEAM_MEMBERS_SERVICE_TOKEN,
-} from '@/core/domain/teamMembers/contracts/teamMembers.service.contracts';
+} from '@libs/organization/domain/team-members/contracts/teamMembers.service.contracts';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 

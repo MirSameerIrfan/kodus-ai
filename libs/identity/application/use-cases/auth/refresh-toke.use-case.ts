@@ -1,8 +1,8 @@
 import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
-} from '@/core/domain/auth/contracts/auth.service.contracts';
-import { AuthProvider } from '@/shared/domain/enums/auth-provider.enum';
+} from '@libs/identity/domain/auth/contracts/auth.service.contracts';
+import { AuthProvider } from '@shared/domain/enums/auth-provider.enum';
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 
 @Injectable()

@@ -8,20 +8,20 @@ import {
     Repository,
 } from '@/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { AutomationExecutionEntity } from '@/core/domain/automation/entities/automation-execution.entity';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
+import { AutomationExecutionEntity } from '@libs/automation/domain/entities/automation-execution.entity';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
 import { PipelineContext } from '../../../pipeline/interfaces/pipeline-context.interface';
-import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
-import { ISuggestionByPR } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
-import { IPullRequestMessages } from '@/core/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
-import { IClusterizedSuggestion } from '@/core/domain/kodyFineTuning/interfaces/kodyFineTuning.interface';
-import { IExternalPromptContext } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
+import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
+import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
+import { IClusterizedSuggestion } from '@libs/code-review/ee/fine-tuning/domain/interfaces/kodyFineTuning.interface';
+import { IExternalPromptContext } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
 import type {
     ContextLayer,
     ContextPack,
     ContextEvidence,
 } from '@context-os-core/interfaces';
-import type { ContextAugmentationsMap } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
+import type { ContextAugmentationsMap } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';
 
 export interface CodeReviewPipelineContext extends PipelineContext {
     workflowJobId?: string; // ID of the workflow job (for pausing/resuming)

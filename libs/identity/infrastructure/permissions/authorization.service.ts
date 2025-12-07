@@ -1,12 +1,12 @@
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PermissionsAbilityFactory } from './permissionsAbility.factory';
 import { subject as caslSubject } from '@casl/ability';
-import { GetAssignedReposUseCase } from '@/core/application/use-cases/permissions/get-assigned-repos.use-case';
+import { GetAssignedReposUseCase } from '@libs/identity/application/use-cases/permissions/get-assigned-repos.use-case';
 import { extractReposFromAbility } from './policy.handlers';
 
 @Injectable()

@@ -1,6 +1,6 @@
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
-import { ConfigurationMissingException } from '@/shared/infrastructure/filters/configuration-missing.exception';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
+import { IntegrationCategory } from '@shared/domain/enums/integration-category.enum';
+import { ConfigurationMissingException } from '@shared/infrastructure/filters/configuration-missing.exception';
 import { SimpleLogger } from '@kodus/flow/dist/observability/logger';
 import { extractOrganizationAndTeamData } from './extractOrganizationAndTeamData.helper';
 

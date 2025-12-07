@@ -1,11 +1,11 @@
 import { Injectable, Optional } from '@nestjs/common';
 import { createLogger } from '@kodus/flow';
 import { RabbitSubscribe, AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { StageCompletedEvent } from '@/core/domain/workflowQueue/interfaces/stage-completed-event.interface';
-import { WorkflowJobRepository } from '@/core/infrastructure/adapters/repositories/typeorm/workflow-job.repository';
+import { StageCompletedEvent } from '@libs/workflow-queue/domain/interfaces/stage-completed-event.interface';
+import { WorkflowJobRepository } from '@core/database/typeorm/repositories/workflow-job.repository';
 import { PipelineStateManager } from '../pipeline/pipeline-state-manager.service';
-import { JobStatus } from '@/core/domain/workflowQueue/enums/job-status.enum';
-import { ObservabilityService } from '@/core/infrastructure/adapters/services/observability/observability.service';
+import { JobStatus } from '@libs/workflow-queue/domain/enums/job-status.enum';
+import { ObservabilityService } from '@shared/logging/observability.service';
 import { EventBufferService } from './event-buffer.service';
 
 /**

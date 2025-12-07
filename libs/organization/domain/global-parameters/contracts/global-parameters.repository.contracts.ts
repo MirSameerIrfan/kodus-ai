@@ -1,6 +1,6 @@
 import { GlobalParametersEntity } from '../entities/global-parameters.entity';
 import { IGlobalParameters } from '../interfaces/global-parameters.interface';
-import { GlobalParametersKey } from '@/shared/domain/enums/global-parameters-key.enum';
+import { GlobalParametersKey } from '@shared/domain/enums/global-parameters-key.enum';
 
 export const GLOBAL_PARAMETERS_REPOSITORY_TOKEN = Symbol(
     'GlobalParametersRepository',

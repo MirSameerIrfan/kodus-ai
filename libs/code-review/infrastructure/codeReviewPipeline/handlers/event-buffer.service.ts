@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { createLogger } from '@kodus/flow';
-import { StageCompletedEvent } from '@/core/domain/workflowQueue/interfaces/stage-completed-event.interface';
+import { StageCompletedEvent } from '@libs/workflow-queue/domain/interfaces/stage-completed-event.interface';
 
 /**
  * EventBufferService

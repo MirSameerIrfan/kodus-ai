@@ -3,7 +3,7 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import {
     DRY_RUN_SERVICE_TOKEN,
     IDryRunService,
-} from '@/core/domain/dryRun/contracts/dryRun.service.contract';
+} from '@libs/dry-run/domain/contracts/dryRun.service.contract';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

@@ -1,12 +1,12 @@
 import { createLogger } from "@kodus/flow";
 import { Injectable } from '@nestjs/common';
 import { BaseStage } from './base/base-stage.abstract';
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
+import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
 import { CodeManagementService } from '../../../platformIntegration/codeManagement.service';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { CommentResult } from '@/config/types/general/codeReview.type';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
-import { PullRequestReviewState } from '@/core/domain/platformIntegrations/types/codeManagement/pullRequests.type';
+import { PullRequestReviewState } from '@libs/platform/domain/types/codeManagement/pullRequests.type';
 
 @Injectable()
 export class RequestChangesOrApproveStage extends BaseStage {

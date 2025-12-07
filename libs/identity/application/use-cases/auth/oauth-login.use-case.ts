@@ -1,10 +1,10 @@
 import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
-} from '@/core/domain/auth/contracts/auth.service.contracts';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
+} from '@libs/identity/domain/auth/contracts/auth.service.contracts';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { AuthProvider } from '@/shared/domain/enums/auth-provider.enum';
+import { AuthProvider } from '@shared/domain/enums/auth-provider.enum';
 import { SignUpUseCase } from './signup.use-case';
 import { randomBytes } from 'crypto';
 

@@ -1,11 +1,11 @@
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 
 import {
     IUsersService,
     USER_SERVICE_TOKEN,
-} from '@/core/domain/user/contracts/user.service.contract';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
+} from '@libs/identity/domain/user/contracts/user.service.contract';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import { REQUEST } from '@nestjs/core';
 
 @Injectable() // @Case()

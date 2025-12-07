@@ -1,5 +1,5 @@
-import { IIntegration } from '../../integrations/interfaces/integration.interface';
-import { IOrganization } from '../../organization/interfaces/organization.interface';
+import { IIntegration } from '@libs/integrations/domain/interfaces/integration.interface';
+import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 import { IAuthIntegration } from '../interfaces/auth-integration.interface';
 
 export class AuthIntegrationEntity implements IAuthIntegration {

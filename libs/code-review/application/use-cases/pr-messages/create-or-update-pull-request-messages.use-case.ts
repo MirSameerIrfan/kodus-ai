@@ -1,30 +1,30 @@
 import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import {
     IPullRequestMessagesService,
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
-} from '@/core/domain/pullRequestMessages/contracts/pullRequestMessages.service.contract';
-import { IPullRequestMessages } from '@/core/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
+} from '@libs/code-review/domain/pr-messages/contracts/pullRequestMessages.service.contract';
+import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
 import { ConfigLevel } from '@/config/types/general/pullRequestMessages.type';
 import { ActionType } from '@/config/types/general/codeReviewSettingsLog.type';
 import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
     ICodeReviewSettingsLogService,
-} from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
+} from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
 
 import {
     IGetAdditionalInfoHelper,
     GET_ADDITIONAL_INFO_HELPER_TOKEN,
-} from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
-import { PullRequestMessagesLogParams } from '@/ee/codeReviewSettingsLog/services/pullRequestMessageLog.handler';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
+} from '@shared/domain/contracts/getAdditionalInfo.helper.contract';
+import { PullRequestMessagesLogParams } from '@libs/analytics/ee/settings-log/services/pullRequestMessageLog.handler';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
+import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import { getDefaultKodusConfigFile } from '@/shared/utils/validateCodeReviewConfigFile';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { getDefaultKodusConfigFile } from '@shared/utils/validateCodeReviewConfigFile';
 
 @Injectable()
 export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {

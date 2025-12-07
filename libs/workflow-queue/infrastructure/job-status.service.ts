@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { IJobStatusService } from '@/core/domain/workflowQueue/contracts/job-status.service.contract';
-import { WorkflowJobRepository } from '@/core/infrastructure/adapters/repositories/typeorm/workflow-job.repository';
-import { JobStatus } from '@/core/domain/workflowQueue/enums/job-status.enum';
+import { IJobStatusService } from '@libs/workflow-queue/domain/contracts/job-status.service.contract';
+import { WorkflowJobRepository } from '@core/database/typeorm/repositories/workflow-job.repository';
+import { JobStatus } from '@libs/workflow-queue/domain/enums/job-status.enum';
 import { DataSource } from 'typeorm';
 
 @Injectable()

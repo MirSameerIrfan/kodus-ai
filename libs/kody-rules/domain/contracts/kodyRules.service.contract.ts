@@ -1,5 +1,5 @@
 import { IKodyRulesRepository } from './kodyRules.repository.contract';
-import { CreateKodyRuleDto } from '@/core/infrastructure/http/dtos/create-kody-rule.dto';
+import { CreateKodyRuleDto } from '@shared/dtos/create-kody-rule.dto';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     IKodyRule,

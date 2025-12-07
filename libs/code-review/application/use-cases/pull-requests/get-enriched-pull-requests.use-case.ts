@@ -1,33 +1,33 @@
 import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
-import { EnrichedPullRequestsQueryDto } from '@/core/infrastructure/http/dtos/enriched-pull-requests-query.dto';
-import { EnrichedPullRequestResponse } from '@/core/infrastructure/http/dtos/enriched-pull-request-response.dto';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { EnrichedPullRequestsQueryDto } from '@shared/dtos/enriched-pull-requests-query.dto';
+import { EnrichedPullRequestResponse } from '@shared/dtos/enriched-pull-request-response.dto';
 import {
     PaginatedEnrichedPullRequestsResponse,
     PaginationMetadata,
-} from '@/core/infrastructure/http/dtos/paginated-enriched-pull-requests.dto';
+} from '@shared/dtos/paginated-enriched-pull-requests.dto';
 import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
     IAutomationExecutionService,
-} from '@/core/domain/automation/contracts/automation-execution.service';
+} from '@libs/automation/domain/contracts/automation-execution.service';
 import {
     PULL_REQUESTS_SERVICE_TOKEN,
     IPullRequestsService,
-} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
+} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
 import {
     CODE_REVIEW_EXECUTION_SERVICE,
     ICodeReviewExecutionService,
-} from '@/core/domain/codeReviewExecutions/contracts/codeReviewExecution.service.contract';
+} from '@libs/code-review/domain/executions/contracts/codeReviewExecution.service.contract';
 import { UserRequest } from '@/config/types/http/user-request.type';
-import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
+import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import { IPullRequests } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
-import { DeliveryStatus } from '@/core/domain/pullRequests/enums/deliveryStatus.enum';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { IPullRequests } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
 
 @Injectable()
 export class GetEnrichedPullRequestsUseCase implements IUseCase {

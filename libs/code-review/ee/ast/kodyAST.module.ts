@@ -1,8 +1,8 @@
 import { Global, Module } from '@nestjs/common';
-import { AST_ANALYSIS_SERVICE_TOKEN } from '@/core/domain/codeBase/contracts/ASTAnalysisService.contract';
-import { CodeAstAnalysisService } from '@/ee/kodyAST/codeASTAnalysis.service';
-import { PlatformIntegrationModule } from '@/modules/platformIntegration.module';
-import { ContextReferenceModule } from '@/modules/contextReference.module';
+import { AST_ANALYSIS_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
+import { CodeAstAnalysisService } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
+import { PlatformIntegrationModule } from '@libs/platform/platform.module';
+import { ContextReferenceModule } from '@libs/code-review/modules/context-reference.module';
 import { environment } from '../configs/environment';
 
 const staticImports = [PlatformIntegrationModule, ContextReferenceModule];

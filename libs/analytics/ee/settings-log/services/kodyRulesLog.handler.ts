@@ -7,7 +7,7 @@ import {
     ActionType,
     ConfigLevel,
 } from '@/config/types/general/codeReviewSettingsLog.type';
-import { IKodyRule } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+import { IKodyRule } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 
 export interface KodyRuleLogParams extends BaseLogParams {
     oldRule?: Partial<IKodyRule>;

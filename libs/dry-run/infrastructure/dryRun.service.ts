@@ -3,22 +3,22 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import {
     DRY_RUN_REPOSITORY_TOKEN,
     IDryRunRepository,
-} from '@/core/domain/dryRun/contracts/dryRun.repository.contract';
-import { IDryRunService } from '@/core/domain/dryRun/contracts/dryRun.service.contract';
-import { DryRunEntity } from '@/core/domain/dryRun/entities/dryRun.entity';
+} from '@libs/dry-run/domain/contracts/dryRun.repository.contract';
+import { IDryRunService } from '@libs/dry-run/domain/contracts/dryRun.service.contract';
+import { DryRunEntity } from '@libs/dry-run/domain/entities/dryRun.entity';
 import {
     DryRunEventType,
     DryRunStatus,
     IDryRun,
     IDryRunEvent,
     IDryRunPayloadMap,
-} from '@/core/domain/dryRun/interfaces/dryRun.interface';
+} from '@libs/dry-run/domain/interfaces/dryRun.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { createHash } from 'crypto';
-import { deepSort } from '@/shared/utils/deep';
+import { deepSort } from '@shared/utils/deep';
 import { produce } from 'immer';
 import { CodeReviewParameter } from '@/config/types/general/codeReviewConfig.type';
-import { IPullRequestMessages } from '@/core/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
+import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
 import {
     CodeReviewConfig,
     CodeReviewConfigWithoutLLMProvider,
@@ -27,25 +27,25 @@ import {
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import {
     IPullRequestMessagesService,
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
-} from '@/core/domain/pullRequestMessages/contracts/pullRequestMessages.service.contract';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+} from '@libs/code-review/domain/pr-messages/contracts/pullRequestMessages.service.contract';
+import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
 import {
     IFile,
     IPullRequests,
     ISuggestion,
     ISuggestionByPR,
-} from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
+} from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import {
     CODE_BASE_CONFIG_SERVICE_TOKEN,
     ICodeBaseConfigService,
-} from '@/core/domain/codeBase/contracts/CodeBaseConfigService.contract';
+} from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
 import { v4 } from 'uuid';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { PullRequestsEntity } from '@/core/domain/pullRequests/entities/pullRequests.entity';
+import { PullRequestsEntity } from '@libs/code-review/domain/pull-requests/entities/pullRequests.entity';
 
 @Injectable()
 export class DryRunService implements IDryRunService {

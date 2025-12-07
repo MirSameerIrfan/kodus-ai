@@ -11,9 +11,9 @@ import {
     IPullRequests,
     ISuggestion,
     ISuggestionByPR,
-} from '../../pullRequests/interfaces/pullRequests.interface';
-import { IPullRequestMessages } from '../../pullRequestMessages/interfaces/pullRequestMessages.interface';
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
+} from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
+import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
 import { IPullRequestsService } from '../../pullRequests/contracts/pullRequests.service.contracts';
 
 export const DRY_RUN_SERVICE_TOKEN = Symbol('DRY_RUN_SERVICE_TOKEN');

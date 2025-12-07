@@ -1,10 +1,10 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { createLogger } from '@kodus/flow';
-import { CacheService } from '@/shared/utils/cache/cache.service';
+import { CacheService } from '@shared/utils/cache/cache.service';
 import {
     CODE_BASE_CONFIG_SERVICE_TOKEN,
     ICodeBaseConfigService,
-} from '@/core/domain/codeBase/contracts/CodeBaseConfigService.contract';
+} from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
 import {
     CodeReviewConfig,
     FileChange,

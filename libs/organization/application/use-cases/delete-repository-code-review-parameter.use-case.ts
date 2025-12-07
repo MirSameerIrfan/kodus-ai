@@ -4,25 +4,25 @@ import { REQUEST } from '@nestjs/core';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
+import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { DeleteRepositoryCodeReviewParameterDto } from '@/core/infrastructure/http/dtos/delete-repository-code-review-parameter.dto';
+import { DeleteRepositoryCodeReviewParameterDto } from '@shared/dtos/delete-repository-code-review-parameter.dto';
 import { ActionType } from '@/config/types/general/codeReviewSettingsLog.type';
-import { RepositoryWithDirectoriesException } from '@/shared/infrastructure/filters/repository-with-directories.exception';
+import { RepositoryWithDirectoriesException } from '@shared/infrastructure/filters/repository-with-directories.exception';
 import { DeleteByRepositoryOrDirectoryPullRequestMessagesUseCase } from '../pullRequestMessages/delete-by-repository-or-directory.use-case';
 import {
     IKodyRulesService,
     KODY_RULES_SERVICE_TOKEN,
-} from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
-import { KodyRulesStatus } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+} from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
+import { KodyRulesStatus } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import { CodeReviewParameter } from '@/config/types/general/codeReviewConfig.type';
 import { produce } from 'immer';
 import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
     ICodeReviewSettingsLogService,
-} from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
+} from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
 import { UserRequest } from '@/config/types/http/user-request.type';
 
 @Injectable()

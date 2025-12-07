@@ -3,7 +3,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { ISuggestionService } from '@/core/domain/codeBase/contracts/SuggestionService.contract';
+import { ISuggestionService } from '@libs/code-review/domain/contracts/SuggestionService.contract';
 import {
     CodeSuggestion,
     SuggestionControlConfig,
@@ -18,23 +18,23 @@ import {
     CodeReviewVersion,
     AnalysisContext,
 } from '@/config/types/general/codeReview.type';
-import { DeliveryStatus } from '@/core/domain/pullRequests/enums/deliveryStatus.enum';
-import { PriorityStatus } from '@/core/domain/pullRequests/enums/priorityStatus.enum';
-import { extractLinesFromDiffHunk } from '@/shared/utils/patch';
-import { IAIAnalysisService } from '@/core/domain/codeBase/contracts/AIAnalysisService.contract';
+import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
+import { PriorityStatus } from '@libs/code-review/domain/pull-requests/enums/priorityStatus.enum';
+import { extractLinesFromDiffHunk } from '@shared/utils/patch';
+import { IAIAnalysisService } from '@libs/code-review/domain/contracts/AIAnalysisService.contract';
 import { LLM_ANALYSIS_SERVICE_TOKEN } from '../codeBase/llmAnalysis.service';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
-} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
+} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
+import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
 import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
-} from '@/core/domain/codeBase/contracts/CommentManagerService.contract';
-import { ImplementationStatus } from '@/core/domain/pullRequests/enums/implementationStatus.enum';
-import { LabelType } from '@/shared/utils/codeManagement/labels';
-import { ISuggestionByPR } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
+} from '@libs/code-review/domain/contracts/CommentManagerService.contract';
+import { ImplementationStatus } from '@libs/code-review/domain/pull-requests/enums/implementationStatus.enum';
+import { LabelType } from '@shared/utils/codeManagement/labels';
+import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';
 
 @Injectable()

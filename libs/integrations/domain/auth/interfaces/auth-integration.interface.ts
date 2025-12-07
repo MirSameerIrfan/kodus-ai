@@ -1,6 +1,6 @@
-import { IIntegration } from '../../integrations/interfaces/integration.interface';
-import { IOrganization } from '../../organization/interfaces/organization.interface';
-import { ITeam } from '../../team/interfaces/team.interface';
+import { IIntegration } from '@libs/integrations/domain/interfaces/integration.interface';
+import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
+import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';
 
 export interface IAuthIntegration {
     uuid: string;

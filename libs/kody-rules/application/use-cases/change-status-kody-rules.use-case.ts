@@ -2,9 +2,9 @@ import { createLogger } from "@kodus/flow";
 import {
     IKodyRulesService,
     KODY_RULES_SERVICE_TOKEN,
-} from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
-import { ChangeStatusKodyRulesDTO } from '@/core/infrastructure/http/dtos/change-status-kody-rules.dto';
-import { CreateKodyRuleDto } from '@/core/infrastructure/http/dtos/create-kody-rule.dto';
+} from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
+import { ChangeStatusKodyRulesDTO } from '@shared/dtos/change-status-kody-rules.dto';
+import { CreateKodyRuleDto } from '@shared/dtos/create-kody-rule.dto';
 import { Inject } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from './find-rules-in-organization-by-filter.use-case';

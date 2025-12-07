@@ -34,11 +34,11 @@ import { REQUEST } from '@nestjs/core';
 import {
     CheckPolicies,
     PolicyGuard,
-} from '../../adapters/services/permissions/policy.guard';
+} from '@libs/identity/infrastructure/permissions/policy.guard';
 import {
     checkPermissions,
     checkRepoPermissions,
-} from '../../adapters/services/permissions/policy.handlers';
+} from '@libs/identity/infrastructure/permissions/policy.handlers';
 import { AddLibraryKodyRulesDto } from '../dtos/add-library-kody-rules.dto';
 import { ChangeStatusKodyRulesDTO } from '../dtos/change-status-kody-rules.dto';
 import { CreateKodyRuleDto } from '../dtos/create-kody-rule.dto';

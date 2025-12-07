@@ -2,12 +2,12 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import {
     IIntegrationConfigRepository,
     INTEGRATION_CONFIG_REPOSITORY_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.repository.contracts';
-import { IIntegrationConfigService } from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { IntegrationConfigEntity } from '@/core/domain/integrationConfigs/entities/integration-config.entity';
-import { IIntegrationConfig } from '@/core/domain/integrationConfigs/interfaces/integration-config.interface';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
+} from '@libs/integrations/domain/configs/contracts/integration-config.repository.contracts';
+import { IIntegrationConfigService } from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
+import { IntegrationConfigEntity } from '@libs/integrations/domain/configs/entities/integration-config.entity';
+import { IIntegrationConfig } from '@libs/integrations/domain/configs/interfaces/integration-config.interface';
+import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { isString } from 'class-validator';
 import { v4 as uuidv4 } from 'uuid';

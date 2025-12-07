@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { CODE_REVIEW_FEEDBACK_REPOSITORY_TOKEN } from '@/core/domain/codeReviewFeedback/contracts/codeReviewFeedback.repository';
-import { ICodeReviewFeedbackRepository } from '@/core/domain/codeReviewFeedback/contracts/codeReviewFeedback.repository';
-import { ICodeReviewFeedbackService } from '@/core/domain/codeReviewFeedback/contracts/codeReviewFeedback.service.contract';
+import { CODE_REVIEW_FEEDBACK_REPOSITORY_TOKEN } from '@libs/code-review/domain/feedback/contracts/codeReviewFeedback.repository';
+import { ICodeReviewFeedbackRepository } from '@libs/code-review/domain/feedback/contracts/codeReviewFeedback.repository';
+import { ICodeReviewFeedbackService } from '@libs/code-review/domain/feedback/contracts/codeReviewFeedback.service.contract';
 import { Inject } from '@nestjs/common';
-import { CodeReviewFeedbackEntity } from '@/core/domain/codeReviewFeedback/entities/codeReviewFeedback.entity';
-import { ICodeReviewFeedback } from '@/core/domain/codeReviewFeedback/interfaces/codeReviewFeedback.interface';
+import { CodeReviewFeedbackEntity } from '@libs/code-review/domain/feedback/entities/codeReviewFeedback.entity';
+import { ICodeReviewFeedback } from '@libs/code-review/domain/feedback/interfaces/codeReviewFeedback.interface';
 import { Collection } from 'mongoose';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     IPullRequests,
     IRepository,
-} from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
+} from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 
 @Injectable()
 export class CodeReviewFeedbackService implements ICodeReviewFeedbackService {

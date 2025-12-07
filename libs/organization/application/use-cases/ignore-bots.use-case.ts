@@ -1,13 +1,13 @@
 import { createLogger } from "@kodus/flow";
-import { PULL_REQUEST_MANAGER_SERVICE_TOKEN } from '@/core/domain/codeBase/contracts/PullRequestManagerService.contract';
+import { PULL_REQUEST_MANAGER_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/PullRequestManagerService.contract';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
-import { OrganizationParametersAutoAssignConfig } from '@/core/domain/organizationParameters/types/organizationParameters.types';
-import { PullRequestHandlerService } from '@/core/infrastructure/adapters/services/codeBase/pullRequestManager.service';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
+} from '@libs/organization/domain/org-parameters/contracts/organizationParameters.service.contract';
+import { OrganizationParametersAutoAssignConfig } from '@libs/organization/domain/org-parameters/types/organizationParameters.types';
+import { PullRequestHandlerService } from '@libs/code-review/infrastructure/pullRequestManager.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
+import { OrganizationParametersKey } from '@shared/domain/enums/organization-parameters-key.enum';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

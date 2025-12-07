@@ -3,34 +3,34 @@ import { STATUS } from '@/config/types/database/status.type';
 import {
     IOrganizationService,
     ORGANIZATION_SERVICE_TOKEN,
-} from '@/core/domain/organization/contracts/organization.service.contract';
+} from '@libs/organization/domain/organization/contracts/organization.service.contract';
 import {
     IProfileService,
     PROFILE_SERVICE_TOKEN,
-} from '@/core/domain/profile/contracts/profile.service.contract';
+} from '@libs/identity/domain/profile/contracts/profile.service.contract';
 import {
     ITeamService,
     TEAM_SERVICE_TOKEN,
-} from '@/core/domain/team/contracts/team.service.contract';
+} from '@libs/organization/domain/team/contracts/team.service.contract';
 import {
     ITeamMemberService,
     TEAM_MEMBERS_SERVICE_TOKEN,
-} from '@/core/domain/teamMembers/contracts/teamMembers.service.contracts';
-import { TeamMemberRole } from '@/core/domain/teamMembers/enums/teamMemberRole.enum';
+} from '@libs/organization/domain/team-members/contracts/teamMembers.service.contracts';
+import { TeamMemberRole } from '@libs/organization/domain/team-members/enums/teamMemberRole.enum';
 import {
     IUsersService,
     USER_SERVICE_TOKEN,
-} from '@/core/domain/user/contracts/user.service.contract';
-import { Role } from '@/core/domain/permissions/enums/permissions.enum';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { JoinOrganizationDto } from '@/core/infrastructure/http/dtos/join-organization.dto';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+} from '@libs/identity/domain/user/contracts/user.service.contract';
+import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
+import { JoinOrganizationDto } from '@shared/dtos/join-organization.dto';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
-import { sendConfirmationEmail } from '@/shared/utils/email/sendMail';
+import { sendConfirmationEmail } from '@shared/utils/email/sendMail';
 import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
-} from '@/core/domain/auth/contracts/auth.service.contracts';
+} from '@libs/identity/domain/auth/contracts/auth.service.contracts';
 
 @Injectable()
 export class JoinOrganizationUseCase implements IUseCase {

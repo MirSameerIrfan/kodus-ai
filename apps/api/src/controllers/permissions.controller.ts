@@ -22,10 +22,10 @@ import { GetAssignedReposUseCase } from '@/core/application/use-cases/permission
 import {
     CheckPolicies,
     PolicyGuard,
-} from '../../adapters/services/permissions/policy.guard';
+} from '@libs/identity/infrastructure/permissions/policy.guard';
 import { subject } from '@casl/ability';
 import { AssignReposUseCase } from '@/core/application/use-cases/permissions/assign-repos.use-case';
-import { checkPermissions } from '../../adapters/services/permissions/policy.handlers';
+import { checkPermissions } from '@libs/identity/infrastructure/permissions/policy.handlers';
 
 @Controller('permissions')
 export class PermissionsController {

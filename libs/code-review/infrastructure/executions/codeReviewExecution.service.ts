@@ -3,10 +3,10 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import {
     CODE_REVIEW_EXECUTION_REPOSITORY,
     ICodeReviewExecutionRepository,
-} from '@/core/domain/codeReviewExecutions/contracts/codeReviewExecution.repository.contract';
-import { ICodeReviewExecutionService } from '@/core/domain/codeReviewExecutions/contracts/codeReviewExecution.service.contract';
-import { CodeReviewExecutionEntity } from '@/core/domain/codeReviewExecutions/entities/codeReviewExecution.entity';
-import { CodeReviewExecution } from '@/core/domain/codeReviewExecutions/interfaces/codeReviewExecution.interface';
+} from '@libs/code-review/domain/executions/contracts/codeReviewExecution.repository.contract';
+import { ICodeReviewExecutionService } from '@libs/code-review/domain/executions/contracts/codeReviewExecution.service.contract';
+import { CodeReviewExecutionEntity } from '@libs/code-review/domain/executions/entities/codeReviewExecution.entity';
+import { CodeReviewExecution } from '@libs/code-review/domain/executions/interfaces/codeReviewExecution.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

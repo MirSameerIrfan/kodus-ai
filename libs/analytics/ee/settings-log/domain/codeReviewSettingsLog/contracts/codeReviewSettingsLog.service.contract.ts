@@ -1,14 +1,14 @@
-import { ICodeReviewSettingsLogRepository } from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.repository.contract';
-import { CodeReviewConfigLogParams } from '@/ee/codeReviewSettingsLog/services/codeReviewConfigLog.handler';
-import { IntegrationLogParams } from '@/ee/codeReviewSettingsLog/services/integrationLog.handler';
-import { KodyRuleLogParams } from '@/ee/codeReviewSettingsLog/services/kodyRulesLog.handler';
-import { PullRequestMessagesLogParams } from '@/ee/codeReviewSettingsLog/services/pullRequestMessageLog.handler';
+import { ICodeReviewSettingsLogRepository } from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.repository.contract';
+import { CodeReviewConfigLogParams } from '@libs/analytics/ee/settings-log/services/codeReviewConfigLog.handler';
+import { IntegrationLogParams } from '@libs/analytics/ee/settings-log/services/integrationLog.handler';
+import { KodyRuleLogParams } from '@libs/analytics/ee/settings-log/services/kodyRulesLog.handler';
+import { PullRequestMessagesLogParams } from '@libs/analytics/ee/settings-log/services/pullRequestMessageLog.handler';
 import {
     RepositoriesLogParams,
     RepositoryConfigRemovalParams,
     DirectoryConfigRemovalParams,
-} from '@/ee/codeReviewSettingsLog/services/repositoriesLog.handler';
-import { UserStatusLogParams } from '@/ee/codeReviewSettingsLog/services/userStatusLog.handler';
+} from '@libs/analytics/ee/settings-log/services/repositoriesLog.handler';
+import { UserStatusLogParams } from '@libs/analytics/ee/settings-log/services/userStatusLog.handler';
 
 export const CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN = Symbol(
     'CodeReviewSettingsLogService',

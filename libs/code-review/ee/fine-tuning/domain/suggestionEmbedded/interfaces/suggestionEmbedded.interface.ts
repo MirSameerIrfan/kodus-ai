@@ -1,4 +1,4 @@
-import { IOrganization } from '@/core/domain/organization/interfaces/organization.interface';
+import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 
 export interface ISuggestionEmbedded {
     uuid?: string;

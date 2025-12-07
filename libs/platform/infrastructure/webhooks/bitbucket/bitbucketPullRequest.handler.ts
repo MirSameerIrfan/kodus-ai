@@ -1,26 +1,26 @@
 import { createLogger } from "@kodus/flow";
-import { GenerateIssuesFromPrClosedUseCase } from '@/core/application/use-cases/issues/generate-issues-from-pr-closed.use-case';
-import { ChatWithKodyFromGitUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/chatWithKodyFromGit.use-case';
-import { SavePullRequestUseCase } from '@/core/application/use-cases/pullRequests/save.use-case';
+import { GenerateIssuesFromPrClosedUseCase } from '@libs/issues/application/use-cases/generate-issues-from-pr-closed.use-case';
+import { ChatWithKodyFromGitUseCase } from '@libs/platform/application/use-cases/codeManagement/chatWithKodyFromGit.use-case';
+import { SavePullRequestUseCase } from '@libs/code-review/application/use-cases/pull-requests/save.use-case';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
+} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
 import {
     IWebhookEventHandler,
     IWebhookEventParams,
-} from '@/core/domain/platformIntegrations/interfaces/webhook-event-handler.interface';
-import { IWebhookBitbucketPullRequestEvent } from '@/core/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
+} from '@libs/platform/domain/interfaces/webhook-event-handler.interface';
+import { IWebhookBitbucketPullRequestEvent } from '@libs/platform/domain/types/webhooks/webhooks-bitbucket.type';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
-} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
-import { RunCodeReviewAutomationUseCase } from '@/ee/automation/runCodeReview.use-case';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { getMappedPlatform } from '@/shared/utils/webhooks';
+} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
+import { RunCodeReviewAutomationUseCase } from '@libs/automation/ee/runCodeReview.use-case';
+import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { getMappedPlatform } from '@shared/utils/webhooks';
 import { Inject, Injectable } from '@nestjs/common';
-import { KodyRulesSyncService } from '../../services/kodyRules/kodyRulesSync.service';
+import { KodyRulesSyncService } from '@libs/kody-rules/infrastructure/services/kodyRulesSync.service';
 import { CodeManagementService } from '../../services/platformIntegration/codeManagement.service';
 
 /**

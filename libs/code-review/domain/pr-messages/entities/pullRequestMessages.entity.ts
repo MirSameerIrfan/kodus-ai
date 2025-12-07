@@ -1,4 +1,4 @@
-import { Entity } from '@/shared/domain/interfaces/entity';
+import { Entity } from '@shared/domain/interfaces/entity';
 import {
     IPullRequestMessageContent,
     IPullRequestMessages,

@@ -1,8 +1,8 @@
 import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
-} from '@/core/domain/integrations/contracts/integration.service.contracts';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+} from '@libs/integrations/domain/contracts/integration.service.contracts';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { Inject } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';

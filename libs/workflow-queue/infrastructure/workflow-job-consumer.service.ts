@@ -1,13 +1,13 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { UseFilters } from '@nestjs/common';
-import { RabbitmqConsumeErrorFilter } from '@/shared/infrastructure/filters/rabbitmq-consume-error.exception';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { RabbitmqConsumeErrorFilter } from '@shared/infrastructure/filters/rabbitmq-consume-error.exception';
+import { PinoLoggerService } from '@shared/logging/pino.service';
 import { TransactionalInboxService } from './transactional-inbox.service';
-import { IJobProcessorService } from '@/core/domain/workflowQueue/contracts/job-processor.service.contract';
-import { JOB_PROCESSOR_SERVICE_TOKEN } from '@/core/domain/workflowQueue/contracts/job-processor.service.contract';
+import { IJobProcessorService } from '@libs/workflow-queue/domain/contracts/job-processor.service.contract';
+import { JOB_PROCESSOR_SERVICE_TOKEN } from '@libs/workflow-queue/domain/contracts/job-processor.service.contract';
 import { DataSource } from 'typeorm';
-import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
+import { ObservabilityService } from '@shared/logging/observability.service';
 
 interface WorkflowJobMessage {
     jobId: string;

@@ -1,8 +1,8 @@
-import { convertTiptapJSONToMarkdown } from '@/core/utils/tiptap-json';
+import { convertTiptapJSONToMarkdown } from '@shared/utils/tiptap-json';
 import {
     CODE_REVIEW_CONTEXT_PATTERNS,
     stripMarkersFromText,
-} from '@/core/infrastructure/adapters/services/context/code-review-context.utils';
+} from '@libs/code-review/infrastructure/context/code-review-context.utils';
 
 /**
  * Limits text length to a maximum number of characters.

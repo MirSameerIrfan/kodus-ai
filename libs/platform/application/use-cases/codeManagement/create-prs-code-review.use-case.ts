@@ -1,17 +1,17 @@
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
-import { AutomationExecutionService } from '@/core/infrastructure/adapters/services/automation/automation-execution.service';
-import { AUTOMATION_EXECUTION_SERVICE_TOKEN } from '@/core/domain/automation/contracts/automation-execution.service';
-import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
-import { AutomationType } from '@/core/domain/automation/enums/automation-type';
+import { AutomationExecutionService } from '@libs/automation/infrastructure/automation-execution.service';
+import { AUTOMATION_EXECUTION_SERVICE_TOKEN } from '@libs/automation/domain/contracts/automation-execution.service';
+import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
+import { AutomationType } from '@libs/automation/domain/enums/automation-type';
 import {
     ITeamAutomationService,
     TEAM_AUTOMATION_SERVICE_TOKEN,
-} from '@/core/domain/automation/contracts/team-automation.service';
+} from '@libs/automation/domain/contracts/team-automation.service';
 
 @Injectable()
 export class CreatePRCodeReviewUseCase implements IUseCase {

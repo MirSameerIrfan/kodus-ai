@@ -1,4 +1,4 @@
-import { IWebhookBitbucketPullRequestEvent } from '@/core/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
+import { IWebhookBitbucketPullRequestEvent } from '@libs/platform/domain/types/webhooks/webhooks-bitbucket.type';
 import {
     IMappedComment,
     IMappedPlatform,
@@ -6,7 +6,7 @@ import {
     IMappedRepository,
     IMappedUsers,
     MappedAction,
-} from '@/core/domain/platformIntegrations/types/webhooks/webhooks-common.type';
+} from '@libs/platform/domain/types/webhooks/webhooks-common.type';
 import { extractRepoFullName } from '.';
 
 export class BitbucketMappedPlatform implements IMappedPlatform {

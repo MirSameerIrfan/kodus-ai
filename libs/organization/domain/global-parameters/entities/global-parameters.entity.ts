@@ -1,4 +1,4 @@
-import { GlobalParametersKey } from '@/shared/domain/enums/global-parameters-key.enum';
+import { GlobalParametersKey } from '@shared/domain/enums/global-parameters-key.enum';
 import { IGlobalParameters } from '../interfaces/global-parameters.interface';
 
 export class GlobalParametersEntity implements IGlobalParameters {

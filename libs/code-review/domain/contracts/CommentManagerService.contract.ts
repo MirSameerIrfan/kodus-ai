@@ -8,13 +8,13 @@ import {
 } from '@/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { ISuggestionByPR } from '../../pullRequests/interfaces/pullRequests.interface';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import {
     IPullRequestMessageContent,
     IPullRequestMessages,
-} from '../../pullRequestMessages/interfaces/pullRequestMessages.interface';
-import { CodeReviewPipelineContext } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/context/code-review-pipeline.context';
+} from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
+import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/codeReviewPipeline/context/code-review-pipeline.context';
 
 export const COMMENT_MANAGER_SERVICE_TOKEN = Symbol('CommentManagerService');
 

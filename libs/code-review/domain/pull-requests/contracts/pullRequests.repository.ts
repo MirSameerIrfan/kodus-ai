@@ -6,7 +6,7 @@ import {
     IPullRequestWithDeliveredSuggestions,
 } from '../interfaces/pullRequests.interface';
 import { DeliveryStatus } from '../enums/deliveryStatus.enum';
-import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
+import { PullRequestState } from '@shared/domain/enums/pullRequestState.enum';
 import { Repository } from '@/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 

@@ -1,4 +1,4 @@
-import { AzureReposWebhookPayload } from '@/core/domain/platformIntegrations/types/webhooks/webhooks-azureRepos.type';
+import { AzureReposWebhookPayload } from '@libs/platform/domain/types/webhooks/webhooks-azureRepos.type';
 import {
     IMappedComment,
     IMappedPlatform,
@@ -6,7 +6,7 @@ import {
     IMappedRepository,
     IMappedUsers,
     MappedAction,
-} from '@/core/domain/platformIntegrations/types/webhooks/webhooks-common.type';
+} from '@libs/platform/domain/types/webhooks/webhooks-common.type';
 import { extractRepoFullName } from '.';
 
 /**

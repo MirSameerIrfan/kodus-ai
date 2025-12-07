@@ -2,40 +2,40 @@ import { createLogger } from "@kodus/flow";
 import {
     CODE_REVIEW_FEEDBACK_SERVICE_TOKEN,
     ICodeReviewFeedbackService,
-} from '@/core/domain/codeReviewFeedback/contracts/codeReviewFeedback.service.contract';
-import { ICodeReviewFeedback } from '@/core/domain/codeReviewFeedback/interfaces/codeReviewFeedback.interface';
+} from '@libs/code-review/domain/feedback/contracts/codeReviewFeedback.service.contract';
+import { ICodeReviewFeedback } from '@libs/code-review/domain/feedback/interfaces/codeReviewFeedback.interface';
 
 import {
     PULL_REQUESTS_SERVICE_TOKEN,
     IPullRequestsService,
-} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
-import { ImplementationStatus } from '@/core/domain/pullRequests/enums/implementationStatus.enum';
+} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
+import { ImplementationStatus } from '@libs/code-review/domain/pull-requests/enums/implementationStatus.enum';
 import {
     IPullRequests,
     ISuggestionToEmbed,
-} from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
-import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
+} from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { PullRequestState } from '@shared/domain/enums/pullRequestState.enum';
 import { Injectable, Inject } from '@nestjs/common';
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
+import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
 import {
     CodeSuggestion,
     Repository,
 } from '@/config/types/general/codeReview.type';
 
 import { kmeans } from 'ml-kmeans';
-import { FeedbackType } from '@/core/domain/kodyFineTuning/enums/feedbackType.enum';
-import { IClusterizedSuggestion } from '@/core/domain/kodyFineTuning/interfaces/kodyFineTuning.interface';
-import { FineTuningType } from '@/core/domain/kodyFineTuning/enums/fineTuningType.enum';
-import { FineTuningDecision } from '@/core/domain/kodyFineTuning/enums/fineTuningDecision.enum';
+import { FeedbackType } from '@libs/code-review/ee/fine-tuning/domain/enums/feedbackType.enum';
+import { IClusterizedSuggestion } from '@libs/code-review/ee/fine-tuning/domain/interfaces/kodyFineTuning.interface';
+import { FineTuningType } from '@libs/code-review/ee/fine-tuning/domain/enums/fineTuningType.enum';
+import { FineTuningDecision } from '@libs/code-review/ee/fine-tuning/domain/enums/fineTuningDecision.enum';
 import {
     ISuggestionEmbeddedService,
     SUGGESTION_EMBEDDED_SERVICE_TOKEN,
-} from '@/core/domain/kodyFineTuning/suggestionEmbedded/contracts/suggestionEmbedded.service.contract';
-import { IGlobalParametersService } from '@/core/domain/global-parameters/contracts/global-parameters.service.contract';
-import { GLOBAL_PARAMETERS_SERVICE_TOKEN } from '@/core/domain/global-parameters/contracts/global-parameters.service.contract';
-import { GlobalParametersKey } from '@/shared/domain/enums/global-parameters-key.enum';
-import { ISuggestionEmbedded } from '@/core/domain/kodyFineTuning/suggestionEmbedded/interfaces/suggestionEmbedded.interface';
-import { LabelType } from '@/shared/utils/codeManagement/labels';
+} from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/contracts/suggestionEmbedded.service.contract';
+import { IGlobalParametersService } from '@libs/organization/domain/global-parameters/contracts/global-parameters.service.contract';
+import { GLOBAL_PARAMETERS_SERVICE_TOKEN } from '@libs/organization/domain/global-parameters/contracts/global-parameters.service.contract';
+import { GlobalParametersKey } from '@shared/domain/enums/global-parameters-key.enum';
+import { ISuggestionEmbedded } from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/interfaces/suggestionEmbedded.interface';
+import { LabelType } from '@shared/utils/codeManagement/labels';
 
 @Injectable()
 export class KodyFineTuningService {

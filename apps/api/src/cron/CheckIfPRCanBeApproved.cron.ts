@@ -17,7 +17,7 @@ import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
 } from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
-import { CodeManagementService } from '../platformIntegration/codeManagement.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 

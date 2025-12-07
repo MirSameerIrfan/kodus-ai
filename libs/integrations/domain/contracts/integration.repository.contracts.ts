@@ -1,4 +1,4 @@
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
 import { IntegrationEntity } from '../entities/integration.entity';
 import { IIntegration } from '../interfaces/integration.interface';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';

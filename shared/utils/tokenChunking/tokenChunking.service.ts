@@ -1,6 +1,6 @@
 import { createLogger } from "@kodus/flow";
 import { Injectable } from '@nestjs/common';
-import { estimateTokenCount } from '@/shared/utils/langchainCommon/document';
+import { estimateTokenCount } from '@shared/utils/langchainCommon/document';
 import { encoding_for_model, TiktokenModel } from 'tiktoken';
 import { LLMModelProvider, MODEL_STRATEGIES } from '@kodus/kodus-common/llm';
 

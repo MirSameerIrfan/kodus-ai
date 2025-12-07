@@ -8,7 +8,7 @@ import {
     ValidateNested,
     IsNumber,
 } from 'class-validator';
-import { IRepositoryToIssues } from '../../adapters/services/kodyIssuesManagement/domain/kodyIssuesManagement.interface';
+import { IRepositoryToIssues } from '@libs/issues/infrastructure/domain/kodyIssuesManagement.interface';
 import { Type } from 'class-transformer';
 
 class GitUserDto {

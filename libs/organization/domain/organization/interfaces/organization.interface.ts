@@ -1,5 +1,5 @@
 import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { ITeam } from '../../team/interfaces/team.interface';
+import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';
 
 export interface IOrganization {
     uuid: string;

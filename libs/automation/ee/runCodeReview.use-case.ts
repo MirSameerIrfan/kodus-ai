@@ -3,39 +3,39 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import {
     AUTOMATION_SERVICE_TOKEN,
     IAutomationService,
-} from '@/core/domain/automation/contracts/automation.service';
+} from '@libs/automation/domain/contracts/automation.service';
 import {
     ITeamAutomationService,
     TEAM_AUTOMATION_SERVICE_TOKEN,
-} from '@/core/domain/automation/contracts/team-automation.service';
-import { AutomationType } from '@/core/domain/automation/enums/automation-type';
+} from '@libs/automation/domain/contracts/team-automation.service';
+import { AutomationType } from '@libs/automation/domain/enums/automation-type';
 import {
     GitHubReaction,
     GitlabReaction,
-} from '@/core/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
+} from '@libs/code-review/domain/feedback/enums/codeReviewCommentReaction.enum';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
+} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
-import { stripCurlyBracesFromUUIDs } from '@/core/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { AutoAssignLicenseUseCase } from '@/ee/license/use-cases/auto-assign-license.use-case';
+} from '@libs/organization/domain/org-parameters/contracts/organizationParameters.service.contract';
+import { stripCurlyBracesFromUUIDs } from '@libs/platform/domain/types/webhooks/webhooks-bitbucket.type';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
+import { AutoAssignLicenseUseCase } from '@libs/organization/ee/license/use-cases/auto-assign-license.use-case';
 import {
     PermissionValidationService,
     ValidationErrorType,
-} from '@/ee/shared/services/permissionValidation.service';
+} from '@shared/ee/services/permissionValidation.service';
 import {
     EXECUTE_AUTOMATION_SERVICE_TOKEN,
     IExecuteAutomationService,
-} from '@/shared/domain/contracts/execute.automation.service.contracts';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { getMappedPlatform } from '@/shared/utils/webhooks';
+} from '@shared/domain/contracts/execute.automation.service.contracts';
+import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
+import { OrganizationParametersKey } from '@shared/domain/enums/organization-parameters-key.enum';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { getMappedPlatform } from '@shared/utils/webhooks';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 

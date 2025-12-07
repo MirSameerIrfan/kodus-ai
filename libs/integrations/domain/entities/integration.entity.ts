@@ -1,9 +1,9 @@
-import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
+import { IntegrationCategory } from '@shared/domain/enums/integration-category.enum';
 import { IIntegration } from '../interfaces/integration.interface';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { IOrganization } from '../../organization/interfaces/organization.interface';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 import { IAuthIntegration } from '../../authIntegrations/interfaces/auth-integration.interface';
-import { IIntegrationConfig } from '@/core/domain/integrationConfigs/interfaces/integration-config.interface';
+import { IIntegrationConfig } from '@libs/integrations/domain/configs/interfaces/integration-config.interface';
 
 export class IntegrationEntity implements IIntegration {
     private _uuid: string;

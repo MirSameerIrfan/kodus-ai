@@ -1,4 +1,4 @@
-import { mongooseHideObjectId } from '@/shared/utils/mongo-utils';
+import { mongooseHideObjectId } from '@shared/utils/mongo-utils';
 import { Connection } from 'mongoose';
 import * as mongoosePaginate from 'mongoose-paginate';
 

@@ -3,9 +3,9 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
-import { ICockpitMetricsVisibility, DEFAULT_COCKPIT_METRICS_VISIBILITY } from '@/core/domain/organizationParameters/interfaces/cockpit-metrics-visibility.interface';
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
+} from '@libs/organization/domain/org-parameters/contracts/organizationParameters.service.contract';
+import { ICockpitMetricsVisibility, DEFAULT_COCKPIT_METRICS_VISIBILITY } from '@libs/organization/domain/org-parameters/interfaces/cockpit-metrics-visibility.interface';
+import { OrganizationParametersKey } from '@shared/domain/enums/organization-parameters-key.enum';
 import { Inject, Injectable } from '@nestjs/common';
 
 export const GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN = Symbol('GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN');

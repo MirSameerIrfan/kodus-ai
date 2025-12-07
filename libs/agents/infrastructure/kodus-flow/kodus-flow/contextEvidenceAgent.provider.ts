@@ -13,17 +13,17 @@ import { ConfigService } from '@nestjs/config';
 import { DatabaseConnection } from '@/config/types';
 import { LLMModelProvider, PromptRunnerService } from '@kodus/kodus-common/llm';
 import { SDKOrchestrator } from '@kodus/flow/dist/orchestration';
-import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
-import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
-import { MCPManagerService } from '@/core/infrastructure/adapters/mcp/services/mcp-manager.service';
+import { ObservabilityService } from '@shared/logging/observability.service';
+import { PermissionValidationService } from '@shared/ee/services/permissionValidation.service';
+import { MCPManagerService } from '@libs/agents/infrastructure/mcp/services/mcp-manager.service';
 import { BaseAgentProvider } from './base-agent.provider';
 import type {
     CodeReviewConfig,
     FileChange,
 } from '@/config/types/general/codeReview.type';
 import type { ContextEvidence } from '@context-os-core/interfaces';
-import { IKodyRule } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
-import { convertTiptapJSONToText } from '@/shared/utils/tiptap-json';
+import { IKodyRule } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
+import { convertTiptapJSONToText } from '@shared/utils/tiptap-json';
 
 export interface ContextEvidenceAgentResult {
     evidences?: ContextEvidence[];

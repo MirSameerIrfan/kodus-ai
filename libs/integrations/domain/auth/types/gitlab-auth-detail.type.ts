@@ -1,4 +1,4 @@
-import { AuthMode } from '../../platformIntegrations/enums/codeManagement/authMode.enum';
+import { AuthMode } from '@libs/platform/domain/enums/codeManagement/authMode.enum';
 
 export type GitlabAuthDetail = {
     accessToken: string;

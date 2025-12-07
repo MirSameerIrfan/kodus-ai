@@ -1,13 +1,13 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { ISSUES_REPOSITORY_TOKEN } from '@/core/domain/issues/contracts/issues.repository';
-import { IIssuesRepository } from '@/core/domain/issues/contracts/issues.repository';
-import { IssuesEntity } from '@/core/domain/issues/entities/issues.entity';
-import { IIssue } from '@/core/domain/issues/interfaces/issues.interface';
-import { IIssuesService } from '@/core/domain/issues/contracts/issues.service.contract';
+import { ISSUES_REPOSITORY_TOKEN } from '@libs/issues/domain/contracts/issues.repository';
+import { IIssuesRepository } from '@libs/issues/domain/contracts/issues.repository';
+import { IssuesEntity } from '@libs/issues/domain/entities/issues.entity';
+import { IIssue } from '@libs/issues/domain/interfaces/issues.interface';
+import { IIssuesService } from '@libs/issues/domain/contracts/issues.service.contract';
 import { IssueStatus } from '@/config/types/general/issues.type';
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
-import { LabelType } from '@/shared/utils/codeManagement/labels';
-import { GetIssuesByFiltersDto } from '@/core/infrastructure/http/dtos/get-issues-by-filters.dto';
+import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
+import { LabelType } from '@shared/utils/codeManagement/labels';
+import { GetIssuesByFiltersDto } from '@shared/dtos/get-issues-by-filters.dto';
 
 @Injectable()
 export class IssuesService implements IIssuesService {

@@ -10,26 +10,26 @@ import { TreeItem } from '@/config/types/general/tree.type';
 import {
     AUTH_INTEGRATION_SERVICE_TOKEN,
     IAuthIntegrationService,
-} from '@/core/domain/authIntegrations/contracts/auth-integration.service.contracts';
-import { BitbucketAuthDetail } from '@/core/domain/authIntegrations/types/bitbucket-auth-detail.type';
-import { IBitbucketService } from '@/core/domain/bitbucket/contracts/bitbucket.service.contract';
+} from '@libs/integrations/domain/auth/contracts/auth-integration.service.contracts';
+import { BitbucketAuthDetail } from '@libs/integrations/domain/auth/types/bitbucket-auth-detail.type';
+import { IBitbucketService } from '@libs/platform/domain/bitbucket/contracts/bitbucket.service.contract';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { IntegrationConfigEntity } from '@/core/domain/integrationConfigs/entities/integration-config.entity';
+} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
+import { IntegrationConfigEntity } from '@libs/integrations/domain/configs/entities/integration-config.entity';
 import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
-} from '@/core/domain/integrations/contracts/integration.service.contracts';
-import { IntegrationEntity } from '@/core/domain/integrations/entities/integration.entity';
+} from '@libs/integrations/domain/contracts/integration.service.contracts';
+import { IntegrationEntity } from '@libs/integrations/domain/entities/integration.entity';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { AuthMode } from '@/core/domain/platformIntegrations/enums/codeManagement/authMode.enum';
-import { ICodeManagementService } from '@/core/domain/platformIntegrations/interfaces/code-management.interface';
-import { GitCloneParams } from '@/core/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { AuthMode } from '@libs/platform/domain/enums/codeManagement/authMode.enum';
+import { ICodeManagementService } from '@libs/platform/domain/interfaces/code-management.interface';
+import { GitCloneParams } from '@libs/platform/domain/types/codeManagement/gitCloneParams.type';
 import {
     OneSentenceSummaryItem,
     PullRequest,
@@ -41,27 +41,27 @@ import {
     PullRequestsWithChangesRequested,
     PullRequestWithFiles,
     ReactionsInComments,
-} from '@/core/domain/platformIntegrations/types/codeManagement/pullRequests.type';
-import { Repositories } from '@/core/domain/platformIntegrations/types/codeManagement/repositories.type';
-import { RepositoryFile } from '@/core/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
-import { AuthorContribution } from '@/core/domain/pullRequests/interfaces/authorContributor.interface';
-import { IRepository } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
-import { CreateAuthIntegrationStatus } from '@/shared/domain/enums/create-auth-integration-status.enum';
-import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
-import { CacheService } from '@/shared/utils/cache/cache.service';
-import { hasKodyMarker } from '@/shared/utils/codeManagement/codeCommentMarkers';
-import { decrypt, encrypt } from '@/shared/utils/crypto';
-import { IntegrationServiceDecorator } from '@/shared/utils/decorators/integration-service.decorator';
-import { CodeManagementConnectionStatus } from '@/shared/utils/decorators/validate-code-management-integration.decorator';
+} from '@libs/platform/domain/types/codeManagement/pullRequests.type';
+import { Repositories } from '@libs/platform/domain/types/codeManagement/repositories.type';
+import { RepositoryFile } from '@libs/platform/domain/types/codeManagement/repositoryFile.type';
+import { AuthorContribution } from '@libs/code-review/domain/pull-requests/interfaces/authorContributor.interface';
+import { IRepository } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { CreateAuthIntegrationStatus } from '@shared/domain/enums/create-auth-integration-status.enum';
+import { IntegrationCategory } from '@shared/domain/enums/integration-category.enum';
+import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
+import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { PullRequestState } from '@shared/domain/enums/pullRequestState.enum';
+import { CacheService } from '@shared/utils/cache/cache.service';
+import { hasKodyMarker } from '@shared/utils/codeManagement/codeCommentMarkers';
+import { decrypt, encrypt } from '@shared/utils/crypto';
+import { IntegrationServiceDecorator } from '@shared/utils/decorators/integration-service.decorator';
+import { CodeManagementConnectionStatus } from '@shared/utils/decorators/validate-code-management-integration.decorator';
 import {
     isFileMatchingGlob,
     isFileMatchingGlobCaseInsensitive,
-} from '@/shared/utils/glob-utils';
-import { safelyParseMessageContent } from '@/shared/utils/safelyParseMessageContent';
+} from '@shared/utils/glob-utils';
+import { safelyParseMessageContent } from '@shared/utils/safelyParseMessageContent';
 import {
     LLMModelProvider,
     LLMProviderService,

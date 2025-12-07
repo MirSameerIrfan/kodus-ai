@@ -1,5 +1,5 @@
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { GitHubReaction } from '@/core/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { GitHubReaction } from '@libs/code-review/domain/feedback/enums/codeReviewCommentReaction.enum';
 
 const ACKNOWLEDGMENT_MESSAGES = {
     DEFAULT: 'Analyzing your request...',

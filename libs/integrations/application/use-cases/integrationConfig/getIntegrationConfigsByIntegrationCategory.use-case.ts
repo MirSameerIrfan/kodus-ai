@@ -2,15 +2,15 @@ import { createLogger } from "@kodus/flow";
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { IntegrationConfigEntity } from '@/core/domain/integrationConfigs/entities/integration-config.entity';
+} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
+import { IntegrationConfigEntity } from '@libs/integrations/domain/configs/entities/integration-config.entity';
 import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
-} from '@/core/domain/integrations/contracts/integration.service.contracts';
-import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
-import { IntegrationConfigKeyProjectManagement } from '@/shared/domain/enums/Integration-config-key.enum';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+} from '@libs/integrations/domain/contracts/integration.service.contracts';
+import { IntegrationCategory } from '@shared/domain/enums/integration-category.enum';
+import { IntegrationConfigKeyProjectManagement } from '@shared/domain/enums/Integration-config-key.enum';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { Inject } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';

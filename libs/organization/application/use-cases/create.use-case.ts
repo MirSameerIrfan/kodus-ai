@@ -1,11 +1,11 @@
 import { createLogger } from "@kodus/flow";
 import { Inject } from '@nestjs/common';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
-import { IMembers } from '@/core/domain/teamMembers/interfaces/team-members.interface';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { IMembers } from '@libs/organization/domain/team-members/interfaces/team-members.interface';
 import {
     ITeamMemberService,
     TEAM_MEMBERS_SERVICE_TOKEN,
-} from '@/core/domain/teamMembers/contracts/teamMembers.service.contracts';
+} from '@libs/organization/domain/team-members/contracts/teamMembers.service.contracts';
 import { Request } from 'express';
 import { REQUEST } from '@nestjs/core';
 

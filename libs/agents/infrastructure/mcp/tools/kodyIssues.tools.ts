@@ -1,4 +1,4 @@
-import { createLogger } from '@kodus/flow';
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { z } from 'zod';
 import { wrapToolHandler } from '../utils/mcp-protocol.utils';
@@ -11,6 +11,7 @@ import { LabelType } from '@/shared/utils/codeManagement/labels';
 import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
 import { IssueStatus } from '@/config/types/general/issues.type';
 import { IIssue } from '@/core/domain/issues/interfaces/issues.interface';
+import { PullRequestsService } from '../../services/pullRequests/pullRequests.service';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
@@ -25,50 +26,48 @@ export class KodyIssuesTools {
         @Inject(ISSUES_SERVICE_TOKEN)
         private readonly issuesService: IIssuesService,
         @Inject(PULL_REQUESTS_SERVICE_TOKEN)
-        private readonly pullRequestsService: IPullRequestsService,
+        private readonly pullRequestsService: IPullRequestsService
     ) {}
 
     createKodyIssue(): McpToolDefinition {
         const name = 'KODUS_CREATE_KODY_ISSUE';
         const inputSchema = z.strictObject({
-            organizationId: z.string().describe('Organization ID'),
-            title: z.string(),
-            description: z.string(),
-            filePath: z.string(),
-            language: z.string(),
-            label: z.enum(LabelType),
-            severity: z.enum(SeverityLevel),
-            repository: z.strictObject({
-                id: z.string(),
-                platformType: z.enum(PlatformType),
-            }),
-            owner: z
-                .strictObject({
-                    gitId: z
-                        .number()
-                        .describe('userId of user from git provider'),
-                    username: z
-                        .string()
-                        .describe('username of user from git provider'),
-                })
-                .optional()
-                .describe('Details of pull request author'),
-            reporter: z
-                .strictObject({
-                    gitId: z.number(),
-                    username: z.string(),
-                })
-                .optional()
-                .describe('Details of user who is creating this issue'),
-            originalKodyCommentId: z
-                .number()
-                .describe(
-                    'commentId of original Kody comment though which the discussion got started ',
-                ),
-            pullRequestNumber: z
-                .number()
-                .describe('Pull request number to make issue for'),
-        });
+                        organizationId: z.string().describe('Organization ID'),
+                        title: z.string(),
+                        description: z.string(),
+                        filePath: z.string(),
+                        language: z.string(),
+                        label: z.enum(LabelType),
+                        severity: z.enum(SeverityLevel),
+                        repository: z.strictObject({
+                            id: z.string(),
+                            platformType: z.enum(PlatformType),
+                        }),
+                        owner: z.strictObject({
+                                gitId: z
+                                    .number()
+                                    .describe('userId of user from git provider'),
+                                username: z
+                                    .string()
+                                    .describe('username of user from git provider'),
+                            })
+                            .optional()
+                            .describe('Details of pull request author'),
+                        reporter: z.strictObject({
+                                gitId: z.number(),
+                                username: z.string(),
+                            })
+                            .optional()
+                            .describe('Details of user who is creating this issue'),
+                        originalKodyCommentId: z
+                            .number()
+                            .describe(
+                                'commentId of original Kody comment though which the discussion got started ',
+                            ),
+                        pullRequestNumber: z
+                            .number()
+                            .describe('Pull request number to make issue for'),
+                    });
         type InputType = z.infer<typeof inputSchema>;
 
         return {

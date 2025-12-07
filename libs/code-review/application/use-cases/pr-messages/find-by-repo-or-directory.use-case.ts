@@ -8,11 +8,11 @@ import { ConfigLevel } from '@/config/types/general/pullRequestMessages.type';
 import {
     IPullRequestMessagesService,
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
-} from '@/core/domain/pullRequestMessages/contracts/pullRequestMessages.service.contract';
-import { PullRequestMessagesEntity } from '@/core/domain/pullRequestMessages/entities/pullRequestMessages.entity';
-import { IPullRequestMessages } from '@/core/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
-import { deepDifference, deepMerge } from '@/shared/utils/deep';
-import { getDefaultKodusConfigFile } from '@/shared/utils/validateCodeReviewConfigFile';
+} from '@libs/code-review/domain/pr-messages/contracts/pullRequestMessages.service.contract';
+import { PullRequestMessagesEntity } from '@libs/code-review/domain/pr-messages/entities/pullRequestMessages.entity';
+import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
+import { deepDifference, deepMerge } from '@shared/utils/deep';
+import { getDefaultKodusConfigFile } from '@shared/utils/validateCodeReviewConfigFile';
 import { Inject, Injectable } from '@nestjs/common';
 import { DeepPartial } from 'typeorm';
 

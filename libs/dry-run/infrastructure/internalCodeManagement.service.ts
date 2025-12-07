@@ -1,19 +1,19 @@
 import { createLogger } from "@kodus/flow";
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { IntegrationServiceDecorator } from '@/shared/utils/decorators/integration-service.decorator';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { IntegrationServiceDecorator } from '@shared/utils/decorators/integration-service.decorator';
 import { Inject, Injectable } from '@nestjs/common';
-import { ICodeManagementService } from '@/core/domain/platformIntegrations/interfaces/code-management.interface';
+import { ICodeManagementService } from '@libs/platform/domain/interfaces/code-management.interface';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     DRY_RUN_SERVICE_TOKEN,
     IDryRunService,
-} from '@/core/domain/dryRun/contracts/dryRun.service.contract';
-import { CodeReviewPipelineContext } from '../codeBase/codeReviewPipeline/context/code-review-pipeline.context';
+} from '@libs/dry-run/domain/contracts/dryRun.service.contract';
+import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/context/code-review-pipeline.context';
 import {
     CodeSuggestion,
     Comment,
 } from '@/config/types/general/codeReview.type';
-import { ISuggestionByPR } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
+import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 
 type PartialICodeManagementService = Pick<
     ICodeManagementService,

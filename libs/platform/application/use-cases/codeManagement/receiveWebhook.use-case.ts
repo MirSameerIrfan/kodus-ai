@@ -1,12 +1,12 @@
 import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
 
 import {
     IWebhookEventHandler,
     IWebhookEventParams,
-} from '@/core/domain/platformIntegrations/interfaces/webhook-event-handler.interface';
+} from '@libs/platform/domain/interfaces/webhook-event-handler.interface';
 
 @Injectable()
 export class ReceiveWebhookUseCase implements IUseCase {

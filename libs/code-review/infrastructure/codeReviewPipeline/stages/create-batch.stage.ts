@@ -2,7 +2,7 @@ import { createLogger } from "@kodus/flow";
 import { Injectable } from '@nestjs/common';
 import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
 import { FileChange } from '@/config/types/general/codeReview.type';
-import { createOptimizedBatches } from '@/shared/utils/batch.helper';
+import { createOptimizedBatches } from '@shared/utils/batch.helper';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 
 @Injectable()

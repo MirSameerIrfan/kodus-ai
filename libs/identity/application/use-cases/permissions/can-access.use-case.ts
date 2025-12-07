@@ -2,10 +2,10 @@ import { createLogger } from "@kodus/flow";
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { PermissionsAbilityFactory } from '@/core/infrastructure/adapters/services/permissions/permissionsAbility.factory';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
+import { PermissionsAbilityFactory } from '@libs/identity/infrastructure/permissions/permissionsAbility.factory';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()

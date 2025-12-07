@@ -2,11 +2,11 @@ import { CodeSuggestion } from '@/config/types/general/codeReview.type';
 import { SuggestionEmbeddedEntity } from '../entities/suggestionEmbedded.entity';
 import { ISuggestionEmbeddedRepository } from './suggestionEmbedded.repository.contract';
 
-import { ISuggestionToEmbed } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
+import { ISuggestionToEmbed } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import {
     SuggestionEmbeddedFeedbacks,
     SuggestionEmbeddedFeedbacksWithLanguage,
-} from '@/core/infrastructure/adapters/services/kodyFineTuning/suggestionEmbedded/suggestionEmbedded.service';
+} from '@libs/code-review/ee/fine-tuning/infrastructure/suggestionEmbedded/suggestionEmbedded.service';
 
 export const SUGGESTION_EMBEDDED_SERVICE_TOKEN = Symbol(
     'SuggestionEmbeddedService',

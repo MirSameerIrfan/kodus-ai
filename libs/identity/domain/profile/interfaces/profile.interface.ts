@@ -1,4 +1,4 @@
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 
 export interface IProfile {
     uuid: string;

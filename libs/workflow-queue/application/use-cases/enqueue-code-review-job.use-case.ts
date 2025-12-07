@@ -1,14 +1,14 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { PinoLoggerService } from '@shared/logging/pino.service';
 import {
     IJobQueueService,
     JOB_QUEUE_SERVICE_TOKEN,
-} from '@/core/domain/workflowQueue/contracts/job-queue.service.contract';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { JobStatus } from '@/core/domain/workflowQueue/enums/job-status.enum';
-import { WorkflowType } from '@/core/domain/workflowQueue/enums/workflow-type.enum';
-import { HandlerType } from '@/core/domain/workflowQueue/enums/handler-type.enum';
+} from '@libs/workflow-queue/domain/contracts/job-queue.service.contract';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { JobStatus } from '@libs/workflow-queue/domain/enums/job-status.enum';
+import { WorkflowType } from '@libs/workflow-queue/domain/enums/workflow-type.enum';
+import { HandlerType } from '@libs/workflow-queue/domain/enums/handler-type.enum';
 import { v4 as uuid } from 'uuid';
 
 export interface EnqueueCodeReviewJobInput {

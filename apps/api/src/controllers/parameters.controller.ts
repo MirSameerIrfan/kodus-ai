@@ -27,11 +27,11 @@ import { CodeReviewVersion } from '@/config/types/general/codeReview.type';
 import {
     CheckPolicies,
     PolicyGuard,
-} from '../../adapters/services/permissions/policy.guard';
+} from '@libs/identity/infrastructure/permissions/policy.guard';
 import {
     checkPermissions,
     checkRepoPermissions,
-} from '../../adapters/services/permissions/policy.handlers';
+} from '@libs/identity/infrastructure/permissions/policy.handlers';
 import {
     Action,
     ResourceType,

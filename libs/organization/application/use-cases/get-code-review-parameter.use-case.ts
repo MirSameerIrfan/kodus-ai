@@ -10,27 +10,27 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import {
     CODE_BASE_CONFIG_SERVICE_TOKEN,
     ICodeBaseConfigService,
-} from '@/core/domain/codeBase/contracts/CodeBaseConfigService.contract';
+} from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
 import {
     PARAMETERS_SERVICE_TOKEN,
     IParametersService,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { IParameters } from '@/core/domain/parameters/interfaces/parameters.interface';
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { IParameters } from '@libs/organization/domain/parameters/interfaces/parameters.interface';
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { getDefaultKodusConfigFile } from '@/shared/utils/validateCodeReviewConfigFile';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
+import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
+import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
+import { getDefaultKodusConfigFile } from '@shared/utils/validateCodeReviewConfigFile';
 import { Inject, Injectable } from '@nestjs/common';
 import { DeepPartial } from 'typeorm';
 import {
     IPromptExternalReferenceManagerService,
     PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
-} from '@/core/domain/prompts/contracts/promptExternalReferenceManager.contract';
-import { PromptSourceType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
+} from '@libs/code-review/domain/prompts/contracts/promptExternalReferenceManager.contract';
+import { PromptSourceType } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
 
 @Injectable()
 export class GetCodeReviewParameterUseCase {

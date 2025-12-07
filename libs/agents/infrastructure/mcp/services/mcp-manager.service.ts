@@ -3,7 +3,7 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import { MCPServerConfig, createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
+import { PermissionValidationService } from '@shared/ee/services/permissionValidation.service';
 import { TransportType } from '@kodus/flow/dist/core/types/allTypes';
 
 type MCPConnection = {

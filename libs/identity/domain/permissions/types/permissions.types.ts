@@ -1,4 +1,4 @@
-import { IUser } from '../../user/interfaces/user.interface';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import { Action, ResourceType } from '../enums/permissions.enum';
 import { MongoAbility } from '@casl/ability';
 

@@ -2,20 +2,20 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import {
     CONTEXT_REFERENCE_SERVICE_TOKEN,
     IContextReferenceService,
-} from '@/core/domain/contextReferences/contracts/context-reference.service.contract';
+} from '@libs/code-review/domain/context/contracts/context-reference.service.contract';
 import {
     IPromptContextEngineService,
     PROMPT_CONTEXT_ENGINE_SERVICE_TOKEN,
-} from '@/core/domain/prompts/contracts/promptContextEngine.contract';
-import type { IPromptReferenceSyncError } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
+} from '@libs/code-review/domain/prompts/contracts/promptContextEngine.contract';
+import type { IPromptReferenceSyncError } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
 import {
     PromptReferenceErrorType,
     PromptSourceType,
-} from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
+} from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
 import {
     MCPToolMetadata,
     MCPToolMetadataService,
-} from '@/core/infrastructure/adapters/mcp/services/mcp-tool-metadata.service';
+} from '@libs/agents/infrastructure/mcp/services/mcp-tool-metadata.service';
 import type {
     ContextConsumerKind,
     ContextDependency,

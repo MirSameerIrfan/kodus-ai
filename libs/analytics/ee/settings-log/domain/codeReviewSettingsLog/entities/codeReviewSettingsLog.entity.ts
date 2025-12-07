@@ -1,4 +1,4 @@
-import { Entity } from '@/shared/domain/interfaces/entity';
+import { Entity } from '@shared/domain/interfaces/entity';
 import { ICodeReviewSettingsLog } from '../interfaces/codeReviewSettingsLog.interface';
 import {
     ActionType,

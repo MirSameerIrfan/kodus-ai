@@ -1,7 +1,7 @@
 import { createLogger } from "@kodus/flow";
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { KodyRulesSyncService } from '@/core/infrastructure/adapters/services/kodyRules/kodyRulesSync.service';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
+import { KodyRulesSyncService } from '@libs/kody-rules/infrastructure/kodyRulesSync.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 

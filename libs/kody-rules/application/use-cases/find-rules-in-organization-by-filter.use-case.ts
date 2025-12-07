@@ -3,19 +3,19 @@ import { UserRequest } from '@/config/types/http/user-request.type';
 import {
     KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,
-} from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
-import { IKodyRule } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+} from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
+import { IKodyRule } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import {
     CONTEXT_REFERENCE_SERVICE_TOKEN,
     IContextReferenceService,
-} from '@/core/domain/contextReferences/contracts/context-reference.service.contract';
+} from '@libs/code-review/domain/context/contracts/context-reference.service.contract';
 import { enrichRulesWithContextReferences } from './utils/enrich-rules-with-context-references.util';
 
 @Injectable()

@@ -11,27 +11,27 @@ import { v4 as uuidv4 } from 'uuid';
 import { JwtService } from '@nestjs/jwt';
 import { JWT, TokenResponse } from '@/config/types/jwt/jwt';
 import { ConfigService } from '@nestjs/config';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import {
     AUTH_REPOSITORY_TOKEN,
     IAuthRepository,
-} from '@/core/domain/auth/contracts/auth.repository.contracts';
-import { IAuthService } from '@/core/domain/auth/contracts/auth.service.contracts';
+} from '@libs/identity/domain/auth/contracts/auth.repository.contracts';
+import { IAuthService } from '@libs/identity/domain/auth/contracts/auth.service.contracts';
 import {
     IUserRepository,
     USER_REPOSITORY_TOKEN,
-} from '@/core/domain/user/contracts/user.repository.contract';
-import { UserEntity } from '@/core/domain/user/entities/user.entity';
-import { IAuth } from '@/core/domain/auth/interfaces/auth.interface';
-import { mapSimpleEntityToModel } from '@/shared/infrastructure/repositories/mappers';
+} from '@libs/identity/domain/user/contracts/user.repository.contract';
+import { UserEntity } from '@libs/identity/domain/user/entities/user.entity';
+import { IAuth } from '@libs/identity/domain/auth/interfaces/auth.interface';
+import { mapSimpleEntityToModel } from '@shared/infrastructure/repositories/mappers';
 import { UserModel } from '../../repositories/typeorm/schema/user.model';
-import { getExpiryDate } from '@/shared/utils/transforms/date';
+import { getExpiryDate } from '@shared/utils/transforms/date';
 import {
     ITeamMemberService,
     TEAM_MEMBERS_SERVICE_TOKEN,
-} from '@/core/domain/teamMembers/contracts/teamMembers.service.contracts';
-import { TeamMemberEntity } from '@/core/domain/teamMembers/entities/teamMember.entity';
-import { AuthProvider } from '@/shared/domain/enums/auth-provider.enum';
+} from '@libs/organization/domain/team-members/contracts/teamMembers.service.contracts';
+import { TeamMemberEntity } from '@libs/organization/domain/team-members/entities/teamMember.entity';
+import { AuthProvider } from '@shared/domain/enums/auth-provider.enum';
 import axios, { AxiosResponse } from 'axios';
 
 @Injectable()

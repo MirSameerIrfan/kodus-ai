@@ -1,4 +1,4 @@
-import { ITeam } from '../../team/interfaces/team.interface';
+import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';
 import { IAutomation } from './automation.interface';
 
 export interface ITeamAutomation {

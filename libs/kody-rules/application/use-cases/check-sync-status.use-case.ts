@@ -1,37 +1,37 @@
 import { createLogger } from "@kodus/flow";
-import { CommentAnalysisService } from '@/core/infrastructure/adapters/services/codeBase/commentAnalysis.service';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { GenerateKodyRulesDTO } from '@/core/infrastructure/http/dtos/generate-kody-rules.dto';
+import { CommentAnalysisService } from '@libs/code-review/infrastructure/commentAnalysis.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
+import { GenerateKodyRulesDTO } from '@shared/dtos/generate-kody-rules.dto';
 import { Inject, Injectable } from '@nestjs/common';
 
 import { CreateOrUpdateKodyRulesUseCase } from './create-or-update.use-case';
 import {
     CreateKodyRuleDto,
     KodyRuleSeverity,
-} from '@/core/infrastructure/http/dtos/create-kody-rule.dto';
+} from '@shared/dtos/create-kody-rule.dto';
 import {
     IKodyRule,
     KodyRulesStatus,
-} from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+} from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from './find-rules-in-organization-by-filter.use-case';
-import { generateDateFilter } from '@/shared/utils/transforms/date';
+import { generateDateFilter } from '@shared/utils/transforms/date';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
+} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
 import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
-} from '@/core/domain/integrations/contracts/integration.service.contracts';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { Repositories } from '@/core/domain/platformIntegrations/types/codeManagement/repositories.type';
+} from '@libs/integrations/domain/contracts/integration.service.contracts';
+import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
+import { Repositories } from '@libs/platform/domain/types/codeManagement/repositories.type';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { KodyLearningStatus } from '@/core/domain/parameters/types/configValue.type';
-import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
+import { KodyLearningStatus } from '@libs/organization/domain/parameters/types/configValue.type';
+import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { SendRulesNotificationUseCase } from './send-rules-notification.use-case';
 import { REQUEST } from '@nestjs/core';

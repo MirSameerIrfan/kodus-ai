@@ -1,4 +1,4 @@
-import { createLogger } from '@kodus/flow';
+import { createLogger } from "@kodus/flow";
 import { Inject, Injectable } from '@nestjs/common';
 import { z } from 'zod';
 import { wrapToolHandler } from '../utils/mcp-protocol.utils';
@@ -10,6 +10,8 @@ import {
 import {
     IKodyRule,
     IKodyRulesExample,
+    IKodyRulesInheritance,
+    IKodyRuleExternalReference,
     KodyRulesOrigin,
     KodyRulesScope,
     KodyRulesStatus,
@@ -57,7 +59,7 @@ export class KodyRulesTools {
     private readonly logger = createLogger(KodyRulesTools.name);
     constructor(
         @Inject(KODY_RULES_SERVICE_TOKEN)
-        private readonly kodyRulesService: IKodyRulesService,
+        private readonly kodyRulesService: IKodyRulesService
     ) {}
 
     getKodyRules(): McpToolDefinition {
@@ -81,30 +83,30 @@ export class KodyRulesTools {
                 count: z.number(),
                 data: z.array(
                     z.looseObject({
-                        uuid: z.string().optional(),
-                        title: z.string().optional(),
-                        rule: z.string().optional(),
-                        path: z.string().optional(),
-                        status: z.enum(KodyRulesStatus).optional(),
-                        severity: z.string().optional(),
-                        label: z.string().optional(),
-                        type: z.string().optional(),
-                        examples: z
-                            .array(
-                                z.looseObject({
-                                    snippet: z.string(),
-                                    isCorrect: z.boolean(),
-                                }),
-                            )
-                            .optional(),
-                        repositoryId: z.string().optional(),
-                        origin: z.enum(KodyRulesOrigin).optional(),
-                        createdAt: z.date().optional(),
-                        updatedAt: z.date().optional(),
-                        reason: z.string().nullable().optional(),
-                        scope: z.enum(KodyRulesScope).optional(),
-                        directoryId: z.string().nullable().optional(),
-                    }),
+                                                uuid: z.string().optional(),
+                                                title: z.string().optional(),
+                                                rule: z.string().optional(),
+                                                path: z.string().optional(),
+                                                status: z.enum(KodyRulesStatus).optional(),
+                                                severity: z.string().optional(),
+                                                label: z.string().optional(),
+                                                type: z.string().optional(),
+                                                examples: z
+                                                    .array(
+                                                        z.looseObject({
+                                                            snippet: z.string(),
+                                                            isCorrect: z.boolean(),
+                                                        }),
+                                                    )
+                                                    .optional(),
+                                                repositoryId: z.string().optional(),
+                                                origin: z.enum(KodyRulesOrigin).optional(),
+                                                createdAt: z.date().optional(),
+                                                updatedAt: z.date().optional(),
+                                                reason: z.string().nullable().optional(),
+                                                scope: z.enum(KodyRulesScope).optional(),
+                                                directoryId: z.string().nullable().optional(),
+                                            }),
                 ),
             }),
             execute: wrapToolHandler(
@@ -163,30 +165,30 @@ export class KodyRulesTools {
                 count: z.number(),
                 data: z.array(
                     z.looseObject({
-                        uuid: z.string().optional(),
-                        title: z.string().optional(),
-                        rule: z.string().optional(),
-                        path: z.string().optional(),
-                        status: z.enum(KodyRulesStatus).optional(),
-                        severity: z.string().optional(),
-                        label: z.string().optional(),
-                        type: z.string().optional(),
-                        examples: z
-                            .array(
-                                z.looseObject({
-                                    snippet: z.string(),
-                                    isCorrect: z.boolean(),
-                                }),
-                            )
-                            .optional(),
-                        repositoryId: z.string().optional(),
-                        origin: z.enum(KodyRulesOrigin).optional(),
-                        createdAt: z.date().optional(),
-                        updatedAt: z.date().optional(),
-                        reason: z.string().nullable().optional(),
-                        scope: z.enum(KodyRulesScope).optional(),
-                        directoryId: z.string().nullable().optional(),
-                    }),
+                                                uuid: z.string().optional(),
+                                                title: z.string().optional(),
+                                                rule: z.string().optional(),
+                                                path: z.string().optional(),
+                                                status: z.enum(KodyRulesStatus).optional(),
+                                                severity: z.string().optional(),
+                                                label: z.string().optional(),
+                                                type: z.string().optional(),
+                                                examples: z
+                                                    .array(
+                                                        z.looseObject({
+                                                            snippet: z.string(),
+                                                            isCorrect: z.boolean(),
+                                                        }),
+                                                    )
+                                                    .optional(),
+                                                repositoryId: z.string().optional(),
+                                                origin: z.enum(KodyRulesOrigin).optional(),
+                                                createdAt: z.date().optional(),
+                                                updatedAt: z.date().optional(),
+                                                reason: z.string().nullable().optional(),
+                                                scope: z.enum(KodyRulesScope).optional(),
+                                                directoryId: z.string().nullable().optional(),
+                                            }),
                 ),
             }),
             execute: wrapToolHandler(
@@ -332,10 +334,10 @@ export class KodyRulesTools {
                 success: z.boolean(),
                 count: z.number(),
                 data: z.looseObject({
-                    uuid: z.string(),
-                    title: z.string(),
-                    rule: z.string(),
-                }),
+                                        uuid: z.string(),
+                                        title: z.string(),
+                                        rule: z.string(),
+                                    }),
             }),
             execute: wrapToolHandler(
                 async (args: InputType): Promise<CreateKodyRuleResponse> => {
@@ -499,11 +501,11 @@ export class KodyRulesTools {
                 success: z.boolean(),
                 count: z.number(),
                 data: z.looseObject({
-                    uuid: z.string(),
-                    title: z.string(),
-                    rule: z.string(),
-                    status: z.enum(KodyRulesStatus),
-                }),
+                                        uuid: z.string(),
+                                        title: z.string(),
+                                        rule: z.string(),
+                                        status: z.enum(KodyRulesStatus),
+                                    }),
             }),
             execute: wrapToolHandler(
                 async (args: InputType): Promise<CreateKodyRuleResponse> => {

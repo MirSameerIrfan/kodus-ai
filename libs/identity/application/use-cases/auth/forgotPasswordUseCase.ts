@@ -2,8 +2,8 @@ import { createLogger } from "@kodus/flow";
 import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
-} from '@/core/domain/auth/contracts/auth.service.contracts';
-import { sendForgotPasswordEmail } from '@/shared/utils/email/sendMail';
+} from '@libs/identity/domain/auth/contracts/auth.service.contracts';
+import { sendForgotPasswordEmail } from '@shared/utils/email/sendMail';
 import {
     Inject,
     Injectable,

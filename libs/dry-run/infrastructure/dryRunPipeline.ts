@@ -1,7 +1,7 @@
 import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
-import { CodeReviewPipelineContext } from '../codeBase/codeReviewPipeline/context/code-review-pipeline.context';
-import { IPipeline } from '../pipeline/interfaces/pipeline.interface';
+import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/context/code-review-pipeline.context';
+import { IPipeline } from '@libs/code-review/infrastructure/pipeline/interfaces/pipeline.interface';
 import { PipelineExecutor } from '../pipeline/pipeline-executor.service';
 import { DryRunCodeReviewPipelineStrategy } from './dry-run-cr-pipeline.strategy';
 

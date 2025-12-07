@@ -5,7 +5,7 @@ import {
 import {
     SeverityLevel,
     severityLevelSchema,
-} from '@/shared/utils/enums/severityLevel.enum';
+} from '@shared/utils/enums/severityLevel.enum';
 import z from 'zod';
 
 export interface UncategorizedComment {

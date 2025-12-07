@@ -1,19 +1,19 @@
 import { createLogger } from '@kodus/flow';
-import { GenerateIssuesFromPrClosedUseCase } from '@/core/application/use-cases/issues/generate-issues-from-pr-closed.use-case';
-import { ChatWithKodyFromGitUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/chatWithKodyFromGit.use-case';
-import { SavePullRequestUseCase } from '@/core/application/use-cases/pullRequests/save.use-case';
+import { GenerateIssuesFromPrClosedUseCase } from '@libs/issues/application/use-cases/generate-issues-from-pr-closed.use-case';
+import { ChatWithKodyFromGitUseCase } from '@libs/platform/application/use-cases/codeManagement/chatWithKodyFromGit.use-case';
+import { SavePullRequestUseCase } from '@libs/code-review/application/use-cases/pull-requests/save.use-case';
 import {
     IWebhookEventHandler,
     IWebhookEventParams,
-} from '@/core/domain/platformIntegrations/interfaces/webhook-event-handler.interface';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { RunCodeReviewAutomationUseCase } from '@/ee/automation/runCodeReview.use-case';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { getMappedPlatform } from '@/shared/utils/webhooks';
+} from '@libs/platform/domain/interfaces/webhook-event-handler.interface';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
+import { RunCodeReviewAutomationUseCase } from '@libs/automation/ee/runCodeReview.use-case';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { getMappedPlatform } from '@shared/utils/webhooks';
 import { Injectable, Inject, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { KodyRulesSyncService } from '../../services/kodyRules/kodyRulesSync.service';
-import { EnqueueCodeReviewJobUseCase } from '@/core/application/use-cases/workflowQueue/enqueue-code-review-job.use-case';
+import { KodyRulesSyncService } from '@libs/kody-rules/infrastructure/services/kodyRulesSync.service';
+import { EnqueueCodeReviewJobUseCase } from '@libs/workflow-queue/application/use-cases/enqueue-code-review-job.use-case';
 
 /**
  * Handler for GitHub webhook events.

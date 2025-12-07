@@ -5,7 +5,7 @@ import {
     IsOptional,
     IsString,
 } from 'class-validator';
-import { AlignmentLevel } from '../../adapters/services/codeBase/types/commentAnalysis.type';
+import { AlignmentLevel } from '@libs/code-review/infrastructure/types/commentAnalysis.type';
 
 export class GenerateCodeReviewParameterDTO {
     @IsString()

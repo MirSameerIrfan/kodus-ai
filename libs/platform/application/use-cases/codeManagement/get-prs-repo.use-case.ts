@@ -3,17 +3,17 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import {
     INTEGRATION_CONFIG_SERVICE_TOKEN,
     IIntegrationConfigService,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { PullRequest } from '@/core/domain/platformIntegrations/types/codeManagement/pullRequests.type';
-import { Repositories } from '@/core/domain/platformIntegrations/types/codeManagement/repositories.type';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
+import { PullRequest } from '@libs/platform/domain/types/codeManagement/pullRequests.type';
+import { Repositories } from '@libs/platform/domain/types/codeManagement/repositories.type';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
+import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { ExecuteDryRunUseCase } from '../../dryRun/execute-dry-run.use-case';
-import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
+import { PullRequestState } from '@shared/domain/enums/pullRequestState.enum';
 
 @Injectable()
 export class GetPRsByRepoUseCase implements IUseCase {

@@ -3,17 +3,17 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { stripCurlyBracesFromUUIDs } from '@/core/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
+} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
+import { stripCurlyBracesFromUUIDs } from '@libs/platform/domain/types/webhooks/webhooks-bitbucket.type';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
-} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
-import { IPullRequests } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { getMappedPlatform } from '@/shared/utils/webhooks';
+} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
+import { IPullRequests } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
+import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { getMappedPlatform } from '@shared/utils/webhooks';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

@@ -1,4 +1,4 @@
-import { OrganizationAndTeamDataDto } from '@/core/infrastructure/http/dtos/organizationAndTeamData.dto';
+import { OrganizationAndTeamDataDto } from '@shared/dtos/organizationAndTeamData.dto';
 import { Type } from 'class-transformer';
 import { IsIn, IsOptional, IsString, ValidateNested } from 'class-validator';
 

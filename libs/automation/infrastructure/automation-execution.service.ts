@@ -2,18 +2,18 @@ import { createLogger } from "@kodus/flow";
 import {
     AUTOMATION_EXECUTION_REPOSITORY_TOKEN,
     IAutomationExecutionRepository,
-} from '@/core/domain/automation/contracts/automation-execution.repository';
-import { IAutomationExecutionService } from '@/core/domain/automation/contracts/automation-execution.service';
-import { AutomationExecutionEntity } from '@/core/domain/automation/entities/automation-execution.entity';
-import { IAutomationExecution } from '@/core/domain/automation/interfaces/automation-execution.interface';
+} from '@libs/automation/domain/contracts/automation-execution.repository';
+import { IAutomationExecutionService } from '@libs/automation/domain/contracts/automation-execution.service';
+import { AutomationExecutionEntity } from '@libs/automation/domain/entities/automation-execution.entity';
+import { IAutomationExecution } from '@libs/automation/domain/interfaces/automation-execution.interface';
 import {
     CODE_REVIEW_EXECUTION_SERVICE,
     ICodeReviewExecutionService,
-} from '@/core/domain/codeReviewExecutions/contracts/codeReviewExecution.service.contract';
+} from '@libs/code-review/domain/executions/contracts/codeReviewExecution.service.contract';
 import { Inject, Injectable } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { CacheService } from '@/shared/utils/cache/cache.service';
+import { CacheService } from '@shared/utils/cache/cache.service';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 
 @Injectable()

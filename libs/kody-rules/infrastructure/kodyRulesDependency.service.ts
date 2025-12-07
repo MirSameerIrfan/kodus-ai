@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { ContextReferenceService } from '@/core/infrastructure/adapters/services/context/context-reference.service';
-import { IKodyRule } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+import { ContextReferenceService } from '@libs/code-review/infrastructure/context/context-reference.service';
+import { IKodyRule } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import type { ContextDependency } from '@context-os-core/interfaces';
 
 @Injectable()

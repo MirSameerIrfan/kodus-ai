@@ -5,7 +5,7 @@ import { CodeReviewVersion } from '@/config/types/general/codeReview.type';
 import {
     CODE_BASE_CONFIG_SERVICE_TOKEN,
     ICodeBaseConfigService,
-} from '@/core/domain/codeBase/contracts/CodeBaseConfigService.contract';
+} from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
 import { ListCodeReviewAutomationLabelsUseCase } from './list-code-review-automation-labels-use-case';
 
 @Injectable()

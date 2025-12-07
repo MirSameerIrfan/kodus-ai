@@ -1,4 +1,4 @@
-import { Entity } from '@/shared/domain/interfaces/entity';
+import { Entity } from '@shared/domain/interfaces/entity';
 import { IKodyRule, IKodyRules, KodyRulesScope } from '../interfaces/kodyRules.interface';
 
 export class KodyRulesEntity implements Entity<IKodyRules> {

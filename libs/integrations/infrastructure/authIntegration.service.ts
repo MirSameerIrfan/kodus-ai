@@ -1,12 +1,12 @@
 import {
     AUTH_INTEGRATION_REPOSITORY_TOKEN,
     IAuthIntegrationRepository,
-} from '@/core/domain/authIntegrations/contracts/auth-integration.repository.contracts';
-import { IAuthIntegrationService } from '@/core/domain/authIntegrations/contracts/auth-integration.service.contracts';
-import { AuthIntegrationEntity } from '@/core/domain/authIntegrations/entities/auth-integration.entity';
-import { IAuthIntegration } from '@/core/domain/authIntegrations/interfaces/auth-integration.interface';
+} from '@libs/integrations/domain/auth/contracts/auth-integration.repository.contracts';
+import { IAuthIntegrationService } from '@libs/integrations/domain/auth/contracts/auth-integration.service.contracts';
+import { AuthIntegrationEntity } from '@libs/integrations/domain/auth/entities/auth-integration.entity';
+import { IAuthIntegration } from '@libs/integrations/domain/auth/interfaces/auth-integration.interface';
 import { Inject, Injectable } from '@nestjs/common';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 
 @Injectable()

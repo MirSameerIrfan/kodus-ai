@@ -1,6 +1,6 @@
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { IIntegration } from '../../integrations/interfaces/integration.interface';
-import { ITeam } from '../../team/interfaces/team.interface';
+import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
+import { IIntegration } from '@libs/integrations/domain/interfaces/integration.interface';
+import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';
 
 export interface IIntegrationConfig {
     uuid: string;

@@ -2,9 +2,9 @@ import { IssueStatus } from '@/config/types/general/issues.type';
 import {
     IContributingSuggestion,
     IRepositoryToIssues,
-} from '@/core/infrastructure/adapters/services/kodyIssuesManagement/domain/kodyIssuesManagement.interface';
-import { LabelType } from '@/shared/utils/codeManagement/labels';
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
+} from '@libs/issues/infrastructure/domain/kodyIssuesManagement.interface';
+import { LabelType } from '@shared/utils/codeManagement/labels';
+import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
 
 export interface IIssue {
     uuid?: string;

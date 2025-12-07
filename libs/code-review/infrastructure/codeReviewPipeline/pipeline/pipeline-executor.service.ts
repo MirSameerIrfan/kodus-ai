@@ -3,10 +3,10 @@ import { Injectable } from '@nestjs/common';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 import { Stage } from '../stages/base/stage.interface';
 import { HeavyStage } from '../stages/base/heavy-stage.interface';
-import { WorkflowPausedError } from '@/core/domain/workflowQueue/errors/workflow-paused.error';
-import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
+import { WorkflowPausedError } from '@libs/workflow-queue/domain/errors/workflow-paused.error';
+import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
 import { PipelineStateManager } from './pipeline-state-manager.service';
-import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
+import { ObservabilityService } from '@shared/logging/observability.service';
 
 /**
  * PipelineExecutor for CodeReviewPipeline

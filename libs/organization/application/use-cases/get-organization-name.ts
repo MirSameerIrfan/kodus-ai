@@ -1,8 +1,8 @@
 import {
     IOrganizationService,
     ORGANIZATION_SERVICE_TOKEN,
-} from '@/core/domain/organization/contracts/organization.service.contract';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+} from '@libs/organization/domain/organization/contracts/organization.service.contract';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { Inject } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 

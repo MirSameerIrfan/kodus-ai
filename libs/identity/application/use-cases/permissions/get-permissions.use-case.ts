@@ -2,18 +2,18 @@ import { createLogger } from "@kodus/flow";
 import {
     IPermissionsService,
     PERMISSIONS_SERVICE_TOKEN,
-} from '@/core/domain/permissions/contracts/permissions.service.contract';
+} from '@libs/identity/domain/permissions/contracts/permissions.service.contract';
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
     AppAbility,
     Subject,
-} from '@/core/domain/permissions/types/permissions.types';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { PermissionsAbilityFactory } from '@/core/infrastructure/adapters/services/permissions/permissionsAbility.factory';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+} from '@libs/identity/domain/permissions/types/permissions.types';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
+import { PermissionsAbilityFactory } from '@libs/identity/infrastructure/permissions/permissionsAbility.factory';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { MongoQuery } from '@casl/ability';
 import { Injectable } from '@nestjs/common';
 

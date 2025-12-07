@@ -40,9 +40,9 @@ import {
     MCPToolMetadata,
     MCPToolMetadataService,
 } from '../../mcp/services/mcp-tool-metadata.service';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { PromptReferenceErrorType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
-import type { IPromptReferenceSyncError } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
+import { PromptReferenceErrorType } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
+import type { IPromptReferenceSyncError } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
 import { formatMCPOutput } from './mcp-output-formatter';
 
 export interface ContextAugmentationOutput {

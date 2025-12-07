@@ -2,28 +2,28 @@ import { createLogger } from '@kodus/flow';
 import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
     IAutomationExecutionService,
-} from '@/core/domain/automation/contracts/automation-execution.service';
+} from '@libs/automation/domain/contracts/automation-execution.service';
 import {
     AUTOMATION_SERVICE_TOKEN,
     IAutomationService,
-} from '@/core/domain/automation/contracts/automation.service';
-import { IAutomationFactory } from '@/core/domain/automation/contracts/processAutomation/automation.factory';
+} from '@libs/automation/domain/contracts/automation.service';
+import { IAutomationFactory } from '@libs/automation/domain/contracts/processAutomation/automation.factory';
 import {
     ITeamAutomationService,
     TEAM_AUTOMATION_SERVICE_TOKEN,
-} from '@/core/domain/automation/contracts/team-automation.service';
-import { AutomationType } from '@/core/domain/automation/enums/automation-type';
+} from '@libs/automation/domain/contracts/team-automation.service';
+import { AutomationType } from '@libs/automation/domain/enums/automation-type';
 import { Inject, Injectable } from '@nestjs/common';
 import { MoreThanOrEqual } from 'typeorm';
-import { IAutomation } from '@/core/domain/automation/interfaces/automation.interface';
-import { ITeamAutomation } from '@/core/domain/automation/interfaces/team-automation.interface';
-import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
-import { CodeReviewHandlerService } from '@/core/infrastructure/adapters/services/codeBase/codeReviewHandlerService.service';
-import { IAutomationExecution } from '@/core/domain/automation/interfaces/automation-execution.interface';
+import { IAutomation } from '@libs/automation/domain/interfaces/automation.interface';
+import { ITeamAutomation } from '@libs/automation/domain/interfaces/team-automation.interface';
+import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
+import { CodeReviewHandlerService } from '@libs/code-review/infrastructure/codeReviewHandlerService.service';
+import { IAutomationExecution } from '@libs/automation/domain/interfaces/automation-execution.interface';
 import {
     IOrganizationService,
     ORGANIZATION_SERVICE_TOKEN,
-} from '@/core/domain/organization/contracts/organization.service.contract';
+} from '@libs/organization/domain/organization/contracts/organization.service.contract';
 
 @Injectable()
 export class AutomationCodeReviewService implements Omit<

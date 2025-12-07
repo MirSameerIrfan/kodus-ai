@@ -2,16 +2,16 @@ import { createLogger } from "@kodus/flow";
 import {
     IOrganizationService,
     ORGANIZATION_SERVICE_TOKEN,
-} from '@/core/domain/organization/contracts/organization.service.contract';
-import { IOrganization } from '@/core/domain/organization/interfaces/organization.interface';
+} from '@libs/organization/domain/organization/contracts/organization.service.contract';
+import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
-import { OrganizationParametersAutoJoinConfig } from '@/core/domain/organizationParameters/types/organizationParameters.types';
-import { Role } from '@/core/domain/permissions/enums/permissions.enum';
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+} from '@libs/organization/domain/org-parameters/contracts/organizationParameters.service.contract';
+import { OrganizationParametersAutoJoinConfig } from '@libs/organization/domain/org-parameters/types/organizationParameters.types';
+import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { OrganizationParametersKey } from '@shared/domain/enums/organization-parameters-key.enum';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

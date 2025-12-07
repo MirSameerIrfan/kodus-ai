@@ -3,8 +3,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
 import { REQUEST } from '@nestjs/core';
 import { KodusConfigFile } from '@/config/types/general/codeReview.type';
 
@@ -13,12 +13,12 @@ import * as fs from 'node:fs';
 import {
     CODE_BASE_CONFIG_SERVICE_TOKEN,
     ICodeBaseConfigService,
-} from '@/core/domain/codeBase/contracts/CodeBaseConfigService.contract';
-import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
+} from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
+import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 
 @Injectable()
 export class GenerateKodusConfigFileUseCase {

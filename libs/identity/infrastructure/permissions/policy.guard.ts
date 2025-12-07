@@ -2,7 +2,7 @@ import {
     IPolicyHandler,
     PolicyHandler,
     PolicyHandlerCallback,
-} from '@/core/domain/permissions/types/policy.types';
+} from '@libs/identity/domain/permissions/types/policy.types';
 import {
     CanActivate,
     ExecutionContext,

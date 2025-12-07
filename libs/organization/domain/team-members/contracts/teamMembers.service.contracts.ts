@@ -1,7 +1,7 @@
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { IMembers, IUpdateOrCreateMembersResponse } from '../interfaces/team-members.interface';
 import { ITeamMemberRepository } from './teamMembers.repository.contracts';
-import { IUser } from '../../user/interfaces/user.interface';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 
 export const TEAM_MEMBERS_SERVICE_TOKEN = Symbol('TeamMembersService');
 

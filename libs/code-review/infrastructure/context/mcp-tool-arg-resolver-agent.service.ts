@@ -1,6 +1,6 @@
 import { DatabaseConnection } from '@/config/types';
 import type { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
+import { PermissionValidationService } from '@shared/ee/services/permissionValidation.service';
 import type {
     ContextDependency,
     ContextPack,
@@ -19,7 +19,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { z } from 'zod';
 import { BaseAgentProvider } from '../agent/kodus-flow/base-agent.provider';
-import { ObservabilityService } from '../logger/observability.service';
+import { ObservabilityService } from '@shared/logging/observability.service';
 
 type SDKOrchestrator = Awaited<ReturnType<typeof createOrchestration>>;
 

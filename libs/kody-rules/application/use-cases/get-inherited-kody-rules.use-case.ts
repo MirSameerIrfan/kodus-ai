@@ -3,22 +3,22 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import {
     IKodyRulesService,
     KODY_RULES_SERVICE_TOKEN,
-} from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
+} from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
 import {
     IKodyRule,
     KodyRulesStatus,
-} from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+} from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { KodyRulesValidationService } from '@/ee/kodyRules/service/kody-rules-validation.service';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { KodyRulesValidationService } from '@libs/kody-rules/ee/service/kody-rules-validation.service';
+import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
 import { Inject, Injectable } from '@nestjs/common';
 import {
     CONTEXT_REFERENCE_SERVICE_TOKEN,
     IContextReferenceService,
-} from '@/core/domain/contextReferences/contracts/context-reference.service.contract';
+} from '@libs/code-review/domain/context/contracts/context-reference.service.contract';
 import { enrichRulesWithContextReferences } from './utils/enrich-rules-with-context-references.util';
 
 type KodyRuleWithInheritance = Partial<IKodyRule> & {

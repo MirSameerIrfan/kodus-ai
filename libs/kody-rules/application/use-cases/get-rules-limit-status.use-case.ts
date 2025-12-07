@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
     IKodyRulesService,
     KODY_RULES_SERVICE_TOKEN,
-} from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
+} from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
 import { REQUEST } from '@nestjs/core';
 import { UserRequest } from '@/config/types/http/user-request.type';
 

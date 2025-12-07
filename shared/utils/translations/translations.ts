@@ -1,4 +1,4 @@
-import { LanguageValue } from '@/shared/domain/enums/language-parameter.enum';
+import { LanguageValue } from '@shared/domain/enums/language-parameter.enum';
 import * as path from 'path';
 import { loadJsonFile } from '../transforms/file';
 

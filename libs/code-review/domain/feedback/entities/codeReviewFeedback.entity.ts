@@ -1,4 +1,4 @@
-import { Entity } from '@/shared/domain/interfaces/entity';
+import { Entity } from '@shared/domain/interfaces/entity';
 import { ICodeReviewFeedback } from '../interfaces/codeReviewFeedback.interface';
 
 export class CodeReviewFeedbackEntity implements Entity<ICodeReviewFeedback> {

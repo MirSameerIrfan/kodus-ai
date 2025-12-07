@@ -1,10 +1,10 @@
 import { ActionType } from '@/config/types/general/codeReviewSettingsLog.type';
-import { UserStatusDto } from '@/core/infrastructure/http/dtos/user-status-change.dto';
+import { UserStatusDto } from '@shared/dtos/user-status-change.dto';
 import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
     ICodeReviewSettingsLogService,
-} from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+} from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 

@@ -1,86 +1,85 @@
-import { createLogger } from '@kodus/flow';
+import { createLogger } from "@kodus/flow";
 import { Injectable } from '@nestjs/common';
 import { z } from 'zod';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
+import { CodeManagementService } from '../../services/platformIntegration/codeManagement.service';
 import { wrapToolHandler } from '../utils/mcp-protocol.utils';
 import { BaseResponse, McpToolDefinition } from '../types/mcp-tool.interface';
-import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
+import { PullRequestState } from '../../../../../shared/domain/enums/pullRequestState.enum';
 
 const RepositorySchema = z.looseObject({
-    id: z.string(),
-    name: z.string(),
-    http_url: z.string(),
-    avatar_url: z.string(),
-    organizationName: z.string(),
-    visibility: z.enum(['public', 'private']),
-    selected: z.boolean(),
-    default_branch: z.string().optional(),
-    project: z
-        .looseObject({
-            id: z.string(),
-            name: z.string(),
-        })
-        .optional(),
-    workspaceId: z.string().optional(),
-});
+        id: z.string(),
+        name: z.string(),
+        http_url: z.string(),
+        avatar_url: z.string(),
+        organizationName: z.string(),
+        visibility: z.enum(['public', 'private']),
+        selected: z.boolean(),
+        default_branch: z.string().optional(),
+        project: z.looseObject({
+                id: z.string(),
+                name: z.string(),
+            })
+            .optional(),
+        workspaceId: z.string().optional(),
+    });
 
 const PullRequestSchema = z.looseObject({
-    id: z.string(),
-    number: z.number(),
-    pull_number: z.number(), // TODO: remove, legacy, use number
-    body: z.string(),
-    title: z.string(),
-    message: z.string(),
-    state: z.enum(Object.values(PullRequestState) as [PullRequestState]),
-    organizationId: z.string(),
-    repository: z.string(), // TODO: remove, legacy, use repositoryData
-    repositoryId: z.string(), // TODO: remove, legacy, use repositoryData
-    repositoryData: z.looseObject({
-        // TODO: consider removing this, use HEAD and BASE instead
         id: z.string(),
-        name: z.string(),
-    }),
-    prURL: z.url(),
-    created_at: z.string(),
-    closed_at: z.string(),
-    updated_at: z.string(),
-    merged_at: z.string(),
-    participants: z.array(
-        z.looseObject({
-            id: z.string(),
-        }),
-    ),
-    reviewers: z.array(
-        z.looseObject({
-            id: z.string(),
-        }),
-    ),
-    sourceRefName: z.string(), // TODO: remove, legacy, use head.ref
-    head: z.looseObject({
-        ref: z.string(),
-        repo: z.looseObject({
+        number: z.number(),
+        pull_number: z.number(), // TODO: remove, legacy, use number
+        body: z.string(),
+        title: z.string(),
+        message: z.string(),
+        state: z.enum(Object.values(PullRequestState) as [PullRequestState]),
+        organizationId: z.string(),
+        repository: z.string(), // TODO: remove, legacy, use repositoryData
+        repositoryId: z.string(), // TODO: remove, legacy, use repositoryData
+        repositoryData: z.looseObject({
+            // TODO: consider removing this, use HEAD and BASE instead
             id: z.string(),
             name: z.string(),
-            defaultBranch: z.string(),
-            fullName: z.string(),
         }),
-    }),
-    targetRefName: z.string(), // TODO: remove, legacy, use base.ref
-    base: z.looseObject({
-        ref: z.string(),
-        repo: z.looseObject({
-            id: z.string(),
+        prURL: z.url(),
+        created_at: z.string(),
+        closed_at: z.string(),
+        updated_at: z.string(),
+        merged_at: z.string(),
+        participants: z.array(
+            z.looseObject({
+                id: z.string(),
+            }),
+        ),
+        reviewers: z.array(
+            z.looseObject({
+                id: z.string(),
+            }),
+        ),
+        sourceRefName: z.string(), // TODO: remove, legacy, use head.ref
+        head: z.looseObject({
+            ref: z.string(),
+            repo: z.looseObject({
+                id: z.string(),
+                name: z.string(),
+                defaultBranch: z.string(),
+                fullName: z.string(),
+            }),
+        }),
+        targetRefName: z.string(), // TODO: remove, legacy, use base.ref
+        base: z.looseObject({
+            ref: z.string(),
+            repo: z.looseObject({
+                id: z.string(),
+                name: z.string(),
+                defaultBranch: z.string(),
+                fullName: z.string(),
+            }),
+        }),
+        user: z.looseObject({
+            login: z.string(),
             name: z.string(),
-            defaultBranch: z.string(),
-            fullName: z.string(),
+            id: z.string(),
         }),
-    }),
-    user: z.looseObject({
-        login: z.string(),
-        name: z.string(),
-        id: z.string(),
-    }),
-});
+    });
 
 const PullRequestWithFilesSchema = PullRequestSchema.extend({
     modified_files: z
@@ -95,12 +94,12 @@ const PullRequestWithFilesSchema = PullRequestSchema.extend({
 const CommitSchema = z.any();
 
 const RepositoryFileSchema = z.looseObject({
-    path: z.string(),
-    sha: z.string().optional(),
-    size: z.number().optional(),
-    type: z.string().optional(),
-    filename: z.string().optional(),
-});
+        path: z.string(),
+        sha: z.string().optional(),
+        size: z.number().optional(),
+        type: z.string().optional(),
+        filename: z.string().optional(),
+    });
 
 interface RepositoriesResponse extends BaseResponse {
     data: z.infer<typeof RepositorySchema>[];
@@ -162,9 +161,7 @@ export class CodeManagementTools {
             'An unexpected error occurred while retrieving Pull Request diff',
     } as const;
 
-    constructor(
-        private readonly codeManagementService: CodeManagementService,
-    ) {}
+    constructor(private readonly codeManagementService: CodeManagementService) {}
 
     listRepositories(): McpToolDefinition {
         const inputSchema = z.object({

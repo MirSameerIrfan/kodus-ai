@@ -1,13 +1,13 @@
 import { createLogger } from "@kodus/flow";
 import { Injectable, Inject } from '@nestjs/common';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { IPullRequests } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
+import { IPullRequests } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import {
     IPullRequestsRepository,
     PULL_REQUESTS_REPOSITORY_TOKEN,
-} from '@/core/domain/pullRequests/contracts/pullRequests.repository';
-import { PullRequest } from '@/core/domain/platformIntegrations/types/codeManagement/pullRequests.type';
+} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.repository';
+import { PullRequest } from '@libs/platform/domain/types/codeManagement/pullRequests.type';
 import { v4 as uuidv4 } from 'uuid';
 
 interface BackfillParams {

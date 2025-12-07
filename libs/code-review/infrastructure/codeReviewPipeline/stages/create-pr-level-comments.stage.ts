@@ -5,19 +5,19 @@ import { CodeReviewPipelineContext } from '../context/code-review-pipeline.conte
 import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
-} from '@/core/domain/codeBase/contracts/CommentManagerService.contract';
+} from '@libs/code-review/domain/contracts/CommentManagerService.contract';
 import {
     ISuggestionService,
     SUGGESTION_SERVICE_TOKEN,
-} from '@/core/domain/codeBase/contracts/SuggestionService.contract';
+} from '@libs/code-review/domain/contracts/SuggestionService.contract';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
-} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
+} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
 import {
     DRY_RUN_SERVICE_TOKEN,
     IDryRunService,
-} from '@/core/domain/dryRun/contracts/dryRun.service.contract';
+} from '@libs/dry-run/domain/contracts/dryRun.service.contract';
 
 @Injectable()
 export class CreatePrLevelCommentsStage extends BaseStage {

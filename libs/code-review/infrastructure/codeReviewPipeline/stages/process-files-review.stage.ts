@@ -6,9 +6,9 @@ import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 
 import { BaseStage } from './base/base-stage.abstract';
 import { HeavyStage } from './base/heavy-stage.interface';
-import { EventType } from '@/core/domain/workflowQueue/enums/event-type.enum';
-import { StageCompletedEvent } from '@/core/domain/workflowQueue/interfaces/stage-completed-event.interface';
-import { WorkflowPausedError } from '@/core/domain/workflowQueue/errors/workflow-paused.error';
+import { EventType } from '@libs/workflow-queue/domain/enums/event-type.enum';
+import { StageCompletedEvent } from '@libs/workflow-queue/domain/interfaces/stage-completed-event.interface';
+import { WorkflowPausedError } from '@libs/workflow-queue/domain/errors/workflow-paused.error';
 import {
     AIAnalysisResult,
     AnalysisContext,
@@ -18,25 +18,25 @@ import {
     FileChange,
     IFinalAnalysisResult,
 } from '@/config/types/general/codeReview.type';
-import { benchmark } from '@/shared/utils/benchmark.util';
-import { createOptimizedBatches } from '@/shared/utils/batch.helper';
+import { benchmark } from '@shared/utils/benchmark.util';
+import { createOptimizedBatches } from '@shared/utils/batch.helper';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
-} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
+} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
 import {
     ISuggestionService,
     SUGGESTION_SERVICE_TOKEN,
-} from '@/core/domain/codeBase/contracts/SuggestionService.contract';
+} from '@libs/code-review/domain/contracts/SuggestionService.contract';
 import {
     FILE_REVIEW_CONTEXT_PREPARATION_TOKEN,
     IFileReviewContextPreparation,
-} from '@/shared/interfaces/file-review-context-preparation.interface';
-import { DeliveryStatus } from '@/core/domain/pullRequests/enums/deliveryStatus.enum';
-import { ImplementationStatus } from '@/core/domain/pullRequests/enums/implementationStatus.enum';
-import { PriorityStatus } from '@/core/domain/pullRequests/enums/priorityStatus.enum';
+} from '@shared/interfaces/file-review-context-preparation.interface';
+import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
+import { ImplementationStatus } from '@libs/code-review/domain/pull-requests/enums/implementationStatus.enum';
+import { PriorityStatus } from '@libs/code-review/domain/pull-requests/enums/priorityStatus.enum';
 import {
     CodeReviewPipelineContext,
     FileContextAgentResult,
@@ -44,13 +44,13 @@ import {
 import {
     IKodyFineTuningContextPreparationService,
     KODY_FINE_TUNING_CONTEXT_PREPARATION_TOKEN,
-} from '@/shared/interfaces/kody-fine-tuning-context-preparation.interface';
+} from '@shared/interfaces/kody-fine-tuning-context-preparation.interface';
 import {
     IKodyASTAnalyzeContextPreparationService,
     KODY_AST_ANALYZE_CONTEXT_PREPARATION_TOKEN,
-} from '@/shared/interfaces/kody-ast-analyze-context-preparation.interface';
-import { CodeAnalysisOrchestrator } from '@/ee/codeBase/codeAnalysisOrchestrator.service';
-import { TaskStatus } from '@/ee/kodyAST/codeASTAnalysis.service';
+} from '@shared/interfaces/kody-ast-analyze-context-preparation.interface';
+import { CodeAnalysisOrchestrator } from '@libs/code-review/ee/analysis/codeAnalysisOrchestrator.service';
+import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
 
 @Injectable()
 export class ProcessFilesReview extends BaseStage implements HeavyStage {

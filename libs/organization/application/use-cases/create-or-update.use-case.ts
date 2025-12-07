@@ -3,11 +3,11 @@ import { OrganizationAndTeamData } from '@/config/types/general/organizationAndT
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
-import { OrganizationParametersEntity } from '@/core/domain/organizationParameters/entities/organizationParameters.entity';
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
-import { encrypt } from '@/shared/utils/crypto';
+} from '@libs/organization/domain/org-parameters/contracts/organizationParameters.service.contract';
+import { OrganizationParametersEntity } from '@libs/organization/domain/org-parameters/entities/organizationParameters.entity';
+import { OrganizationParametersKey } from '@shared/domain/enums/organization-parameters-key.enum';
+import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { encrypt } from '@shared/utils/crypto';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 import { Inject, Injectable } from '@nestjs/common';
 

@@ -1,4 +1,4 @@
-import { IAutomationFactory } from '@/core/domain/automation/contracts/processAutomation/automation.factory';
+import { IAutomationFactory } from '@libs/automation/domain/contracts/processAutomation/automation.factory';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

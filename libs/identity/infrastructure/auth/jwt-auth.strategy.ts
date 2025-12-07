@@ -2,7 +2,7 @@ import { JWT } from '@/config/types/jwt/jwt';
 import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
-} from '@/core/domain/auth/contracts/auth.service.contracts';
+} from '@libs/identity/domain/auth/contracts/auth.service.contracts';
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
