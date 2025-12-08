@@ -1,6 +1,6 @@
-import { CreateOrUpdateTeamMembersUseCase } from '@libs/organization/application/use-cases/team-members/create.use-case';
-import { DeleteTeamMembersUseCase } from '@libs/organization/application/use-cases/team-members/delete.use-case';
-import { GetTeamMembersUseCase } from '@libs/organization/application/use-cases/team-members/get-team-members.use-case';
+import { CreateOrUpdateTeamMembersUseCase } from '@libs/organization/application/use-cases/create.use-case';
+import { DeleteTeamMembersUseCase } from '@libs/organization/application/use-cases/delete.use-case';
+import { GetTeamMembersUseCase } from '@libs/organization/application/use-cases/get-team-members.use-case';
 import {
     Action,
     ResourceType,

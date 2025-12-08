@@ -10,7 +10,11 @@ const extractDataFromModel = (model: any): any => {
     const cleanedData: any = {};
 
     for (const key in source) {
-        if (source.hasOwnProperty(key) && key !== '$__' && key !== '$isNew') {
+        if (
+            Object.prototype.hasOwnProperty.call(source, key) &&
+            key !== '$__' &&
+            key !== '$isNew'
+        ) {
             if (key === '_id') {
                 cleanedData['uuid'] = source[key].toString();
             } else {
@@ -79,7 +83,10 @@ const mapSimpleEntityToModel = <E, M>(
         const model: any = new ModelClass();
 
         for (const key in entity) {
-            if (entity.hasOwnProperty(key) && key.startsWith('_')) {
+            if (
+                Object.prototype.hasOwnProperty.call(entity, key) &&
+                key.startsWith('_')
+            ) {
                 // Remova o prefixo '_' e atribua o valor ao modelo
                 model[key.substring(1)] = entity[key];
             } else {

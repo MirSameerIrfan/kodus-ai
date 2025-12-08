@@ -4,7 +4,6 @@ import { AuthController } from './controllers/auth.controller';
 import { HealthController } from './controllers/health.controller';
 import { WorkflowQueueController } from './controllers/workflow-queue.controller';
 import { ParametersController } from './controllers/parameters.controller';
-import { OrganizationController } from './controllers/organization.controller';
 import { TeamController } from './controllers/team.controller';
 import { TeamMembersController } from './controllers/teamMembers.controller';
 import { IntegrationController } from './controllers/integrations/integration.controller';
@@ -24,6 +23,8 @@ import { IssuesController } from './controllers/issues.controller';
 import { PermissionsController } from './controllers/permissions.controller';
 import { TokenUsageController } from './controllers/tokenUsage.controller';
 import { OrganizationParametersController } from './controllers/organizationParameters.controller';
+import { AppModule } from './app.module';
+import { JwtAuthGuard } from '@libs/identity/infrastructure/guards/jwt-auth.guard';
 
 /**
  * API REST Module
@@ -49,7 +50,6 @@ import { OrganizationParametersController } from './controllers/organizationPara
         ParametersController,
         OrganizationParametersController,
         // Organization & Teams
-        OrganizationController,
         TeamController,
         TeamMembersController,
         // Platform Integration (includes webhook endpoints for backward compatibility)

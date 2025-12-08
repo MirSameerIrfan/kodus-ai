@@ -27,7 +27,7 @@ enum ShieldColor {
     PINK = 'D81B60',
     INDIGO = '4527A0',
     YELLOW = 'FFD600',
-    LIGHT_PURPLE = '9C27B0'
+    LIGHT_PURPLE = '9C27B0',
 }
 
 const getLabelShield = (label: string) => {
