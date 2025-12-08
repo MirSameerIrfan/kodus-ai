@@ -55,7 +55,7 @@ export class SamlStrategy extends PassportStrategy(MultiSamlStrategy, 'saml') {
     }
 
     async validate(req: Request, profile: any) {
-        const email: string = profile.email || profile.nameId;
+        const email: string = profile.email || profile.nameId || profile.nameID;
 
         if (!email || !/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,3}/.test(email)) {
             throw new UnauthorizedException('Invalid email in SAML assertion');
