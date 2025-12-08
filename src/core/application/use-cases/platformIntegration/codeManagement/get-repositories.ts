@@ -25,8 +25,11 @@ export class GetRepositoriesUseCase implements IUseCase {
         teamId: string;
         organizationSelected: any;
         isSelected?: boolean;
+        page?: number;
+        perPage?: number;
     }) {
         try {
+            const pullRequestWindowInDays = 7;
             const repositories =
                 await this.codeManagementService.getRepositories({
                     organizationAndTeamData: {
@@ -35,6 +38,11 @@ export class GetRepositoriesUseCase implements IUseCase {
                     },
                     filters: {
                         organizationSelected: params?.organizationSelected,
+                    },
+                    options: {
+                        includePullRequestMetrics: {
+                            lastNDays: pullRequestWindowInDays,
+                        },
                     },
                 });
 
@@ -53,9 +61,39 @@ export class GetRepositoriesUseCase implements IUseCase {
             }
 
             if (params.isSelected !== undefined) {
+                const isSelectedFilter =
+                    typeof params.isSelected === 'string'
+                        ? params.isSelected === 'true'
+                        : Boolean(params.isSelected);
                 filteredRepositories = filteredRepositories.filter(
-                    (repo) => repo.selected === Boolean(params.isSelected),
+                    (repo) => repo.selected === isSelectedFilter,
                 );
+            }
+
+            const total = filteredRepositories.length;
+
+            if (params.page !== undefined || params.perPage !== undefined) {
+                const page =
+                    Number(params.page ?? 1) > 0 ? Number(params.page ?? 1) : 1;
+                const perPage =
+                    Number(params.perPage ?? 20) > 0
+                        ? Number(params.perPage ?? 20)
+                        : 20;
+
+                const startIndex = (page - 1) * perPage;
+                const paginatedRepositories = filteredRepositories.slice(
+                    startIndex,
+                    startIndex + perPage,
+                );
+
+                return {
+                    data: paginatedRepositories,
+                    pagination: {
+                        page,
+                        perPage,
+                        total,
+                    },
+                };
             }
 
             return filteredRepositories;

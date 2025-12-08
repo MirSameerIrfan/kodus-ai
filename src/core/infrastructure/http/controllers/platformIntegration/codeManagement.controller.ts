@@ -66,6 +66,8 @@ export class CodeManagementController {
             teamId: string;
             organizationSelected: any;
             isSelected?: boolean;
+            page?: number;
+            perPage?: number;
         },
     ) {
         return this.getRepositoriesUseCase.execute(query);
