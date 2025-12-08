@@ -264,11 +264,18 @@ export class GitlabService
                     ref: mergeRequest.source_branch,
                     repo: {
                         name: params.repository.name,
-                        id: projectId,
+                        // Use source project ID so forked MRs can fetch files from the right project
+                        id:
+                            mergeRequest.source_project_id?.toString() ??
+                            projectId,
                     },
                 },
                 base: {
                     ref: mergeRequest.target_branch,
+                    repo: {
+                        name: params.repository.name,
+                        id: projectId,
+                    },
                 },
                 user: {
                     login: mergeRequest.author.username,
@@ -1998,18 +2005,171 @@ export class GitlabService
         const gitlabAPI = this.instanceGitlabApi(gitlabAuthDetail);
 
         try {
-            const fileContent = await gitlabAPI.RepositoryFiles.show(
-                params?.repository?.id,
-                params.file?.filename,
-                params?.pullRequest?.head?.ref,
-            );
+            const filePath = params.file?.filename;
+            if (!filePath) {
+                return null;
+            }
 
-            return {
-                data: {
-                    content: fileContent.content,
-                    encoding: 'base64',
+            const headRef = params?.pullRequest?.head?.ref;
+            const baseRef = params?.pullRequest?.base?.ref;
+
+            const headProjectId =
+                params?.pullRequest?.head?.repo?.id ??
+                params?.pullRequest?.head?.projectId ??
+                params?.pullRequest?.head?.repoId ??
+                params?.repository?.id;
+            const baseProjectId =
+                params?.pullRequest?.base?.repo?.id ??
+                params?.pullRequest?.base?.projectId ??
+                params?.pullRequest?.base?.repoId ??
+                params?.repository?.id;
+
+            const attempts: Array<{
+                projectId: string;
+                ref: string;
+                source: string;
+            }> = [];
+
+            if (headRef && headProjectId) {
+                attempts.push({
+                    projectId: headProjectId,
+                    ref: headRef,
+                    source: 'head',
+                });
+            }
+
+            if (baseRef && baseProjectId) {
+                attempts.push({
+                    projectId: baseProjectId,
+                    ref: baseRef,
+                    source: 'base',
+                });
+            }
+
+            const tried = new Set<string>();
+            for (const attempt of attempts) {
+                const key = `${attempt.projectId}:${attempt.ref}`;
+                if (tried.has(key)) continue;
+                tried.add(key);
+
+                try {
+                    const fileContent = await gitlabAPI.RepositoryFiles.show(
+                        attempt.projectId,
+                        filePath,
+                        attempt.ref,
+                    );
+
+                    return {
+                        data: {
+                            content: fileContent.content,
+                            encoding: 'base64',
+                        },
+                    };
+                } catch (attemptError: any) {
+                    const status = attemptError?.response?.status;
+                    const isNotFound = status === 404;
+
+                    const logPayload = {
+                        message: isNotFound
+                            ? 'File not found in GitLab attempt'
+                            : 'Error fetching file content from GitLab attempt',
+                        context: GitlabService.name,
+                        error: attemptError,
+                        metadata: {
+                            repository: params.repository,
+                            file: filePath,
+                            attempt,
+                        },
+                    };
+
+                    if (isNotFound) {
+                        this.logger.warn(logPayload);
+                        continue; // Try next ref/project combo
+                    }
+
+                    this.logger.error(logPayload);
+                }
+            }
+
+            // Final fallback: try default branch only if all prior attempts failed
+            if (params.repository?.id) {
+                try {
+                    const defaultBranch = await this.getDefaultBranch({
+                        organizationAndTeamData: params.organizationAndTeamData,
+                        repository: {
+                            id: params.repository?.id,
+                            name: params.repository?.name,
+                        },
+                    });
+
+                    if (defaultBranch) {
+                        try {
+                            const fileContent = await gitlabAPI.RepositoryFiles.show(
+                                params.repository.id,
+                                filePath,
+                                defaultBranch,
+                            );
+
+                            return {
+                                data: {
+                                    content: fileContent.content,
+                                    encoding: 'base64',
+                                },
+                            };
+                        } catch (defaultAttemptError: any) {
+                            const status = defaultAttemptError?.response
+                                ?.status;
+                            const isNotFound = status === 404;
+
+                            const logPayload = {
+                                message: isNotFound
+                                    ? 'File not found in GitLab default branch attempt'
+                                    : 'Error fetching file content from GitLab default branch attempt',
+                                context: GitlabService.name,
+                                error: defaultAttemptError,
+                                metadata: {
+                                    repository: params.repository,
+                                    file: filePath,
+                                    attempt: {
+                                        projectId: params.repository.id,
+                                        ref: defaultBranch,
+                                        source: 'default',
+                                    },
+                                },
+                            };
+
+                            if (isNotFound) {
+                                this.logger.warn(logPayload);
+                            } else {
+                                this.logger.error(logPayload);
+                            }
+                        }
+                    }
+                } catch (defaultBranchError) {
+                    this.logger.warn({
+                        message:
+                            'Could not resolve default branch while fetching file content',
+                        context: GitlabService.name,
+                        error: defaultBranchError,
+                        metadata: {
+                            repository: params.repository,
+                            file: filePath,
+                        },
+                    });
+                }
+            }
+
+            this.logger.warn({
+                message:
+                    'Exhausted all attempts to fetch file content from GitLab',
+                context: GitlabService.name,
+                metadata: {
+                    repository: params.repository,
+                    file: filePath,
+                    attempts,
                 },
-            };
+            });
+            return null;
         } catch (error) {
             this.logger.error({
                 message: 'Error fetching file content from GitLab',
@@ -3658,9 +3818,31 @@ export class GitlabService
             }
 
             // Extract base directories from filePatterns
-            const baseDirectories = this.extractBaseDirectoriesFromPatterns(
+            const baseDirectoriesRaw = this.extractBaseDirectoriesFromPatterns(
                 filePatterns || [],
             );
+            const globChars = ['*', '?', '{', '}', '[', ']', '!'];
+            const hasRootOnlyPatterns = (filePatterns || []).some(
+                (pattern) => {
+                    const normalized = pattern
+                        .replace(/^\/+/, '')
+                        .replace(/\\/g, '/');
+                    const hasGlob = globChars.some((ch) =>
+                        normalized.includes(ch),
+                    );
+                    const hasSlash = normalized.includes('/');
+                    // Plain filename (no glob, no directory) -> needs root scan
+                    return !hasGlob && !hasSlash;
+                },
+            );
+            // Include root as a base directory if patterns target files at repo root
+            const baseDirectories = hasRootOnlyPatterns
+                ? [''].concat(
+                      baseDirectoriesRaw.filter(
+                          (dir) => dir !== '',
+                      ),
+                  )
+                : baseDirectoriesRaw;
 
             let allFiles: RepositoryFile[] = [];
 
@@ -3669,14 +3851,22 @@ export class GitlabService
                 // Search files from each specific directory
                 for (const baseDir of baseDirectories) {
                     try {
+                        const options: any = {
+                            ref: branch,
+                            recursive: true, // deep search for subdirs
+                        };
+
+                        // For root scans (''), avoid recursion to keep it fast and match only top-level files
+                        if (!baseDir) {
+                            options.recursive = false;
+                        } else {
+                            options.path = baseDir;
+                        }
+
                         const trees =
                             await gitlabAPI.Repositories.allRepositoryTrees(
                                 repository.id,
-                                {
-                                    ref: branch,
-                                    path: baseDir,
-                                    recursive: true, // Only search within this directory
-                                },
+                                options,
                             );
 
                         const files = trees
