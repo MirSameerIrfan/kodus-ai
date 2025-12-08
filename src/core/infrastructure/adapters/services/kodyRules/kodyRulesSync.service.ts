@@ -878,7 +878,7 @@ export class KodyRulesSyncService {
      * Fast, non-persisting sync used for onboarding.
      * - Scans only known rule patterns (same list as full sync)
      * - Uses Groq (OpenAI-compatible) via the existing PromptRunner/BYOK wrapper
-     * - Returns parsed rules without saving them
+     * - Persists parsed rules as global (repositoryId = "global") for onboarding review
      */
     async syncRepositoryMainFast(
         params: SyncTarget & {
@@ -893,6 +893,7 @@ export class KodyRulesSyncService {
         errors: Array<{ file?: string; message: string }>;
     }> {
         const { organizationAndTeamData, repository } = params;
+        const targetRepositoryId = 'global';
         const response = {
             rules: [] as Array<Partial<CreateKodyRuleDto>>,
             skippedFiles: [] as Array<{ file: string; reason: string }>,
@@ -1147,7 +1148,7 @@ export class KodyRulesSyncService {
                         rule: rule.rule as string,
                         path: (rule.path as string) || sourcePath,
                         sourcePath: sourcePath,
-                        repositoryId: repository.id,
+                        repositoryId: targetRepositoryId,
                         directoryId,
                         severity:
                             ((

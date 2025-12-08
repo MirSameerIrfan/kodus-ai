@@ -49,9 +49,21 @@ export class FindRulesInOrganizationByRuleFilterKodyRulesUseCase {
                 repoIds: [repositoryId],
             });
 
+            const ruleFilters: Partial<IKodyRule>[] = [];
+
+            if (repositoryId && directoryId) {
+                ruleFilters.push({ repositoryId, directoryId });
+                ruleFilters.push({ repositoryId: 'global' });
+            } else if (repositoryId) {
+                ruleFilters.push({ repositoryId });
+                ruleFilters.push({ repositoryId: 'global' });
+            } else if (directoryId) {
+                ruleFilters.push({ directoryId });
+            }
+
             const existingRules = await this.kodyRulesService.find({
                 organizationId,
-                rules: [{ repositoryId, directoryId }],
+                ...(ruleFilters.length ? { rules: ruleFilters } : {}),
             });
 
             if (!existingRules || existingRules.length === 0) {
@@ -65,10 +77,18 @@ export class FindRulesInOrganizationByRuleFilterKodyRulesUseCase {
             let filteredRules = allRules;
 
             if (repositoryId && !directoryId) {
-                filteredRules = allRules.filter((rule) => !rule.directoryId);
+                filteredRules = allRules.filter(
+                    (rule) =>
+                        rule.repositoryId === 'global' ||
+                        (rule.repositoryId === repositoryId &&
+                            !rule.directoryId),
+                );
             } else if (repositoryId && directoryId) {
                 filteredRules = allRules.filter(
-                    (rule) => rule.directoryId === directoryId,
+                    (rule) =>
+                        rule.repositoryId === 'global' ||
+                        (rule.repositoryId === repositoryId &&
+                            rule.directoryId === directoryId),
                 );
             }
 
