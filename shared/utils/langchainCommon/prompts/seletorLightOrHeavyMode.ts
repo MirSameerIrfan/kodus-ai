@@ -1,4 +1,4 @@
-import { FileChange } from "@/config/types/general/codeReview.type";
+import { FileChange } from '@shared/types/general/codeReview.type';
 
 export const prompt_selectorLightOrHeavyMode_system = (payload: {
     file: FileChange;

@@ -2,7 +2,7 @@ import { Entity } from '@shared/domain/interfaces/entity';
 import { IIssue } from '../interfaces/issues.interface';
 import { LabelType } from '@shared/utils/codeManagement/labels';
 import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
-import { IssueStatus } from '@/config/types/general/issues.type';
+import { IssueStatus } from '@shared/types/general/issues.type';
 import {
     IContributingSuggestion,
     IRepositoryToIssues,
@@ -26,7 +26,7 @@ export class IssuesEntity implements Entity<IIssue> {
         gitId: string;
         username: string;
     };
-    public reporter?: {      
+    public reporter?: {
         gitId: string;
         username: string;
     };

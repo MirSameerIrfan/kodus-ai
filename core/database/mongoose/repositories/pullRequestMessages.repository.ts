@@ -1,19 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { IPullRequestMessagesRepository } from '@/core/domain/pullRequestMessages/contracts/pullRequestMessages.repository.contract';
-import { IPullRequestMessages } from '@/core/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
-import { PullRequestMessagesEntity } from '@/core/domain/pullRequestMessages/entities/pullRequestMessages.entity';
+import { IPullRequestMessagesRepository } from '@libs/code-review/domain/pr-messages/contracts/pullRequestMessages.repository.contract';
+import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
+import { PullRequestMessagesEntity } from '@libs/code-review/domain/pr-messages/entities/pullRequestMessages.entity';
 import { PullRequestMessagesModel } from '@core/database/mongoose/schemas/pullRequestMessages.model';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
-} from '@/shared/infrastructure/repositories/mappers';
+} from '@shared/infrastructure/repositories/mappers';
 
 @Injectable()
-export class PullRequestMessagesRepository
-    implements IPullRequestMessagesRepository
-{
+export class PullRequestMessagesRepository implements IPullRequestMessagesRepository {
     constructor(
         @InjectModel(PullRequestMessagesModel.name)
         private readonly pullRequestMessagesModel: Model<PullRequestMessagesModel>,
@@ -42,16 +40,26 @@ export class PullRequestMessagesRepository
         await this.pullRequestMessagesModel.findByIdAndDelete(uuid);
     }
 
-    async deleteByFilter(filter: Partial<IPullRequestMessages>): Promise<boolean> {
+    async deleteByFilter(
+        filter: Partial<IPullRequestMessages>,
+    ): Promise<boolean> {
         if (!filter || Object.keys(filter).length === 0) {
             return false;
         }
 
-        if (!filter.organizationId && !filter.repositoryId && !filter.configLevel) {
-            throw new Error('OrganizationId, repositoryId and configLevel are required');
+        if (
+            !filter.organizationId &&
+            !filter.repositoryId &&
+            !filter.configLevel
+        ) {
+            throw new Error(
+                'OrganizationId, repositoryId and configLevel are required',
+            );
         }
 
-        const result = await this.pullRequestMessagesModel.findOneAndDelete(filter).select({ _id: 1 });
+        const result = await this.pullRequestMessagesModel
+            .findOneAndDelete(filter)
+            .select({ _id: 1 });
         return result !== null;
     }
 

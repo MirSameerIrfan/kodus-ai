@@ -4,21 +4,21 @@ import { Model } from 'mongoose';
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
-} from '@/shared/infrastructure/repositories/mappers';
+} from '@shared/infrastructure/repositories/mappers';
 import { PullRequestsModel } from '@core/database/mongoose/schemas/pullRequests.model';
-import { IPullRequestsRepository } from '@/core/domain/pullRequests/contracts/pullRequests.repository';
-import { PullRequestsEntity } from '@/core/domain/pullRequests/entities/pullRequests.entity';
+import { IPullRequestsRepository } from '@libs/code-review/domain/pull-requests/contracts/pullRequests.repository';
+import { PullRequestsEntity } from '@libs/code-review/domain/pull-requests/entities/pullRequests.entity';
 import mongoose from 'mongoose';
 import {
     ISuggestion,
     IFile,
     IPullRequests,
     IPullRequestWithDeliveredSuggestions,
-} from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
-import { DeliveryStatus } from '@/core/domain/pullRequests/enums/deliveryStatus.enum';
-import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
-import { Repository } from '@/config/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+} from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
+import { PullRequestState } from '@shared/domain/enums/pullRequestState.enum';
+import { Repository } from '@shared/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 
 @Injectable()
 export class PullRequestsRepository implements IPullRequestsRepository {
@@ -252,7 +252,8 @@ export class PullRequestsRepository implements IPullRequestsRepository {
                     },
                     {
                         $match: {
-                            'files.suggestions.deliveryStatus': DeliveryStatus.SENT,
+                            'files.suggestions.deliveryStatus':
+                                DeliveryStatus.SENT,
                             'files.suggestions.brokenKodyRulesIds': ruleId,
                         },
                     },
@@ -286,7 +287,8 @@ export class PullRequestsRepository implements IPullRequestsRepository {
                     },
                     {
                         $match: {
-                            'prLevelSuggestions.deliveryStatus': DeliveryStatus.SENT,
+                            'prLevelSuggestions.deliveryStatus':
+                                DeliveryStatus.SENT,
                             'prLevelSuggestions.brokenKodyRulesIds': ruleId,
                         },
                     },

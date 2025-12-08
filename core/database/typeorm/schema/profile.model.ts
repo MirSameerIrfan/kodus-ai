@@ -1,4 +1,4 @@
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import { CoreModel } from '@shared/infrastructure/repositories/model/typeOrm';
 import { Column, Entity, JoinColumn, OneToMany, OneToOne } from 'typeorm';
 import { UserModel } from './user.model';
 import { ProfileConfigModel } from './profileConfig.model';

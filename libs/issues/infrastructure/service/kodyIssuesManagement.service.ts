@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Injectable, Inject } from '@nestjs/common';
 import { PULL_REQUESTS_SERVICE_TOKEN } from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
 import { IPullRequestsService } from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
@@ -6,11 +6,11 @@ import { ImplementationStatus } from '@libs/code-review/domain/pull-requests/enu
 import { ISSUES_SERVICE_TOKEN } from '@libs/domain/issues/contracts/issues.service.contract';
 import { IKodyIssuesManagementService } from '@libs/domain/codeBase/contracts/KodyIssuesManagement.contract';
 import { IssuesService } from '@libs/infrastructure/adapters/services/issues/issues.service';
-import { KodyIssuesAnalysisService } from '@/ee/codeBase/kodyIssuesAnalysis.service';
-import { KODY_ISSUES_ANALYSIS_SERVICE_TOKEN } from '@/ee/codeBase/kodyIssuesAnalysis.service';
+import { KodyIssuesAnalysisService } from '@libs/code-review/ee/analysis/kodyIssuesAnalysis.service';
+import { KODY_ISSUES_ANALYSIS_SERVICE_TOKEN } from '@libs/code-review/ee/analysis/kodyIssuesAnalysis.service';
 import { PriorityStatus } from '@libs/code-review/domain/pull-requests/enums/priorityStatus.enum';
-import { IssueStatus } from '@/config/types/general/issues.type';
-import { CodeSuggestion } from '@/config/types/general/codeReview.type';
+import { IssueStatus } from '@shared/types/general/issues.type';
+import { CodeSuggestion } from '@shared/types/general/codeReview.type';
 import {
     contextToGenerateIssues,
     IContributingSuggestion,
@@ -34,12 +34,10 @@ import {
 import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
 import { IssueCreationConfig } from '@libs/domain/issues/entities/issue-creation-config.entity';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
-import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
+import { PermissionValidationService } from '@shared/ee/services/permissionValidation.service';
 
 @Injectable()
-export class KodyIssuesManagementService
-    implements IKodyIssuesManagementService
-{
+export class KodyIssuesManagementService implements IKodyIssuesManagementService {
     private readonly logger = createLogger(KodyIssuesManagementService.name);
     constructor(
         @Inject(ISSUES_SERVICE_TOKEN)
@@ -53,7 +51,7 @@ export class KodyIssuesManagementService
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
         private readonly cacheService: CacheService,
-        private readonly permissionValidationService: PermissionValidationService
+        private readonly permissionValidationService: PermissionValidationService,
     ) {}
 
     async processClosedPr(params: contextToGenerateIssues): Promise<void> {

@@ -33,4 +33,3 @@ export interface StageCompletedEvent {
      */
     metadata?: Record<string, unknown>;
 }
-

@@ -1,5 +1,5 @@
-import { LicenseModule } from '@/ee/license/license.module';
-import { OrganizationParametersModule } from '@/modules/organizationParameters.module';
+import { LicenseModule } from '@libs/organization/ee/license/license.module';
+import { OrganizationParametersModule } from '@libs/organization/modules/org-parameters.module';
 import { Module, forwardRef } from '@nestjs/common';
 import { PermissionValidationService } from './services/permissionValidation.service';
 

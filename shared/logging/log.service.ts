@@ -1,10 +1,10 @@
 import {
     ILogRepository,
     LOG_REPOSITORY_TOKEN,
-} from '@libs/log/contracts/log.repository.contracts';
-import { ILogService } from '@libs/log/contracts/log.service.contracts';
-import { LogEntity } from '@libs/log/entities/log.entity';
-import { ILog } from '@libs/log/interfaces/log.interface';
+} from '@libs/analytics/domain/log/contracts/log.repository.contracts';
+import { ILogService } from '@libs/analytics/domain/log/contracts/log.service.contracts';
+import { LogEntity } from '@libs/analytics/domain/log/entities/log.entity';
+import { ILog } from '@libs/analytics/domain/log/interfaces/log.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

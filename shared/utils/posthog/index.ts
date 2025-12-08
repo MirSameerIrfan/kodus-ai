@@ -3,7 +3,7 @@ import { IPostHog, PostHog } from 'posthog-node';
 import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 
 class PostHogClient {
     private readonly posthog: IPostHog | null = null;

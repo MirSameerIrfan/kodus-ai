@@ -1,12 +1,12 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import {
     CommentResult,
     FileChange,
     Repository,
-} from '@/config/types/general/codeReview.type';
-import { Commit } from '@/config/types/general/commit.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { TreeItem } from '@/config/types/general/tree.type';
+} from '@shared/types/general/codeReview.type';
+import { Commit } from '@shared/types/general/commit.type';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { TreeItem } from '@shared/types/general/tree.type';
 import {
     AUTH_INTEGRATION_SERVICE_TOKEN,
     IAuthIntegrationService,
@@ -107,7 +107,7 @@ export class BitbucketService
         private readonly promptService: PromptService,
         private readonly configService: ConfigService,
         private readonly cacheService: CacheService,
-        private readonly mcpManagerService?: MCPManagerService
+        private readonly mcpManagerService?: MCPManagerService,
     ) {}
 
     private readonly USER_CACHE_TTL = 60 * 60 * 1000; // 1 hour

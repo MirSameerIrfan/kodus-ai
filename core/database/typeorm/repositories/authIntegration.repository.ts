@@ -2,12 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AuthIntegrationModel } from '@core/database/typeorm/schema/authIntegration.model';
 import { FindManyOptions, Raw, Repository, UpdateQueryBuilder } from 'typeorm';
-import { IAuthIntegrationRepository } from '@/core/domain/authIntegrations/contracts/auth-integration.repository.contracts';
-import { AuthIntegrationEntity } from '@/core/domain/authIntegrations/entities/auth-integration.entity';
-import { IAuthIntegration } from '@/core/domain/authIntegrations/interfaces/auth-integration.interface';
-import { mapSimpleModelToEntity } from '@/shared/infrastructure/repositories/mappers';
-import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
+import { IAuthIntegrationRepository } from '@libs/integrations/domain/auth-integrations/contracts/auth-integration.repository.contracts';
+import { AuthIntegrationEntity } from '@libs/integrations/domain/auth-integrations/entities/auth-integration.entity';
+import { IAuthIntegration } from '@libs/integrations/domain/auth-integrations/interfaces/auth-integration.interface';
+import { mapSimpleModelToEntity } from '@shared/infrastructure/repositories/mappers';
+import { createNestedConditions } from '@shared/infrastructure/repositories/filters';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
 
 @Injectable()
 export class AuthIntegrationRepository implements IAuthIntegrationRepository {

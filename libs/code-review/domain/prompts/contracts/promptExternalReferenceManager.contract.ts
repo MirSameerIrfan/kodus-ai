@@ -1,4 +1,4 @@
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { PromptExternalReferenceEntity } from '../entities/promptExternalReference.entity';
 import { PromptSourceType } from '../interfaces/promptExternalReference.interface';
 

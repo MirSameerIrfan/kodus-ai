@@ -1,20 +1,19 @@
 import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
 import { IIntegrationConfigRepository } from './integration-config.repository.contracts';
 import { IntegrationConfigEntity } from '../entities/integration-config.entity';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 
 export const INTEGRATION_CONFIG_SERVICE_TOKEN = Symbol(
     'IntegrationConfigService',
 );
 
-export interface IIntegrationConfigService
-    extends IIntegrationConfigRepository {
+export interface IIntegrationConfigService extends IIntegrationConfigRepository {
     createOrUpdateConfig(
         integrationConfigKey: IntegrationConfigKey,
         payload: any,
         integrationId: any,
         organizationAndTeamData: OrganizationAndTeamData,
-        type?: "replace" | "append",
+        type?: 'replace' | 'append',
     ): Promise<IntegrationConfigEntity>;
     findIntegrationConfigFormatted<T>(
         configKey: IntegrationConfigKey,

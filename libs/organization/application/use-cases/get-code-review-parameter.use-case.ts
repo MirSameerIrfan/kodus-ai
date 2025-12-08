@@ -1,12 +1,12 @@
-import { createLogger } from "@kodus/flow";
-import { CodeReviewConfigWithoutLLMProvider } from '@/config/types/general/codeReview.type';
+import { createLogger } from '@kodus/flow';
+import { CodeReviewConfigWithoutLLMProvider } from '@shared/types/general/codeReview.type';
 import {
     FormattedCodeReviewConfig,
     FormattedConfigLevel,
     FormattedGlobalCodeReviewConfig,
     IFormattedConfigProperty,
-} from '@/config/types/general/codeReviewConfig.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+} from '@shared/types/general/codeReviewConfig.type';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     CODE_BASE_CONFIG_SERVICE_TOKEN,
     ICodeBaseConfigService,
@@ -42,7 +42,7 @@ export class GetCodeReviewParameterUseCase {
         private readonly codeBaseConfigService: ICodeBaseConfigService,
         private readonly authorizationService: AuthorizationService,
         @Inject(PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN)
-        private readonly promptReferenceManager: IPromptExternalReferenceManagerService
+        private readonly promptReferenceManager: IPromptExternalReferenceManagerService,
     ) {}
 
     async execute(user: Partial<IUser>, teamId: string) {

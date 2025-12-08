@@ -9,12 +9,12 @@ import {
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
-} from '@/shared/infrastructure/repositories/mappers';
+} from '@shared/infrastructure/repositories/mappers';
 import { GlobalParametersModel } from '@core/database/typeorm/schema/global-parameters.model';
-import { GlobalParametersEntity } from '@/core/domain/global-parameters/entities/global-parameters.entity';
-import { IGlobalParameters } from '@/core/domain/global-parameters/interfaces/global-parameters.interface';
-import { IGlobalParametersRepository } from '@/core/domain/global-parameters/contracts/global-parameters.repository.contracts';
-import { GlobalParametersKey } from '@/shared/domain/enums/global-parameters-key.enum';
+import { GlobalParametersEntity } from '@libs/organization/domain/global-parameters/entities/global-parameters.entity';
+import { IGlobalParameters } from '@libs/organization/domain/global-parameters/interfaces/global-parameters.interface';
+import { IGlobalParametersRepository } from '@libs/organization/domain/global-parameters/contracts/global-parameters.repository.contracts';
+import { GlobalParametersKey } from '@shared/domain/enums/global-parameters-key.enum';
 
 @Injectable()
 export class GlobalParametersRepository implements IGlobalParametersRepository {

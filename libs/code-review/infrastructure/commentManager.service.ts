@@ -8,8 +8,8 @@ import {
     CommentResult,
     FileChange,
     SummaryConfig,
-} from '@/config/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+} from '@shared/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
@@ -35,7 +35,6 @@ import {
     PromptRunnerService,
 } from '@kodus/kodus-common/llm';
 import { Inject, Injectable } from '@nestjs/common';
-import { ICommentManagerService } from '../../../../domain/codeBase/contracts/CommentManagerService.contract';
 import { ObservabilityService } from '@shared/logging/observability.service';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import { CodeReviewPipelineContext } from './codeReviewPipeline/context/code-review-pipeline.context';
@@ -44,6 +43,7 @@ import {
     PlaceholderContext,
 } from './utils/services/messageTemplateProcessor.service';
 import { LLMResponseProcessor } from './utils/transforms/llmResponseProcessor.transform';
+import { ICommentManagerService } from '../domain/contracts/CommentManagerService.contract';
 
 interface ClusteredSuggestion {
     id: string;

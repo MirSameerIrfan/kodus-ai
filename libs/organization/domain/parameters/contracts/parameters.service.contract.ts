@@ -1,6 +1,6 @@
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { IParametersRepository } from './parameters.repository.contracts';
-import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
+import { ParametersKey } from '@shared/enums/parameters-key.enum';
 import { ParametersEntity } from '../entities/parameters.entity';
 
 export const PARAMETERS_SERVICE_TOKEN = Symbol('ParametersService');

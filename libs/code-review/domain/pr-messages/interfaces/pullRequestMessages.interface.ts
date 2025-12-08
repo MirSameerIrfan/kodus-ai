@@ -1,7 +1,7 @@
 import {
     ConfigLevel,
     PullRequestMessageStatus,
-} from '@/config/types/general/pullRequestMessages.type';
+} from '@shared/types/general/pullRequestMessages.type';
 
 export interface IPullRequestMessageContent {
     content: string;

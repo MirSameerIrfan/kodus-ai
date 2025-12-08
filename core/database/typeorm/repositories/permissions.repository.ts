@@ -1,18 +1,18 @@
-import { createLogger } from "@kodus/flow";
-import { IPermissionsRepository } from '@/core/domain/permissions/contracts/permissions.repository.contract';
+import { createLogger } from '@kodus/flow';
+import { IPermissionsRepository } from '@libs/identity/domain/permissions/contracts/permissions.repository.contract';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PermissionsModel } from '@core/database/typeorm/schema/permissions.model';
 import { FindOptionsWhere, Repository } from 'typeorm';
-import { IPermissions } from '@/core/domain/permissions/types/permissions.types';
-import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
+import { IPermissions } from '@libs/identity/domain/permissions/types/permissions.types';
+import { createNestedConditions } from '@shared/infrastructure/repositories/filters';
 
 @Injectable()
 export class PermissionsRepository implements IPermissionsRepository {
     private readonly logger = createLogger(PermissionsRepository.name);
     constructor(
         @InjectRepository(PermissionsModel)
-        private readonly permissionsRepository: Repository<PermissionsModel>
+        private readonly permissionsRepository: Repository<PermissionsModel>,
     ) {}
 
     async create(

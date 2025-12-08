@@ -6,9 +6,7 @@ import { PipelineExecutor } from '../pipeline/pipeline-executor.service';
 import { DryRunCodeReviewPipelineStrategy } from './dry-run-cr-pipeline.strategy';
 
 @Injectable()
-export class DryRunCodeReviewPipeline
-    implements IPipeline<CodeReviewPipelineContext>
-{
+export class DryRunCodeReviewPipeline implements IPipeline<CodeReviewPipelineContext> {
     private readonly logger = createLogger(DryRunCodeReviewPipeline.name);
     pipeLineName: string = 'DryRunCodeReviewPipeline';
 

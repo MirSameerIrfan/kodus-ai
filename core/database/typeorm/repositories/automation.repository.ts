@@ -1,5 +1,5 @@
-import { IAutomationRepository } from '@/core/domain/automation/contracts/automation.repository';
-import { IAutomation } from '@/core/domain/automation/interfaces/automation.interface';
+import { IAutomationRepository } from '@libs/automation/domain/contracts/automation.repository';
+import { IAutomation } from '@libs/automation/domain/interfaces/automation.interface';
 import { Injectable } from '@nestjs/common';
 import { AutomationModel } from '@core/database/typeorm/schema/automation.model';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -15,15 +15,15 @@ import {
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
-} from '@/shared/infrastructure/repositories/mappers';
-import { AutomationEntity } from '@/core/domain/automation/entities/automation.entity';
+} from '@shared/infrastructure/repositories/mappers';
+import { AutomationEntity } from '@libs/automation/domain/entities/automation.entity';
 
 @Injectable()
 export class AutomationRepository implements IAutomationRepository {
     constructor(
         @InjectRepository(AutomationModel)
         private readonly automationRepository: Repository<AutomationModel>,
-    ) { }
+    ) {}
 
     async findOne(filter: Partial<IAutomation>): Promise<AutomationEntity> {
         try {

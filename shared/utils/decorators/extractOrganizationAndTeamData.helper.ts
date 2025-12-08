@@ -1,4 +1,4 @@
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 
 export function extractOrganizationAndTeamData(
     args: any[],

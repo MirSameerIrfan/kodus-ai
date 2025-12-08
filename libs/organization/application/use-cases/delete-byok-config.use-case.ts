@@ -1,5 +1,8 @@
-import { Injectable, Inject } from "@nestjs/common";
-import { ORGANIZATION_PARAMETERS_SERVICE_TOKEN, IOrganizationParametersService } from "@/core/domain/organizationParameters/contracts/organizationParameters.service.contract";
+import { Injectable, Inject } from '@nestjs/common';
+import {
+    ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
+    IOrganizationParametersService,
+} from '@libs/organization/domain/org-parameters/contracts/organizationParameters.service.contract';
 
 @Injectable()
 export class DeleteByokConfigUseCase {
@@ -9,6 +12,9 @@ export class DeleteByokConfigUseCase {
     ) {}
 
     async execute(organizationId: string, configType: 'main' | 'fallback') {
-        return await this.organizationParametersService.deleteByokConfig(organizationId, configType);
+        return await this.organizationParametersService.deleteByokConfig(
+            organizationId,
+            configType,
+        );
     }
 }

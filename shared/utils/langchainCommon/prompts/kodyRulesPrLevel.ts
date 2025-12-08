@@ -1,7 +1,7 @@
 import {
     AnalysisContext,
     FileChange,
-} from '@/config/types/general/codeReview.type';
+} from '@shared/types/general/codeReview.type';
 
 export type KodyRulesPrLevelPayload = {
     pr_title: string;

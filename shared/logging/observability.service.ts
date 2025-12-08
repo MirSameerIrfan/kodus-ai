@@ -1,4 +1,4 @@
-import type { DatabaseConnection } from '@/config/types';
+import type { DatabaseConnection } from '@shared/types';
 import { getObservability, IdGenerator, createLogger } from '@kodus/flow';
 import { TokenTrackingHandler } from '@kodus/kodus-common/llm';
 import { Injectable } from '@nestjs/common';

@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere } from 'typeorm';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { PinoLoggerService } from '@shared/logging/pino.service';
 import { CodeReviewJobModel } from '@core/database/typeorm/schema/code-review-job.model';
 import { JobExecutionHistoryModel } from '@core/database/typeorm/schema/job-execution-history.model';
-import { ICodeReviewJob } from '@/core/domain/workflowQueue/interfaces/code-review-job.interface';
-import { IJobExecutionHistory } from '@/core/domain/workflowQueue/interfaces/code-review-job.interface';
-import { JobStatus } from '@/core/domain/workflowQueue/enums/job-status.enum';
+import { ICodeReviewJob } from '@libs/workflow-queue/domain/interfaces/code-review-job.interface';
+import { IJobExecutionHistory } from '@libs/workflow-queue/domain/interfaces/code-review-job.interface';
+import { JobStatus } from '@libs/workflow-queue/domain/enums/job-status.enum';
 
 @Injectable()
 export class CodeReviewJobRepository {

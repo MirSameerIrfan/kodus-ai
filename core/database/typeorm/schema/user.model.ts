@@ -1,6 +1,6 @@
-import { STATUS } from '@/config/types/database/status.type';
-import { Role } from '@/core/domain/permissions/enums/permissions.enum';
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import { STATUS } from '@shared/types/database/status.type';
+import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { CoreModel } from '@shared/infrastructure/repositories/model/typeOrm';
 import {
     Column,
     Entity,

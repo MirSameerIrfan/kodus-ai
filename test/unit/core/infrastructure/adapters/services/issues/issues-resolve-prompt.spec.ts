@@ -546,7 +546,8 @@ describe('KodyIssuesManagementService - resolveExistingIssues', () => {
                                 {
                                     id: 'suggestion-1',
                                     language: 'csharp',
-                                    suggestionContent: 'Add logging for exceptions',
+                                    suggestionContent:
+                                        'Add logging for exceptions',
                                 },
                             ],
                         },
@@ -556,7 +557,8 @@ describe('KodyIssuesManagementService - resolveExistingIssues', () => {
                                 {
                                     id: 'suggestion-2',
                                     language: 'csharp',
-                                    suggestionContent: 'Translate error message to Portuguese',
+                                    suggestionContent:
+                                        'Translate error message to Portuguese',
                                 },
                             ],
                         },

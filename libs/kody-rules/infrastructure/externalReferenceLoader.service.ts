@@ -1,7 +1,7 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 import { IKodyRule } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
-import { AnalysisContext } from '@/config/types/general/codeReview.type';
+import { AnalysisContext } from '@shared/types/general/codeReview.type';
 import { CodeReviewContextPackService } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';
 
 export interface LoadedReference {
@@ -18,7 +18,9 @@ export interface LoadedReferencesResult {
 @Injectable()
 export class ExternalReferenceLoaderService {
     private readonly logger = createLogger(ExternalReferenceLoaderService.name);
-    constructor(private readonly contextPackService: CodeReviewContextPackService) {}
+    constructor(
+        private readonly contextPackService: CodeReviewContextPackService,
+    ) {}
 
     async loadReferences(
         rule: IKodyRule,

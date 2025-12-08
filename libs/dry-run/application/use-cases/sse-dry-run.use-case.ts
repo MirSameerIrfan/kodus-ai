@@ -1,5 +1,5 @@
-import { createLogger } from "@kodus/flow";
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { createLogger } from '@kodus/flow';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     DRY_RUN_SERVICE_TOKEN,
     IDryRunService,
@@ -20,7 +20,7 @@ export class SseDryRunUseCase {
     constructor(
         @Inject(DRY_RUN_SERVICE_TOKEN)
         private readonly dryRunService: IDryRunService,
-        private readonly eventEmitter: EventEmitter2
+        private readonly eventEmitter: EventEmitter2,
     ) {}
 
     async execute(params: {

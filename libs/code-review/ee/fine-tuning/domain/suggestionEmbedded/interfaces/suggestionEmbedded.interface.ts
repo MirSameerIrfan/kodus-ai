@@ -15,4 +15,4 @@ export interface ISuggestionEmbedded {
     suggestionContent: string;
     oneSentenceSummary?: string;
     language: string;
- }
+}

@@ -1,6 +1,6 @@
 import { IsEnum, IsOptional } from 'class-validator';
-import { Role } from '@/core/domain/permissions/enums/permissions.enum';
-import { STATUS } from '@/config/types/database/status.type';
+import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { STATUS } from '@shared/types/database/status.type';
 
 export class UpdateAnotherUserDto {
     @IsOptional()

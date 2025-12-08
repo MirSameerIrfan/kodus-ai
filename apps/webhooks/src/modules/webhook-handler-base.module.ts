@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ConfigModule } from '@nestjs/config';
 import { WebhookEnqueueModule } from './webhook-enqueue.module';
-import { RabbitMQWrapperModule } from '@/modules/rabbitmq.module';
-import { LogModule } from '@/modules/log.module';
-import { DatabaseModule } from '@/modules/database.module';
-import { WebhookLogModule } from '@/modules/webhookLog.module';
+import { RabbitMQWrapperModule } from '@core/queue/rabbitmq.module';
+import { LogModule } from '@libs/analytics/modules/log.module';
+import { DatabaseModule } from '@core/database/database.module';
+import { WebhookLogModule } from '@libs/platform/modules/webhookLog.module';
 
 @Module({
     imports: [

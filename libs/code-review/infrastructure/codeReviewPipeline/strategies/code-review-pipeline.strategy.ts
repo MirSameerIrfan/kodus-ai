@@ -26,9 +26,7 @@ import { Inject } from '@nestjs/common';
 import { FileContextGateStage } from '../stages/file-context-gate.stage';
 
 @Injectable()
-export class CodeReviewPipelineStrategy
-    implements IPipelineStrategy<CodeReviewPipelineContext>
-{
+export class CodeReviewPipelineStrategy implements IPipelineStrategy<CodeReviewPipelineContext> {
     constructor(
         private readonly validateNewCommitsStage: ValidateNewCommitsStage,
         private readonly resolveConfigStage: ResolveConfigStage,

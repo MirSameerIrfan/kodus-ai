@@ -11,7 +11,7 @@ import { Type } from 'class-transformer';
 import {
     KodyRulesOrigin,
     KodyRulesStatus,
-} from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+} from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 
 export enum KodyRuleSeverity {
     LOW = 'low',

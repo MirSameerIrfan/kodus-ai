@@ -274,11 +274,13 @@ describe('External References - Integration Tests', () => {
             });
 
             expect(kodyRule.externalReferences).toHaveLength(3);
-            expect(kodyRule.externalReferences?.map((r) => r.filePath)).toEqual([
-                '.github/CODEOWNERS',
-                'src/types/UserRole.enum.ts',
-                'docs/openapi.yml',
-            ]);
+            expect(kodyRule.externalReferences?.map((r) => r.filePath)).toEqual(
+                [
+                    '.github/CODEOWNERS',
+                    'src/types/UserRole.enum.ts',
+                    'docs/openapi.yml',
+                ],
+            );
         });
 
         it('should not create rule when referenced file does not exist', async () => {
@@ -295,7 +297,9 @@ describe('External References - Integration Tests', () => {
                 'detectReferences',
             ).mockResolvedValue(mockLLMDetectionResult.references);
 
-            mockCodeManagementService.getRepositoryAllFiles.mockResolvedValue([]);
+            mockCodeManagementService.getRepositoryAllFiles.mockResolvedValue(
+                [],
+            );
 
             const kodyRule: CreateKodyRuleDto = {
                 title: 'Missing ref rule',
@@ -319,13 +323,11 @@ describe('External References - Integration Tests', () => {
             jest.spyOn(
                 detectorService as any,
                 'detectReferences',
-            ).mockResolvedValueOnce([
-                { fileName: 'CODEOWNERS' },
-            ]);
+            ).mockResolvedValueOnce([{ fileName: 'CODEOWNERS' }]);
 
-            mockCodeManagementService.getRepositoryAllFiles.mockResolvedValueOnce([
-                { path: '.github/CODEOWNERS', size: 100 },
-            ] as any);
+            mockCodeManagementService.getRepositoryAllFiles.mockResolvedValueOnce(
+                [{ path: '.github/CODEOWNERS', size: 100 }] as any,
+            );
 
             const kodyRule: CreateKodyRuleDto = {
                 uuid: 'existing-rule',
@@ -351,13 +353,11 @@ describe('External References - Integration Tests', () => {
             jest.spyOn(
                 detectorService as any,
                 'detectReferences',
-            ).mockResolvedValueOnce([
-                { fileName: 'UserRole.enum.ts' },
-            ]);
+            ).mockResolvedValueOnce([{ fileName: 'UserRole.enum.ts' }]);
 
-            mockCodeManagementService.getRepositoryAllFiles.mockResolvedValueOnce([
-                { path: 'src/types/UserRole.enum.ts', size: 200 },
-            ] as any);
+            mockCodeManagementService.getRepositoryAllFiles.mockResolvedValueOnce(
+                [{ path: 'src/types/UserRole.enum.ts', size: 200 }] as any,
+            );
 
             kodyRule.rule = 'Validate against UserRole.enum.ts';
 
@@ -400,7 +400,9 @@ describe('External References - Integration Tests', () => {
             });
 
             expect(result[0].filePath).toBe('src/types/UserRole.enum.ts');
-            expect(mockCodeManagementService.getRepositoryAllFiles).toHaveBeenCalledWith(
+            expect(
+                mockCodeManagementService.getRepositoryAllFiles,
+            ).toHaveBeenCalledWith(
                 expect.objectContaining({
                     filters: expect.objectContaining({
                         filePatterns: ['**/types/UserRole.enum.ts'],
@@ -485,7 +487,10 @@ describe('External References - Integration Tests', () => {
                 new Error('Context OS unavailable'),
             );
 
-            const result = await loaderService.loadReferences(rule, mockContext);
+            const result = await loaderService.loadReferences(
+                rule,
+                mockContext,
+            );
 
             expect(result.references).toEqual([]);
             expect(result.augmentations.size).toBe(0);
@@ -524,7 +529,9 @@ describe('External References - Integration Tests', () => {
             });
 
             expect(result.length).toBeLessThanOrEqual(10);
-            expect(mockCodeManagementService.getRepositoryAllFiles).toHaveBeenCalledWith(
+            expect(
+                mockCodeManagementService.getRepositoryAllFiles,
+            ).toHaveBeenCalledWith(
                 expect.objectContaining({
                     filters: expect.objectContaining({
                         maxFiles: 10,

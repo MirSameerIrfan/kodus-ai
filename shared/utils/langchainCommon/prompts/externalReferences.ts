@@ -99,4 +99,3 @@ ${payload.text}${contextHint}
 Analyze if this text requires external file references.
 Return JSON with detected file references or empty array if none exist.`;
 };
-

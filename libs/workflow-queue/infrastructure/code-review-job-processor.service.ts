@@ -34,7 +34,7 @@ import { WorkflowPausedError } from '@libs/workflow-queue/domain/errors/workflow
 import { MoreThanOrEqual } from 'typeorm';
 import { environment } from '@config/ee/environment/environment.dev';
 import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
-import { Repository } from '@/config/types/general/codeReview.type';
+import { Repository } from '@shared/types/general/codeReview.type';
 import { RetryPolicyService } from './retry-policy.service';
 import { DEFAULT_RETRY_POLICY } from './retry-policy.config';
 import { DistributedLockService } from './distributed-lock.service';

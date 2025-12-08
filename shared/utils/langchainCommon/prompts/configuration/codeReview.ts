@@ -1,4 +1,4 @@
-import { LimitationType } from '@/config/types/general/codeReview.type';
+import { LimitationType } from '@shared/types/general/codeReview.type';
 import type { ContextPack } from '@context-os-core/interfaces';
 import { getDefaultKodusConfigFile } from '@shared/utils/validateCodeReviewConfigFile';
 import { getTextOrDefault, sanitizePromptText } from '../prompt.helpers';

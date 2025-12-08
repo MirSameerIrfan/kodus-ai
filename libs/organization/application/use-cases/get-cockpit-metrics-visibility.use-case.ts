@@ -1,21 +1,28 @@
-import { createLogger } from "@kodus/flow";
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { createLogger } from '@kodus/flow';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/org-parameters/contracts/organizationParameters.service.contract';
-import { ICockpitMetricsVisibility, DEFAULT_COCKPIT_METRICS_VISIBILITY } from '@libs/organization/domain/org-parameters/interfaces/cockpit-metrics-visibility.interface';
+import {
+    ICockpitMetricsVisibility,
+    DEFAULT_COCKPIT_METRICS_VISIBILITY,
+} from '@libs/organization/domain/org-parameters/interfaces/cockpit-metrics-visibility.interface';
 import { OrganizationParametersKey } from '@shared/domain/enums/organization-parameters-key.enum';
 import { Inject, Injectable } from '@nestjs/common';
 
-export const GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN = Symbol('GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN');
+export const GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN = Symbol(
+    'GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN',
+);
 
 @Injectable()
 export class GetCockpitMetricsVisibilityUseCase {
-    private readonly logger = createLogger(GetCockpitMetricsVisibilityUseCase.name);
+    private readonly logger = createLogger(
+        GetCockpitMetricsVisibilityUseCase.name,
+    );
     constructor(
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
-        private readonly organizationParametersService: IOrganizationParametersService
+        private readonly organizationParametersService: IOrganizationParametersService,
     ) {}
 
     async execute(
@@ -30,7 +37,8 @@ export class GetCockpitMetricsVisibilityUseCase {
 
             if (!parameter) {
                 this.logger.log({
-                    message: 'Cockpit metrics visibility config not found, returning default values (all true)',
+                    message:
+                        'Cockpit metrics visibility config not found, returning default values (all true)',
                     context: GetCockpitMetricsVisibilityUseCase.name,
                     metadata: {
                         organizationId: organizationAndTeamData.organizationId,
@@ -42,7 +50,8 @@ export class GetCockpitMetricsVisibilityUseCase {
             return parameter.configValue as ICockpitMetricsVisibility;
         } catch (error) {
             this.logger.error({
-                message: 'Error getting cockpit metrics visibility, returning default values',
+                message:
+                    'Error getting cockpit metrics visibility, returning default values',
                 context: GetCockpitMetricsVisibilityUseCase.name,
                 error: error,
                 metadata: {
@@ -54,4 +63,3 @@ export class GetCockpitMetricsVisibilityUseCase {
         }
     }
 }
-

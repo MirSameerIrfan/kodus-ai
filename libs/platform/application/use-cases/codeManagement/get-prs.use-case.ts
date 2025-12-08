@@ -1,5 +1,5 @@
-import { createLogger } from "@kodus/flow";
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { createLogger } from '@kodus/flow';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { PullRequest } from '@libs/platform/domain/types/codeManagement/pullRequests.type';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
@@ -13,10 +13,15 @@ export class GetPRsUseCase implements IUseCase {
     constructor(
         private readonly codeManagementService: CodeManagementService,
         @Inject(REQUEST)
-        private readonly request: Request & { user }
+        private readonly request: Request & { user },
     ) {}
 
-    public async execute(params: { teamId: string; number?: number; title: string; url?: string }) {
+    public async execute(params: {
+        teamId: string;
+        number?: number;
+        title: string;
+        url?: string;
+    }) {
         try {
             const { teamId } = params;
             const organizationId = this.request.user.organization.uuid;

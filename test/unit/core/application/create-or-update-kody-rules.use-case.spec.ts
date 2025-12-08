@@ -180,7 +180,9 @@ describe('CreateOrUpdateKodyRulesUseCase', () => {
         });
 
         it('should clear references when none detected', async () => {
-            mockDetectorService.detectAndResolveReferences.mockResolvedValue([]);
+            mockDetectorService.detectAndResolveReferences.mockResolvedValue(
+                [],
+            );
 
             const kodyRule: CreateKodyRuleDto = {
                 title: 'Simple rule',
@@ -242,7 +244,8 @@ describe('CreateOrUpdateKodyRulesUseCase', () => {
             expect(mockKodyRulesService.createOrUpdate).toHaveBeenCalled();
             expect(mockLogger.warn).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    message: 'Failed to detect external references for manual rule creation',
+                    message:
+                        'Failed to detect external references for manual rule creation',
                 }),
             );
         });
@@ -278,7 +281,9 @@ describe('CreateOrUpdateKodyRulesUseCase', () => {
         });
 
         it('should work with kody-system user without authorization check', async () => {
-            mockDetectorService.detectAndResolveReferences.mockResolvedValue([]);
+            mockDetectorService.detectAndResolveReferences.mockResolvedValue(
+                [],
+            );
 
             const kodyRule: CreateKodyRuleDto = {
                 title: 'System rule',
@@ -300,4 +305,3 @@ describe('CreateOrUpdateKodyRulesUseCase', () => {
         });
     });
 });
-

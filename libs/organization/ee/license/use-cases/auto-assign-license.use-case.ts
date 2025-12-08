@@ -1,5 +1,5 @@
-import { createLogger } from "@kodus/flow";
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { createLogger } from '@kodus/flow';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
@@ -24,7 +24,7 @@ export class AutoAssignLicenseUseCase {
         @Inject(LICENSE_SERVICE_TOKEN)
         private readonly licenseService: ILicenseService,
         @Inject(PULL_REQUESTS_SERVICE_TOKEN)
-        private readonly pullRequestsService: IPullRequestsService
+        private readonly pullRequestsService: IPullRequestsService,
     ) {}
 
     async execute(params: {
@@ -79,7 +79,7 @@ export class AutoAssignLicenseUseCase {
 
             // 4. Count user's PRs
             const prs = await this.pullRequestsService.find({
-                organizationId: organizationAndTeamData.organizationId,
+                'organizationId': organizationAndTeamData.organizationId,
                 'user.id': userGitId,
             } as any);
 

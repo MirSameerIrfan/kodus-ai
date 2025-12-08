@@ -1,7 +1,7 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     IFileReference,
     ILoadedFileReference,
@@ -19,7 +19,9 @@ import {
 @Injectable()
 export class PromptContextLoaderService implements IPromptContextLoaderService {
     private readonly logger = createLogger(PromptContextLoaderService.name);
-    constructor(private readonly codeManagementService: CodeManagementService) {}
+    constructor(
+        private readonly codeManagementService: CodeManagementService,
+    ) {}
 
     async loadExternalContext(
         params: LoadContextParams,
@@ -312,8 +314,7 @@ export class PromptContextLoaderService implements IPromptContextLoaderService {
             newReferences: ILoadedFileReference[],
             errorMessage?: string,
         ): { references: ILoadedFileReference[]; error?: string } => {
-            const hasCurrentReferences =
-                (current?.references?.length ?? 0) > 0;
+            const hasCurrentReferences = (current?.references?.length ?? 0) > 0;
 
             if (hasCurrentReferences) {
                 return current as {

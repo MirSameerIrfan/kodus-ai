@@ -1,5 +1,5 @@
-import { createLogger } from "@kodus/flow";
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { createLogger } from '@kodus/flow';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { PULL_REQUEST_MANAGER_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/PullRequestManagerService.contract';
 import { PullRequestHandlerService } from '@libs/code-review/infrastructure/pullRequestManager.service';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
@@ -10,7 +10,9 @@ import { Request } from 'express';
 
 @Injectable()
 export class GetCodeManagementMemberListUseCase implements IUseCase {
-    private readonly logger = createLogger(GetCodeManagementMemberListUseCase.name);
+    private readonly logger = createLogger(
+        GetCodeManagementMemberListUseCase.name,
+    );
     constructor(
         private readonly codeManagementService: CodeManagementService,
         @Inject(PULL_REQUEST_MANAGER_SERVICE_TOKEN)
@@ -18,7 +20,7 @@ export class GetCodeManagementMemberListUseCase implements IUseCase {
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };
-        }
+        },
     ) {}
 
     public async execute(): Promise<{ name: string; id: string | number }[]> {

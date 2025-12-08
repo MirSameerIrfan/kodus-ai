@@ -18,6 +18,15 @@ export interface IRuleLikeService {
     findOne(filter?: Partial<RuleLikeEntity>): Promise<RuleLikeEntity | null>;
     find(filter?: Partial<RuleLikeEntity>): Promise<RuleLikeEntity[]>;
     getAllLikes(): Promise<RuleLikeEntity[]>;
-    getAllRulesWithFeedback(userId?: string): Promise<{ ruleId: string; positiveCount: number; negativeCount: number; userFeedback: RuleFeedbackType | null }[]>;
+    getAllRulesWithFeedback(
+        userId?: string,
+    ): Promise<
+        {
+            ruleId: string;
+            positiveCount: number;
+            negativeCount: number;
+            userFeedback: RuleFeedbackType | null;
+        }[]
+    >;
     removeFeedback(ruleId: string, userId?: string): Promise<boolean>;
 }

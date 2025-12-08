@@ -1,4 +1,4 @@
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import { CoreModel } from '@shared/infrastructure/repositories/model/typeOrm';
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { OrganizationModel } from './organization.model';
 import { VectorColumn } from '@core/database/typeorm/columnType/vector.type';

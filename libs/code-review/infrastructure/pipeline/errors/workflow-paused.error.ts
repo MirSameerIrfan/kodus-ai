@@ -22,4 +22,3 @@ export class WorkflowPausedError extends Error {
         }
     }
 }
-

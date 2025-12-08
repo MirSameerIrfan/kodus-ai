@@ -1,5 +1,8 @@
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { IMembers, IUpdateOrCreateMembersResponse } from '../interfaces/team-members.interface';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import {
+    IMembers,
+    IUpdateOrCreateMembersResponse,
+} from '../interfaces/team-members.interface';
 import { ITeamMemberRepository } from './teamMembers.repository.contracts';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 

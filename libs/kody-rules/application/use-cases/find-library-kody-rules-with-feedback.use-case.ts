@@ -1,5 +1,5 @@
-import { createLogger } from "@kodus/flow";
-import { KodyRuleFilters } from '@/config/types/kodyRules.type';
+import { createLogger } from '@kodus/flow';
+import { KodyRuleFilters } from '@shared/types/kodyRules.type';
 import {
     KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,
@@ -7,35 +7,48 @@ import {
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { FindLibraryKodyRulesDto } from '@shared/dtos/find-library-kody-rules.dto';
-import { PaginatedLibraryKodyRulesResponse, PaginationMetadata } from '@shared/dtos/paginated-library-kody-rules.dto';
+import {
+    PaginatedLibraryKodyRulesResponse,
+    PaginationMetadata,
+} from '@shared/dtos/paginated-library-kody-rules.dto';
 
 @Injectable()
 export class FindLibraryKodyRulesWithFeedbackUseCase {
-    private readonly logger = createLogger(FindLibraryKodyRulesWithFeedbackUseCase.name);
+    private readonly logger = createLogger(
+        FindLibraryKodyRulesWithFeedbackUseCase.name,
+    );
     constructor(
         @Inject(KODY_RULES_SERVICE_TOKEN)
         private readonly kodyRulesService: IKodyRulesService,
         @Inject(REQUEST)
         private readonly request: Request & {
             user?: { uuid: string; organization: { uuid: string } };
-        }
-    ) { }
+        },
+    ) {}
 
-    async execute(filters: FindLibraryKodyRulesDto): Promise<PaginatedLibraryKodyRulesResponse> {
+    async execute(
+        filters: FindLibraryKodyRulesDto,
+    ): Promise<PaginatedLibraryKodyRulesResponse> {
         try {
             const { page = 1, limit = 100, skip, ...kodyRuleFilters } = filters;
-            
+
             // Passa userId se o usuário estiver logado
             const userId = this.request.user?.uuid;
-            
+
             const allLibraryKodyRules =
-                await this.kodyRulesService.getLibraryKodyRulesWithFeedback(kodyRuleFilters, userId);
+                await this.kodyRulesService.getLibraryKodyRulesWithFeedback(
+                    kodyRuleFilters,
+                    userId,
+                );
 
             // Aplicar paginação
             const totalItems = allLibraryKodyRules.length;
             const totalPages = Math.ceil(totalItems / limit);
             const offset = skip || (page - 1) * limit;
-            const paginatedRules = allLibraryKodyRules.slice(offset, offset + limit);
+            const paginatedRules = allLibraryKodyRules.slice(
+                offset,
+                offset + limit,
+            );
 
             const paginationMetadata: PaginationMetadata = {
                 currentPage: page,
@@ -47,7 +60,8 @@ export class FindLibraryKodyRulesWithFeedbackUseCase {
             };
 
             this.logger.log({
-                message: 'Successfully retrieved library Kody Rules with feedback',
+                message:
+                    'Successfully retrieved library Kody Rules with feedback',
                 context: FindLibraryKodyRulesWithFeedbackUseCase.name,
                 metadata: {
                     userId,
@@ -72,4 +86,3 @@ export class FindLibraryKodyRulesWithFeedbackUseCase {
         }
     }
 }
-

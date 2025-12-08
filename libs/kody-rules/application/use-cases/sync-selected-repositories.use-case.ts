@@ -1,21 +1,23 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Injectable, Inject } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import { KodyRulesSyncService } from '@libs/kody-rules/infrastructure/kodyRulesSync.service';
 
 @Injectable()
 export class SyncSelectedRepositoriesKodyRulesUseCase {
-    private readonly logger = createLogger(SyncSelectedRepositoriesKodyRulesUseCase.name);
+    private readonly logger = createLogger(
+        SyncSelectedRepositoriesKodyRulesUseCase.name,
+    );
     constructor(
         private readonly codeManagementService: CodeManagementService,
         private readonly kodyRulesSyncService: KodyRulesSyncService,
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };
-        }
+        },
     ) {}
 
     async execute(params: {

@@ -1,4 +1,4 @@
-import { CodeReviewExecution } from '../../codeReviewExecutions/interfaces/codeReviewExecution.interface';
+import { CodeReviewExecution } from '@libs/code-review/domain/executions/interfaces/codeReviewExecution.interface';
 import { AutomationStatus } from '../enums/automation-status';
 import { ITeamAutomation } from './team-automation.interface';
 

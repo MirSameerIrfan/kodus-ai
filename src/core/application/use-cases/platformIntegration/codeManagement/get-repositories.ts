@@ -9,7 +9,6 @@ import { CodeManagementService } from '@/core/infrastructure/adapters/services/p
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { Inject } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import { Request } from 'express';
 
 export class GetRepositoriesUseCase implements IUseCase {
     private readonly logger = createLogger(GetRepositoriesUseCase.name);
@@ -38,11 +37,11 @@ export class GetRepositoriesUseCase implements IUseCase {
                 });
 
             const assignedRepositoryIds =
-                await this.authorizationService.getRepositoryScope(
-                    this.request.user,
-                    Action.Read,
-                    ResourceType.CodeReviewSettings,
-                );
+                await this.authorizationService.getRepositoryScope({
+                    user: this.request.user,
+                    action: Action.Read,
+                    resource: ResourceType.CodeReviewSettings,
+                });
 
             let filteredRepositories = repositories;
             if (assignedRepositoryIds !== null) {

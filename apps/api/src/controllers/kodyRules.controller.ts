@@ -1,25 +1,24 @@
-import { UserRequest } from '@/config/types/http/user-request.type';
-import { AddLibraryKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/add-library-kody-rules.use-case';
-import { ChangeStatusKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/change-status-kody-rules.use-case';
-import { CheckSyncStatusUseCase } from '@/core/application/use-cases/kodyRules/check-sync-status.use-case';
-import { CreateOrUpdateKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/create-or-update.use-case';
-import { DeleteRuleInOrganizationByIdKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/delete-rule-in-organization-by-id.use-case';
-import { FindByOrganizationIdKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-by-organization-id.use-case';
-import { FindLibraryKodyRulesBucketsUseCase } from '@/core/application/use-cases/kodyRules/find-library-kody-rules-buckets.use-case';
-import { FindLibraryKodyRulesWithFeedbackUseCase } from '@/core/application/use-cases/kodyRules/find-library-kody-rules-with-feedback.use-case';
-import { FindLibraryKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-library-kody-rules.use-case';
-import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-rules-in-organization-by-filter.use-case';
-import { FindSuggestionsByRuleUseCase } from '@/core/application/use-cases/kodyRules/find-suggestions-by-rule.use-case';
-import { GenerateKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/generate-kody-rules.use-case';
-import { GetInheritedRulesKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/get-inherited-kody-rules.use-case';
-import { GetRulesLimitStatusUseCase } from '@/core/application/use-cases/kodyRules/get-rules-limit-status.use-case';
-import { ResyncRulesFromIdeUseCase } from '@/core/application/use-cases/kodyRules/resync-rules-from-ide.use-case';
-import { SyncSelectedRepositoriesKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/sync-selected-repositories.use-case';
+import { UserRequest } from '@shared/types/http/user-request.type';
+import { AddLibraryKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/add-library-kody-rules.use-case';
+import { ChangeStatusKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/change-status-kody-rules.use-case';
+import { CheckSyncStatusUseCase } from '@libs/kody-rules/application/use-cases/check-sync-status.use-case';
+import { CreateOrUpdateKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/create-or-update.use-case';
+import { DeleteRuleInOrganizationByIdKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/delete-rule-in-organization-by-id.use-case';
+import { FindByOrganizationIdKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/find-by-organization-id.use-case';
+import { FindLibraryKodyRulesBucketsUseCase } from '@libs/kody-rules/application/use-cases/find-library-kody-rules-buckets.use-case';
+import { FindLibraryKodyRulesWithFeedbackUseCase } from '@libs/kody-rules/application/use-cases/find-library-kody-rules-with-feedback.use-case';
+import { FindLibraryKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/find-library-kody-rules.use-case';
+import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/find-rules-in-organization-by-filter.use-case';
+import { FindSuggestionsByRuleUseCase } from '@libs/kody-rules/application/use-cases/find-suggestions-by-rule.use-case';
+import { GenerateKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/generate-kody-rules.use-case';
+import { GetInheritedRulesKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/get-inherited-kody-rules.use-case';
+import { GetRulesLimitStatusUseCase } from '@libs/kody-rules/application/use-cases/get-rules-limit-status.use-case';
+import { ResyncRulesFromIdeUseCase } from '@libs/kody-rules/application/use-cases/resync-rules-from-ide.use-case';
+import { SyncSelectedRepositoriesKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/sync-selected-repositories.use-case';
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import { CacheService } from '@/shared/utils/cache/cache.service';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
     Body,
     Controller,
@@ -45,6 +44,7 @@ import { CreateKodyRuleDto } from '../dtos/create-kody-rule.dto';
 import { FindLibraryKodyRulesDto } from '../dtos/find-library-kody-rules.dto';
 import { FindSuggestionsByRuleDto } from '../dtos/find-suggestions-by-rule.dto';
 import { GenerateKodyRulesDTO } from '../dtos/generate-kody-rules.dto';
+import { CacheService } from '@core/cache/cache.service';
 
 @Controller('kody-rules')
 export class KodyRulesController {

@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { BaseStage } from './base/base-stage.abstract';
 import {
@@ -10,7 +10,7 @@ import {
     handlePatchDeletions,
     convertToHunksWithLinesNumbers,
 } from '@shared/utils/patch';
-import { FileChange } from '@/config/types/general/codeReview.type';
+import { FileChange } from '@shared/types/general/codeReview.type';
 import {
     AutomationMessage,
     AutomationStatus,
@@ -20,13 +20,16 @@ import {
 export class FetchChangedFilesStage extends BaseStage {
     private readonly logger = createLogger(FetchChangedFilesStage.name);
     readonly name = 'FetchChangedFilesStage';
-    readonly dependsOn: string[] = ['ValidateNewCommitsStage', 'ValidateConfigStage']; // Depends on validation stages
+    readonly dependsOn: string[] = [
+        'ValidateNewCommitsStage',
+        'ValidateConfigStage',
+    ]; // Depends on validation stages
 
     private maxFilesToAnalyze = 500;
 
     constructor(
         @Inject(PULL_REQUEST_MANAGER_SERVICE_TOKEN)
-        private pullRequestHandlerService: IPullRequestManagerService
+        private pullRequestHandlerService: IPullRequestManagerService,
     ) {
         super();
     }

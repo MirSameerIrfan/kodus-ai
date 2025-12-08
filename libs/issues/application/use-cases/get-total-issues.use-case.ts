@@ -14,7 +14,7 @@ import {
     Action,
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { UserRequest } from '@/config/types/http/user-request.type';
+import { UserRequest } from '@shared/types/http/user-request.type';
 
 @Injectable()
 export class GetTotalIssuesUseCase implements IUseCase {

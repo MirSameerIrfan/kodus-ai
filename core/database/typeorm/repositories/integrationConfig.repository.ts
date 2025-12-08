@@ -1,6 +1,6 @@
-import { IIntegrationConfigRepository } from '@/core/domain/integrationConfigs/contracts/integration-config.repository.contracts';
-import { IntegrationConfigEntity } from '@/core/domain/integrationConfigs/entities/integration-config.entity';
-import { IIntegrationConfig } from '@/core/domain/integrationConfigs/interfaces/integration-config.interface';
+import { IIntegrationConfigRepository } from '@libs/integrations/domain/configs/contracts/integration-config.repository.contracts';
+import { IntegrationConfigEntity } from '@libs/integrations/domain/configs/entities/integration-config.entity';
+import { IIntegrationConfig } from '@libs/integrations/domain/configs/interfaces/integration-config.interface';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IntegrationConfigModel } from '@core/database/typeorm/schema/integrationConfig.model';
@@ -14,17 +14,15 @@ import {
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
-} from '@/shared/infrastructure/repositories/mappers';
-import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { STATUS } from '@/config/types/database/status.type';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
+} from '@shared/infrastructure/repositories/mappers';
+import { createNestedConditions } from '@shared/infrastructure/repositories/filters';
+import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { STATUS } from '@shared/types/database/status.type';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
 
 @Injectable()
-export class IntegrationConfigRepository
-    implements IIntegrationConfigRepository
-{
+export class IntegrationConfigRepository implements IIntegrationConfigRepository {
     constructor(
         @InjectRepository(IntegrationConfigModel)
         private readonly integrationConfigRepository: Repository<IntegrationConfigModel>,

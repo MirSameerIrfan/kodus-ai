@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { BaseStage } from './base/base-stage.abstract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
@@ -9,8 +9,8 @@ import {
     CommentResult,
     FileChange,
     Repository,
-} from '@/config/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+} from '@shared/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
@@ -23,7 +23,6 @@ import {
     ISuggestionService,
     SUGGESTION_SERVICE_TOKEN,
 } from '@libs/code-review/domain/contracts/SuggestionService.contract';
-import { CodeManagementService } from '../../../platformIntegration/codeManagement.service';
 import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
 import { ImplementationStatus } from '@libs/code-review/domain/pull-requests/enums/implementationStatus.enum';
 import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
@@ -44,6 +43,7 @@ import {
     DRY_RUN_SERVICE_TOKEN,
     IDryRunService,
 } from '@libs/dry-run/domain/contracts/dryRun.service.contract';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 
 @Injectable()
 export class CreateFileCommentsStage extends BaseStage {
@@ -64,7 +64,7 @@ export class CreateFileCommentsStage extends BaseStage {
         private readonly suggestionService: ISuggestionService,
         @Inject(DRY_RUN_SERVICE_TOKEN)
         private readonly dryRunService: IDryRunService,
-        private readonly codeManagementService: CodeManagementService
+        private readonly codeManagementService: CodeManagementService,
     ) {
         super();
     }
@@ -76,7 +76,7 @@ export class CreateFileCommentsStage extends BaseStage {
         if (!context?.organizationAndTeamData) {
             this.logger.error({
                 message: 'Missing organizationAndTeamData in context',
-                context: this.stageName,
+                context: this.name,
             });
             return context;
         }
@@ -84,7 +84,7 @@ export class CreateFileCommentsStage extends BaseStage {
         if (!context?.pullRequest?.number) {
             this.logger.error({
                 message: 'Missing pullRequest data in context',
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     organizationAndTeamData: context.organizationAndTeamData,
                 },
@@ -95,7 +95,7 @@ export class CreateFileCommentsStage extends BaseStage {
         if (!context?.repository?.name || !context?.repository?.id) {
             this.logger.error({
                 message: 'Missing repository data in context',
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     organizationAndTeamData: context.organizationAndTeamData,
                     prNumber: context.pullRequest.number,
@@ -121,7 +121,7 @@ export class CreateFileCommentsStage extends BaseStage {
         if (validSuggestions.length === 0) {
             this.logger.log({
                 message: `No file-level suggestions to process for PR#${context.pullRequest.number}`,
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     organizationAndTeamData: context.organizationAndTeamData,
                     prNumber: context.pullRequest.number,
@@ -154,7 +154,7 @@ export class CreateFileCommentsStage extends BaseStage {
         try {
             this.logger.log({
                 message: `Starting file comments creation for PR#${context.pullRequest.number}`,
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     validSuggestionsCount: validSuggestions.length,
                     discardedSuggestionsCount: discardedSuggestions.length,
@@ -173,7 +173,7 @@ export class CreateFileCommentsStage extends BaseStage {
 
             this.logger.log({
                 message: `Successfully processed file comments for PR#${context.pullRequest.number}`,
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     lineCommentsCreated: lineComments.length,
                     organizationAndTeamData: context.organizationAndTeamData,
@@ -188,7 +188,7 @@ export class CreateFileCommentsStage extends BaseStage {
         } catch (error) {
             this.logger.error({
                 message: `Error during file comments creation for PR#${context.pullRequest.number}`,
-                context: this.stageName,
+                context: this.name,
                 error,
                 metadata: {
                     organizationAndTeamData: context.organizationAndTeamData,
@@ -347,7 +347,7 @@ export class CreateFileCommentsStage extends BaseStage {
             this.logger.error({
                 message: `Error when trying to create line comments for PR#${pullRequest.number}`,
                 error: error,
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     organizationAndTeamData,
                     prNumber: pullRequest.number,
@@ -599,7 +599,7 @@ export class CreateFileCommentsStage extends BaseStage {
         } catch (error) {
             this.logger.error({
                 message: `Error while resolving comments for PR#${prNumber}`,
-                context: this.stageName,
+                context: this.name,
                 error,
                 metadata: {
                     organizationAndTeamData,
@@ -643,7 +643,7 @@ export class CreateFileCommentsStage extends BaseStage {
     async compensate(context: CodeReviewPipelineContext): Promise<void> {
         try {
             const lineComments = context.lineComments || [];
-            
+
             if (lineComments.length === 0) {
                 return;
             }

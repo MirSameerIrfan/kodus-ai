@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 import { TokenChunkingService } from '@shared/utils/tokenChunking/tokenChunking.service';
 import {
@@ -11,15 +11,14 @@ import {
     AnalysisContext,
     CodeSuggestion,
     SuggestionType,
-} from '@/config/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+} from '@shared/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { v4 as uuidv4 } from 'uuid';
 import {
     LLMModelProvider,
     ParserType,
     PromptRole,
     PromptRunnerService,
-    TokenTrackingHandler,
     TokenUsage,
 } from '@kodus/kodus-common/llm';
 import { LabelType } from '@shared/utils/codeManagement/labels';
@@ -67,7 +66,7 @@ export class CrossFileAnalysisService {
     constructor(
         private readonly tokenChunkingService: TokenChunkingService,
         private readonly promptRunnerService: PromptRunnerService,
-        private readonly observabilityService: ObservabilityService
+        private readonly observabilityService: ObservabilityService,
     ) {}
 
     async analyzeCrossFileCode(

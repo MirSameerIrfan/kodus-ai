@@ -1,10 +1,10 @@
-import { UserRequest } from '@/config/types/http/user-request.type';
-import { BackfillHistoricalPRsUseCase } from '@/core/application/use-cases/pullRequests/backfill-historical-prs.use-case';
-import { GetEnrichedPullRequestsUseCase } from '@/core/application/use-cases/pullRequests/get-enriched-pull-requests.use-case';
+import { UserRequest } from '@shared/types/http/user-request.type';
+import { BackfillHistoricalPRsUseCase } from '@libs/code-review/application/use-cases/pull-requests/backfill-historical-prs.use-case';
+import { GetEnrichedPullRequestsUseCase } from '@libs/code-review/application/use-cases/pull-requests/get-enriched-pull-requests.use-case';
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
     Body,
     Controller,

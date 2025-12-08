@@ -1,4 +1,4 @@
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { ProfileConfigKey } from '../enum/profileConfigKey.enum';
 import { IProfileConfigRepository } from './profileConfig.repository.contract';
 import { ProfileConfigEntity } from '../entities/profileConfig.entity';
@@ -16,5 +16,7 @@ export interface IProfileConfigService extends IProfileConfigRepository {
         organizationAndTeamData: OrganizationAndTeamData,
     ): Promise<T>;
 
-    findProfileConfigOrganizationOwner(organization_id: string): Promise<ProfileConfigEntity>;
+    findProfileConfigOrganizationOwner(
+        organization_id: string,
+    ): Promise<ProfileConfigEntity>;
 }

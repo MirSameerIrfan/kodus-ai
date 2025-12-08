@@ -1,6 +1,6 @@
-import { createLogger } from "@kodus/flow";
-import { GetOrganizationNameUseCase } from '@/core/application/use-cases/github/GetOrganizationName';
-import { GetIntegrationGithubUseCase } from '@/core/application/use-cases/github/get-integration-github';
+import { createLogger } from '@kodus/flow';
+import { GetOrganizationNameUseCase } from '@libs/platform/application/use-cases/github/GetOrganizationName';
+import { GetIntegrationGithubUseCase } from '@libs/platform/application/use-cases/github/get-integration-github';
 import {
     Controller,
     Get,
@@ -12,12 +12,12 @@ import {
     Res,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { ReceiveWebhookUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/receiveWebhook.use-case';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { ReceiveWebhookUseCase } from '@libs/platform/application/use-cases/codeManagement/receiveWebhook.use-case';
 import {
     IWebhookLogService,
     WEBHOOK_LOG_SERVICE,
-} from '@/core/domain/webhookLog/contracts/webhook-log.service.contract';
+} from '@libs/platform/domain/webhook-log/contracts/webhook-log.service.contract';
 
 @Controller('github')
 export class GithubController {
@@ -27,7 +27,7 @@ export class GithubController {
         private readonly getIntegrationGithubUseCase: GetIntegrationGithubUseCase,
         private readonly receiveWebhookUseCase: ReceiveWebhookUseCase,
         @Inject(WEBHOOK_LOG_SERVICE)
-        private readonly webhookLogService: IWebhookLogService
+        private readonly webhookLogService: IWebhookLogService,
     ) {}
 
     @Get('/organization-name')

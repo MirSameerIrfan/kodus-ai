@@ -5,7 +5,7 @@ import type {
     ContextRevisionActor,
     ContextRevisionScope,
 } from '@context-os-core/interfaces';
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import { CoreModel } from '@shared/infrastructure/repositories/model/typeOrm';
 
 @Entity('context_references')
 export class ContextReferenceModel extends CoreModel {

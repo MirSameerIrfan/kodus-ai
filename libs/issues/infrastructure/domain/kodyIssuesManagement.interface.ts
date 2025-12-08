@@ -1,5 +1,5 @@
-import { IssueStatus } from '@/config/types/general/issues.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { IssueStatus } from '@shared/types/general/issues.type';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { PlatformType } from '@shared/domain/enums/platform-type.enum';
 import { LabelType } from '@shared/utils/codeManagement/labels';
 import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';

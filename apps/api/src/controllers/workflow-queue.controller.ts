@@ -7,18 +7,18 @@ import {
     HttpStatus,
     HttpCode,
 } from '@nestjs/common';
-import { JOB_STATUS_SERVICE_TOKEN } from '@/core/domain/workflowQueue/contracts/job-status.service.contract';
-import { IJobStatusService } from '@/core/domain/workflowQueue/contracts/job-status.service.contract';
+import { JOB_STATUS_SERVICE_TOKEN } from '@libs/workflow-queue/domain/contracts/job-status.service.contract';
+import { IJobStatusService } from '@libs/workflow-queue/domain/contracts/job-status.service.contract';
 import { Inject } from '@nestjs/common';
-import { JobStatus } from '@/core/domain/workflowQueue/enums/job-status.enum';
-import { WorkflowType } from '@/core/domain/workflowQueue/enums/workflow-type.enum';
-import { PolicyGuard } from '@/core/infrastructure/adapters/services/permissions/policy.guard';
-import { CheckPolicies } from '@/core/infrastructure/adapters/services/permissions/policy.guard';
-import { checkPermissions } from '@/core/infrastructure/adapters/services/permissions/policy.handlers';
+import { JobStatus } from '@libs/workflow-queue/domain/enums/job-status.enum';
+import { WorkflowType } from '@libs/workflow-queue/domain/enums/workflow-type.enum';
+import { PolicyGuard } from '@libs/identity/infrastructure/permissions/policy.guard';
+import { CheckPolicies } from '@libs/identity/infrastructure/permissions/policy.guard';
+import { checkPermissions } from '@libs/identity/infrastructure/permissions/policy.handlers';
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 
 @Controller('workflow-queue')
 @UseGuards(PolicyGuard)

@@ -1,5 +1,5 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { ConversationAgentUseCase } from '@/core/application/use-cases/agent/conversation-agent.use-case';
+import { ConversationAgentUseCase } from '@libs/agents/application/use-cases/conversation-agent.use-case';
 import { OrganizationAndTeamDataDto } from '../dtos/organizationAndTeamData.dto';
 import { createThreadId } from '@kodus/flow';
 

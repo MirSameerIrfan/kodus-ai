@@ -6,7 +6,7 @@ import {
 } from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.repository.contract';
 import { CodeReviewSettingsLogEntity } from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/entities/codeReviewSettingsLog.entity';
 import { ICodeReviewSettingsLog } from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/interfaces/codeReviewSettingsLog.interface';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { PermissionValidationService } from '@shared/ee/services/permissionValidation.service';
 
 // Handlers
@@ -35,9 +35,7 @@ import {
 } from './pullRequestMessageLog.handler';
 
 @Injectable()
-export class CodeReviewSettingsLogService
-    implements ICodeReviewSettingsLogService
-{
+export class CodeReviewSettingsLogService implements ICodeReviewSettingsLogService {
     constructor(
         @Inject(CODE_REVIEW_SETTINGS_LOG_REPOSITORY_TOKEN)
         private readonly codeReviewSettingsLogRepository: ICodeReviewSettingsLogRepository,

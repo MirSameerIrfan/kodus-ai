@@ -1,5 +1,5 @@
-import { createLogger } from "@kodus/flow";
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { createLogger } from '@kodus/flow';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     IKodyRulesService,
     KODY_RULES_SERVICE_TOKEN,
@@ -28,7 +28,9 @@ type KodyRuleWithInheritance = Partial<IKodyRule> & {
 
 @Injectable()
 export class GetInheritedRulesKodyRulesUseCase {
-    private readonly logger = createLogger(GetInheritedRulesKodyRulesUseCase.name);
+    private readonly logger = createLogger(
+        GetInheritedRulesKodyRulesUseCase.name,
+    );
     constructor(
         private readonly kodyRulesValidationService: KodyRulesValidationService,
         @Inject(PARAMETERS_SERVICE_TOKEN)
@@ -36,7 +38,7 @@ export class GetInheritedRulesKodyRulesUseCase {
         @Inject(KODY_RULES_SERVICE_TOKEN)
         private readonly kodyRulesService: IKodyRulesService,
         @Inject(CONTEXT_REFERENCE_SERVICE_TOKEN)
-        private readonly contextReferenceService: IContextReferenceService
+        private readonly contextReferenceService: IContextReferenceService,
     ) {}
 
     async execute(

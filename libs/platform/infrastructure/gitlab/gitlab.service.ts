@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import {
     GitHubReaction,
     GitlabReaction,
@@ -21,10 +21,10 @@ import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import {
     Repository,
     ReviewComment,
-} from '@/config/types/general/codeReview.type';
-import { Commit } from '@/config/types/general/commit.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { TreeItem } from '@/config/types/general/tree.type';
+} from '@shared/types/general/codeReview.type';
+import { Commit } from '@shared/types/general/commit.type';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { TreeItem } from '@shared/types/general/tree.type';
 import {
     AUTH_INTEGRATION_SERVICE_TOKEN,
     IAuthIntegrationService,
@@ -89,20 +89,17 @@ import { PromptService } from './prompt.service';
 
 @Injectable()
 @IntegrationServiceDecorator(PlatformType.GITLAB, 'codeManagement')
-export class GitlabService
-    implements
-        Omit<
-            ICodeManagementService,
-            | 'getOrganizations'
-            | 'getPullRequestsWithChangesRequested'
-            | 'getListOfValidReviews'
-            | 'getPullRequestReviewThreads'
-            | 'getAuthenticationOAuthToken'
-            | 'getCommitsByReleaseMode'
-            | 'getDataForCalculateDeployFrequency'
-            | 'requestChangesPullRequest'
-        >
-{
+export class GitlabService implements Omit<
+    ICodeManagementService,
+    | 'getOrganizations'
+    | 'getPullRequestsWithChangesRequested'
+    | 'getListOfValidReviews'
+    | 'getPullRequestReviewThreads'
+    | 'getAuthenticationOAuthToken'
+    | 'getCommitsByReleaseMode'
+    | 'getDataForCalculateDeployFrequency'
+    | 'requestChangesPullRequest'
+> {
     private readonly logger = createLogger(GitlabService.name);
     constructor(
         @Inject(INTEGRATION_SERVICE_TOKEN)
@@ -117,7 +114,7 @@ export class GitlabService
         private readonly promptService: PromptService,
         private readonly configService: ConfigService,
         private readonly cacheService: CacheService,
-        private readonly mcpManagerService?: MCPManagerService
+        private readonly mcpManagerService?: MCPManagerService,
     ) {}
 
     async getPullRequestAuthors(params: {

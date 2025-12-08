@@ -33,7 +33,10 @@ describe('CodeReviewPipelineExecutor', () => {
         } as CodeReviewPipelineContext;
     };
 
-    const createMockLightStage = (name: string, dependsOn: string[] = []): Stage => {
+    const createMockLightStage = (
+        name: string,
+        dependsOn: string[] = [],
+    ): Stage => {
         return {
             name,
             dependsOn,
@@ -42,7 +45,10 @@ describe('CodeReviewPipelineExecutor', () => {
         } as unknown as Stage;
     };
 
-    const createMockHeavyStage = (name: string, dependsOn: string[] = []): HeavyStage => {
+    const createMockHeavyStage = (
+        name: string,
+        dependsOn: string[] = [],
+    ): HeavyStage => {
         return {
             name,
             dependsOn,
@@ -81,7 +87,9 @@ describe('CodeReviewPipelineExecutor', () => {
             ],
         }).compile();
 
-        executor = module.get<CodeReviewPipelineExecutor>(CodeReviewPipelineExecutor);
+        executor = module.get<CodeReviewPipelineExecutor>(
+            CodeReviewPipelineExecutor,
+        );
         stateManager = module.get(PipelineStateManager);
     });
 
@@ -95,7 +103,11 @@ describe('CodeReviewPipelineExecutor', () => {
             const stage1 = createMockLightStage('Stage1');
             const stage2 = createMockLightStage('Stage2', ['Stage1']);
 
-            const result = await executor.execute(context, [stage1, stage2], 'workflow-id');
+            const result = await executor.execute(
+                context,
+                [stage1, stage2],
+                'workflow-id',
+            );
 
             expect(stage1.execute).toHaveBeenCalledTimes(1);
             expect(stage2.execute).toHaveBeenCalledTimes(1);
@@ -122,7 +134,11 @@ describe('CodeReviewPipelineExecutor', () => {
                 return ctx;
             });
 
-            await executor.execute(context, [stage3, stage1, stage2], 'workflow-id');
+            await executor.execute(
+                context,
+                [stage3, stage1, stage2],
+                'workflow-id',
+            );
 
             expect(executionOrder).toEqual(['Stage1', 'Stage2', 'Stage3']);
         });
@@ -130,10 +146,16 @@ describe('CodeReviewPipelineExecutor', () => {
         it('should pause workflow when heavy stage is encountered', async () => {
             const context = createMockContext();
             const lightStage = createMockLightStage('LightStage');
-            const heavyStage = createMockHeavyStage('HeavyStage', ['LightStage']);
+            const heavyStage = createMockHeavyStage('HeavyStage', [
+                'LightStage',
+            ]);
 
             await expect(
-                executor.execute(context, [lightStage, heavyStage], 'workflow-id'),
+                executor.execute(
+                    context,
+                    [lightStage, heavyStage],
+                    'workflow-id',
+                ),
             ).rejects.toThrow(WorkflowPausedError);
 
             expect(lightStage.execute).toHaveBeenCalledTimes(1);
@@ -160,9 +182,9 @@ describe('CodeReviewPipelineExecutor', () => {
             stage.execute = jest.fn().mockRejectedValue(error);
             stage.compensate = jest.fn().mockResolvedValue(undefined);
 
-            await expect(executor.execute(context, [stage], 'workflow-id')).rejects.toThrow(
-                'Stage failed',
-            );
+            await expect(
+                executor.execute(context, [stage], 'workflow-id'),
+            ).rejects.toThrow('Stage failed');
 
             expect(stage.compensate).toHaveBeenCalledTimes(1);
         });
@@ -172,9 +194,9 @@ describe('CodeReviewPipelineExecutor', () => {
             const stage1 = createMockLightStage('Stage1', ['Stage2']);
             const stage2 = createMockLightStage('Stage2', ['Stage1']);
 
-            await expect(executor.execute(context, [stage1, stage2], 'workflow-id')).rejects.toThrow(
-                'Circular dependency',
-            );
+            await expect(
+                executor.execute(context, [stage1, stage2], 'workflow-id'),
+            ).rejects.toThrow('Circular dependency');
         });
 
         it('should skip pipeline if status is SKIPPED', async () => {
@@ -204,7 +226,10 @@ describe('CodeReviewPipelineExecutor', () => {
                 'workflow-id',
             );
 
-            expect(heavyStage.getResult).toHaveBeenCalledWith(context, 'task-id-123');
+            expect(heavyStage.getResult).toHaveBeenCalledWith(
+                context,
+                'task-id-123',
+            );
             expect(heavyStage.resume).toHaveBeenCalledTimes(1);
             expect(nextStage.execute).toHaveBeenCalledTimes(1);
         });
@@ -225,9 +250,13 @@ describe('CodeReviewPipelineExecutor', () => {
             const lightStage = createMockLightStage('LightStage');
 
             await expect(
-                executor.resume(context, [lightStage], 'task-id', 'workflow-id'),
+                executor.resume(
+                    context,
+                    [lightStage],
+                    'task-id',
+                    'workflow-id',
+                ),
             ).rejects.toThrow('Cannot resume: stage');
         });
     });
 });
-

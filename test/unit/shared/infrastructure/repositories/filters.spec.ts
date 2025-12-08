@@ -179,7 +179,7 @@ describe('createNestedConditions', () => {
     it('should handle complex objects with mixed Date, RegExp, and plain objects', () => {
         const now = new Date();
         const regex = /pattern/;
-        
+
         const filterObject = {
             createdAt: now,
             validationPattern: regex,

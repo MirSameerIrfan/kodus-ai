@@ -4,5 +4,5 @@ export enum ProgrammingLanguage {
     JAVA = 'JAVA',
     CSHARP = 'CSHARP',
     DART = 'DART',
-    RUBY = 'RUBY'
+    RUBY = 'RUBY',
 }

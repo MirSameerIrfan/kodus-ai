@@ -6,8 +6,7 @@ export const AUTOMATION_EXECUTION_SERVICE_TOKEN = Symbol(
     'AutomationExecutionService',
 );
 
-export interface IAutomationExecutionService
-    extends IAutomationExecutionRepository {
+export interface IAutomationExecutionService extends IAutomationExecutionRepository {
     findOneByOrganizationIdAndIssueId(
         organizationId: string,
         issueId: string,

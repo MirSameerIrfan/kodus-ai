@@ -1,5 +1,5 @@
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { IPullRequests, IRepository } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { IPullRequests, IRepository } from '../../pullRequests/interfaces/pullRequests.interface';
 import { CodeReviewFeedbackEntity } from '../entities/codeReviewFeedback.entity';
 import { ICodeReviewFeedbackRepository } from './codeReviewFeedback.repository';
 

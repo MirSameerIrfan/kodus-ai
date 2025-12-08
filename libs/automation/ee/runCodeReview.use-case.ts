@@ -1,5 +1,5 @@
-import { createLogger } from "@kodus/flow";
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { createLogger } from '@kodus/flow';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     AUTOMATION_SERVICE_TOKEN,
     IAutomationService,
@@ -71,7 +71,7 @@ export class RunCodeReviewAutomationUseCase {
         private readonly permissionValidationService: PermissionValidationService,
         private readonly autoAssignLicenseUseCase: AutoAssignLicenseUseCase,
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
-        private readonly organizationParametersService: IOrganizationParametersService
+        private readonly organizationParametersService: IOrganizationParametersService,
     ) {}
 
     async execute(params: {

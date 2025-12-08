@@ -3,7 +3,7 @@
  * Kodus Tech. All rights reserved.
  */
 
-import { CodeSuggestion } from '@/config/types/general/codeReview.type';
+import { CodeSuggestion } from '@shared/types/general/codeReview.type';
 import { IClusterizedSuggestion } from '@libs/domain/kodyFineTuning/interfaces/kodyFineTuning.interface';
 
 export const KODY_FINE_TUNING_CONTEXT_PREPARATION_TOKEN = Symbol(

@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import {
     AUTH_INTEGRATION_SERVICE_TOKEN,
     IAuthIntegrationService,
@@ -30,7 +30,7 @@ export class CloneIntegrationUseCase implements IUseCase {
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };
-        }
+        },
     ) {}
     public async execute(params: any): Promise<{ status: boolean }> {
         try {

@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import {
     AlignmentLevel,
@@ -40,7 +40,7 @@ import {
     BehaviourForExistingDescription,
     CodeReviewConfig,
     ReviewOptions,
-} from '@/config/types/general/codeReview.type';
+} from '@shared/types/general/codeReview.type';
 import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
 import * as filteredLibraryKodyRules from './data/filtered-rules.json';
 import { KodyRuleSeverity } from '@shared/dtos/create-kody-rule.dto';
@@ -50,11 +50,11 @@ import {
 } from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
 import { v4 } from 'uuid';
 import { SUPPORTED_LANGUAGES } from '@libs/code-review/domain/contracts/SupportedLanguages';
-import { LibraryKodyRule } from '@/config/types/kodyRules.type';
+import { LibraryKodyRule } from '@shared/types/kodyRules.type';
 import { ObservabilityService } from '@shared/logging/observability.service';
 import { BYOKPromptRunnerService } from '@shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
 import { PermissionValidationService } from '@shared/ee/services/permissionValidation.service';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 
 @Injectable()
 export class CommentAnalysisService {
@@ -62,7 +62,7 @@ export class CommentAnalysisService {
     constructor(
         private readonly promptRunnerService: PromptRunnerService,
         private readonly observabilityService: ObservabilityService,
-        private readonly permissionValidationService: PermissionValidationService
+        private readonly permissionValidationService: PermissionValidationService,
     ) {}
 
     async categorizeComments(params: {

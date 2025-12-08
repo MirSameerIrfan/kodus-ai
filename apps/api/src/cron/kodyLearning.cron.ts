@@ -4,17 +4,17 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import {
     TEAM_SERVICE_TOKEN,
     ITeamService,
-} from '@/core/domain/team/contracts/team.service.contract';
-import { STATUS } from '@/config/types/database/status.type';
-import { IntegrationStatusFilter } from '@/core/domain/team/interfaces/team.interface';
-import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
+} from '@libs/organization/domain/team/contracts/team.service.contract';
+import { STATUS } from '@shared/types/database/status.type';
+import { IntegrationStatusFilter } from '@libs/organization/domain/team/interfaces/team.interface';
+import { IntegrationCategory } from '@shared/domain/enums/integration-category.enum';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { GenerateKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/generate-kody-rules.use-case';
-import { KodyLearningStatus } from '@/core/domain/parameters/types/configValue.type';
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
+import { GenerateKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/generate-kody-rules.use-case';
+import { KodyLearningStatus } from '@libs/organization/domain/parameters/types/configValue.type';
 
 const CRON_KODY_LEARNING = process.env.API_CRON_KODY_LEARNING;
 

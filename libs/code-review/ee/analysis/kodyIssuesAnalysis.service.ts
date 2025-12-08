@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 import { tryParseJSONObject } from '@shared/utils/transforms/json';
 import { Inject } from '@nestjs/common';
@@ -6,7 +6,7 @@ import {
     prompt_kodyissues_merge_suggestions_into_issues_system,
     prompt_kodyissues_resolve_issues_system,
 } from '@shared/utils/langchainCommon/prompts/kodyIssuesManagement';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { contextToGenerateIssues } from '../../core/infrastructure/adapters/services/kodyIssuesManagement/domain/kodyIssuesManagement.interface';
 import {
     LLMModelProvider,
@@ -31,7 +31,7 @@ export class KodyIssuesAnalysisService {
 
     constructor(
         private readonly promptRunnerService: PromptRunnerService,
-        private readonly observabilityService: ObservabilityService
+        private readonly observabilityService: ObservabilityService,
     ) {
         this.isCloud = environment.API_CLOUD_MODE;
         this.isDevelopment = environment.API_DEVELOPMENT_MODE;

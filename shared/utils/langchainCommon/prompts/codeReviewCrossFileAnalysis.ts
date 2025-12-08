@@ -1,6 +1,6 @@
 import z from 'zod';
 import { SeverityLevel } from '../../enums/severityLevel.enum';
-import { CodeReviewConfig } from '@/config/types/general/codeReview.type';
+import { CodeReviewConfig } from '@shared/types/general/codeReview.type';
 import { getDefaultKodusConfigFile } from '../../validateCodeReviewConfigFile';
 import { getTextOrDefault } from './prompt.helpers';
 

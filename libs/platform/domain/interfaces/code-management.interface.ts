@@ -1,11 +1,11 @@
-import { Repository } from '@/config/types/general/codeReview.type';
-import { Commit } from '@/config/types/general/commit.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { TreeItem } from '@/config/types/general/tree.type';
+import { Repository } from '@shared/types/general/codeReview.type';
+import { Commit } from '@shared/types/general/commit.type';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { TreeItem } from '@shared/types/general/tree.type';
 import {
     GitHubReaction,
     GitlabReaction,
-} from '@/core/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
+} from '@libs/code-review/domain/feedback/enums/codeReviewCommentReaction.enum';
 import { PullRequestState } from '@shared/domain/enums/pullRequestState.enum';
 import { CodeManagementConnectionStatus } from '@shared/utils/decorators/validate-code-management-integration.decorator';
 import { IntegrationConfigEntity } from '../../integrationConfigs/entities/integration-config.entity';
@@ -25,8 +25,7 @@ import { RepositoryFile } from '../types/codeManagement/repositoryFile.type';
 import { Workflow } from '../types/codeManagement/workflow.type';
 import { ICommonPlatformIntegrationService } from './common.interface';
 
-export interface ICodeManagementService
-    extends ICommonPlatformIntegrationService {
+export interface ICodeManagementService extends ICommonPlatformIntegrationService {
     getPullRequests(params: {
         organizationAndTeamData: OrganizationAndTeamData;
         repository?: {

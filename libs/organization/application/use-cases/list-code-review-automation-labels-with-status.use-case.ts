@@ -1,7 +1,7 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import { CodeReviewVersion } from '@/config/types/general/codeReview.type';
+import { CodeReviewVersion } from '@shared/types/general/codeReview.type';
 import {
     CODE_BASE_CONFIG_SERVICE_TOKEN,
     ICodeBaseConfigService,
@@ -10,7 +10,9 @@ import { ListCodeReviewAutomationLabelsUseCase } from './list-code-review-automa
 
 @Injectable()
 export class ListCodeReviewAutomationLabelsWithStatusUseCase {
-    private readonly logger = createLogger(ListCodeReviewAutomationLabelsWithStatusUseCase.name);
+    private readonly logger = createLogger(
+        ListCodeReviewAutomationLabelsWithStatusUseCase.name,
+    );
     constructor(
         private readonly listLabelsUseCase: ListCodeReviewAutomationLabelsUseCase,
         @Inject(CODE_BASE_CONFIG_SERVICE_TOKEN)
@@ -18,7 +20,7 @@ export class ListCodeReviewAutomationLabelsWithStatusUseCase {
         @Inject(REQUEST)
         private readonly request: Request & {
             user?: { organization?: { uuid: string } };
-        }
+        },
     ) {}
 
     async execute(params: {

@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { GenerateIssuesFromPrClosedUseCase } from '@libs/issues/application/use-cases/generate-issues-from-pr-closed.use-case';
 import { ChatWithKodyFromGitUseCase } from '@libs/platform/application/use-cases/codeManagement/chatWithKodyFromGit.use-case';
 import { SavePullRequestUseCase } from '@libs/code-review/application/use-cases/pull-requests/save.use-case';
@@ -9,7 +9,7 @@ import {
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import { RunCodeReviewAutomationUseCase } from '@libs/automation/ee/runCodeReview.use-case';
 import { PlatformType } from '@shared/domain/enums/platform-type.enum';
-import { CacheService } from '@shared/utils/cache/cache.service';
+import { CacheService } from '@core/cache/cache.service';
 import { getMappedPlatform } from '@shared/utils/webhooks';
 import { Injectable } from '@nestjs/common';
 import { createHash } from 'crypto';
@@ -18,6 +18,7 @@ import { KodyRulesSyncService } from '@libs/kody-rules/infrastructure/services/k
 @Injectable()
 export class AzureReposPullRequestHandler implements IWebhookEventHandler {
     private readonly logger = createLogger(AzureReposPullRequestHandler.name);
+
     constructor(
         private readonly savePullRequestUseCase: SavePullRequestUseCase,
         private readonly runCodeReviewAutomationUseCase: RunCodeReviewAutomationUseCase,
@@ -25,7 +26,7 @@ export class AzureReposPullRequestHandler implements IWebhookEventHandler {
         private readonly cacheService: CacheService,
         private readonly generateIssuesFromPrClosedUseCase: GenerateIssuesFromPrClosedUseCase,
         private readonly kodyRulesSyncService: KodyRulesSyncService,
-        private readonly codeManagement: CodeManagementService
+        private readonly codeManagement: CodeManagementService,
     ) {}
 
     /**

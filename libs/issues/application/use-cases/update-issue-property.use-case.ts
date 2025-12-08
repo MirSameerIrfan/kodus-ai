@@ -1,4 +1,4 @@
-import { IssueStatus } from '@/config/types/general/issues.type';
+import { IssueStatus } from '@shared/types/general/issues.type';
 import { ISSUES_SERVICE_TOKEN } from '@libs/issues/domain/contracts/issues.service.contract';
 import { IssuesEntity } from '@libs/issues/domain/entities/issues.entity';
 import { IssuesService } from '@libs/issues/infrastructure/issues.service';

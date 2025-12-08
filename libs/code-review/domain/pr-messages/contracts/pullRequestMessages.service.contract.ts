@@ -4,5 +4,4 @@ export const PULL_REQUEST_MESSAGES_SERVICE_TOKEN = Symbol(
     'PullRequestMessagesService',
 );
 
-export interface IPullRequestMessagesService
-    extends IPullRequestMessagesRepository {}
+export interface IPullRequestMessagesService extends IPullRequestMessagesRepository {}

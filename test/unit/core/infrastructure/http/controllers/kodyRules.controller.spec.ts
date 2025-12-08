@@ -109,7 +109,8 @@ describe('KodyRulesController', () => {
                     useValue: mockFindRuleInOrganizationByIdUseCase,
                 },
                 {
-                    provide: FindRulesInOrganizationByRuleFilterKodyRulesUseCase,
+                    provide:
+                        FindRulesInOrganizationByRuleFilterKodyRulesUseCase,
                     useValue: mockFindRulesInOrganizationByRuleFilterUseCase,
                 },
                 {
@@ -162,14 +163,22 @@ describe('KodyRulesController', () => {
         it('deve retornar resultado do cache quando disponível', async () => {
             const teamId = 'team-456';
             const repositoryId = 'repo-789';
-            const expectedCacheKey = 'check-sync-status:org-123:team-456:repo-789';
+            const expectedCacheKey =
+                'check-sync-status:org-123:team-456:repo-789';
 
-            mockCacheService.getFromCache.mockResolvedValue(mockSyncStatusResult);
+            mockCacheService.getFromCache.mockResolvedValue(
+                mockSyncStatusResult,
+            );
 
-            const result = await controller.checkSyncStatus(teamId, repositoryId);
+            const result = await controller.checkSyncStatus(
+                teamId,
+                repositoryId,
+            );
 
             expect(result).toEqual(mockSyncStatusResult);
-            expect(mockCacheService.getFromCache).toHaveBeenCalledWith(expectedCacheKey);
+            expect(mockCacheService.getFromCache).toHaveBeenCalledWith(
+                expectedCacheKey,
+            );
             expect(mockCheckSyncStatusUseCase.execute).not.toHaveBeenCalled();
             expect(mockCacheService.addToCache).not.toHaveBeenCalled();
         });
@@ -177,16 +186,27 @@ describe('KodyRulesController', () => {
         it('deve executar use case e salvar no cache quando não há cache', async () => {
             const teamId = 'team-456';
             const repositoryId = 'repo-789';
-            const expectedCacheKey = 'check-sync-status:org-123:team-456:repo-789';
+            const expectedCacheKey =
+                'check-sync-status:org-123:team-456:repo-789';
 
             mockCacheService.getFromCache.mockResolvedValue(null);
-            mockCheckSyncStatusUseCase.execute.mockResolvedValue(mockSyncStatusResult);
+            mockCheckSyncStatusUseCase.execute.mockResolvedValue(
+                mockSyncStatusResult,
+            );
 
-            const result = await controller.checkSyncStatus(teamId, repositoryId);
+            const result = await controller.checkSyncStatus(
+                teamId,
+                repositoryId,
+            );
 
             expect(result).toEqual(mockSyncStatusResult);
-            expect(mockCacheService.getFromCache).toHaveBeenCalledWith(expectedCacheKey);
-            expect(mockCheckSyncStatusUseCase.execute).toHaveBeenCalledWith(teamId, repositoryId);
+            expect(mockCacheService.getFromCache).toHaveBeenCalledWith(
+                expectedCacheKey,
+            );
+            expect(mockCheckSyncStatusUseCase.execute).toHaveBeenCalledWith(
+                teamId,
+                repositoryId,
+            );
             expect(mockCacheService.addToCache).toHaveBeenCalledWith(
                 expectedCacheKey,
                 mockSyncStatusResult,
@@ -196,16 +216,24 @@ describe('KodyRulesController', () => {
 
         it('deve gerar cache key correta sem repositoryId', async () => {
             const teamId = 'team-456';
-            const expectedCacheKey = 'check-sync-status:org-123:team-456:no-repo';
+            const expectedCacheKey =
+                'check-sync-status:org-123:team-456:no-repo';
 
             mockCacheService.getFromCache.mockResolvedValue(null);
-            mockCheckSyncStatusUseCase.execute.mockResolvedValue(mockSyncStatusResult);
+            mockCheckSyncStatusUseCase.execute.mockResolvedValue(
+                mockSyncStatusResult,
+            );
 
             const result = await controller.checkSyncStatus(teamId);
 
             expect(result).toEqual(mockSyncStatusResult);
-            expect(mockCacheService.getFromCache).toHaveBeenCalledWith(expectedCacheKey);
-            expect(mockCheckSyncStatusUseCase.execute).toHaveBeenCalledWith(teamId, undefined);
+            expect(mockCacheService.getFromCache).toHaveBeenCalledWith(
+                expectedCacheKey,
+            );
+            expect(mockCheckSyncStatusUseCase.execute).toHaveBeenCalledWith(
+                teamId,
+                undefined,
+            );
             expect(mockCacheService.addToCache).toHaveBeenCalledWith(
                 expectedCacheKey,
                 mockSyncStatusResult,
@@ -216,16 +244,27 @@ describe('KodyRulesController', () => {
         it('deve gerar cache key correta com repositoryId undefined', async () => {
             const teamId = 'team-456';
             const repositoryId = undefined;
-            const expectedCacheKey = 'check-sync-status:org-123:team-456:no-repo';
+            const expectedCacheKey =
+                'check-sync-status:org-123:team-456:no-repo';
 
             mockCacheService.getFromCache.mockResolvedValue(null);
-            mockCheckSyncStatusUseCase.execute.mockResolvedValue(mockSyncStatusResult);
+            mockCheckSyncStatusUseCase.execute.mockResolvedValue(
+                mockSyncStatusResult,
+            );
 
-            const result = await controller.checkSyncStatus(teamId, repositoryId);
+            const result = await controller.checkSyncStatus(
+                teamId,
+                repositoryId,
+            );
 
             expect(result).toEqual(mockSyncStatusResult);
-            expect(mockCacheService.getFromCache).toHaveBeenCalledWith(expectedCacheKey);
-            expect(mockCheckSyncStatusUseCase.execute).toHaveBeenCalledWith(teamId, undefined);
+            expect(mockCacheService.getFromCache).toHaveBeenCalledWith(
+                expectedCacheKey,
+            );
+            expect(mockCheckSyncStatusUseCase.execute).toHaveBeenCalledWith(
+                teamId,
+                undefined,
+            );
             expect(mockCacheService.addToCache).toHaveBeenCalledWith(
                 expectedCacheKey,
                 mockSyncStatusResult,
@@ -236,14 +275,19 @@ describe('KodyRulesController', () => {
         it('deve usar organization UUID correto na cache key', async () => {
             const teamId = 'team-456';
             const repositoryId = 'repo-789';
-            const expectedCacheKey = 'check-sync-status:org-123:team-456:repo-789';
+            const expectedCacheKey =
+                'check-sync-status:org-123:team-456:repo-789';
 
             mockCacheService.getFromCache.mockResolvedValue(null);
-            mockCheckSyncStatusUseCase.execute.mockResolvedValue(mockSyncStatusResult);
+            mockCheckSyncStatusUseCase.execute.mockResolvedValue(
+                mockSyncStatusResult,
+            );
 
             await controller.checkSyncStatus(teamId, repositoryId);
 
-            expect(mockCacheService.getFromCache).toHaveBeenCalledWith(expectedCacheKey);
+            expect(mockCacheService.getFromCache).toHaveBeenCalledWith(
+                expectedCacheKey,
+            );
             expect(mockCacheService.addToCache).toHaveBeenCalledWith(
                 expectedCacheKey,
                 mockSyncStatusResult,

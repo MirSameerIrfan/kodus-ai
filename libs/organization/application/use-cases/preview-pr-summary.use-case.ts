@@ -1,4 +1,4 @@
-import { SummaryConfig } from '@/config/types/general/codeReview.type';
+import { SummaryConfig } from '@shared/types/general/codeReview.type';
 import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,

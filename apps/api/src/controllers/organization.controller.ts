@@ -1,10 +1,10 @@
-import { GetOrganizationNameUseCase } from '@/core/application/use-cases/organization/get-organization-name';
-import { GetOrganizationsByDomainUseCase } from '@/core/application/use-cases/organization/get-organizations-domain.use-case';
-import { UpdateInfoOrganizationAndPhoneUseCase } from '@/core/application/use-cases/organization/update-infos.use-case';
+import { GetOrganizationNameUseCase } from '@libs/organization/application/use-cases/organization/get-organization-name';
+import { GetOrganizationsByDomainUseCase } from '@libs/organization/application/use-cases/organization/get-organizations-domain.use-case';
+import { UpdateInfoOrganizationAndPhoneUseCase } from '@libs/organization/application/use-cases/organization/update-infos.use-case';
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { Body, Controller, Get, Patch, Query, UseGuards } from '@nestjs/common';
 import {
     CheckPolicies,

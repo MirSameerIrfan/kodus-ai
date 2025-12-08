@@ -6,11 +6,10 @@ import {
     FileChangeContext,
     ISafeguardResponse,
     ReviewModeResponse,
-} from '@/config/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+} from '@shared/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
-import { IAIAnalysisService } from '../../../../domain/codeBase/contracts/AIAnalysisService.contract';
 
 import { BYOKPromptRunnerService } from '@shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
 import { prompt_codeReviewSafeguard_system } from '@shared/utils/langchainCommon/prompts';
@@ -34,13 +33,14 @@ import {
     PromptScope,
 } from '@kodus/kodus-common/llm';
 import { z } from 'zod';
-import type { ContextAugmentationsMap } from '../context/code-review-context-pack.service';
+import { ObservabilityService } from '@shared/logging/observability.service';
+import { LLMResponseProcessor } from './utils/transforms/llmResponseProcessor.transform';
+import { IAIAnalysisService } from '../domain/contracts/AIAnalysisService.contract';
 import {
     getAugmentationsFromPack,
     getOverridesFromPack,
-} from '../context/code-review-context.utils';
-import { ObservabilityService } from '@shared/logging/observability.service';
-import { LLMResponseProcessor } from './utils/transforms/llmResponseProcessor.transform';
+} from './context/code-review-context.utils';
+import { ContextAugmentationsMap } from './context/code-review-context-pack.service';
 
 export const LLM_ANALYSIS_SERVICE_TOKEN = Symbol('LLMAnalysisService');
 

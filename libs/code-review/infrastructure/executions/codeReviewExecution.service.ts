@@ -1,5 +1,5 @@
-import { createLogger } from "@kodus/flow";
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { createLogger } from '@kodus/flow';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     CODE_REVIEW_EXECUTION_REPOSITORY,
     ICodeReviewExecutionRepository,
@@ -14,7 +14,7 @@ export class CodeReviewExecutionService implements ICodeReviewExecutionService {
     private readonly logger = createLogger(CodeReviewExecutionService.name);
     constructor(
         @Inject(CODE_REVIEW_EXECUTION_REPOSITORY)
-        private readonly codeReviewExecutionRepository: ICodeReviewExecutionRepository
+        private readonly codeReviewExecutionRepository: ICodeReviewExecutionRepository,
     ) {}
 
     create(

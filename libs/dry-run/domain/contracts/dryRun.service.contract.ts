@@ -1,11 +1,11 @@
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { DryRunEntity } from '../entities/dryRun.entity';
 import { DryRunStatus, IDryRun } from '../interfaces/dryRun.interface';
 import { IDryRunRepository } from './dryRun.repository.contract';
 import {
     CodeReviewConfig,
     FileChange,
-} from '@/config/types/general/codeReview.type';
+} from '@shared/types/general/codeReview.type';
 import {
     IFile,
     IPullRequests,

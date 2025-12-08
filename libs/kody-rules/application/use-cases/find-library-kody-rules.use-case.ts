@@ -1,22 +1,27 @@
-import { createLogger } from "@kodus/flow";
-import { KodyRuleFilters } from '@/config/types/kodyRules.type';
+import { createLogger } from '@kodus/flow';
+import { KodyRuleFilters } from '@shared/types/kodyRules.type';
 import {
     KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,
 } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
 import { Inject, Injectable } from '@nestjs/common';
 import { FindLibraryKodyRulesDto } from '@shared/dtos/find-library-kody-rules.dto';
-import { PaginatedLibraryKodyRulesResponse, PaginationMetadata } from '@shared/dtos/paginated-library-kody-rules.dto';
+import {
+    PaginatedLibraryKodyRulesResponse,
+    PaginationMetadata,
+} from '@shared/dtos/paginated-library-kody-rules.dto';
 
 @Injectable()
 export class FindLibraryKodyRulesUseCase {
     private readonly logger = createLogger(FindLibraryKodyRulesUseCase.name);
     constructor(
         @Inject(KODY_RULES_SERVICE_TOKEN)
-        private readonly kodyRulesService: IKodyRulesService
+        private readonly kodyRulesService: IKodyRulesService,
     ) {}
 
-    async execute(filters: FindLibraryKodyRulesDto): Promise<PaginatedLibraryKodyRulesResponse> {
+    async execute(
+        filters: FindLibraryKodyRulesDto,
+    ): Promise<PaginatedLibraryKodyRulesResponse> {
         try {
             const { page = 1, limit = 100, skip, ...kodyRuleFilters } = filters;
 
@@ -31,7 +36,10 @@ export class FindLibraryKodyRulesUseCase {
             const totalItems = allLibraryKodyRules.length;
             const totalPages = Math.ceil(totalItems / limit);
             const offset = skip || (page - 1) * limit;
-            const paginatedRules = allLibraryKodyRules.slice(offset, offset + limit);
+            const paginatedRules = allLibraryKodyRules.slice(
+                offset,
+                offset + limit,
+            );
 
             const paginationMetadata: PaginationMetadata = {
                 currentPage: page,

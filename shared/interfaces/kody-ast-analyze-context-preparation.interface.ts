@@ -3,7 +3,10 @@
  * Kodus Tech. All rights reserved.
  */
 
-import { AIAnalysisResult, AnalysisContext } from '@/config/types/general/codeReview.type';
+import {
+    AIAnalysisResult,
+    AnalysisContext,
+} from '@shared/types/general/codeReview.type';
 
 export const KODY_AST_ANALYZE_CONTEXT_PREPARATION_TOKEN = Symbol(
     'KodyASTAnalyzeContextPreparation',
@@ -12,5 +15,5 @@ export const KODY_AST_ANALYZE_CONTEXT_PREPARATION_TOKEN = Symbol(
 export interface IKodyASTAnalyzeContextPreparationService {
     prepareKodyASTAnalyzeContext(
         context: AnalysisContext,
-    ): Promise<AIAnalysisResult | null>
+    ): Promise<AIAnalysisResult | null>;
 }

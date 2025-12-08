@@ -1,4 +1,4 @@
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import { CoreModel } from '@shared/infrastructure/repositories/model/typeOrm';
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { WorkflowJobModel } from './workflow-job.model';
 
@@ -28,4 +28,3 @@ export class OutboxMessageModel extends CoreModel {
     @Column({ type: 'timestamp', nullable: true })
     processedAt?: Date;
 }
-

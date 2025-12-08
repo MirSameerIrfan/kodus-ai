@@ -2,17 +2,17 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { DryRunModel } from '@core/database/mongoose/schemas/dryRun.model';
 import { Model } from 'mongoose';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     IDryRunData,
     IDryRun,
-} from '@/core/domain/dryRun/interfaces/dryRun.interface';
+} from '@libs/dry-run/domain/interfaces/dryRun.interface';
 import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
-} from '@/shared/infrastructure/repositories/mappers';
-import { DryRunEntity } from '@/core/domain/dryRun/entities/dryRun.entity';
-import { IDryRunRepository } from '@/core/domain/dryRun/contracts/dryRun.repository.contract';
+} from '@shared/infrastructure/repositories/mappers';
+import { DryRunEntity } from '@libs/dry-run/domain/entities/dryRun.entity';
+import { IDryRunRepository } from '@libs/dry-run/domain/contracts/dryRun.repository.contract';
 
 @Injectable()
 export class DryRunRepository implements IDryRunRepository {

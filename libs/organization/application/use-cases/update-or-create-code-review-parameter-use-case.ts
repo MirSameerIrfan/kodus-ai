@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import {
     IParametersService,
@@ -6,7 +6,7 @@ import {
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
 import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
@@ -20,19 +20,19 @@ import { REQUEST } from '@nestjs/core';
 import {
     ActionType,
     ConfigLevel,
-} from '@/config/types/general/codeReviewSettingsLog.type';
+} from '@shared/types/general/codeReviewSettingsLog.type';
 import {
     ICodeRepository,
     CodeReviewParameter,
     DirectoryCodeReviewConfig,
     RepositoryCodeReviewConfig,
-} from '@/config/types/general/codeReviewConfig.type';
+} from '@shared/types/general/codeReviewConfig.type';
 import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
 import {
     Action,
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { UserRequest } from '@/config/types/http/user-request.type';
+import { UserRequest } from '@shared/types/http/user-request.type';
 import { getDefaultKodusConfigFile } from '@shared/utils/validateCodeReviewConfigFile';
 import { produce } from 'immer';
 import { deepDifference, deepMerge } from '@shared/utils/deep';
@@ -43,7 +43,7 @@ import {
     IPromptExternalReferenceManagerService,
     PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
 } from '@libs/code-review/domain/prompts/contracts/promptExternalReferenceManager.contract';
-import { CodeReviewVersion } from '@/config/types/general/codeReview.type';
+import { CodeReviewVersion } from '@shared/types/general/codeReview.type';
 import {
     CODE_REVIEW_CONTEXT_PATTERNS,
     pathToKey,
@@ -58,7 +58,9 @@ import {
 
 @Injectable()
 export class UpdateOrCreateCodeReviewParameterUseCase {
-    private readonly logger = createLogger(UpdateOrCreateCodeReviewParameterUseCase.name);
+    private readonly logger = createLogger(
+        UpdateOrCreateCodeReviewParameterUseCase.name,
+    );
     constructor(
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
@@ -71,7 +73,7 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
         private readonly authorizationService: AuthorizationService,
         private readonly contextReferenceDetectionService: ContextReferenceDetectionService,
         @Inject(PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN)
-        private readonly promptReferenceManager: IPromptExternalReferenceManagerService
+        private readonly promptReferenceManager: IPromptExternalReferenceManagerService,
     ) {}
 
     async execute(

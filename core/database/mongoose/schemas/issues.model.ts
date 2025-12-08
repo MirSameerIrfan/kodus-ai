@@ -1,11 +1,11 @@
-import { IssueStatus } from '@/config/types/general/issues.type';
+import { IssueStatus } from '@shared/types/general/issues.type';
 import {
     IContributingSuggestion,
     IRepositoryToIssues,
-} from '@/core/infrastructure/adapters/services/kodyIssuesManagement/domain/kodyIssuesManagement.interface';
-import { CoreDocument } from '@/shared/infrastructure/repositories/model/mongodb';
-import { LabelType } from '@/shared/utils/codeManagement/labels';
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
+} from '@libs/issues/domain/interfaces/kodyIssuesManagement.interface';
+import { CoreDocument } from '@shared/infrastructure/repositories/model/mongodb';
+import { LabelType } from '@shared/utils/codeManagement/labels';
+import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 @Schema({

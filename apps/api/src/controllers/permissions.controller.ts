@@ -1,6 +1,6 @@
-import { createLogger } from "@kodus/flow";
-import { GetPermissionsUseCase } from '@/core/application/use-cases/permissions/get-permissions.use-case';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
+import { createLogger } from '@kodus/flow';
+import { GetPermissionsUseCase } from '@libs/identity/application/use-cases/permissions/get-permissions.use-case';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import {
     Body,
     Controller,
@@ -15,16 +15,16 @@ import { REQUEST } from '@nestjs/core';
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import { CanAccessUseCase } from '@/core/application/use-cases/permissions/can-access.use-case';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { CanAccessUseCase } from '@libs/identity/application/use-cases/permissions/can-access.use-case';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
-import { GetAssignedReposUseCase } from '@/core/application/use-cases/permissions/get-assigned-repos.use-case';
+import { GetAssignedReposUseCase } from '@libs/identity/application/use-cases/permissions/get-assigned-repos.use-case';
 import {
     CheckPolicies,
     PolicyGuard,
 } from '@libs/identity/infrastructure/permissions/policy.guard';
 import { subject } from '@casl/ability';
-import { AssignReposUseCase } from '@/core/application/use-cases/permissions/assign-repos.use-case';
+import { AssignReposUseCase } from '@libs/identity/application/use-cases/permissions/assign-repos.use-case';
 import { checkPermissions } from '@libs/identity/infrastructure/permissions/policy.handlers';
 
 @Controller('permissions')
@@ -38,7 +38,7 @@ export class PermissionsController {
         private readonly getPermissionsUseCase: GetPermissionsUseCase,
         private readonly canAccessUseCase: CanAccessUseCase,
         private readonly getAssignedReposUseCase: GetAssignedReposUseCase,
-        private readonly assignReposUseCase: AssignReposUseCase
+        private readonly assignReposUseCase: AssignReposUseCase,
     ) {}
 
     @Get()

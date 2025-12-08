@@ -1,9 +1,10 @@
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import type { ContextLayer } from '@context-os-core/interfaces';
 import { PromptExternalReferenceEntity } from '../entities/promptExternalReference.entity';
 import { IExternalPromptContext } from '../interfaces/promptExternalReference.interface';
 
-export const PROMPT_CONTEXT_LOADER_SERVICE_TOKEN = 'PROMPT_CONTEXT_LOADER_SERVICE_TOKEN';
+export const PROMPT_CONTEXT_LOADER_SERVICE_TOKEN =
+    'PROMPT_CONTEXT_LOADER_SERVICE_TOKEN';
 
 export interface LoadContextParams {
     organizationAndTeamData: OrganizationAndTeamData;

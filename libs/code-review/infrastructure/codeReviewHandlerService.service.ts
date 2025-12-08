@@ -1,17 +1,16 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 /**
  * @license
  * Kodus Tech. All rights reserved.
  */
 import { Injectable, Inject } from '@nestjs/common';
-import { PipelineFactory } from '../pipeline/pipeline-factory.service';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { CodeReviewPipelineContext } from './codeReviewPipeline/context/code-review-pipeline.context';
 import { PlatformType } from '@shared/domain/enums/platform-type.enum';
 import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
 import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
 import { ConfigService } from '@nestjs/config';
-import { DatabaseConnection } from '@/config/types';
+import { DatabaseConnection } from '@shared/types';
 import { ObservabilityService } from '@shared/logging/observability.service';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import {
@@ -19,6 +18,7 @@ import {
     GitlabReaction,
     ReviewStatusReaction,
 } from '@libs/code-review/domain/feedback/enums/codeReviewCommentReaction.enum';
+import { PipelineFactory } from './pipeline/pipeline-factory.service';
 
 @Injectable()
 export class CodeReviewHandlerService {
@@ -45,7 +45,7 @@ export class CodeReviewHandlerService {
         private readonly pipelineFactory: PipelineFactory<CodeReviewPipelineContext>,
         private readonly configService: ConfigService,
         private readonly observabilityService: ObservabilityService,
-        private readonly codeManagement: CodeManagementService
+        private readonly codeManagement: CodeManagementService,
     ) {
         this.config =
             this.configService.get<DatabaseConnection>('mongoDatabase');

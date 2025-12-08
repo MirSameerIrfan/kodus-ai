@@ -1,4 +1,4 @@
-import { InviteDataUserUseCase } from '@/core/application/use-cases/user/invite-data.use-case';
+import { InviteDataUserUseCase } from '@libs/identity/application/use-cases/user/invite-data.use-case';
 import {
     Body,
     Controller,
@@ -11,16 +11,16 @@ import {
     UseGuards,
 } from '@nestjs/common';
 
-import { AcceptUserInvitationUseCase } from '@/core/application/use-cases/user/accept-user-invitation.use-case';
-import { CheckUserWithEmailUserUseCase } from '@/core/application/use-cases/user/check-user-email.use-case';
-import { GetUserUseCase } from '@/core/application/use-cases/user/get-user.use-case';
-import { JoinOrganizationUseCase } from '@/core/application/use-cases/user/join-organization.use-case';
-import { UpdateAnotherUserUseCase } from '@/core/application/use-cases/user/update-another.use-case';
+import { AcceptUserInvitationUseCase } from '@libs/identity/application/use-cases/user/accept-user-invitation.use-case';
+import { CheckUserWithEmailUserUseCase } from '@libs/identity/application/use-cases/user/check-user-email.use-case';
+import { GetUserUseCase } from '@libs/identity/application/use-cases/user/get-user.use-case';
+import { JoinOrganizationUseCase } from '@libs/identity/application/use-cases/user/join-organization.use-case';
+import { UpdateAnotherUserUseCase } from '@libs/identity/application/use-cases/user/update-another.use-case';
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import { REQUEST } from '@nestjs/core';
 import {
     CheckPolicies,

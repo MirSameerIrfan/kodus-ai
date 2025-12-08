@@ -1,4 +1,4 @@
-import { IKodyRule } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+import { IKodyRule } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 @Schema({

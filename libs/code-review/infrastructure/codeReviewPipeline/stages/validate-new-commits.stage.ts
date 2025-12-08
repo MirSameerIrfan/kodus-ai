@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { BaseStage } from './base/base-stage.abstract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
@@ -25,7 +25,7 @@ export class ValidateNewCommitsStage extends BaseStage {
         @Inject(AUTOMATION_EXECUTION_SERVICE_TOKEN)
         private readonly automationExecutionService: IAutomationExecutionService,
         @Inject(PULL_REQUEST_MANAGER_SERVICE_TOKEN)
-        private readonly pullRequestHandlerService: IPullRequestManagerService
+        private readonly pullRequestHandlerService: IPullRequestManagerService,
     ) {
         super();
     }

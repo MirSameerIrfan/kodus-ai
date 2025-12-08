@@ -1,4 +1,4 @@
-import { LibraryKodyRule } from '@/config/types/kodyRules.type';
+import { LibraryKodyRule } from '@shared/types/kodyRules.type';
 import {
     IKodyRule,
     kodyRuleSchema,

@@ -1,10 +1,10 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere } from 'typeorm';
-import { IContextReferenceRepository } from '@/core/domain/contextReferences/contracts/context-reference.repository.contract';
-import { ContextReferenceEntity } from '@/core/domain/contextReferences/entities/context-reference.entity';
-import { IContextReference } from '@/core/domain/contextReferences/interfaces/context-reference.interface';
+import { IContextReferenceRepository } from '@libs/code-review/domain/context/contracts/context-reference.repository.contract';
+import { ContextReferenceEntity } from '@libs/code-review/domain/context/entities/context-reference.entity';
+import { IContextReference } from '@libs/code-review/domain/context/interfaces/context-reference.interface';
 import { ContextReferenceModel } from '@core/database/typeorm/schema/contextReference.model';
 
 function modelToEntity(model: ContextReferenceModel): ContextReferenceEntity {
@@ -59,7 +59,7 @@ export class ContextReferenceRepository implements IContextReferenceRepository {
     private readonly logger = createLogger(ContextReferenceRepository.name);
     constructor(
         @InjectRepository(ContextReferenceModel)
-        private readonly repository: Repository<ContextReferenceModel>
+        private readonly repository: Repository<ContextReferenceModel>,
     ) {}
 
     async create(

@@ -71,4 +71,3 @@ export class TransactionalInboxService {
         return existing !== null;
     }
 }
-

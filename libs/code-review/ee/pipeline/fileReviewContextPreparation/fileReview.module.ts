@@ -1,8 +1,8 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { FileReviewContextPreparation } from '@libs/code-review/infrastructure/file-review/file-review-context-preparation.service';
 import { FILE_REVIEW_CONTEXT_PREPARATION_TOKEN } from '@shared/interfaces/file-review-context-preparation.interface';
-import { FILE_REVIEW_CONTEXT_PREPARATION_PROVIDER } from '@libs/code-review/providers/file-analyzer.provider.ee';
 import { CodebaseModule } from '@libs/code-review/code-review.module';
+import { FileReviewContextPreparation } from '@libs/code-review/ee/pipeline/fileReviewContextPreparation/file-review-context-preparation.service';
+import { FILE_REVIEW_CONTEXT_PREPARATION_PROVIDER } from '@libs/code-review/ee/providers/file-analyzer.provider.ee';
 
 @Module({
     imports: [forwardRef(() => CodebaseModule)],

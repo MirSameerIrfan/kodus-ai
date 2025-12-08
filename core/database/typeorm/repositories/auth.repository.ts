@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOneOptions, Repository, UpdateQueryBuilder } from 'typeorm';
-import { mapSimpleModelToEntity } from '@/shared/infrastructure/repositories/mappers';
+import { mapSimpleModelToEntity } from '@shared/infrastructure/repositories/mappers';
 import { AuthModel } from '@core/database/typeorm/schema/auth.model';
-import { IAuthRepository } from '@/core/domain/auth/contracts/auth.repository.contracts';
-import { IAuth } from '@/core/domain/auth/interfaces/auth.interface';
-import { AuthEntity } from '@/core/domain/auth/entities/auth.entity';
+import { IAuthRepository } from '@libs/identity/domain/auth/contracts/auth.repository.contracts';
+import { IAuth } from '@libs/identity/domain/auth/interfaces/auth.interface';
+import { AuthEntity } from '@libs/identity/domain/auth/entities/auth.entity';
 
 @Injectable()
 export class AuthRepository implements IAuthRepository {

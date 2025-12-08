@@ -1,12 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { createMCPAdapter, type MCPServerConfig, createLogger } from '@kodus/flow';
+import {
+    createMCPAdapter,
+    type MCPServerConfig,
+    createLogger,
+} from '@kodus/flow';
 import { createHash } from 'crypto';
-import type { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import type { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import type {
     CodeReviewConfig,
     Repository,
     AnalysisContext,
-} from '@/config/types/general/codeReview.type';
+} from '@shared/types/general/codeReview.type';
 import type {
     ContextDependency,
     ContextLayer,
@@ -36,14 +40,15 @@ import {
     resolveDependencyToolName,
     deepClone,
 } from './code-review-context.utils';
-import {
-    MCPToolMetadata,
-    MCPToolMetadataService,
-} from '../../mcp/services/mcp-tool-metadata.service';
+
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import { PromptReferenceErrorType } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
 import type { IPromptReferenceSyncError } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
 import { formatMCPOutput } from './mcp-output-formatter';
+import {
+    MCPToolMetadata,
+    MCPToolMetadataService,
+} from '@libs/mcp-server/infrastructure/services/mcp-tool-metadata.service';
 
 export interface ContextAugmentationOutput {
     provider?: string;
@@ -222,7 +227,7 @@ export class CodeReviewContextPackService {
         private readonly contextReferenceService: ContextReferenceService,
         private readonly mcpToolMetadataService: MCPToolMetadataService,
         private readonly mcpToolArgResolver: MCPToolArgResolverAgentService,
-        private readonly codeManagementService: CodeManagementService
+        private readonly codeManagementService: CodeManagementService,
     ) {}
 
     async buildContextPack(params: BuildPackParams): Promise<BuildPackResult> {

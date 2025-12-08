@@ -1,4 +1,4 @@
-import { mapSimpleModelToEntity } from '@/shared/infrastructure/repositories/mappers';
+import { mapSimpleModelToEntity } from '@shared/infrastructure/repositories/mappers';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -9,10 +9,10 @@ import {
     UpdateQueryBuilder,
 } from 'typeorm';
 import { ProfileModel } from '@core/database/typeorm/schema/profile.model';
-import { IProfileRepository } from '@/core/domain/profile/contracts/profile.repository.contract';
-import { ProfileEntity } from '@/core/domain/profile/entities/profile.entity';
-import { IProfile } from '@/core/domain/profile/interfaces/profile.interface';
-import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
+import { IProfileRepository } from '@libs/identity/domain/profile/contracts/profile.repository.contract';
+import { ProfileEntity } from '@libs/identity/domain/profile/entities/profile.entity';
+import { IProfile } from '@libs/identity/domain/profile/interfaces/profile.interface';
+import { createNestedConditions } from '@shared/infrastructure/repositories/filters';
 
 @Injectable()
 export class ProfileDatabaseRepository implements IProfileRepository {

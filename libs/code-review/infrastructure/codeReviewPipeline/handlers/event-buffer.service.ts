@@ -10,11 +10,14 @@ import { StageCompletedEvent } from '@libs/workflow-queue/domain/interfaces/stag
 @Injectable()
 export class EventBufferService {
     private readonly logger = createLogger(EventBufferService.name);
-    private readonly buffer = new Map<string, {
-        event: StageCompletedEvent;
-        timestamp: number;
-        ttl: number;
-    }>();
+    private readonly buffer = new Map<
+        string,
+        {
+            event: StageCompletedEvent;
+            timestamp: number;
+            ttl: number;
+        }
+    >();
 
     private readonly DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes
 
@@ -104,4 +107,3 @@ export class EventBufferService {
         return `${eventType}:${eventKey}`;
     }
 }
-

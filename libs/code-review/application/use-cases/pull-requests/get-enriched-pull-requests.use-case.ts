@@ -1,13 +1,7 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
-import { EnrichedPullRequestsQueryDto } from '@shared/dtos/enriched-pull-requests-query.dto';
-import { EnrichedPullRequestResponse } from '@shared/dtos/enriched-pull-request-response.dto';
-import {
-    PaginatedEnrichedPullRequestsResponse,
-    PaginationMetadata,
-} from '@shared/dtos/paginated-enriched-pull-requests.dto';
 import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
     IAutomationExecutionService,
@@ -20,7 +14,7 @@ import {
     CODE_REVIEW_EXECUTION_SERVICE,
     ICodeReviewExecutionService,
 } from '@libs/code-review/domain/executions/contracts/codeReviewExecution.service.contract';
-import { UserRequest } from '@/config/types/http/user-request.type';
+import { UserRequest } from '@shared/types/http/user-request.type';
 import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
 import {
     Action,
@@ -28,6 +22,12 @@ import {
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { IPullRequests } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
+import { EnrichedPullRequestsQueryDto } from 'apps/api/src/dtos/enriched-pull-requests-query.dto';
+import {
+    PaginatedEnrichedPullRequestsResponse,
+    PaginationMetadata,
+} from 'apps/api/src/dtos/paginated-enriched-pull-requests.dto';
+import { EnrichedPullRequestResponse } from 'apps/api/src/dtos/enriched-pull-request-response.dto';
 
 @Injectable()
 export class GetEnrichedPullRequestsUseCase implements IUseCase {
@@ -41,7 +41,7 @@ export class GetEnrichedPullRequestsUseCase implements IUseCase {
         private readonly codeReviewExecutionService: ICodeReviewExecutionService,
         @Inject(REQUEST)
         private readonly request: UserRequest,
-        private readonly authorizationService: AuthorizationService
+        private readonly authorizationService: AuthorizationService,
     ) {}
 
     async execute(
@@ -174,7 +174,8 @@ export class GetEnrichedPullRequestsUseCase implements IUseCase {
                             codeReviewExecutions.length === 0
                         ) {
                             this.logger.debug({
-                                message: 'Skipping PR without code review history',
+                                message:
+                                    'Skipping PR without code review history',
                                 context: GetEnrichedPullRequestsUseCase.name,
                                 metadata: {
                                     prNumber: execution.pullRequestNumber,
@@ -366,9 +367,10 @@ export class GetEnrichedPullRequestsUseCase implements IUseCase {
         };
     }
 
-    private extractSuggestionsCount(
-        pullRequest: IPullRequests,
-    ): { sent: number; filtered: number } {
+    private extractSuggestionsCount(pullRequest: IPullRequests): {
+        sent: number;
+        filtered: number;
+    } {
         return (pullRequest.files ?? []).reduce(
             (
                 acc: { sent: number; filtered: number },

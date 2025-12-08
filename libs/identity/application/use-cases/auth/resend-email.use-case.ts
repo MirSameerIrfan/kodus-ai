@@ -13,7 +13,7 @@ import {
     IUsersService,
     USER_SERVICE_TOKEN,
 } from '@libs/identity/domain/user/contracts/user.service.contract';
-import { STATUS } from '@/config/types/database/status.type';
+import { STATUS } from '@shared/types/database/status.type';
 import { sendConfirmationEmail } from '@shared/utils/email/sendMail';
 
 interface DecodedPayload {

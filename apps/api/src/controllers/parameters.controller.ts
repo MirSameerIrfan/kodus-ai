@@ -1,9 +1,9 @@
-import { CreateOrUpdateParametersUseCase } from '@/core/application/use-cases/parameters/create-or-update-use-case';
-import { FindByKeyParametersUseCase } from '@/core/application/use-cases/parameters/find-by-key-use-case';
-import { UpdateCodeReviewParameterRepositoriesUseCase } from '@/core/application/use-cases/parameters/update-code-review-parameter-repositories-use-case';
-import { UpdateOrCreateCodeReviewParameterUseCase } from '@/core/application/use-cases/parameters/update-or-create-code-review-parameter-use-case';
+import { CreateOrUpdateParametersUseCase } from '@libs/organization/application/use-cases/parameters/create-or-update-use-case';
+import { FindByKeyParametersUseCase } from '@libs/organization/application/use-cases/parameters/find-by-key-use-case';
+import { UpdateCodeReviewParameterRepositoriesUseCase } from '@libs/organization/application/use-cases/parameters/update-code-review-parameter-repositories-use-case';
+import { UpdateOrCreateCodeReviewParameterUseCase } from '@libs/organization/application/use-cases/update-or-create-code-review-parameter-use-case';
 
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
 import {
     Body,
     Controller,
@@ -15,15 +15,15 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { ListCodeReviewAutomationLabelsWithStatusUseCase } from '@/core/application/use-cases/parameters/list-code-review-automation-labels-with-status.use-case';
+import { ListCodeReviewAutomationLabelsWithStatusUseCase } from '@libs/organization/application/use-cases/parameters/list-code-review-automation-labels-with-status.use-case';
 
 import { CreateOrUpdateCodeReviewParameterDto } from '../dtos/create-or-update-code-review-parameter.dto';
-import { GenerateKodusConfigFileUseCase } from '@/core/application/use-cases/parameters/generate-kodus-config-file.use-case';
+import { GenerateKodusConfigFileUseCase } from '@libs/organization/application/use-cases/parameters/generate-kodus-config-file.use-case';
 import { DeleteRepositoryCodeReviewParameterDto } from '../dtos/delete-repository-code-review-parameter.dto';
-import { DeleteRepositoryCodeReviewParameterUseCase } from '@/core/application/use-cases/parameters/delete-repository-code-review-parameter.use-case';
+import { DeleteRepositoryCodeReviewParameterUseCase } from '@libs/organization/application/use-cases/parameters/delete-repository-code-review-parameter.use-case';
 import { PreviewPrSummaryDto } from '../dtos/preview-pr-summary.dto';
-import { PreviewPrSummaryUseCase } from '@/core/application/use-cases/parameters/preview-pr-summary.use-case';
-import { CodeReviewVersion } from '@/config/types/general/codeReview.type';
+import { PreviewPrSummaryUseCase } from '@libs/organization/application/use-cases/parameters/preview-pr-summary.use-case';
+import { CodeReviewVersion } from '@shared/types/general/codeReview.type';
 import {
     CheckPolicies,
     PolicyGuard,
@@ -35,11 +35,11 @@ import {
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import { GetDefaultConfigUseCase } from '@/core/application/use-cases/parameters/get-default-config.use-case';
-import { GetCodeReviewParameterUseCase } from '@/core/application/use-cases/parameters/get-code-review-parameter.use-case';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { GetDefaultConfigUseCase } from '@libs/organization/application/use-cases/parameters/get-default-config.use-case';
+import { GetCodeReviewParameterUseCase } from '@libs/organization/application/use-cases/parameters/get-code-review-parameter.use-case';
 import { REQUEST } from '@nestjs/core';
-import { UserRequest } from '@/config/types/http/user-request.type';
+import { UserRequest } from '@shared/types/http/user-request.type';
 
 @Controller('parameters')
 export class ParametersController {

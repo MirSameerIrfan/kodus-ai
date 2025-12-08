@@ -11,9 +11,7 @@ import { ICodeReviewSettingsLog } from '@libs/analytics/ee/settings-log/domain/c
 import { CodeReviewSettingsLogModel } from '@core/database/mongoose/schemas/codeReviewSettingsLog.model';
 
 @Injectable()
-export class CodeReviewSettingsLogRepository
-    implements ICodeReviewSettingsLogRepository
-{
+export class CodeReviewSettingsLogRepository implements ICodeReviewSettingsLogRepository {
     constructor(
         @InjectModel(CodeReviewSettingsLogModel.name)
         private readonly codeReviewSettingsLogModel: Model<CodeReviewSettingsLogModel>,

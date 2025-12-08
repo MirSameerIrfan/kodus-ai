@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
@@ -15,10 +15,10 @@ import { Inject } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 
-export class GetIntegrationConfigsByIntegrationCategoryUseCase
-    implements IUseCase
-{
-    private readonly logger = createLogger(GetIntegrationConfigsByIntegrationCategoryUseCase.name);
+export class GetIntegrationConfigsByIntegrationCategoryUseCase implements IUseCase {
+    private readonly logger = createLogger(
+        GetIntegrationConfigsByIntegrationCategoryUseCase.name,
+    );
     constructor(
         @Inject(INTEGRATION_SERVICE_TOKEN)
         private readonly integrationService: IIntegrationService,
@@ -27,7 +27,7 @@ export class GetIntegrationConfigsByIntegrationCategoryUseCase
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };
-        }
+        },
     ) {}
     public async execute(params: any): Promise<any> {
         try {

@@ -1,5 +1,3 @@
-import { FindOperator } from 'typeorm';
-import { IAutomationExecution } from '../../automation/interfaces/automation-execution.interface';
 import { CodeReviewExecutionEntity } from '../entities/codeReviewExecution.entity';
 import { CodeReviewExecution } from '../interfaces/codeReviewExecution.interface';
 

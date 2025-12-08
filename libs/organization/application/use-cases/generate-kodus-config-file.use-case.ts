@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import {
     IParametersService,
@@ -6,7 +6,7 @@ import {
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
 import { REQUEST } from '@nestjs/core';
-import { KodusConfigFile } from '@/config/types/general/codeReview.type';
+import { KodusConfigFile } from '@shared/types/general/codeReview.type';
 
 import * as yaml from 'js-yaml';
 import * as fs from 'node:fs';
@@ -32,7 +32,7 @@ export class GenerateKodusConfigFileUseCase {
         private readonly request: Request & {
             user: { organization: { uuid: string }; uuid: string };
         },
-        private readonly authorizationService: AuthorizationService
+        private readonly authorizationService: AuthorizationService,
     ) {}
 
     async execute(

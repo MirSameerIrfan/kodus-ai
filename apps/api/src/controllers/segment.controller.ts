@@ -1,4 +1,4 @@
-import { TrackUseCase } from '@/core/application/use-cases/segment/track.use-case';
+import { TrackUseCase } from '@libs/analytics/application/use-cases/segment/track.use-case';
 import { Body, Controller, Post } from '@nestjs/common';
 
 @Controller('segment')

@@ -1,5 +1,5 @@
-import { createLogger } from "@kodus/flow";
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { createLogger } from '@kodus/flow';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/KodyIssuesManagement.contract';
 import {
     IIntegrationConfigService,
@@ -27,14 +27,16 @@ import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class GenerateIssuesFromPrClosedUseCase implements IUseCase {
-    private readonly logger = createLogger(GenerateIssuesFromPrClosedUseCase.name);
+    private readonly logger = createLogger(
+        GenerateIssuesFromPrClosedUseCase.name,
+    );
     constructor(
         @Inject(KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN)
         private readonly kodyIssuesManagementService: KodyIssuesManagementService,
         @Inject(PULL_REQUESTS_SERVICE_TOKEN)
         private readonly pullRequestService: IPullRequestsService,
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
-        private readonly integrationConfigService: IIntegrationConfigService
+        private readonly integrationConfigService: IIntegrationConfigService,
     ) {}
 
     async execute(params: any): Promise<void> {

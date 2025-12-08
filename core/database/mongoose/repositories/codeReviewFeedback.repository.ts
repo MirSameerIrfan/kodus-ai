@@ -4,16 +4,14 @@ import { Model } from 'mongoose';
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
-} from '@/shared/infrastructure/repositories/mappers';
+} from '@shared/infrastructure/repositories/mappers';
 import { CodeReviewFeedbackModel } from '@core/database/mongoose/schemas/codeReviewFeedback.model';
-import { ICodeReviewFeedbackRepository } from '@/core/domain/codeReviewFeedback/contracts/codeReviewFeedback.repository';
-import { ICodeReviewFeedback } from '@/core/domain/codeReviewFeedback/interfaces/codeReviewFeedback.interface';
-import { CodeReviewFeedbackEntity } from '@/core/domain/codeReviewFeedback/entities/codeReviewFeedback.entity';
+import { ICodeReviewFeedbackRepository } from '@libs/code-review/domain/feedback/contracts/codeReviewFeedback.repository';
+import { ICodeReviewFeedback } from '@libs/code-review/domain/feedback/interfaces/codeReviewFeedback.interface';
+import { CodeReviewFeedbackEntity } from '@libs/code-review/domain/feedback/entities/codeReviewFeedback.entity';
 
 @Injectable()
-export class CodeReviewFeedbackRepository
-    implements ICodeReviewFeedbackRepository
-{
+export class CodeReviewFeedbackRepository implements ICodeReviewFeedbackRepository {
     constructor(
         @InjectModel(CodeReviewFeedbackModel.name)
         private readonly codeReviewFeedbackModel: Model<CodeReviewFeedbackModel>,

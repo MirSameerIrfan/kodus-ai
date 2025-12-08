@@ -9,19 +9,17 @@ import {
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
-} from '@/shared/infrastructure/repositories/mappers';
-import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { IOrganizationParametersRepository } from '@/core/domain/organizationParameters/contracts/organizationParameters.repository.contract';
+} from '@shared/infrastructure/repositories/mappers';
+import { createNestedConditions } from '@shared/infrastructure/repositories/filters';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { IOrganizationParametersRepository } from '@libs/organization/domain/org-parameters/contracts/organizationParameters.repository.contract';
 import { OrganizationParametersModel } from '@core/database/typeorm/schema/organizationParameters.model';
-import { OrganizationParametersEntity } from '@/core/domain/organizationParameters/entities/organizationParameters.entity';
-import { IOrganizationParameters } from '@/core/domain/organizationParameters/interfaces/organizationParameters.interface';
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
+import { OrganizationParametersEntity } from '@libs/organization/domain/org-parameters/entities/organizationParameters.entity';
+import { IOrganizationParameters } from '@libs/organization/domain/org-parameters/interfaces/organizationParameters.interface';
+import { OrganizationParametersKey } from '@shared/domain/enums/organization-parameters-key.enum';
 
 @Injectable()
-export class OrganizationParametersRepository
-    implements IOrganizationParametersRepository
-{
+export class OrganizationParametersRepository implements IOrganizationParametersRepository {
     constructor(
         @InjectRepository(OrganizationParametersModel)
         private readonly organizationParametersRepository: Repository<OrganizationParametersModel>,

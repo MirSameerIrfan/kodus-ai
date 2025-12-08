@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import {
     CODE_REVIEW_FEEDBACK_SERVICE_TOKEN,
     ICodeReviewFeedbackService,
@@ -20,7 +20,7 @@ import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
 import {
     CodeSuggestion,
     Repository,
-} from '@/config/types/general/codeReview.type';
+} from '@shared/types/general/codeReview.type';
 
 import { kmeans } from 'ml-kmeans';
 import { FeedbackType } from '@libs/code-review/ee/fine-tuning/domain/enums/feedbackType.enum';
@@ -54,7 +54,7 @@ export class KodyFineTuningService {
         @Inject(SUGGESTION_EMBEDDED_SERVICE_TOKEN)
         private readonly suggestionEmbeddedService: ISuggestionEmbeddedService,
         @Inject(GLOBAL_PARAMETERS_SERVICE_TOKEN)
-        private readonly globalParametersService: IGlobalParametersService
+        private readonly globalParametersService: IGlobalParametersService,
     ) {}
 
     public async startAnalysis(

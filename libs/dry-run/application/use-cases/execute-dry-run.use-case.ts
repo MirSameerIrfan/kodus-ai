@@ -1,5 +1,5 @@
-import { DatabaseConnection } from '@/config/types';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { DatabaseConnection } from '@shared/types';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
 import {
     DRY_RUN_SERVICE_TOKEN,

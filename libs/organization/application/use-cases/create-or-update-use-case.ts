@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import {
     IParametersService,
@@ -6,14 +6,16 @@ import {
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
 import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 
 @Injectable()
 export class CreateOrUpdateParametersUseCase {
-    private readonly logger = createLogger(CreateOrUpdateParametersUseCase.name);
+    private readonly logger = createLogger(
+        CreateOrUpdateParametersUseCase.name,
+    );
     constructor(
         @Inject(PARAMETERS_SERVICE_TOKEN)
-        private readonly parametersService: IParametersService
+        private readonly parametersService: IParametersService,
     ) {}
 
     async execute<K extends ParametersKey>(

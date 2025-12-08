@@ -47,9 +47,7 @@ export class JobProcessorRouterService implements IJobProcessorService {
         return await processor.markCompleted(jobId, result);
     }
 
-    private getProcessor(
-        workflowType: WorkflowType,
-    ): IJobProcessorService {
+    private getProcessor(workflowType: WorkflowType): IJobProcessorService {
         switch (workflowType) {
             case WorkflowType.WEBHOOK_PROCESSING:
                 return this.webhookProcessor;
@@ -62,4 +60,3 @@ export class JobProcessorRouterService implements IJobProcessorService {
         }
     }
 }
-

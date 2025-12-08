@@ -1,12 +1,12 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Controller, HttpStatus, Inject, Post, Req, Res } from '@nestjs/common';
 import { Response } from 'express';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { ReceiveWebhookUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/receiveWebhook.use-case';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { ReceiveWebhookUseCase } from '@libs/platform/application/use-cases/codeManagement/receiveWebhook.use-case';
 import {
     WEBHOOK_LOG_SERVICE,
     IWebhookLogService,
-} from '@/core/domain/webhookLog/contracts/webhook-log.service.contract';
+} from '@libs/platform/domain/webhook-log/contracts/webhook-log.service.contract';
 
 @Controller('gitlab')
 export class GitlabController {
@@ -14,7 +14,7 @@ export class GitlabController {
     constructor(
         private readonly receiveWebhookUseCase: ReceiveWebhookUseCase,
         @Inject(WEBHOOK_LOG_SERVICE)
-        private readonly webhookLogService: IWebhookLogService
+        private readonly webhookLogService: IWebhookLogService,
     ) {}
 
     @Post('/webhook')

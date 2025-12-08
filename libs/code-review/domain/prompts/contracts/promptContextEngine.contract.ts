@@ -1,4 +1,4 @@
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 import type { ContextRequirement } from '@context-os-core/interfaces';
 import {

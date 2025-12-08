@@ -1,10 +1,10 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import {
     FormattedConfig,
     FormattedConfigLevel,
     IFormattedConfigProperty,
-} from '@/config/types/general/codeReviewConfig.type';
-import { ConfigLevel } from '@/config/types/general/pullRequestMessages.type';
+} from '@shared/types/general/codeReviewConfig.type';
+import { ConfigLevel } from '@shared/types/general/pullRequestMessages.type';
 import {
     IPullRequestMessagesService,
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
@@ -25,10 +25,12 @@ export type FormattedCustomMessagesConfig =
 
 @Injectable()
 export class FindByRepositoryOrDirectoryIdPullRequestMessagesUseCase {
-    private readonly logger = createLogger(FindByRepositoryOrDirectoryIdPullRequestMessagesUseCase.name);
+    private readonly logger = createLogger(
+        FindByRepositoryOrDirectoryIdPullRequestMessagesUseCase.name,
+    );
     constructor(
         @Inject(PULL_REQUEST_MESSAGES_SERVICE_TOKEN)
-        private readonly pullRequestMessagesService: IPullRequestMessagesService
+        private readonly pullRequestMessagesService: IPullRequestMessagesService,
     ) {}
 
     async execute(

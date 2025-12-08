@@ -1,7 +1,7 @@
-import { JobStatus } from '@/core/domain/workflowQueue/enums/job-status.enum';
-import { ErrorClassification } from '@/core/domain/workflowQueue/enums/error-classification.enum';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import { JobStatus } from '@libs/workflow-queue/domain/enums/job-status.enum';
+import { ErrorClassification } from '@libs/workflow-queue/domain/enums/error-classification.enum';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { CoreModel } from '@shared/infrastructure/repositories/model/typeOrm';
 import {
     Column,
     Entity,

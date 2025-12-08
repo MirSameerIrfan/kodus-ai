@@ -9,7 +9,7 @@ import * as bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import { JwtService } from '@nestjs/jwt';
-import { JWT, TokenResponse } from '@/config/types/jwt/jwt';
+import { JWT, TokenResponse } from '@shared/types/jwt/jwt';
 import { ConfigService } from '@nestjs/config';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import {
@@ -31,7 +31,7 @@ import {
     TEAM_MEMBERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/team-members/contracts/teamMembers.service.contracts';
 import { TeamMemberEntity } from '@libs/organization/domain/team-members/entities/teamMember.entity';
-import { AuthProvider } from '@shared/domain/enums/auth-provider.enum';
+import { AuthProvider } from '@shared/enums/auth-provider.enum';
 import axios, { AxiosResponse } from 'axios';
 
 @Injectable()

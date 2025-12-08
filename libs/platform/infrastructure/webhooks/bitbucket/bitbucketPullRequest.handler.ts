@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { GenerateIssuesFromPrClosedUseCase } from '@libs/issues/application/use-cases/generate-issues-from-pr-closed.use-case';
 import { ChatWithKodyFromGitUseCase } from '@libs/platform/application/use-cases/codeManagement/chatWithKodyFromGit.use-case';
 import { SavePullRequestUseCase } from '@libs/code-review/application/use-cases/pull-requests/save.use-case';
@@ -40,7 +40,7 @@ export class BitbucketPullRequestHandler implements IWebhookEventHandler {
         private readonly chatWithKodyFromGitUseCase: ChatWithKodyFromGitUseCase,
         private readonly codeManagement: CodeManagementService,
         private readonly generateIssuesFromPrClosedUseCase: GenerateIssuesFromPrClosedUseCase,
-        private readonly kodyRulesSyncService: KodyRulesSyncService
+        private readonly kodyRulesSyncService: KodyRulesSyncService,
     ) {}
 
     /**

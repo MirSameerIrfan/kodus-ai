@@ -1,20 +1,20 @@
-import { createLogger } from "@kodus/flow";
-import { FileChange } from '@/config/types/general/codeReview.type';
-import { Commit } from '@/config/types/general/commit.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { createLogger } from '@kodus/flow';
+import { FileChange } from '@shared/types/general/codeReview.type';
+import { Commit } from '@shared/types/general/commit.type';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { PullRequestAuthor } from '@libs/platform/domain/types/codeManagement/pullRequests.type';
 import { CacheService } from '@shared/utils/cache/cache.service';
 import { isFileMatchingGlob } from '@shared/utils/glob-utils';
 import { Injectable } from '@nestjs/common';
-import { IPullRequestManagerService } from '../../../../domain/codeBase/contracts/PullRequestManagerService.contract';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
+import { IPullRequestManagerService } from '../domain/contracts/PullRequestManagerService.contract';
 
 @Injectable()
 export class PullRequestHandlerService implements IPullRequestManagerService {
     private readonly logger = createLogger(PullRequestHandlerService.name);
     constructor(
         private readonly codeManagementService: CodeManagementService,
-        private readonly cacheService: CacheService
+        private readonly cacheService: CacheService,
     ) {}
 
     async getPullRequestDetails(

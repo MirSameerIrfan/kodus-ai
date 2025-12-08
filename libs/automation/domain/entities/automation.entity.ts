@@ -12,7 +12,6 @@ export class AutomationEntity implements IAutomation {
     private _status: boolean;
     private _level: AutomationLevel;
 
-
     constructor(automation: IAutomation | Partial<IAutomation>) {
         this._uuid = automation.uuid;
         this._name = automation.name;

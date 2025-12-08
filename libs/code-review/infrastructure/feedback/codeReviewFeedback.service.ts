@@ -6,7 +6,7 @@ import { Inject } from '@nestjs/common';
 import { CodeReviewFeedbackEntity } from '@libs/code-review/domain/feedback/entities/codeReviewFeedback.entity';
 import { ICodeReviewFeedback } from '@libs/code-review/domain/feedback/interfaces/codeReviewFeedback.interface';
 import { Collection } from 'mongoose';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     IPullRequests,
     IRepository,

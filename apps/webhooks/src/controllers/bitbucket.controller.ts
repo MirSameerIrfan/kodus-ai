@@ -1,12 +1,12 @@
 import { createLogger } from '@kodus/flow';
 import { Controller, HttpStatus, Inject, Post, Req, Res } from '@nestjs/common';
 import { Response } from 'express';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { EnqueueWebhookUseCase } from '@/core/application/use-cases/webhook/enqueue-webhook.use-case';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { EnqueueWebhookUseCase } from '@libs/platform/application/use-cases/webhook/enqueue-webhook.use-case';
 import {
     WEBHOOK_LOG_SERVICE,
     IWebhookLogService,
-} from '@/core/domain/webhookLog/contracts/webhook-log.service.contract';
+} from '@libs/platform/domain/webhook-log/contracts/webhook-log.service.contract';
 
 @Controller('bitbucket')
 export class BitbucketController {

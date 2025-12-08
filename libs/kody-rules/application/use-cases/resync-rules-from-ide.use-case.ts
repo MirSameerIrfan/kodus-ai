@@ -1,5 +1,5 @@
-import { createLogger } from "@kodus/flow";
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { createLogger } from '@kodus/flow';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { KodyRulesSyncService } from '@libs/kody-rules/infrastructure/kodyRulesSync.service';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import { Inject, Injectable } from '@nestjs/common';
@@ -14,7 +14,7 @@ export class ResyncRulesFromIdeUseCase {
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };
-        }
+        },
     ) {}
 
     async execute(params: { teamId: string; repositoriesIds: string[] }) {

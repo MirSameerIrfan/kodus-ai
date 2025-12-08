@@ -1,5 +1,5 @@
-import { Repository } from '@/config/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { Repository } from '@shared/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import * as moment from 'moment-timezone';
 
 export function extractRepoNames(

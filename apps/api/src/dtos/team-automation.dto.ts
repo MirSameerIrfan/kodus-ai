@@ -33,7 +33,6 @@ export class TeamAutomationsDto {
     automations: AutomationDto[];
 }
 
-
 export class OrganizationAutomationsDto {
     @Type(() => TeamQueryDto)
     organizationId: string;

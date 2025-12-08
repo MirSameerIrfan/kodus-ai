@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import {
@@ -6,8 +6,8 @@ import {
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
 } from '@libs/code-review/domain/pr-messages/contracts/pullRequestMessages.service.contract';
 import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
-import { ConfigLevel } from '@/config/types/general/pullRequestMessages.type';
-import { ActionType } from '@/config/types/general/codeReviewSettingsLog.type';
+import { ConfigLevel } from '@shared/types/general/pullRequestMessages.type';
+import { ActionType } from '@shared/types/general/codeReviewSettingsLog.type';
 import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
     ICodeReviewSettingsLogService,
@@ -28,7 +28,9 @@ import { getDefaultKodusConfigFile } from '@shared/utils/validateCodeReviewConfi
 
 @Injectable()
 export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
-    private readonly logger = createLogger(CreateOrUpdatePullRequestMessagesUseCase.name);
+    private readonly logger = createLogger(
+        CreateOrUpdatePullRequestMessagesUseCase.name,
+    );
     constructor(
         @Inject(PULL_REQUEST_MESSAGES_SERVICE_TOKEN)
         private readonly pullRequestMessagesService: IPullRequestMessagesService,
@@ -36,7 +38,7 @@ export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
         private readonly codeReviewSettingsLogService: ICodeReviewSettingsLogService,
         @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
         private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
-        private readonly authorizationService: AuthorizationService
+        private readonly authorizationService: AuthorizationService,
     ) {}
 
     async execute(
@@ -72,8 +74,9 @@ export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
         // For non-global configurations, check if content matches global/parent config
         // If it does, delete the specific config to inherit instead of creating/updating
         if (pullRequestMessages.configLevel !== ConfigLevel.GLOBAL) {
-            const shouldInherit = await this.shouldInheritFromParent(pullRequestMessages);
-            
+            const shouldInherit =
+                await this.shouldInheritFromParent(pullRequestMessages);
+
             if (shouldInherit && existingPullRequestMessage) {
                 // Delete existing configuration to inherit from parent
                 await this.pullRequestMessagesService.deleteByFilter({
@@ -82,9 +85,10 @@ export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
                     directoryId: pullRequestMessages.directoryId,
                     configLevel: pullRequestMessages.configLevel,
                 });
-                
+
                 this.logger.log({
-                    message: 'Deleted repository/directory configuration to inherit from parent',
+                    message:
+                        'Deleted repository/directory configuration to inherit from parent',
                     context: CreateOrUpdatePullRequestMessagesUseCase.name,
                     metadata: {
                         organizationId: pullRequestMessages.organizationId,
@@ -95,11 +99,12 @@ export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
                 });
                 return;
             }
-            
+
             if (shouldInherit && !existingPullRequestMessage) {
                 // No need to create config if it matches parent - just inherit
                 this.logger.log({
-                    message: 'Configuration matches parent, no action needed - inheriting',
+                    message:
+                        'Configuration matches parent, no action needed - inheriting',
                     context: CreateOrUpdatePullRequestMessagesUseCase.name,
                     metadata: {
                         organizationId: pullRequestMessages.organizationId,
@@ -203,7 +208,10 @@ export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
                 pullRequestMessages.directoryId,
             );
 
-            return this.areConfigurationsEqual(pullRequestMessages, parentConfig);
+            return this.areConfigurationsEqual(
+                pullRequestMessages,
+                parentConfig,
+            );
         } catch (error) {
             this.logger.error({
                 message: 'Error checking if should inherit from parent',
@@ -262,10 +270,16 @@ export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
         overrideConfig: Partial<IPullRequestMessages>,
     ): IPullRequestMessages {
         return {
-            startReviewMessage: overrideConfig.startReviewMessage || baseConfig.startReviewMessage,
-            endReviewMessage: overrideConfig.endReviewMessage || baseConfig.endReviewMessage,
+            startReviewMessage:
+                overrideConfig.startReviewMessage ||
+                baseConfig.startReviewMessage,
+            endReviewMessage:
+                overrideConfig.endReviewMessage || baseConfig.endReviewMessage,
             globalSettings: {
-                hideComments: overrideConfig.globalSettings?.hideComments ?? baseConfig.globalSettings?.hideComments ?? false,
+                hideComments:
+                    overrideConfig.globalSettings?.hideComments ??
+                    baseConfig.globalSettings?.hideComments ??
+                    false,
             },
         } as IPullRequestMessages;
     }
@@ -296,27 +310,39 @@ export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
         config2: IPullRequestMessages,
     ): boolean {
         // Compare startReviewMessage
-        if (!this.areMessagesEqual(config1.startReviewMessage, config2.startReviewMessage)) {
+        if (
+            !this.areMessagesEqual(
+                config1.startReviewMessage,
+                config2.startReviewMessage,
+            )
+        ) {
             return false;
         }
 
         // Compare endReviewMessage
-        if (!this.areMessagesEqual(config1.endReviewMessage, config2.endReviewMessage)) {
+        if (
+            !this.areMessagesEqual(
+                config1.endReviewMessage,
+                config2.endReviewMessage,
+            )
+        ) {
             return false;
         }
 
         // Compare globalSettings
-        if (!this.areGlobalSettingsEqual(config1.globalSettings, config2.globalSettings)) {
+        if (
+            !this.areGlobalSettingsEqual(
+                config1.globalSettings,
+                config2.globalSettings,
+            )
+        ) {
             return false;
         }
 
         return true;
     }
 
-    private areMessagesEqual(
-        message1: any,
-        message2: any,
-    ): boolean {
+    private areMessagesEqual(message1: any, message2: any): boolean {
         // Handle null/undefined cases
         if (!message1 && !message2) return true;
         if (!message1 || !message2) return false;
@@ -327,10 +353,7 @@ export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
         );
     }
 
-    private areGlobalSettingsEqual(
-        settings1: any,
-        settings2: any,
-    ): boolean {
+    private areGlobalSettingsEqual(settings1: any, settings2: any): boolean {
         // Handle null/undefined cases
         if (!settings1 && !settings2) return true;
         if (!settings1 || !settings2) return false;

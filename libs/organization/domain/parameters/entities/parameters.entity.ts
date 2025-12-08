@@ -3,9 +3,9 @@ import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
 import { IParameters } from '../interfaces/parameters.interface';
 import { ConfigValueMap } from '../types/configValue.type';
 
-export class ParametersEntity<K extends ParametersKey>
-    implements IParameters<K>
-{
+export class ParametersEntity<
+    K extends ParametersKey,
+> implements IParameters<K> {
     private _uuid: string;
     private _active: boolean;
     private _configKey: K;

@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { PlatformType } from '@shared/domain/enums/platform-type.enum';
@@ -24,7 +24,7 @@ export class ReceiveWebhookUseCase implements IUseCase {
         @Inject('BITBUCKET_WEBHOOK_HANDLER')
         private readonly bitbucketPullRequestHandler: IWebhookEventHandler,
         @Inject('AZURE_REPOS_WEBHOOK_HANDLER')
-        private readonly azureReposPullRequestHandler: IWebhookEventHandler
+        private readonly azureReposPullRequestHandler: IWebhookEventHandler,
     ) {
         // Inicializar o mapa de handlers por tipo de plataforma
         this.webhookHandlersMap = new Map<PlatformType, IWebhookEventHandler>([

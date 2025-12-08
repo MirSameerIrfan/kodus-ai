@@ -1,16 +1,16 @@
-import { ITeamRepository } from '@/core/domain/team/contracts/team.repository.contract';
-import { TeamEntity } from '@/core/domain/team/entities/team.entity';
+import { ITeamRepository } from '@libs/organization/domain/team/contracts/team.repository.contract';
+import { TeamEntity } from '@libs/organization/domain/team/entities/team.entity';
 import {
     IntegrationMatchType,
     IntegrationStatusFilter,
     ITeam,
     ITeamWithIntegrations,
     TeamsFilter,
-} from '@/core/domain/team/interfaces/team.interface';
+} from '@libs/organization/domain/team/interfaces/team.interface';
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
-} from '@/shared/infrastructure/repositories/mappers';
+} from '@shared/infrastructure/repositories/mappers';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -21,9 +21,9 @@ import {
     UpdateQueryBuilder,
 } from 'typeorm';
 import { TeamModel } from '@core/database/typeorm/schema/team.model';
-import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
-import { STATUS } from '@/config/types/database/status.type';
-import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
+import { createNestedConditions } from '@shared/infrastructure/repositories/filters';
+import { STATUS } from '@shared/types/database/status.type';
+import { IntegrationCategory } from '@shared/domain/enums/integration-category.enum';
 import { IntegrationModel } from '@core/database/typeorm/schema/integration.model';
 
 @Injectable()

@@ -1,19 +1,17 @@
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
-} from '@/shared/infrastructure/repositories/mappers';
+} from '@shared/infrastructure/repositories/mappers';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOneOptions, FindManyOptions } from 'typeorm';
-import { ISuggestionEmbeddedRepository } from '@/core/domain/kodyFineTuning/suggestionEmbedded/contracts/suggestionEmbedded.repository.contract';
-import { SuggestionEmbeddedModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/suggestionEmbedded.model';
-import { ISuggestionEmbedded } from '@/core/domain/kodyFineTuning/suggestionEmbedded/interfaces/suggestionEmbedded.interface';
-import { SuggestionEmbeddedEntity } from '@/core/domain/kodyFineTuning/suggestionEmbedded/entities/suggestionEmbedded.entity';
+import { ISuggestionEmbeddedRepository } from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/contracts/suggestionEmbedded.repository.contract';
+import { SuggestionEmbeddedModel } from '@libs/workflow-queue/infrastructure/repositories/schema/suggestionEmbedded.model';
+import { ISuggestionEmbedded } from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/interfaces/suggestionEmbedded.interface';
+import { SuggestionEmbeddedEntity } from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/entities/suggestionEmbedded.entity';
 
 @Injectable()
-export class SuggestionEmbeddedDatabaseRepository
-    implements ISuggestionEmbeddedRepository
-{
+export class SuggestionEmbeddedDatabaseRepository implements ISuggestionEmbeddedRepository {
     constructor(
         @InjectRepository(SuggestionEmbeddedModel)
         private readonly SuggestionEmbeddedRepository: Repository<SuggestionEmbeddedModel>,

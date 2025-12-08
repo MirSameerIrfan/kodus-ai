@@ -1,17 +1,16 @@
-import { INTEGRATION_REPOSITORY_TOKEN } from '@libs/core/domain/integrations/contracts/integration.repository.contracts';
-import { IntegrationRepository } from '@libs/core/infrastructure/adapters/repositories/typeorm/integration.repository';
-import { IntegrationModel } from '@libs/core/infrastructure/adapters/repositories/typeorm/schema/integration.model';
-import { IntegrationService } from '@libs/core/infrastructure/adapters/services/integrations/integration.service';
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { UseCases } from '@libs/core/application/use-cases/integrations';
-import { INTEGRATION_SERVICE_TOKEN } from '@libs/core/domain/integrations/contracts/integration.service.contracts';
-import { IntegrationController } from '@libs/core/infrastructure/http/controllers/integrations/integration.controller';
 import { AuthIntegrationModule } from '@libs/integrations/modules/authIntegration.module';
 import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
 import { PlatformIntegrationModule } from '@libs/platform/platform.module';
 import { ProfileConfigModule } from '@libs/identity/modules/profileConfig.module';
+import { IntegrationModel } from '@core/database/typeorm/schema/integration.model';
+import { INTEGRATION_SERVICE_TOKEN } from './domain/contracts/integration.service.contracts';
+import { IntegrationService } from './infrastructure/integration.service';
+import { INTEGRATION_REPOSITORY_TOKEN } from './domain/contracts/integration.repository.contracts';
+import { IntegrationController } from 'apps/api/src/controllers/integrations/integration.controller';
+import { IntegrationRepository } from '@core/database/typeorm/repositories/integration.repository';
 
 @Module({
     imports: [

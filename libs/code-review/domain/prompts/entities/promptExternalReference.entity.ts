@@ -6,9 +6,7 @@ import {
     PromptProcessingStatus,
 } from '../interfaces/promptExternalReference.interface';
 
-export class PromptExternalReferenceEntity
-    implements IPromptExternalReference
-{
+export class PromptExternalReferenceEntity implements IPromptExternalReference {
     private readonly _uuid?: string;
     private readonly _configKey: string;
     private readonly _sourceType: PromptSourceType;
@@ -47,7 +45,9 @@ export class PromptExternalReferenceEntity
         this._updatedAt = data.updatedAt;
     }
 
-    static create(data: IPromptExternalReference): PromptExternalReferenceEntity {
+    static create(
+        data: IPromptExternalReference,
+    ): PromptExternalReferenceEntity {
         return new PromptExternalReferenceEntity(data);
     }
 

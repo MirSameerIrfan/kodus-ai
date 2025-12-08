@@ -1,26 +1,24 @@
-import { createLogger } from "@kodus/flow";
-import { ICodeReviewExecutionRepository } from '@/core/domain/codeReviewExecutions/contracts/codeReviewExecution.repository.contract';
+import { createLogger } from '@kodus/flow';
+import { ICodeReviewExecutionRepository } from '@libs/code-review/domain/executions/contracts/codeReviewExecution.repository.contract';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CodeReviewExecutionModel } from '@core/database/typeorm/schema/codeReviewExecution.model';
 import { FindOptionsWhere, Repository } from 'typeorm';
-import { CodeReviewExecutionEntity } from '@/core/domain/codeReviewExecutions/entities/codeReviewExecution.entity';
-import { CodeReviewExecution } from '@/core/domain/codeReviewExecutions/interfaces/codeReviewExecution.interface';
+import { CodeReviewExecutionEntity } from '@libs/code-review/domain/executions/entities/codeReviewExecution.entity';
+import { CodeReviewExecution } from '@libs/code-review/domain/executions/interfaces/codeReviewExecution.interface';
 import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
-} from '@/shared/infrastructure/repositories/mappers';
-import { IAutomationExecution } from '@/core/domain/automation/interfaces/automation-execution.interface';
-import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
+} from '@shared/infrastructure/repositories/mappers';
+import { IAutomationExecution } from '@libs/automation/domain/interfaces/automation-execution.interface';
+import { createNestedConditions } from '@shared/infrastructure/repositories/filters';
 
 @Injectable()
-export class CodeReviewExecutionRepository
-    implements ICodeReviewExecutionRepository
-{
+export class CodeReviewExecutionRepository implements ICodeReviewExecutionRepository {
     private readonly logger = createLogger(CodeReviewExecutionRepository.name);
     constructor(
         @InjectRepository(CodeReviewExecutionModel)
-        private readonly codeReviewExecutionRepository: Repository<CodeReviewExecutionModel>
+        private readonly codeReviewExecutionRepository: Repository<CodeReviewExecutionModel>,
     ) {}
 
     async create(

@@ -3,8 +3,9 @@ import { PipelineContext } from './interfaces/pipeline-context.interface';
 import { PipelineExecutor } from './pipeline-executor.service';
 import { PipelineStage } from './interfaces/pipeline.interface';
 
-export abstract class BasePipelineStage<TContext extends PipelineContext>
-    implements PipelineStage<TContext> {
+export abstract class BasePipelineStage<
+    TContext extends PipelineContext,
+> implements PipelineStage<TContext> {
     abstract stageName: string;
 
     async execute(context: TContext): Promise<TContext> {

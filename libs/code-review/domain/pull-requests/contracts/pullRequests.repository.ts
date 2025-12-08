@@ -7,8 +7,8 @@ import {
 } from '../interfaces/pullRequests.interface';
 import { DeliveryStatus } from '../enums/deliveryStatus.enum';
 import { PullRequestState } from '@shared/domain/enums/pullRequestState.enum';
-import { Repository } from '@/config/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { Repository } from '@shared/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 
 export const PULL_REQUESTS_REPOSITORY_TOKEN = Symbol('PullRequestsRepository');
 

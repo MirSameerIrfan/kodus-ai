@@ -4,12 +4,12 @@
 export const V2_DEFAULT_CATEGORY_DESCRIPTIONS_TEXT = {
     bug: [
         '- Execution breaks: Code throws unhandled exceptions',
-        '- Wrong results: Output doesn\'t match expected behavior',
+        "- Wrong results: Output doesn't match expected behavior",
         '- Resource leaks: Unclosed files, connections, memory accumulation',
         '- State corruption: Invalid object/data states',
         '- Logic errors: Control flow produces incorrect outcomes',
         '- Race conditions: Concurrent access causes inconsistent state or duplicates',
-        '- Incorrect measurements: Metrics/timings that don\'t reflect actual operations',
+        "- Incorrect measurements: Metrics/timings that don't reflect actual operations",
         '- Invariant violations: Broken constraints (size limits, uniqueness, etc.)',
         '- Async timing bugs: Variables captured incorrectly in async closures',
         '- Conditional validation errors: Logic that checks for presence/absence of values using truthiness tests (e.g., `if dict.get("key")`) that fail with falsy values (0, None, False, ""), when membership tests (e.g., `if "key" in dict`) should be used',
@@ -37,7 +37,7 @@ export const V2_DEFAULT_CATEGORY_DESCRIPTIONS_TEXT = {
         '- Insecure fallback values: Using empty strings, default values, or weak fallbacks for critical security parameters (encryption keys, secrets, tokens) when environment variables are missing - system should fail-fast instead',
         '- Input validation bypass: User-controlled parameters (offsets, limits, indices, IDs) accepted without validation or with inadequate bounds checking, especially negative values in array slicing or pagination that could bypass access controls',
         '- SSRF (Server-Side Request Forgery): Using user-controlled URLs in network operations (open, fetch, HTTP requests) without allowlist validation, enabling access to internal resources or arbitrary external sites',
-        '- Case-sensitivity bypass: Inconsistent normalization in comparisons of case-insensitive data (emails, usernames, domains) where one side is normalized (toLowerCase/toUpperCase) but the other isn\'t, allowing bypass through case variations',
+        "- Case-sensitivity bypass: Inconsistent normalization in comparisons of case-insensitive data (emails, usernames, domains) where one side is normalized (toLowerCase/toUpperCase) but the other isn't, allowing bypass through case variations",
     ].join('\n'),
 };
 

@@ -8,14 +8,14 @@ import {
     Repository,
     UpdateQueryBuilder,
 } from 'typeorm';
-import { IProfileConfigRepository } from '@/core/domain/profileConfigs/contracts/profileConfig.repository.contract';
-import { ProfileConfigEntity } from '@/core/domain/profileConfigs/entities/profileConfig.entity';
-import { IProfileConfig } from '@/core/domain/profileConfigs/interfaces/profileConfig.interface';
-import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
+import { IProfileConfigRepository } from '@libs/identity/domain/profile-configs/contracts/profileConfig.repository.contract';
+import { ProfileConfigEntity } from '@libs/identity/domain/profile-configs/entities/profileConfig.entity';
+import { IProfileConfig } from '@libs/identity/domain/profile-configs/interfaces/profileConfig.interface';
+import { createNestedConditions } from '@shared/infrastructure/repositories/filters';
 import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
-} from '@/shared/infrastructure/repositories/mappers';
+} from '@shared/infrastructure/repositories/mappers';
 
 @Injectable()
 export class ProfileConfigRepository implements IProfileConfigRepository {

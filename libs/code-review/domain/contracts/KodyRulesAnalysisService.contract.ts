@@ -1,6 +1,11 @@
-import { FileChangeContext, ReviewModeResponse, AnalysisContext, AIAnalysisResult, AIAnalysisResultPrLevel } from "@/config/types/general/codeReview.type";
-import { OrganizationAndTeamData } from "@/config/types/general/organizationAndTeamData";
-import { IKodyRule } from "../../kodyRules/interfaces/kodyRules.interface";
+import {
+    FileChangeContext,
+    ReviewModeResponse,
+    AnalysisContext,
+    AIAnalysisResult,
+    AIAnalysisResultPrLevel,
+} from '@shared/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 
 export interface IKodyRulesAnalysisService {
     analyzeCodeWithAI(

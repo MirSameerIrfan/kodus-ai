@@ -1,5 +1,5 @@
-import { createLogger } from "@kodus/flow";
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { createLogger } from '@kodus/flow';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { KODY_RULES_SERVICE_TOKEN } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
 import { IKodyRulesService } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
 import {
@@ -35,7 +35,7 @@ export class CreateOrUpdateKodyRulesUseCase {
         private readonly authorizationService: AuthorizationService,
         private readonly contextReferenceDetectionService: ContextReferenceDetectionService,
         @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
-        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper
+        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
     ) {}
 
     async execute(

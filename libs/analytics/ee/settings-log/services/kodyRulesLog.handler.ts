@@ -1,12 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import {
-    UnifiedLogHandler,
-    BaseLogParams
-} from './unifiedLog.handler';
+import { UnifiedLogHandler, BaseLogParams } from './unifiedLog.handler';
 import {
     ActionType,
     ConfigLevel,
-} from '@/config/types/general/codeReviewSettingsLog.type';
+} from '@shared/types/general/codeReviewSettingsLog.type';
 import { IKodyRule } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 
 export interface KodyRuleLogParams extends BaseLogParams {
@@ -17,9 +14,7 @@ export interface KodyRuleLogParams extends BaseLogParams {
 
 @Injectable()
 export class KodyRulesLogHandler {
-    constructor(
-        private readonly unifiedLogHandler: UnifiedLogHandler,
-    ) {}
+    constructor(private readonly unifiedLogHandler: UnifiedLogHandler) {}
 
     public async logKodyRuleAction(params: KodyRuleLogParams): Promise<void> {
         const {
@@ -34,9 +29,16 @@ export class KodyRulesLogHandler {
         } = params;
 
         const entityName = this.getRuleName(newRule, oldRule, ruleTitle);
-        const { oldData, newData } = this.prepareRuleData(oldRule, newRule, actionType);
+        const { oldData, newData } = this.prepareRuleData(
+            oldRule,
+            newRule,
+            actionType,
+        );
 
-        const configLevel = this.determineConfigLevel(repository?.id, directory?.id);
+        const configLevel = this.determineConfigLevel(
+            repository?.id,
+            directory?.id,
+        );
 
         await this.unifiedLogHandler.logAction({
             organizationAndTeamData,
@@ -55,7 +57,7 @@ export class KodyRulesLogHandler {
     private getRuleName(
         newRule?: Partial<IKodyRule>,
         oldRule?: Partial<IKodyRule>,
-        ruleTitle?: string
+        ruleTitle?: string,
     ): string {
         return newRule?.title || oldRule?.title || ruleTitle || 'Unnamed Rule';
     }
@@ -63,7 +65,7 @@ export class KodyRulesLogHandler {
     private prepareRuleData(
         oldRule?: Partial<IKodyRule>,
         newRule?: Partial<IKodyRule>,
-        actionType?: ActionType
+        actionType?: ActionType,
     ): { oldData: any; newData: any } {
         switch (actionType) {
             case ActionType.CREATE:

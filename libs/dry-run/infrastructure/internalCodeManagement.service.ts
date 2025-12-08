@@ -1,9 +1,9 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { PlatformType } from '@shared/domain/enums/platform-type.enum';
 import { IntegrationServiceDecorator } from '@shared/utils/decorators/integration-service.decorator';
 import { Inject, Injectable } from '@nestjs/common';
 import { ICodeManagementService } from '@libs/platform/domain/interfaces/code-management.interface';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     DRY_RUN_SERVICE_TOKEN,
     IDryRunService,
@@ -12,7 +12,7 @@ import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/cont
 import {
     CodeSuggestion,
     Comment,
-} from '@/config/types/general/codeReview.type';
+} from '@shared/types/general/codeReview.type';
 import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 
 type PartialICodeManagementService = Pick<
@@ -27,13 +27,11 @@ type PartialICodeManagementService = Pick<
 
 @Injectable()
 @IntegrationServiceDecorator(PlatformType.INTERNAL, 'codeManagement')
-export class InternalCodeManagementService
-    implements PartialICodeManagementService
-{
+export class InternalCodeManagementService implements PartialICodeManagementService {
     private readonly logger = createLogger(InternalCodeManagementService.name);
     constructor(
         @Inject(DRY_RUN_SERVICE_TOKEN)
-        private readonly dryRunService: IDryRunService
+        private readonly dryRunService: IDryRunService,
     ) {}
 
     minimizeComment(params: any): Promise<any | null> {

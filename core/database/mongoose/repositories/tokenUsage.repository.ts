@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { LogModel } from '@/core/infrastructure/adapters/repositories/mongoose/schema/log.model';
-import { ITokenUsageRepository } from '@/core/domain/tokenUsage/contracts/tokenUsage.repository.contract';
+import { LogModel } from '@shared/infrastructure/repositories/model/mongodb/log.model';
+import { ITokenUsageRepository } from '@libs/analytics/domain/token-usage/contracts/tokenUsage.repository.contract';
 import { ObservabilityTelemetryModel } from '@core/database/mongoose/schemas/observabilityTelemetry.model';
 import {
     TokenUsageQueryContract,
@@ -10,9 +10,9 @@ import {
     UsageSummaryContract,
     UsageByPrResultContract,
     DailyUsageByPrResultContract,
-} from '@/core/domain/tokenUsage/types/tokenUsage.types';
+} from '@libs/analytics/domain/token-usage/types/tokenUsage.types';
 import { LLMAnalysisService } from '@libs/codeBase/llmAnalysis.service';
-import { CodeAstAnalysisService } from '@/ee/kodyAST/codeASTAnalysis.service';
+import { CodeAstAnalysisService } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
 
 @Injectable()
 export class TokenUsageRepository implements ITokenUsageRepository {

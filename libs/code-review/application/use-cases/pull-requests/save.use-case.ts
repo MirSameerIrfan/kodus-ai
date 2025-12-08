@@ -1,5 +1,5 @@
-import { createLogger } from "@kodus/flow";
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { createLogger } from '@kodus/flow';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
@@ -24,7 +24,7 @@ export class SavePullRequestUseCase {
         private readonly integrationConfigService: IIntegrationConfigService,
         @Inject(PULL_REQUESTS_SERVICE_TOKEN)
         private readonly pullRequestsService: IPullRequestsService,
-        private readonly codeManagement: CodeManagementService
+        private readonly codeManagement: CodeManagementService,
     ) {}
 
     public async execute(params: {

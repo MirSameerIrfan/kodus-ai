@@ -1,4 +1,4 @@
-import { AutomationType } from '@/core/domain/automation/enums/automation-type';
+import { AutomationType } from '@libs/automation/domain/enums/automation-type';
 import {
     IsEnum,
     IsNotEmpty,

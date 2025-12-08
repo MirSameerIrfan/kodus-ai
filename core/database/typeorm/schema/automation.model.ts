@@ -1,6 +1,6 @@
-import { AutomationType } from '@/core/domain/automation/enums/automation-type';
-import { AutomationLevel } from '@/shared/domain/enums/automations-level.enum';
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import { AutomationType } from '@libs/automation/domain/enums/automation-type';
+import { AutomationLevel } from '@shared/domain/enums/automations-level.enum';
+import { CoreModel } from '@shared/infrastructure/repositories/model/typeOrm';
 import { Column, Entity, JoinColumn, OneToMany } from 'typeorm';
 import { TeamAutomationModel } from './teamAutomation.model';
 

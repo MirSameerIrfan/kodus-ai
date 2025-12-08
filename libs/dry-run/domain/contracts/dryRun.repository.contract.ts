@@ -1,4 +1,4 @@
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { DryRunEntity } from '../entities/dryRun.entity';
 import { IDryRun } from '../interfaces/dryRun.interface';
 

@@ -1,6 +1,6 @@
-import { IIntegrationRepository } from '@/core/domain/integrations/contracts/integration.repository.contracts';
-import { IntegrationEntity } from '@/core/domain/integrations/entities/integration.entity';
-import { IIntegration } from '@/core/domain/integrations/interfaces/integration.interface';
+import { IIntegrationRepository } from '@libs/integrations/domain/integrations/contracts/integration.repository.contracts';
+import { IntegrationEntity } from '@libs/integrations/domain/integrations/entities/integration.entity';
+import { IIntegration } from '@libs/integrations/domain/integrations/interfaces/integration.interface';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IntegrationModel } from '@core/database/typeorm/schema/integration.model';
@@ -13,10 +13,10 @@ import {
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
-} from '@/shared/infrastructure/repositories/mappers';
-import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+} from '@shared/infrastructure/repositories/mappers';
+import { createNestedConditions } from '@shared/infrastructure/repositories/filters';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 
 @Injectable()
 export class IntegrationRepository implements IIntegrationRepository {

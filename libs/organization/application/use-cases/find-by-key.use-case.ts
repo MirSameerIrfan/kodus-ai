@@ -1,5 +1,5 @@
-import { createLogger } from "@kodus/flow";
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { createLogger } from '@kodus/flow';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
@@ -12,10 +12,12 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class FindByKeyOrganizationParametersUseCase {
-    private readonly logger = createLogger(FindByKeyOrganizationParametersUseCase.name);
+    private readonly logger = createLogger(
+        FindByKeyOrganizationParametersUseCase.name,
+    );
     constructor(
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
-        private readonly organizationParametersService: IOrganizationParametersService
+        private readonly organizationParametersService: IOrganizationParametersService,
     ) {}
 
     async execute(

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { IntegrationConfigEntity } from '@libs/integrations/domain/configs/entities/integration-config.entity';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import { PlatformType } from '@shared/domain/enums/platform-type.enum';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { ConversationAgentUseCase } from '../../agent/conversation-agent.use-case';
 import { BusinessRulesValidationAgentUseCase } from '../../agent/business-rules-validation-agent.use-case';
 import { createThreadId, createLogger } from '@kodus/flow';
@@ -153,7 +153,7 @@ export class ChatWithKodyFromGitUseCase {
     constructor(
         private readonly codeManagementService: CodeManagementService,
         private readonly conversationAgentUseCase: ConversationAgentUseCase,
-        private readonly businessRulesValidationAgentUseCase: BusinessRulesValidationAgentUseCase
+        private readonly businessRulesValidationAgentUseCase: BusinessRulesValidationAgentUseCase,
     ) {}
 
     async execute(params: WebhookParams): Promise<void> {

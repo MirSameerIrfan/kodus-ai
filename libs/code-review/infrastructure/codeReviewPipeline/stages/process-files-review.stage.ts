@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import pLimit from 'p-limit';
@@ -17,10 +17,10 @@ import {
     CodeSuggestion,
     FileChange,
     IFinalAnalysisResult,
-} from '@/config/types/general/codeReview.type';
+} from '@shared/types/general/codeReview.type';
 import { benchmark } from '@shared/utils/benchmark.util';
 import { createOptimizedBatches } from '@shared/utils/batch.helper';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 
 import {
     IPullRequestsService,
@@ -63,9 +63,12 @@ export class ProcessFilesReview extends BaseStage implements HeavyStage {
     readonly eventType = EventType.FILES_REVIEW_COMPLETED;
 
     private readonly concurrencyLimit = 20;
-    
+
     // Store results temporarily (in production, this would be in a database/cache)
-    private readonly resultsCache = new Map<string, CodeReviewPipelineContext>();
+    private readonly resultsCache = new Map<
+        string,
+        CodeReviewPipelineContext
+    >();
 
     constructor(
         @Inject(SUGGESTION_SERVICE_TOKEN)
@@ -99,7 +102,7 @@ export class ProcessFilesReview extends BaseStage implements HeavyStage {
      */
     async start(context: CodeReviewPipelineContext): Promise<string> {
         const taskId = uuidv4();
-        
+
         this.logger.log({
             message: `Starting file review for PR#${context.pullRequest.number}`,
             context: this.name,
@@ -126,13 +129,13 @@ export class ProcessFilesReview extends BaseStage implements HeavyStage {
             // TODO: In future, this should enqueue the analysis and return immediately
             // For now, execute synchronously but store result for getResult/resume
             const result = await this.executeAnalysis(context);
-            
+
             // Store result temporarily
             this.resultsCache.set(taskId, result);
-            
+
             // Publish completion event (simulating async completion)
             await this.publishCompletionEvent(taskId, result, context);
-            
+
             return taskId;
         } catch (error) {
             this.logger.error({
@@ -170,10 +173,10 @@ export class ProcessFilesReview extends BaseStage implements HeavyStage {
         if (!result) {
             throw new Error(`No result found for taskId: ${taskId}`);
         }
-        
+
         // Remove from cache after retrieval
         this.resultsCache.delete(taskId);
-        
+
         return result;
     }
 
@@ -220,12 +223,8 @@ export class ProcessFilesReview extends BaseStage implements HeavyStage {
     private async executeAnalysis(
         context: CodeReviewPipelineContext,
     ): Promise<CodeReviewPipelineContext> {
-        const {
-            validSuggestions,
-            discardedSuggestions,
-            fileMetadata,
-            tasks,
-        } = await this.analyzeChangedFilesInBatches(context);
+        const { validSuggestions, discardedSuggestions, fileMetadata, tasks } =
+            await this.analyzeChangedFilesInBatches(context);
 
         return this.updateContext(context, (draft) => {
             draft.validSuggestions = validSuggestions;
@@ -245,7 +244,8 @@ export class ProcessFilesReview extends BaseStage implements HeavyStage {
     ): Promise<void> {
         if (!this.amqpConnection) {
             this.logger.debug({
-                message: 'RabbitMQ not available, skipping files review completion event',
+                message:
+                    'RabbitMQ not available, skipping files review completion event',
                 context: this.name,
                 metadata: { taskId },
             });
@@ -261,7 +261,9 @@ export class ProcessFilesReview extends BaseStage implements HeavyStage {
                 result: {
                     validSuggestions: result.validSuggestions || [],
                     discardedSuggestions: result.discardedSuggestions || [],
-                    fileMetadata: result.fileMetadata ? Array.from(result.fileMetadata.entries()) : [],
+                    fileMetadata: result.fileMetadata
+                        ? Array.from(result.fileMetadata.entries())
+                        : [],
                     tasks: result.tasks,
                 },
                 metadata: {

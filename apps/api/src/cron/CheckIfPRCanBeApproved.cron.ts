@@ -1,61 +1,63 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import {
     TEAM_SERVICE_TOKEN,
     ITeamService,
-} from '@/core/domain/team/contracts/team.service.contract';
+} from '@libs/organization/domain/team/contracts/team.service.contract';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
-import { IntegrationStatusFilter } from '@/core/domain/team/interfaces/team.interface';
-import { STATUS } from '@/config/types/database/status.type';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { IntegrationCategory } from '@shared/domain/enums/integration-category.enum';
+import { IntegrationStatusFilter } from '@libs/organization/domain/team/interfaces/team.interface';
+import { STATUS } from '@shared/types/database/status.type';
+import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
-} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
+} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
 
-import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
-import { AzureRepoCommentTypeString } from '@/core/domain/azureRepos/entities/azureRepoExtras.type';
+import { PullRequestState } from '@shared/domain/enums/pullRequestState.enum';
+import { AzureRepoCommentTypeString } from '@libs/platform/domain/azure/entities/azureRepoExtras.type';
 import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
     IAutomationExecutionService,
-} from '@/core/domain/automation/contracts/automation-execution.service';
-import { AutomationType } from '@/core/domain/automation/enums/automation-type';
-import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
+} from '@libs/automation/domain/contracts/automation-execution.service';
+import { AutomationType } from '@libs/automation/domain/enums/automation-type';
+import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
 import {
     AUTOMATION_SERVICE_TOKEN,
     IAutomationService,
-} from '@/core/domain/automation/contracts/automation.service';
+} from '@libs/automation/domain/contracts/automation.service';
 import {
     TEAM_AUTOMATION_SERVICE_TOKEN,
     ITeamAutomationService,
-} from '@/core/domain/automation/contracts/team-automation.service';
+} from '@libs/automation/domain/contracts/team-automation.service';
 import {
     CODE_BASE_CONFIG_SERVICE_TOKEN,
     ICodeBaseConfigService,
-} from '@/core/domain/codeBase/contracts/CodeBaseConfigService.contract';
+} from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
 import {
     IPullRequestMessagesService,
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
-} from '@/core/domain/pullRequestMessages/contracts/pullRequestMessages.service.contract';
-import { IPullRequestMessages } from '@/core/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
-import { CodeReviewConfig } from '@/config/types/general/codeReview.type';
-import { ConfigLevel } from '@/config/types/general/pullRequestMessages.type';
-import { IPullRequestWithDeliveredSuggestions } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
+} from '@libs/code-review/domain/pr-messages/contracts/pullRequestMessages.service.contract';
+import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
+import { CodeReviewConfig } from '@shared/types/general/codeReview.type';
+import { ConfigLevel } from '@shared/types/general/pullRequestMessages.type';
+import { IPullRequestWithDeliveredSuggestions } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 
 const API_CRON_CHECK_IF_PR_SHOULD_BE_APPROVED =
     process.env.API_CRON_CHECK_IF_PR_SHOULD_BE_APPROVED;
 
 @Injectable()
 export class CheckIfPRCanBeApprovedCronProvider {
-    private readonly logger = createLogger(CheckIfPRCanBeApprovedCronProvider.name);
+    private readonly logger = createLogger(
+        CheckIfPRCanBeApprovedCronProvider.name,
+    );
     private pullRequestMessagesCache = new Map<
         string,
         IPullRequestMessages | null
@@ -78,7 +80,7 @@ export class CheckIfPRCanBeApprovedCronProvider {
         @Inject(TEAM_AUTOMATION_SERVICE_TOKEN)
         private readonly teamAutomationService: ITeamAutomationService,
         @Inject(PULL_REQUEST_MESSAGES_SERVICE_TOKEN)
-        private readonly pullRequestMessagesService: IPullRequestMessagesService
+        private readonly pullRequestMessagesService: IPullRequestMessagesService,
     ) {}
 
     @Cron(API_CRON_CHECK_IF_PR_SHOULD_BE_APPROVED, {

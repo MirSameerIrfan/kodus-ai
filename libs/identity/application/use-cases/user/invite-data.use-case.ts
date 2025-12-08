@@ -6,7 +6,7 @@ import {
     USER_SERVICE_TOKEN,
 } from '@libs/identity/domain/user/contracts/user.service.contract';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
-import { STATUS } from '@/config/types/database/status.type';
+import { STATUS } from '@shared/types/database/status.type';
 
 // @Case()
 export class InviteDataUserUseCase implements IUseCase {

@@ -1,4 +1,4 @@
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';
 
 export interface IOrganization {

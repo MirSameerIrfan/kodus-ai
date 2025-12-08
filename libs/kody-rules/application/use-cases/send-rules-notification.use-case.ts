@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import {
     IUsersService,
@@ -8,7 +8,7 @@ import {
     IOrganizationService,
     ORGANIZATION_SERVICE_TOKEN,
 } from '@libs/organization/domain/organization/contracts/organization.service.contract';
-import { STATUS } from '@/config/types/database/status.type';
+import { STATUS } from '@shared/types/database/status.type';
 import { sendKodyRulesNotification } from '@shared/utils/email/sendMail';
 
 @Injectable()
@@ -18,13 +18,10 @@ export class SendRulesNotificationUseCase {
         @Inject(USER_SERVICE_TOKEN)
         private readonly usersService: IUsersService,
         @Inject(ORGANIZATION_SERVICE_TOKEN)
-        private readonly organizationService: IOrganizationService
+        private readonly organizationService: IOrganizationService,
     ) {}
 
-    async execute(
-        organizationId: string,
-        rules: string[],
-    ): Promise<void> {
+    async execute(organizationId: string, rules: string[]): Promise<void> {
         try {
             this.logger.log({
                 message: 'Starting Kody Rules notification process',

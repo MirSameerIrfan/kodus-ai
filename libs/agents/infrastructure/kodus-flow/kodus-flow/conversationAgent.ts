@@ -8,10 +8,10 @@ import {
     LLMAdapter,
     createLogger,
 } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { MCPManagerService } from '@libs/agents/infrastructure/mcp/services/mcp-manager.service';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { MCPManagerService } from '@libs/mcp-server/infrastructure/services/mcp-manager.service';
 import { ConfigService } from '@nestjs/config';
-import { DatabaseConnection } from '@/config/types';
+import { DatabaseConnection } from '@shared/types';
 import { LLMModelProvider, PromptRunnerService } from '@kodus/kodus-common/llm';
 import { SDKOrchestrator } from '@kodus/flow/dist/orchestration';
 import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';

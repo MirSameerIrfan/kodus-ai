@@ -1,5 +1,8 @@
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { ActionType, UserInfo } from '@/config/types/general/codeReviewSettingsLog.type';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import {
+    ActionType,
+    UserInfo,
+} from '@shared/types/general/codeReviewSettingsLog.type';
 
 export interface IntegrationLogParams {
     organizationAndTeamData: OrganizationAndTeamData;
@@ -20,7 +23,7 @@ export interface UserStatusLogParams {
     userStatusChanges: Array<{
         gitId: string;
         gitTool: string;
-        licenseStatus: "active" | "inactive";
+        licenseStatus: 'active' | 'inactive';
         userName: string;
     }>;
 }

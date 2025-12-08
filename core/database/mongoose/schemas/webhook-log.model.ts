@@ -1,5 +1,5 @@
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { CoreDocument } from '@/shared/infrastructure/repositories/model/mongodb';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { CoreDocument } from '@shared/infrastructure/repositories/model/mongodb';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 @Schema({

@@ -1,5 +1,5 @@
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
+import { CoreModel } from '@shared/infrastructure/repositories/model/typeOrm';
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { TeamModel } from './team.model';
 

@@ -1,4 +1,8 @@
-import { ActionType, ChangedData, ConfigLevel } from "@/config/types/general/codeReviewSettingsLog.type";
+import {
+    ActionType,
+    ChangedData,
+    ConfigLevel,
+} from '@shared/types/general/codeReviewSettingsLog.type';
 
 export interface ICodeReviewSettingsLog {
     uuid: string;

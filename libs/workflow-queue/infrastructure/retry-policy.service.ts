@@ -31,7 +31,8 @@ export class RetryPolicyService {
             try {
                 return await fn();
             } catch (error) {
-                lastError = error instanceof Error ? error : new Error(String(error));
+                lastError =
+                    error instanceof Error ? error : new Error(String(error));
                 attempt++;
 
                 // Check if error is retryable
@@ -54,7 +55,10 @@ export class RetryPolicyService {
                 }
 
                 // Calculate backoff delay
-                const delay = calculateBackoffInterval(attempt - 1, policy.backoff);
+                const delay = calculateBackoffInterval(
+                    attempt - 1,
+                    policy.backoff,
+                );
 
                 // Callback before retry
                 if (policy.onRetry) {
@@ -85,4 +89,3 @@ export class RetryPolicyService {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
 }
-

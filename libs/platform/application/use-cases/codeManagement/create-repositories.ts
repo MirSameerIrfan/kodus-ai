@@ -1,4 +1,4 @@
-import { STATUS } from '@/config/types/database/status.type';
+import { STATUS } from '@shared/types/database/status.type';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,

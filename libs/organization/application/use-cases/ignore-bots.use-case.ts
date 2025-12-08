@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { PULL_REQUEST_MANAGER_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/PullRequestManagerService.contract';
 import {
     IOrganizationParametersService,
@@ -18,7 +18,7 @@ export class IgnoreBotsUseCase {
         private readonly pullRequestHandlerService: PullRequestHandlerService,
         private readonly codeManagementService: CodeManagementService,
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
-        private readonly organizationParametersService: IOrganizationParametersService
+        private readonly organizationParametersService: IOrganizationParametersService,
     ) {}
 
     public async execute(params: { organizationId: string; teamId: string }) {

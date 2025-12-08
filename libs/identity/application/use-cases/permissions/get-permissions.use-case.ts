@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import {
     IPermissionsService,
     PERMISSIONS_SERVICE_TOKEN,

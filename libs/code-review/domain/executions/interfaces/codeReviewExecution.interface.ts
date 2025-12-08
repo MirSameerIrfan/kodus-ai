@@ -1,5 +1,5 @@
-import { AutomationStatus } from '../../automation/enums/automation-status';
-import { IAutomationExecution } from '../../automation/interfaces/automation-execution.interface';
+import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
+import { IAutomationExecution } from '@libs/automation/domain/interfaces/automation-execution.interface';
 
 export type CodeReviewExecution = {
     uuid: string;

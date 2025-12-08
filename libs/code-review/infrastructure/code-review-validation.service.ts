@@ -1,25 +1,25 @@
 import { createLogger } from '@kodus/flow';
 import { Injectable, Inject } from '@nestjs/common';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
+} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
 import {
     ITeamAutomationService,
     TEAM_AUTOMATION_SERVICE_TOKEN,
-} from '@/core/domain/automation/contracts/team-automation.service';
+} from '@libs/automation/domain/contracts/team-automation.service';
 import {
     AUTOMATION_SERVICE_TOKEN,
     IAutomationService,
-} from '@/core/domain/automation/contracts/automation.service';
-import { AutomationType } from '@/core/domain/automation/enums/automation-type';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
+} from '@libs/automation/domain/contracts/automation.service';
+import { AutomationType } from '@libs/automation/domain/enums/automation-type';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
 import {
     PermissionValidationService,
     ValidationErrorType,
-} from '@/ee/shared/services/permissionValidation.service';
+} from '@shared/ee/services/permissionValidation.service';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 
 export interface FindTeamWithActiveCodeReviewResult {
@@ -214,10 +214,7 @@ export class CodeReviewValidationService {
         return automation;
     }
 
-    private async getTeamAutomations(
-        automationUuid: string,
-        teamId: string,
-    ) {
+    private async getTeamAutomations(automationUuid: string, teamId: string) {
         const teamAutomations = await this.teamAutomationService.find({
             automation: { uuid: automationUuid },
             status: true,
@@ -239,4 +236,3 @@ export class CodeReviewValidationService {
         return teamAutomations;
     }
 }
-

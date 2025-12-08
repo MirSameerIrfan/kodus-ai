@@ -4,11 +4,6 @@ import {
     IUsersService,
     USER_SERVICE_TOKEN,
 } from '@libs/identity/domain/user/contracts/user.service.contract';
-import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
-import { CreateProfileUseCase } from '../profile/create.use-case';
-import { CreateTeamUseCase } from '@libs/organization/application/use-cases/team/create.use-case';
-import { STATUS } from '@/config/types/database/status.type';
-import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { DuplicateRecordException } from '@shared/infrastructure/filters/duplicate-record.exception';
 
 @Injectable()

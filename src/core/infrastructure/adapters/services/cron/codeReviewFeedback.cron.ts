@@ -88,8 +88,8 @@ export class CodeReviewFeedbackCronProvider {
             }
 
             const automationUuid = codeReviewAutomation[0].uuid;
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            const threeDaysAgo = new Date();
+            threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
             const now = new Date();
 
             const teamAutomationsResults = await Promise.allSettled(
@@ -131,7 +131,7 @@ export class CodeReviewFeedbackCronProvider {
                 teamsWithAutomation.map(({ team, teamAutomation }) =>
                     this.automationExecutionService
                         .findByPeriodAndTeamAutomationId(
-                            sevenDaysAgo,
+                            threeDaysAgo,
                             now,
                             teamAutomation.uuid,
                             AutomationStatus.SUCCESS,
@@ -159,7 +159,7 @@ export class CodeReviewFeedbackCronProvider {
             if (!teamsToProcess.length) {
                 this.logger.log({
                     message:
-                        'No teams with successful executions in the last 7 days',
+                        'No teams with successful executions in the last 3 days',
                     context: CodeReviewFeedbackCronProvider.name,
                 });
                 return;

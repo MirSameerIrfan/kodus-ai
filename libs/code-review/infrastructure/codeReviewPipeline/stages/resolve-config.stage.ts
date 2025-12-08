@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { BaseStage } from './base/base-stage.abstract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
@@ -19,7 +19,7 @@ import {
     IDryRunService,
 } from '@libs/dry-run/domain/contracts/dryRun.service.contract';
 import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
-import { ConfigLevel } from '@/config/types/general/pullRequestMessages.type';
+import { ConfigLevel } from '@shared/types/general/pullRequestMessages.type';
 import {
     IPullRequestMessagesService,
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
@@ -29,9 +29,7 @@ import {
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
-import {
-    CODE_BASE_CONFIG_CACHE_SERVICE_TOKEN,
-} from '@libs/code-review/domain/contracts/CodeBaseConfigCacheService.contract';
+import { CODE_BASE_CONFIG_CACHE_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/CodeBaseConfigCacheService.contract';
 import { CodeBaseConfigCacheService } from '@libs/code-review/infrastructure/code-base-config-cache.service';
 
 @Injectable()
@@ -52,7 +50,7 @@ export class ResolveConfigStage extends BaseStage {
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
         @Inject(DRY_RUN_SERVICE_TOKEN)
-        private readonly dryRunService: IDryRunService
+        private readonly dryRunService: IDryRunService,
     ) {
         super();
     }

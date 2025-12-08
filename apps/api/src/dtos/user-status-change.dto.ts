@@ -8,7 +8,7 @@ export class UserStatusDto {
     public gitTool: string;
 
     @IsString()
-    public licenseStatus: "active" | "inactive";
+    public licenseStatus: 'active' | 'inactive';
 
     @IsString()
     public teamId: string;

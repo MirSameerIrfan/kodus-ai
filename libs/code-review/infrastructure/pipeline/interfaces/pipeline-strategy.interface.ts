@@ -3,8 +3,8 @@
  * Kodus Tech. All rights reserved.
  */
 
-import { PipelineContext } from "./pipeline-context.interface";
-import { PipelineStage } from "./pipeline.interface";
+import { PipelineContext } from './pipeline-context.interface';
+import { PipelineStage } from './pipeline.interface';
 
 export interface IPipelineStrategy<TContext extends PipelineContext> {
     /**

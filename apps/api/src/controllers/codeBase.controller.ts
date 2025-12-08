@@ -1,11 +1,11 @@
 import {
     AST_ANALYSIS_SERVICE_TOKEN,
     IASTAnalysisService,
-} from '@/core/domain/codeBase/contracts/ASTAnalysisService.contract';
+} from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
     Controller,
     Post,
@@ -25,7 +25,7 @@ import {
     CheckPolicies,
 } from '@libs/identity/infrastructure/permissions/policy.guard';
 import { checkPermissions } from '@libs/identity/infrastructure/permissions/policy.handlers';
-import { BackoffPresets } from '@/shared/utils/polling';
+import { BackoffPresets } from '@shared/utils/polling';
 
 function replacer(key: any, value: any) {
     if (value instanceof Map) {

@@ -9,14 +9,14 @@ import {
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
-} from '@/shared/infrastructure/repositories/mappers';
-import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
+} from '@shared/infrastructure/repositories/mappers';
+import { createNestedConditions } from '@shared/infrastructure/repositories/filters';
 import { ParametersModel } from '@core/database/typeorm/schema/parameters.model';
-import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
-import { IParameters } from '@/core/domain/parameters/interfaces/parameters.interface';
-import { IParametersRepository } from '@/core/domain/parameters/contracts/parameters.repository.contracts';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
+import { IParameters } from '@libs/organization/domain/parameters/interfaces/parameters.interface';
+import { IParametersRepository } from '@libs/organization/domain/parameters/contracts/parameters.repository.contracts';
+import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 
 @Injectable()
 export class ParametersRepository implements IParametersRepository {

@@ -1,5 +1,5 @@
-import { createLogger } from "@kodus/flow";
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { createLogger } from '@kodus/flow';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     DRY_RUN_REPOSITORY_TOKEN,
     IDryRunRepository,
@@ -17,13 +17,13 @@ import { Inject, Injectable } from '@nestjs/common';
 import { createHash } from 'crypto';
 import { deepSort } from '@shared/utils/deep';
 import { produce } from 'immer';
-import { CodeReviewParameter } from '@/config/types/general/codeReviewConfig.type';
+import { CodeReviewParameter } from '@shared/types/general/codeReviewConfig.type';
 import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
 import {
     CodeReviewConfig,
     CodeReviewConfigWithoutLLMProvider,
     FileChange,
-} from '@/config/types/general/codeReview.type';
+} from '@shared/types/general/codeReview.type';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
@@ -59,7 +59,7 @@ export class DryRunService implements IDryRunService {
         private readonly pullRequestMessagesService: IPullRequestMessagesService,
         @Inject(CODE_BASE_CONFIG_SERVICE_TOKEN)
         private readonly codeBaseConfigService: ICodeBaseConfigService,
-        private readonly eventEmitter: EventEmitter2
+        private readonly eventEmitter: EventEmitter2,
     ) {}
 
     create(

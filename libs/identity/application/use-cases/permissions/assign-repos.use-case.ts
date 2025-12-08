@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
@@ -25,7 +25,7 @@ export class AssignReposUseCase implements IUseCase {
         @Inject(PERMISSIONS_SERVICE_TOKEN)
         private readonly permissionsService: IPermissionsService,
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
-        private readonly integrationConfigService: IIntegrationConfigService
+        private readonly integrationConfigService: IIntegrationConfigService,
     ) {}
 
     async execute(params: {

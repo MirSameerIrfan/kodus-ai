@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import { IntegrationCategory } from '@shared/domain/enums/integration-category.enum';
@@ -14,7 +14,7 @@ import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
     ICodeReviewSettingsLogService,
 } from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
-import { ActionType } from '@/config/types/general/codeReviewSettingsLog.type';
+import { ActionType } from '@shared/types/general/codeReviewSettingsLog.type';
 
 @Injectable()
 export class DeleteIntegrationUseCase {
@@ -36,7 +36,7 @@ export class DeleteIntegrationUseCase {
                 uuid: string;
                 email: string;
             };
-        }
+        },
     ) {}
 
     async execute(params: {

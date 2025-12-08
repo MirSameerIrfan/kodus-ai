@@ -1,4 +1,4 @@
-import { KodyRulesStatus } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+import { KodyRulesStatus } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import { IsArray, IsEnum, IsString } from 'class-validator';
 
 export class ChangeStatusKodyRulesDTO {

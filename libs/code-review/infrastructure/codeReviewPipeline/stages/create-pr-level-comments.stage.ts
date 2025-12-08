@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { BaseStage } from './base/base-stage.abstract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
@@ -33,7 +33,7 @@ export class CreatePrLevelCommentsStage extends BaseStage {
         @Inject(PULL_REQUESTS_SERVICE_TOKEN)
         private readonly pullRequestsService: IPullRequestsService,
         @Inject(DRY_RUN_SERVICE_TOKEN)
-        private readonly dryRunService: IDryRunService
+        private readonly dryRunService: IDryRunService,
     ) {
         super();
     }
@@ -253,7 +253,7 @@ export class CreatePrLevelCommentsStage extends BaseStage {
         } catch (error) {
             this.logger.error({
                 message: `Error during PR-level comments creation for PR#${context.pullRequest.number}`,
-                context: this.stageName,
+                context: this.name,
                 error,
                 metadata: {
                     organizationAndTeamData: context.organizationAndTeamData,
@@ -270,7 +270,7 @@ export class CreatePrLevelCommentsStage extends BaseStage {
     async compensate(context: CodeReviewPipelineContext): Promise<void> {
         try {
             const prLevelCommentResults = context.prLevelCommentResults || [];
-            
+
             if (prLevelCommentResults.length === 0) {
                 return;
             }

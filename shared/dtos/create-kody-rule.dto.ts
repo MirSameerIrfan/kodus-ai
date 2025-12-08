@@ -48,9 +48,7 @@ export class KodyRulesInheritanceDto {
     include: string[];
 }
 
-export class KodyRuleExternalReferenceDto
-    implements IKodyRuleExternalReference
-{
+export class KodyRuleExternalReferenceDto implements IKodyRuleExternalReference {
     @IsString()
     filePath: string;
 

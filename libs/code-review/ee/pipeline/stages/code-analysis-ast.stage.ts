@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Injectable, Inject } from '@nestjs/common';
 import {
     AST_ANALYSIS_SERVICE_TOKEN,
@@ -26,7 +26,7 @@ export class CodeAnalysisASTStage extends BaseStage implements HeavyStage {
 
     constructor(
         @Inject(AST_ANALYSIS_SERVICE_TOKEN)
-        private readonly codeASTAnalysisService: IASTAnalysisService
+        private readonly codeASTAnalysisService: IASTAnalysisService,
     ) {
         super();
     }

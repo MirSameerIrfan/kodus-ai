@@ -75,14 +75,20 @@ export class UsersController {
 
     @Post('/join-organization')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Create, ResourceType.UserSettings))
+    @CheckPolicies(checkPermissions({
+        action: Action.Create,
+        resource: ResourceType.UserSettings
+    }))
     public async joinOrganization(@Body() body: JoinOrganizationDto) {
         return await this.joinOrganizationUseCase.execute(body);
     }
 
     @Patch('/:targetUserId')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Update, ResourceType.UserSettings))
+    @CheckPolicies(checkPermissions({
+        action: Action.Update,
+        resource: ResourceType.UserSettings
+    }))
     public async updateAnother(
         @Body() body: UpdateAnotherUserDto,
         @Param('targetUserId') targetUserId: string,

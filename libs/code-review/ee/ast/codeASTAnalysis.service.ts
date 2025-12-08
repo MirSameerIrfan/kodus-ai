@@ -1,12 +1,12 @@
-import { AxiosASTService } from '@/config/axios/microservices/ast.axios';
+import { AxiosASTService } from '@core/config/axios/microservices/ast.axios';
 import {
     AIAnalysisResult,
     AnalysisContext,
     CodeSuggestion,
     Repository,
     ReviewModeResponse,
-} from '@/config/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+} from '@shared/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { IASTAnalysisService } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
 import { LLMResponseProcessor } from '@libs/code-review/infrastructure/utils/transforms/llmResponseProcessor.transform';
 import type { ContextAugmentationsMap } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';

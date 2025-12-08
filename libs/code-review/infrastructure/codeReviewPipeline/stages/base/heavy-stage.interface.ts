@@ -49,4 +49,3 @@ export interface HeavyStage extends Stage {
      */
     eventType: string;
 }
-

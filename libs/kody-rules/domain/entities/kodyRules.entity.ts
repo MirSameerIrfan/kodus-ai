@@ -1,5 +1,9 @@
 import { Entity } from '@shared/domain/interfaces/entity';
-import { IKodyRule, IKodyRules, KodyRulesScope } from '../interfaces/kodyRules.interface';
+import {
+    IKodyRule,
+    IKodyRules,
+    KodyRulesScope,
+} from '../interfaces/kodyRules.interface';
 
 export class KodyRulesEntity implements Entity<IKodyRules> {
     private readonly _uuid: string;
@@ -17,7 +21,7 @@ export class KodyRulesEntity implements Entity<IKodyRules> {
     }
 
     private normalizeRules(rules: Partial<IKodyRule>[]): Partial<IKodyRule>[] {
-        return rules.map(rule => ({
+        return rules.map((rule) => ({
             ...rule,
             scope: rule.scope ?? KodyRulesScope.FILE,
         }));

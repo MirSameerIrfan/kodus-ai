@@ -1,4 +1,4 @@
-import { CodeSuggestion } from '@/config/types/general/codeReview.type';
+import { CodeSuggestion } from '@shared/types/general/codeReview.type';
 import { SuggestionEmbeddedEntity } from '../entities/suggestionEmbedded.entity';
 import { ISuggestionEmbeddedRepository } from './suggestionEmbedded.repository.contract';
 
@@ -12,8 +12,7 @@ export const SUGGESTION_EMBEDDED_SERVICE_TOKEN = Symbol(
     'SuggestionEmbeddedService',
 );
 
-export interface ISuggestionEmbeddedService
-    extends ISuggestionEmbeddedRepository {
+export interface ISuggestionEmbeddedService extends ISuggestionEmbeddedRepository {
     bulkCreateFromMongoData(
         suggestions: ISuggestionToEmbed[],
     ): Promise<SuggestionEmbeddedEntity[] | undefined>;

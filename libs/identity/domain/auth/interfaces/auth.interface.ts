@@ -1,5 +1,5 @@
-import { AuthProvider } from '@shared/domain/enums/auth-provider.enum';
-import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
+import { AuthProvider } from '@shared/enums/auth-provider.enum';
+import { IUser } from '../../user/interfaces/user.interface';
 
 export interface IAuth {
     uuid: string;

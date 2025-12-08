@@ -1,7 +1,7 @@
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import { CoreModel } from '@shared/infrastructure/repositories/model/typeOrm';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { IntegrationModel } from './integration.model';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
+import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
 import { TeamModel } from './team.model';
 
 @Entity('integration_configs')

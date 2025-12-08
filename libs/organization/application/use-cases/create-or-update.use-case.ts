@@ -1,5 +1,5 @@
-import { createLogger } from "@kodus/flow";
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { createLogger } from '@kodus/flow';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
@@ -13,10 +13,12 @@ import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class CreateOrUpdateOrganizationParametersUseCase implements IUseCase {
-    private readonly logger = createLogger(CreateOrUpdateOrganizationParametersUseCase.name);
+    private readonly logger = createLogger(
+        CreateOrUpdateOrganizationParametersUseCase.name,
+    );
     constructor(
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
-        private readonly organizationParametersService: IOrganizationParametersService
+        private readonly organizationParametersService: IOrganizationParametersService,
     ) {}
 
     async execute(

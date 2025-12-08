@@ -5,7 +5,7 @@ import {
     ITeamService,
     TEAM_SERVICE_TOKEN,
 } from '@libs/organization/domain/team/contracts/team.service.contract';
-import { STATUS } from '@/config/types/database/status.type';
+import { STATUS } from '@shared/types/database/status.type';
 import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
 
 @Injectable()

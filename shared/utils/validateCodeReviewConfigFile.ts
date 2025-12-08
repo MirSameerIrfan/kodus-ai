@@ -1,4 +1,4 @@
-import { KodusConfigFile } from '@/config/types/general/codeReview.type';
+import { KodusConfigFile } from '@shared/types/general/codeReview.type';
 import * as codereviewConfigSchema from '@shared/schemas/codereview.json';
 import Ajv, { ErrorObject } from 'ajv';
 

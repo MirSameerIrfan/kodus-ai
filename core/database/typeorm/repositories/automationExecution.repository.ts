@@ -1,7 +1,7 @@
-import { createLogger } from "@kodus/flow";
-import { IAutomationExecutionRepository } from '@/core/domain/automation/contracts/automation-execution.repository';
-import { AutomationExecutionEntity } from '@/core/domain/automation/entities/automation-execution.entity';
-import { IAutomationExecution } from '@/core/domain/automation/interfaces/automation-execution.interface';
+import { createLogger } from '@kodus/flow';
+import { IAutomationExecutionRepository } from '@libs/automation/domain/contracts/automation-execution.repository';
+import { AutomationExecutionEntity } from '@libs/automation/domain/entities/automation-execution.entity';
+import { IAutomationExecution } from '@libs/automation/domain/interfaces/automation-execution.interface';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AutomationExecutionModel } from '@core/database/typeorm/schema/automationExecution.model';
@@ -14,18 +14,16 @@ import {
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
-} from '@/shared/infrastructure/repositories/mappers';
-import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+} from '@shared/infrastructure/repositories/mappers';
+import { createNestedConditions } from '@shared/infrastructure/repositories/filters';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 
 @Injectable()
-export class AutomationExecutionRepository
-    implements IAutomationExecutionRepository
-{
+export class AutomationExecutionRepository implements IAutomationExecutionRepository {
     private readonly logger = createLogger(AutomationExecutionRepository.name);
     constructor(
         @InjectRepository(AutomationExecutionModel)
-        private readonly automationExecutionRepository: Repository<AutomationExecutionModel>
+        private readonly automationExecutionRepository: Repository<AutomationExecutionModel>,
     ) {}
 
     async create(

@@ -1,4 +1,4 @@
-import { CoreDocument } from '@/shared/infrastructure/repositories/model/mongodb';
+import { CoreDocument } from '@shared/infrastructure/repositories/model/mongodb';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 

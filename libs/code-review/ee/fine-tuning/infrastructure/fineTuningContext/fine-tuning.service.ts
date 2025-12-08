@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 /**
  * @license
  * Kodus Tech. All rights reserved.
@@ -6,7 +6,7 @@ import { createLogger } from "@kodus/flow";
 
 import { Injectable } from '@nestjs/common';
 import { KodyFineTuningService } from '@libs/code-review/ee/fine-tuning/infrastructure/kodyFineTuning.service';
-import { CodeSuggestion } from '@/config/types/general/codeReview.type';
+import { CodeSuggestion } from '@shared/types/general/codeReview.type';
 import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/codeReviewPipeline/context/code-review-pipeline.context';
 import { IClusterizedSuggestion } from '@libs/code-review/ee/fine-tuning/domain/interfaces/kodyFineTuning.interface';
 import { IKodyFineTuningContextPreparationService } from '@shared/interfaces/kody-fine-tuning-context-preparation.interface';
@@ -16,11 +16,13 @@ import { IKodyFineTuningContextPreparationService } from '@shared/interfaces/kod
  * Available only in the cloud version or with an enterprise license
  */
 @Injectable()
-export class KodyFineTuningContextPreparationService
-    implements IKodyFineTuningContextPreparationService
-{
-    private readonly logger = createLogger(KodyFineTuningContextPreparationService.name);
-    constructor(private readonly kodyFineTuningService: KodyFineTuningService) {}
+export class KodyFineTuningContextPreparationService implements IKodyFineTuningContextPreparationService {
+    private readonly logger = createLogger(
+        KodyFineTuningContextPreparationService.name,
+    );
+    constructor(
+        private readonly kodyFineTuningService: KodyFineTuningService,
+    ) {}
 
     prepareKodyFineTuningContext(
         organizationId: string,

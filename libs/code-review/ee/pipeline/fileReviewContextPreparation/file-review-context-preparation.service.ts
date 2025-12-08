@@ -9,20 +9,20 @@ import {
     FileChange,
     ReviewModeConfig,
     ReviewModeResponse,
-} from '@/config/types/general/codeReview.type';
+} from '@shared/types/general/codeReview.type';
 import { IAIAnalysisService } from '@libs/code-review/domain/contracts/AIAnalysisService.contract';
 import {
     AST_ANALYSIS_SERVICE_TOKEN,
     IASTAnalysisService,
 } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
 import { LLM_ANALYSIS_SERVICE_TOKEN } from '@libs/code-review/infrastructure/llmAnalysis.service';
-import { BaseFileReviewContextPreparation } from '@libs/code-review/infrastructure/file-review/base-file-review-context-preparation.service';
 import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
 import { ReviewModeOptions } from '@shared/interfaces/file-review-context-preparation.interface';
 import { BackoffPresets } from '@shared/utils/polling';
 import { WorkflowPausedError } from '@libs/code-review/infrastructure/pipeline/errors/workflow-paused.error';
 import { Inject, Injectable } from '@nestjs/common';
-import { BYOKConfig } from '@kodus/kodus-common/llm';
+import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';
+import { BaseFileReviewContextPreparation } from '@libs/code-review/infrastructure/fileReviewContextPreparation/base-file-review-context-preparation.service';
 
 /**
  * Enterprise (cloud) implementation of the file review context preparation service

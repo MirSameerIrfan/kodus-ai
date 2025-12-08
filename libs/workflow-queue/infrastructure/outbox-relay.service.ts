@@ -52,9 +52,8 @@ export class OutboxRelayService implements OnModuleInit, OnModuleDestroy {
             return await this.observability.runInSpan(
                 'workflow.outbox.relay',
                 async (span) => {
-                    const messages = await this.outboxRepository.findUnprocessed(
-                        100,
-                    );
+                    const messages =
+                        await this.outboxRepository.findUnprocessed(100);
 
                     span.setAttributes({
                         'workflow.outbox.pending_count': messages.length,
@@ -100,7 +99,8 @@ export class OutboxRelayService implements OnModuleInit, OnModuleDestroy {
                 });
 
                 try {
-                    const correlationId = message.payload.correlationId as string;
+                    const correlationId = message.payload
+                        .correlationId as string;
 
                     // Publicar no RabbitMQ com correlation ID nos headers
                     await this.amqpConnection.publish(
@@ -161,4 +161,3 @@ export class OutboxRelayService implements OnModuleInit, OnModuleDestroy {
         );
     }
 }
-

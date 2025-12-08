@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { CacheService } from '@shared/utils/cache/cache.service';
@@ -7,7 +7,7 @@ import {
     GET_ADDITIONAL_INFO_HELPER_TOKEN,
 } from '@shared/domain/contracts/getAdditionalInfo.helper.contract';
 import { Inject, Injectable } from '@nestjs/common';
-import { TreeItem } from '@/config/types/general/tree.type';
+import { TreeItem } from '@shared/types/general/tree.type';
 import { GetRepositoryTreeByDirectoryDto } from '@shared/dtos/get-repository-tree-by-directory.dto';
 
 export interface DirectoryItem {
@@ -26,12 +26,14 @@ export interface RepositoryTreeByDirectoryResponse {
 
 @Injectable()
 export class GetRepositoryTreeByDirectoryUseCase implements IUseCase {
-    private readonly logger = createLogger(GetRepositoryTreeByDirectoryUseCase.name);
+    private readonly logger = createLogger(
+        GetRepositoryTreeByDirectoryUseCase.name,
+    );
     constructor(
         private readonly codeManagementService: CodeManagementService,
         @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
         private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
-        private readonly cacheService: CacheService
+        private readonly cacheService: CacheService,
     ) {}
 
     public async execute(

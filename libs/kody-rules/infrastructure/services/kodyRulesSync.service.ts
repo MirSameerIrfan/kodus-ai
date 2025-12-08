@@ -1,49 +1,49 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { RULE_FILE_PATTERNS } from '@/shared/utils/kody-rules/file-patterns';
-import { isFileMatchingGlob } from '@/shared/utils/glob-utils';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
+import { RULE_FILE_PATTERNS } from '@shared/utils/kody-rules/file-patterns';
+import { isFileMatchingGlob } from '@shared/utils/glob-utils';
 import {
     KodyRulesOrigin,
     KodyRulesScope,
     KodyRulesStatus,
-} from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+} from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import {
     CreateKodyRuleDto,
     KodyRuleSeverity,
-} from '@/core/infrastructure/http/dtos/create-kody-rule.dto';
+} from '@libs/kody-rules/infrastructure/http/dtos/create-kody-rule.dto';
 import {
     IKodyRulesService,
     KODY_RULES_SERVICE_TOKEN,
-} from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
+} from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
 import {
     PromptRunnerService,
     ParserType,
     PromptRole,
     LLMModelProvider,
 } from '@kodus/kodus-common/llm';
-import { UpdateOrCreateCodeReviewParameterUseCase } from '@/core/application/use-cases/parameters/update-or-create-code-review-parameter-use-case';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+import { UpdateOrCreateCodeReviewParameterUseCase } from '@libs/organization/application/use-cases/update-or-create-code-review-parameter-use-case';
+import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import * as path from 'path';
 import { ObservabilityService } from '@shared/logging/observability.service';
-import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
-import { BYOKPromptRunnerService } from '@/shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { kodyRulesIDEGeneratorSchema } from '@/shared/utils/langchainCommon/prompts/kodyRules';
+import { PermissionValidationService } from '@shared/ee/services/permissionValidation.service';
+import { BYOKPromptRunnerService } from '@shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { kodyRulesIDEGeneratorSchema } from '@shared/utils/langchainCommon/prompts/kodyRules';
 import {
     ContextDetectionField,
     ContextReferenceDetectionService,
-} from '@/core/infrastructure/adapters/services/context/context-reference-detection.service';
-import { PromptSourceType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
+} from '@libs/code-review/infrastructure/context/context-reference-detection.service';
+import { PromptSourceType } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
 import {
     GET_ADDITIONAL_INFO_HELPER_TOKEN,
     IGetAdditionalInfoHelper,
-} from '@/shared/domain/contracts/getAdditionalInfo.helper.contract';
-import type { UserInfo } from '@/config/types/general/codeReviewSettingsLog.type';
+} from '@shared/domain/contracts/getAdditionalInfo.helper.contract';
+import type { UserInfo } from '@shared/types/general/codeReviewSettingsLog.type';
 
 type SyncTarget = {
     organizationAndTeamData: OrganizationAndTeamData;
@@ -75,7 +75,7 @@ export class KodyRulesSyncService {
         private readonly observabilityService: ObservabilityService,
         private readonly contextReferenceDetectionService: ContextReferenceDetectionService,
         @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
-        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper
+        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
     ) {}
 
     /**

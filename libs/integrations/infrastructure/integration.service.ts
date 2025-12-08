@@ -14,7 +14,7 @@ import { PlatformType } from '@shared/domain/enums/platform-type.enum';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { IntegrationCategory } from '@shared/domain/enums/integration-category.enum';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 
 @Injectable()
 export class IntegrationService implements IIntegrationService {

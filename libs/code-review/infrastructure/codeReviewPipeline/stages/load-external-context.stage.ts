@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { BaseStage } from './base/base-stage.abstract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
@@ -19,6 +19,8 @@ export class LoadExternalContextStage
     extends BaseStage
     implements ILoadExternalContextStage
 {
+    stageName: string;
+
     private readonly logger = createLogger(LoadExternalContextStage.name);
     readonly name = 'LoadExternalContextStage';
     readonly dependsOn: string[] = ['FetchChangedFilesStage']; // Depends on FetchChangedFilesStage
@@ -28,7 +30,7 @@ export class LoadExternalContextStage
         private readonly promptReferenceManager: IPromptExternalReferenceManagerService,
         @Inject(PROMPT_CONTEXT_LOADER_SERVICE_TOKEN)
         private readonly promptContextLoader: IPromptContextLoaderService,
-        private readonly contextPackService: CodeReviewContextPackService
+        private readonly contextPackService: CodeReviewContextPackService,
     ) {
         super();
     }

@@ -1,10 +1,10 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Injectable, Inject } from '@nestjs/common';
 import {
     IPullRequestMessagesService,
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
 } from '@libs/code-review/domain/pr-messages/contracts/pullRequestMessages.service.contract';
-import { ConfigLevel } from '@/config/types/general/pullRequestMessages.type';
+import { ConfigLevel } from '@shared/types/general/pullRequestMessages.type';
 import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 
 export interface DeletePullRequestMessagesParams {
@@ -15,10 +15,12 @@ export interface DeletePullRequestMessagesParams {
 
 @Injectable()
 export class DeleteByRepositoryOrDirectoryPullRequestMessagesUseCase implements IUseCase {
-    private readonly logger = createLogger(DeleteByRepositoryOrDirectoryPullRequestMessagesUseCase.name);
+    private readonly logger = createLogger(
+        DeleteByRepositoryOrDirectoryPullRequestMessagesUseCase.name,
+    );
     constructor(
         @Inject(PULL_REQUEST_MESSAGES_SERVICE_TOKEN)
-        private readonly pullRequestMessagesService: IPullRequestMessagesService
+        private readonly pullRequestMessagesService: IPullRequestMessagesService,
     ) {}
 
     async execute(params: DeletePullRequestMessagesParams): Promise<boolean> {
@@ -28,16 +30,19 @@ export class DeleteByRepositoryOrDirectoryPullRequestMessagesUseCase implements 
             let wasDeleted = false;
 
             if (repositoryId && directoryId) {
-                wasDeleted = await this.pullRequestMessagesService.deleteByFilter({
-                    organizationId,
-                    repositoryId,
-                    directoryId,
-                    configLevel: ConfigLevel.DIRECTORY,
-                });
+                wasDeleted =
+                    await this.pullRequestMessagesService.deleteByFilter({
+                        organizationId,
+                        repositoryId,
+                        directoryId,
+                        configLevel: ConfigLevel.DIRECTORY,
+                    });
 
                 this.logger.log({
-                    message: 'Directory pull request messages deletion attempt completed',
-                    context: DeleteByRepositoryOrDirectoryPullRequestMessagesUseCase.name,
+                    message:
+                        'Directory pull request messages deletion attempt completed',
+                    context:
+                        DeleteByRepositoryOrDirectoryPullRequestMessagesUseCase.name,
                     metadata: {
                         organizationId,
                         repositoryId,
@@ -46,15 +51,18 @@ export class DeleteByRepositoryOrDirectoryPullRequestMessagesUseCase implements 
                     },
                 });
             } else if (repositoryId && !directoryId) {
-                wasDeleted = await this.pullRequestMessagesService.deleteByFilter({
-                    organizationId,
-                    repositoryId,
-                    configLevel: ConfigLevel.REPOSITORY,
-                });
+                wasDeleted =
+                    await this.pullRequestMessagesService.deleteByFilter({
+                        organizationId,
+                        repositoryId,
+                        configLevel: ConfigLevel.REPOSITORY,
+                    });
 
                 this.logger.log({
-                    message: 'Repository pull request messages deletion attempt completed',
-                    context: DeleteByRepositoryOrDirectoryPullRequestMessagesUseCase.name,
+                    message:
+                        'Repository pull request messages deletion attempt completed',
+                    context:
+                        DeleteByRepositoryOrDirectoryPullRequestMessagesUseCase.name,
                     metadata: {
                         organizationId,
                         repositoryId,
@@ -62,14 +70,17 @@ export class DeleteByRepositoryOrDirectoryPullRequestMessagesUseCase implements 
                     },
                 });
             } else {
-                throw new Error('Either repositoryId or both repositoryId and directoryId must be provided');
+                throw new Error(
+                    'Either repositoryId or both repositoryId and directoryId must be provided',
+                );
             }
 
             return wasDeleted;
         } catch (error) {
             this.logger.error({
                 message: 'Failed to delete pull request messages',
-                context: DeleteByRepositoryOrDirectoryPullRequestMessagesUseCase.name,
+                context:
+                    DeleteByRepositoryOrDirectoryPullRequestMessagesUseCase.name,
                 error,
                 metadata: {
                     organizationId,

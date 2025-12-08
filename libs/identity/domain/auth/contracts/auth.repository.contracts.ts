@@ -1,4 +1,4 @@
-import { AuthModel } from '@core/database/typeorm/repositories/schema/auth.model';
+import { AuthModel } from '@libs/identity/infrastructure/repositories/schemas/auth.model';
 import { AuthEntity } from '../entities/auth.entity';
 import { IAuth } from '../interfaces/auth.interface';
 

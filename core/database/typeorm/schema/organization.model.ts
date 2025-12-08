@@ -1,4 +1,4 @@
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import { CoreModel } from '@shared/infrastructure/repositories/model/typeOrm';
 import { Column, Entity, OneToMany } from 'typeorm';
 import { AuthIntegrationModel } from './authIntegration.model';
 import { IntegrationModel } from './integration.model';

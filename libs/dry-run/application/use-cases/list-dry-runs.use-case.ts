@@ -1,5 +1,5 @@
-import { createLogger } from "@kodus/flow";
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { createLogger } from '@kodus/flow';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     DRY_RUN_SERVICE_TOKEN,
     IDryRunService,
@@ -11,7 +11,7 @@ export class ListDryRunsUseCase {
     private readonly logger = createLogger(ListDryRunsUseCase.name);
     constructor(
         @Inject(DRY_RUN_SERVICE_TOKEN)
-        private readonly dryRunService: IDryRunService
+        private readonly dryRunService: IDryRunService,
     ) {}
 
     async execute(params: {

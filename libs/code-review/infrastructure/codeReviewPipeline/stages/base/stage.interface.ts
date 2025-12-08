@@ -20,7 +20,9 @@ export interface Stage {
      * @param context Current pipeline context
      * @returns Updated context
      */
-    execute(context: CodeReviewPipelineContext): Promise<CodeReviewPipelineContext>;
+    execute(
+        context: CodeReviewPipelineContext,
+    ): Promise<CodeReviewPipelineContext>;
 
     /**
      * Check if this is a light stage (fast, synchronous)
@@ -43,4 +45,3 @@ export interface Stage {
      */
     compensate?(context: CodeReviewPipelineContext): Promise<void>;
 }
-

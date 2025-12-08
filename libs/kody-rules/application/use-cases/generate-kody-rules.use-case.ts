@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { CommentAnalysisService } from '@libs/code-review/infrastructure/commentAnalysis.service';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import { GenerateKodyRulesDTO } from '@shared/dtos/generate-kody-rules.dto';
@@ -29,7 +29,7 @@ import {
 import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
 import { KodyLearningStatus } from '@libs/organization/domain/parameters/types/configValue.type';
 import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { SendRulesNotificationUseCase } from './send-rules-notification.use-case';
 
 @Injectable()
@@ -46,7 +46,7 @@ export class GenerateKodyRulesUseCase {
         private readonly commentAnalysisService: CommentAnalysisService,
         private readonly createOrUpdateKodyRulesUseCase: CreateOrUpdateKodyRulesUseCase,
         private readonly findRulesInOrganizationByRuleFilterKodyRulesUseCase: FindRulesInOrganizationByRuleFilterKodyRulesUseCase,
-        private readonly sendRulesNotificationUseCase: SendRulesNotificationUseCase
+        private readonly sendRulesNotificationUseCase: SendRulesNotificationUseCase,
     ) {}
 
     async execute(body: GenerateKodyRulesDTO, organizationId: string) {

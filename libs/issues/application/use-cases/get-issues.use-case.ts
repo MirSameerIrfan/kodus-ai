@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import {
     IIssuesService,
     ISSUES_SERVICE_TOKEN,
@@ -14,7 +14,7 @@ import {
     Action,
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { UserRequest } from '@/config/types/http/user-request.type';
+import { UserRequest } from '@shared/types/http/user-request.type';
 
 @Injectable()
 export class GetIssuesUseCase implements IUseCase {
@@ -25,7 +25,7 @@ export class GetIssuesUseCase implements IUseCase {
         @Inject(REQUEST)
         private readonly request: UserRequest,
         private readonly cacheService: CacheService,
-        private readonly authorizationService: AuthorizationService
+        private readonly authorizationService: AuthorizationService,
     ) {}
 
     async execute(filters: GetIssuesByFiltersDto): Promise<IIssue[]> {

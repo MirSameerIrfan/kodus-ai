@@ -7,7 +7,7 @@ import {
     AnalysisContext,
     FileChange,
     FileChangeContext,
-} from '@/config/types/general/codeReview.type';
+} from '@shared/types/general/codeReview.type';
 
 export const FILE_REVIEW_CONTEXT_PREPARATION_TOKEN = Symbol(
     'FileReviewContextPreparation',

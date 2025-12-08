@@ -18,7 +18,7 @@ import {
     AzureRepoFileItem,
 } from '@libs/platform/domain/azure/entities/azureRepoExtras.type';
 import { decrypt } from '@shared/utils/crypto';
-import { FileChange } from '@/config/types/general/codeReview.type';
+import { FileChange } from '@shared/types/general/codeReview.type';
 
 @Injectable()
 export class AzureReposRequestHelper {
@@ -1113,22 +1113,22 @@ export class AzureReposRequestHelper {
         recursionLevel?: 'OneLevel' | 'Full' | 'None';
     }): Promise<any[]> {
         const instance = await this.azureRequest(params);
-    
+
         const queryParams = new URLSearchParams();
         queryParams.append('api-version', '7.1');
         queryParams.append(
             'recursionLevel',
             params.recursionLevel || 'OneLevel', // ← Padrão: apenas 1 nível
         );
-    
+
         if (params.scopePath) {
             queryParams.append('scopePath', params.scopePath);
         }
-    
+
         const { data } = await instance.get(
             `/${params.projectId}/_apis/git/repositories/${params.repositoryId}/items?${queryParams.toString()}`,
         );
-    
+
         return data?.value || [];
     }
 

@@ -1,11 +1,11 @@
-import { UserRequest } from '@/config/types/http/user-request.type';
-import { CreateOrUpdatePullRequestMessagesUseCase } from '@/core/application/use-cases/pullRequestMessages/create-or-update-pull-request-messages.use-case';
-import { FindByRepositoryOrDirectoryIdPullRequestMessagesUseCase } from '@/core/application/use-cases/pullRequestMessages/find-by-repo-or-directory.use-case';
+import { UserRequest } from '@shared/types/http/user-request.type';
+import { CreateOrUpdatePullRequestMessagesUseCase } from '@libs/code-review/application/use-cases/pr-messages/create-or-update-pull-request-messages.use-case';
+import { FindByRepositoryOrDirectoryIdPullRequestMessagesUseCase } from '@libs/code-review/application/use-cases/pr-messages/find-by-repo-or-directory.use-case';
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import { IPullRequestMessages } from '@/core/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
 import {
     Body,
     Controller,

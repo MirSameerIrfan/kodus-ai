@@ -1,6 +1,6 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { randomUUID } from 'crypto';
 import {
     IPromptExternalReferenceManagerService,
@@ -45,13 +45,13 @@ type NormalizedSyncError = {
 };
 
 @Injectable()
-export class PromptExternalReferenceManagerService
-    implements IPromptExternalReferenceManagerService
-{
-    private readonly logger = createLogger(PromptExternalReferenceManagerService.name);
+export class PromptExternalReferenceManagerService implements IPromptExternalReferenceManagerService {
+    private readonly logger = createLogger(
+        PromptExternalReferenceManagerService.name,
+    );
     constructor(
         @Inject(CONTEXT_REFERENCE_SERVICE_TOKEN)
-        private readonly contextReferenceService: ContextReferenceService
+        private readonly contextReferenceService: ContextReferenceService,
     ) {}
 
     buildConfigKey(
@@ -192,10 +192,7 @@ export class PromptExternalReferenceManagerService
         sourceType: PromptSourceType,
         options?: PromptReferenceLookupOptions,
     ): Promise<PromptExternalReferenceEntity | null> {
-        const references = await this.findByConfigKeys(
-            [configKey],
-            options,
-        );
+        const references = await this.findByConfigKeys([configKey], options);
         return (
             references.find((entity) => entity.sourceType === sourceType) ??
             null
@@ -224,10 +221,7 @@ export class PromptExternalReferenceManagerService
             return result;
         }
 
-        const references = await this.findByConfigKeys(
-            [configKey],
-            options,
-        );
+        const references = await this.findByConfigKeys([configKey], options);
 
         for (const sourceType of sourceTypes) {
             const match = references.find(

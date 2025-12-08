@@ -2,7 +2,7 @@
  * Interface and types for license service.
  */
 
-import { OrganizationAndTeamData } from "@/config/types/general/organizationAndTeamData";
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 
 export enum SubscriptionStatus {
     TRIAL = 'trial',

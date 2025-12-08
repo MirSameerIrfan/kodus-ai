@@ -1,22 +1,22 @@
-import { createLogger } from "@kodus/flow";
-import { IWebhookLogRepository } from '@/core/domain/webhookLog/contracts/webhook-log.repository.contract';
-import { IWebhookLog } from '@/core/domain/webhookLog/interfaces/webhook-log.interface';
+import { createLogger } from '@kodus/flow';
+import { IWebhookLogRepository } from '@libs/platform/domain/webhook-log/contracts/webhook-log.repository.contract';
+import { IWebhookLog } from '@libs/platform/domain/webhook-log/interfaces/webhook-log.interface';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { WebhookLogModel } from '@core/database/mongoose/schemas/webhook-log.model';
 import { Model } from 'mongoose';
-import { WebhookLogEntity } from '@/core/domain/webhookLog/entities/webhook-log.entity';
+import { WebhookLogEntity } from '@libs/platform/domain/webhook-log/entities/webhook-log.entity';
 import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
-} from '@/shared/infrastructure/repositories/mappers';
+} from '@shared/infrastructure/repositories/mappers';
 
 @Injectable()
 export class WebhookLogRepository implements IWebhookLogRepository {
     private readonly logger = createLogger(WebhookLogRepository.name);
     constructor(
         @InjectModel(WebhookLogModel.name)
-        private readonly webhookLogModel: Model<WebhookLogModel>
+        private readonly webhookLogModel: Model<WebhookLogModel>,
     ) {}
 
     async create(

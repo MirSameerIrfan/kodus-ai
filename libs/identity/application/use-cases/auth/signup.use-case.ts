@@ -1,5 +1,5 @@
 import { createLogger } from "@kodus/flow";
-import { STATUS } from '@/config/types/database/status.type';
+import { STATUS } from '@shared/types/database/status.type';
 import {
     ORGANIZATION_SERVICE_TOKEN,
     IOrganizationService,
@@ -11,13 +11,13 @@ import {
 } from '@libs/identity/domain/user/contracts/user.service.contract';
 import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
-import { SignUpDTO } from '@shared/dtos/create-user-organization.dto';
+import { SignUpDTO } from '@libs/identity/infrastructure/http/dtos/create-user-organization.dto';
 import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { DuplicateRecordException } from '@shared/infrastructure/filters/duplicate-record.exception';
 import { generateRandomOrgName } from '@shared/utils/helpers';
 import { Inject, Injectable } from '@nestjs/common';
 import { CreateProfileUseCase } from '../profile/create.use-case';
-import { CreateTeamUseCase } from '@libs/organization/application/use-cases/team/create.use-case';
+import { CreateTeamUseCase } from '../team/create.use-case';
 import { identify, track } from '@shared/utils/segment';
 import posthogClient from '@shared/utils/posthog';
 import {

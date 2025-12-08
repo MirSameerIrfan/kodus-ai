@@ -1,5 +1,5 @@
-import { createLogger } from "@kodus/flow";
-import { ActionType } from '@/config/types/general/codeReviewSettingsLog.type';
+import { createLogger } from '@kodus/flow';
+import { ActionType } from '@shared/types/general/codeReviewSettingsLog.type';
 import {
     AUTH_INTEGRATION_SERVICE_TOKEN,
     IAuthIntegrationService,
@@ -32,7 +32,7 @@ export class CreateIntegrationUseCase implements IUseCase {
         },
         @Inject(AUTH_INTEGRATION_SERVICE_TOKEN)
         private readonly authIntegrationService: IAuthIntegrationService,
-        private readonly ignoreBotsUseCase: IgnoreBotsUseCase
+        private readonly ignoreBotsUseCase: IgnoreBotsUseCase,
     ) {}
 
     public async execute(params: any): Promise<any> {

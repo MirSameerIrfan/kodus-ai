@@ -1,5 +1,5 @@
-import { LabelType } from '@/shared/utils/codeManagement/labels';
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
+import { LabelType } from '@shared/utils/codeManagement/labels';
+import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
 import {
     IsString,
     IsEnum,

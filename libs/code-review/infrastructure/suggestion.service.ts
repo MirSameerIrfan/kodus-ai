@@ -1,8 +1,8 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Injectable, Inject } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { ISuggestionService } from '@libs/code-review/domain/contracts/SuggestionService.contract';
 import {
     CodeSuggestion,
@@ -16,13 +16,11 @@ import {
     CodeReviewConfig,
     CommentResult,
     CodeReviewVersion,
-    AnalysisContext,
-} from '@/config/types/general/codeReview.type';
+} from '@shared/types/general/codeReview.type';
 import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
 import { PriorityStatus } from '@libs/code-review/domain/pull-requests/enums/priorityStatus.enum';
 import { extractLinesFromDiffHunk } from '@shared/utils/patch';
 import { IAIAnalysisService } from '@libs/code-review/domain/contracts/AIAnalysisService.contract';
-import { LLM_ANALYSIS_SERVICE_TOKEN } from '../codeBase/llmAnalysis.service';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
@@ -36,6 +34,7 @@ import { ImplementationStatus } from '@libs/code-review/domain/pull-requests/enu
 import { LabelType } from '@shared/utils/codeManagement/labels';
 import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';
+import { LLM_ANALYSIS_SERVICE_TOKEN } from './llmAnalysis.service';
 
 @Injectable()
 export class SuggestionService implements ISuggestionService {
@@ -46,7 +45,7 @@ export class SuggestionService implements ISuggestionService {
         @Inject(PULL_REQUESTS_SERVICE_TOKEN)
         private readonly pullRequestService: IPullRequestsService,
         @Inject(COMMENT_MANAGER_SERVICE_TOKEN)
-        private readonly commentManagerService: ICommentManagerService
+        private readonly commentManagerService: ICommentManagerService,
     ) {}
 
     /**

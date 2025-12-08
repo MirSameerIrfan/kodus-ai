@@ -1,5 +1,5 @@
 import 'source-map-support/register';
-import { environment } from '@/ee/configs/environment';
+import { environment } from '@shared/ee/configs/environment';
 
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -10,10 +10,10 @@ import helmet from 'helmet';
 import * as volleyball from 'volleyball';
 import * as bodyParser from 'body-parser';
 import { useContainer } from 'class-validator';
-import { HttpServerConfiguration } from '@/config/types/http/http-server.type';
-import { ApiModule } from '@/modules/api.module';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { setupSentryAndOpenTelemetry } from '@/config/log/otel';
+import { HttpServerConfiguration } from '@shared/types/http/http-server.type';
+import { ApiModule } from '@apps/api/api.module';
+import { PinoLoggerService } from '@shared/logging/pino.service';
+import { setupSentryAndOpenTelemetry } from '@core/config/log/otel';
 
 async function bootstrap() {
     // Define tipo de componente para configuração de pool de DB

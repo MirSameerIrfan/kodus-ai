@@ -1,5 +1,4 @@
-import { ActionType } from '@/config/types/general/codeReviewSettingsLog.type';
-import { UserStatusDto } from '@shared/dtos/user-status-change.dto';
+import { ActionType } from '@shared/types/general/codeReviewSettingsLog.type';
 import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
     ICodeReviewSettingsLogService,
@@ -7,6 +6,7 @@ import {
 import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
+import { UserStatusDto } from 'apps/api/src/dtos/user-status-change.dto';
 
 @Injectable()
 export class RegisterUserStatusLogUseCase implements IUseCase {

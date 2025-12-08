@@ -1,4 +1,4 @@
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { SimpleLogger } from '@kodus/flow/dist/observability/logger';
 import { EmailParams, MailerSend, Recipient, Sender } from 'mailersend';
 

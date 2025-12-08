@@ -11,7 +11,7 @@ import {
     PromptRole,
     ParserType,
 } from '@kodus/kodus-common/llm';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { PermissionValidationService } from '@shared/ee/services/permissionValidation.service';
 import { BYOKPromptRunnerService } from '@shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
 import { ObservabilityService } from '@shared/logging/observability.service';

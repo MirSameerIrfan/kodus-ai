@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere } from 'typeorm';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { PinoLoggerService } from '@shared/logging/pino.service';
 import { WorkflowJobModel } from '@core/database/typeorm/schema/workflow-job.model';
 import { JobExecutionHistoryModel } from '@core/database/typeorm/schema/job-execution-history.model';
-import { IWorkflowJob } from '@/core/domain/workflowQueue/interfaces/workflow-job.interface';
-import { IJobExecutionHistory } from '@/core/domain/workflowQueue/interfaces/job-execution-history.interface';
-import { JobStatus } from '@/core/domain/workflowQueue/enums/job-status.enum';
-import { WorkflowType } from '@/core/domain/workflowQueue/enums/workflow-type.enum';
+import { IWorkflowJob } from '@libs/workflow-queue/domain/interfaces/workflow-job.interface';
+import { IJobExecutionHistory } from '@libs/workflow-queue/domain/interfaces/job-execution-history.interface';
+import { JobStatus } from '@libs/workflow-queue/domain/enums/job-status.enum';
+import { WorkflowType } from '@libs/workflow-queue/domain/enums/workflow-type.enum';
 
 @Injectable()
 export class WorkflowJobRepository {
@@ -100,10 +100,7 @@ export class WorkflowJobRepository {
         jobId: string,
         pipelineState: Record<string, unknown>,
     ): Promise<void> {
-        await this.jobRepository.update(
-            { uuid: jobId },
-            { pipelineState },
-        );
+        await this.jobRepository.update({ uuid: jobId }, { pipelineState });
     }
 
     async findMany(filters: {

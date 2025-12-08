@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import {
     KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,
@@ -8,7 +8,9 @@ import { REQUEST } from '@nestjs/core';
 
 @Injectable()
 export class DeleteRuleInOrganizationByIdKodyRulesUseCase {
-    private readonly logger = createLogger(DeleteRuleInOrganizationByIdKodyRulesUseCase.name);
+    private readonly logger = createLogger(
+        DeleteRuleInOrganizationByIdKodyRulesUseCase.name,
+    );
     constructor(
         @Inject(REQUEST)
         private readonly request: Request & {
@@ -19,7 +21,7 @@ export class DeleteRuleInOrganizationByIdKodyRulesUseCase {
             };
         },
         @Inject(KODY_RULES_SERVICE_TOKEN)
-        private readonly kodyRulesService: IKodyRulesService
+        private readonly kodyRulesService: IKodyRulesService,
     ) {}
 
     async execute(ruleId: string) {

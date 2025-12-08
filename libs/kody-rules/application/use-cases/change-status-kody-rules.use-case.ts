@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import {
     IKodyRulesService,
     KODY_RULES_SERVICE_TOKEN,
@@ -18,7 +18,7 @@ export class ChangeStatusKodyRulesUseCase {
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };
-        }
+        },
     ) {}
 
     async execute(body: ChangeStatusKodyRulesDTO) {

@@ -109,7 +109,8 @@ export class StateSerializerService {
 
         // Sempre incluir metadados essenciais
         delta.organizationAndTeamData = {
-            organizationId: currentState.organizationAndTeamData?.organizationId,
+            organizationId:
+                currentState.organizationAndTeamData?.organizationId,
             teamId: currentState.organizationAndTeamData?.teamId,
         };
 
@@ -183,10 +184,10 @@ export class StateSerializerService {
         }
 
         try {
-            const decompressed = await gunzip(
-                Buffer.from(data.data, 'base64'),
-            );
-            return JSON.parse(decompressed.toString()) as CodeReviewPipelineContext;
+            const decompressed = await gunzip(Buffer.from(data.data, 'base64'));
+            return JSON.parse(
+                decompressed.toString(),
+            ) as CodeReviewPipelineContext;
         } catch (error) {
             this.logger.error({
                 message: 'Failed to decompress pipeline state',
@@ -220,4 +221,3 @@ export class StateSerializerService {
         return reconstructed;
     }
 }
-

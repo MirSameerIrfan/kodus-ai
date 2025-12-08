@@ -5,13 +5,13 @@ import {
     IUsersService,
     USER_SERVICE_TOKEN,
 } from '@libs/identity/domain/user/contracts/user.service.contract';
-import { STATUS } from '@/config/types/database/status.type';
-import { AcceptUserInvitationDto } from '@shared/dtos/accept-user-invitation.dto';
+import { STATUS } from '@shared/types/database/status.type';
 import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
 } from '@libs/identity/domain/auth/contracts/auth.service.contracts';
 import { CreateProfileUseCase } from '../profile/create.use-case';
+import { AcceptUserInvitationDto } from 'apps/api/src/dtos/accept-user-invitation.dto';
 
 // @Case()
 export class AcceptUserInvitationUseCase implements IUseCase {
@@ -23,7 +23,7 @@ export class AcceptUserInvitationUseCase implements IUseCase {
         private readonly authService: IAuthService,
 
         private readonly createProfileUseCase: CreateProfileUseCase,
-    ) { }
+    ) {}
     public async execute(user: AcceptUserInvitationDto): Promise<any> {
         const userUpdated = await this.usersService.update(
             {
@@ -39,13 +39,13 @@ export class AcceptUserInvitationUseCase implements IUseCase {
         );
 
         if (!userUpdated) {
-            throw new NotFoundException("User could not be found")
+            throw new NotFoundException('User could not be found');
         }
 
         await this.createProfileUseCase.execute({
             user: { uuid: user.uuid },
             name: user.name,
-            phone: user?.phone
+            phone: user?.phone,
         });
 
         return userUpdated;

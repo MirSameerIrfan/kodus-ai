@@ -1,12 +1,12 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 import { BaseStage } from './base/base-stage.abstract';
 import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
-import { CodeManagementService } from '../../../platformIntegration/codeManagement.service';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { CommentResult } from '@/config/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { CommentResult } from '@shared/types/general/codeReview.type';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 import { PullRequestReviewState } from '@libs/platform/domain/types/codeManagement/pullRequests.type';
+import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 
 @Injectable()
 export class RequestChangesOrApproveStage extends BaseStage {
@@ -57,7 +57,7 @@ export class RequestChangesOrApproveStage extends BaseStage {
 
         this.logger.log({
             message: `Finished processing PR#${pullRequest.number}`,
-            context: this.stageName,
+            context: this.name,
             metadata: {
                 lineCommentsCount: lineComments.length,
                 organizationId: organizationAndTeamData.organizationId,

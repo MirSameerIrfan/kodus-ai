@@ -1,12 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { CoreDocument } from '@/shared/infrastructure/repositories/model/mongodb';
+import { CoreDocument } from '@shared/infrastructure/repositories/model/mongodb';
 import {
     PromptSourceType,
     IFileReference,
     IPromptReferenceSyncError,
     PromptProcessingStatus,
-} from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
+} from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
 
 @Schema({ collection: 'promptExternalReferences', timestamps: true })
 export class PromptExternalReferencesModel extends CoreDocument {

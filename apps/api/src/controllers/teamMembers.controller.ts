@@ -1,11 +1,11 @@
-import { CreateOrUpdateTeamMembersUseCase } from '@/core/application/use-cases/teamMembers/create.use-case';
-import { DeleteTeamMembersUseCase } from '@/core/application/use-cases/teamMembers/delete.use-case';
-import { GetTeamMembersUseCase } from '@/core/application/use-cases/teamMembers/get-team-members.use-case';
+import { CreateOrUpdateTeamMembersUseCase } from '@libs/organization/application/use-cases/team-members/create.use-case';
+import { DeleteTeamMembersUseCase } from '@libs/organization/application/use-cases/team-members/delete.use-case';
+import { GetTeamMembersUseCase } from '@libs/organization/application/use-cases/team-members/get-team-members.use-case';
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import { IMembers } from '@/core/domain/teamMembers/interfaces/team-members.interface';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { IMembers } from '@libs/organization/domain/team-members/interfaces/team-members.interface';
 import {
     Body,
     Controller,

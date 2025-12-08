@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import {
     FileChangeContext,
@@ -9,8 +9,8 @@ import {
     ReviewOptions,
     SuggestionControlConfig,
     CodeReviewConfig,
-} from '@/config/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+} from '@shared/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { tryParseJSONObject } from '@shared/utils/transforms/json';
 import {
     KodyRulesClassifierSchema,
@@ -106,7 +106,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
         private readonly observabilityService: ObservabilityService,
         private readonly externalReferenceLoaderService: ExternalReferenceLoaderService,
         private readonly fileContextAugmentationService: FileContextAugmentationService,
-        private readonly kodyRuleDependencyService: KodyRuleDependencyService
+        private readonly kodyRuleDependencyService: KodyRuleDependencyService,
     ) {}
 
     private async buildKodyRuleLinkAndRepalceIds(

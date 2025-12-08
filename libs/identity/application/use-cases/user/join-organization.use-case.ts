@@ -1,5 +1,5 @@
-import { createLogger } from "@kodus/flow";
-import { STATUS } from '@/config/types/database/status.type';
+import { createLogger } from '@kodus/flow';
+import { STATUS } from '@shared/types/database/status.type';
 import {
     IOrganizationService,
     ORGANIZATION_SERVICE_TOKEN,
@@ -47,7 +47,7 @@ export class JoinOrganizationUseCase implements IUseCase {
         @Inject(PROFILE_SERVICE_TOKEN)
         private readonly profileService: IProfileService,
         @Inject(AUTH_SERVICE_TOKEN)
-        private readonly authService: IAuthService
+        private readonly authService: IAuthService,
     ) {}
 
     public async execute(data: JoinOrganizationDto): Promise<IUser> {
@@ -137,15 +137,10 @@ export class JoinOrganizationUseCase implements IUseCase {
             );
 
             // send confirmation email
-            await sendConfirmationEmail(
-                token,
-                user.email,
-                organization.name,
-                {
-                    organizationId,
-                    teamId: team.uuid,
-                },
-            );
+            await sendConfirmationEmail(token, user.email, organization.name, {
+                organizationId,
+                teamId: team.uuid,
+            });
 
             this.logger.log({
                 message: 'User joined organization',

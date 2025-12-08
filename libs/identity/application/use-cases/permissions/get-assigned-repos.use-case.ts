@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import {
     IPermissionsService,
     PERMISSIONS_SERVICE_TOKEN,
@@ -12,7 +12,7 @@ export class GetAssignedReposUseCase implements IUseCase {
     private readonly logger = createLogger(GetAssignedReposUseCase.name);
     constructor(
         @Inject(PERMISSIONS_SERVICE_TOKEN)
-        private readonly permissionsService: IPermissionsService
+        private readonly permissionsService: IPermissionsService,
     ) {}
 
     async execute(params: { userId: string }): Promise<string[]> {

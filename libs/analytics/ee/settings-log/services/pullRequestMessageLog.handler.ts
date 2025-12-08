@@ -7,8 +7,8 @@ import {
 import {
     ActionType,
     ConfigLevel,
-} from '@/config/types/general/codeReviewSettingsLog.type';
-import { PullRequestMessageStatus } from '@/config/types/general/pullRequestMessages.type';
+} from '@shared/types/general/codeReviewSettingsLog.type';
+import { PullRequestMessageStatus } from '@shared/types/general/pullRequestMessages.type';
 
 // Default messages constants - to be filled with actual content
 const DEFAULT_START_MESSAGE = '';

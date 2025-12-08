@@ -4,11 +4,9 @@ import {
     ActionType,
     ChangedData,
     ConfigLevel,
-} from '@/config/types/general/codeReviewSettingsLog.type';
+} from '@shared/types/general/codeReviewSettingsLog.type';
 
-export class CodeReviewSettingsLogEntity
-    implements Entity<ICodeReviewSettingsLog>
-{
+export class CodeReviewSettingsLogEntity implements Entity<ICodeReviewSettingsLog> {
     private readonly _uuid: string;
     private readonly _organizationId: string;
     private readonly _teamId: string;

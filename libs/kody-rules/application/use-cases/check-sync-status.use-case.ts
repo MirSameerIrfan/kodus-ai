@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { CommentAnalysisService } from '@libs/code-review/infrastructure/commentAnalysis.service';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import { GenerateKodyRulesDTO } from '@shared/dtos/generate-kody-rules.dto';
@@ -32,14 +32,14 @@ import {
 import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
 import { KodyLearningStatus } from '@libs/organization/domain/parameters/types/configValue.type';
 import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { SendRulesNotificationUseCase } from './send-rules-notification.use-case';
 import { REQUEST } from '@nestjs/core';
 import {
     ICodeRepository,
     CodeReviewParameter,
     RepositoryCodeReviewConfig,
-} from '@/config/types/general/codeReviewConfig.type';
+} from '@shared/types/general/codeReviewConfig.type';
 
 @Injectable()
 export class CheckSyncStatusUseCase {
@@ -55,7 +55,7 @@ export class CheckSyncStatusUseCase {
         @Inject(REQUEST)
         private readonly request: Request & {
             user: { organization: { uuid: string } };
-        }
+        },
     ) {}
 
     async execute(

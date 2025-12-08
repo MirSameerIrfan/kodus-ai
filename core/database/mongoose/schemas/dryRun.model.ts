@@ -1,6 +1,6 @@
-import { CodeReviewConfig } from '@/config/types/general/codeReview.type';
-import { IDryRunData } from '@/core/domain/dryRun/interfaces/dryRun.interface';
-import { CoreDocument } from '@/shared/infrastructure/repositories/model/mongodb';
+import { CodeReviewConfig } from '@shared/types/general/codeReview.type';
+import { IDryRunData } from '@libs/dry-run/domain/interfaces/dryRun.interface';
+import { CoreDocument } from '@shared/infrastructure/repositories/model/mongodb';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 @Schema({

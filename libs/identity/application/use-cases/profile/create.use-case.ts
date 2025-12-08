@@ -11,11 +11,9 @@ export class CreateProfileUseCase implements IUseCase {
     constructor(
         @Inject(PROFILE_SERVICE_TOKEN)
         private readonly profileService: IProfileService,
-    ) { }
+    ) {}
 
-    public async execute(
-        payload: Partial<IProfile>,
-    ): Promise<void> {
+    public async execute(payload: Partial<IProfile>): Promise<void> {
         await this.profileService.updateByUserId(payload.user.uuid, {
             ...payload,
             name: payload?.name,

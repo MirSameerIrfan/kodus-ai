@@ -1,14 +1,14 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Injectable, Inject } from '@nestjs/common';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 import { OrganizationParametersKey } from '@shared/domain/enums/organization-parameters-key.enum';
-import { environment } from '@/ee/configs/environment';
+import { environment } from '@shared/ee/configs/environment';
 import {
     ILicenseService,
     LICENSE_SERVICE_TOKEN,
     OrganizationLicenseValidationResult,
-} from '@/ee/license/interfaces/license.interface';
+} from '@libs/organization/ee/license/interfaces/license.interface';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
@@ -57,7 +57,7 @@ export class PermissionValidationService {
         @Inject(LICENSE_SERVICE_TOKEN)
         private readonly licenseService: ILicenseService,
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
-        private readonly organizationParametersService: IOrganizationParametersService
+        private readonly organizationParametersService: IOrganizationParametersService,
     ) {
         this.isCloud = environment.API_CLOUD_MODE;
         this.isDevelopment = environment.API_DEVELOPMENT_MODE;

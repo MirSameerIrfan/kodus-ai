@@ -1,43 +1,43 @@
 import {
-  IsBoolean,
-  IsEnum,
-  IsOptional,
-  IsString,
-  IsArray,
-  ValidateNested,
-  IsDefined,
+    IsBoolean,
+    IsEnum,
+    IsOptional,
+    IsString,
+    IsArray,
+    ValidateNested,
+    IsDefined,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
+import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
 
 class SourceFiltersDto {
-  @IsBoolean()
-  includeKodyRules: boolean;
+    @IsBoolean()
+    includeKodyRules: boolean;
 
-  @IsBoolean()
-  includeCodeReviewEngine: boolean;
+    @IsBoolean()
+    includeCodeReviewEngine: boolean;
 }
 
 class SeverityFiltersDto {
-  @IsEnum(SeverityLevel)
-  minimumSeverity: SeverityLevel;
+    @IsEnum(SeverityLevel)
+    minimumSeverity: SeverityLevel;
 
-  @IsArray()
-  @IsEnum(SeverityLevel, { each: true })
-  allowedSeverities: SeverityLevel[];
+    @IsArray()
+    @IsEnum(SeverityLevel, { each: true })
+    allowedSeverities: SeverityLevel[];
 }
 
 export class IssuesParameterDto {
-  @IsBoolean()
-  automaticCreationEnabled: boolean;
+    @IsBoolean()
+    automaticCreationEnabled: boolean;
 
-  @ValidateNested()
-  @Type(() => SourceFiltersDto)
-  sourceFilters: SourceFiltersDto;
+    @ValidateNested()
+    @Type(() => SourceFiltersDto)
+    sourceFilters: SourceFiltersDto;
 
-  @ValidateNested()
-  @Type(() => SeverityFiltersDto)
-  severityFilters: SeverityFiltersDto;
+    @ValidateNested()
+    @Type(() => SeverityFiltersDto)
+    severityFilters: SeverityFiltersDto;
 }
 
 // required
@@ -50,12 +50,12 @@ export class OrganizationAndTeamDataDto {
 }
 
 export class UpdateOrCreateIssuesParameterBodyDto {
-  @ValidateNested()
-  @Type(() => IssuesParameterDto)
-  configValue: IssuesParameterDto;
+    @ValidateNested()
+    @Type(() => IssuesParameterDto)
+    configValue: IssuesParameterDto;
 
-  @IsDefined()
-  @ValidateNested()
-  @Type(() => OrganizationAndTeamDataDto)
-  organizationAndTeamData: OrganizationAndTeamDataDto;
+    @IsDefined()
+    @ValidateNested()
+    @Type(() => OrganizationAndTeamDataDto)
+    organizationAndTeamData: OrganizationAndTeamDataDto;
 }

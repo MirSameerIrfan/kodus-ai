@@ -1,5 +1,5 @@
-import { createLogger } from "@kodus/flow";
-import { UserRequest } from '@/config/types/http/user-request.type';
+import { createLogger } from '@kodus/flow';
+import { UserRequest } from '@shared/types/http/user-request.type';
 import {
     Action,
     ResourceType,
@@ -17,7 +17,7 @@ export class GetRepositoriesUseCase implements IUseCase {
         private readonly codeManagementService: CodeManagementService,
         @Inject(REQUEST)
         private readonly request: UserRequest,
-        private readonly authorizationService: AuthorizationService
+        private readonly authorizationService: AuthorizationService,
     ) {}
 
     public async execute(params: {

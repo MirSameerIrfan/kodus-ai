@@ -1,21 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { TeamAutomationModel } from '@core/database/typeorm/schema/teamAutomation.model';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ITeamAutomationRepository } from '@/core/domain/automation/contracts/team-automation.repository';
+import { ITeamAutomationRepository } from '@libs/automation/domain/contracts/team-automation.repository';
 import {
     FindManyOptions,
     FindOneOptions,
     Repository,
     UpdateQueryBuilder,
 } from 'typeorm';
-import { TeamAutomationEntity } from '@/core/domain/automation/entities/team-automation.entity';
-import { ITeamAutomation } from '@/core/domain/automation/interfaces/team-automation.interface';
+import { TeamAutomationEntity } from '@libs/automation/domain/entities/team-automation.entity';
+import { ITeamAutomation } from '@libs/automation/domain/interfaces/team-automation.interface';
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
-} from '@/shared/infrastructure/repositories/mappers';
-import { STATUS } from '@/config/types/database/status.type';
-import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
+} from '@shared/infrastructure/repositories/mappers';
+import { STATUS } from '@shared/types/database/status.type';
+import { createNestedConditions } from '@shared/infrastructure/repositories/filters';
 
 @Injectable()
 export class TeamAutomationRepository implements ITeamAutomationRepository {

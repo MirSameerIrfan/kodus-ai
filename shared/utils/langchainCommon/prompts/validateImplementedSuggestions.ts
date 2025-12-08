@@ -1,4 +1,4 @@
-import { CodeSuggestion } from '@/config/types/general/codeReview.type';
+import { CodeSuggestion } from '@shared/types/general/codeReview.type';
 
 export const prompt_validateImplementedSuggestions = (payload: {
     codePatch: string;

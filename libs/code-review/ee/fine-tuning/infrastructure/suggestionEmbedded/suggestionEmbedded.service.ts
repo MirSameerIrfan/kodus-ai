@@ -1,11 +1,11 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 import { ISuggestionEmbeddedService } from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/contracts/suggestionEmbedded.service.contract';
 import { ISuggestionEmbedded } from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/interfaces/suggestionEmbedded.interface';
 import { SuggestionEmbeddedEntity } from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/entities/suggestionEmbedded.entity';
 import { ISuggestionToEmbed } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import { FindManyOptions } from 'typeorm';
-import { CodeSuggestion } from '@/config/types/general/codeReview.type';
+import { CodeSuggestion } from '@shared/types/general/codeReview.type';
 import { KodyFineTuningService } from '../kodyFineTuning.service';
 import { getOpenAIEmbedding } from '@shared/utils/langchainCommon/document';
 import { FeedbackType } from '@libs/code-review/ee/fine-tuning/domain/enums/feedbackType.enum';
@@ -42,7 +42,7 @@ const UUID_REGEX =
 export class SuggestionEmbeddedService implements ISuggestionEmbeddedService {
     private readonly logger = createLogger(SuggestionEmbeddedService.name);
     constructor(
-        private readonly SuggestionEmbeddedRepository: SuggestionEmbeddedDatabaseRepository
+        private readonly SuggestionEmbeddedRepository: SuggestionEmbeddedDatabaseRepository,
     ) {}
 
     bulkInsert(

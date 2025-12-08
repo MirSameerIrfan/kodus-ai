@@ -1,6 +1,9 @@
 import { IsOptional, IsString, IsEnum, IsUUID } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { ActionType, ConfigLevel } from '@/config/types/general/codeReviewSettingsLog.type';
+import {
+    ActionType,
+    ConfigLevel,
+} from '@shared/types/general/codeReviewSettingsLog.type';
 import { PaginationDto } from './pagination.dto';
 
 export class CodeReviewSettingsLogFiltersDto extends PaginationDto {
@@ -35,4 +38,4 @@ export class CodeReviewSettingsLogFiltersDto extends PaginationDto {
     @IsOptional()
     @Transform(({ value }) => new Date(value))
     endDate?: Date;
-} 
+}

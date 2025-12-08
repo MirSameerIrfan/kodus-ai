@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { createHash } from 'crypto';
 import type {
@@ -12,7 +12,7 @@ import {
     IPromptReferenceSyncError,
     PromptReferenceErrorType,
 } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
-import type { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import type { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { ObservabilityService } from '@shared/logging/observability.service';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import { BYOKPromptRunnerService } from '@shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
@@ -71,7 +71,7 @@ export class PromptContextEngineService implements IPromptContextEngineService {
         private readonly integrationConfigService: IIntegrationConfigService,
         private readonly promptRunnerService: PromptRunnerService,
         private readonly observabilityService: ObservabilityService,
-        private readonly codeManagementService: CodeManagementService
+        private readonly codeManagementService: CodeManagementService,
     ) {}
 
     async detectAndResolveReferences(params: DetectReferencesParams): Promise<{

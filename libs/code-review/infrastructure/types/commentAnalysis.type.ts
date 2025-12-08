@@ -1,7 +1,7 @@
 import {
     ReviewOptions,
     reviewOptionsSchema,
-} from '@/config/types/general/codeReview.type';
+} from '@shared/types/general/codeReview.type';
 import {
     SeverityLevel,
     severityLevelSchema,

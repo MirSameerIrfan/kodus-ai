@@ -1,5 +1,5 @@
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import { OrganizationParametersKey } from '@shared/domain/enums/organization-parameters-key.enum';
+import { CoreModel } from '@shared/infrastructure/repositories/model/typeOrm';
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { OrganizationModel } from './organization.model';
 

@@ -1,5 +1,5 @@
-import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
+import { CoreModel } from '@shared/infrastructure/repositories/model/typeOrm';
 import {
     Column,
     Entity,

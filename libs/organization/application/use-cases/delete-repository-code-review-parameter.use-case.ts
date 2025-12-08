@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import {
@@ -7,9 +7,9 @@ import {
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
 import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { DeleteRepositoryCodeReviewParameterDto } from '@shared/dtos/delete-repository-code-review-parameter.dto';
-import { ActionType } from '@/config/types/general/codeReviewSettingsLog.type';
+import { ActionType } from '@shared/types/general/codeReviewSettingsLog.type';
 import { RepositoryWithDirectoriesException } from '@shared/infrastructure/filters/repository-with-directories.exception';
 import { DeleteByRepositoryOrDirectoryPullRequestMessagesUseCase } from '../pullRequestMessages/delete-by-repository-or-directory.use-case';
 import {
@@ -17,17 +17,19 @@ import {
     KODY_RULES_SERVICE_TOKEN,
 } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
 import { KodyRulesStatus } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
-import { CodeReviewParameter } from '@/config/types/general/codeReviewConfig.type';
+import { CodeReviewParameter } from '@shared/types/general/codeReviewConfig.type';
 import { produce } from 'immer';
 import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
     ICodeReviewSettingsLogService,
 } from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
-import { UserRequest } from '@/config/types/http/user-request.type';
+import { UserRequest } from '@shared/types/http/user-request.type';
 
 @Injectable()
 export class DeleteRepositoryCodeReviewParameterUseCase {
-    private readonly logger = createLogger(DeleteRepositoryCodeReviewParameterUseCase.name);
+    private readonly logger = createLogger(
+        DeleteRepositoryCodeReviewParameterUseCase.name,
+    );
     constructor(
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
@@ -37,7 +39,7 @@ export class DeleteRepositoryCodeReviewParameterUseCase {
         @Inject(KODY_RULES_SERVICE_TOKEN)
         private readonly kodyRulesService: IKodyRulesService,
         @Inject(REQUEST)
-        private readonly request: UserRequest
+        private readonly request: UserRequest,
     ) {}
 
     async execute(

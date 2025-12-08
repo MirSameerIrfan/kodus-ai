@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { KODY_RULES_SERVICE_TOKEN } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
 import { KodyRulesService } from '@libs/kody-rules/infrastructure/services/kodyRules.service';
 import { Inject, Injectable } from '@nestjs/common';
@@ -10,8 +10,8 @@ import {
     AIAnalysisResult,
     FileChange,
     AIAnalysisResultPrLevel,
-} from '@/config/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+} from '@shared/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     IKodyRule,
     KodyRulesScope,
@@ -95,10 +95,10 @@ export const KODY_RULES_PR_LEVEL_ANALYSIS_SERVICE_TOKEN = Symbol(
 );
 
 @Injectable()
-export class KodyRulesPrLevelAnalysisService
-    implements IKodyRulesAnalysisService
-{
-    private readonly logger = createLogger(KodyRulesPrLevelAnalysisService.name);
+export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisService {
+    private readonly logger = createLogger(
+        KodyRulesPrLevelAnalysisService.name,
+    );
     private readonly DEFAULT_USAGE_LLM_MODEL_PERCENTAGE = 70;
 
     private readonly DEFAULT_BATCH_CONFIG: BatchProcessingConfig = {
@@ -116,7 +116,7 @@ export class KodyRulesPrLevelAnalysisService
         private readonly observabilityService: ObservabilityService,
         private readonly externalReferenceLoaderService: ExternalReferenceLoaderService,
         private readonly fileContextAugmentationService: FileContextAugmentationService,
-        private readonly kodyRuleDependencyService: KodyRuleDependencyService
+        private readonly kodyRuleDependencyService: KodyRuleDependencyService,
     ) {}
 
     async analyzeCodeWithAI(

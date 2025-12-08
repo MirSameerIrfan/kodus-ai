@@ -1,5 +1,5 @@
-import { createLogger } from "@kodus/flow";
-import { UserRequest } from '@/config/types/http/user-request.type';
+import { createLogger } from '@kodus/flow';
+import { UserRequest } from '@shared/types/http/user-request.type';
 import {
     KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,
@@ -20,7 +20,9 @@ import { enrichRulesWithContextReferences } from './utils/enrich-rules-with-cont
 
 @Injectable()
 export class FindRulesInOrganizationByRuleFilterKodyRulesUseCase {
-    private readonly logger = createLogger(FindRulesInOrganizationByRuleFilterKodyRulesUseCase.name);
+    private readonly logger = createLogger(
+        FindRulesInOrganizationByRuleFilterKodyRulesUseCase.name,
+    );
     constructor(
         @Inject(KODY_RULES_SERVICE_TOKEN)
         private readonly kodyRulesService: IKodyRulesService,
@@ -28,7 +30,7 @@ export class FindRulesInOrganizationByRuleFilterKodyRulesUseCase {
         private readonly request: UserRequest,
         private readonly authorizationService: AuthorizationService,
         @Inject(CONTEXT_REFERENCE_SERVICE_TOKEN)
-        private readonly contextReferenceService: IContextReferenceService
+        private readonly contextReferenceService: IContextReferenceService,
     ) {}
 
     async execute(

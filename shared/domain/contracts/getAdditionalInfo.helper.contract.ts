@@ -1,4 +1,5 @@
-export const GET_ADDITIONAL_INFO_HELPER_TOKEN = 'GET_ADDITIONAL_INFO_HELPER_TOKEN';
+export const GET_ADDITIONAL_INFO_HELPER_TOKEN =
+    'GET_ADDITIONAL_INFO_HELPER_TOKEN';
 
 export interface IGetAdditionalInfoHelper {
     getTeamIdByOrganizationAndRepository(
@@ -17,4 +18,3 @@ export interface IGetAdditionalInfoHelper {
         repositoryId: string,
     ): Promise<string>;
 }
-

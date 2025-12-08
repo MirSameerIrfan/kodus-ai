@@ -172,9 +172,8 @@ describe('PromptExternalReferenceManagerService - hasLikelyExternalReferences', 
         });
 
         it('should NOT detect unsupported extension', () => {
-            const result = service['hasLikelyExternalReferences'](
-                'Use @file.exe',
-            );
+            const result =
+                service['hasLikelyExternalReferences']('Use @file.exe');
             expect(result).toBe(false);
         });
     });
@@ -209,9 +208,8 @@ describe('PromptExternalReferenceManagerService - hasLikelyExternalReferences', 
         });
 
         it('should detect "Reference setup.md" (caught by pattern 9)', () => {
-            const result = service['hasLikelyExternalReferences'](
-                'Reference setup.md',
-            );
+            const result =
+                service['hasLikelyExternalReferences']('Reference setup.md');
             expect(result).toBe(true);
         });
     });
@@ -246,9 +244,8 @@ describe('PromptExternalReferenceManagerService - hasLikelyExternalReferences', 
         });
 
         it('should detect "Checkout setup.md" (caught by pattern 9)', () => {
-            const result = service['hasLikelyExternalReferences'](
-                'Checkout setup.md',
-            );
+            const result =
+                service['hasLikelyExternalReferences']('Checkout setup.md');
             expect(result).toBe(true);
         });
     });
@@ -283,9 +280,8 @@ describe('PromptExternalReferenceManagerService - hasLikelyExternalReferences', 
         });
 
         it('should detect "Seed setup.md" (caught by pattern 9)', () => {
-            const result = service['hasLikelyExternalReferences'](
-                'Seed setup.md',
-            );
+            const result =
+                service['hasLikelyExternalReferences']('Seed setup.md');
             expect(result).toBe(true);
         });
     });
@@ -306,25 +302,22 @@ describe('PromptExternalReferenceManagerService - hasLikelyExternalReferences', 
         });
 
         it('should detect docs.api.md', () => {
-            const result = service['hasLikelyExternalReferences'](
-                'Follow docs.api.md',
-            );
+            const result =
+                service['hasLikelyExternalReferences']('Follow docs.api.md');
             expect(result).toBe(true);
         });
 
         it('should detect single dot files (caught by pattern 9)', () => {
-            const result = service['hasLikelyExternalReferences'](
-                'Use config.ts',
-            );
+            const result =
+                service['hasLikelyExternalReferences']('Use config.ts');
             expect(result).toBe(true);
         });
     });
 
     describe('Pattern 8: [A-Z_][A-Z0-9_]*\\.(ext) - CAPS files', () => {
         it('should detect README.md', () => {
-            const result = service['hasLikelyExternalReferences'](
-                'Follow README.md',
-            );
+            const result =
+                service['hasLikelyExternalReferences']('Follow README.md');
             expect(result).toBe(true);
         });
 
@@ -343,32 +336,28 @@ describe('PromptExternalReferenceManagerService - hasLikelyExternalReferences', 
         });
 
         it('should detect CHANGELOG.md', () => {
-            const result = service['hasLikelyExternalReferences'](
-                'See CHANGELOG.md',
-            );
+            const result =
+                service['hasLikelyExternalReferences']('See CHANGELOG.md');
             expect(result).toBe(true);
         });
 
         it('should detect lowercase (caught by pattern 9)', () => {
-            const result = service['hasLikelyExternalReferences'](
-                'check readme.md',
-            );
+            const result =
+                service['hasLikelyExternalReferences']('check readme.md');
             expect(result).toBe(true);
         });
 
         it('should NOT detect files starting with lowercase', () => {
-            const result = service['hasLikelyExternalReferences'](
-                'Use setup.py',
-            );
+            const result =
+                service['hasLikelyExternalReferences']('Use setup.py');
             expect(result).toBe(false);
         });
     });
 
     describe('Pattern 9: Common config files', () => {
         it('should detect readme.md (lowercase)', () => {
-            const result = service['hasLikelyExternalReferences'](
-                'Follow readme.md',
-            );
+            const result =
+                service['hasLikelyExternalReferences']('Follow readme.md');
             expect(result).toBe(true);
         });
 
@@ -387,9 +376,8 @@ describe('PromptExternalReferenceManagerService - hasLikelyExternalReferences', 
         });
 
         it('should detect jest.config.ts', () => {
-            const result = service['hasLikelyExternalReferences'](
-                'See jest.config.ts',
-            );
+            const result =
+                service['hasLikelyExternalReferences']('See jest.config.ts');
             expect(result).toBe(true);
         });
 
@@ -408,37 +396,32 @@ describe('PromptExternalReferenceManagerService - hasLikelyExternalReferences', 
         });
 
         it('should detect vite.config.ts', () => {
-            const result = service['hasLikelyExternalReferences'](
-                'Use vite.config.ts',
-            );
+            const result =
+                service['hasLikelyExternalReferences']('Use vite.config.ts');
             expect(result).toBe(true);
         });
 
         it('should detect setup.yml', () => {
-            const result = service['hasLikelyExternalReferences'](
-                'Follow setup.yml',
-            );
+            const result =
+                service['hasLikelyExternalReferences']('Follow setup.yml');
             expect(result).toBe(true);
         });
 
         it('should detect config.yaml', () => {
-            const result = service['hasLikelyExternalReferences'](
-                'Use config.yaml',
-            );
+            const result =
+                service['hasLikelyExternalReferences']('Use config.yaml');
             expect(result).toBe(true);
         });
 
         it('should NOT detect non-listed files', () => {
-            const result = service['hasLikelyExternalReferences'](
-                'Use myfile.md',
-            );
+            const result =
+                service['hasLikelyExternalReferences']('Use myfile.md');
             expect(result).toBe(false);
         });
 
         it('should NOT detect non-listed extensions', () => {
-            const result = service['hasLikelyExternalReferences'](
-                'Use package.xml',
-            );
+            const result =
+                service['hasLikelyExternalReferences']('Use package.xml');
             expect(result).toBe(false);
         });
     });
@@ -512,7 +495,8 @@ describe('PromptExternalReferenceManagerService - hasLikelyExternalReferences', 
             const module: TestingModule = await Test.createTestingModule({
                 providers: [
                     {
-                        provide: PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
+                        provide:
+                            PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
                         useClass: PromptExternalReferenceManagerService,
                     },
                     {
@@ -530,9 +514,10 @@ describe('PromptExternalReferenceManagerService - hasLikelyExternalReferences', 
                 ],
             }).compile();
 
-            const testService = module.get<IPromptExternalReferenceManagerService>(
-                PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
-            );
+            const testService =
+                module.get<IPromptExternalReferenceManagerService>(
+                    PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
+                );
 
             const result = await testService.createOrUpdatePendingReference({
                 promptText: 'Fix all bugs',
@@ -551,7 +536,8 @@ describe('PromptExternalReferenceManagerService - hasLikelyExternalReferences', 
             expect(mockRepository.delete).toHaveBeenCalledWith('existing-uuid');
             expect(mockLogger.log).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    message: 'No external references pattern detected, deleted existing record',
+                    message:
+                        'No external references pattern detected, deleted existing record',
                 }),
             );
         });
@@ -576,7 +562,8 @@ describe('PromptExternalReferenceManagerService - hasLikelyExternalReferences', 
             const module: TestingModule = await Test.createTestingModule({
                 providers: [
                     {
-                        provide: PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
+                        provide:
+                            PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
                         useClass: PromptExternalReferenceManagerService,
                     },
                     {
@@ -594,9 +581,10 @@ describe('PromptExternalReferenceManagerService - hasLikelyExternalReferences', 
                 ],
             }).compile();
 
-            const testService = module.get<IPromptExternalReferenceManagerService>(
-                PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
-            );
+            const testService =
+                module.get<IPromptExternalReferenceManagerService>(
+                    PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
+                );
 
             const result = await testService.createOrUpdatePendingReference({
                 promptText: 'Fix all bugs',
@@ -670,4 +658,3 @@ describe('PromptExternalReferenceManagerService - hasLikelyExternalReferences', 
         });
     });
 });
-

@@ -6,11 +6,10 @@ import {
     CommentResult,
     FileChange,
     Repository,
-} from '@/config/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+} from '@shared/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { AutomationExecutionEntity } from '@libs/automation/domain/entities/automation-execution.entity';
 import { PlatformType } from '@shared/domain/enums/platform-type.enum';
-import { PipelineContext } from '../../../pipeline/interfaces/pipeline-context.interface';
 import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
 import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
@@ -22,6 +21,7 @@ import type {
     ContextEvidence,
 } from '@context-os-core/interfaces';
 import type { ContextAugmentationsMap } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';
+import { PipelineContext } from '../../pipeline/interfaces/pipeline-context.interface';
 
 export interface CodeReviewPipelineContext extends PipelineContext {
     workflowJobId?: string; // ID of the workflow job (for pausing/resuming)
@@ -142,9 +142,7 @@ export interface FileContextAgentResult {
 /**
  * Serialize context to JSON string for persistence
  */
-export function serializeContext(
-    context: CodeReviewPipelineContext,
-): string {
+export function serializeContext(context: CodeReviewPipelineContext): string {
     // Convert Map to object for serialization
     const serializableContext = {
         ...context,
@@ -158,15 +156,11 @@ export function serializeContext(
 /**
  * Deserialize JSON string back to CodeReviewPipelineContext
  */
-export function deserializeContext(
-    data: string,
-): CodeReviewPipelineContext {
+export function deserializeContext(data: string): CodeReviewPipelineContext {
     const parsed = JSON.parse(data);
     // Convert object back to Map
     if (parsed.fileMetadata) {
-        parsed.fileMetadata = new Map(
-            Object.entries(parsed.fileMetadata),
-        );
+        parsed.fileMetadata = new Map(Object.entries(parsed.fileMetadata));
     }
     return parsed as CodeReviewPipelineContext;
 }

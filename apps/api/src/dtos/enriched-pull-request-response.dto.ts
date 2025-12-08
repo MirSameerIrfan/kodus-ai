@@ -1,4 +1,4 @@
-import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
+import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
 
 export interface CodeReviewExecutionTimeline {
     uuid: string;

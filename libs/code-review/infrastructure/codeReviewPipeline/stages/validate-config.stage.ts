@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { BaseStage } from './base/base-stage.abstract';
 import {
@@ -15,7 +15,7 @@ import {
     ReviewCadenceType,
     ReviewCadenceState,
     CodeReviewConfig,
-} from '@/config/types/general/codeReview.type';
+} from '@shared/types/general/codeReview.type';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 import {
     AutomationMessage,
@@ -27,7 +27,7 @@ import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/org-parameters/contracts/organizationParameters.service.contract';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { PlatformType } from '@shared/domain/enums/platform-type.enum';
 
 @Injectable()
@@ -41,7 +41,7 @@ export class ValidateConfigStage extends BaseStage {
         private automationExecutionService: IAutomationExecutionService,
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
         private organizationParametersService: IOrganizationParametersService,
-        private codeManagementService: CodeManagementService
+        private codeManagementService: CodeManagementService,
     ) {
         super();
     }
@@ -119,7 +119,7 @@ export class ValidateConfigStage extends BaseStage {
             this.logger.error({
                 message: `Error in ValidateConfigStage for PR#${context?.pullRequest?.number}`,
                 error,
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     organizationAndTeamData: context?.organizationAndTeamData,
                     prNumber: context?.pullRequest?.number,

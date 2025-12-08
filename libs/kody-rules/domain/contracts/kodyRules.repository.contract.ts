@@ -1,5 +1,9 @@
 import { KodyRulesEntity } from '../entities/kodyRules.entity';
-import { IKodyRule, IKodyRules, KodyRulesStatus } from '../interfaces/kodyRules.interface';
+import {
+    IKodyRule,
+    IKodyRules,
+    KodyRulesStatus,
+} from '../interfaces/kodyRules.interface';
 
 export const KODY_RULES_REPOSITORY_TOKEN = Symbol('KodyRulesRepository');
 

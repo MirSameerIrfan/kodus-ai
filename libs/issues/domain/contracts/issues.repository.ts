@@ -1,4 +1,4 @@
-import { IssueStatus } from '@/config/types/general/issues.type';
+import { IssueStatus } from '@shared/types/general/issues.type';
 import { IssuesEntity } from '../entities/issues.entity';
 import { IIssue } from '../interfaces/issues.interface';
 import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
@@ -29,10 +29,7 @@ export interface IIssuesRepository {
         updateData: Partial<IIssue>,
     ): Promise<IssuesEntity | null>;
 
-    updateLabel(
-        uuid: string,
-        label: LabelType,
-    ): Promise<IssuesEntity | null>;
+    updateLabel(uuid: string, label: LabelType): Promise<IssuesEntity | null>;
 
     updateSeverity(
         uuid: string,

@@ -7,7 +7,7 @@ import {
 import {
     ActionType,
     ConfigLevel,
-} from '@/config/types/general/codeReviewSettingsLog.type';
+} from '@shared/types/general/codeReviewSettingsLog.type';
 
 export interface RepositoriesLogParams extends BaseLogParams {
     addedRepositories?: Array<{ id: string; name: string }>;

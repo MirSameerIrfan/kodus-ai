@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { BaseStage } from './base/base-stage.abstract';
 import {
@@ -7,7 +7,7 @@ import {
 } from '@libs/code-review/domain/contracts/CommentManagerService.contract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 import { PlatformType } from '@shared/domain/enums/platform-type.enum';
-import { PullRequestMessageStatus } from '@/config/types/general/pullRequestMessages.type';
+import { PullRequestMessageStatus } from '@shared/types/general/pullRequestMessages.type';
 
 @Injectable()
 export class InitialCommentStage extends BaseStage {
@@ -17,7 +17,7 @@ export class InitialCommentStage extends BaseStage {
 
     constructor(
         @Inject(COMMENT_MANAGER_SERVICE_TOKEN)
-        private commentManagerService: ICommentManagerService
+        private commentManagerService: ICommentManagerService,
     ) {
         super();
     }

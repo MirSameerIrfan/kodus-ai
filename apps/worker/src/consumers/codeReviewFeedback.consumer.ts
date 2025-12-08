@@ -1,8 +1,8 @@
-import { createLogger } from "@kodus/flow";
-import { SaveCodeReviewFeedbackUseCase } from '@/core/application/use-cases/codeReviewFeedback/save-feedback.use-case';
+import { createLogger } from '@kodus/flow';
+import { SaveCodeReviewFeedbackUseCase } from '@libs/code-review/application/use-cases/feedback/save-feedback.use-case';
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { Injectable } from '@nestjs/common';
-import { RabbitmqConsumeErrorFilter } from '@/shared/infrastructure/filters/rabbitmq-consume-error.exception';
+import { RabbitmqConsumeErrorFilter } from '@shared/infrastructure/filters/rabbitmq-consume-error.exception';
 import { UseFilters } from '@nestjs/common';
 
 @UseFilters(RabbitmqConsumeErrorFilter)
@@ -10,7 +10,7 @@ import { UseFilters } from '@nestjs/common';
 export class CodeReviewFeedbackConsumer {
     private readonly logger = createLogger(CodeReviewFeedbackConsumer.name);
     constructor(
-        private readonly saveCodeReviewFeedbackUseCase: SaveCodeReviewFeedbackUseCase
+        private readonly saveCodeReviewFeedbackUseCase: SaveCodeReviewFeedbackUseCase,
     ) {}
 
     @RabbitSubscribe({

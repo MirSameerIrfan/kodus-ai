@@ -1,9 +1,14 @@
 {
     "extends": "../../tsconfig.json",
     "compilerOptions": {
+        "outDir": "./dist",
         "baseUrl": "../../",
         "paths": {
-            "@/*": ["src/*"]
+            "@/*": ["src/*"],
+            "@libs/*": ["libs/*"],
+            "@core/*": ["core/*"],
+            "@shared/*": ["shared/*"],
+            "@context-os-core/*": ["packages/kodus-flow/src/context/core/*"]
         }
     },
     "include": ["src/**/*"],

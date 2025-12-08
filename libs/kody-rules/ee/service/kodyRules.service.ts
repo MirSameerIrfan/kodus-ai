@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import {
     IKodyRulesRepository,
     KODY_RULES_REPOSITORY_TOKEN,
@@ -23,14 +23,14 @@ import {
 } from '@nestjs/common';
 import { CreateKodyRuleDto } from '@shared/dtos/create-kody-rule.dto';
 import { v4 } from 'uuid';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import * as libraryKodyRules from './data/library-kody-rules.json';
 import * as bucketsData from './data/buckets.json';
 import {
     KodyRuleFilters,
     LibraryKodyRule,
     BucketInfo,
-} from '@/config/types/kodyRules.type';
+} from '@shared/types/kodyRules.type';
 import { ProgrammingLanguage } from '@shared/domain/enums/programming-language.enum';
 import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
@@ -39,7 +39,7 @@ import {
 import {
     ActionType,
     UserInfo,
-} from '@/config/types/general/codeReviewSettingsLog.type';
+} from '@shared/types/general/codeReviewSettingsLog.type';
 import {
     IRuleLikeService,
     RULE_LIKE_SERVICE_TOKEN,
@@ -56,7 +56,7 @@ export class KodyRulesService implements IKodyRulesService {
         private readonly codeReviewSettingsLogService: ICodeReviewSettingsLogService,
         @Inject(RULE_LIKE_SERVICE_TOKEN)
         private readonly ruleLikeService: IRuleLikeService,
-        private readonly kodyRulesValidationService: KodyRulesValidationService
+        private readonly kodyRulesValidationService: KodyRulesValidationService,
     ) {}
 
     getNativeCollection() {

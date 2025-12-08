@@ -6,7 +6,7 @@ import {
     KodyRulesOrigin,
     KodyRulesScope,
     KodyRulesStatus,
-} from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+} from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import { Type } from 'class-transformer';
 import {
     IsArray,
@@ -48,9 +48,7 @@ export class KodyRulesInheritanceDto {
     include: string[];
 }
 
-export class KodyRuleExternalReferenceDto
-    implements IKodyRuleExternalReference
-{
+export class KodyRuleExternalReferenceDto implements IKodyRuleExternalReference {
     @IsString()
     filePath: string;
 

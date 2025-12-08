@@ -2,8 +2,8 @@ import {
     ConfigLevel,
     PullRequestMessageStatus,
     PullRequestMessageType,
-} from '@/config/types/general/pullRequestMessages.type';
-import { CoreDocument } from '@/shared/infrastructure/repositories/model/mongodb';
+} from '@shared/types/general/pullRequestMessages.type';
+import { CoreDocument } from '@shared/infrastructure/repositories/model/mongodb';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 @Schema({

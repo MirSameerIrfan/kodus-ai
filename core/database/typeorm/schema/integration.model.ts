@@ -1,6 +1,6 @@
-import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import { IntegrationCategory } from '@shared/domain/enums/integration-category.enum';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { CoreModel } from '@shared/infrastructure/repositories/model/typeOrm';
 import {
     Column,
     Entity,

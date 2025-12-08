@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import {
     IOrganizationService,
     ORGANIZATION_SERVICE_TOKEN,
@@ -16,12 +16,14 @@ import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class GetOrganizationsByDomainUseCase implements IUseCase {
-    private readonly logger = createLogger(GetOrganizationsByDomainUseCase.name);
+    private readonly logger = createLogger(
+        GetOrganizationsByDomainUseCase.name,
+    );
     constructor(
         @Inject(ORGANIZATION_SERVICE_TOKEN)
         private readonly organizationService: IOrganizationService,
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
-        private readonly organizationParametersService: IOrganizationParametersService
+        private readonly organizationParametersService: IOrganizationParametersService,
     ) {}
 
     public async execute(domain: string): Promise<Partial<IOrganization>[]> {

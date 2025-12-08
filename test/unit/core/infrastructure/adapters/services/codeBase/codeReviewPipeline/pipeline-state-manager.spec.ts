@@ -59,7 +59,9 @@ describe('PipelineStateManager', () => {
 
             await stateManager.saveState(workflowJobId, context);
 
-            expect(workflowJobRepository.updatePipelineState).toHaveBeenCalledWith(
+            expect(
+                workflowJobRepository.updatePipelineState,
+            ).toHaveBeenCalledWith(
                 workflowJobId,
                 expect.objectContaining({
                     correlationId: context.correlationId,
@@ -77,9 +79,9 @@ describe('PipelineStateManager', () => {
             const error = new Error('Database error');
             workflowJobRepository.updatePipelineState.mockRejectedValue(error);
 
-            await expect(stateManager.saveState(workflowJobId, context)).rejects.toThrow(
-                'Database error',
-            );
+            await expect(
+                stateManager.saveState(workflowJobId, context),
+            ).rejects.toThrow('Database error');
 
             // Logger uses createLogger, so we can't easily mock it
             // Just verify the error was thrown
@@ -151,9 +153,9 @@ describe('PipelineStateManager', () => {
             const error = new Error('Database error');
             workflowJobRepository.findOne.mockRejectedValue(error);
 
-            await expect(stateManager.resumeFromState(workflowJobId)).rejects.toThrow(
-                'Database error',
-            );
+            await expect(
+                stateManager.resumeFromState(workflowJobId),
+            ).rejects.toThrow('Database error');
 
             // Logger uses createLogger, so we can't easily mock it
             // Just verify the error was thrown
@@ -196,8 +198,9 @@ describe('PipelineStateManager', () => {
             const error = new Error('Database error');
             workflowJobRepository.findOne.mockRejectedValue(error);
 
-            await expect(stateManager.getState(workflowJobId)).rejects.toThrow('Database error');
+            await expect(stateManager.getState(workflowJobId)).rejects.toThrow(
+                'Database error',
+            );
         });
     });
 });
-

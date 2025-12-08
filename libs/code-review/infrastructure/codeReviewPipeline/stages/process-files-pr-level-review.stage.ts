@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
@@ -10,7 +10,7 @@ import {
     KODY_RULES_PR_LEVEL_ANALYSIS_SERVICE_TOKEN,
     KodyRulesPrLevelAnalysisService,
 } from '@libs/code-review/ee/analysis/kodyRulesPrLevelAnalysis.service';
-import { ReviewModeResponse } from '@/config/types/general/codeReview.type';
+import { ReviewModeResponse } from '@shared/types/general/codeReview.type';
 import {
     CROSS_FILE_ANALYSIS_SERVICE_TOKEN,
     CrossFileAnalysisService,
@@ -20,17 +20,23 @@ import { StageCompletedEvent } from '@libs/workflow-queue/domain/interfaces/stag
 import { WorkflowPausedError } from '@libs/workflow-queue/domain/errors/workflow-paused.error';
 
 @Injectable()
-export class ProcessFilesPrLevelReviewStage extends BaseStage implements HeavyStage {
+export class ProcessFilesPrLevelReviewStage
+    extends BaseStage
+    implements HeavyStage
+{
     private readonly logger = createLogger(ProcessFilesPrLevelReviewStage.name);
     readonly name = 'PRLevelReviewStage';
     readonly dependsOn: string[] = ['InitialCommentStage']; // Depends on InitialCommentStage
-    
+
     // HeavyStage properties
     readonly timeout = 10 * 60 * 1000; // 10 minutes
     readonly eventType = EventType.PR_LEVEL_REVIEW_COMPLETED;
-    
+
     // Store results temporarily (in production, this would be in a database/cache)
-    private readonly resultsCache = new Map<string, CodeReviewPipelineContext>();
+    private readonly resultsCache = new Map<
+        string,
+        CodeReviewPipelineContext
+    >();
 
     constructor(
         @Inject(KODY_RULES_PR_LEVEL_ANALYSIS_SERVICE_TOKEN)
@@ -57,7 +63,7 @@ export class ProcessFilesPrLevelReviewStage extends BaseStage implements HeavySt
      */
     async start(context: CodeReviewPipelineContext): Promise<string> {
         const taskId = uuidv4();
-        
+
         this.logger.log({
             message: `Starting PR-level review for PR#${context.pullRequest.number}`,
             context: this.name,
@@ -71,13 +77,13 @@ export class ProcessFilesPrLevelReviewStage extends BaseStage implements HeavySt
         // TODO: In future, this should enqueue the analysis and return immediately
         // For now, execute synchronously but store result for getResult/resume
         const result = await this.executeAnalysis(context);
-        
+
         // Store result temporarily
         this.resultsCache.set(taskId, result);
-        
+
         // Publish completion event (simulating async completion)
         await this.publishCompletionEvent(taskId, result, context);
-        
+
         return taskId;
     }
 
@@ -93,10 +99,10 @@ export class ProcessFilesPrLevelReviewStage extends BaseStage implements HeavySt
         if (!result) {
             throw new Error(`No result found for taskId: ${taskId}`);
         }
-        
+
         // Remove from cache after retrieval
         this.resultsCache.delete(taskId);
-        
+
         return result;
     }
 
@@ -191,7 +197,7 @@ export class ProcessFilesPrLevelReviewStage extends BaseStage implements HeavySt
         if (!context?.organizationAndTeamData) {
             this.logger.error({
                 message: 'Missing organizationAndTeamData in context',
-                context: this.stageName,
+                context: this.name,
             });
             return context;
         }
@@ -199,7 +205,7 @@ export class ProcessFilesPrLevelReviewStage extends BaseStage implements HeavySt
         if (!context?.pullRequest?.number) {
             this.logger.error({
                 message: 'Missing pullRequest data in context',
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     organizationAndTeamData: context.organizationAndTeamData,
                 },
@@ -210,7 +216,7 @@ export class ProcessFilesPrLevelReviewStage extends BaseStage implements HeavySt
         if (!context?.repository?.name || !context?.repository?.id) {
             this.logger.error({
                 message: 'Missing repository data in context',
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     organizationAndTeamData: context.organizationAndTeamData,
                     prNumber: context.pullRequest.number,
@@ -222,7 +228,7 @@ export class ProcessFilesPrLevelReviewStage extends BaseStage implements HeavySt
         if (!context?.changedFiles?.length) {
             this.logger.warn({
                 message: `No files to analyze for PR#${context.pullRequest.number}`,
-                context: this.stageName,
+                context: this.name,
                 metadata: {
                     organizationId:
                         context.organizationAndTeamData.organizationId,
@@ -404,7 +410,8 @@ export class ProcessFilesPrLevelReviewStage extends BaseStage implements HeavySt
     ): Promise<void> {
         if (!this.amqpConnection) {
             this.logger.debug({
-                message: 'RabbitMQ not available, skipping PR-level review completion event',
+                message:
+                    'RabbitMQ not available, skipping PR-level review completion event',
                 context: this.name,
                 metadata: { taskId },
             });

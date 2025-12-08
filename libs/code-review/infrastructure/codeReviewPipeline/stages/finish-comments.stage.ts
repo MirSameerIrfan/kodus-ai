@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Injectable, Inject } from '@nestjs/common';
 import { BaseStage } from './base/base-stage.abstract';
 import {
@@ -6,18 +6,20 @@ import {
     ICommentManagerService,
 } from '@libs/code-review/domain/contracts/CommentManagerService.contract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
-import { PullRequestMessageStatus } from '@/config/types/general/pullRequestMessages.type';
-import { BehaviourForNewCommits } from '@/config/types/general/codeReview.type';
+import { PullRequestMessageStatus } from '@shared/types/general/pullRequestMessages.type';
+import { BehaviourForNewCommits } from '@shared/types/general/codeReview.type';
 
 @Injectable()
 export class UpdateCommentsAndGenerateSummaryStage extends BaseStage {
-    private readonly logger = createLogger(UpdateCommentsAndGenerateSummaryStage.name);
+    private readonly logger = createLogger(
+        UpdateCommentsAndGenerateSummaryStage.name,
+    );
     readonly name = 'UpdateCommentsAndGenerateSummaryStage';
     readonly dependsOn: string[] = ['AggregateResultsStage']; // Depends on AggregateResultsStage
 
     constructor(
         @Inject(COMMENT_MANAGER_SERVICE_TOKEN)
-        private readonly commentManagerService: ICommentManagerService
+        private readonly commentManagerService: ICommentManagerService,
     ) {
         super();
     }
@@ -128,7 +130,8 @@ export class UpdateCommentsAndGenerateSummaryStage extends BaseStage {
         }
 
         if (
-            endReviewMessage.status === PullRequestMessageStatus.ONLY_WHEN_OPENED &&
+            endReviewMessage.status ===
+                PullRequestMessageStatus.ONLY_WHEN_OPENED &&
             context.lastExecution
         ) {
             return context;
@@ -136,13 +139,17 @@ export class UpdateCommentsAndGenerateSummaryStage extends BaseStage {
 
         if (
             (endReviewMessage.status === PullRequestMessageStatus.ACTIVE ||
-                endReviewMessage.status === PullRequestMessageStatus.EVERY_PUSH ||
-                (endReviewMessage.status === PullRequestMessageStatus.ONLY_WHEN_OPENED &&
+                endReviewMessage.status ===
+                    PullRequestMessageStatus.EVERY_PUSH ||
+                (endReviewMessage.status ===
+                    PullRequestMessageStatus.ONLY_WHEN_OPENED &&
                     !context.lastExecution)) &&
             startReviewMessage &&
             (startReviewMessage.status === PullRequestMessageStatus.ACTIVE ||
-                startReviewMessage.status === PullRequestMessageStatus.EVERY_PUSH ||
-                (startReviewMessage.status === PullRequestMessageStatus.ONLY_WHEN_OPENED &&
+                startReviewMessage.status ===
+                    PullRequestMessageStatus.EVERY_PUSH ||
+                (startReviewMessage.status ===
+                    PullRequestMessageStatus.ONLY_WHEN_OPENED &&
                     !context.lastExecution))
         ) {
             const finalCommentBody =
@@ -174,13 +181,17 @@ export class UpdateCommentsAndGenerateSummaryStage extends BaseStage {
 
         if (
             (endReviewMessage.status === PullRequestMessageStatus.ACTIVE ||
-                endReviewMessage.status === PullRequestMessageStatus.EVERY_PUSH ||
-                (endReviewMessage.status === PullRequestMessageStatus.ONLY_WHEN_OPENED &&
+                endReviewMessage.status ===
+                    PullRequestMessageStatus.EVERY_PUSH ||
+                (endReviewMessage.status ===
+                    PullRequestMessageStatus.ONLY_WHEN_OPENED &&
                     !context.lastExecution)) &&
             (!startReviewMessage ||
-                startReviewMessage.status === PullRequestMessageStatus.INACTIVE ||
+                startReviewMessage.status ===
+                    PullRequestMessageStatus.INACTIVE ||
                 startReviewMessage.status === PullRequestMessageStatus.OFF ||
-                (startReviewMessage.status === PullRequestMessageStatus.ONLY_WHEN_OPENED &&
+                (startReviewMessage.status ===
+                    PullRequestMessageStatus.ONLY_WHEN_OPENED &&
                     context.lastExecution))
         ) {
             const finalCommentBody = endReviewMessage.content;

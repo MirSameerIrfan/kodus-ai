@@ -8,9 +8,9 @@ import {
     LLMAdapter,
     createLogger,
 } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { ConfigService } from '@nestjs/config';
-import { DatabaseConnection } from '@/config/types';
+import { DatabaseConnection } from '@shared/types';
 import { LLMModelProvider, PromptRunnerService } from '@kodus/kodus-common/llm';
 import { SDKOrchestrator } from '@kodus/flow/dist/orchestration';
 import { ObservabilityService } from '@shared/logging/observability.service';
@@ -22,7 +22,7 @@ import {
 import { Inject } from '@nestjs/common';
 import { PermissionValidationService } from '@shared/ee/services/permissionValidation.service';
 import { BaseAgentProvider } from './base-agent.provider';
-import { MCPManagerService } from '@libs/agents/infrastructure/mcp/services/mcp-manager.service';
+import { MCPManagerService } from '@libs/mcp-server/infrastructure/services/mcp-manager.service';
 
 export interface ValidationResult {
     needsMoreInfo?: boolean;

@@ -1,8 +1,8 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 import { BaseStage } from './base/base-stage.abstract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
-import { FileContextAugmentationService } from '../../../context/file-context-augmentation.service';
+import { FileContextAugmentationService } from '../../context/file-context-augmentation.service';
 
 @Injectable()
 export class FileContextGateStage extends BaseStage {
@@ -11,7 +11,7 @@ export class FileContextGateStage extends BaseStage {
     readonly dependsOn: string[] = ['LoadExternalContextStage']; // Depends on LoadExternalContextStage
 
     constructor(
-        private readonly fileContextAugmentationService: FileContextAugmentationService
+        private readonly fileContextAugmentationService: FileContextAugmentationService,
     ) {
         super();
     }
@@ -35,9 +35,9 @@ export class FileContextGateStage extends BaseStage {
         const augmentationsByFile =
             await this.fileContextAugmentationService.augmentFiles(
                 context.changedFiles,
-                        context,
-                        mcpDependencies,
-        );
+                context,
+                mcpDependencies,
+            );
 
         return this.updateContext(context, (draft) => {
             draft.augmentationsByFile = augmentationsByFile;

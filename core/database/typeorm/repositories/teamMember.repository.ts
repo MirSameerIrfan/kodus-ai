@@ -1,20 +1,20 @@
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
-} from '@/shared/infrastructure/repositories/mappers';
+} from '@shared/infrastructure/repositories/mappers';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOneOptions, Repository, UpdateQueryBuilder } from 'typeorm';
 import {
     IMembers,
     ITeamMember,
-} from '@/core/domain/teamMembers/interfaces/team-members.interface';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+} from '@libs/organization/domain/team-members/interfaces/team-members.interface';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { TeamMemberModel } from '@core/database/typeorm/schema/teamMember.model';
-import { TeamMemberEntity } from '@/core/domain/teamMembers/entities/teamMember.entity';
-import { ITeamMemberRepository } from '@/core/domain/teamMembers/contracts/teamMembers.repository.contracts';
-import { TeamMemberRole } from '@/core/domain/teamMembers/enums/teamMemberRole.enum';
-import { STATUS } from '@/config/types/database/status.type';
+import { TeamMemberEntity } from '@libs/organization/domain/team-members/entities/teamMember.entity';
+import { ITeamMemberRepository } from '@libs/organization/domain/team-members/contracts/teamMembers.repository.contracts';
+import { TeamMemberRole } from '@libs/organization/domain/team-members/enums/teamMemberRole.enum';
+import { STATUS } from '@shared/types/database/status.type';
 import { In } from 'typeorm';
 
 @Injectable()

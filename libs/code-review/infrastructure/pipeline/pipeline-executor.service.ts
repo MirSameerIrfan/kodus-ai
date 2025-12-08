@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { v4 as uuid } from 'uuid';
 import { PipelineContext } from './interfaces/pipeline-context.interface';
 import { PipelineStage } from './interfaces/pipeline.interface';
@@ -42,9 +42,7 @@ export class PipelineExecutor<TContext extends PipelineContext> {
      * Stages in the same phase can execute in parallel.
      * Returns an array of phases, where each phase is an array of stage names.
      */
-    private topologicalSort(
-        graph: Map<string, Set<string>>,
-    ): string[][] {
+    private topologicalSort(graph: Map<string, Set<string>>): string[][] {
         const phases: string[][] = [];
         const inDegree = new Map<string, number>();
         const ready: string[] = [];
@@ -172,7 +170,9 @@ export class PipelineExecutor<TContext extends PipelineContext> {
             }
 
             // Get stages for this phase
-            const phaseStages = stages.filter((s) => phase.includes(s.stageName));
+            const phaseStages = stages.filter((s) =>
+                phase.includes(s.stageName),
+            );
 
             // Execute stages in this phase in parallel
             const phaseStart = Date.now();
@@ -209,7 +209,7 @@ export class PipelineExecutor<TContext extends PipelineContext> {
                     });
                 } else {
                     const error = result.reason as Error;
-                    
+
                     // If error is WorkflowPausedError, propagate it immediately (don't treat as failure)
                     if (error instanceof WorkflowPausedError) {
                         this.logger.log({
@@ -223,13 +223,14 @@ export class PipelineExecutor<TContext extends PipelineContext> {
                                 eventType: error.eventType,
                                 eventKey: error.eventKey,
                                 timeout: error.timeout,
-                                correlationId: (context as any)?.correlationId ?? null,
+                                correlationId:
+                                    (context as any)?.correlationId ?? null,
                             },
                         });
                         // Re-throw to allow processor to handle pause
                         throw error;
                     }
-                    
+
                     errors.push({ stage: stage.stageName, error });
 
                     this.logger.error({
@@ -238,12 +239,14 @@ export class PipelineExecutor<TContext extends PipelineContext> {
                         serviceName: PipelineExecutor.name,
                         error: error,
                         metadata: {
-                            correlationId: (context as any)?.correlationId ?? null,
+                            correlationId:
+                                (context as any)?.correlationId ?? null,
                             ...context?.pipelineMetadata,
                             stage: stage.stageName,
                             phase: phaseIndex + 1,
                             organizationAndTeamData:
-                                (context as any)?.organizationAndTeamData ?? null,
+                                (context as any)?.organizationAndTeamData ??
+                                null,
                             status: context.statusInfo,
                         },
                     });

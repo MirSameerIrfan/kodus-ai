@@ -1,11 +1,11 @@
-import { ReviewModeResponse } from '@/config/types/general/codeReview.type';
-import { DeliveryStatus } from '@/core/domain/pullRequests/enums/deliveryStatus.enum';
-import { PriorityStatus } from '@/core/domain/pullRequests/enums/priorityStatus.enum';
-import { ICommit } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
-import { CoreDocument } from '@/shared/infrastructure/repositories/model/mongodb';
+import { ReviewModeResponse } from '@shared/types/general/codeReview.type';
+import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
+import { PriorityStatus } from '@libs/code-review/domain/pull-requests/enums/priorityStatus.enum';
+import { ICommit } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { CoreDocument } from '@shared/infrastructure/repositories/model/mongodb';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { LabelType } from '@/shared/utils/codeManagement/labels';
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
+import { LabelType } from '@shared/utils/codeManagement/labels';
+import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
 
 @Schema({
     collection: 'pullRequests',

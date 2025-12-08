@@ -1,4 +1,4 @@
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';

@@ -1,8 +1,11 @@
 // services/message-template-processor.service.ts
 import { Injectable } from '@nestjs/common';
-import { FileChange, ReviewCadenceType } from '@/config/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { CodeReviewConfig } from '@/config/types/general/codeReview.type';
+import {
+    FileChange,
+    ReviewCadenceType,
+} from '@shared/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { CodeReviewConfig } from '@shared/types/general/codeReview.type';
 import { PlatformType } from '@shared/domain/enums/platform-type.enum';
 import { LanguageValue } from '@shared/domain/enums/language-parameter.enum';
 import {
@@ -240,7 +243,9 @@ ${reviewOptionsMarkdown}
                 const pushes =
                     context.codeReviewConfig.reviewCadence.pushesToTrigger || 3;
                 description =
-                    translation.autoPauseDesc?.replace('{timeWindow}', String(timeWindow))?.replace('{pushes}', String(pushes)) ||
+                    translation.autoPauseDesc
+                        ?.replace('{timeWindow}', String(timeWindow))
+                        ?.replace('{pushes}', String(pushes)) ||
                     `Kody reviews the first push automatically, then pauses if you make ${pushes}+ pushes in ${timeWindow} minutes. Use @kody resume to continue.`;
                 break;
 

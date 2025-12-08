@@ -4,11 +4,11 @@ import { Model } from 'mongoose';
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
-} from '@/shared/infrastructure/repositories/mappers';
-import { ILogRepository } from '@/core/domain/log/contracts/log.repository.contracts';
+} from '@shared/infrastructure/repositories/mappers';
+import { ILogRepository } from '@libs/analytics/domain/log/contracts/log.repository.contracts';
 import { LogModel } from '@core/database/mongoose/schemas/log.model';
-import { LogEntity } from '@/core/domain/log/entities/log.entity';
-import { ILog } from '@/core/domain/log/interfaces/log.interface';
+import { LogEntity } from '@libs/analytics/domain/log/entities/log.entity';
+import { ILog } from '@libs/analytics/domain/log/interfaces/log.interface';
 
 @Injectable()
 export class LogDatabaseRepository implements ILogRepository {

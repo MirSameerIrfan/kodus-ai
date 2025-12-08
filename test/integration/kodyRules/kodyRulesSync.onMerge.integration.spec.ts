@@ -109,12 +109,10 @@ describe('GitHubPullRequestHandler - KodyRules sync on PR merged', () => {
         codeManagementService = {
             getDefaultBranch: jest.fn().mockResolvedValue('main'),
             getFilesByPullRequestId: jest.fn().mockResolvedValue(changedFiles),
-            getPullRequestByNumber: jest
-                .fn()
-                .mockResolvedValue({
-                    head: { ref: 'feat/new_rules_4' },
-                    base: { ref: 'main' },
-                }),
+            getPullRequestByNumber: jest.fn().mockResolvedValue({
+                head: { ref: 'feat/new_rules_4' },
+                base: { ref: 'main' },
+            }),
             getRepositoryContentFile: jest
                 .fn()
                 .mockImplementation(async ({ file }: any) => {

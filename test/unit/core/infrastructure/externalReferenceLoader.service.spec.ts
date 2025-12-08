@@ -17,11 +17,9 @@ const buildContextPackMock = jest.fn();
 jest.mock(
     '@/core/infrastructure/adapters/services/context/code-review-context-pack.service',
     () => ({
-        CodeReviewContextPackService: jest
-            .fn()
-            .mockImplementation(() => ({
-                buildContextPack: buildContextPackMock,
-            })),
+        CodeReviewContextPackService: jest.fn().mockImplementation(() => ({
+            buildContextPack: buildContextPackMock,
+        })),
     }),
 );
 
@@ -180,7 +178,9 @@ describe('ExternalReferenceLoaderService', () => {
                         'Rule has no contextReferenceId, skipping reference loading',
                 }),
             );
-            expect(mockContextPackService.buildContextPack).not.toHaveBeenCalled();
+            expect(
+                mockContextPackService.buildContextPack,
+            ).not.toHaveBeenCalled();
         });
 
         it('should handle errors thrown by context pack service', async () => {

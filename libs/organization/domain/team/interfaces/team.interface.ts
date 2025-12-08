@@ -1,6 +1,6 @@
-import { STATUS } from '@/config/types/database/status.type';
+import { STATUS } from '@shared/types/database/status.type';
 import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
-import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
+import { IntegrationCategory } from '@shared/domain/enums/integration-category.enum';
 
 export interface ITeam {
     uuid: string;
@@ -34,6 +34,5 @@ export interface TeamsFilter {
 
 export enum IntegrationMatchType {
     SOME = 'SOME',
-    EVERY = 'EVERY'
+    EVERY = 'EVERY',
 }
-

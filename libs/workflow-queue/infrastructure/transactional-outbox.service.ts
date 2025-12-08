@@ -56,4 +56,3 @@ export class TransactionalOutboxService {
         await this.outboxRepository.create(message);
     }
 }
-

@@ -1,4 +1,4 @@
-import { CodeSuggestion } from '@/config/types/general/codeReview.type';
+import { CodeSuggestion } from '@shared/types/general/codeReview.type';
 import { contextToGenerateIssues } from '@libs/issues/infrastructure/domain/kodyIssuesManagement.interface';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 

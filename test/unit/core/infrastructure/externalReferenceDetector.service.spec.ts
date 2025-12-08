@@ -131,7 +131,9 @@ describe('ExternalReferenceDetectorService', () => {
                 },
             ]);
 
-            expect(mockCodeManagementService.getRepositoryAllFiles).toHaveBeenCalledWith({
+            expect(
+                mockCodeManagementService.getRepositoryAllFiles,
+            ).toHaveBeenCalledWith({
                 organizationAndTeamData: mockOrganizationAndTeamData,
                 repository: { id: 'repo-123', name: '' },
                 filters: {
@@ -245,7 +247,9 @@ describe('ExternalReferenceDetectorService', () => {
                 },
             );
 
-            mockCodeManagementService.getRepositoryAllFiles.mockResolvedValue([]);
+            mockCodeManagementService.getRepositoryAllFiles.mockResolvedValue(
+                [],
+            );
 
             const result = await service.detectAndResolveReferences({
                 ruleText: 'Check NonExistent.ts',
@@ -315,9 +319,9 @@ describe('ExternalReferenceDetectorService', () => {
                 setRunName: jest.fn().mockReturnThis(),
                 execute: jest.fn().mockResolvedValue({
                     references: [
-                    {
-                        fileName: 'types/UserRole.enum.ts',
-                    },
+                        {
+                            fileName: 'types/UserRole.enum.ts',
+                        },
                     ],
                 }),
             };
@@ -339,7 +343,9 @@ describe('ExternalReferenceDetectorService', () => {
             });
 
             expect(result[0].filePath).toBe('src/types/UserRole.enum.ts');
-            expect(mockCodeManagementService.getRepositoryAllFiles).toHaveBeenCalledWith(
+            expect(
+                mockCodeManagementService.getRepositoryAllFiles,
+            ).toHaveBeenCalledWith(
                 expect.objectContaining({
                     filters: expect.objectContaining({
                         filePatterns: ['**/types/UserRole.enum.ts'],
@@ -385,7 +391,9 @@ describe('ExternalReferenceDetectorService', () => {
             });
 
             expect(result).toHaveLength(2);
-            expect(mockCodeManagementService.getRepositoryAllFiles).toHaveBeenCalledWith(
+            expect(
+                mockCodeManagementService.getRepositoryAllFiles,
+            ).toHaveBeenCalledWith(
                 expect.objectContaining({
                     filters: expect.objectContaining({
                         filePatterns: expect.arrayContaining(['**/*.enum.ts']),
@@ -527,4 +535,3 @@ describe('ExternalReferenceDetectorService', () => {
         });
     });
 });
-

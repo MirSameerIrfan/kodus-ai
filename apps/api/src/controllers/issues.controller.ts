@@ -1,4 +1,4 @@
-import { IssuesEntity } from '@/core/domain/issues/entities/issues.entity';
+import { IssuesEntity } from '@libs/issues/domain/entities/issues.entity';
 import {
     Body,
     Controller,
@@ -9,10 +9,10 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { GetIssuesByFiltersDto } from '../dtos/get-issues-by-filters.dto';
-import { GetTotalIssuesUseCase } from '@/core/application/use-cases/issues/get-total-issues.use-case';
-import { GetIssueByIdUseCase } from '@/core/application/use-cases/issues/get-issue-by-id.use-case';
-import { UpdateIssuePropertyUseCase } from '@/core/application/use-cases/issues/update-issue-property.use-case';
-import { GetIssuesUseCase } from '@/core/application/use-cases/issues/get-issues.use-case';
+import { GetTotalIssuesUseCase } from '@libs/issues/application/use-cases/get-total-issues.use-case';
+import { GetIssueByIdUseCase } from '@libs/issues/application/use-cases/get-issue-by-id.use-case';
+import { UpdateIssuePropertyUseCase } from '@libs/issues/application/use-cases/update-issue-property.use-case';
+import { GetIssuesUseCase } from '@libs/issues/application/use-cases/get-issues.use-case';
 import {
     CheckPolicies,
     PolicyGuard,
@@ -21,7 +21,7 @@ import { checkPermissions } from '@libs/identity/infrastructure/permissions/poli
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 
 @Controller('issues')
 export class IssuesController {

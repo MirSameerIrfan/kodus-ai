@@ -1,4 +1,7 @@
-import { PullRequestMessageStatus, PullRequestMessageType } from '@/config/types/general/pullRequestMessages.type';
+import {
+    PullRequestMessageStatus,
+    PullRequestMessageType,
+} from '@shared/types/general/pullRequestMessages.type';
 import { IsObject, IsOptional, IsString } from 'class-validator';
 
 export class PullRequestMessagesDto {

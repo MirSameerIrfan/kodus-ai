@@ -1,4 +1,4 @@
-import { IssueStatus } from '@/config/types/general/issues.type';
+import { IssueStatus } from '@shared/types/general/issues.type';
 import {
     IContributingSuggestion,
     IRepositoryToIssues,
@@ -26,7 +26,7 @@ export interface IIssue {
         gitId: string;
         username: string;
     };
-    reporter?: { 
+    reporter?: {
         gitId: string;
         username: string;
     };

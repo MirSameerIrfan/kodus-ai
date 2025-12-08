@@ -1,5 +1,10 @@
-import { createLogger } from "@kodus/flow";
-import { Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { createLogger } from '@kodus/flow';
+import {
+    Inject,
+    Injectable,
+    NotFoundException,
+    BadRequestException,
+} from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import {
     PULL_REQUESTS_REPOSITORY_TOKEN,
@@ -22,7 +27,7 @@ export class FindSuggestionsByRuleUseCase {
         @Inject(PULL_REQUESTS_REPOSITORY_TOKEN)
         private readonly pullRequestsRepository: IPullRequestsRepository,
         @Inject(KODY_RULES_SERVICE_TOKEN)
-        private readonly kodyRulesService: IKodyRulesService
+        private readonly kodyRulesService: IKodyRulesService,
     ) {}
 
     async execute(ruleId: string): Promise<ISuggestion[]> {
@@ -37,9 +42,10 @@ export class FindSuggestionsByRuleUseCase {
 
             const organizationId = this.request.user.organization.uuid;
 
-            const existingRules = await this.kodyRulesService.findByOrganizationId(
-                organizationId,
-            );
+            const existingRules =
+                await this.kodyRulesService.findByOrganizationId(
+                    organizationId,
+                );
 
             if (!existingRules) {
                 throw new NotFoundException(
@@ -47,7 +53,9 @@ export class FindSuggestionsByRuleUseCase {
                 );
             }
 
-            const rule = existingRules.rules.find((rule) => rule.uuid === ruleId);
+            const rule = existingRules.rules.find(
+                (rule) => rule.uuid === ruleId,
+            );
 
             if (!rule) {
                 throw new NotFoundException(
@@ -55,10 +63,11 @@ export class FindSuggestionsByRuleUseCase {
                 );
             }
 
-            const suggestions = await this.pullRequestsRepository.findSuggestionsByRuleId(
-                ruleId,
-                organizationId,
-            );
+            const suggestions =
+                await this.pullRequestsRepository.findSuggestionsByRuleId(
+                    ruleId,
+                    organizationId,
+                );
 
             if (!suggestions || suggestions.length === 0) {
                 return [];
@@ -66,7 +75,10 @@ export class FindSuggestionsByRuleUseCase {
 
             return suggestions;
         } catch (error) {
-            if (error instanceof NotFoundException || error instanceof BadRequestException) {
+            if (
+                error instanceof NotFoundException ||
+                error instanceof BadRequestException
+            ) {
                 throw error;
             }
 
@@ -83,4 +95,3 @@ export class FindSuggestionsByRuleUseCase {
         }
     }
 }
-

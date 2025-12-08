@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Injectable, Inject } from '@nestjs/common';
 import {
     CODE_REVIEW_SETTINGS_LOG_REPOSITORY_TOKEN,
@@ -8,8 +8,8 @@ import {
     ActionType,
     ConfigLevel,
     UserInfo,
-} from '@/config/types/general/codeReviewSettingsLog.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+} from '@shared/types/general/codeReviewSettingsLog.type';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     IGetAdditionalInfoHelper,
     GET_ADDITIONAL_INFO_HELPER_TOKEN,
@@ -46,7 +46,7 @@ export class UnifiedLogHandler {
         @Inject(CODE_REVIEW_SETTINGS_LOG_REPOSITORY_TOKEN)
         private readonly codeReviewSettingsLogRepository: ICodeReviewSettingsLogRepository,
         @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
-        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper
+        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
     ) {}
 
     public async logAction(params: UnifiedLogParams): Promise<void> {

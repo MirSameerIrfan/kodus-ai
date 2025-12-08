@@ -1,13 +1,13 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Controller, HttpStatus, Inject, Post, Req, Res } from '@nestjs/common';
 import { Response, Request } from 'express';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { ReceiveWebhookUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/receiveWebhook.use-case';
-import { validateWebhookToken } from '@/shared/utils/webhooks/webhookTokenCrypto';
+import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { ReceiveWebhookUseCase } from '@libs/platform/application/use-cases/codeManagement/receiveWebhook.use-case';
+import { validateWebhookToken } from '@shared/utils/webhooks/webhookTokenCrypto';
 import {
     WEBHOOK_LOG_SERVICE,
     IWebhookLogService,
-} from '@/core/domain/webhookLog/contracts/webhook-log.service.contract';
+} from '@libs/platform/domain/webhook-log/contracts/webhook-log.service.contract';
 
 @Controller('azure-repos')
 export class AzureReposController {
@@ -15,7 +15,7 @@ export class AzureReposController {
     constructor(
         private readonly receiveWebhookUseCase: ReceiveWebhookUseCase,
         @Inject(WEBHOOK_LOG_SERVICE)
-        private readonly webhookLogService: IWebhookLogService
+        private readonly webhookLogService: IWebhookLogService,
     ) {}
 
     @Post('/webhook')

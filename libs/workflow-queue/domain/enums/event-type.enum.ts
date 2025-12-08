@@ -8,4 +8,3 @@ export enum EventType {
     FILES_REVIEW_COMPLETED = 'files.review.completed',
     LLM_ANALYSIS_COMPLETED = 'llm.analysis.completed',
 }
-

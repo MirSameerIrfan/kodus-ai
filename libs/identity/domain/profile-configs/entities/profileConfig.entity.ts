@@ -1,6 +1,6 @@
-import { IProfile } from "../../profile/interfaces/profile.interface";
-import { ProfileConfigKey } from "../enum/profileConfigKey.enum";
-import { IProfileConfig } from "../interfaces/profileConfig.interface";
+import { IProfile } from '../../profile/interfaces/profile.interface';
+import { ProfileConfigKey } from '../enum/profileConfigKey.enum';
+import { IProfileConfig } from '../interfaces/profileConfig.interface';
 
 export class ProfileConfigEntity implements IProfileConfig {
     private _uuid: string;
@@ -17,7 +17,9 @@ export class ProfileConfigEntity implements IProfileConfig {
         this._profile = profileConfig.profile;
     }
 
-    public static create(profileConfig: IProfileConfig | Partial<IProfileConfig>) {
+    public static create(
+        profileConfig: IProfileConfig | Partial<IProfileConfig>,
+    ) {
         return new ProfileConfigEntity(profileConfig);
     }
 

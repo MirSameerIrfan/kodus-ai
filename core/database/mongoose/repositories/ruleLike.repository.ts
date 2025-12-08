@@ -5,13 +5,13 @@ import { Model, FilterQuery } from 'mongoose';
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
-} from '@/shared/infrastructure/repositories/mappers';
-import { IRuleLikeRepository } from '@/core/domain/kodyRules/contracts/ruleLike.repository.contract';
+} from '@shared/infrastructure/repositories/mappers';
+import { IRuleLikeRepository } from '@libs/kody-rules/domain/contracts/ruleLike.repository.contract';
 import { RuleLikeModel } from '@core/database/mongoose/schemas/rulesLikes.model';
 import {
     RuleLikeEntity,
     RuleFeedbackType,
-} from '@/core/domain/kodyRules/entities/ruleLike.entity';
+} from '@libs/kody-rules/domain/entities/ruleLike.entity';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()

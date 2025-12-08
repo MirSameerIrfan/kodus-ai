@@ -1,4 +1,4 @@
-import { AuthProvider } from '@/shared/domain/enums/auth-provider.enum';
+import { AuthProvider } from '@shared/domain/enums/auth-provider.enum';
 import { IsEmail, IsString, IsEnum } from 'class-validator';
 
 export class CreateUserOrganizationOAuthDto {

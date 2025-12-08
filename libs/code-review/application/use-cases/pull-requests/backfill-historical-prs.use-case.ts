@@ -1,7 +1,7 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Injectable, Inject } from '@nestjs/common';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { IPullRequests } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import {
     IPullRequestsRepository,
@@ -27,7 +27,7 @@ export class BackfillHistoricalPRsUseCase {
     constructor(
         private readonly codeManagementService: CodeManagementService,
         @Inject(PULL_REQUESTS_REPOSITORY_TOKEN)
-        private readonly pullRequestsRepository: IPullRequestsRepository
+        private readonly pullRequestsRepository: IPullRequestsRepository,
     ) {}
 
     public async execute(params: BackfillParams): Promise<void> {

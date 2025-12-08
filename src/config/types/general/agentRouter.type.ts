@@ -1,4 +1,3 @@
-import { AuthDetailsParams } from '@/core/domain/agents/types/auth-details-params.type';
 import { OrganizationAndTeamData } from './organizationAndTeamData';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 
@@ -6,7 +5,6 @@ export type RouterPromptParams = {
     message: string;
     organizationAndTeamData: OrganizationAndTeamData;
     memory?: any;
-    authDetailsParams?: AuthDetailsParams;
     route?: string;
     sessionId?: string;
     parameters?: any[];

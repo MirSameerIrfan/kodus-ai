@@ -1,9 +1,9 @@
-import { FindCodeReviewSettingsLogsUseCase } from '@/core/application/use-cases/codeReviewSettingsLog/find-code-review-settings-logs.use-case';
-import { RegisterUserStatusLogUseCase } from '@/core/application/use-cases/user/register-user-status-log.use-case';
+import { FindCodeReviewSettingsLogsUseCase } from '@libs/analytics/application/use-cases/find-code-review-settings-logs.use-case';
+import { RegisterUserStatusLogUseCase } from '@libs/identity/application/use-cases/user/register-user-status-log.use-case';
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import {
     CheckPolicies,
@@ -26,7 +26,6 @@ export class CodeReviewSettingLogController {
     ): Promise<void> {
         return await this.registerUserStatusLogUseCase.execute(body);
     }
-
 
     @Get('/code-review-settings')
     @UseGuards(PolicyGuard)

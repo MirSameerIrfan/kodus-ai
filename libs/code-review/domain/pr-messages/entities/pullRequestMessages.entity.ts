@@ -3,7 +3,7 @@ import {
     IPullRequestMessageContent,
     IPullRequestMessages,
 } from '../interfaces/pullRequestMessages.interface';
-import { ConfigLevel } from '@/config/types/general/pullRequestMessages.type';
+import { ConfigLevel } from '@shared/types/general/pullRequestMessages.type';
 
 export class PullRequestMessagesEntity implements Entity<IPullRequestMessages> {
     private readonly _uuid: string;

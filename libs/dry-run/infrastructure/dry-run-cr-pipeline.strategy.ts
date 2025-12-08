@@ -18,9 +18,7 @@ import { IPipelineStrategy } from '@libs/code-review/infrastructure/pipeline/int
 import { PipelineStage } from '@libs/code-review/infrastructure/pipeline/interfaces/pipeline.interface';
 
 @Injectable()
-export class DryRunCodeReviewPipelineStrategy
-    implements IPipelineStrategy<CodeReviewPipelineContext>
-{
+export class DryRunCodeReviewPipelineStrategy implements IPipelineStrategy<CodeReviewPipelineContext> {
     constructor(
         private readonly resolveConfigStage: ResolveConfigStage,
         private readonly validateConfigStage: ValidateConfigStage,

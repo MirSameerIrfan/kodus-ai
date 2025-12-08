@@ -1,5 +1,5 @@
-import { createLogger } from "@kodus/flow";
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { createLogger } from '@kodus/flow';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     INTEGRATION_CONFIG_SERVICE_TOKEN,
     IIntegrationConfigService,
@@ -23,7 +23,7 @@ export class GetPRsByRepoUseCase implements IUseCase {
         @Inject(REQUEST)
         private readonly request: Request & { user },
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
-        private readonly integrationConfigService: IIntegrationConfigService
+        private readonly integrationConfigService: IIntegrationConfigService,
     ) {}
 
     public async execute(params: {

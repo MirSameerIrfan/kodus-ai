@@ -65,7 +65,10 @@ export class WebhookHealthController {
         });
     }
 
-    private async checkApplication(): Promise<{ status: string; error?: string }> {
+    private async checkApplication(): Promise<{
+        status: string;
+        error?: string;
+    }> {
         try {
             return { status: 'ok' };
         } catch (error) {
@@ -108,4 +111,3 @@ export class WebhookHealthController {
         }
     }
 }
-

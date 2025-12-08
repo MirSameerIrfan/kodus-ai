@@ -5,4 +5,3 @@ export class FindSuggestionsByRuleDto {
     @IsString()
     readonly ruleId: string;
 }
-

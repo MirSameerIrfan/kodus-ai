@@ -4,14 +4,14 @@ import { Model } from 'mongoose';
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
-} from '@/shared/infrastructure/repositories/mappers';
+} from '@shared/infrastructure/repositories/mappers';
 import { IssuesModel } from '@core/database/mongoose/schemas/issues.model';
-import { IIssuesRepository } from '@/core/domain/issues/contracts/issues.repository';
-import { IssuesEntity } from '@/core/domain/issues/entities/issues.entity';
-import { IIssue } from '@/core/domain/issues/interfaces/issues.interface';
-import { IssueStatus } from '@/config/types/general/issues.type';
-import { LabelType } from '@/shared/utils/codeManagement/labels';
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
+import { IIssuesRepository } from '@libs/issues/domain/contracts/issues.repository';
+import { IssuesEntity } from '@libs/issues/domain/entities/issues.entity';
+import { IIssue } from '@libs/issues/domain/interfaces/issues.interface';
+import { IssueStatus } from '@shared/types/general/issues.type';
+import { LabelType } from '@shared/utils/codeManagement/labels';
+import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
 
 @Injectable()
 export class IssuesRepository implements IIssuesRepository {

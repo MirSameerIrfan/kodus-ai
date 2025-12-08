@@ -1,11 +1,11 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 import { ContextEvidenceAgentProvider } from '@libs/agents/infrastructure/kodus-flow/kodus-flow/contextEvidenceAgent.provider';
 import pLimit from 'p-limit';
 import {
     CodeReviewConfig,
     FileChange,
-} from '@/config/types/general/codeReview.type';
+} from '@shared/types/general/codeReview.type';
 import {
     CodeReviewPipelineContext,
     FileContextAgentResult,
@@ -24,7 +24,7 @@ export class FileContextAugmentationService {
     private readonly concurrency = 5;
 
     constructor(
-        private readonly contextEvidenceAgentProvider: ContextEvidenceAgentProvider
+        private readonly contextEvidenceAgentProvider: ContextEvidenceAgentProvider,
     ) {}
 
     async augmentFiles(

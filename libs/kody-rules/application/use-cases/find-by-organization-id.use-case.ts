@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import {
     KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,
@@ -13,7 +13,9 @@ import { enrichRulesWithContextReferences } from './utils/enrich-rules-with-cont
 
 @Injectable()
 export class FindByOrganizationIdKodyRulesUseCase {
-    private readonly logger = createLogger(FindByOrganizationIdKodyRulesUseCase.name);
+    private readonly logger = createLogger(
+        FindByOrganizationIdKodyRulesUseCase.name,
+    );
     constructor(
         @Inject(REQUEST)
         private readonly request: Request & {
@@ -22,7 +24,7 @@ export class FindByOrganizationIdKodyRulesUseCase {
         @Inject(KODY_RULES_SERVICE_TOKEN)
         private readonly kodyRulesService: IKodyRulesService,
         @Inject(CONTEXT_REFERENCE_SERVICE_TOKEN)
-        private readonly contextReferenceService: IContextReferenceService
+        private readonly contextReferenceService: IContextReferenceService,
     ) {}
 
     async execute() {
@@ -41,12 +43,11 @@ export class FindByOrganizationIdKodyRulesUseCase {
                 );
             }
 
-            const enrichedRulesArray =
-                await enrichRulesWithContextReferences(
-                    existing.rules || [],
-                    this.contextReferenceService,
-                    this.logger,
-                );
+            const enrichedRulesArray = await enrichRulesWithContextReferences(
+                existing.rules || [],
+                this.contextReferenceService,
+                this.logger,
+            );
 
             return {
                 ...existing,

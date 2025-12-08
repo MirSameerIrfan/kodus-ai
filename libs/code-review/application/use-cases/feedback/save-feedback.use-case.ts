@@ -2,7 +2,7 @@ import { createLogger } from "@kodus/flow";
 import { CodeReviewFeedbackEntity } from '@libs/code-review/domain/feedback/entities/codeReviewFeedback.entity';
 import { ICodeReviewFeedback } from '@libs/code-review/domain/feedback/interfaces/codeReviewFeedback.interface';
 import { CodeReviewFeedbackService } from '@libs/code-review/infrastructure/feedback/codeReviewFeedback.service';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { CODE_REVIEW_FEEDBACK_SERVICE_TOKEN } from '@libs/code-review/domain/feedback/contracts/codeReviewFeedback.service.contract';
@@ -31,8 +31,46 @@ export class SaveCodeReviewFeedbackUseCase implements IUseCase {
                 payload.automationExecutionsPRs,
             );
 
+            // Buscar feedbacks existentes para evitar duplicações
+            const existingFeedbacks =
+                await this.codeReviewFeedbackService.getByOrganizationId(
+                    payload.organizationId,
+                );
+
+            // Montar array com todos os suggestionIds já salvos
+            const existingSuggestionIds = new Set(
+                existingFeedbacks?.map((feedback) => feedback.suggestionId) ||
+                    [],
+            );
+
+            // Filtrar reactions removendo as que já foram salvas
+            const newReactions = reactions.filter(
+                (reaction) =>
+                    !existingSuggestionIds.has(reaction.suggestionId),
+            );
+
+            this.logger.log({
+                message: 'Filtering reactions to avoid duplicates',
+                context: SaveCodeReviewFeedbackUseCase.name,
+                metadata: {
+                    totalReactions: reactions.length,
+                    existingSuggestionIds: existingSuggestionIds.size,
+                    newReactions: newReactions.length,
+                    organizationId: payload.organizationId,
+                },
+            });
+
+            if (newReactions.length === 0) {
+                this.logger.log({
+                    message: 'No new reactions to save (all already exist)',
+                    context: SaveCodeReviewFeedbackUseCase.name,
+                    metadata: { payload },
+                });
+                return [];
+            }
+
             return await this.codeReviewFeedbackService.bulkCreate(
-                reactions as Omit<ICodeReviewFeedback, 'uuid'>[],
+                newReactions as Omit<ICodeReviewFeedback, 'uuid'>[],
             );
         } catch (error) {
             this.logger.error({

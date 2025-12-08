@@ -6,7 +6,7 @@ import { ProcessWorkflowJobUseCase } from '@libs/workflow-queue/application/use-
 import { TransactionalInboxService } from './transactional-inbox.service';
 import { DataSource } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import { WorkflowQueueConfig } from '@/config/types/environment/workflow-queue.type';
+import { WorkflowQueueConfig } from '@shared/types/environment/workflow-queue.type';
 import { ObservabilityService } from '@shared/logging/observability.service';
 import { WorkflowJobRepository } from '@core/database/typeorm/repositories/workflow-job.repository';
 import { JobStatus } from '@libs/workflow-queue/domain/enums/job-status.enum';
@@ -31,8 +31,9 @@ export class WorkflowResumedConsumer {
         private readonly configService: ConfigService,
         private readonly observability: ObservabilityService,
     ) {
-        const workflowQueueConfig =
-            this.configService.get<WorkflowQueueConfig>('workflowQueueConfig');
+        const workflowQueueConfig = this.configService.get<WorkflowQueueConfig>(
+            'workflowQueueConfig',
+        );
         this.workerEnabled = workflowQueueConfig.WORKFLOW_QUEUE_WORKER_ENABLED;
     }
 
@@ -56,7 +57,8 @@ export class WorkflowResumedConsumer {
     ): Promise<void> {
         if (!this.workerEnabled) {
             this.logger.debug({
-                message: 'Workflow worker is disabled, skipping resumed message processing.',
+                message:
+                    'Workflow worker is disabled, skipping resumed message processing.',
                 context: WorkflowResumedConsumer.name,
                 metadata: { messageId: amqpMsg?.properties?.messageId },
             });
@@ -72,11 +74,14 @@ export class WorkflowResumedConsumer {
 
         if (!messageId || !jobId) {
             this.logger.error({
-                message: 'Received resumed message without messageId or jobId. Cannot ensure idempotency.',
+                message:
+                    'Received resumed message without messageId or jobId. Cannot ensure idempotency.',
                 context: WorkflowResumedConsumer.name,
                 metadata: { message, amqpMsg, correlationId },
             });
-            throw new Error('Message without messageId or jobId cannot be processed idempotently.');
+            throw new Error(
+                'Message without messageId or jobId cannot be processed idempotently.',
+            );
         }
 
         this.observability.setContext({ correlationId });
@@ -113,7 +118,12 @@ export class WorkflowResumedConsumer {
                 this.logger.warn({
                     message: `Job ${jobId} is not in WAITING_FOR_EVENT status (current: ${job.status}). Skipping resume.`,
                     context: WorkflowResumedConsumer.name,
-                    metadata: { jobId, correlationId, messageId, currentStatus: job.status },
+                    metadata: {
+                        jobId,
+                        correlationId,
+                        messageId,
+                        currentStatus: job.status,
+                    },
                 });
                 // Mark as processed to avoid reprocessing
                 await this.transactionalInboxService.markAsProcessedInTransaction(
@@ -127,7 +137,12 @@ export class WorkflowResumedConsumer {
             this.logger.log({
                 message: `Resuming workflow job ${jobId} after event`,
                 context: WorkflowResumedConsumer.name,
-                metadata: { jobId, correlationId, messageId, eventData: message.eventData },
+                metadata: {
+                    jobId,
+                    correlationId,
+                    messageId,
+                    eventData: message.eventData,
+                },
             });
 
             try {
@@ -157,4 +172,3 @@ export class WorkflowResumedConsumer {
         });
     }
 }
-

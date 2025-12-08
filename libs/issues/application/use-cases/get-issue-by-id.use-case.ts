@@ -90,7 +90,7 @@ export class GetIssueByIdUseCase implements IUseCase {
             const repoConfig = integrationConfig?.configValue?.find(
                 (x) => x.id === issue.repository.id,
             );
-            
+
             httpUrl = repoConfig?.http_url ?? null;
         }
 

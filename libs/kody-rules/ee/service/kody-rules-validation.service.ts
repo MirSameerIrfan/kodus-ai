@@ -3,7 +3,7 @@
  * Kodus Tech. All rights reserved.
  */
 
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
 import {
     IKodyRule,
     KodyRulesStatus,
@@ -327,10 +327,7 @@ export class KodyRulesValidationService {
                     directoryId === rule.directoryId);
 
             if (matchesExactContextLevel) {
-                return (
-                    isPathMatch(rule) &&
-                    isInheritanceMatch(rule)
-                );
+                return isPathMatch(rule) && isInheritanceMatch(rule);
             }
 
             return (
