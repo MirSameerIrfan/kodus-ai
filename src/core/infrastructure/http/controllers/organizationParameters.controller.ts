@@ -58,7 +58,7 @@ export class OrgnizationParametersController {
     @CheckPolicies(
         checkPermissions({
             action: Action.Create,
-            resource: ResourceType.OrganizationSettings
+            resource: ResourceType.OrganizationSettings,
         }),
     )
     public async createOrUpdate(
@@ -66,13 +66,20 @@ export class OrgnizationParametersController {
         body: {
             key: OrganizationParametersKey;
             configValue: any;
-            organizationAndTeamData: { organizationId: string; teamId: string };
         },
     ) {
+        const organizationId = this.request?.user?.organization?.uuid;
+
+        if (!organizationId) {
+            throw new Error('Organization ID is missing from request');
+        }
+
         return await this.createOrUpdateOrganizationParametersUseCase.execute(
             body.key,
             body.configValue,
-            body.organizationAndTeamData,
+            {
+                organizationId,
+            },
         );
     }
 
@@ -81,13 +88,16 @@ export class OrgnizationParametersController {
     @CheckPolicies(
         checkPermissions({
             action: Action.Read,
-            resource: ResourceType.OrganizationSettings
+            resource: ResourceType.OrganizationSettings,
         }),
     )
-    public async findByKey(
-        @Query('key') key: OrganizationParametersKey,
-        @Query('organizationId') organizationId: string,
-    ) {
+    public async findByKey(@Query('key') key: OrganizationParametersKey) {
+        const organizationId = this.request?.user?.organization?.uuid;
+
+        if (!organizationId) {
+            throw new Error('Organization ID is missing from request');
+        }
+
         return await this.findByKeyOrganizationParametersUseCase.execute(key, {
             organizationId,
         });
@@ -116,9 +126,14 @@ export class OrgnizationParametersController {
 
     @Delete('/delete-byok-config')
     public async deleteByokConfig(
-        @Query('organizationId') organizationId: string,
         @Query('configType') configType: 'main' | 'fallback',
     ) {
+        const organizationId = this.request?.user?.organization?.uuid;
+
+        if (!organizationId) {
+            throw new Error('Organization ID is missing from request');
+        }
+
         return await this.deleteByokConfigUseCase.execute(
             organizationId,
             configType,
@@ -130,12 +145,16 @@ export class OrgnizationParametersController {
     @CheckPolicies(
         checkPermissions({
             action: Action.Read,
-            resource: ResourceType.OrganizationSettings
+            resource: ResourceType.OrganizationSettings,
         }),
     )
-    public async getCockpitMetricsVisibility(
-        @Query('organizationId') organizationId: string,
-    ): Promise<ICockpitMetricsVisibility> {
+    public async getCockpitMetricsVisibility(): Promise<ICockpitMetricsVisibility> {
+        const organizationId = this.request?.user?.organization?.uuid;
+
+        if (!organizationId) {
+            throw new Error('Organization ID is missing from request');
+        }
+
         return await this.getCockpitMetricsVisibilityUseCase.execute({
             organizationId,
         });
@@ -146,22 +165,27 @@ export class OrgnizationParametersController {
     @CheckPolicies(
         checkPermissions({
             action: Action.Update,
-            resource: ResourceType.OrganizationSettings
+            resource: ResourceType.OrganizationSettings,
         }),
     )
     public async updateCockpitMetricsVisibility(
         @Body()
         body: {
-            organizationId: string;
             teamId?: string;
             config: ICockpitMetricsVisibility;
         },
     ) {
+        const organizationId = this.request?.user?.organization?.uuid;
+
+        if (!organizationId) {
+            throw new Error('Organization ID is missing from request');
+        }
+
         return await this.createOrUpdateOrganizationParametersUseCase.execute(
             OrganizationParametersKey.COCKPIT_METRICS_VISIBILITY,
             body.config,
             {
-                organizationId: body.organizationId,
+                organizationId,
                 teamId: body.teamId,
             },
         );
@@ -172,7 +196,7 @@ export class OrgnizationParametersController {
     @CheckPolicies(
         checkPermissions({
             action: Action.Update,
-            resource: ResourceType.OrganizationSettings
+            resource: ResourceType.OrganizationSettings,
         }),
     )
     public async ignoreBots(

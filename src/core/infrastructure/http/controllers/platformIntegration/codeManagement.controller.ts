@@ -1,3 +1,4 @@
+import { UserRequest } from '@/config/types/http/user-request.type';
 import { CreateIntegrationUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/create-integration.use-case';
 import { CreateRepositoriesUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/create-repositories';
 import { DeleteIntegrationAndRepositoriesUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/delete-integration-and-repositories.use-case';
@@ -24,14 +25,17 @@ import {
 } from '@/core/infrastructure/adapters/services/permissions/policy.handlers';
 import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
 import {
+    BadRequestException,
     Body,
     Controller,
     Delete,
     Get,
+    Inject,
     Post,
     Query,
     UseGuards,
 } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
 import { FinishOnboardingDTO } from '../../dtos/finish-onboarding.dto';
 import { GetRepositoryTreeByDirectoryDto } from '../../dtos/get-repository-tree-by-directory.dto';
 import { WebhookStatusQueryDto } from '../../dtos/webhook-status-query.dto';
@@ -50,6 +54,9 @@ export class CodeManagementController {
         private readonly getRepositoryTreeByDirectoryUseCase: GetRepositoryTreeByDirectoryUseCase,
         private readonly getPRsByRepoUseCase: GetPRsByRepoUseCase,
         private readonly getWebhookStatusUseCase: GetWebhookStatusUseCase,
+
+        @Inject(REQUEST)
+        private readonly request: UserRequest,
     ) {}
 
     @Get('/repositories/org')
@@ -192,10 +199,19 @@ export class CodeManagementController {
             resource: ResourceType.GitSettings,
         }),
     )
-    public async deleteIntegration(
-        @Query() query: { organizationId: string; teamId: string },
-    ) {
-        return await this.deleteIntegrationUseCase.execute(query);
+    public async deleteIntegration(@Query() query: { teamId: string }) {
+        const organizationId = this.request?.user?.organization?.uuid;
+
+        if (!organizationId) {
+            throw new BadRequestException(
+                'organizationId not found in request',
+            );
+        }
+
+        return await this.deleteIntegrationUseCase.execute({
+            organizationId,
+            teamId: query.teamId,
+        });
     }
 
     @Delete('/delete-integration-and-repositories')
@@ -207,11 +223,20 @@ export class CodeManagementController {
         }),
     )
     public async deleteIntegrationAndRepositories(
-        @Query() query: { organizationId: string; teamId: string },
+        @Query() query: { teamId: string },
     ) {
-        return await this.deleteIntegrationAndRepositoriesUseCase.execute(
-            query,
-        );
+        const organizationId = this.request?.user?.organization?.uuid;
+
+        if (!organizationId) {
+            throw new BadRequestException(
+                'organizationId not found in request',
+            );
+        }
+
+        return await this.deleteIntegrationAndRepositoriesUseCase.execute({
+            organizationId,
+            teamId: query.teamId,
+        });
     }
 
     @Get('/get-repository-tree-by-directory')
@@ -228,7 +253,18 @@ export class CodeManagementController {
     public async getRepositoryTreeByDirectory(
         @Query() query: GetRepositoryTreeByDirectoryDto,
     ) {
-        return await this.getRepositoryTreeByDirectoryUseCase.execute(query);
+        const organizationId = this.request?.user?.organization?.uuid;
+
+        if (!organizationId) {
+            throw new BadRequestException(
+                'organizationId not found in request',
+            );
+        }
+
+        return await this.getRepositoryTreeByDirectoryUseCase.execute({
+            ...query,
+            organizationId,
+        });
     }
 
     // NOT USED IN WEB - INTERNAL USE ONLY
