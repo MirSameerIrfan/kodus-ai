@@ -1428,6 +1428,11 @@ export class GithubService
             visibility?: 'all' | 'public' | 'private';
             language?: string;
         };
+        options?: {
+            includePullRequestMetrics?: {
+                lastNDays?: number;
+            };
+        };
     }): Promise<Repositories[]> {
         try {
             const githubAuthDetail = await this.getGithubAuthDetails(
@@ -1513,6 +1518,7 @@ export class GithubService
                     (repository: { name: string }) =>
                         repository?.name === repo?.name,
                 ),
+                lastActivityAt: (repo as any)?.pushed_at || repo.updated_at,
             }));
         } catch (err) {
             throw new BadRequestException(err);

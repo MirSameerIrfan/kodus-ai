@@ -2570,6 +2570,11 @@ export class AzureReposService
             visibility?: 'all' | 'public' | 'private';
             language?: string;
         };
+        options?: {
+            includePullRequestMetrics?: {
+                lastNDays?: number;
+            };
+        };
     }): Promise<Repositories[]> {
         try {
             const { organizationAndTeamData } = params;
@@ -2619,20 +2624,11 @@ export class AzureReposService
                 }),
             );
 
-            const repositories = projectsWithRepos.reduce<Repositories[]>(
-                (acc, { project, repositories }) => {
-                    repositories.forEach((repo) => {
-                        acc.push(
-                            this.transformRepo(
-                                repo,
-                                project,
-                                integrationConfig,
-                            ),
-                        );
-                    });
-                    return acc;
-                },
-                [],
+            const repositories: Repositories[] = projectsWithRepos.flatMap(
+                ({ project, repositories }) =>
+                    repositories.map((repo) =>
+                        this.transformRepo(repo, project, integrationConfig),
+                    ),
             );
 
             return repositories;
@@ -2671,6 +2667,7 @@ export class AzureReposService
                 id: project?.id,
                 name: project?.name ?? '',
             },
+            lastActivityAt: repo?.lastUpdateTime ?? project?.lastUpdateTime,
         };
     }
 

@@ -29,7 +29,6 @@ export class GetRepositoriesUseCase implements IUseCase {
         perPage?: number;
     }) {
         try {
-            const pullRequestWindowInDays = 7;
             const repositories =
                 await this.codeManagementService.getRepositories({
                     organizationAndTeamData: {
@@ -38,11 +37,6 @@ export class GetRepositoriesUseCase implements IUseCase {
                     },
                     filters: {
                         organizationSelected: params?.organizationSelected,
-                    },
-                    options: {
-                        includePullRequestMetrics: {
-                            lastNDays: pullRequestWindowInDays,
-                        },
                     },
                 });
 

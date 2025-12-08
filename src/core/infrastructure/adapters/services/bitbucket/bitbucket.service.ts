@@ -762,6 +762,12 @@ export class BitbucketService
             visibility?: 'all' | 'public' | 'private';
             language?: string;
         };
+        options?: {
+            includePullRequestMetrics?: {
+                lastNDays?: number;
+                limit?: number;
+            };
+        };
     }): Promise<Repositories[]> {
         try {
             const { organizationAndTeamData } = params;
@@ -811,20 +817,11 @@ export class BitbucketService
                 ),
             );
 
-            const repositories = workspacesWithRepos.reduce<Repositories[]>(
-                (acc, { workspace, repos }) => {
-                    repos.forEach((repo) => {
-                        acc.push(
-                            this.transformRepo(
-                                repo,
-                                workspace,
-                                integrationConfig,
-                            ),
-                        );
-                    });
-                    return acc;
-                },
-                [],
+            const repositories: Repositories[] = workspacesWithRepos.flatMap(
+                ({ workspace, repos }) =>
+                    repos.map((repo) =>
+                        this.transformRepo(repo, workspace, integrationConfig),
+                    ),
             );
 
             return repositories;
@@ -839,6 +836,50 @@ export class BitbucketService
                 },
             });
             throw new BadRequestException(error);
+        }
+    }
+
+    private async getRecentPullRequestsCount(params: {
+        bitbucketAPI: InstanceType<typeof Bitbucket>;
+        repoId: string;
+        workspaceId: string;
+        days: number;
+        organizationAndTeamData: OrganizationAndTeamData;
+    }): Promise<number> {
+        try {
+            const sinceDate = moment()
+                .subtract(Math.max(params.days, 1), 'days')
+                .toISOString();
+
+            const response = await params.bitbucketAPI.pullrequests.list({
+                repo_slug: `{${params.repoId}}`,
+                workspace: `{${params.workspaceId}}`,
+                q: `created_on >= "${sinceDate}"`,
+                sort: '-created_on',
+                pagelen: 50,
+            });
+
+            const pullRequests = await this.getPaginatedResults(
+                params.bitbucketAPI,
+                response,
+            );
+
+            return pullRequests.length;
+        } catch (error) {
+            this.logger.warn({
+                message:
+                    'Failed to count recent pull requests from Bitbucket repository',
+                context: BitbucketService.name,
+                error: error,
+                metadata: {
+                    repoId: params.repoId,
+                    workspaceId: params.workspaceId,
+                    organizationId:
+                        params.organizationAndTeamData?.organizationId,
+                    teamId: params.organizationAndTeamData?.teamId,
+                },
+            });
+            return 0;
         }
     }
 
@@ -867,6 +908,7 @@ export class BitbucketService
                 id: this.sanitizeUUID(project?.uuid),
                 name: project?.name ?? '',
             },
+            lastActivityAt: repo?.updated_on || repo?.created_on,
         };
     }
 

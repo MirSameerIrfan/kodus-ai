@@ -54,6 +54,12 @@ export interface ICodeManagementService
             visibility?: 'all' | 'public' | 'private';
             language?: string;
         };
+        options?: {
+            includePullRequestMetrics?: {
+                lastNDays?: number;
+                limit?: number;
+            };
+        };
     }): Promise<Repositories[]>;
     getWorkflows(params: any): Promise<Workflow[]>;
     getListMembers(

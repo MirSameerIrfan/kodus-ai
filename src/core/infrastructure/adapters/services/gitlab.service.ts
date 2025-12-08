@@ -654,6 +654,11 @@ export class GitlabService
             visibility?: 'all' | 'public' | 'private';
             language?: string;
         };
+        options?: {
+            includePullRequestMetrics?: {
+                lastNDays?: number;
+            };
+        };
     }): Promise<Repositories[]> {
         try {
             const gitlabAuthDetail = await this.getAuthDetails(
@@ -679,7 +684,7 @@ export class GitlabService
                     integration: { uuid: integration?.uuid },
                     configKey: IntegrationConfigKey.REPOSITORIES,
                     team: { uuid: params.organizationAndTeamData.teamId },
-                });
+            });
 
             const gitlabAPI = this.instanceGitlabApi(gitlabAuthDetail);
 
@@ -701,7 +706,9 @@ export class GitlabService
                 const batchResults = await Promise.all(
                     batch.map(async (project) => {
                         try {
-                            if (project?.default_branch) {
+                            const buildRepository = async (
+                                defaultBranch?: string,
+                            ): Promise<Repositories> => {
                                 return {
                                     id: project.id.toString(),
                                     name: project.path_with_namespace,
@@ -718,29 +725,21 @@ export class GitlabService
                                                 repository?.name ===
                                                 project?.path_with_namespace,
                                         ),
-                                    default_branch: project?.default_branch,
+                                    default_branch: defaultBranch,
+                                    lastActivityAt: project.last_activity_at,
                                 };
+                            };
+
+                            if (project?.default_branch) {
+                                return buildRepository(project?.default_branch);
                             }
 
                             const projectDetails =
                                 await gitlabAPI.Projects.show(project.id);
 
-                            return {
-                                id: project.id.toString(),
-                                name: project.path_with_namespace,
-                                http_url: project.http_url_to_repo,
-                                avatar_url: project.namespace?.avatar_url,
-                                organizationName: project.namespace?.name,
-                                visibility: (project?.visibility === 'public'
-                                    ? 'public'
-                                    : 'private') as 'public' | 'private',
-                                selected: integrationConfig?.configValue?.some(
-                                    (repository: { name: string }) =>
-                                        repository?.name ===
-                                        project?.path_with_namespace,
-                                ),
-                                default_branch: projectDetails?.default_branch,
-                            };
+                            return buildRepository(
+                                projectDetails?.default_branch,
+                            );
                         } catch (error) {
                             this.logger.warn({
                                 message: `Failed to fetch details for project ${project?.id}`,
@@ -766,17 +765,21 @@ export class GitlabService
                                     selected:
                                         integrationConfig?.configValue?.some(
                                             (repository: { name: string }) =>
-                                                repository?.name ===
-                                                project?.path_with_namespace,
-                                        ),
-                                    default_branch: project?.default_branch,
-                                };
-                            }
+                                        repository?.name ===
+                                        project?.path_with_namespace,
+                                ),
+                                default_branch: project?.default_branch,
+                            };
+                        }
                         }
                     }),
                 );
 
-                repositories.push(...batchResults);
+                repositories.push(
+                    ...batchResults.filter(
+                        (repository) => repository !== undefined,
+                    ),
+                );
 
                 // Adicionar delay entre lotes para evitar rate limiting
                 if (i + batchSize < projects?.length) {

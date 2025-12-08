@@ -101,6 +101,12 @@ export class CodeManagementService implements ICodeManagementService {
                 visibility?: 'all' | 'public' | 'private';
                 language?: string;
             };
+            options?: {
+                includePullRequestMetrics?: {
+                    lastNDays?: number;
+                    limit?: number;
+                };
+            };
         },
         type?: PlatformType,
     ): Promise<Repositories[]> {
