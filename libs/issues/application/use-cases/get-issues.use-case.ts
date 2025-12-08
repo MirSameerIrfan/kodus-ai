@@ -3,18 +3,18 @@ import {
     IIssuesService,
     ISSUES_SERVICE_TOKEN,
 } from '@libs/issues/domain/contracts/issues.service.contract';
-import { GetIssuesByFiltersDto } from '@shared/dtos/get-issues-by-filters.dto';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { GetIssuesByFiltersDto } from '@libs/common/dtos/get-issues-by-filters.dto';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { IIssue } from '@libs/issues/domain/interfaces/issues.interface';
-import { CacheService } from '@shared/utils/cache/cache.service';
+import { CacheService } from '@libs/common/utils/cache/cache.service';
 import { REQUEST } from '@nestjs/core';
 import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
 import {
     Action,
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { UserRequest } from '@shared/types/http/user-request.type';
+import { UserRequest } from '@libs/common/types/http/user-request.type';
 
 @Injectable()
 export class GetIssuesUseCase implements IUseCase {

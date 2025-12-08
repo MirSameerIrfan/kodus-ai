@@ -8,8 +8,8 @@ import {
 } from '@libs/platform/domain/interfaces/webhook-event-handler.interface';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import { RunCodeReviewAutomationUseCase } from '@libs/automation/ee/runCodeReview.use-case';
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
-import { getMappedPlatform } from '@shared/utils/webhooks';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { getMappedPlatform } from '@libs/common/utils/webhooks';
 import { Injectable, Inject, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { KodyRulesSyncService } from '@libs/kody-rules/infrastructure/services/kodyRulesSync.service';

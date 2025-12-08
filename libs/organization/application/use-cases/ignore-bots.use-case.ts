@@ -7,7 +7,7 @@ import {
 import { OrganizationParametersAutoAssignConfig } from '@libs/organization/domain/org-parameters/types/organizationParameters.types';
 import { PullRequestHandlerService } from '@libs/code-review/infrastructure/pullRequestManager.service';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { OrganizationParametersKey } from '@shared/domain/enums/organization-parameters-key.enum';
+import { OrganizationParametersKey } from '@libs/common/enums/organization-parameters-key.enum';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

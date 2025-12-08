@@ -1,4 +1,4 @@
-import { SummaryConfig } from '@shared/types/general/codeReview.type';
+import { SummaryConfig } from '@libs/common/types/general/codeReview.type';
 import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
@@ -8,8 +8,8 @@ import {
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { PreviewPrSummaryDto } from '@shared/dtos/preview-pr-summary.dto';
-import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
+import { PreviewPrSummaryDto } from '@libs/common/dtos/preview-pr-summary.dto';
+import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 
 @Injectable()

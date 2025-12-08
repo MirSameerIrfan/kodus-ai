@@ -1,5 +1,5 @@
-import { createLogger } from "@kodus/flow";
-import { STATUS } from '@shared/types/database/status.type';
+import { createLogger } from '@kodus/flow';
+import { STATUS } from '@libs/common/types/database/status.type';
 import {
     ORGANIZATION_SERVICE_TOKEN,
     IOrganizationService,
@@ -12,14 +12,13 @@ import {
 import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import { SignUpDTO } from '@libs/identity/infrastructure/http/dtos/create-user-organization.dto';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
-import { DuplicateRecordException } from '@shared/infrastructure/filters/duplicate-record.exception';
-import { generateRandomOrgName } from '@shared/utils/helpers';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
+import { DuplicateRecordException } from '@libs/common/infrastructure/filters/duplicate-record.exception';
+import { generateRandomOrgName } from '@libs/common/utils/helpers';
 import { Inject, Injectable } from '@nestjs/common';
 import { CreateProfileUseCase } from '../profile/create.use-case';
-import { CreateTeamUseCase } from '../team/create.use-case';
-import { identify, track } from '@shared/utils/segment';
-import posthogClient from '@shared/utils/posthog';
+import { identify, track } from '@libs/common/utils/segment';
+import posthogClient from '@libs/common/utils/posthog';
 import {
     ITeamMemberService,
     TEAM_MEMBERS_SERVICE_TOKEN,
@@ -44,7 +43,7 @@ export class SignUpUseCase implements IUseCase {
         @Inject(TEAM_SERVICE_TOKEN)
         private readonly teamService: ITeamService,
         private readonly createProfileUseCase: CreateProfileUseCase,
-        private readonly createTeamUseCase: CreateTeamUseCase
+        private readonly createTeamUseCase: CreateTeamUseCase,
     ) {}
 
     public async execute(payload: SignUpDTO): Promise<Partial<IUser>> {

@@ -8,24 +8,24 @@ import {
     CommentResult,
     FileChange,
     SummaryConfig,
-} from '@shared/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+} from '@libs/common/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
 import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
-import { PermissionValidationService } from '@shared/ee/services/permissionValidation.service';
-import { LanguageValue } from '@shared/domain/enums/language-parameter.enum';
-import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
-import { BYOKPromptRunnerService } from '@shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { prompt_repeated_suggestion_clustering_system } from '@shared/utils/langchainCommon/prompts/repeatedCodeReviewSuggestionClustering';
+import { PermissionValidationService } from '@libs/common/ee/services/permissionValidation.service';
+import { LanguageValue } from '@libs/common/enums/language-parameter.enum';
+import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { BYOKPromptRunnerService } from '@libs/common/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { prompt_repeated_suggestion_clustering_system } from '@libs/common/utils/langchainCommon/prompts/repeatedCodeReviewSuggestionClustering';
 import {
     getTranslationsForLanguageByCategory,
     TranslationsCategory,
-} from '@shared/utils/translations/translations';
+} from '@libs/common/utils/translations/translations';
 import { createLogger } from '@kodus/flow';
 import {
     BYOKConfig,
@@ -35,7 +35,7 @@ import {
     PromptRunnerService,
 } from '@kodus/kodus-common/llm';
 import { Inject, Injectable } from '@nestjs/common';
-import { ObservabilityService } from '@shared/logging/observability.service';
+import { ObservabilityService } from '@libs/common/logging/observability.service';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import { CodeReviewPipelineContext } from './codeReviewPipeline/context/code-review-pipeline.context';
 import {

@@ -1,4 +1,4 @@
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 
 export interface RepositoryInfo {
     id: string;

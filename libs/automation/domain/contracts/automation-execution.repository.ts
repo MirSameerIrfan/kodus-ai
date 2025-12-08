@@ -1,7 +1,7 @@
 import { FindOptionsWhere } from 'typeorm';
 import { AutomationExecutionEntity } from '../entities/automation-execution.entity';
 import { IAutomationExecution } from '../interfaces/automation-execution.interface';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 
 export const AUTOMATION_EXECUTION_REPOSITORY_TOKEN = Symbol(
     'AutomationExecutionRepository',

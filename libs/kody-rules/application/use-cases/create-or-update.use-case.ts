@@ -1,5 +1,5 @@
 import { createLogger } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import { KODY_RULES_SERVICE_TOKEN } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
 import { IKodyRulesService } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
 import {
@@ -7,13 +7,13 @@ import {
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
-import { CreateKodyRuleDto } from '@shared/dtos/create-kody-rule.dto';
+import { CreateKodyRuleDto } from '@libs/common/dtos/create-kody-rule.dto';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import {
     IGetAdditionalInfoHelper,
     GET_ADDITIONAL_INFO_HELPER_TOKEN,
-} from '@shared/domain/contracts/getAdditionalInfo.helper.contract';
+} from '@libs/common/domain/contracts/getAdditionalInfo.helper.contract';
 import { PromptSourceType } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
 import { ContextReferenceDetectionService } from '@libs/code-review/infrastructure/context/context-reference-detection.service';
 import type { ContextDetectionField } from '@libs/code-review/infrastructure/context/context-reference-detection.service';

@@ -1,5 +1,5 @@
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
-import { InstallationStatus } from '@shared/enums/github-installation-status.enum';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { InstallationStatus } from '@libs/common/enums/github-installation-status.enum';
 
 export const GITHUB_SERVICE_TOKEN = Symbol('GithubService');
 

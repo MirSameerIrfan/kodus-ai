@@ -1,4 +1,4 @@
-import { PermissionValidationModule } from '@shared/ee/permission-validation.module';
+import { PermissionValidationModule } from '@libs/common/ee/permission-validation.module';
 import { IssuesModule } from '@libs/issues/issues.module';
 import { KodyRulesModule } from '@libs/kody-rules/kody-rules.module';
 import { DynamicModule, Module, Provider, forwardRef } from '@nestjs/common';

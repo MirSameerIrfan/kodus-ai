@@ -1,4 +1,4 @@
-import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
+import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
 
 export interface IssueCreationConfig {
     automaticCreationEnabled: boolean;

@@ -1,4 +1,4 @@
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
 import { GitHubReaction } from '@libs/code-review/domain/feedback/enums/codeReviewCommentReaction.enum';
 
 const ACKNOWLEDGMENT_MESSAGES = {

@@ -13,14 +13,15 @@ import {
     IUsersService,
     USER_SERVICE_TOKEN,
 } from '@libs/identity/domain/user/contracts/user.service.contract';
-import { STATUS } from '@shared/types/database/status.type';
+import { STATUS } from '@libs/common/types/database/status.type';
+import { IUseCase } from '@libs/common/interfaces/use-case.interface';
 
 interface DecodedPayload {
     readonly email: string;
 }
 
 @Injectable()
-export class ConfirmEmailUseCase {
+export class ConfirmEmailUseCase implements IUseCase {
     private readonly logger = createLogger(ConfirmEmailUseCase.name);
     constructor(
         @Inject(AUTH_SERVICE_TOKEN)

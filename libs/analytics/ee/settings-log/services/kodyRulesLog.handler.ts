@@ -3,7 +3,7 @@ import { UnifiedLogHandler, BaseLogParams } from './unifiedLog.handler';
 import {
     ActionType,
     ConfigLevel,
-} from '@shared/types/general/codeReviewSettingsLog.type';
+} from '@libs/common/types/general/codeReviewSettingsLog.type';
 import { IKodyRule } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 
 export interface KodyRuleLogParams extends BaseLogParams {

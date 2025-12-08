@@ -3,15 +3,15 @@ import { Injectable } from '@nestjs/common';
 import {
     FileChange,
     ReviewCadenceType,
-} from '@shared/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
-import { CodeReviewConfig } from '@shared/types/general/codeReview.type';
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
-import { LanguageValue } from '@shared/domain/enums/language-parameter.enum';
+} from '@libs/common/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { CodeReviewConfig } from '@libs/common/types/general/codeReview.type';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { LanguageValue } from '@libs/common/enums/language-parameter.enum';
 import {
     getTranslationsForLanguageByCategory,
     TranslationsCategory,
-} from '@shared/utils/translations/translations';
+} from '@libs/common/utils/translations/translations';
 
 export interface PlaceholderContext {
     changedFiles?: FileChange[];

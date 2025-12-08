@@ -1,6 +1,6 @@
 import { IsOptional, IsString, IsEnum, IsUUID } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { ActionType, ConfigLevel } from '@shared/types/general/codeReviewSettingsLog.type';
+import { ActionType, ConfigLevel } from '@libs/common/types/general/codeReviewSettingsLog.type';
 import { PaginationDto } from './pagination.dto';
 
 export class CodeReviewSettingsLogFiltersDto extends PaginationDto {

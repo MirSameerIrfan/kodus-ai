@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOneOptions, Repository, UpdateQueryBuilder } from 'typeorm';
-import { mapSimpleModelToEntity } from '@shared/infrastructure/repositories/mappers';
+import { mapSimpleModelToEntity } from '@libs/common/infrastructure/repositories/mappers';
 import { AuthModel } from './schema/auth.model';
 import { IAuthRepository } from '@libs/identity/domain/auth/contracts/auth.repository.contracts';
 import { IAuth } from '@libs/identity/domain/auth/interfaces/auth.interface';

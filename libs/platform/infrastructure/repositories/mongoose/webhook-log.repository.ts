@@ -9,7 +9,7 @@ import { WebhookLogEntity } from '@libs/platform/domain/webhook-log/entities/web
 import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
-} from '@shared/infrastructure/repositories/mappers';
+} from '@libs/common/infrastructure/repositories/mappers';
 
 @Injectable()
 export class WebhookLogRepository implements IWebhookLogRepository {

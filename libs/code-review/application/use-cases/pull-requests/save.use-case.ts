@@ -1,5 +1,5 @@
 import { createLogger } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
@@ -11,9 +11,9 @@ import {
 } from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
 import { IPullRequests } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
-import { getMappedPlatform } from '@shared/utils/webhooks';
+import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { getMappedPlatform } from '@libs/common/utils/webhooks';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -110,7 +110,7 @@ export class SavePullRequestUseCase {
                     payload: sanitizedPayload,
                 });
 
-                let pullRequestWithUserData: any = {
+                const pullRequestWithUserData: any = {
                     ...pullRequest,
                     ...relevantUsers,
                 };

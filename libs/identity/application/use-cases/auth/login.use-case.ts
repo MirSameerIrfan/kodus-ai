@@ -2,11 +2,12 @@ import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
 } from '@libs/identity/domain/auth/contracts/auth.service.contracts';
-import { AuthProvider } from '@shared/enums/auth-provider.enum';
+import { AuthProvider } from '@libs/common/enums/auth-provider.enum';
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { IUseCase } from '@libs/common/interfaces/use-case.interface';
 
 @Injectable()
-export class LoginUseCase {
+export class LoginUseCase implements IUseCase {
     constructor(
         @Inject(AUTH_SERVICE_TOKEN)
         private readonly authService: IAuthService,
@@ -32,7 +33,7 @@ export class LoginUseCase {
             );
 
             return { accessToken, refreshToken };
-        } catch (error) {
+        } catch {
             throw new UnauthorizedException('api.users.unauthorized');
         }
     }

@@ -3,9 +3,10 @@ import {
     IAuthService,
 } from '@libs/identity/domain/auth/contracts/auth.service.contracts';
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { IUseCase } from '@libs/common/interfaces/use-case.interface';
 
 @Injectable()
-export class LogoutUseCase {
+export class LogoutUseCase implements IUseCase {
     constructor(
         @Inject(AUTH_SERVICE_TOKEN)
         private readonly authService: IAuthService,
@@ -14,7 +15,7 @@ export class LogoutUseCase {
     async execute(refreshToken: string) {
         try {
             return await this.authService.logout(refreshToken);
-        } catch (error) {
+        } catch {
             throw new UnauthorizedException('api.users.unauthorized');
         }
     }

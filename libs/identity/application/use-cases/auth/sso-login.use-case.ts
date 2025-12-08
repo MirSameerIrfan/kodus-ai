@@ -2,14 +2,15 @@ import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
 } from '@libs/identity/domain/auth/contracts/auth.service.contracts';
-import { PinoLoggerService } from '@shared/logging/pino.service';
-import { AuthProvider } from '@shared/enums/auth-provider.enum';
+import { PinoLoggerService } from '@libs/common/logging/pino.service';
+import { AuthProvider } from '@libs/common/enums/auth-provider.enum';
 import { Inject, Injectable } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { SignUpUseCase } from './signup.use-case';
+import { IUseCase } from '@libs/common/interfaces/use-case.interface';
 
 @Injectable()
-export class SSOLoginUseCase {
+export class SSOLoginUseCase implements IUseCase {
     constructor(
         @Inject(AUTH_SERVICE_TOKEN)
         private readonly authService: IAuthService,

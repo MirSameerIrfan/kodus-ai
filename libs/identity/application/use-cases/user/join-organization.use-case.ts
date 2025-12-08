@@ -1,5 +1,5 @@
 import { createLogger } from '@kodus/flow';
-import { STATUS } from '@shared/types/database/status.type';
+import { STATUS } from '@libs/common/types/database/status.type';
 import {
     IOrganizationService,
     ORGANIZATION_SERVICE_TOKEN,
@@ -23,10 +23,10 @@ import {
 } from '@libs/identity/domain/user/contracts/user.service.contract';
 import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
-import { JoinOrganizationDto } from '@shared/dtos/join-organization.dto';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { JoinOrganizationDto } from '@libs/common/dtos/join-organization.dto';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
-import { sendConfirmationEmail } from '@shared/utils/email/sendMail';
+import { sendConfirmationEmail } from '@libs/common/utils/email/sendMail';
 import {
     AUTH_SERVICE_TOKEN,
     IAuthService,

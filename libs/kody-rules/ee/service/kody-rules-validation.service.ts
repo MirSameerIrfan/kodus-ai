@@ -3,14 +3,14 @@
  * Kodus Tech. All rights reserved.
  */
 
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     IKodyRule,
     KodyRulesStatus,
 } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
-import { PermissionValidationService } from '@shared/ee/services/permissionValidation.service';
+import { PermissionValidationService } from '@libs/common/ee/services/permissionValidation.service';
 import { environment } from '@config/ee/environment/environment.dev';
-import { isFileMatchingGlob } from '@shared/utils/glob-utils';
+import { isFileMatchingGlob } from '@libs/common/utils/glob-utils';
 import { Injectable } from '@nestjs/common';
 
 /**

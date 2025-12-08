@@ -4,16 +4,16 @@ import { IJobProcessorService } from '@libs/workflow-queue/domain/contracts/job-
 import { WorkflowType } from '@libs/workflow-queue/domain/enums/workflow-type.enum';
 import { JobStatus } from '@libs/workflow-queue/domain/enums/job-status.enum';
 import { ErrorClassification } from '@libs/workflow-queue/domain/enums/error-classification.enum';
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
 import {
     IWebhookEventHandler,
     IWebhookEventParams,
 } from '@libs/platform/domain/interfaces/webhook-event-handler.interface';
 import { CodeReviewValidationService } from '@libs/code-review/infrastructure/code-review-validation.service';
 import { EnqueueCodeReviewJobUseCase } from '@libs/workflow-queue/application/use-cases/enqueue-code-review-job.use-case';
-import { ObservabilityService } from '@shared/logging/observability.service';
+import { ObservabilityService } from '@libs/common/logging/observability.service';
 import { ConfigService } from '@nestjs/config';
-import { WorkflowJobRepository } from '@core/database/typeorm/repositories/workflow-job.repository';
+import { WorkflowJobRepository } from '@libs/core/database/typeorm/repositories/workflow-job.repository';
 
 /**
  * Processor for WEBHOOK_PROCESSING jobs

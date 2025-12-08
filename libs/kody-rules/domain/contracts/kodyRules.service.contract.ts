@@ -1,6 +1,6 @@
 import { IKodyRulesRepository } from './kodyRules.repository.contract';
-import { CreateKodyRuleDto } from '@shared/dtos/create-kody-rule.dto';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { CreateKodyRuleDto } from '@libs/common/dtos/create-kody-rule.dto';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     IKodyRule,
     IKodyRuleExternalReference,
@@ -13,8 +13,8 @@ import {
     KodyRuleFilters,
     LibraryKodyRule,
     BucketInfo,
-} from '@shared/types/kodyRules.type';
-import { UserInfo } from '@shared/types/general/codeReviewSettingsLog.type';
+} from '@libs/common/types/kodyRules.type';
+import { UserInfo } from '@libs/common/types/general/codeReviewSettingsLog.type';
 
 export const KODY_RULES_SERVICE_TOKEN = 'KODY_RULES_SERVICE_TOKEN';
 

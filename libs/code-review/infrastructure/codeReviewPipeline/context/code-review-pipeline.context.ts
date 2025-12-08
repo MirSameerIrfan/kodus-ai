@@ -6,10 +6,10 @@ import {
     CommentResult,
     FileChange,
     Repository,
-} from '@shared/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+} from '@libs/common/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import { AutomationExecutionEntity } from '@libs/automation/domain/entities/automation-execution.entity';
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
 import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
 import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';

@@ -4,9 +4,9 @@ import { Model } from 'mongoose';
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
-} from '@shared/infrastructure/repositories/mappers';
+} from '@libs/common/infrastructure/repositories/mappers';
 import { ILogRepository } from '@libs/analytics/domain/log/contracts/log.repository.contracts';
-import { LogModel } from './schema/log.model';
+import { LogModel } from '@libs/core/database/mongoose/schemas/log.model';
 import { LogEntity } from '@libs/analytics/domain/log/entities/log.entity';
 import { ILog } from '@libs/analytics/domain/log/interfaces/log.interface';
 

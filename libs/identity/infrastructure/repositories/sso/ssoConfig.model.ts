@@ -2,7 +2,7 @@ import {
     SSOProtocol,
     SSOProtocolConfigMap,
 } from '@libs/identity/domain/sso/interfaces/ssoConfig.interface';
-import { CoreModel } from '@shared/infrastructure/repositories/model/typeOrm';
+import { CoreModel } from '@libs/common/infrastructure/repositories/model/typeOrm';
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { OrganizationModel } from './organization.model';
 

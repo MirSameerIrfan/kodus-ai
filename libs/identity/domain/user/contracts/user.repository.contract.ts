@@ -1,4 +1,4 @@
-import { STATUS } from '@shared/types/database/status.type';
+import { STATUS } from '@libs/common/types/database/status.type';
 import { UserEntity } from '../entities/user.entity';
 import { IUser } from '../interfaces/user.interface';
 import { Role } from '../../permissions/enums/permissions.enum';

@@ -3,10 +3,10 @@ import {
     CommentResult,
     FileChange,
     Repository,
-} from '@shared/types/general/codeReview.type';
-import { Commit } from '@shared/types/general/commit.type';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
-import { TreeItem } from '@shared/types/general/tree.type';
+} from '@libs/common/types/general/codeReview.type';
+import { Commit } from '@libs/common/types/general/commit.type';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { TreeItem } from '@libs/common/types/general/tree.type';
 import {
     AUTH_INTEGRATION_SERVICE_TOKEN,
     IAuthIntegrationService,
@@ -46,22 +46,22 @@ import { Repositories } from '@libs/platform/domain/types/codeManagement/reposit
 import { RepositoryFile } from '@libs/platform/domain/types/codeManagement/repositoryFile.type';
 import { AuthorContribution } from '@libs/code-review/domain/pull-requests/interfaces/authorContributor.interface';
 import { IRepository } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
-import { CreateAuthIntegrationStatus } from '@shared/domain/enums/create-auth-integration-status.enum';
-import { IntegrationCategory } from '@shared/domain/enums/integration-category.enum';
-import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
-import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
-import { PullRequestState } from '@shared/domain/enums/pullRequestState.enum';
-import { CacheService } from '@shared/utils/cache/cache.service';
-import { hasKodyMarker } from '@shared/utils/codeManagement/codeCommentMarkers';
-import { decrypt, encrypt } from '@shared/utils/crypto';
-import { IntegrationServiceDecorator } from '@shared/utils/decorators/integration-service.decorator';
-import { CodeManagementConnectionStatus } from '@shared/utils/decorators/validate-code-management-integration.decorator';
+import { CreateAuthIntegrationStatus } from '@libs/common/enums/create-auth-integration-status.enum';
+import { IntegrationCategory } from '@libs/common/enums/integration-category.enum';
+import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
+import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { PullRequestState } from '@libs/common/enums/pullRequestState.enum';
+import { CacheService } from '@libs/common/utils/cache/cache.service';
+import { hasKodyMarker } from '@libs/common/utils/codeManagement/codeCommentMarkers';
+import { decrypt, encrypt } from '@libs/common/utils/crypto';
+import { IntegrationServiceDecorator } from '@libs/common/utils/decorators/integration-service.decorator';
+import { CodeManagementConnectionStatus } from '@libs/common/utils/decorators/validate-code-management-integration.decorator';
 import {
     isFileMatchingGlob,
     isFileMatchingGlobCaseInsensitive,
-} from '@shared/utils/glob-utils';
-import { safelyParseMessageContent } from '@shared/utils/safelyParseMessageContent';
+} from '@libs/common/utils/glob-utils';
+import { safelyParseMessageContent } from '@libs/common/utils/safelyParseMessageContent';
 import {
     LLMModelProvider,
     LLMProviderService,

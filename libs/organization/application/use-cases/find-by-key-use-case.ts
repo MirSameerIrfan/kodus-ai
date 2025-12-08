@@ -5,8 +5,8 @@ import {
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
-import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import { IParameters } from '@libs/organization/domain/parameters/interfaces/parameters.interface';
 
 @Injectable()

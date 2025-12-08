@@ -1,20 +1,20 @@
 import { createLogger } from '@kodus/flow';
 import { CommentAnalysisService } from '@libs/code-review/infrastructure/commentAnalysis.service';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { GenerateKodyRulesDTO } from '@shared/dtos/generate-kody-rules.dto';
+import { GenerateKodyRulesDTO } from '@libs/common/dtos/generate-kody-rules.dto';
 import { Inject, Injectable } from '@nestjs/common';
 
 import { CreateOrUpdateKodyRulesUseCase } from './create-or-update.use-case';
 import {
     CreateKodyRuleDto,
     KodyRuleSeverity,
-} from '@shared/dtos/create-kody-rule.dto';
+} from '@libs/common/dtos/create-kody-rule.dto';
 import {
     IKodyRule,
     KodyRulesStatus,
 } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from './find-rules-in-organization-by-filter.use-case';
-import { generateDateFilter } from '@shared/utils/transforms/date';
+import { generateDateFilter } from '@libs/common/utils/transforms/date';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
@@ -23,23 +23,23 @@ import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
 } from '@libs/integrations/domain/contracts/integration.service.contracts';
-import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
+import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
 import { Repositories } from '@libs/platform/domain/types/codeManagement/repositories.type';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
-import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
+import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
 import { KodyLearningStatus } from '@libs/organization/domain/parameters/types/configValue.type';
 import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import { SendRulesNotificationUseCase } from './send-rules-notification.use-case';
 import { REQUEST } from '@nestjs/core';
 import {
     ICodeRepository,
     CodeReviewParameter,
     RepositoryCodeReviewConfig,
-} from '@shared/types/general/codeReviewConfig.type';
+} from '@libs/common/types/general/codeReviewConfig.type';
 
 @Injectable()
 export class CheckSyncStatusUseCase {

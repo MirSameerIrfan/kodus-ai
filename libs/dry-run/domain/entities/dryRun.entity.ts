@@ -1,4 +1,4 @@
-import { Entity } from '@shared/domain/interfaces/entity';
+import { Entity } from '@libs/common/domain/interfaces/entity';
 import { IDryRun } from '../interfaces/dryRun.interface';
 
 export class DryRunEntity implements Entity<IDryRun> {

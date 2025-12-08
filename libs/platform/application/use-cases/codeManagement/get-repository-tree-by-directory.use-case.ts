@@ -1,14 +1,14 @@
 import { createLogger } from '@kodus/flow';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
-import { CacheService } from '@shared/utils/cache/cache.service';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
+import { CacheService } from '@libs/common/utils/cache/cache.service';
 import {
     IGetAdditionalInfoHelper,
     GET_ADDITIONAL_INFO_HELPER_TOKEN,
-} from '@shared/domain/contracts/getAdditionalInfo.helper.contract';
+} from '@libs/common/domain/contracts/getAdditionalInfo.helper.contract';
 import { Inject, Injectable } from '@nestjs/common';
-import { TreeItem } from '@shared/types/general/tree.type';
-import { GetRepositoryTreeByDirectoryDto } from '@shared/dtos/get-repository-tree-by-directory.dto';
+import { TreeItem } from '@libs/common/types/general/tree.type';
+import { GetRepositoryTreeByDirectoryDto } from '@libs/common/dtos/get-repository-tree-by-directory.dto';
 
 export interface DirectoryItem {
     name: string;

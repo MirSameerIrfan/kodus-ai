@@ -20,7 +20,7 @@ import {
     KodyRuleSeverity,
     CreateKodyRuleDto,
 } from '@libs/kody-rules/infrastructure/http/dtos/create-kody-rule.dto';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 
 type KodyRuleInput = Required<
     Omit<

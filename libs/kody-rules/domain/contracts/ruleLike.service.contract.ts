@@ -1,4 +1,4 @@
-import { ProgrammingLanguage } from '@shared/domain/enums/programming-language.enum';
+import { ProgrammingLanguage } from '@libs/common/enums/programming-language.enum';
 import { RuleLikeEntity, RuleFeedbackType } from '../entities/ruleLike.entity';
 
 export const RULE_LIKE_SERVICE_TOKEN = 'RULE_LIKE_SERVICE_TOKEN';

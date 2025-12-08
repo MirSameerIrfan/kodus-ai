@@ -1,10 +1,10 @@
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import {
     IUsersService,
     USER_SERVICE_TOKEN,
 } from '@libs/identity/domain/user/contracts/user.service.contract';
-import { DuplicateRecordException } from '@shared/infrastructure/filters/duplicate-record.exception';
+import { DuplicateRecordException } from '@libs/common/infrastructure/filters/duplicate-record.exception';
 
 @Injectable()
 export class CheckUserWithEmailUserUseCase implements IUseCase {

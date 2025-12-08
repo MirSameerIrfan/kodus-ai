@@ -1,4 +1,4 @@
-import { Entity } from '@shared/domain/interfaces/entity';
+import { Entity } from '@libs/common/domain/interfaces/entity';
 import { ISuggestionEmbedded } from '../interfaces/suggestionEmbedded.interface';
 import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 

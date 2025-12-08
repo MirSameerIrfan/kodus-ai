@@ -1,7 +1,6 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
     IAutomationExecutionService,
@@ -14,7 +13,7 @@ import {
     CODE_REVIEW_EXECUTION_SERVICE,
     ICodeReviewExecutionService,
 } from '@libs/code-review/domain/executions/contracts/codeReviewExecution.service.contract';
-import { UserRequest } from '@shared/types/http/user-request.type';
+import { UserRequest } from '@libs/common/types/http/user-request.type';
 import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
 import {
     Action,
@@ -28,6 +27,7 @@ import {
     PaginationMetadata,
 } from 'apps/api/src/dtos/paginated-enriched-pull-requests.dto';
 import { EnrichedPullRequestResponse } from 'apps/api/src/dtos/enriched-pull-request-response.dto';
+import { IUseCase } from '@libs/common/interfaces/use-case.interface';
 
 @Injectable()
 export class GetEnrichedPullRequestsUseCase implements IUseCase {

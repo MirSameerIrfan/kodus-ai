@@ -1,4 +1,4 @@
-import { STATUS } from '@shared/types/database/status.type';
+import { STATUS } from '@libs/common/types/database/status.type';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
@@ -8,9 +8,9 @@ import {
     TEAM_SERVICE_TOKEN,
 } from '@libs/organization/domain/team/contracts/team.service.contract';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
-import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
+import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
 import { createLogger } from '@kodus/flow';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';

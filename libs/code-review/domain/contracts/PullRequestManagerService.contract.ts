@@ -1,6 +1,6 @@
-import { FileChange } from '@shared/types/general/codeReview.type';
-import { Commit } from '@shared/types/general/commit.type';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { FileChange } from '@libs/common/types/general/codeReview.type';
+import { Commit } from '@libs/common/types/general/commit.type';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import { PullRequestAuthor } from '@libs/platform/domain/types/codeManagement/pullRequests.type';
 
 export const PULL_REQUEST_MANAGER_SERVICE_TOKEN = Symbol(

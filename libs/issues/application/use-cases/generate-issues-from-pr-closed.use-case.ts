@@ -1,5 +1,5 @@
 import { createLogger } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/KodyIssuesManagement.contract';
 import {
     IIntegrationConfigService,
@@ -17,12 +17,12 @@ import {
 import {
     contextToGenerateIssues,
     IRepositoryToIssues,
-} from '@libs/issues/infrastructure/domain/kodyIssuesManagement.interface';
+} from '@libs/issues/domain/interfaces/kodyIssuesManagement.interface';
 import { KodyIssuesManagementService } from '@libs/issues/infrastructure/service/kodyIssuesManagement.service';
-import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
-import { getMappedPlatform } from '@shared/utils/webhooks';
+import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
+import { getMappedPlatform } from '@libs/common/utils/webhooks';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -120,7 +120,7 @@ export class GenerateIssuesFromPrClosedUseCase implements IUseCase {
             return;
         }
 
-        let pullRequest = mappedPlatform.mapPullRequest({
+        const pullRequest = mappedPlatform.mapPullRequest({
             payload: sanitizedPayload,
         });
 

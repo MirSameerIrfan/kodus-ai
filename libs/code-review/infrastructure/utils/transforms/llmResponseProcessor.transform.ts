@@ -2,9 +2,9 @@ import { createLogger } from '@kodus/flow';
 import {
     AIAnalysisResult,
     ReviewModeResponse,
-} from '@shared/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
-import { tryParseJSONObject } from '@shared/utils/transforms/json';
+} from '@libs/common/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { tryParseJSONObject } from '@libs/common/utils/transforms/json';
 
 export class LLMResponseProcessor {
     private readonly logger = createLogger(LLMResponseProcessor.name);

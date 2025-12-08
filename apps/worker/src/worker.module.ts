@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { WorkflowQueueModule } from './workflowQueue.module';
 
 /**
  * Worker Module
@@ -15,8 +14,7 @@ import { WorkflowQueueModule } from './workflowQueue.module';
  */
 @Module({
     imports: [
-        AppModule,
-        WorkflowQueueModule, // Workers, consumers, processors
+        AppModule, // Workers, consumers, processors
     ],
     // No controllers - workers don't expose HTTP endpoints
     // No APP_GUARD - workers don't handle HTTP requests

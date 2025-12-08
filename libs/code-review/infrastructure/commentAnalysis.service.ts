@@ -19,7 +19,7 @@ import {
     prompt_CommentCategorizerUser,
     prompt_CommentIrrelevanceFilterSystem,
     prompt_CommentIrrelevanceFilterUser,
-} from '@shared/utils/langchainCommon/prompts/commentAnalysis';
+} from '@libs/common/utils/langchainCommon/prompts/commentAnalysis';
 import {
     IKodyRule,
     KodyRulesOrigin,
@@ -35,26 +35,26 @@ import {
     prompt_KodyRulesGeneratorQualityFilterUser,
     prompt_KodyRulesGeneratorSystem,
     prompt_KodyRulesGeneratorUser,
-} from '@shared/utils/langchainCommon/prompts/kodyRulesGenerator';
+} from '@libs/common/utils/langchainCommon/prompts/kodyRulesGenerator';
 import {
     BehaviourForExistingDescription,
     CodeReviewConfig,
     ReviewOptions,
-} from '@shared/types/general/codeReview.type';
-import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
+} from '@libs/common/types/general/codeReview.type';
+import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
 import * as filteredLibraryKodyRules from './data/filtered-rules.json';
-import { KodyRuleSeverity } from '@shared/dtos/create-kody-rule.dto';
+import { KodyRuleSeverity } from '@libs/common/dtos/create-kody-rule.dto';
 import {
     CODE_BASE_CONFIG_SERVICE_TOKEN,
     ICodeBaseConfigService,
 } from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
 import { v4 } from 'uuid';
 import { SUPPORTED_LANGUAGES } from '@libs/code-review/domain/contracts/SupportedLanguages';
-import { LibraryKodyRule } from '@shared/types/kodyRules.type';
-import { ObservabilityService } from '@shared/logging/observability.service';
-import { BYOKPromptRunnerService } from '@shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { PermissionValidationService } from '@shared/ee/services/permissionValidation.service';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { LibraryKodyRule } from '@libs/common/types/kodyRules.type';
+import { ObservabilityService } from '@libs/common/logging/observability.service';
+import { BYOKPromptRunnerService } from '@libs/common/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { PermissionValidationService } from '@libs/common/ee/services/permissionValidation.service';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 
 @Injectable()
 export class CommentAnalysisService {

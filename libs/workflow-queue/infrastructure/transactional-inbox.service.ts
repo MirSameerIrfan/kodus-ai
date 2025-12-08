@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
-import { InboxMessageRepository } from '@core/database/typeorm/repositories/inbox-message.repository';
-import { InboxMessageModel } from '@core/database/typeorm/repositories/schema/inbox-message.model';
-import { PinoLoggerService } from '@shared/logging/pino.service';
+import { InboxMessageRepository } from '@libs/core/database/typeorm/repositories/inbox-message.repository';
+import { InboxMessageModel } from '@libs/core/database/typeorm/repositories/schema/inbox-message.model';
+import { PinoLoggerService } from '@libs/common/logging/pino.service';
 
 @Injectable()
 export class TransactionalInboxService {

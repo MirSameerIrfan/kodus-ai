@@ -1,5 +1,5 @@
 import { createLogger } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
@@ -8,7 +8,7 @@ import {
     ICockpitMetricsVisibility,
     DEFAULT_COCKPIT_METRICS_VISIBILITY,
 } from '@libs/organization/domain/org-parameters/interfaces/cockpit-metrics-visibility.interface';
-import { OrganizationParametersKey } from '@shared/domain/enums/organization-parameters-key.enum';
+import { OrganizationParametersKey } from '@libs/common/enums/organization-parameters-key.enum';
 import { Inject, Injectable } from '@nestjs/common';
 
 export const GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN = Symbol(

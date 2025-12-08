@@ -1,9 +1,9 @@
 import { createLogger } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import { PULL_REQUEST_MANAGER_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/PullRequestManagerService.contract';
 import { PullRequestHandlerService } from '@libs/code-review/infrastructure/pullRequestManager.service';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';

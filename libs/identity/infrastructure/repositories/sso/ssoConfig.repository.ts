@@ -7,7 +7,7 @@ import {
 import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
-} from '@shared/infrastructure/repositories/mappers';
+} from '@libs/common/infrastructure/repositories/mappers';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ArrayContains, FindOptionsWhere, Repository } from 'typeorm';

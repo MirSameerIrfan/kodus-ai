@@ -1,12 +1,11 @@
 import 'source-map-support/register';
-import { environment } from '@shared/ee/configs/environment';
 
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { WorkerModule } from '@apps/worker/worker.module';
-import { PinoLoggerService } from '@shared/logging/pino.service';
-import { setupSentryAndOpenTelemetry } from '@core/config/log/otel';
-import { WorkflowQueueLoader } from '@core/config/loaders/workflow-queue.loader';
+import { WorkerModule } from './worker.module';
+import { PinoLoggerService } from '@libs/common/logging/pino.service';
+import { setupSentryAndOpenTelemetry } from '@libs/core/config/log/otel';
+import { WorkflowQueueLoader } from '@libs/core/config/loaders/workflow-queue.loader';
 
 async function bootstrap() {
     // Define tipo de componente para configuração de pool de DB
@@ -38,7 +37,9 @@ async function bootstrap() {
         message: 'Workflow queue worker started',
         context: 'WorkerBootstrap',
         metadata: {
-            environment: environment.API_CLOUD_MODE ? 'CLOUD' : 'SELF-HOSTED',
+            environment: configService.get('API_CLOUD_MODE')
+                ? 'CLOUD'
+                : 'SELF-HOSTED',
             workerEnabled: workflowConfig.WORKFLOW_QUEUE_WORKER_ENABLED,
             prefetch: workflowConfig.WORKFLOW_QUEUE_WORKER_PREFETCH,
             maxRetries: workflowConfig.WORKFLOW_QUEUE_WORKER_MAX_RETRIES,
@@ -57,7 +58,10 @@ async function bootstrap() {
         pinoLogger.error({
             message: `Unhandled Rejection: ${reason?.message || reason}`,
             context: 'WorkerGlobalExceptionHandler',
-            error: reason instanceof Error ? reason : new Error(String(reason)),
+            error:
+                reason instanceof Error
+                    ? new Error(String(reason))
+                    : new Error(String(reason)),
         });
     });
 

@@ -3,16 +3,15 @@ import {
     FormattedConfig,
     FormattedConfigLevel,
     IFormattedConfigProperty,
-} from '@shared/types/general/codeReviewConfig.type';
-import { ConfigLevel } from '@shared/types/general/pullRequestMessages.type';
+} from '@libs/common/types/general/codeReviewConfig.type';
+import { ConfigLevel } from '@libs/common/types/general/pullRequestMessages.type';
 import {
     IPullRequestMessagesService,
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
 } from '@libs/code-review/domain/pr-messages/contracts/pullRequestMessages.service.contract';
 import { PullRequestMessagesEntity } from '@libs/code-review/domain/pr-messages/entities/pullRequestMessages.entity';
-import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
-import { deepDifference, deepMerge } from '@shared/utils/deep';
-import { getDefaultKodusConfigFile } from '@shared/utils/validateCodeReviewConfigFile';
+import { deepDifference, deepMerge } from '@libs/common/utils/deep';
+import { getDefaultKodusConfigFile } from '@libs/common/utils/validateCodeReviewConfigFile';
 import { Inject, Injectable } from '@nestjs/common';
 import { DeepPartial } from 'typeorm';
 

@@ -1,11 +1,11 @@
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import { DryRunEntity } from '../entities/dryRun.entity';
 import { DryRunStatus, IDryRun } from '../interfaces/dryRun.interface';
 import { IDryRunRepository } from './dryRun.repository.contract';
 import {
     CodeReviewConfig,
     FileChange,
-} from '@shared/types/general/codeReview.type';
+} from '@libs/common/types/general/codeReview.type';
 import {
     IFile,
     IPullRequests,
@@ -13,7 +13,7 @@ import {
     ISuggestionByPR,
 } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
-import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
+import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
 import { IPullRequestsService } from '../../pullRequests/contracts/pullRequests.service.contracts';
 
 export const DRY_RUN_SERVICE_TOKEN = Symbol('DRY_RUN_SERVICE_TOKEN');

@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import {
     Inject,
     Injectable,
@@ -13,21 +13,17 @@ import {
     IUsersService,
     USER_SERVICE_TOKEN,
 } from '@libs/identity/domain/user/contracts/user.service.contract';
-import { STATUS } from '@shared/types/database/status.type';
-import { sendConfirmationEmail } from '@shared/utils/email/sendMail';
-
-interface DecodedPayload {
-    readonly email: string;
-}
+import { sendConfirmationEmail } from '@libs/common/utils/email/sendMail';
+import { IUseCase } from '@libs/common/interfaces/use-case.interface';
 
 @Injectable()
-export class ResendEmailUseCase {
+export class ResendEmailUseCase implements IUseCase {
     private readonly logger = createLogger(ResendEmailUseCase.name);
     constructor(
         @Inject(AUTH_SERVICE_TOKEN)
         private readonly authService: IAuthService,
         @Inject(USER_SERVICE_TOKEN)
-        private readonly usersService: IUsersService
+        private readonly usersService: IUsersService,
     ) {}
 
     async execute(email: string): Promise<{ message: string }> {

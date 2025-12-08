@@ -1,4 +1,4 @@
-import { UserRequest } from '@shared/types/http/user-request.type';
+import { UserRequest } from '@libs/common/types/http/user-request.type';
 import { BackfillHistoricalPRsUseCase } from '@libs/code-review/application/use-cases/pull-requests/backfill-historical-prs.use-case';
 import { GetEnrichedPullRequestsUseCase } from '@libs/code-review/application/use-cases/pull-requests/get-enriched-pull-requests.use-case';
 import {

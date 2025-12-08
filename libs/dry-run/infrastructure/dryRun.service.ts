@@ -1,5 +1,5 @@
 import { createLogger } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     DRY_RUN_REPOSITORY_TOKEN,
     IDryRunRepository,
@@ -15,15 +15,15 @@ import {
 } from '@libs/dry-run/domain/interfaces/dryRun.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { createHash } from 'crypto';
-import { deepSort } from '@shared/utils/deep';
+import { deepSort } from '@libs/common/utils/deep';
 import { produce } from 'immer';
-import { CodeReviewParameter } from '@shared/types/general/codeReviewConfig.type';
+import { CodeReviewParameter } from '@libs/common/types/general/codeReviewConfig.type';
 import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
 import {
     CodeReviewConfig,
     CodeReviewConfigWithoutLLMProvider,
     FileChange,
-} from '@shared/types/general/codeReview.type';
+} from '@libs/common/types/general/codeReview.type';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
@@ -32,7 +32,7 @@ import {
     IPullRequestMessagesService,
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
 } from '@libs/code-review/domain/pr-messages/contracts/pullRequestMessages.service.contract';
-import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
+import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
 import {
     IFile,
     IPullRequests,

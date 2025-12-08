@@ -8,11 +8,11 @@ import {
     IASTAnalysisService,
 } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
 import { FileReviewContextPreparation as ProFileReviewContextPreparation } from '@libs/code-review/ee/pipeline/fileReviewContextPreparation/file-review-context-preparation.service';
-import { environment } from '@shared/ee/configs/environment';
+import { environment } from '@libs/common/ee/configs/environment';
 import {
     FILE_REVIEW_CONTEXT_PREPARATION_TOKEN,
     IFileReviewContextPreparation,
-} from '@shared/interfaces/file-review-context-preparation.interface';
+} from '@libs/common/interfaces/file-review-context-preparation.interface';
 import { Provider } from '@nestjs/common';
 import { LLM_ANALYSIS_SERVICE_TOKEN } from '../adapters/services/codeBase/llmAnalysis.service';
 import { FileReviewContextPreparation as CoreFileReviewContextPreparation } from '../adapters/services/fileReviewContextPreparation/file-review-context-preparation.service';

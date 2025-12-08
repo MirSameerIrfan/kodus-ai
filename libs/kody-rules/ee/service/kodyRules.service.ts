@@ -21,17 +21,17 @@ import {
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
-import { CreateKodyRuleDto } from '@shared/dtos/create-kody-rule.dto';
+import { CreateKodyRuleDto } from '@libs/common/dtos/create-kody-rule.dto';
 import { v4 } from 'uuid';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import * as libraryKodyRules from './data/library-kody-rules.json';
 import * as bucketsData from './data/buckets.json';
 import {
     KodyRuleFilters,
     LibraryKodyRule,
     BucketInfo,
-} from '@shared/types/kodyRules.type';
-import { ProgrammingLanguage } from '@shared/domain/enums/programming-language.enum';
+} from '@libs/common/types/kodyRules.type';
+import { ProgrammingLanguage } from '@libs/common/enums/programming-language.enum';
 import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
     ICodeReviewSettingsLogService,
@@ -39,7 +39,7 @@ import {
 import {
     ActionType,
     UserInfo,
-} from '@shared/types/general/codeReviewSettingsLog.type';
+} from '@libs/common/types/general/codeReviewSettingsLog.type';
 import {
     IRuleLikeService,
     RULE_LIKE_SERVICE_TOKEN,

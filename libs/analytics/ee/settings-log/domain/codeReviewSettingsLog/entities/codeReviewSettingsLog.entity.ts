@@ -1,10 +1,10 @@
-import { Entity } from '@shared/domain/interfaces/entity';
+import { Entity } from '@libs/common/domain/interfaces/entity';
 import { ICodeReviewSettingsLog } from '../interfaces/codeReviewSettingsLog.interface';
 import {
     ActionType,
     ChangedData,
     ConfigLevel,
-} from '@shared/types/general/codeReviewSettingsLog.type';
+} from '@libs/common/types/general/codeReviewSettingsLog.type';
 
 export class CodeReviewSettingsLogEntity implements Entity<ICodeReviewSettingsLog> {
     private readonly _uuid: string;

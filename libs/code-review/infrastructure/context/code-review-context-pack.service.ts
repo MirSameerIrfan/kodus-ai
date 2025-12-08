@@ -5,12 +5,12 @@ import {
     createLogger,
 } from '@kodus/flow';
 import { createHash } from 'crypto';
-import type { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import type { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import type {
     CodeReviewConfig,
     Repository,
     AnalysisContext,
-} from '@shared/types/general/codeReview.type';
+} from '@libs/common/types/general/codeReview.type';
 import type {
     ContextDependency,
     ContextLayer,

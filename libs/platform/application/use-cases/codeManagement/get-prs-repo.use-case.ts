@@ -1,5 +1,5 @@
 import { createLogger } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     INTEGRATION_CONFIG_SERVICE_TOKEN,
     IIntegrationConfigService,
@@ -7,13 +7,13 @@ import {
 import { PullRequest } from '@libs/platform/domain/types/codeManagement/pullRequests.type';
 import { Repositories } from '@libs/platform/domain/types/codeManagement/repositories.type';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { ExecuteDryRunUseCase } from '../../dryRun/execute-dry-run.use-case';
-import { PullRequestState } from '@shared/domain/enums/pullRequestState.enum';
+import { PullRequestState } from '@libs/common/enums/pullRequestState.enum';
 
 @Injectable()
 export class GetPRsByRepoUseCase implements IUseCase {

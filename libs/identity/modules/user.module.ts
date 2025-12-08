@@ -1,14 +1,14 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OrganizationModule } from '@libs/organization/organization.module';
-import { UserModel } from '@core/database/typeorm/schema/user.model';
+import { UserModel } from '@libs/core/database/typeorm/schema/user.model';
 import { AuthModule } from '@libs/identity/modules/auth.module';
 import { ProfilesModule } from '@libs/identity/modules/profileConfig.module';
 import { TeamsModule } from '@libs/organization/modules/team.module';
 import { TeamMembersModule } from '@libs/organization/modules/teamMembers.module';
 import { CodeReviewSettingsLogModule } from '@libs/analytics/modules/settings-log.module';
 import { USER_REPOSITORY_TOKEN } from '../domain/user/contracts/user.repository.contract';
-import { UserDatabaseRepository } from '@core/database/typeorm/repositories/user.repository';
+import { UserDatabaseRepository } from '@libs/core/database/typeorm/repositories/user.repository';
 import { USER_SERVICE_TOKEN } from '../domain/user/contracts/user.service.contract';
 import { UsersService } from '@libs/identity/infrastructure/services/users.service';
 import { PASSWORD_SERVICE_TOKEN } from '../domain/user/contracts/password.service.contract';

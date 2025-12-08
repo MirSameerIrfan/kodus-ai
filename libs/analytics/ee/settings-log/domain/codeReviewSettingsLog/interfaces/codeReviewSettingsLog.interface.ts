@@ -2,7 +2,7 @@ import {
     ActionType,
     ChangedData,
     ConfigLevel,
-} from '@shared/types/general/codeReviewSettingsLog.type';
+} from '@libs/common/types/general/codeReviewSettingsLog.type';
 
 export interface ICodeReviewSettingsLog {
     uuid: string;

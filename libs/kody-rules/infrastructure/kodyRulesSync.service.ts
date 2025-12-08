@@ -1,9 +1,9 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { RULE_FILE_PATTERNS } from '@shared/utils/kody-rules/file-patterns';
-import { isFileMatchingGlob } from '@shared/utils/glob-utils';
+import { RULE_FILE_PATTERNS } from '@libs/common/utils/kody-rules/file-patterns';
+import { isFileMatchingGlob } from '@libs/common/utils/glob-utils';
 import {
     KodyRulesOrigin,
     KodyRulesScope,
@@ -12,7 +12,7 @@ import {
 import {
     CreateKodyRuleDto,
     KodyRuleSeverity,
-} from '@shared/dtos/create-kody-rule.dto';
+} from '@libs/common/dtos/create-kody-rule.dto';
 import {
     IKodyRulesService,
     KODY_RULES_SERVICE_TOKEN,
@@ -24,16 +24,16 @@ import {
     LLMModelProvider,
 } from '@kodus/kodus-common/llm';
 import { UpdateOrCreateCodeReviewParameterUseCase } from '@libs/organization/application/use-cases/update-or-create-code-review-parameter-use-case';
-import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
+import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import * as path from 'path';
-import { ObservabilityService } from '@shared/logging/observability.service';
-import { PermissionValidationService } from '@shared/ee/services/permissionValidation.service';
-import { BYOKPromptRunnerService } from '@shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { kodyRulesIDEGeneratorSchema } from '@shared/utils/langchainCommon/prompts/kodyRules';
+import { ObservabilityService } from '@libs/common/logging/observability.service';
+import { PermissionValidationService } from '@libs/common/ee/services/permissionValidation.service';
+import { BYOKPromptRunnerService } from '@libs/common/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { kodyRulesIDEGeneratorSchema } from '@libs/common/utils/langchainCommon/prompts/kodyRules';
 import {
     ContextDetectionField,
     ContextReferenceDetectionService,
@@ -42,8 +42,8 @@ import { PromptSourceType } from '@libs/code-review/domain/prompts/interfaces/pr
 import {
     GET_ADDITIONAL_INFO_HELPER_TOKEN,
     IGetAdditionalInfoHelper,
-} from '@shared/domain/contracts/getAdditionalInfo.helper.contract';
-import type { UserInfo } from '@shared/types/general/codeReviewSettingsLog.type';
+} from '@libs/common/domain/contracts/getAdditionalInfo.helper.contract';
+import type { UserInfo } from '@libs/common/types/general/codeReviewSettingsLog.type';
 
 type SyncTarget = {
     organizationAndTeamData: OrganizationAndTeamData;

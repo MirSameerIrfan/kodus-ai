@@ -4,7 +4,7 @@ import {
     PERMISSIONS_SERVICE_TOKEN,
 } from '@libs/identity/domain/permissions/contracts/permissions.service.contract';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

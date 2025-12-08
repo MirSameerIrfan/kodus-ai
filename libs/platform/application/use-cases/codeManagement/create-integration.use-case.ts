@@ -1,5 +1,5 @@
 import { createLogger } from '@kodus/flow';
-import { ActionType } from '@shared/types/general/codeReviewSettingsLog.type';
+import { ActionType } from '@libs/common/types/general/codeReviewSettingsLog.type';
 import {
     AUTH_INTEGRATION_SERVICE_TOKEN,
     IAuthIntegrationService,
@@ -10,7 +10,7 @@ import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
     ICodeReviewSettingsLogService,
 } from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { IgnoreBotsUseCase } from '../../organizationParameters/ignore-bots.use-case';

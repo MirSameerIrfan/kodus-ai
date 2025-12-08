@@ -1,5 +1,5 @@
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
-import { PullRequestState } from '@shared/domain/enums/pullRequestState.enum';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { PullRequestState } from '@libs/common/enums/pullRequestState.enum';
 import { PullRequestsEntity } from '../entities/pullRequests.entity';
 import {
     ICommit,
@@ -9,7 +9,7 @@ import {
     ISuggestionByPR,
 } from '../interfaces/pullRequests.interface';
 import { IPullRequestsRepository } from './pullRequests.repository';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 
 export const PULL_REQUESTS_SERVICE_TOKEN = Symbol('PullRequestsService');
 

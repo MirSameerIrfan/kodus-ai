@@ -1,10 +1,10 @@
 import { createLogger } from '@kodus/flow';
-import { FileChange } from '@shared/types/general/codeReview.type';
-import { Commit } from '@shared/types/general/commit.type';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { FileChange } from '@libs/common/types/general/codeReview.type';
+import { Commit } from '@libs/common/types/general/commit.type';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import { PullRequestAuthor } from '@libs/platform/domain/types/codeManagement/pullRequests.type';
-import { CacheService } from '@shared/utils/cache/cache.service';
-import { isFileMatchingGlob } from '@shared/utils/glob-utils';
+import { CacheService } from '@libs/common/utils/cache/cache.service';
+import { isFileMatchingGlob } from '@libs/common/utils/glob-utils';
 import { Injectable } from '@nestjs/common';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import { IPullRequestManagerService } from '../domain/contracts/PullRequestManagerService.contract';

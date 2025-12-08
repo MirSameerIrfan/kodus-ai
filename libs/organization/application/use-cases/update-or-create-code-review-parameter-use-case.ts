@@ -5,13 +5,13 @@ import {
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
-import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
 } from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
-import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
+import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
 import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
     ICodeReviewSettingsLogService,
@@ -20,37 +20,37 @@ import { REQUEST } from '@nestjs/core';
 import {
     ActionType,
     ConfigLevel,
-} from '@shared/types/general/codeReviewSettingsLog.type';
+} from '@libs/common/types/general/codeReviewSettingsLog.type';
 import {
     ICodeRepository,
     CodeReviewParameter,
     DirectoryCodeReviewConfig,
     RepositoryCodeReviewConfig,
-} from '@shared/types/general/codeReviewConfig.type';
+} from '@libs/common/types/general/codeReviewConfig.type';
 import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
 import {
     Action,
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { UserRequest } from '@shared/types/http/user-request.type';
-import { getDefaultKodusConfigFile } from '@shared/utils/validateCodeReviewConfigFile';
+import { UserRequest } from '@libs/common/types/http/user-request.type';
+import { getDefaultKodusConfigFile } from '@libs/common/utils/validateCodeReviewConfigFile';
 import { produce } from 'immer';
-import { deepDifference, deepMerge } from '@shared/utils/deep';
-import { CreateOrUpdateCodeReviewParameterDto } from '@shared/dtos/create-or-update-code-review-parameter.dto';
+import { deepDifference, deepMerge } from '@libs/common/utils/deep';
+import { CreateOrUpdateCodeReviewParameterDto } from '@libs/common/dtos/create-or-update-code-review-parameter.dto';
 import { v4 as uuidv4 } from 'uuid';
 import { PromptSourceType } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
 import {
     IPromptExternalReferenceManagerService,
     PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
 } from '@libs/code-review/domain/prompts/contracts/promptExternalReferenceManager.contract';
-import { CodeReviewVersion } from '@shared/types/general/codeReview.type';
+import { CodeReviewVersion } from '@libs/common/types/general/codeReview.type';
 import {
     CODE_REVIEW_CONTEXT_PATTERNS,
     pathToKey,
     resolveSourceTypeFromPath,
     extractDependenciesFromValue,
 } from '@libs/code-review/infrastructure/context/code-review-context.utils';
-import { convertTiptapJSONToText } from '@shared/utils/tiptap-json';
+import { convertTiptapJSONToText } from '@libs/common/utils/tiptap-json';
 import {
     ContextReferenceDetectionService,
     type ContextDetectionField,

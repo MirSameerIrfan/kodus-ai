@@ -2,8 +2,8 @@ import {
     AIAnalysisResult,
     AnalysisContext,
     ReviewModeResponse,
-} from '@shared/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+} from '@libs/common/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     GetImpactAnalysisResponse,
     InitializeImpactAnalysisResponse,

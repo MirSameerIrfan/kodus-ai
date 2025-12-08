@@ -1,7 +1,7 @@
-import { Entity } from '@shared/domain/interfaces/entity';
+import { Entity } from '@libs/common/domain/interfaces/entity';
 import { ITeam } from '../interfaces/team.interface';
 import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
-import { STATUS } from '@shared/types/database/status.type';
+import { STATUS } from '@libs/common/types/database/status.type';
 
 export class TeamEntity implements Entity<ITeam> {
     private _uuid: string;

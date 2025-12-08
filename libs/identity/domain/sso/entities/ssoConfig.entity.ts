@@ -1,4 +1,4 @@
-import { Entity } from '@shared/domain/interfaces/entity';
+import { Entity } from '@libs/common/domain/interfaces/entity';
 import { IOrganization } from '../../organization/interfaces/organization.interface';
 import {
     SSOConfig,

@@ -17,8 +17,8 @@ import {
     AzureRepoReviewerWithVote,
     AzureRepoFileItem,
 } from '@libs/platform/domain/azure/entities/azureRepoExtras.type';
-import { decrypt } from '@shared/utils/crypto';
-import { FileChange } from '@shared/types/general/codeReview.type';
+import { decrypt } from '@libs/common/utils/crypto';
+import { FileChange } from '@libs/common/types/general/codeReview.type';
 
 @Injectable()
 export class AzureReposRequestHelper {

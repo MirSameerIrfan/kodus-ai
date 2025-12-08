@@ -1,22 +1,23 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
 } from '@libs/identity/domain/auth/contracts/auth.service.contracts';
-import { sendForgotPasswordEmail } from '@shared/utils/email/sendMail';
+import { sendForgotPasswordEmail } from '@libs/common/utils/email/sendMail';
 import {
     Inject,
     Injectable,
     InternalServerErrorException,
     NotFoundException,
 } from '@nestjs/common';
+import { IUseCase } from '@libs/common/interfaces/use-case.interface';
 
 @Injectable()
-export class ForgotPasswordUseCase {
+export class ForgotPasswordUseCase implements IUseCase {
     private readonly logger = createLogger(ForgotPasswordUseCase.name);
     constructor(
         @Inject(AUTH_SERVICE_TOKEN)
-        private readonly authService: IAuthService
+        private readonly authService: IAuthService,
     ) {}
 
     async execute(email: string) {
@@ -36,8 +37,10 @@ export class ForgotPasswordUseCase {
                 this.logger,
             );
             return { message: 'Reset link sent.' };
-        } catch (error) {
-            throw new InternalServerErrorException('Failed to send reset link.');
+        } catch {
+            throw new InternalServerErrorException(
+                'Failed to send reset link.',
+            );
         }
     }
 }

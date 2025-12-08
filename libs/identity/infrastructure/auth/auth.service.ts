@@ -9,7 +9,7 @@ import * as bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import { JwtService } from '@nestjs/jwt';
-import { JWT, TokenResponse } from '@shared/types/jwt/jwt';
+import { JWT, TokenResponse } from '@libs/common/types/jwt/jwt';
 import { ConfigService } from '@nestjs/config';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import {
@@ -23,15 +23,15 @@ import {
 } from '@libs/identity/domain/user/contracts/user.repository.contract';
 import { UserEntity } from '@libs/identity/domain/user/entities/user.entity';
 import { IAuth } from '@libs/identity/domain/auth/interfaces/auth.interface';
-import { mapSimpleEntityToModel } from '@shared/infrastructure/repositories/mappers';
+import { mapSimpleEntityToModel } from '@libs/common/infrastructure/repositories/mappers';
 import { UserModel } from '../../repositories/typeorm/schema/user.model';
-import { getExpiryDate } from '@shared/utils/transforms/date';
+import { getExpiryDate } from '@libs/common/utils/transforms/date';
 import {
     ITeamMemberService,
     TEAM_MEMBERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/team-members/contracts/teamMembers.service.contracts';
 import { TeamMemberEntity } from '@libs/organization/domain/team-members/entities/teamMember.entity';
-import { AuthProvider } from '@shared/enums/auth-provider.enum';
+import { AuthProvider } from '@libs/common/enums/auth-provider.enum';
 import axios, { AxiosResponse } from 'axios';
 
 @Injectable()

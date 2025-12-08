@@ -1,9 +1,9 @@
-import { ActionType } from '@shared/types/general/codeReviewSettingsLog.type';
+import { ActionType } from '@libs/common/types/general/codeReviewSettingsLog.type';
 import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
     ICodeReviewSettingsLogService,
 } from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { UserStatusDto } from 'apps/api/src/dtos/user-status-change.dto';

@@ -3,9 +3,9 @@
 //  * Kodus Tech. All rights reserved.
 //  */
 // import { Injectable } from '@nestjs/common';
-// import { AnalysisContext } from '@shared/types/general/codeReview.type';
-// import { FileChange } from '@shared/types/general/codeReview.type';
-// import { CodeSuggestion } from '@shared/types/general/codeReview.type';
+// import { AnalysisContext } from '@libs/common/types/general/codeReview.type';
+// import { FileChange } from '@libs/common/types/general/codeReview.type';
+// import { CodeSuggestion } from '@libs/common/types/general/codeReview.type';
 // import { IClusterizedSuggestion } from '@libs/code-review/ee/fine-tuning/domain/interfaces/kodyFineTuning.interface';
 // import { KodyFineTuningService } from '@libs/code-review/ee/fine-tuning/infrastructure/kodyFineTuning.service';
 // import { SuggestionService } from '@libs/code-review/infrastructure/suggestion.service';

@@ -1,18 +1,18 @@
 import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
-import { TokenChunkingService } from '@shared/utils/tokenChunking/tokenChunking.service';
+import { TokenChunkingService } from '@libs/common/utils/tokenChunking/tokenChunking.service';
 import {
     CrossFileAnalysisPayload,
     CrossFileAnalysisSchema,
     CrossFileAnalysisSchemaType,
     prompt_codereview_cross_file_analysis,
-} from '@shared/utils/langchainCommon/prompts/codeReviewCrossFileAnalysis';
+} from '@libs/common/utils/langchainCommon/prompts/codeReviewCrossFileAnalysis';
 import {
     AnalysisContext,
     CodeSuggestion,
     SuggestionType,
-} from '@shared/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+} from '@libs/common/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import { v4 as uuidv4 } from 'uuid';
 import {
     LLMModelProvider,
@@ -21,9 +21,9 @@ import {
     PromptRunnerService,
     TokenUsage,
 } from '@kodus/kodus-common/llm';
-import { LabelType } from '@shared/utils/codeManagement/labels';
-import { BYOKPromptRunnerService } from '@shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { ObservabilityService } from '@shared/logging/observability.service';
+import { LabelType } from '@libs/common/utils/codeManagement/labels';
+import { BYOKPromptRunnerService } from '@libs/common/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { ObservabilityService } from '@libs/common/logging/observability.service';
 
 //#region Interfaces
 interface BatchProcessingConfig {

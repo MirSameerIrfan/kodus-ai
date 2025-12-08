@@ -22,7 +22,7 @@ import {
     checkPermissions,
     checkRepoPermissions,
 } from '@libs/identity/infrastructure/permissions/policy.handlers';
-import { PullRequestState } from '@shared/domain/enums/pullRequestState.enum';
+import { PullRequestState } from '@libs/common/enums/pullRequestState.enum';
 import {
     Body,
     Controller,

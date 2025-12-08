@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { IntegrationConfigEntity } from '@libs/integrations/domain/configs/entities/integration-config.entity';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import { ConversationAgentUseCase } from '../../agent/conversation-agent.use-case';
 import { BusinessRulesValidationAgentUseCase } from '../../agent/business-rules-validation-agent.use-case';
 import { createThreadId, createLogger } from '@kodus/flow';

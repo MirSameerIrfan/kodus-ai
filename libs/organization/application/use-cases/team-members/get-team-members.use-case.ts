@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
 import {
     ITeamMemberService,
     TEAM_MEMBERS_SERVICE_TOKEN,

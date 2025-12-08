@@ -1,13 +1,13 @@
 import { createLogger } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/org-parameters/contracts/organizationParameters.service.contract';
 import { OrganizationParametersEntity } from '@libs/organization/domain/org-parameters/entities/organizationParameters.entity';
-import { OrganizationParametersKey } from '@shared/domain/enums/organization-parameters-key.enum';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
-import { encrypt } from '@shared/utils/crypto';
+import { OrganizationParametersKey } from '@libs/common/enums/organization-parameters-key.enum';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
+import { encrypt } from '@libs/common/utils/crypto';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 import { Inject, Injectable } from '@nestjs/common';
 

@@ -8,12 +8,12 @@ import {
     ActionType,
     ConfigLevel,
     UserInfo,
-} from '@shared/types/general/codeReviewSettingsLog.type';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+} from '@libs/common/types/general/codeReviewSettingsLog.type';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     IGetAdditionalInfoHelper,
     GET_ADDITIONAL_INFO_HELPER_TOKEN,
-} from '@shared/domain/contracts/getAdditionalInfo.helper.contract';
+} from '@libs/common/domain/contracts/getAdditionalInfo.helper.contract';
 
 export interface ChangedDataToExport {
     actionDescription: string;

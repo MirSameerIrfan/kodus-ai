@@ -1,5 +1,5 @@
-import { LabelType } from '@shared/utils/codeManagement/labels';
-import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
+import { LabelType } from '@libs/common/utils/codeManagement/labels';
+import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
 import {
     IsString,
     IsEnum,
@@ -8,7 +8,7 @@ import {
     ValidateNested,
     IsNumber,
 } from 'class-validator';
-import { IRepositoryToIssues } from '@libs/issues/infrastructure/domain/kodyIssuesManagement.interface';
+import { IRepositoryToIssues } from '@libs/issues/domain/interfaces/kodyIssuesManagement.interface';
 import { Type } from 'class-transformer';
 
 class GitUserDto {

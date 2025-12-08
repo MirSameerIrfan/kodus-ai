@@ -1,5 +1,5 @@
-import { ListTeamsWithIntegrationsUseCase } from '@libs/organization/application/use-cases/team/list-with-integrations.use-case';
-import { ListTeamsUseCase } from '@libs/organization/application/use-cases/team/list.use-case';
+import { ListTeamsWithIntegrationsUseCase } from '@libs/organization/application/use-cases/list-with-integrations.use-case';
+import { ListTeamsUseCase } from '@libs/organization/application/use-cases/list.use-case';
 import { Controller, Get } from '@nestjs/common';
 
 @Controller('team')

@@ -1,5 +1,5 @@
 import { createLogger } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     AUTOMATION_SERVICE_TOKEN,
     IAutomationService,
@@ -27,15 +27,15 @@ import { AutoAssignLicenseUseCase } from '@libs/organization/ee/license/use-case
 import {
     PermissionValidationService,
     ValidationErrorType,
-} from '@shared/ee/services/permissionValidation.service';
+} from '@libs/common/ee/services/permissionValidation.service';
 import {
     EXECUTE_AUTOMATION_SERVICE_TOKEN,
     IExecuteAutomationService,
-} from '@shared/domain/contracts/execute.automation.service.contracts';
-import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
-import { OrganizationParametersKey } from '@shared/domain/enums/organization-parameters-key.enum';
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
-import { getMappedPlatform } from '@shared/utils/webhooks';
+} from '@libs/common/domain/contracts/execute.automation.service.contracts';
+import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
+import { OrganizationParametersKey } from '@libs/common/enums/organization-parameters-key.enum';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { getMappedPlatform } from '@libs/common/utils/webhooks';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 

@@ -29,10 +29,7 @@
         "disableSourceOfProjectReferenceRedirect": true,
 
         "paths": {
-            "@/*": ["src/*"],
             "@libs/*": ["libs/*"],
-            "@core/*": ["core/*"],
-            "@shared/*": ["shared/*"],
             "@apps/*": ["apps/*/src"],
             "@context-os-core/*": ["packages/kodus-flow/src/context/core/*"]
         }
@@ -41,16 +38,7 @@
         // Avoid looping in "npm run start:dev"
         "watchFile": "useFsEventsOnParentDirectory"
     },
-    "include": [
-        "src",
-        "libs",
-        "core",
-        "shared",
-        "apps",
-        "test/**/*.ts",
-        "tsconfig-paths-bootstrap.js",
-        "src/**/*.json"
-    ],
+    "include": ["libs", "apps", "test/**/*.ts", "tsconfig-paths-bootstrap.js"],
     "exclude": [
         "node_modules",
         "dist",

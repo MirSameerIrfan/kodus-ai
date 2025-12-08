@@ -10,7 +10,7 @@ import {
     KODY_RULES_PR_LEVEL_ANALYSIS_SERVICE_TOKEN,
     KodyRulesPrLevelAnalysisService,
 } from '@libs/code-review/ee/analysis/kodyRulesPrLevelAnalysis.service';
-import { ReviewModeResponse } from '@shared/types/general/codeReview.type';
+import { ReviewModeResponse } from '@libs/common/types/general/codeReview.type';
 import {
     CROSS_FILE_ANALYSIS_SERVICE_TOKEN,
     CrossFileAnalysisService,

@@ -10,8 +10,8 @@ import {
     AIAnalysisResult,
     FileChange,
     AIAnalysisResultPrLevel,
-} from '@shared/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+} from '@libs/common/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     IKodyRule,
     KodyRulesScope,
@@ -20,14 +20,14 @@ import {
     KodyRulesPrLevelPayload,
     prompt_kodyrules_prlevel_analyzer,
     prompt_kodyrules_prlevel_group_rules,
-} from '@shared/utils/langchainCommon/prompts/kodyRulesPrLevel';
-import { tryParseJSONObject } from '@shared/utils/transforms/json';
+} from '@libs/common/utils/langchainCommon/prompts/kodyRulesPrLevel';
+import { tryParseJSONObject } from '@libs/common/utils/transforms/json';
 import { v4 as uuidv4, validate as uuidValidate } from 'uuid';
-import { LabelType } from '@shared/utils/codeManagement/labels';
+import { LabelType } from '@libs/common/utils/codeManagement/labels';
 import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
-import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
-import { TokenChunkingService } from '@shared/utils/tokenChunking/tokenChunking.service';
+import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
+import { TokenChunkingService } from '@libs/common/utils/tokenChunking/tokenChunking.service';
 import {
     LLMModelProvider,
     PromptRunnerService,
@@ -36,8 +36,8 @@ import {
     BYOKConfig,
     TokenUsage,
 } from '@kodus/kodus-common/llm';
-import { BYOKPromptRunnerService } from '@shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { ObservabilityService } from '@shared/logging/observability.service';
+import { BYOKPromptRunnerService } from '@libs/common/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { ObservabilityService } from '@libs/common/logging/observability.service';
 import { ExternalReferenceLoaderService } from '@libs/kody-rules/infrastructure/externalReferenceLoader.service';
 import { FileContextAugmentationService } from '@libs/code-review/infrastructure/context/file-context-augmentation.service';
 import { ContextAugmentationsMap } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';

@@ -1,5 +1,5 @@
-import { Repository } from '@shared/types/general/codeReview.type';
-import { PullRequestState } from '@shared/domain/enums/pullRequestState.enum';
+import { Repository } from '@libs/common/types/general/codeReview.type';
+import { PullRequestState } from '@libs/common/enums/pullRequestState.enum';
 
 export type PullRequest = {
     id: string;

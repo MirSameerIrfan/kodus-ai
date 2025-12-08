@@ -5,7 +5,7 @@ import {
 import { IWebhookLogService } from '@libs/platform/domain/webhook-log/contracts/webhook-log.service.contract';
 import { WebhookLogEntity } from '@libs/platform/domain/webhook-log/entities/webhook-log.entity';
 import { IWebhookLog } from '@libs/platform/domain/webhook-log/interfaces/webhook-log.interface';
-import { PlatformType } from '@shared/enums/platform-type.enum';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

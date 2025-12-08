@@ -25,7 +25,7 @@ import {
     CheckPolicies,
 } from '@libs/identity/infrastructure/permissions/policy.guard';
 import { checkPermissions } from '@libs/identity/infrastructure/permissions/policy.handlers';
-import { BackoffPresets } from '@shared/utils/polling';
+import { BackoffPresets } from '@libs/common/utils/polling';
 
 function replacer(key: any, value: any) {
     if (value instanceof Map) {

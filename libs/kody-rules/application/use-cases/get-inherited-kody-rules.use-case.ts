@@ -1,5 +1,5 @@
 import { createLogger } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     IKodyRulesService,
     KODY_RULES_SERVICE_TOKEN,
@@ -13,7 +13,7 @@ import {
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { KodyRulesValidationService } from '@libs/kody-rules/ee/service/kody-rules-validation.service';
-import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
+import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
 import { Inject, Injectable } from '@nestjs/common';
 import {
     CONTEXT_REFERENCE_SERVICE_TOKEN,

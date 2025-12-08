@@ -2,12 +2,12 @@ import {
     ClusteringType,
     ReviewModeResponse,
     SuggestionType,
-} from '@shared/types/general/codeReview.type';
+} from '@libs/common/types/general/codeReview.type';
 import { DeliveryStatus } from '../enums/deliveryStatus.enum';
 import { ImplementationStatus } from '../enums/implementationStatus.enum';
 import { PriorityStatus } from '../enums/priorityStatus.enum';
-import { LabelType } from '@shared/utils/codeManagement/labels';
-import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
+import { LabelType } from '@libs/common/utils/codeManagement/labels';
+import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
 import { FeedbackType } from '@libs/code-review/ee/fine-tuning/domain/enums/feedbackType.enum';
 
 export interface IPullRequests {

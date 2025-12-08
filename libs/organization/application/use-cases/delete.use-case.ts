@@ -1,7 +1,7 @@
 import { TEAM_MEMBERS_SERVICE_TOKEN } from '@libs/organization/domain/team-members/contracts/teamMembers.service.contracts';
 import { TeamMemberEntity } from '@libs/organization/domain/team-members/entities/teamMember.entity';
 import { TeamMemberService } from '@libs/organization/infrastructure/team-members.service';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { DeleteUserUseCase } from '../user/delete.use-case';
 

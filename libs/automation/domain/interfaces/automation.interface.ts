@@ -1,4 +1,4 @@
-import { AutomationLevel } from '@shared/enums';
+import { AutomationLevel } from '@libs/common/enums';
 import { AutomationType } from '../enums/automation-type';
 
 export interface IAutomation {

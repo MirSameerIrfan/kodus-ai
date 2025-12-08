@@ -1,4 +1,4 @@
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     CodeSuggestion,
     SuggestionControlConfig,
@@ -10,7 +10,7 @@ import {
     CommentResult,
     CodeReviewVersion,
     AnalysisContext,
-} from '@shared/types/general/codeReview.type';
+} from '@libs/common/types/general/codeReview.type';
 import { PriorityStatus } from '@libs/code-review/domain/pull-requests/enums/priorityStatus.enum';
 import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import { BYOKConfig } from '@kodus/kodus-common/llm';

@@ -1,4 +1,4 @@
-import { RepositoryTreeType } from '@shared/utils/enums/repositoryTree.enum';
+import { RepositoryTreeType } from '@libs/common/utils/enums/repositoryTree.enum';
 import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class GetRepositoryTreeDto {

@@ -1,6 +1,6 @@
 import { createLogger } from '@kodus/flow';
 import { Inject } from '@nestjs/common';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
 import { IMembers } from '@libs/organization/domain/team-members/interfaces/team-members.interface';
 import {
     ITeamMemberService,

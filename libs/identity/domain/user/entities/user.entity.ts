@@ -1,8 +1,8 @@
-import { Entity } from '@shared/domain/interfaces/entity';
+import { Entity } from '@libs/common/domain/interfaces/entity';
 import { IUser } from '../interfaces/user.interface';
 import { IOrganization } from '../../organization/interfaces/organization.interface';
 import { ITeamMember } from '../../teamMembers/interfaces/team-members.interface';
-import { STATUS } from '@shared/types/database/status.type';
+import { STATUS } from '@libs/common/types/database/status.type';
 import { Role } from '../../permissions/enums/permissions.enum';
 import { IPermissions } from '../../permissions/types/permissions.types';
 

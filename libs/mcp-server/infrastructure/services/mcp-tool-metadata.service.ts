@@ -4,7 +4,7 @@ import {
     type MCPServerConfig,
     createLogger,
 } from '@kodus/flow';
-import type { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import type { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import { MCPManagerService } from './mcp-manager.service';
 import {
     markProviderHasMetadata,

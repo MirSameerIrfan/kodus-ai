@@ -13,9 +13,9 @@ import { ITeamAutomation } from '@libs/automation/domain/interfaces/team-automat
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
-} from '@shared/infrastructure/repositories/mappers';
-import { STATUS } from '@shared/types/database/status.type';
-import { createNestedConditions } from '@shared/infrastructure/repositories/filters';
+} from '@libs/common/infrastructure/repositories/mappers';
+import { STATUS } from '@libs/common/types/database/status.type';
+import { createNestedConditions } from '@libs/common/infrastructure/repositories/filters';
 
 @Injectable()
 export class TeamAutomationRepository implements ITeamAutomationRepository {

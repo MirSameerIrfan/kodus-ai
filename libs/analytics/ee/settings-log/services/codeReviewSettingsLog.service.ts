@@ -6,8 +6,8 @@ import {
 } from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.repository.contract';
 import { CodeReviewSettingsLogEntity } from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/entities/codeReviewSettingsLog.entity';
 import { ICodeReviewSettingsLog } from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/interfaces/codeReviewSettingsLog.interface';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
-import { PermissionValidationService } from '@shared/ee/services/permissionValidation.service';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { PermissionValidationService } from '@libs/common/ee/services/permissionValidation.service';
 
 // Handlers
 import { KodyRuleLogParams, KodyRulesLogHandler } from './kodyRulesLog.handler';

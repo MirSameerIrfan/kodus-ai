@@ -1,13 +1,13 @@
-import { LoginUseCase } from '@libs/identity/application/use-cases/auth/login.use-case';
-import { LogoutUseCase } from '@libs/identity/application/use-cases/auth/logout.use-case';
-import { RefreshTokenUseCase } from '@libs/identity/application/use-cases/auth/refresh-toke.use-case';
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { SignUpDTO } from '../dtos/create-user-organization.dto';
-import { OAuthLoginUseCase } from '@libs/identity/application/use-cases/auth/oauth-login.use-case';
 import { CreateUserOrganizationOAuthDto } from '../dtos/create-user-organization-oauth.dto';
+import { LoginUseCase } from '@libs/identity/application/use-cases/auth/login.use-case';
+import { RefreshTokenUseCase } from '@libs/identity/application/use-cases/auth/refresh-toke.use-case';
+import { LogoutUseCase } from '@libs/identity/application/use-cases/auth/logout.use-case';
+import { SignUpUseCase } from '@libs/identity/application/use-cases/auth/signup.use-case';
+import { OAuthLoginUseCase } from '@libs/identity/application/use-cases/auth/oauth-login.use-case';
 import { ForgotPasswordUseCase } from '@libs/identity/application/use-cases/auth/forgotPasswordUseCase';
 import { ResetPasswordUseCase } from '@libs/identity/application/use-cases/auth/resetPasswordUseCase';
-import { SignUpUseCase } from '@libs/identity/application/use-cases/auth/signup.use-case';
 import { ConfirmEmailUseCase } from '@libs/identity/application/use-cases/auth/confirm-email.use-case';
 import { ResendEmailUseCase } from '@libs/identity/application/use-cases/auth/resend-email.use-case';
 

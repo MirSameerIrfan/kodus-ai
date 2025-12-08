@@ -1,6 +1,6 @@
 import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
-import { CodeReviewVersion } from '@shared/types/general/codeReview.type';
+import { CodeReviewVersion } from '@libs/common/types/general/codeReview.type';
 import * as labelsDataV2 from '@libs/automation/infrastructure/processAutomation/config/codeReview/labelsCodeReview_v2.json';
 import * as labelsDataLegacy from '@libs/automation/infrastructure/processAutomation/config/codeReview/labelsCodeReview_legacy.json';
 

@@ -8,15 +8,15 @@ import { TeamAutomationRepository } from '@libs/automation/infrastructure/reposi
 import { TeamAutomationService } from '@libs/automation/infrastructure/services/team-automation.service';
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AutomationModule } from './automation.module';
+import { AutomationModule } from '../automation.module';
 import { AutomationStrategyModule } from './automationStrategy.module';
-import { IntegrationModule } from './integration.module';
-import { IntegrationConfigModule } from './integrationConfig.module';
-import { OrganizationModule } from './organization.module';
-import { PlatformIntegrationModule } from './platformIntegration.module';
-import { ProfileConfigModule } from './profileConfig.module';
-import { TeamsModule } from './team.module';
-import { TeamMembersModule } from './teamMembers.module';
+import { IntegrationModule } from '@libs/integrations/integrations.module';
+import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
+import { OrganizationModule } from '@libs/organization/organization.module';
+import { PlatformIntegrationModule } from '@libs/platform/platform.module';
+import { ProfileConfigModule } from '@libs/identity/modules/profileConfig.module';
+import { TeamsModule } from '@libs/organization/modules/team.module';
+import { TeamMembersModule } from '@libs/organization/modules/teamMembers.module';
 
 @Module({
     imports: [

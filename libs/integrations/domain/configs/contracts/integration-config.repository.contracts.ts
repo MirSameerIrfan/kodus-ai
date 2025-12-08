@@ -1,8 +1,8 @@
-import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
+import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
 import { IntegrationConfigEntity } from '../entities/integration-config.entity';
 import { IIntegrationConfig } from '../interfaces/integration-config.interface';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
 
 export const INTEGRATION_CONFIG_REPOSITORY_TOKEN = Symbol(
     'IntegrationConfigRepository',

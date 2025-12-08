@@ -7,7 +7,7 @@ import {
 import {
     ActionType,
     ConfigLevel,
-} from '@shared/types/general/codeReviewSettingsLog.type';
+} from '@libs/common/types/general/codeReviewSettingsLog.type';
 
 export interface UserStatusChange {
     gitId: string;

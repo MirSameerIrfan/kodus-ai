@@ -9,8 +9,8 @@ import {
     CommentResult,
     FileChange,
     Repository,
-} from '@shared/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+} from '@libs/common/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
@@ -31,7 +31,7 @@ import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
     IAutomationExecutionService,
 } from '@libs/automation/domain/contracts/automation-execution.service';
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
 import { PullRequestsEntity } from '@libs/code-review/domain/pull-requests/entities/pullRequests.entity';
 import { PullRequestReviewComment } from '@libs/platform/domain/types/codeManagement/pullRequests.type';
 import {

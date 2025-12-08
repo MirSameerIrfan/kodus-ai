@@ -3,8 +3,8 @@ import {
     IKodyRulesService,
     KODY_RULES_SERVICE_TOKEN,
 } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
-import { ChangeStatusKodyRulesDTO } from '@shared/dtos/change-status-kody-rules.dto';
-import { CreateKodyRuleDto } from '@shared/dtos/create-kody-rule.dto';
+import { ChangeStatusKodyRulesDTO } from '@libs/common/dtos/change-status-kody-rules.dto';
+import { CreateKodyRuleDto } from '@libs/common/dtos/create-kody-rule.dto';
 import { Inject } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from './find-rules-in-organization-by-filter.use-case';

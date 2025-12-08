@@ -16,7 +16,7 @@ import {
     IUsersService,
 } from '@libs/identity/domain/user/contracts/user.service.contract';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { UpdateAnotherUserDto } from 'apps/api/src/dtos/update-another-user.dto';
 

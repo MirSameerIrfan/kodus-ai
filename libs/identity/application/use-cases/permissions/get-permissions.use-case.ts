@@ -13,7 +13,7 @@ import {
 } from '@libs/identity/domain/permissions/types/permissions.types';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import { PermissionsAbilityFactory } from '@libs/identity/infrastructure/permissions/permissionsAbility.factory';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
 import { MongoQuery } from '@casl/ability';
 import { Injectable } from '@nestjs/common';
 

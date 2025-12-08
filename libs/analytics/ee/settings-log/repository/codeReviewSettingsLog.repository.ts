@@ -6,9 +6,9 @@ import { CodeReviewSettingsLogEntity } from '@libs/analytics/ee/settings-log/dom
 import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
-} from '@shared/infrastructure/repositories/mappers';
+} from '@libs/common/infrastructure/repositories/mappers';
 import { ICodeReviewSettingsLog } from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/interfaces/codeReviewSettingsLog.interface';
-import { CodeReviewSettingsLogModel } from '@core/database/mongoose/schemas/codeReviewSettingsLog.model';
+import { CodeReviewSettingsLogModel } from '@libs/core/database/mongoose/schemas/codeReviewSettingsLog.model';
 
 @Injectable()
 export class CodeReviewSettingsLogRepository implements ICodeReviewSettingsLogRepository {

@@ -4,9 +4,10 @@ import {
 } from '@libs/identity/domain/sso/contracts/ssoConfig.service.contract';
 import { SSOProtocol } from '@libs/identity/domain/sso/interfaces/ssoConfig.interface';
 import { Inject, Injectable } from '@nestjs/common';
+import { IUseCase } from '@libs/common/interfaces/use-case.interface';
 
 @Injectable()
-export class SSOCheckUseCase {
+export class SSOCheckUseCase implements IUseCase {
     constructor(
         @Inject(SSO_CONFIG_SERVICE_TOKEN)
         private readonly ssoConfigService: ISSOConfigService,

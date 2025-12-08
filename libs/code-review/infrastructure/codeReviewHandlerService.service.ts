@@ -4,14 +4,14 @@ import { createLogger } from '@kodus/flow';
  * Kodus Tech. All rights reserved.
  */
 import { Injectable, Inject } from '@nestjs/common';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import { CodeReviewPipelineContext } from './codeReviewPipeline/context/code-review-pipeline.context';
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
 import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
 import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
 import { ConfigService } from '@nestjs/config';
-import { DatabaseConnection } from '@shared/types';
-import { ObservabilityService } from '@shared/logging/observability.service';
+import { DatabaseConnection } from '@libs/common/types';
+import { ObservabilityService } from '@libs/common/logging/observability.service';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import {
     GitHubReaction,

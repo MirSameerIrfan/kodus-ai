@@ -1,9 +1,9 @@
 import { createLogger } from '@kodus/flow';
-import { AddLibraryKodyRulesDto } from '@shared/dtos/add-library-kody-rules.dto';
+import { AddLibraryKodyRulesDto } from '@libs/common/dtos/add-library-kody-rules.dto';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { CreateOrUpdateKodyRulesUseCase } from './create-or-update.use-case';
-import { CreateKodyRuleDto } from '@shared/dtos/create-kody-rule.dto';
+import { CreateKodyRuleDto } from '@libs/common/dtos/create-kody-rule.dto';
 import {
     IKodyRule,
     KodyRulesOrigin,

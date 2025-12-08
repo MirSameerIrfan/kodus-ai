@@ -9,19 +9,19 @@ import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
-import { IntegrationCategory } from '@shared/domain/enums/integration-category.enum';
+import { IntegrationCategory } from '@libs/common/enums/integration-category.enum';
 import { IntegrationStatusFilter } from '@libs/organization/domain/team/interfaces/team.interface';
-import { STATUS } from '@shared/types/database/status.type';
-import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
+import { STATUS } from '@libs/common/types/database/status.type';
+import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
 } from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
 
-import { PullRequestState } from '@shared/domain/enums/pullRequestState.enum';
+import { PullRequestState } from '@libs/common/enums/pullRequestState.enum';
 import { AzureRepoCommentTypeString } from '@libs/platform/domain/azure/entities/azureRepoExtras.type';
 import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
@@ -46,8 +46,8 @@ import {
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
 } from '@libs/code-review/domain/pr-messages/contracts/pullRequestMessages.service.contract';
 import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
-import { CodeReviewConfig } from '@shared/types/general/codeReview.type';
-import { ConfigLevel } from '@shared/types/general/pullRequestMessages.type';
+import { CodeReviewConfig } from '@libs/common/types/general/codeReview.type';
+import { ConfigLevel } from '@libs/common/types/general/pullRequestMessages.type';
 import { IPullRequestWithDeliveredSuggestions } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 
 const API_CRON_CHECK_IF_PR_SHOULD_BE_APPROVED =

@@ -7,16 +7,16 @@ import {
     IIssuesService,
     ISSUES_SERVICE_TOKEN,
 } from '@libs/issues/domain/contracts/issues.service.contract';
-import { LabelType } from '@shared/utils/codeManagement/labels';
-import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
-import { IssueStatus } from '@shared/types/general/issues.type';
+import { LabelType } from '@libs/common/utils/codeManagement/labels';
+import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
+import { IssueStatus } from '@libs/common/types/general/issues.type';
 import { IIssue } from '@libs/issues/domain/interfaces/issues.interface';
 import { PullRequestsService } from '../../services/pullRequests/pullRequests.service';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
 } from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
 import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
 
 @Injectable()

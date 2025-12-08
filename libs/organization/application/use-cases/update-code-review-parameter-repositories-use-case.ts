@@ -5,13 +5,13 @@ import {
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
-import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
 } from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
-import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
+import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
 import {
     ICodeReviewSettingsLogService,
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
@@ -20,8 +20,8 @@ import { REQUEST } from '@nestjs/core';
 import {
     ActionType,
     ConfigLevel,
-} from '@shared/types/general/codeReviewSettingsLog.type';
-import { CodeReviewParameter } from '@shared/types/general/codeReviewConfig.type';
+} from '@libs/common/types/general/codeReviewSettingsLog.type';
+import { CodeReviewParameter } from '@libs/common/types/general/codeReviewConfig.type';
 interface ICodeRepository {
     avatar_url?: string;
     default_branch: string;

@@ -10,8 +10,8 @@ import {
 } from '@libs/organization/domain/org-parameters/contracts/organizationParameters.service.contract';
 import { OrganizationParametersAutoJoinConfig } from '@libs/organization/domain/org-parameters/types/organizationParameters.types';
 import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { OrganizationParametersKey } from '@shared/domain/enums/organization-parameters-key.enum';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { OrganizationParametersKey } from '@libs/common/enums/organization-parameters-key.enum';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

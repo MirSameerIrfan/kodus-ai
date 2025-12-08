@@ -1,11 +1,11 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
-import { PinoLoggerService } from '@shared/logging/pino.service';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
+import { PinoLoggerService } from '@libs/common/logging/pino.service';
 import {
     IJobQueueService,
     JOB_QUEUE_SERVICE_TOKEN,
 } from '@libs/workflow-queue/domain/contracts/job-queue.service.contract';
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
 import { JobStatus } from '@libs/workflow-queue/domain/enums/job-status.enum';
 import { WorkflowType } from '@libs/workflow-queue/domain/enums/workflow-type.enum';
 import { HandlerType } from '@libs/workflow-queue/domain/enums/handler-type.enum';

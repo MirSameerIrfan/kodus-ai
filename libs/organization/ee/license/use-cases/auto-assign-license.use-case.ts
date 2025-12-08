@@ -1,5 +1,5 @@
 import { createLogger } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
@@ -8,7 +8,7 @@ import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
 } from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
-import { OrganizationParametersKey } from '@shared/domain/enums/organization-parameters-key.enum';
+import { OrganizationParametersKey } from '@libs/common/enums/organization-parameters-key.enum';
 import { Inject, Injectable } from '@nestjs/common';
 import {
     ILicenseService,

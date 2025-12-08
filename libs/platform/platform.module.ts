@@ -34,8 +34,8 @@ import { AzureReposPullRequestHandler } from '@libs/infrastructure/adapters/webh
 import { IssuesModule } from '@libs/issues.module';
 import { CodeReviewSettingsLogModule } from '@libs/analytics/modules/settings-log.module';
 import { McpAgentModule } from '@libs/mcpAgent.module';
-import { GetAdditionalInfoHelper } from '@shared/utils/helpers/getAdditionalInfo.helper';
-import { GET_ADDITIONAL_INFO_HELPER_TOKEN } from '@shared/domain/contracts/getAdditionalInfo.helper.contract';
+import { GetAdditionalInfoHelper } from '@libs/common/utils/helpers/getAdditionalInfo.helper';
+import { GET_ADDITIONAL_INFO_HELPER_TOKEN } from '@libs/common/domain/contracts/getAdditionalInfo.helper.contract';
 import { PullRequestMessagesModule } from '@libs/code-review/modules/pullRequestMessages.module';
 import { WorkflowQueueModule } from '@libs/workflowQueue.module';
 @Module({

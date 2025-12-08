@@ -16,11 +16,11 @@ import { UpdateIssuePropertyUseCase } from '@libs/application/use-cases/update-i
 import { IssuesService } from '@libs/infrastructure/issues.service';
 
 // External dependencies (from src/ - temporary during migration)
-import { IssuesRepository } from '@core/database/mongoose/repositories/issues.repository';
+import { IssuesRepository } from '@libs/core/database/mongoose/repositories/issues.repository';
 import {
     IssuesModel,
     IssuesSchema,
-} from '@core/database/mongoose/schemas/issues.model';
+} from '@libs/core/database/mongoose/schemas/issues.model';
 import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/KodyIssuesManagement.contract';
 import { KodyIssuesManagementService } from '@libs/issues/infrastructure/service/kodyIssuesManagement.service';
 import {
@@ -30,7 +30,7 @@ import {
 import { IssuesController } from '@apps/api/controllers/issues.controller';
 
 // Module dependencies (still from src/modules/ during migration)
-import { GlobalCacheModule } from '@core/cache/cache.module';
+import { GlobalCacheModule } from '@libs/core/cache/cache.module';
 import { CodebaseModule } from '@libs/code-review/code-review.module';
 import { CodeReviewFeedbackModule } from '@libs/code-review/code-review.module';
 import { IntegrationConfigModule } from '@libs/integrations/integrations.module';
@@ -40,7 +40,7 @@ import { ParametersModule } from '@libs/organization/organization.module';
 import { PullRequestsModule } from '@libs/code-review/code-review.module';
 import { UsersModule } from '@libs/identity/identity.module';
 import { LicenseModule } from '@libs/organization/ee/license/license.module';
-import { PermissionValidationModule } from '@shared/ee/permission-validation.module';
+import { PermissionValidationModule } from '@libs/common/ee/permission-validation.module';
 
 const UseCases = [
     UpdateIssuePropertyUseCase,

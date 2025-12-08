@@ -1,11 +1,11 @@
-import { IssueStatus } from '@shared/types/general/issues.type';
+import { IssueStatus } from '@libs/common/types/general/issues.type';
 import { ISSUES_SERVICE_TOKEN } from '@libs/issues/domain/contracts/issues.service.contract';
 import { IssuesEntity } from '@libs/issues/domain/entities/issues.entity';
 import { IssuesService } from '@libs/issues/infrastructure/issues.service';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
-import { LabelType } from '@shared/utils/codeManagement/labels';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
+import { LabelType } from '@libs/common/utils/codeManagement/labels';
 import { Injectable, Inject } from '@nestjs/common';
-import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
+import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
 import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/KodyIssuesManagement.contract';
 import { KodyIssuesManagementService } from '@libs/issues/infrastructure/service/kodyIssuesManagement.service';
 import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';

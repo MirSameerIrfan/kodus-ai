@@ -1,4 +1,4 @@
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
 import { IWebhookLog } from '../interfaces/webhook-log.interface';
 import { WebhookLogEntity } from '../entities/webhook-log.entity';
 

@@ -9,8 +9,8 @@ import { IssuesService } from '@libs/infrastructure/adapters/services/issues/iss
 import { KodyIssuesAnalysisService } from '@libs/code-review/ee/analysis/kodyIssuesAnalysis.service';
 import { KODY_ISSUES_ANALYSIS_SERVICE_TOKEN } from '@libs/code-review/ee/analysis/kodyIssuesAnalysis.service';
 import { PriorityStatus } from '@libs/code-review/domain/pull-requests/enums/priorityStatus.enum';
-import { IssueStatus } from '@shared/types/general/issues.type';
-import { CodeSuggestion } from '@shared/types/general/codeReview.type';
+import { IssueStatus } from '@libs/common/types/general/issues.type';
+import { CodeSuggestion } from '@libs/common/types/general/codeReview.type';
 import {
     contextToGenerateIssues,
     IContributingSuggestion,
@@ -24,17 +24,17 @@ import { IssuesEntity } from '@libs/domain/issues/entities/issues.entity';
 import { GetIssuesByFiltersDto } from '@libs/infrastructure/http/dtos/get-issues-by-filters.dto';
 import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
 import { ISuggestion } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
-import { LabelType } from '@shared/utils/codeManagement/labels';
-import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
-import { CacheService } from '@shared/utils/cache/cache.service';
+import { LabelType } from '@libs/common/utils/codeManagement/labels';
+import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
+import { CacheService } from '@libs/common/utils/cache/cache.service';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/domain/parameters/contracts/parameters.service.contract';
-import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
+import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
 import { IssueCreationConfig } from '@libs/domain/issues/entities/issue-creation-config.entity';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
-import { PermissionValidationService } from '@shared/ee/services/permissionValidation.service';
+import { PermissionValidationService } from '@libs/common/ee/services/permissionValidation.service';
 
 @Injectable()
 export class KodyIssuesManagementService implements IKodyIssuesManagementService {

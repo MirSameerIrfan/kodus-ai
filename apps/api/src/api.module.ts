@@ -1,35 +1,29 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
-import { JwtAuthGuard } from '@libs/identity/infrastructure/auth/jwt-auth.guard';
-import { AppModule } from './app.module';
-import { AuthController } from '@apps/api/controllers/auth.controller';
-import { HealthController } from '@apps/api/controllers/health.controller';
-import { WorkflowQueueController } from '@apps/api/controllers/workflow-queue.controller';
-import { ParametersController } from '@apps/api/controllers/parameters.controller';
-import { OrganizationController } from '@apps/api/controllers/organization.controller';
-import { OrgnizationParametersController } from '@apps/api/controllers/organizationParameters.controller';
-import { TeamController } from '@apps/api/controllers/team.controller';
-import { CodeManagementController } from '@apps/api/controllers/platformIntegration/codeManagement.controller';
-import { IntegrationController } from '@apps/api/controllers/integrations/integration.controller';
-import { IntegrationConfigController } from '@apps/api/controllers/integrations/integrationConfig.controller';
-import { KodyRulesController } from '@apps/api/controllers/kodyRules.controller';
-import { DryRunController } from '@apps/api/controllers/dryRun.controller';
-import { CodeBaseController } from '@apps/api/controllers/codeBase.controller';
-import { AgentController } from '@apps/api/controllers/agent.controller';
-import { SegmentController } from '@apps/api/controllers/segment.controller';
-import { UsersController } from '@apps/api/controllers/user.controller';
-import { TeamMembersController } from '@apps/api/controllers/teamMembers.controller';
-import { RuleLikeController } from '@apps/api/controllers/ruleLike.controller';
-import { PullRequestMessagesController } from '@apps/api/controllers/pullRequestMessages.controller';
-import { PullRequestController } from '@apps/api/controllers/pullRequest.controller';
-import { IssuesController } from '@apps/api/controllers/issues.controller';
-import { CodeReviewSettingLogController } from '@apps/api/controllers/codeReviewSettingLog.controller';
-import { TokenUsageController } from '@apps/api/controllers/tokenUsage.controller';
-import { PermissionsController } from '@apps/api/controllers/permissions.controller';
-import { GithubController } from '@apps/api/controllers/github.controller';
-import { GitlabController } from '@apps/api/controllers/gitlab.controller';
-import { BitbucketController } from '@apps/api/controllers/bitbucket.controller';
-import { AzureReposController } from '@apps/api/controllers/azureRepos.controller';
+import { AuthController } from './controllers/auth.controller';
+import { HealthController } from './controllers/health.controller';
+import { WorkflowQueueController } from './controllers/workflow-queue.controller';
+import { ParametersController } from './controllers/parameters.controller';
+import { OrganizationController } from './controllers/organization.controller';
+import { TeamController } from './controllers/team.controller';
+import { TeamMembersController } from './controllers/teamMembers.controller';
+import { IntegrationController } from './controllers/integrations/integration.controller';
+import { CodeManagementController } from './controllers/platformIntegration/codeManagement.controller';
+import { IntegrationConfigController } from './controllers/integrations/integrationConfig.controller';
+import { KodyRulesController } from './controllers/kodyRules.controller';
+import { DryRunController } from './controllers/dryRun.controller';
+import { CodeReviewSettingLogController } from './controllers/codeReviewSettingLog.controller';
+import { CodeBaseController } from './controllers/codeBase.controller';
+import { PullRequestMessagesController } from './controllers/pullRequestMessages.controller';
+import { PullRequestController } from './controllers/pullRequest.controller';
+import { AgentController } from './controllers/agent.controller';
+import { SegmentController } from './controllers/segment.controller';
+import { RuleLikeController } from './controllers/ruleLike.controller';
+import { UsersController } from './controllers/user.controller';
+import { IssuesController } from './controllers/issues.controller';
+import { PermissionsController } from './controllers/permissions.controller';
+import { TokenUsageController } from './controllers/tokenUsage.controller';
+import { OrganizationParametersController } from './controllers/organizationParameters.controller';
 
 /**
  * API REST Module
@@ -53,7 +47,7 @@ import { AzureReposController } from '@apps/api/controllers/azureRepos.controlle
         WorkflowQueueController,
         // Parameters
         ParametersController,
-        OrgnizationParametersController,
+        OrganizationParametersController,
         // Organization & Teams
         OrganizationController,
         TeamController,
@@ -62,10 +56,6 @@ import { AzureReposController } from '@apps/api/controllers/azureRepos.controlle
         CodeManagementController,
         IntegrationController,
         IntegrationConfigController,
-        GithubController, // Includes GET endpoints + POST /webhook
-        GitlabController, // Includes POST /webhook
-        BitbucketController, // Includes POST /webhook
-        AzureReposController, // Includes POST /webhook
         // Code Review
         KodyRulesController,
         DryRunController,

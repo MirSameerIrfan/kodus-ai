@@ -1,12 +1,12 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { CodeReviewFeedbackEntity } from '@libs/code-review/domain/feedback/entities/codeReviewFeedback.entity';
 import { ICodeReviewFeedback } from '@libs/code-review/domain/feedback/interfaces/codeReviewFeedback.interface';
 import { CodeReviewFeedbackService } from '@libs/code-review/infrastructure/feedback/codeReviewFeedback.service';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import { Inject, Injectable } from '@nestjs/common';
 import { CODE_REVIEW_FEEDBACK_SERVICE_TOKEN } from '@libs/code-review/domain/feedback/contracts/codeReviewFeedback.service.contract';
 import { GetReactionsUseCase } from './get-reactions.use-case';
+import { IUseCase } from '@libs/common/interfaces/use-case.interface';
 
 @Injectable()
 export class SaveCodeReviewFeedbackUseCase implements IUseCase {
@@ -14,7 +14,7 @@ export class SaveCodeReviewFeedbackUseCase implements IUseCase {
     constructor(
         @Inject(CODE_REVIEW_FEEDBACK_SERVICE_TOKEN)
         private readonly codeReviewFeedbackService: CodeReviewFeedbackService,
-        private readonly getReactionsUseCase: GetReactionsUseCase
+        private readonly getReactionsUseCase: GetReactionsUseCase,
     ) {}
 
     async execute(payload: {
@@ -45,8 +45,7 @@ export class SaveCodeReviewFeedbackUseCase implements IUseCase {
 
             // Filtrar reactions removendo as que já foram salvas
             const newReactions = reactions.filter(
-                (reaction) =>
-                    !existingSuggestionIds.has(reaction.suggestionId),
+                (reaction) => !existingSuggestionIds.has(reaction.suggestionId),
             );
 
             this.logger.log({

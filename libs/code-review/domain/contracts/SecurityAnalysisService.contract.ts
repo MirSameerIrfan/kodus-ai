@@ -1,4 +1,4 @@
-import { FileChange } from '@shared/types/general/codeReview.type';
+import { FileChange } from '@libs/common/types/general/codeReview.type';
 
 export interface ISecurityAnalysisService {
     analyzeSecurity(file: FileChange): Promise<any>;

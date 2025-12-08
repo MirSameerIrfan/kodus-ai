@@ -1,4 +1,4 @@
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     IIntegrationConfigRepository,
     INTEGRATION_CONFIG_REPOSITORY_TOKEN,
@@ -6,8 +6,8 @@ import {
 import { IIntegrationConfigService } from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
 import { IntegrationConfigEntity } from '@libs/integrations/domain/configs/entities/integration-config.entity';
 import { IIntegrationConfig } from '@libs/integrations/domain/configs/interfaces/integration-config.interface';
-import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { isString } from 'class-validator';
 import { v4 as uuidv4 } from 'uuid';

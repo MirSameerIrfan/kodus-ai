@@ -1,7 +1,7 @@
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
-} from '@shared/infrastructure/repositories/mappers';
+} from '@libs/common/infrastructure/repositories/mappers';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOneOptions, Repository, UpdateQueryBuilder } from 'typeorm';
@@ -9,12 +9,12 @@ import {
     IMembers,
     ITeamMember,
 } from '@libs/organization/domain/team-members/interfaces/team-members.interface';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import { TeamMemberModel } from './schema/teamMember.model';
 import { TeamMemberEntity } from '@libs/organization/domain/team-members/entities/teamMember.entity';
 import { ITeamMemberRepository } from '@libs/organization/domain/team-members/contracts/teamMembers.repository.contracts';
 import { TeamMemberRole } from '@libs/organization/domain/team-members/enums/teamMemberRole.enum';
-import { STATUS } from '@shared/types/database/status.type';
+import { STATUS } from '@libs/common/types/database/status.type';
 import { In } from 'typeorm';
 
 @Injectable()

@@ -1,6 +1,6 @@
-import { CodeReviewParameter } from '@shared/types/general/codeReviewConfig.type';
-import { LanguageValue } from '@shared/domain/enums/language-parameter.enum';
-import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
+import { CodeReviewParameter } from '@libs/common/types/general/codeReviewConfig.type';
+import { LanguageValue } from '@libs/common/enums/language-parameter.enum';
+import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
 
 type DayOfWeek = 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat';
 

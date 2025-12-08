@@ -16,9 +16,9 @@ import {
     PULL_REQUESTS_SERVICE_TOKEN,
 } from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
 import { RunCodeReviewAutomationUseCase } from '@libs/automation/ee/runCodeReview.use-case';
-import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
-import { getMappedPlatform } from '@shared/utils/webhooks';
+import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { getMappedPlatform } from '@libs/common/utils/webhooks';
 import { Inject, Injectable } from '@nestjs/common';
 import { KodyRulesSyncService } from '@libs/kody-rules/infrastructure/services/kodyRulesSync.service';
 import { CodeManagementService } from '../../services/platformIntegration/codeManagement.service';

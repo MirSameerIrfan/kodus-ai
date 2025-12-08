@@ -4,7 +4,7 @@ import {
     BaseLogParams,
     ChangedDataToExport,
 } from './unifiedLog.handler';
-import { UserInfo } from '@shared/types/general/codeReviewSettingsLog.type';
+import { UserInfo } from '@libs/common/types/general/codeReviewSettingsLog.type';
 
 export interface CodeReviewConfigLogParams extends BaseLogParams {
     oldConfig: any;

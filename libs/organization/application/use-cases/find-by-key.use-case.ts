@@ -1,13 +1,13 @@
 import { createLogger } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/org-parameters/contracts/organizationParameters.service.contract';
 import { OrganizationParametersEntity } from '@libs/organization/domain/org-parameters/entities/organizationParameters.entity';
 import { IOrganizationParameters } from '@libs/organization/domain/org-parameters/interfaces/organizationParameters.interface';
-import { OrganizationParametersKey } from '@shared/domain/enums/organization-parameters-key.enum';
-import { decrypt } from '@shared/utils/crypto';
+import { OrganizationParametersKey } from '@libs/common/enums/organization-parameters-key.enum';
+import { decrypt } from '@libs/common/utils/crypto';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 
 @Injectable()

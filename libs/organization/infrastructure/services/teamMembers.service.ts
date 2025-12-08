@@ -14,17 +14,17 @@ import {
     IMSTeamsService,
     MSTEAMS_SERVICE_TOKEN,
 } from '@libs/platform/domain/msTeams/msTeams.service.contract';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import { TeamMemberEntity } from '@libs/organization/domain/team-members/entities/teamMember.entity';
 import { ITeamMemberService } from '@libs/organization/domain/team-members/contracts/teamMembers.service.contracts';
 import {
     IUsersService,
     USER_SERVICE_TOKEN,
 } from '@libs/identity/domain/user/contracts/user.service.contract';
-import { STATUS } from '@shared/types/database/status.type';
+import { STATUS } from '@libs/common/types/database/status.type';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { sendInvite } from '@shared/utils/email/sendMail';
+import { sendInvite } from '@libs/common/utils/email/sendMail';
 import { TeamMemberRole } from '@libs/organization/domain/team-members/enums/teamMemberRole.enum';
 
 @Injectable()

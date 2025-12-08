@@ -3,7 +3,7 @@ import {
     AUTOMATION_SERVICE_TOKEN,
     IAutomationService,
 } from '@libs/automation/domain/contracts/automation.service';
-import { IntegrationConfigKey } from '@shared/enums/Integration-config-key.enum';
+import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
@@ -12,9 +12,9 @@ import { REQUEST } from '@nestjs/core';
 import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
-} from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
-import { IntegrationCategory } from '@shared/enums/integration-category.enum';
-import { AutomationLevel } from '@shared/enums/automations-level.enum';
+} from '@libs/integrations/domain/contracts/integration.service.contracts';
+import { IntegrationCategory } from '@libs/common/enums/integration-category.enum';
+import { AutomationLevel } from '@libs/common/enums/automations-level.enum';
 import { UpdateOrCreateTeamAutomationUseCase } from './updateOrCreateTeamAutomationUseCase';
 
 @Injectable()

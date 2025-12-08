@@ -1,6 +1,3 @@
-import { GetOrganizationNameUseCase } from '@libs/organization/application/use-cases/organization/get-organization-name';
-import { GetOrganizationsByDomainUseCase } from '@libs/organization/application/use-cases/organization/get-organizations-domain.use-case';
-import { UpdateInfoOrganizationAndPhoneUseCase } from '@libs/organization/application/use-cases/organization/update-infos.use-case';
 import {
     Action,
     ResourceType,
@@ -12,6 +9,9 @@ import {
 } from '@libs/identity/infrastructure/permissions/policy.guard';
 import { checkPermissions } from '@libs/identity/infrastructure/permissions/policy.handlers';
 import { UpdateInfoOrganizationAndPhoneDto } from '../dtos/updateInfoOrgAndPhone.dto';
+import { GetOrganizationNameUseCase } from '@libs/organization/application/use-cases/get-organization-name';
+import { UpdateInfoOrganizationAndPhoneUseCase } from '@libs/organization/application/use-cases/update-infos.use-case';
+import { GetOrganizationsByDomainUseCase } from '@libs/organization/application/use-cases/get-organizations-domain.use-case';
 
 @Controller('organization')
 export class OrganizationController {

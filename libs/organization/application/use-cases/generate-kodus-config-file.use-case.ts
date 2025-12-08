@@ -4,9 +4,9 @@ import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
-import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
+import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
 import { REQUEST } from '@nestjs/core';
-import { KodusConfigFile } from '@shared/types/general/codeReview.type';
+import { KodusConfigFile } from '@libs/common/types/general/codeReview.type';
 
 import * as yaml from 'js-yaml';
 import * as fs from 'node:fs';

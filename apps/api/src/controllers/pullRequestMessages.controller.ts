@@ -1,4 +1,4 @@
-import { UserRequest } from '@shared/types/http/user-request.type';
+import { UserRequest } from '@libs/common/types/http/user-request.type';
 import { CreateOrUpdatePullRequestMessagesUseCase } from '@libs/code-review/application/use-cases/pr-messages/create-or-update-pull-request-messages.use-case';
 import { FindByRepositoryOrDirectoryIdPullRequestMessagesUseCase } from '@libs/code-review/application/use-cases/pr-messages/find-by-repo-or-directory.use-case';
 import {

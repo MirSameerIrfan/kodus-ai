@@ -1,4 +1,4 @@
-import { BehaviourForExistingDescription } from '@shared/types/general/codeReview.type';
+import { BehaviourForExistingDescription } from '@libs/common/types/general/codeReview.type';
 import {
     IsEnum,
     IsNotEmpty,

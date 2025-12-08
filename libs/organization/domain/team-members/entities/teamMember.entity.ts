@@ -1,4 +1,4 @@
-import { Entity } from '@shared/domain/interfaces/entity';
+import { Entity } from '@libs/common/domain/interfaces/entity';
 import { IMembers, ITeamMember } from '../interfaces/team-members.interface';
 import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';

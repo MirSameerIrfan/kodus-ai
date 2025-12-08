@@ -1,4 +1,4 @@
-import { Entity } from '@shared/domain/interfaces/entity';
+import { Entity } from '@libs/common/domain/interfaces/entity';
 
 import { IProfile } from '../interfaces/profile.interface';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';

@@ -1,4 +1,4 @@
-import { OrganizationParametersKey } from '@shared/domain/enums/organization-parameters-key.enum';
+import { OrganizationParametersKey } from '@libs/common/enums/organization-parameters-key.enum';
 import { IOrganizationParameters } from '../interfaces/organizationParameters.interface';
 import { IOrganization } from '../../organization/interfaces/organization.interface';
 

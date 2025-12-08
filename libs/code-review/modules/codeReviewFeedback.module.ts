@@ -10,7 +10,7 @@ import { TeamsModule } from '@libs/organization/modules/team.module';
 import { UsersModule } from '@libs/identity/modules/user.module';
 import { GetReactionsUseCase } from '../application/use-cases/feedback/get-reactions.use-case';
 import { SaveCodeReviewFeedbackUseCase } from '../application/use-cases/feedback/save-feedback.use-case';
-import { CodeReviewFeedbackModelInstance } from '@core/database/mongoose/schemas';
+import { CodeReviewFeedbackModelInstance } from '@libs/core/database/mongoose/schemas';
 import { ParametersModule } from '@libs/organization/modules/parameters.module';
 import { PullRequestsModule } from './pull-requests.module';
 

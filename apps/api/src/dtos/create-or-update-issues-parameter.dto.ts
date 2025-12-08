@@ -1,14 +1,13 @@
 import {
     IsBoolean,
     IsEnum,
-    IsOptional,
     IsString,
     IsArray,
     ValidateNested,
     IsDefined,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
+import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
 
 class SourceFiltersDto {
     @IsBoolean()

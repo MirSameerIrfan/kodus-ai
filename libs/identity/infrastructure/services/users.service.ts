@@ -11,7 +11,7 @@ import {
     IAuthService,
 } from '@libs/identity/domain/auth/contracts/auth.service.contracts';
 import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { STATUS } from '@shared/types/database/status.type';
+import { STATUS } from '@libs/common/types/database/status.type';
 import { IUsersService } from '@libs/identity/domain/user/contracts/user.service.contract';
 
 @Injectable()

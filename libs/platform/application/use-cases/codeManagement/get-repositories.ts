@@ -1,12 +1,12 @@
 import { createLogger } from '@kodus/flow';
-import { UserRequest } from '@shared/types/http/user-request.type';
+import { UserRequest } from '@libs/common/types/http/user-request.type';
 import {
     Action,
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
 import { Inject } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';

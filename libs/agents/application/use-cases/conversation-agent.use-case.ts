@@ -1,8 +1,8 @@
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { IUseCase } from '@libs/common/interfaces/use-case.interface';
 import { Injectable } from '@nestjs/common';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import { Thread } from '@kodus/flow';
-import { ConversationAgentProvider } from '@libs/agents/infrastructure/kodus-flow/kodus-flow/conversationAgent';
+import { ConversationAgentProvider } from '@libs/agents/infrastructure/services/kodus-flow/conversationAgent';
 
 @Injectable()
 export class ConversationAgentUseCase implements IUseCase {
@@ -26,7 +26,6 @@ export class ConversationAgentUseCase implements IUseCase {
                 thread,
             });
         } catch (error) {
-            console.error('Erro no use-case de conversação:', error);
             throw new Error(`Falha ao processar conversação: ${error.message}`);
         }
     }

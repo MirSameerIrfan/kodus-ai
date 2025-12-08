@@ -4,12 +4,13 @@ import {
 } from '@libs/identity/domain/auth/contracts/auth.service.contracts';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { AuthProvider } from '@shared/enums/auth-provider.enum';
+import { AuthProvider } from '@libs/common/enums/auth-provider.enum';
 import { SignUpUseCase } from './signup.use-case';
 import { randomBytes } from 'crypto';
+import { IUseCase } from '@libs/common/interfaces/use-case.interface';
 
 @Injectable()
-export class OAuthLoginUseCase {
+export class OAuthLoginUseCase implements IUseCase {
     constructor(
         @Inject(AUTH_SERVICE_TOKEN)
         private readonly authService: IAuthService,

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
-import { OutboxMessageRepository } from '@core/database/typeorm/repositories/outbox-message.repository';
-import { OutboxMessageModel } from '@core/database/typeorm/repositories/schema/outbox-message.model';
-import { PinoLoggerService } from '@shared/logging/pino.service';
+import { OutboxMessageRepository } from '@libs/core/database/typeorm/repositories/outbox-message.repository';
+import { OutboxMessageModel } from '@libs/core/database/typeorm/repositories/schema/outbox-message.model';
+import { PinoLoggerService } from '@libs/common/logging/pino.service';
 
 export interface OutboxMessage {
     jobId: string;

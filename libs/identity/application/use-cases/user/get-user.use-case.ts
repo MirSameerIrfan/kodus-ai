@@ -1,4 +1,4 @@
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 
 import {

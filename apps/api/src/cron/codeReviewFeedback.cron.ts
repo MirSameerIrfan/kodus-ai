@@ -1,10 +1,10 @@
 import { createLogger } from '@kodus/flow';
-import { IMessageBrokerService } from '@shared/domain/contracts/message-broker.service.contracts';
-import { MESSAGE_BROKER_SERVICE_TOKEN } from '@shared/domain/contracts/message-broker.service.contracts';
+import { IMessageBrokerService } from '@libs/common/contracts/message-broker.service.contracts';
+import { MESSAGE_BROKER_SERVICE_TOKEN } from '@libs/common/contracts/message-broker.service.contracts';
 import { Inject, Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { IntegrationCategory } from '@shared/domain/enums/integration-category.enum';
-import { STATUS } from '@shared/types/database/status.type';
+import { IntegrationCategory } from '@libs/common/enums/integration-category.enum';
+import { STATUS } from '@libs/common/types/database/status.type';
 import {
     ITeamService,
     TEAM_SERVICE_TOKEN,

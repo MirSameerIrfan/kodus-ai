@@ -1,8 +1,8 @@
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     ActionType,
     UserInfo,
-} from '@shared/types/general/codeReviewSettingsLog.type';
+} from '@libs/common/types/general/codeReviewSettingsLog.type';
 
 export interface IntegrationLogParams {
     organizationAndTeamData: OrganizationAndTeamData;

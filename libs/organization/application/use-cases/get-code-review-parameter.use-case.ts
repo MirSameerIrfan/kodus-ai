@@ -1,12 +1,12 @@
 import { createLogger } from '@kodus/flow';
-import { CodeReviewConfigWithoutLLMProvider } from '@shared/types/general/codeReview.type';
+import { CodeReviewConfigWithoutLLMProvider } from '@libs/common/types/general/codeReview.type';
 import {
     FormattedCodeReviewConfig,
     FormattedConfigLevel,
     FormattedGlobalCodeReviewConfig,
     IFormattedConfigProperty,
-} from '@shared/types/general/codeReviewConfig.type';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+} from '@libs/common/types/general/codeReviewConfig.type';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     CODE_BASE_CONFIG_SERVICE_TOKEN,
     ICodeBaseConfigService,
@@ -22,8 +22,8 @@ import {
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
-import { ParametersKey } from '@shared/domain/enums/parameters-key.enum';
-import { getDefaultKodusConfigFile } from '@shared/utils/validateCodeReviewConfigFile';
+import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
+import { getDefaultKodusConfigFile } from '@libs/common/utils/validateCodeReviewConfigFile';
 import { Inject, Injectable } from '@nestjs/common';
 import { DeepPartial } from 'typeorm';
 import {

@@ -1,10 +1,10 @@
 import {
     CommentResult,
     Repository,
-} from '@shared/types/general/codeReview.type';
-import { Commit } from '@shared/types/general/commit.type';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
-import { TreeItem } from '@shared/types/general/tree.type';
+} from '@libs/common/types/general/codeReview.type';
+import { Commit } from '@libs/common/types/general/commit.type';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { TreeItem } from '@libs/common/types/general/tree.type';
 import {
     GitHubReaction,
     GitlabReaction,
@@ -25,11 +25,11 @@ import {
 import { Repositories } from '@libs/platform/domain/types/codeManagement/repositories.type';
 import { RepositoryFile } from '@libs/platform/domain/types/codeManagement/repositoryFile.type';
 import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
-import { IntegrationCategory } from '@shared/enums/integration-category.enum';
-import { PlatformType } from '@shared/enums/platform-type.enum';
-import { PullRequestState } from '@shared/enums/pullRequestState.enum';
-import { CodeManagementConnectionStatus } from '@shared/utils/decorators/validate-code-management-integration.decorator';
-import { extractOrganizationAndTeamData } from '@shared/utils/helpers';
+import { IntegrationCategory } from '@libs/common/enums/integration-category.enum';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { PullRequestState } from '@libs/common/enums/pullRequestState.enum';
+import { CodeManagementConnectionStatus } from '@libs/common/utils/decorators/validate-code-management-integration.decorator';
+import { extractOrganizationAndTeamData } from '@libs/common/utils/helpers';
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { CodeReviewPipelineContext } from '../codeBase/codeReviewPipeline/context/code-review-pipeline.context';
 import { PlatformIntegrationFactory } from './platformIntegration.factory';

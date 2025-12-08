@@ -1,9 +1,9 @@
 import { createLogger } from '@kodus/flow';
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
-import { IntegrationServiceDecorator } from '@shared/utils/decorators/integration-service.decorator';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { IntegrationServiceDecorator } from '@libs/common/utils/decorators/integration-service.decorator';
 import { Inject, Injectable } from '@nestjs/common';
 import { ICodeManagementService } from '@libs/platform/domain/interfaces/code-management.interface';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     DRY_RUN_SERVICE_TOKEN,
     IDryRunService,
@@ -12,7 +12,7 @@ import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/cont
 import {
     CodeSuggestion,
     Comment,
-} from '@shared/types/general/codeReview.type';
+} from '@libs/common/types/general/codeReview.type';
 import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 
 type PartialICodeManagementService = Pick<

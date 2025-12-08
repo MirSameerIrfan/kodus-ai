@@ -3,7 +3,7 @@ import { UnifiedLogHandler, BaseLogParams } from './unifiedLog.handler';
 import {
     ActionType,
     ConfigLevel,
-} from '@shared/types/general/codeReviewSettingsLog.type';
+} from '@libs/common/types/general/codeReviewSettingsLog.type';
 
 export interface IntegrationLogParams extends BaseLogParams {
     integration: {

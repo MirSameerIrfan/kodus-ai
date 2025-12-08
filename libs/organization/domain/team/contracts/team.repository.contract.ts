@@ -1,4 +1,4 @@
-import { STATUS } from '@shared/types/database/status.type';
+import { STATUS } from '@libs/common/types/database/status.type';
 import { TeamEntity } from '../entities/team.entity';
 import {
     ITeam,

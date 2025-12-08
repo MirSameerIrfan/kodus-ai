@@ -8,9 +8,9 @@ import {
 } from '@libs/platform/domain/interfaces/webhook-event-handler.interface';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
 import { RunCodeReviewAutomationUseCase } from '@libs/automation/ee/runCodeReview.use-case';
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
-import { CacheService } from '@core/cache/cache.service';
-import { getMappedPlatform } from '@shared/utils/webhooks';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { CacheService } from '@libs/core/cache/cache.service';
+import { getMappedPlatform } from '@libs/common/utils/webhooks';
 import { Injectable } from '@nestjs/common';
 import { createHash } from 'crypto';
 import { KodyRulesSyncService } from '@libs/kody-rules/infrastructure/services/kodyRulesSync.service';

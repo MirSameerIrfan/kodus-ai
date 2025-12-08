@@ -1,7 +1,7 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import { CodeReviewVersion } from '@shared/types/general/codeReview.type';
+import { CodeReviewVersion } from '@libs/common/types/general/codeReview.type';
 import {
     CODE_BASE_CONFIG_SERVICE_TOKEN,
     ICodeBaseConfigService,

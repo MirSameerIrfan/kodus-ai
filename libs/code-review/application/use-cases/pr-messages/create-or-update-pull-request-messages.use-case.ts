@@ -1,13 +1,12 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
 import {
     IPullRequestMessagesService,
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
 } from '@libs/code-review/domain/pr-messages/contracts/pullRequestMessages.service.contract';
 import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
-import { ConfigLevel } from '@shared/types/general/pullRequestMessages.type';
-import { ActionType } from '@shared/types/general/codeReviewSettingsLog.type';
+import { ConfigLevel } from '@libs/common/types/general/pullRequestMessages.type';
+import { ActionType } from '@libs/common/types/general/codeReviewSettingsLog.type';
 import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
     ICodeReviewSettingsLogService,
@@ -16,7 +15,7 @@ import {
 import {
     IGetAdditionalInfoHelper,
     GET_ADDITIONAL_INFO_HELPER_TOKEN,
-} from '@shared/domain/contracts/getAdditionalInfo.helper.contract';
+} from '@libs/common/contracts/getAdditionalInfo.helper.contract';
 import { PullRequestMessagesLogParams } from '@libs/analytics/ee/settings-log/services/pullRequestMessageLog.handler';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
@@ -24,7 +23,8 @@ import {
     Action,
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { getDefaultKodusConfigFile } from '@shared/utils/validateCodeReviewConfigFile';
+import { getDefaultKodusConfigFile } from '@libs/common/utils/validateCodeReviewConfigFile';
+import { IUseCase } from '@libs/common/interfaces/use-case.interface';
 
 @Injectable()
 export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {

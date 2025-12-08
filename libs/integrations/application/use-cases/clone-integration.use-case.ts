@@ -7,13 +7,13 @@ import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
 } from '@libs/integrations/domain/contracts/integration.service.contracts';
-import { IntegrationCategory } from '@shared/domain/enums/integration-category.enum';
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { IntegrationCategory } from '@libs/common/enums/integration-category.enum';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
 import {
     toIntegrationCategory,
     toPlatformType,
-} from '@shared/utils/enum-utils';
+} from '@libs/common/utils/enum-utils';
 import { Inject } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';

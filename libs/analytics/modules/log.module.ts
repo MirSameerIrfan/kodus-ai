@@ -1,10 +1,10 @@
 import { LOG_REPOSITORY_TOKEN } from '@libs/analytics/domain/log/contracts/log.repository.contracts';
 import { LOG_SERVICE_TOKEN } from '@libs/analytics/domain/log/contracts/log.service.contracts';
 import { LogDatabaseRepository } from '@libs/analytics/infrastructure/repositories/mongoose/log.repository';
-import { LogModelInstance } from '@shared/infrastructure/repositories/model/mongodb';
-import { LogService } from '@shared/logging/log.service';
-import { PinoLoggerService } from '@shared/logging/pino.service';
-import { ObservabilityService } from '@shared/logging/observability.service';
+import { LogModelInstance } from '@libs/common/infrastructure/repositories/model/mongodb';
+import { LogService } from '@libs/common/logging/log.service';
+import { PinoLoggerService } from '@libs/common/logging/pino.service';
+import { ObservabilityService } from '@libs/common/logging/observability.service';
 import { Global, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 

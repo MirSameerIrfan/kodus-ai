@@ -1,4 +1,4 @@
-import { GlobalParametersKey } from '@shared/domain/enums/global-parameters-key.enum';
+import { GlobalParametersKey } from '@libs/common/enums/global-parameters-key.enum';
 
 export interface IGlobalParameters {
     uuid: string;

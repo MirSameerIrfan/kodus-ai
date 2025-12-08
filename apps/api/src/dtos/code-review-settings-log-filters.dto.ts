@@ -3,7 +3,7 @@ import { Transform } from 'class-transformer';
 import {
     ActionType,
     ConfigLevel,
-} from '@shared/types/general/codeReviewSettingsLog.type';
+} from '@libs/common/types/general/codeReviewSettingsLog.type';
 import { PaginationDto } from './pagination.dto';
 
 export class CodeReviewSettingsLogFiltersDto extends PaginationDto {

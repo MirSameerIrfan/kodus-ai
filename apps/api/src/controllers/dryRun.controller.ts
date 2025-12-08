@@ -1,4 +1,4 @@
-import { UserRequest } from '@shared/types/http/user-request.type';
+import { UserRequest } from '@libs/common/types/http/user-request.type';
 import { ExecuteDryRunUseCase } from '@libs/dry-run/application/use-cases/execute-dry-run.use-case';
 import { GetStatusDryRunUseCase } from '@libs/dry-run/application/use-cases/get-status-dry-run.use-case';
 import {

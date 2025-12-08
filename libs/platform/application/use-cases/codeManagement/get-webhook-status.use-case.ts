@@ -1,9 +1,9 @@
 import { createLogger } from '@kodus/flow';
 import { BadRequestException, Injectable } from '@nestjs/common';
 
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { IUseCase } from '@shared/domain/interfaces/use-case.interface';
+import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
 
 @Injectable()
 export class GetWebhookStatusUseCase implements IUseCase {

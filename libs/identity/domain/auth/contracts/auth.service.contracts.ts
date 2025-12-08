@@ -1,4 +1,4 @@
-import { AuthProvider } from '@shared/domain/enums/auth-provider.enum';
+import { AuthProvider } from '@libs/common/enums/auth-provider.enum';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 
 export const AUTH_SERVICE_TOKEN = Symbol('AuthService');

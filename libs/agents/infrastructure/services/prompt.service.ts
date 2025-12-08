@@ -1,16 +1,16 @@
 import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
-} from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
+} from '@libs/integrations/domain/contracts/integration.service.contracts';
 import { Inject, Injectable } from '@nestjs/common';
-import * as prompts from '@shared/utils/langchainCommon/prompts';
-import { IntegrationCategory } from '@shared/enums/integration-category.enum';
+import * as prompts from '@libs/common/utils/langchainCommon/prompts';
+import { IntegrationCategory } from '@libs/common/enums/integration-category.enum';
 import {
     ChatPromptTemplate,
     HumanMessagePromptTemplate,
     MessagesPlaceholder,
 } from '@langchain/core/prompts';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import {
     ITeamService,
     TEAM_SERVICE_TOKEN,
@@ -19,9 +19,12 @@ import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
 } from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
-import { IntegrationConfigKey } from '@shared/enums/Integration-config-key.enum';
-import { IParametersService, PARAMETERS_SERVICE_TOKEN } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
-import { ParametersKey } from '@shared/enums/parameters-key.enum';
+import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
+import {
+    IParametersService,
+    PARAMETERS_SERVICE_TOKEN,
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
 
 const platformDataDictionary = {
     JIRA: 'Issues, changelogs, board columns',
@@ -81,8 +84,8 @@ export class PromptService {
         private readonly teamService: ITeamService,
 
         @Inject(PARAMETERS_SERVICE_TOKEN)
-        private readonly parametersService: IParametersService
-    ) { }
+        private readonly parametersService: IParametersService,
+    ) {}
 
     getPromptByName(name: string): any {
         if (name in prompts) {
@@ -137,7 +140,7 @@ export class PromptService {
             formattedPlatformsInput,
             formattedPlatformsOutput,
             teamConfiguration,
-            language
+            language,
         );
 
         return prompt;
@@ -231,7 +234,7 @@ export class PromptService {
 
             if (
                 typeof data === 'object' &&
-                data.hasOwnProperty('instruction')
+                Object.prototype.hasOwnProperty.call(data, 'instruction')
             ) {
                 return data.instruction;
             } else {

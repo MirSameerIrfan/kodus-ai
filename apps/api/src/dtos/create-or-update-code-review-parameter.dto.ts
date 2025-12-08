@@ -17,9 +17,9 @@ import {
     GroupingModeSuggestions,
     LimitationType,
     ReviewCadenceType,
-} from '@shared/types/general/codeReview.type';
-import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
-import { PullRequestMessageStatus } from '@shared/types/general/pullRequestMessages.type';
+} from '@libs/common/types/general/codeReview.type';
+import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
+import { PullRequestMessageStatus } from '@libs/common/types/general/pullRequestMessages.type';
 
 class ReviewOptionsDto {
     @IsBoolean()
@@ -150,16 +150,6 @@ class ReviewCadenceDto {
     @IsOptional()
     @IsNumber()
     pushesToTrigger?: number;
-}
-
-class PathInstructionDto {
-    @IsOptional()
-    @IsString()
-    path?: string;
-
-    @IsOptional()
-    @IsString()
-    instructions?: string;
 }
 
 // -------------------- v2 Prompt Overrides DTOs (must be declared before usage) --------------------

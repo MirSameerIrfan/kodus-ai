@@ -1,6 +1,6 @@
 import { JobStatus } from '../enums/job-status.enum';
 import { ErrorClassification } from '../enums/error-classification.enum';
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
 
 export interface ICodeReviewJob {
     id: string;

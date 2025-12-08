@@ -1,23 +1,23 @@
-import { CreateOrUpdateOrganizationParametersUseCase } from '@libs/organization/application/use-cases/org-parameters/create-or-update.use-case';
-import { FindByKeyOrganizationParametersUseCase } from '@libs/organization/application/use-cases/org-parameters/find-by-key.use-case';
+import { CreateOrUpdateOrganizationParametersUseCase } from '@libs/organization/application/use-cases/create-or-update.use-case';
+import { FindByKeyOrganizationParametersUseCase } from '@libs/organization/application/use-cases/find-by-key.use-case';
 import {
     GetModelsByProviderUseCase,
     ModelResponse,
-} from '@libs/organization/application/use-cases/org-parameters/get-models-by-provider.use-case';
+} from '@libs/organization/application/use-cases/get-models-by-provider.use-case';
 import {
     Action,
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { ProviderService } from '@libs/platform/infrastructure/services/provider.service';
-import { OrganizationParametersKey } from '@shared/domain/enums/organization-parameters-key.enum';
+import { OrganizationParametersKey } from '@libs/common/enums/organization-parameters-key.enum';
 
-import { UserRequest } from '@shared/types/http/user-request.type';
-import { DeleteByokConfigUseCase } from '@libs/organization/application/use-cases/org-parameters/delete-byok-config.use-case';
+import { UserRequest } from '@libs/common/types/http/user-request.type';
+import { DeleteByokConfigUseCase } from '@libs/organization/application/use-cases/delete-byok-config.use-case';
 import {
     GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN,
     GetCockpitMetricsVisibilityUseCase,
-} from '@libs/organization/application/use-cases/org-parameters/get-cockpit-metrics-visibility.use-case';
-import { IgnoreBotsUseCase } from '@libs/organization/application/use-cases/org-parameters/ignore-bots.use-case';
+} from '@libs/organization/application/use-cases/get-cockpit-metrics-visibility.use-case';
+import { IgnoreBotsUseCase } from '@libs/organization/application/use-cases/ignore-bots.use-case';
 import { ICockpitMetricsVisibility } from '@libs/organization/domain/org-parameters/interfaces/cockpit-metrics-visibility.interface';
 import {
     BadRequestException,
@@ -38,7 +38,7 @@ import {
 import { checkPermissions } from '@libs/identity/infrastructure/permissions/policy.handlers';
 
 @Controller('organization-parameters')
-export class OrgnizationParametersController {
+export class OrganizationParametersController {
     constructor(
         private readonly createOrUpdateOrganizationParametersUseCase: CreateOrUpdateOrganizationParametersUseCase,
         private readonly findByKeyOrganizationParametersUseCase: FindByKeyOrganizationParametersUseCase,

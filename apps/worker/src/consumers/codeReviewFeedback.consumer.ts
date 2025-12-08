@@ -2,7 +2,7 @@ import { createLogger } from '@kodus/flow';
 import { SaveCodeReviewFeedbackUseCase } from '@libs/code-review/application/use-cases/feedback/save-feedback.use-case';
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { Injectable } from '@nestjs/common';
-import { RabbitmqConsumeErrorFilter } from '@shared/infrastructure/filters/rabbitmq-consume-error.exception';
+import { RabbitmqConsumeErrorFilter } from '@libs/common/infrastructure/filters/rabbitmq-consume-error.exception';
 import { UseFilters } from '@nestjs/common';
 
 @UseFilters(RabbitmqConsumeErrorFilter)

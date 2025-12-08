@@ -1,8 +1,8 @@
-import { IssueStatus } from '@shared/types/general/issues.type';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
-import { PlatformType } from '@shared/enums/platform-type.enum';
-import { LabelType } from '@shared/utils/codeManagement/labels';
-import { SeverityLevel } from '@shared/utils/enums/severityLevel.enum';
+import { IssueStatus } from '@libs/common/types/general/issues.type';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { LabelType } from '@libs/common/utils/codeManagement/labels';
+import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
 
 export interface IIssueDetails {
     id: string;

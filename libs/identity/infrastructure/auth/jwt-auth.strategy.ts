@@ -1,5 +1,5 @@
-import { STATUS } from '@shared/types/database/status.type';
-import { JWT } from '@shared/types/jwt/jwt';
+import { STATUS } from '@libs/common/types/database/status.type';
+import { JWT } from '@libs/common/types/jwt/jwt';
 import {
     AUTH_SERVICE_TOKEN,
     IAuthService,

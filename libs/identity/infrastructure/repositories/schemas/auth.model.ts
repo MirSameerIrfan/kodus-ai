@@ -1,7 +1,7 @@
 import { Column, Entity, ManyToOne } from 'typeorm';
 import { UserModel } from './user.model';
-import { CoreModel } from '@shared/infrastructure/repositories/model/typeOrm';
-import { AuthProvider } from '@shared/enums/auth-provider.enum';
+import { CoreModel } from '@libs/common/infrastructure/repositories/model/typeOrm';
+import { AuthProvider } from '@libs/common/enums/auth-provider.enum';
 
 @Entity('auth')
 export class AuthModel extends CoreModel {

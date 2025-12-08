@@ -12,10 +12,10 @@ import {
     IPromptReferenceSyncError,
     PromptReferenceErrorType,
 } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
-import type { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
-import { ObservabilityService } from '@shared/logging/observability.service';
+import type { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { ObservabilityService } from '@libs/common/logging/observability.service';
 import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { BYOKPromptRunnerService } from '@shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { BYOKPromptRunnerService } from '@libs/common/infrastructure/services/tokenTracking/byokPromptRunner.service';
 import {
     LLMModelProvider,
     PromptRunnerService,
@@ -26,17 +26,17 @@ import {
 import {
     prompt_detect_external_references_system,
     prompt_detect_external_references_user,
-} from '@shared/utils/langchainCommon/prompts/externalReferences';
+} from '@libs/common/utils/langchainCommon/prompts/externalReferences';
 import {
     prompt_kodyrules_detect_references_system,
     prompt_kodyrules_detect_references_user,
-} from '@shared/utils/langchainCommon/prompts/kodyRulesExternalReferences';
+} from '@libs/common/utils/langchainCommon/prompts/kodyRulesExternalReferences';
 import { IPromptContextEngineService } from '@libs/code-review/domain/prompts/contracts/promptContextEngine.contract';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
 } from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
-import { IntegrationConfigKey } from '@shared/domain/enums/Integration-config-key.enum';
+import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
 import { Repositories } from '@libs/platform/domain/types/codeManagement/repositories.type';
 
 interface DetectReferencesParams {

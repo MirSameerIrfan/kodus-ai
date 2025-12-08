@@ -11,8 +11,8 @@ import { REQUEST } from '@nestjs/core';
 import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
-} from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
-import { AutomationLevel } from '@shared/enums/automations-level.enum';
+} from '@libs/integrations/domain/contracts/integration.service.contracts';
+import { AutomationLevel } from '@libs/common/enums/automations-level.enum';
 import { UpdateOrCreateTeamAutomationUseCase } from './updateOrCreateTeamAutomationUseCase';
 import {
     AutomationCategoryMapping,
@@ -38,7 +38,7 @@ export class ActiveCodeManagementTeamAutomationsUseCase {
         private readonly request: Request & {
             user: { organization: { uuid: string } };
         },
-    ) { }
+    ) {}
 
     async execute(teamId: string, notify: boolean = true) {
         const organizationAndTeamData = {
@@ -60,16 +60,17 @@ export class ActiveCodeManagementTeamAutomationsUseCase {
 
         const teamAutomations = {
             teamId: teamId,
-            automations: automationsFiltered?.map((automation) =>
-            ({
+            automations: automationsFiltered?.map((automation) => ({
                 automationUuid: automation.uuid,
                 automationType: automation.automationType,
                 status: automation.status,
-            })
-            ),
+            })),
         };
 
-        await this.updateOrCreateAutomationUseCase.execute(teamAutomations, notify);
+        await this.updateOrCreateAutomationUseCase.execute(
+            teamAutomations,
+            notify,
+        );
 
         return teamAutomations.automations;
     }

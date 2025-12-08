@@ -1,5 +1,5 @@
 import { createLogger } from '@kodus/flow';
-import { UserRequest } from '@shared/types/http/user-request.type';
+import { UserRequest } from '@libs/common/types/http/user-request.type';
 import {
     KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,

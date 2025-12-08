@@ -6,23 +6,23 @@ import {
     FileChangeContext,
     ISafeguardResponse,
     ReviewModeResponse,
-} from '@shared/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+} from '@libs/common/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 
-import { BYOKPromptRunnerService } from '@shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { prompt_codeReviewSafeguard_system } from '@shared/utils/langchainCommon/prompts';
+import { BYOKPromptRunnerService } from '@libs/common/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { prompt_codeReviewSafeguard_system } from '@libs/common/utils/langchainCommon/prompts';
 import {
     prompt_codereview_system_gemini,
     prompt_codereview_system_gemini_v2,
     prompt_codereview_user_deepseek,
     prompt_codereview_user_gemini,
     prompt_codereview_user_gemini_v2,
-} from '@shared/utils/langchainCommon/prompts/configuration/codeReview';
-import { prompt_selectorLightOrHeavyMode_system } from '@shared/utils/langchainCommon/prompts/seletorLightOrHeavyMode';
-import { prompt_severity_analysis_user } from '@shared/utils/langchainCommon/prompts/severityAnalysis';
-import { prompt_validateImplementedSuggestions } from '@shared/utils/langchainCommon/prompts/validateImplementedSuggestions';
+} from '@libs/common/utils/langchainCommon/prompts/configuration/codeReview';
+import { prompt_selectorLightOrHeavyMode_system } from '@libs/common/utils/langchainCommon/prompts/seletorLightOrHeavyMode';
+import { prompt_severity_analysis_user } from '@libs/common/utils/langchainCommon/prompts/severityAnalysis';
+import { prompt_validateImplementedSuggestions } from '@libs/common/utils/langchainCommon/prompts/validateImplementedSuggestions';
 import type { ContextPack } from '@context-os-core/interfaces';
 import {
     BYOKConfig,
@@ -33,7 +33,7 @@ import {
     PromptScope,
 } from '@kodus/kodus-common/llm';
 import { z } from 'zod';
-import { ObservabilityService } from '@shared/logging/observability.service';
+import { ObservabilityService } from '@libs/common/logging/observability.service';
 import { LLMResponseProcessor } from './utils/transforms/llmResponseProcessor.transform';
 import { IAIAnalysisService } from '../domain/contracts/AIAnalysisService.contract';
 import {

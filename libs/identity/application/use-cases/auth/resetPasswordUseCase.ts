@@ -12,13 +12,14 @@ import {
     InternalServerErrorException,
     UnauthorizedException,
 } from '@nestjs/common';
+import { IUseCase } from '@libs/common/interfaces/use-case.interface';
 
 interface DecodedPayload {
-  readonly email: string;
+    readonly email: string;
 }
 
 @Injectable()
-export class ResetPasswordUseCase {
+export class ResetPasswordUseCase implements IUseCase {
     constructor(
         @Inject(AUTH_SERVICE_TOKEN)
         private readonly authService: IAuthService,
@@ -28,7 +29,8 @@ export class ResetPasswordUseCase {
 
     async execute(token: string, newPassword: string) {
         try {
-            const decode:DecodedPayload = await this.authService.verifyForgotPassToken(token);
+            const decode: DecodedPayload =
+                await this.authService.verifyForgotPassToken(token);
             if (!decode?.email) {
                 throw new UnauthorizedException(
                     'Token does not contain user email',
@@ -43,7 +45,7 @@ export class ResetPasswordUseCase {
                 { password },
             );
             return { message: 'Password reset done' };
-        } catch (error) {
+        } catch {
             return new InternalServerErrorException(
                 'Something went wrong while resetting password',
             );

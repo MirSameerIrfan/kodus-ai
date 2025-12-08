@@ -1,7 +1,7 @@
-import { PlatformType } from '@shared/domain/enums/platform-type.enum';
+import { PlatformType } from '@libs/common/enums/platform-type.enum';
 import { IntegrationEntity } from '../entities/integration.entity';
 import { IIntegration } from '../interfaces/integration.interface';
-import { OrganizationAndTeamData } from '@shared/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
 
 export const INTEGRATION_REPOSITORY_TOKEN = Symbol('IntegrationRepository');
 
