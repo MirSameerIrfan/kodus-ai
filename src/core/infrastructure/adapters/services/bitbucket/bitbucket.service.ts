@@ -3960,6 +3960,37 @@ export class BitbucketService
         }
     }
 
+    async getCurrentUser(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+    }): Promise<any | null> {
+        try {
+            const bitbucketAuthDetail = await this.getAuthDetails(
+                params.organizationAndTeamData,
+            );
+
+            if (!bitbucketAuthDetail) {
+                return null;
+            }
+
+            const bitbucketAPI =
+                this.instanceBitbucketApi(bitbucketAuthDetail);
+            const user = await bitbucketAPI.user
+                .get({})
+                .then((res) => res.data);
+
+            return user || null;
+        } catch (error) {
+            this.logger.error({
+                message: 'Error retrieving current Bitbucket user',
+                context: BitbucketService.name,
+                serviceName: 'BitbucketService getCurrentUser',
+                error,
+                metadata: params,
+            });
+            return null;
+        }
+    }
+
     async getPullRequestReviewComments(params: {
         organizationAndTeamData: OrganizationAndTeamData;
         repository: Partial<Repository>;

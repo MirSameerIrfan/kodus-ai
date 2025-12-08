@@ -9,6 +9,8 @@ import { GetPRsUseCase } from '@/core/application/use-cases/platformIntegration/
 import { GetRepositoriesUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-repositories';
 import { GetRepositoryTreeByDirectoryUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-repository-tree-by-directory.use-case';
 import { GetWebhookStatusUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-webhook-status.use-case';
+import { GetCurrentCodeManagementUserUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-current-code-management-user.use-case';
+import { SearchCodeManagementUsersUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/search-code-management-users.use-case';
 import { Repository } from '@/core/domain/integrationConfigs/types/codeManagement/repositories.type';
 import {
     Action,
@@ -50,6 +52,8 @@ export class CodeManagementController {
         private readonly getRepositoryTreeByDirectoryUseCase: GetRepositoryTreeByDirectoryUseCase,
         private readonly getPRsByRepoUseCase: GetPRsByRepoUseCase,
         private readonly getWebhookStatusUseCase: GetWebhookStatusUseCase,
+        private readonly searchCodeManagementUsersUseCase: SearchCodeManagementUsersUseCase,
+        private readonly getCurrentCodeManagementUserUseCase: GetCurrentCodeManagementUserUseCase,
     ) {}
 
     @Get('/repositories/org')
@@ -231,6 +235,54 @@ export class CodeManagementController {
         @Query() query: GetRepositoryTreeByDirectoryDto,
     ) {
         return await this.getRepositoryTreeByDirectoryUseCase.execute(query);
+    }
+
+    @Get('/search-users')
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.UserSettings,
+        }),
+    )
+    public async searchUsers(
+        @Query()
+        query: {
+            organizationId: string;
+            teamId?: string;
+            q?: string;
+            userId?: string;
+            limit?: number;
+        },
+    ) {
+        return await this.searchCodeManagementUsersUseCase.execute({
+            organizationId: query.organizationId,
+            teamId: query.teamId,
+            query: query.q,
+            userId: query.userId,
+            limit: query.limit ? Number(query.limit) : undefined,
+        });
+    }
+
+    @Get('/current-user')
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.UserSettings,
+        }),
+    )
+    public async getCurrentUser(
+        @Query()
+        query: {
+            organizationId: string;
+            teamId?: string;
+        },
+    ) {
+        return await this.getCurrentCodeManagementUserUseCase.execute({
+            organizationId: query.organizationId,
+            teamId: query.teamId,
+        });
     }
 
     // NOT USED IN WEB - INTERNAL USE ONLY

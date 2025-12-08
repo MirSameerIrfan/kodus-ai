@@ -149,6 +149,10 @@ export interface ICodeManagementService
         userId: string;
     }): Promise<any | null>;
 
+    getCurrentUser(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+    }): Promise<any | null>;
+
     markReviewCommentAsResolved(params: any): Promise<any | null>;
     getPullRequestReviewComments(params: {
         organizationAndTeamData: OrganizationAndTeamData;

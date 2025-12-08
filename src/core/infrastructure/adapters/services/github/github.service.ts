@@ -5260,6 +5260,35 @@ export class GithubService
         throw new Error('Method not implemented.');
     }
 
+    async getCurrentUser(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+    }): Promise<any | null> {
+        try {
+            const githubAuthDetail = await this.getGithubAuthDetails(
+                params.organizationAndTeamData,
+            );
+
+            if (!githubAuthDetail?.authToken) {
+                return null;
+            }
+
+            const token = decrypt(githubAuthDetail.authToken);
+            const userOctokit = new Octokit({ auth: token });
+            const { data } = await userOctokit.rest.users.getAuthenticated();
+
+            return data || null;
+        } catch (error) {
+            this.logger.error({
+                message: 'Error retrieving current GitHub user',
+                context: GithubService.name,
+                serviceName: 'GithubService getCurrentUser',
+                error: error,
+                metadata: params,
+            });
+            return null;
+        }
+    }
+
     async getPullRequestsByRepository(params: {
         organizationAndTeamData: OrganizationAndTeamData;
         repository: {

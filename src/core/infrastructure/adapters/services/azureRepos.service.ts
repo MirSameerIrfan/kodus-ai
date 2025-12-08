@@ -75,6 +75,7 @@ import {
 } from '@/shared/utils/translations/translations';
 import { generateWebhookToken } from '@/shared/utils/webhooks/webhookTokenCrypto';
 import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
 import { MCPManagerService } from '../mcp/services/mcp-manager.service';
 import { AzureReposRequestHelper } from './azureRepos/azure-repos-request-helper';
 
@@ -1695,6 +1696,45 @@ export class AzureReposService
                     organizationAndTeamData,
                 },
             });
+        }
+    }
+
+    async getCurrentUser(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+    }): Promise<any | null> {
+        try {
+            const authDetails = await this.getAuthDetails(
+                params.organizationAndTeamData,
+            );
+
+            if (!authDetails?.orgName || !authDetails?.token) {
+                return null;
+            }
+
+            const { orgName, token } = authDetails;
+
+            const instance = axios.create({
+                baseURL: `https://vssps.dev.azure.com/${orgName}`,
+                headers: {
+                    Authorization: `Basic ${Buffer.from(`:${decrypt(token)}`).toString('base64')}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            const { data } = await instance.get(
+                '/_apis/profile/profiles/me?api-version=7.1-preview',
+            );
+
+            return data || null;
+        } catch (error) {
+            this.logger.error({
+                message: 'Error retrieving current Azure Repos user',
+                context: AzureReposService.name,
+                serviceName: 'AzureReposService getCurrentUser',
+                error: error,
+                metadata: params,
+            });
+            return null;
         }
     }
 

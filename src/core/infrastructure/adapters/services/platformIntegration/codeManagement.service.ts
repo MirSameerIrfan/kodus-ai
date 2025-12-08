@@ -915,6 +915,28 @@ export class CodeManagementService implements ICodeManagementService {
         return codeManagementService.getUserById(params);
     }
 
+    async getCurrentUser(
+        params: {
+            organizationAndTeamData: OrganizationAndTeamData;
+        },
+        type?: PlatformType,
+    ): Promise<any | null> {
+        if (!type) {
+            type = await this.getTypeIntegration(
+                extractOrganizationAndTeamData(params),
+            );
+        }
+
+        const codeManagementService =
+            this.platformIntegrationFactory.getCodeManagementService(type);
+
+        if (!codeManagementService.getCurrentUser) {
+            return null;
+        }
+
+        return codeManagementService.getCurrentUser(params);
+    }
+
     async markReviewCommentAsResolved(
         params: any,
         type?: PlatformType,

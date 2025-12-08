@@ -3325,6 +3325,34 @@ export class GitlabService
         }
     }
 
+    async getCurrentUser(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+    }): Promise<any | null> {
+        try {
+            const gitlabAuthDetail = await this.getAuthDetails(
+                params.organizationAndTeamData,
+            );
+
+            if (!gitlabAuthDetail) {
+                return null;
+            }
+
+            const gitlabAPI = this.instanceGitlabApi(gitlabAuthDetail);
+            const user = await gitlabAPI.Users.showCurrentUser();
+
+            return user || null;
+        } catch (error) {
+            this.logger.error({
+                message: 'Error retrieving current GitLab user',
+                context: GitlabService.name,
+                serviceName: 'GitlabService getCurrentUser',
+                error: error,
+                metadata: params,
+            });
+            return null;
+        }
+    }
+
     async getPullRequestsByRepository(params: {
         organizationAndTeamData: OrganizationAndTeamData;
         repository: {
