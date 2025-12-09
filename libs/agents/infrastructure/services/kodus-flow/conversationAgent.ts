@@ -20,9 +20,9 @@ import {
     IParametersService,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { Inject } from '@nestjs/common';
-import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
 import { BaseAgentProvider } from './base-agent.provider';
 import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
+import { PermissionValidationService } from '@libs/core/infrastructure/services/permissionValidation.service';
 
 @Injectable()
 export class ConversationAgentProvider extends BaseAgentProvider {

@@ -1,4 +1,4 @@
-import { AuthModel } from '@libs/identity/infrastructure/repositories/schemas/auth.model';
+import { AuthModel } from '@libs/identity/infrastructure/adapters/repositories/schemas/auth.model';
 import { AuthEntity } from '../entities/auth.entity';
 import { IAuth } from '../interfaces/auth.interface';
 

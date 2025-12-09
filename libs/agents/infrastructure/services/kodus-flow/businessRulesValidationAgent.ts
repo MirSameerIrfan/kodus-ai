@@ -20,9 +20,9 @@ import {
     IParametersService,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { Inject } from '@nestjs/common';
-import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
 import { BaseAgentProvider } from './base-agent.provider';
 import { MCPManagerService } from '@libs/mcp-server/infrastructure/services/mcp-manager.service';
+import { PermissionValidationService } from '@libs/core/infrastructure/services/permissionValidation.service';
 
 export interface ValidationResult {
     needsMoreInfo?: boolean;

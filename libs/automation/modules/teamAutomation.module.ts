@@ -1,11 +1,11 @@
-import { UseCases } from '@libs/automation/application/use-cases/team-automation';
-import { ActiveCodeManagementTeamAutomationsUseCase } from '@libs/automation/application/use-cases/team-automation/active-code-manegement-automations.use-case';
-import { ActiveCodeReviewAutomationUseCase } from '@libs/automation/application/use-cases/team-automation/active-code-review-automation.use-case';
+import { UseCases } from '@libs/automation/application/use-cases/teamAutomation';
+import { ActiveCodeManagementTeamAutomationsUseCase } from '@libs/automation/application/use-cases/teamAutomation/active-code-manegement-automations.use-case';
+import { ActiveCodeReviewAutomationUseCase } from '@libs/automation/application/use-cases/teamAutomation/active-code-review-automation.use-case';
 import { TEAM_AUTOMATION_REPOSITORY_TOKEN } from '@libs/automation/domain/contracts/team-automation.repository';
 import { TEAM_AUTOMATION_SERVICE_TOKEN } from '@libs/automation/domain/contracts/team-automation.service';
-import { TeamAutomationModel } from '@libs/automation/infrastructure/repositories/schemas/teamAutomation.model';
-import { TeamAutomationRepository } from '@libs/automation/infrastructure/repositories/teamAutomation.repository';
-import { TeamAutomationService } from '@libs/automation/infrastructure/services/team-automation.service';
+import { TeamAutomationModel } from '@libs/automation/infrastructure/adapters/repositories/schemas/teamAutomation.model';
+import { TeamAutomationRepository } from '@libs/automation/infrastructure/adapters/repositories/teamAutomation.repository';
+import { TeamAutomationService } from '@libs/automation/infrastructure/adapters/services/team-automation.service';
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AutomationModule } from '../automation.module';

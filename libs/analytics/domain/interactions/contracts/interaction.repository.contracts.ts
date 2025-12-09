@@ -1,4 +1,4 @@
-import { IInteractionExecution } from '@libs/analytics/domain/interactions/interfaces/interactions-execution.interface';
+import { IInteractionExecution } from '../interfaces/interactions-execution.interface';
 
 export const INTERACTION_EXECUTION_REPOSITORY_TOKEN = Symbol(
     'InteractionExecutionRepository',

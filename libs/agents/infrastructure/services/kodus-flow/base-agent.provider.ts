@@ -12,9 +12,9 @@ import {
     ParserType,
 } from '@kodus/kodus-common/llm';
 import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
-import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
 import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
 import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
+import { PermissionValidationService } from '@libs/core/infrastructure/services/permissionValidation.service';
 
 @Injectable()
 export abstract class BaseAgentProvider {

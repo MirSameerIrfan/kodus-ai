@@ -14,7 +14,6 @@ import { DatabaseConnection } from '@libs/core/domain/types';
 import { LLMModelProvider, PromptRunnerService } from '@kodus/kodus-common/llm';
 import { SDKOrchestrator } from '@kodus/flow/dist/orchestration';
 import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
-import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
 import { MCPManagerService } from '@libs/mcp-server/infrastructure/services/mcp-manager.service';
 import { BaseAgentProvider } from './base-agent.provider';
 import type {
@@ -24,6 +23,7 @@ import type {
 import type { ContextEvidence } from '@context-os-core/interfaces';
 import { IKodyRule } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import { convertTiptapJSONToText } from '@libs/core/utils/tiptap-json';
+import { PermissionValidationService } from '@libs/core/infrastructure/services/permissionValidation.service';
 
 export interface ContextEvidenceAgentResult {
     evidences?: ContextEvidence[];
