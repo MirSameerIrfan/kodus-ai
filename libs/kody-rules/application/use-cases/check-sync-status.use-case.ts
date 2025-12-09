@@ -24,7 +24,7 @@ import {
     INTEGRATION_SERVICE_TOKEN,
 } from '@libs/integrations/domain/contracts/integration.service.contracts';
 import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
-import { Repositories } from '@libs/platform/domain/types/codeManagement/repositories.type';
+import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,

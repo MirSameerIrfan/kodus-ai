@@ -14,7 +14,7 @@ import {
     IContributingSuggestion,
     IIssueDetails,
 } from '@libs/issues/domain/interfaces/kodyIssuesManagement.interface';
-import { KodyIssuesManagementService } from '@libs/issues/infrastructure/service/kodyIssuesManagement.service';
+import { KodyIssuesManagementService } from '@libs/issues/infrastructure/adapters/service/kodyIssuesManagement.service';
 import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/KodyIssuesManagement.contract';
 import { REQUEST } from '@nestjs/core';
 import { AuthorizationService } from '@libs/identity/infrastructure/adapters/services/permissions/authorization.service';

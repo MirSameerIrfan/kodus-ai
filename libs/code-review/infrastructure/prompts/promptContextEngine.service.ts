@@ -37,7 +37,7 @@ import {
     INTEGRATION_CONFIG_SERVICE_TOKEN,
 } from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
 import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
-import { Repositories } from '@libs/platform/domain/types/codeManagement/repositories.type';
+import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
 
 interface DetectReferencesParams {
     requirementId: string;

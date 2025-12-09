@@ -1,4 +1,4 @@
-import { IMappedPlatform } from '@libs/platform/domain/types/webhooks/webhooks-common.type';
+import { IMappedPlatform } from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-common.type';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { GithubMappedPlatform } from './github';
 import { GitlabMappedPlatform } from './gitlab';

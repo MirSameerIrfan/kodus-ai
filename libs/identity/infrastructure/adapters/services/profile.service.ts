@@ -1,10 +1,10 @@
 import {
     IProfileRepository,
     PROFILE_REPOSITORY_TOKEN,
-} from '@/core/domain/profile/contracts/profile.repository.contract';
-import { IProfileService } from '@/core/domain/profile/contracts/profile.service.contract';
-import { ProfileEntity } from '@/core/domain/profile/entities/profile.entity';
-import { IProfile } from '@/core/domain/profile/interfaces/profile.interface';
+} from '@libs/identity/domain/profile/contracts/profile.repository.contract';
+import { IProfileService } from '@libs/identity/domain/profile/contracts/profile.service.contract';
+import { ProfileEntity } from '@libs/identity/domain/profile/entities/profile.entity';
+import { IProfile } from '@libs/identity/domain/profile/interfaces/profile.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

@@ -5,11 +5,11 @@ import {
     IMappedRepository,
     IMappedUsers,
     MappedAction,
-} from '@libs/platform/domain/types/webhooks/webhooks-common.type';
+} from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-common.type';
 import {
     IWebhookGitlabMergeRequestEvent,
     IWebhookGitlabCommentEvent,
-} from '@libs/platform/domain/types/webhooks/webhooks-gitlab.type';
+} from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-gitlab.type';
 import { extractRepoFullName } from '.';
 
 export class GitlabMappedPlatform implements IMappedPlatform {

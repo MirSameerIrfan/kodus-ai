@@ -7,7 +7,7 @@ import {
     IPullRequestsRepository,
     PULL_REQUESTS_REPOSITORY_TOKEN,
 } from '@libs/code-review/domain/pull-requests/contracts/pullRequests.repository';
-import { PullRequest } from '@libs/platform/domain/types/codeManagement/pullRequests.type';
+import { PullRequest } from '@libs/platform/domain/platformIntegrations/types/codeManagement/pullRequests.type';
 
 interface BackfillParams {
     organizationAndTeamData: OrganizationAndTeamData;

@@ -1,18 +1,18 @@
-import { Inject, Injectable } from '@nestjs/common';
-import {
-    IUserRepository,
-    USER_REPOSITORY_TOKEN,
-} from '@/core/domain/user/contracts/user.repository.contract';
-import { v4 as uuidv4 } from 'uuid';
-import { UserEntity } from '@/core/domain/user/entities/user.entity';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
+import { STATUS } from '@libs/core/domain/types/database/status.type';
 import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
-} from '@/core/domain/auth/contracts/auth.service.contracts';
-import { Role } from '@/core/domain/permissions/enums/permissions.enum';
-import { STATUS } from '@/config/types/database/status.type';
-import { IUsersService } from '@/core/domain/user/contracts/user.service.contract';
+} from '@libs/identity/domain/auth/contracts/auth.service.contracts';
+import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
+import {
+    IUserRepository,
+    USER_REPOSITORY_TOKEN,
+} from '@libs/identity/domain/user/contracts/user.repository.contract';
+import { IUsersService } from '@libs/identity/domain/user/contracts/user.service.contract';
+import { UserEntity } from '@libs/identity/domain/user/entities/user.entity';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
+import { Inject, Injectable } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class UsersService implements IUsersService {

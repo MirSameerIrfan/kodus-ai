@@ -5,11 +5,11 @@ import {
     IMappedRepository,
     IMappedUsers,
     MappedAction,
-} from '@libs/platform/domain/types/webhooks/webhooks-common.type';
+} from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-common.type';
 import {
     IWebhookGithubPullRequestEvent,
     IWebhookGithubPullRequestCommentEvent,
-} from '@libs/platform/domain/types/webhooks/webhooks-github.type';
+} from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-github.type';
 import { extractRepoFullName } from '.';
 
 export class GithubMappedPlatform implements IMappedPlatform {

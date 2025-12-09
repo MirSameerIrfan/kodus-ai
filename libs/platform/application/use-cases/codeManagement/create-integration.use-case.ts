@@ -1,19 +1,15 @@
 import { createLogger } from '@kodus/flow';
 import { ActionType } from '@libs/core/domain/types/general/codeReviewSettingsLog.type';
-import {
-    AUTH_INTEGRATION_SERVICE_TOKEN,
-    IAuthIntegrationService,
-} from '@libs/integrations/domain/auth/contracts/auth-integration.service.contracts';
-import { AuthMode } from '@libs/platform/domain/enums/codeManagement/authMode.enum';
-import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
-import {
-    CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
-    ICodeReviewSettingsLogService,
-} from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import { IgnoreBotsUseCase } from '../../organizationParameters/ignore-bots.use-case';
+import {
+    AUTH_INTEGRATION_SERVICE_TOKEN,
+    IAuthIntegrationService,
+} from '@libs/integrations/domain/authIntegrations/contracts/auth-integration.service.contracts';
+import { IgnoreBotsUseCase } from '@libs/organization/application/use-cases/organizationParameters/ignore-bots.use-case';
+import { AuthMode } from '@libs/platform/domain/platformIntegrations/enums/codeManagement/authMode.enum';
+import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 
 @Injectable()
 export class CreateIntegrationUseCase implements IUseCase {

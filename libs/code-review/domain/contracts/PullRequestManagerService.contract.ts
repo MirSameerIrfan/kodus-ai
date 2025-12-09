@@ -1,7 +1,7 @@
 import { FileChange } from '@libs/core/domain/types/general/codeReview.type';
 import { Commit } from '@libs/core/domain/types/general/commit.type';
 import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
-import { PullRequestAuthor } from '@libs/platform/domain/types/codeManagement/pullRequests.type';
+import { PullRequestAuthor } from '@libs/platform/domain/platformIntegrations/types/codeManagement/pullRequests.type';
 
 export const PULL_REQUEST_MANAGER_SERVICE_TOKEN = Symbol(
     'PullRequestManagerService',

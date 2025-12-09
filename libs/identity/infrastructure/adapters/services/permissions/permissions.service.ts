@@ -1,9 +1,9 @@
 import {
     IPermissionsRepository,
     PERMISSIONS_REPOSITORY_TOKEN,
-} from '@/core/domain/permissions/contracts/permissions.repository.contract';
-import { IPermissionsService } from '@/core/domain/permissions/contracts/permissions.service.contract';
-import { IPermissions } from '@/core/domain/permissions/types/permissions.types';
+} from '@libs/identity/domain/permissions/contracts/permissions.repository.contract';
+import { IPermissionsService } from '@libs/identity/domain/permissions/contracts/permissions.service.contract';
+import { IPermissions } from '@libs/identity/domain/permissions/types/permissions.types';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

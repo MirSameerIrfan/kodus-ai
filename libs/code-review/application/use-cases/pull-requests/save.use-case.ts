@@ -4,7 +4,7 @@ import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
 } from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
-import { stripCurlyBracesFromUUIDs } from '@libs/platform/domain/types/webhooks/webhooks-bitbucket.type';
+import { stripCurlyBracesFromUUIDs } from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,

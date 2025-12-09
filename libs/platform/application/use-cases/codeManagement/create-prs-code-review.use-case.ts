@@ -1,17 +1,18 @@
 import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
-import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
-import { AutomationExecutionService } from '@libs/automation/infrastructure/automation-execution.service';
-import { AUTOMATION_EXECUTION_SERVICE_TOKEN } from '@libs/automation/domain/contracts/automation-execution.service';
-import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
-import { AutomationType } from '@libs/automation/domain/enums/automation-type';
 import {
     ITeamAutomationService,
     TEAM_AUTOMATION_SERVICE_TOKEN,
-} from '@libs/automation/domain/contracts/team-automation.service';
+} from '@libs/automation/domain/teamAutomation/contracts/team-automation.service';
+import {
+    AUTOMATION_EXECUTION_SERVICE_TOKEN,
+    IAutomationExecutionService,
+} from '@libs/automation/domain/automationExecution/contracts/automation-execution.service';
+import { AutomationStatus } from '@libs/automation/domain/automation/enum/automation-status';
+import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 
 @Injectable()
 export class CreatePRCodeReviewUseCase implements IUseCase {
@@ -22,7 +23,7 @@ export class CreatePRCodeReviewUseCase implements IUseCase {
         private readonly teamAutomationService: ITeamAutomationService,
 
         @Inject(AUTOMATION_EXECUTION_SERVICE_TOKEN)
-        private readonly automationExecutionService: AutomationExecutionService,
+        private readonly automationExecutionService: IAutomationExecutionService,
 
         @Inject(REQUEST)
         private readonly request: Request & { user },

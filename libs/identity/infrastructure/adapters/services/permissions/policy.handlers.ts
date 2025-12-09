@@ -1,12 +1,12 @@
-import { STATUS } from '@/config/types/database/status.type';
+import { subject as caslSubject } from '@casl/ability';
+import { STATUS } from '@libs/core/domain/types/database/status.type';
 import {
     Action,
     ResourceType,
     Role,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import { AppAbility } from '@/core/domain/permissions/types/permissions.types';
-import { PolicyHandler } from '@/core/domain/permissions/types/policy.types';
-import { subject as caslSubject } from '@casl/ability';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { AppAbility } from '@libs/identity/domain/permissions/types/permissions.types';
+import { PolicyHandler } from '@libs/identity/domain/permissions/types/policy.types';
 
 const getNestedValue = (obj: any, path: string): any => {
     return path.split('.').reduce((acc, key) => acc?.[key], obj);

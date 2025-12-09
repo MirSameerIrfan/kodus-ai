@@ -7,7 +7,7 @@ import {
     IPermissionsService,
     PERMISSIONS_SERVICE_TOKEN,
 } from '@libs/identity/domain/permissions/contracts/permissions.service.contract';
-import { Repositories } from '@libs/platform/domain/types/codeManagement/repositories.type';
+import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
 import {
     IUsersService,
     USER_SERVICE_TOKEN,

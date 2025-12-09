@@ -22,7 +22,7 @@ import {
     IssuesSchema,
 } from '@libs/core/infrastructure/database/mongoose/schemas/issues.model';
 import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/KodyIssuesManagement.contract';
-import { KodyIssuesManagementService } from '@libs/issues/infrastructure/service/kodyIssuesManagement.service';
+import { KodyIssuesManagementService } from '@libs/issues/infrastructure/adapters/service/kodyIssuesManagement.service';
 import {
     KODY_ISSUES_ANALYSIS_SERVICE_TOKEN,
     KodyIssuesAnalysisService,

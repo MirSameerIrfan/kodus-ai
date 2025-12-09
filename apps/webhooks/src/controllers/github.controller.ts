@@ -6,7 +6,7 @@ import { EnqueueWebhookUseCase } from '@libs/platform/application/use-cases/webh
 import {
     IWebhookLogService,
     WEBHOOK_LOG_SERVICE,
-} from '@libs/platform/domain/webhook-log/contracts/webhook-log.service.contract';
+} from '@libs/webhookLog/domain/webhook-log/contracts/webhook-log.service.contract';
 
 @Controller('github')
 export class GithubController {

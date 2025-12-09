@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { IntegrationConfigEntity } from '@libs/integrations/domain/configs/entities/integration-config.entity';
-import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
-import { ConversationAgentUseCase } from '../../agent/conversation-agent.use-case';
-import { BusinessRulesValidationAgentUseCase } from '../../agent/business-rules-validation-agent.use-case';
 import { createThreadId, createLogger } from '@kodus/flow';
 import { PlatformResponsePolicyFactory } from './policies/platform-response.policy';
+import { ConversationAgentUseCase } from '@libs/agents/application/use-cases/conversation-agent.use-case';
+import { BusinessRulesValidationAgentUseCase } from '@libs/agents/application/use-cases/business-rules-validation-agent.use-case';
+import { IntegrationConfigEntity } from '@libs/integrations/domain/integrationConfigs/entities/integration-config.entity';
+import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 
 // Constants
 const KODY_COMMANDS = {
@@ -205,7 +205,7 @@ export class ChatWithKodyFromGitUseCase {
                 this.getPullRequestDescription(params);
             const headRef = this.getHeadRef(params);
             const baseRef = this.getBaseRef(params);
-            const defaultBranch = this.getDefaultBranch(params, repository);
+            const defaultBranch = this.getDefaultBranch(params);
 
             this.logger.log({
                 message: 'Extracted PR information',
@@ -280,7 +280,6 @@ export class ChatWithKodyFromGitUseCase {
 
     private detectCommandType(params: WebhookParams): CommandType {
         if (params.platformType === PlatformType.GITHUB) {
-            const isIssueComment = params.event === 'issue_comment';
             const isInlineComment =
                 params.event === 'pull_request_review_comment';
             const commentBody =
@@ -1096,10 +1095,7 @@ export class ChatWithKodyFromGitUseCase {
         }
     }
 
-    private getDefaultBranch(
-        params: WebhookParams,
-        repository: Repository,
-    ): string {
+    private getDefaultBranch(params: WebhookParams): string {
         switch (params.platformType) {
             case PlatformType.GITHUB:
                 return (
@@ -1548,10 +1544,7 @@ export class ChatWithKodyFromGitUseCase {
         };
     }
 
-    private mentionsKody(
-        comment: Comment,
-        platformType: PlatformType,
-    ): boolean {
+    private mentionsKody(comment: Comment): boolean {
         const commentBody = comment.body.toLowerCase();
         return [KODY_COMMANDS.KODY_MENTION, KODY_COMMANDS.KODUS_MENTION].some(
             (keyword) => commentBody.startsWith(keyword),
@@ -1711,7 +1704,7 @@ export class ChatWithKodyFromGitUseCase {
         id: number;
         username: string;
     } {
-        let gitUser = {
+        const gitUser = {
             id: null,
             username: null,
         };

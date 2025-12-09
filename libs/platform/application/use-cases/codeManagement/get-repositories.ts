@@ -1,22 +1,23 @@
-import { createLogger } from '@kodus/flow';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { UserRequest } from '@libs/core/domain/types/http/user-request.type';
+import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
 import {
     Action,
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { AuthorizationService } from '@libs/identity/infrastructure/adapters/services/permissions/authorization.service';
-import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 import { Inject } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import { Request } from 'express';
 
 export class GetRepositoriesUseCase implements IUseCase {
-    private readonly logger = createLogger(GetRepositoriesUseCase.name);
     constructor(
         private readonly codeManagementService: CodeManagementService,
+
         @Inject(REQUEST)
         private readonly request: UserRequest,
+        private readonly logger: PinoLoggerService,
+
         private readonly authorizationService: AuthorizationService,
     ) {}
 
@@ -38,11 +39,11 @@ export class GetRepositoriesUseCase implements IUseCase {
                 });
 
             const assignedRepositoryIds =
-                await this.authorizationService.getRepositoryScope(
-                    this.request.user,
-                    Action.Read,
-                    ResourceType.CodeReviewSettings,
-                );
+                await this.authorizationService.getRepositoryScope({
+                    user: this.request.user,
+                    action: Action.Read,
+                    resource: ResourceType.CodeReviewSettings,
+                });
 
             let filteredRepositories = repositories;
             if (assignedRepositoryIds !== null) {

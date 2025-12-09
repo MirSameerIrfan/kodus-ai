@@ -1,10 +1,10 @@
 import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 import { z } from 'zod';
-import { CodeManagementService } from '../../services/platformIntegration/codeManagement.service';
 import { wrapToolHandler } from '../utils/mcp-protocol.utils';
 import { BaseResponse, McpToolDefinition } from '../types/mcp-tool.interface';
 import { PullRequestState } from '../../../../../shared/domain/enums/pullRequestState.enum';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 
 const RepositorySchema = z.looseObject({
     id: z.string(),

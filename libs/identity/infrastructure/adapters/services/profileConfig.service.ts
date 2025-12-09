@@ -1,21 +1,21 @@
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import {
-    IProfileService,
-    PROFILE_SERVICE_TOKEN,
-} from '@/core/domain/profile/contracts/profile.service.contract';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
     IProfileConfigRepository,
     PROFILE_CONFIG_REPOSITORY_TOKEN,
-} from '@/core/domain/profileConfigs/contracts/profileConfig.repository.contract';
-import { IProfileConfigService } from '@/core/domain/profileConfigs/contracts/profileConfig.service.contract';
-import { ProfileConfigEntity } from '@/core/domain/profileConfigs/entities/profileConfig.entity';
-import { ProfileConfigKey } from '@/core/domain/profileConfigs/enum/profileConfigKey.enum';
-import { IProfileConfig } from '@/core/domain/profileConfigs/interfaces/profileConfig.interface';
+} from '@libs/identity/domain/profile-configs/contracts/profileConfig.repository.contract';
+import { IProfileConfigService } from '@libs/identity/domain/profile-configs/contracts/profileConfig.service.contract';
+import { ProfileConfigEntity } from '@libs/identity/domain/profile-configs/entities/profileConfig.entity';
+import { ProfileConfigKey } from '@libs/identity/domain/profile-configs/enum/profileConfigKey.enum';
+import { IProfileConfig } from '@libs/identity/domain/profile-configs/interfaces/profileConfig.interface';
+import {
+    IProfileService,
+    PROFILE_SERVICE_TOKEN,
+} from '@libs/identity/domain/profile/contracts/profile.service.contract';
 import {
     IUsersService,
     USER_SERVICE_TOKEN,
-} from '@/core/domain/user/contracts/user.service.contract';
-import { Role } from '@/core/domain/permissions/enums/permissions.enum';
+} from '@libs/identity/domain/user/contracts/user.service.contract';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -86,6 +86,7 @@ export class ProfileConfigService implements IProfileConfigService {
             throw new BadRequestException(err);
         }
     }
+
     findProfileConfigFormatted<T>(
         configKey: ProfileConfigKey,
         organizationAndTeamData: OrganizationAndTeamData,
@@ -112,6 +113,7 @@ export class ProfileConfigService implements IProfileConfigService {
             console.log(error);
         }
     }
+
     find(filter?: Partial<IProfileConfig>): Promise<ProfileConfigEntity[]> {
         return this.profileConfigRepository.find(filter);
     }

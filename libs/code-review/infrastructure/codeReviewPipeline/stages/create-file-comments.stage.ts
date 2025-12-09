@@ -33,7 +33,7 @@ import {
 } from '@libs/automation/domain/contracts/automation-execution.service';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { PullRequestsEntity } from '@libs/code-review/domain/pull-requests/entities/pullRequests.entity';
-import { PullRequestReviewComment } from '@libs/platform/domain/types/codeManagement/pullRequests.type';
+import { PullRequestReviewComment } from '@libs/platform/domain/platformIntegrations/types/codeManagement/pullRequests.type';
 import {
     ITeamAutomationService,
     TEAM_AUTOMATION_SERVICE_TOKEN,

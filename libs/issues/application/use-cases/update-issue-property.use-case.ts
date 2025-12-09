@@ -7,7 +7,7 @@ import { LabelType } from '@libs/core/utils/codeManagement/labels';
 import { Injectable, Inject } from '@nestjs/common';
 import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
 import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/KodyIssuesManagement.contract';
-import { KodyIssuesManagementService } from '@libs/issues/infrastructure/service/kodyIssuesManagement.service';
+import { KodyIssuesManagementService } from '@libs/issues/infrastructure/adapters/service/kodyIssuesManagement.service';
 import { AuthorizationService } from '@libs/identity/infrastructure/adapters/services/permissions/authorization.service';
 import { REQUEST } from '@nestjs/core';
 import {

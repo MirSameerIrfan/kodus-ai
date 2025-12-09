@@ -3,16 +3,16 @@ import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
-import { FinishOnboardingDTO } from '@libs/common/dtos/finish-onboarding.dto';
 import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import { ChangeStatusKodyRulesUseCase } from '../../kodyRules/change-status-kody-rules.use-case';
-import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from '../../kodyRules/find-rules-in-organization-by-filter.use-case';
-import { GenerateKodyRulesUseCase } from '../../kodyRules/generate-kody-rules.use-case';
-import { SyncSelectedRepositoriesKodyRulesUseCase } from '../../kodyRules/sync-selected-repositories.use-case';
 import { CreatePRCodeReviewUseCase } from './create-prs-code-review.use-case';
+import { GenerateKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/generate-kody-rules.use-case';
+import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/find-rules-in-organization-by-filter.use-case';
+import { ChangeStatusKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/change-status-kody-rules.use-case';
+import { SyncSelectedRepositoriesKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/sync-selected-repositories.use-case';
+import { FinishOnboardingDTO } from 'apps/api/src/dtos/finish-onboarding.dto';
 
 @Injectable()
 export class FinishOnboardingUseCase {

@@ -7,7 +7,7 @@ import { validateWebhookToken } from '@libs/core/utils/webhooks/webhookTokenCryp
 import {
     WEBHOOK_LOG_SERVICE,
     IWebhookLogService,
-} from '@libs/platform/domain/webhook-log/contracts/webhook-log.service.contract';
+} from '@libs/webhookLog/domain/webhook-log/contracts/webhook-log.service.contract';
 
 @Controller('azure-repos')
 export class AzureReposController {

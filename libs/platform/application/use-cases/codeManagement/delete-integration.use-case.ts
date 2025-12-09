@@ -1,20 +1,16 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
-import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
-import { AuthIntegrationService } from '@libs/integrations/infrastructure/authIntegration.service';
-import { INTEGRATION_SERVICE_TOKEN } from '@libs/integrations/domain/contracts/integration.service.contracts';
-import { IntegrationConfigService } from '@libs/integrations/infrastructure/integrationConfig.service';
-import { IntegrationService } from '@libs/integrations/infrastructure/integration.service';
-import { AUTH_INTEGRATION_SERVICE_TOKEN } from '@libs/integrations/domain/auth/contracts/auth-integration.service.contracts';
-import { INTEGRATION_CONFIG_SERVICE_TOKEN } from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
 import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
 import { REQUEST } from '@nestjs/core';
-import {
-    CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
-    ICodeReviewSettingsLogService,
-} from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
 import { ActionType } from '@libs/core/domain/types/general/codeReviewSettingsLog.type';
+import { INTEGRATION_SERVICE_TOKEN } from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
+import { IntegrationService } from '@libs/integrations/infrastructure/adapters/services/integration.service';
+import { AUTH_INTEGRATION_SERVICE_TOKEN } from '@libs/integrations/domain/authIntegrations/contracts/auth-integration.service.contracts';
+import { AuthIntegrationService } from '@libs/integrations/infrastructure/adapters/services/authIntegration.service';
+import { INTEGRATION_CONFIG_SERVICE_TOKEN } from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import { IntegrationConfigService } from '@libs/integrations/infrastructure/adapters/services/integrationConfig.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 
 @Injectable()
 export class DeleteIntegrationUseCase {

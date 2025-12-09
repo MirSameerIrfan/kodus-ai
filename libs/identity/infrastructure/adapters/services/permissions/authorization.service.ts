@@ -1,14 +1,14 @@
-import { STATUS } from '@/config/types/database/status.type';
-import { GetAssignedReposUseCase } from '@/core/application/use-cases/permissions/get-assigned-repos.use-case';
-import {
-    Action,
-    ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
 import { subject as caslSubject } from '@casl/ability';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PermissionsAbilityFactory } from './permissionsAbility.factory';
 import { extractReposFromAbility } from './policy.handlers';
+import { GetAssignedReposUseCase } from '@libs/identity/application/use-cases/permissions/get-assigned-repos.use-case';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
+import {
+    Action,
+    ResourceType,
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { STATUS } from '@libs/core/domain/types/database/status.type';
 
 @Injectable()
 export class AuthorizationService {

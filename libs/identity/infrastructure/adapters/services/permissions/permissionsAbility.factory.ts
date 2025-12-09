@@ -1,15 +1,15 @@
+import { AbilityBuilder, createMongoAbility, Subject } from '@casl/ability';
 import {
     IPermissionsService,
     PERMISSIONS_SERVICE_TOKEN,
-} from '@/core/domain/permissions/contracts/permissions.service.contract';
+} from '@libs/identity/domain/permissions/contracts/permissions.service.contract';
 import {
     Action,
     ResourceType,
     Role,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import { AppAbility } from '@/core/domain/permissions/types/permissions.types';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { AbilityBuilder, createMongoAbility, Subject } from '@casl/ability';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { AppAbility } from '@libs/identity/domain/permissions/types/permissions.types';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

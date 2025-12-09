@@ -1,9 +1,4 @@
 import {
-    IPolicyHandler,
-    PolicyHandler,
-    PolicyHandlerCallback,
-} from '@/core/domain/permissions/types/policy.types';
-import {
     CanActivate,
     ExecutionContext,
     Injectable,
@@ -12,6 +7,11 @@ import {
 } from '@nestjs/common';
 import { ModuleRef, Reflector } from '@nestjs/core';
 import { PermissionsAbilityFactory } from './permissionsAbility.factory';
+import {
+    IPolicyHandler,
+    PolicyHandler,
+    PolicyHandlerCallback,
+} from '@libs/identity/domain/permissions/types/policy.types';
 
 const CHECK_POLICIES_KEY = 'check_policy';
 
