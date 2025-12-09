@@ -3978,7 +3978,24 @@ export class BitbucketService
                 .get({})
                 .then((res) => res.data);
 
-            return user || null;
+            if (!user) {
+                return null;
+            }
+
+            const sanitizedUuid =
+                user?.uuid && this.sanitizeUUID(String(user.uuid));
+            const sanitizedId =
+                user?.id && this.sanitizeUUID(String(user.id));
+            const sanitizedAccountId =
+                user?.account_id &&
+                this.sanitizeUUID(String(user.account_id));
+
+            return {
+                ...user,
+                ...(sanitizedUuid && { uuid: sanitizedUuid }),
+                ...(sanitizedId && { id: sanitizedId }),
+                ...(sanitizedAccountId && { account_id: sanitizedAccountId }),
+            };
         } catch (error) {
             this.logger.error({
                 message: 'Error retrieving current Bitbucket user',
