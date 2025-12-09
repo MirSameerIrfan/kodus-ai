@@ -75,7 +75,7 @@ import {
 } from '@/shared/utils/translations/translations';
 import { generateWebhookToken } from '@/shared/utils/webhooks/webhookTokenCrypto';
 import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import { MCPManagerService } from '../mcp/services/mcp-manager.service';
 import { AzureReposRequestHelper } from './azureRepos/azure-repos-request-helper';
 
@@ -1725,7 +1725,23 @@ export class AzureReposService
                 '/_apis/profile/profiles/me?api-version=7.1-preview',
             );
 
-            return data || null;
+            const descriptor = await this.resolveCurrentUserDescriptor({
+                instance,
+                profile: data,
+                orgName,
+            });
+
+            const normalizedUser = {
+                ...data,
+                descriptor,
+                originId: data?.id,
+            };
+
+            if (descriptor) {
+                normalizedUser.id = descriptor;
+            }
+
+            return normalizedUser || null;
         } catch (error) {
             this.logger.error({
                 message: 'Error retrieving current Azure Repos user',
@@ -1736,6 +1752,66 @@ export class AzureReposService
             });
             return null;
         }
+    }
+
+    private async resolveCurrentUserDescriptor(params: {
+        instance: AxiosInstance;
+        profile?: any;
+        orgName: string;
+    }): Promise<string | undefined> {
+        const { instance, profile, orgName } = params;
+
+        const descriptorFromProfile =
+            profile?.coreAttributes?.SubjectDescriptor?.value ||
+            profile?.coreAttributes?.Descriptor?.value ||
+            profile?.descriptor;
+
+        if (descriptorFromProfile) {
+            return descriptorFromProfile;
+        }
+
+        try {
+            const { data } = await instance.get(
+                '/_apis/connectionData?connectOptions=IncludeServices&api-version=7.1-preview',
+            );
+
+            const descriptorFromConnection =
+                data?.authenticatedUser?.subjectDescriptor ??
+                data?.authenticatedUser?.descriptor;
+
+            if (descriptorFromConnection) {
+                return descriptorFromConnection;
+            }
+        } catch (error) {
+            this.logger.warn({
+                message:
+                    'Failed to fetch connectionData while resolving Azure descriptor',
+                context: AzureReposService.name,
+                serviceName: 'AzureReposService getCurrentUser',
+                error,
+                metadata: { orgName },
+            });
+        }
+
+        if (profile?.id) {
+            try {
+                const { data } = await instance.get(
+                    `/_apis/graph/descriptors/${profile.id}?api-version=7.1-preview.1`,
+                );
+                return data?.value;
+            } catch (error) {
+                this.logger.warn({
+                    message:
+                        'Failed to map Azure storage key to descriptor for current user',
+                    context: AzureReposService.name,
+                    serviceName: 'AzureReposService getCurrentUser',
+                    error,
+                    metadata: { orgName },
+                });
+            }
+        }
+
+        return undefined;
     }
 
     async createWebhook(
