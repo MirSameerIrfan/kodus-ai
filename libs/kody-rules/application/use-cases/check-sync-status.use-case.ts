@@ -32,14 +32,14 @@ import {
 import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import { KodyLearningStatus } from '@libs/organization/domain/parameters/types/configValue.type';
 import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { SendRulesNotificationUseCase } from './send-rules-notification.use-case';
 import { REQUEST } from '@nestjs/core';
 import {
     ICodeRepository,
     CodeReviewParameter,
     RepositoryCodeReviewConfig,
-} from '@libs/core/domain/types/general/codeReviewConfig.type';
+} from '@libs/core/infrastructure/config/types/general/codeReviewConfig.type';
 
 @Injectable()
 export class CheckSyncStatusUseCase {

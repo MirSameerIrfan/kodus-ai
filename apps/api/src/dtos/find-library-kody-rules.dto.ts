@@ -1,6 +1,6 @@
 import { IsString, IsOptional, IsArray } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { KodyRuleFilters } from '@libs/core/domain/types/kodyRules.type';
+import { KodyRuleFilters } from '@libs/core/infrastructure/config/types/kodyRules.type';
 import { ProgrammingLanguage } from '@libs/core/domain/enums/programming-language.enum';
 import { PaginationDto } from '@libs/core/domain/dtos/pagination.dto';
 

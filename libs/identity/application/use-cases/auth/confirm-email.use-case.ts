@@ -1,4 +1,4 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import {
     Inject,
     Injectable,
@@ -13,7 +13,7 @@ import {
     IUsersService,
     USER_SERVICE_TOKEN,
 } from '@libs/identity/domain/user/contracts/user.service.contract';
-import { STATUS } from '@libs/core/domain/types/database/status.type';
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 
 interface DecodedPayload {
@@ -27,7 +27,7 @@ export class ConfirmEmailUseCase implements IUseCase {
         @Inject(AUTH_SERVICE_TOKEN)
         private readonly authService: IAuthService,
         @Inject(USER_SERVICE_TOKEN)
-        private readonly usersService: IUsersService
+        private readonly usersService: IUsersService,
     ) {}
 
     async execute(token: string): Promise<{ message: string }> {

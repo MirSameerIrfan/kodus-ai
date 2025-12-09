@@ -15,7 +15,7 @@ import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
 } from '@libs/core/infrastructure/repositories/mappers';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { createNestedConditions } from '@libs/core/infrastructure/repositories/model/filters';
 
 @Injectable()

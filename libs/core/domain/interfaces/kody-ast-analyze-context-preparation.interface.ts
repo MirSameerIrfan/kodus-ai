@@ -6,7 +6,7 @@
 import {
     AIAnalysisResult,
     AnalysisContext,
-} from '@libs/core/domain/types/general/codeReview.type';
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
 
 export const KODY_AST_ANALYZE_CONTEXT_PREPARATION_TOKEN = Symbol(
     'KodyASTAnalyzeContextPreparation',

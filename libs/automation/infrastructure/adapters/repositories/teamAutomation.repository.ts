@@ -11,7 +11,7 @@ import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
 } from '@libs/core/infrastructure/repositories/mappers';
-import { STATUS } from '@libs/core/domain/types/database/status.type';
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
 import { ITeamAutomationRepository } from '@libs/automation/domain/teamAutomation/contracts/team-automation.repository';
 import { TeamAutomationEntity } from '@libs/automation/domain/teamAutomation/entities/team-automation.entity';
 import { createNestedConditions } from '@libs/core/infrastructure/repositories/model/filters';

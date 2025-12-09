@@ -5,7 +5,7 @@ import { Model } from 'mongoose';
 import { IssuesModel } from './schemas/issues.model';
 import { IIssue } from '@libs/issues/domain/interfaces/issues.interface';
 import { IssuesEntity } from '@libs/issues/domain/entities/issues.entity';
-import { IssueStatus } from '@libs/core/domain/types/general/issues.type';
+import { IssueStatus } from '@libs/core/infrastructure/config/types/general/issues.type';
 import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,

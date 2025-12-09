@@ -3,7 +3,7 @@ import {
     KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,
 } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
-import { BucketInfo } from '@libs/core/domain/types/kodyRules.type';
+import { BucketInfo } from '@libs/core/infrastructure/config/types/kodyRules.type';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

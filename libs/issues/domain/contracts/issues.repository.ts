@@ -1,4 +1,4 @@
-import { IssueStatus } from '@libs/core/domain/types/general/issues.type';
+import { IssueStatus } from '@libs/core/infrastructure/config/types/general/issues.type';
 import { IssuesEntity } from '../entities/issues.entity';
 import { IIssue } from '../interfaces/issues.interface';
 import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';

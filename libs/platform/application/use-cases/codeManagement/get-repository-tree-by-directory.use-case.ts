@@ -1,7 +1,7 @@
 import { createLogger } from '@kodus/flow';
 
 import { Inject, Injectable } from '@nestjs/common';
-import { TreeItem } from '@libs/core/domain/types/general/tree.type';
+import { TreeItem } from '@libs/core/infrastructure/config/types/general/tree.type';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { CacheService } from '@libs/core/cache/cache.service';
 

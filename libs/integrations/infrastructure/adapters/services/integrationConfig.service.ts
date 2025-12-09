@@ -1,4 +1,4 @@
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 
 import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';

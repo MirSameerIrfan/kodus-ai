@@ -3,7 +3,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
 import { REQUEST } from '@nestjs/core';
-import { ActionType } from '@libs/core/domain/types/general/codeReviewSettingsLog.type';
+import { ActionType } from '@libs/core/infrastructure/config/types/general/codeReviewSettingsLog.type';
 import { INTEGRATION_SERVICE_TOKEN } from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
 import { IntegrationService } from '@libs/integrations/infrastructure/adapters/services/integration.service';
 import { AUTH_INTEGRATION_SERVICE_TOKEN } from '@libs/integrations/domain/authIntegrations/contracts/auth-integration.service.contracts';

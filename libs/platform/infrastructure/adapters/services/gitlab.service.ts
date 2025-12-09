@@ -42,8 +42,8 @@ import {
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
 import { CacheService } from '@libs/core/cache/cache.service';
-import { MCPManagerService } from '@libs/mcp-server/infrastructure/services/mcp-manager.service';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { MCPManagerService } from '@libs/core/mcp-server/infrastructure/services/mcp-manager.service';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
     PullRequest,
     PullRequestAuthor,
@@ -56,7 +56,7 @@ import { GitlabAuthDetail } from '@libs/integrations/domain/authIntegrations/typ
 import { AuthMode } from '@libs/platform/domain/platformIntegrations/enums/codeManagement/authMode.enum';
 import { decrypt, encrypt } from '@libs/core/utils/crypto';
 import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
-import { Commit } from '@libs/core/domain/types/general/commit.type';
+import { Commit } from '@libs/core/infrastructure/config/types/general/commit.type';
 import { CodeManagementConnectionStatus } from '@libs/core/utils/decorators/validate-code-management-integration.decorator';
 import { IntegrationEntity } from '@libs/integrations/domain/integrations/entities/integration.entity';
 import { safelyParseMessageContent } from '@libs/core/utils/safelyParseMessageContent';
@@ -66,7 +66,7 @@ import { getLabelShield } from '@libs/core/utils/codeManagement/labels';
 import {
     Repository,
     ReviewComment,
-} from '@libs/core/domain/types/general/codeReview.type';
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import {
     getTranslationsForLanguageByCategory,
     TranslationsCategory,
@@ -83,7 +83,7 @@ import {
     isFileMatchingGlob,
     isFileMatchingGlobCaseInsensitive,
 } from '@libs/core/utils/glob-utils';
-import { TreeItem } from '@libs/core/domain/types/general/tree.type';
+import { TreeItem } from '@libs/core/infrastructure/config/types/general/tree.type';
 
 @Injectable()
 @IntegrationServiceDecorator(PlatformType.GITLAB, 'codeManagement')

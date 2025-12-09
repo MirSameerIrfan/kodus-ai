@@ -1,7 +1,7 @@
 import {
     PullRequestMessageStatus,
     PullRequestMessageType,
-} from '@libs/core/domain/types/general/pullRequestMessages.type';
+} from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
 import { IsObject, IsOptional, IsString } from 'class-validator';
 
 export class PullRequestMessagesDto {

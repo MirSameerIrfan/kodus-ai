@@ -11,7 +11,7 @@ import {
 import { ProviderService } from '@libs/platform/infrastructure/services/provider.service';
 import { OrganizationParametersKey } from '@libs/core/domain/enums/organization-parameters-key.enum';
 
-import { UserRequest } from '@libs/core/domain/types/http/user-request.type';
+import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
 import { DeleteByokConfigUseCase } from '@libs/organization/application/use-cases/delete-byok-config.use-case';
 import {
     GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN,

@@ -5,8 +5,8 @@ import {
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
 } from '@libs/code-review/domain/pr-messages/contracts/pullRequestMessages.service.contract';
 import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
-import { ConfigLevel } from '@libs/core/domain/types/general/pullRequestMessages.type';
-import { ActionType } from '@libs/core/domain/types/general/codeReviewSettingsLog.type';
+import { ConfigLevel } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
+import { ActionType } from '@libs/core/infrastructure/config/types/general/codeReviewSettingsLog.type';
 import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
     ICodeReviewSettingsLogService,

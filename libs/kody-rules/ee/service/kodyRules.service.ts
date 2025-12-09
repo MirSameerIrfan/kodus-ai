@@ -23,14 +23,14 @@ import {
 } from '@nestjs/common';
 import { CreateKodyRuleDto } from '@libs/common/dtos/create-kody-rule.dto';
 import { v4 } from 'uuid';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import * as libraryKodyRules from './data/library-kody-rules.json';
 import * as bucketsData from './data/buckets.json';
 import {
     KodyRuleFilters,
     LibraryKodyRule,
     BucketInfo,
-} from '@libs/core/domain/types/kodyRules.type';
+} from '@libs/core/infrastructure/config/types/kodyRules.type';
 import { ProgrammingLanguage } from '@libs/core/domain/enums/programming-language.enum';
 import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
@@ -39,7 +39,7 @@ import {
 import {
     ActionType,
     UserInfo,
-} from '@libs/core/domain/types/general/codeReviewSettingsLog.type';
+} from '@libs/core/infrastructure/config/types/general/codeReviewSettingsLog.type';
 import {
     IRuleLikeService,
     RULE_LIKE_SERVICE_TOKEN,

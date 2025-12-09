@@ -1,5 +1,5 @@
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
-import { UserRequest } from '@libs/core/domain/types/http/user-request.type';
+import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
 import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
 import {
     Action,

@@ -1,7 +1,7 @@
 import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
 import { IIntegrationConfigRepository } from './integration-config.repository.contracts';
 import { IntegrationConfigEntity } from '../entities/integration-config.entity';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 
 export const INTEGRATION_CONFIG_SERVICE_TOKEN = Symbol(
     'IntegrationConfigService',

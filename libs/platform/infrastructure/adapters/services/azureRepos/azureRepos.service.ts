@@ -26,8 +26,8 @@ import { createTwoFilesPatch } from 'diff';
 import { v4 } from 'uuid';
 import { AzureReposRequestHelper } from './azure-repos-request-helper';
 import { ConfigService } from '@nestjs/config';
-import { MCPManagerService } from '@libs/mcp-server/infrastructure/services/mcp-manager.service';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { MCPManagerService } from '@libs/core/mcp-server/infrastructure/services/mcp-manager.service';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
     OneSentenceSummaryItem,
     PullRequest,
@@ -43,7 +43,7 @@ import {
     CommentResult,
     FileChange,
     Repository,
-} from '@libs/core/domain/types/general/codeReview.type';
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import {
     AzurePullRequestVote,
     AzureRepoCommit,
@@ -66,13 +66,13 @@ import {
     AzurePRStatus,
     AzureRepoPullRequest,
 } from '@libs/platform/domain/azure/entities/azureRepoPullRequest.type';
-import { Commit } from '@libs/core/domain/types/general/commit.type';
+import { Commit } from '@libs/core/infrastructure/config/types/general/commit.type';
 import { CodeManagementConnectionStatus } from '@libs/core/utils/decorators/validate-code-management-integration.decorator';
 import { generateWebhookToken } from '@libs/core/utils/webhooks/webhookTokenCrypto';
 import { getSeverityLevelShield } from '@libs/core/utils/codeManagement/severityLevel';
 import { getCodeReviewBadge } from '@libs/core/utils/codeManagement/codeReviewBadge';
 import { getLabelShield } from '@libs/core/utils/codeManagement/labels';
-import { TreeItem } from '@libs/core/domain/types/general/tree.type';
+import { TreeItem } from '@libs/core/infrastructure/config/types/general/tree.type';
 import { RepositoryFile } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
 import {
     isFileMatchingGlob,

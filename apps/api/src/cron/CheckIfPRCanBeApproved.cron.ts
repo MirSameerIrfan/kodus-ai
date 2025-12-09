@@ -11,14 +11,14 @@ import {
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 import { IntegrationStatusFilter } from '@libs/organization/domain/team/interfaces/team.interface';
-import { STATUS } from '@libs/core/domain/types/database/status.type';
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
 import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
 } from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
 import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 
 import { PullRequestState } from '@libs/core/domain/enums/pullRequestState.enum';
@@ -46,8 +46,8 @@ import {
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
 } from '@libs/code-review/domain/pr-messages/contracts/pullRequestMessages.service.contract';
 import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
-import { CodeReviewConfig } from '@libs/core/domain/types/general/codeReview.type';
-import { ConfigLevel } from '@libs/core/domain/types/general/pullRequestMessages.type';
+import { CodeReviewConfig } from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { ConfigLevel } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
 import { IPullRequestWithDeliveredSuggestions } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 
 const API_CRON_CHECK_IF_PR_SHOULD_BE_APPROVED =

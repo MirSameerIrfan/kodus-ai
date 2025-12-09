@@ -1,4 +1,4 @@
-import { UserRequest } from '@libs/core/domain/types/http/user-request.type';
+import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
 import { BackfillHistoricalPRsUseCase } from '@libs/code-review/application/use-cases/pull-requests/backfill-historical-prs.use-case';
 import { GetEnrichedPullRequestsUseCase } from '@libs/code-review/application/use-cases/pull-requests/get-enriched-pull-requests.use-case';
 import {

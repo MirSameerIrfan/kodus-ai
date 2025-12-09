@@ -2,8 +2,8 @@ import {
     CodeReviewConfig,
     FileChange,
     KodusConfigFile,
-} from '@libs/core/domain/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 
 export const CODE_BASE_CONFIG_SERVICE_TOKEN = Symbol('CodeBaseConfigService');
 

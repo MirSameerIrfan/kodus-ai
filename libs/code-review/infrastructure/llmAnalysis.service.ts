@@ -6,8 +6,8 @@ import {
     FileChangeContext,
     ISafeguardResponse,
     ReviewModeResponse,
-} from '@libs/core/domain/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 

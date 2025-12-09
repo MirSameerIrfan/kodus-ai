@@ -10,7 +10,7 @@ import {
     handlePatchDeletions,
     convertToHunksWithLinesNumbers,
 } from '@libs/core/utils/patch';
-import { FileChange } from '@libs/core/domain/types/general/codeReview.type';
+import { FileChange } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import {
     AutomationMessage,
     AutomationStatus,

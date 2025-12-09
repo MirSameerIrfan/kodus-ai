@@ -1,4 +1,4 @@
-import { CodeReviewParameter } from '@libs/core/domain/types/general/codeReviewConfig.type';
+import { CodeReviewParameter } from '@libs/core/infrastructure/config/types/general/codeReviewConfig.type';
 import { LanguageValue } from '@libs/core/domain/enums/language-parameter.enum';
 import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 

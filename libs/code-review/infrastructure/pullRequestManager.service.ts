@@ -1,7 +1,7 @@
 import { createLogger } from '@kodus/flow';
-import { FileChange } from '@libs/core/domain/types/general/codeReview.type';
-import { Commit } from '@libs/core/domain/types/general/commit.type';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { FileChange } from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { Commit } from '@libs/core/infrastructure/config/types/general/commit.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { PullRequestAuthor } from '@libs/platform/domain/platformIntegrations/types/codeManagement/pullRequests.type';
 import { CacheService } from '@libs/core/utils/cache/cache.service';
 import { isFileMatchingGlob } from '@libs/core/utils/glob-utils';

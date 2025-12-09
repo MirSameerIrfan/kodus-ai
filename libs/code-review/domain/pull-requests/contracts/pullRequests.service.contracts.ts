@@ -9,7 +9,7 @@ import {
     ISuggestionByPR,
 } from '../interfaces/pullRequests.interface';
 import { IPullRequestsRepository } from './pullRequests.repository';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 
 export const PULL_REQUESTS_SERVICE_TOKEN = Symbol('PullRequestsService');
 

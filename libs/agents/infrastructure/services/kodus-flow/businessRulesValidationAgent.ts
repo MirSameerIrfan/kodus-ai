@@ -8,9 +8,9 @@ import {
     LLMAdapter,
     createLogger,
 } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { ConfigService } from '@nestjs/config';
-import { DatabaseConnection } from '@libs/core/domain/types';
+import { DatabaseConnection } from '@libs/core/infrastructure/config/types';
 import { LLMModelProvider, PromptRunnerService } from '@kodus/kodus-common/llm';
 import { SDKOrchestrator } from '@kodus/flow/dist/orchestration';
 import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
@@ -21,7 +21,7 @@ import {
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { Inject } from '@nestjs/common';
 import { BaseAgentProvider } from './base-agent.provider';
-import { MCPManagerService } from '@libs/mcp-server/infrastructure/services/mcp-manager.service';
+import { MCPManagerService } from '@libs/core/mcp-server/infrastructure/services/mcp-manager.service';
 import { PermissionValidationService } from '@libs/core/infrastructure/services/permissionValidation.service';
 
 export interface ValidationResult {

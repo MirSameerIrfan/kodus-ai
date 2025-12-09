@@ -12,7 +12,7 @@ import {
     IPromptReferenceSyncError,
     PromptReferenceErrorType,
 } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
-import type { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import type { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
 import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';

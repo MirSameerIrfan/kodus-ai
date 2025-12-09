@@ -9,7 +9,7 @@ import { KODY_RULES_SERVICE_TOKEN } from '@libs/kody-rules/domain/contracts/kody
 import { IKodyRulesService } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
 import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import { KodyRulesStatus } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
-import { ConfigLevel } from '@libs/core/domain/types/general/pullRequestMessages.type';
+import { ConfigLevel } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
 
 @Injectable()
 export class DeleteIntegrationAndRepositoriesUseCase {

@@ -20,7 +20,7 @@ import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
 import {
     CodeSuggestion,
     Repository,
-} from '@libs/core/domain/types/general/codeReview.type';
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
 
 import { kmeans } from 'ml-kmeans';
 import { FeedbackType } from '@libs/code-review/ee/fine-tuning/domain/enums/feedbackType.enum';

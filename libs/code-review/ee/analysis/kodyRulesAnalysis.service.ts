@@ -9,8 +9,8 @@ import {
     ReviewOptions,
     SuggestionControlConfig,
     CodeReviewConfig,
-} from '@libs/core/domain/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { tryParseJSONObject } from '@libs/core/utils/transforms/json';
 import {
     KodyRulesClassifierSchema,

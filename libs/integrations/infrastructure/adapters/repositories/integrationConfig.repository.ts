@@ -17,8 +17,8 @@ import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
 } from '@libs/core/infrastructure/repositories/mappers';
-import { STATUS } from '@libs/core/domain/types/database/status.type';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 
 @Injectable()
 export class IntegrationConfigRepository implements IIntegrationConfigRepository {

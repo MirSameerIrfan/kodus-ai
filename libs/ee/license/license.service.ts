@@ -1,6 +1,6 @@
 import { createLogger } from '@kodus/flow';
 import { AxiosLicenseService } from '@libs/core/infrastructure/config/axios/microservices/license.axios';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
     ILicenseService,
     OrganizationLicenseValidationResult,

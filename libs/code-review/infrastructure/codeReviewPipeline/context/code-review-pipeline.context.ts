@@ -6,8 +6,8 @@ import {
     CommentResult,
     FileChange,
     Repository,
-} from '@libs/core/domain/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { AutomationExecutionEntity } from '@libs/automation/domain/entities/automation-execution.entity';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';

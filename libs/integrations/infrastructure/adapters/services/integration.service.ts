@@ -3,7 +3,7 @@ import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { IIntegrationService } from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
 import {
     IIntegrationRepository,

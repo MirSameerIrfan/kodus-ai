@@ -1,6 +1,6 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 import { RULE_FILE_PATTERNS } from '@libs/core/utils/kody-rules/file-patterns';
 import { isFileMatchingGlob } from '@libs/core/utils/glob-utils';
@@ -43,7 +43,7 @@ import {
     GET_ADDITIONAL_INFO_HELPER_TOKEN,
     IGetAdditionalInfoHelper,
 } from '@libs/core/domain/contracts/getAdditionalInfo.helper.contract';
-import type { UserInfo } from '@libs/core/domain/types/general/codeReviewSettingsLog.type';
+import type { UserInfo } from '@libs/core/infrastructure/config/types/general/codeReviewSettingsLog.type';
 
 type SyncTarget = {
     organizationAndTeamData: OrganizationAndTeamData;

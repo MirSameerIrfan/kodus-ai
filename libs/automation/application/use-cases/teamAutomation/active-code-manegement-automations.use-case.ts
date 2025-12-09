@@ -1,27 +1,27 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+import { AutomationLevel } from '@libs/core/domain/enums/automations-level.enum';
+import { UpdateOrCreateTeamAutomationUseCase } from './updateOrCreateTeamAutomationUseCase';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import {
     AUTOMATION_SERVICE_TOKEN,
     IAutomationService,
-} from '@libs/automation/domain/contracts/automation.service';
-import {
-    IIntegrationConfigService,
-    INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
-import { REQUEST } from '@nestjs/core';
+} from '@libs/automation/domain/automation/contracts/automation.service';
 import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
-} from '@libs/integrations/domain/contracts/integration.service.contracts';
-import { AutomationLevel } from '@libs/core/domain/enums/automations-level.enum';
-import { UpdateOrCreateTeamAutomationUseCase } from './updateOrCreateTeamAutomationUseCase';
+} from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
+import {
+    IIntegrationConfigService,
+    INTEGRATION_CONFIG_SERVICE_TOKEN,
+} from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
 import {
     AutomationCategoryMapping,
-    AutomationType,
     AutomationTypeCategory,
-} from '@libs/automation/domain/enums/automation-type';
+} from '@libs/automation/domain/automation/enum/automation-type';
 
 @Injectable()
-export class ActiveCodeManagementTeamAutomationsUseCase {
+export class ActiveCodeManagementTeamAutomationsUseCase implements IUseCase {
     constructor(
         private readonly updateOrCreateAutomationUseCase: UpdateOrCreateTeamAutomationUseCase,
 
@@ -40,12 +40,7 @@ export class ActiveCodeManagementTeamAutomationsUseCase {
         },
     ) {}
 
-    async execute(teamId: string, notify: boolean = true) {
-        const organizationAndTeamData = {
-            organizationId: this.request.user?.organization?.uuid,
-            teamId,
-        };
-
+    async execute(teamId: string) {
         const codeManagementAutomations =
             AutomationCategoryMapping[AutomationTypeCategory.CODE_MANAGEMENT];
 
@@ -67,10 +62,7 @@ export class ActiveCodeManagementTeamAutomationsUseCase {
             })),
         };
 
-        await this.updateOrCreateAutomationUseCase.execute(
-            teamAutomations,
-            notify,
-        );
+        await this.updateOrCreateAutomationUseCase.execute(teamAutomations);
 
         return teamAutomations.automations;
     }

@@ -1,11 +1,11 @@
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { DryRunEntity } from '../entities/dryRun.entity';
 import { DryRunStatus, IDryRun } from '../interfaces/dryRun.interface';
 import { IDryRunRepository } from './dryRun.repository.contract';
 import {
     CodeReviewConfig,
     FileChange,
-} from '@libs/core/domain/types/general/codeReview.type';
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import {
     IFile,
     IPullRequests,

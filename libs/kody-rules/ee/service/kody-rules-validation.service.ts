@@ -3,7 +3,7 @@
  * Kodus Tech. All rights reserved.
  */
 
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
     IKodyRule,
     KodyRulesStatus,

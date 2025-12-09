@@ -4,8 +4,8 @@ import { PlatformType } from '@libs/core/domain/enums';
 import {
     CodeSuggestion,
     Comment,
-} from '@libs/core/domain/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
 import { IntegrationServiceDecorator } from '@libs/core/utils/decorators/integration-service.decorator';
 import {

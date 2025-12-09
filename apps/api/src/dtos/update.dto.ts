@@ -1,6 +1,6 @@
 import { IsEmail, IsEnum, IsOptional, IsString } from 'class-validator';
 import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { STATUS } from '@libs/core/domain/types/database/status.type';
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
 
 export class UpdateUserDto {
     @IsString()

@@ -4,7 +4,7 @@ import {
     IPullRequestMessagesService,
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
 } from '@libs/code-review/domain/pr-messages/contracts/pullRequestMessages.service.contract';
-import { ConfigLevel } from '@libs/core/domain/types/general/pullRequestMessages.type';
+import { ConfigLevel } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 
 export interface DeletePullRequestMessagesParams {

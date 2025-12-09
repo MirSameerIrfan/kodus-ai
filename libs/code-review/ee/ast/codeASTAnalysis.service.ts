@@ -5,8 +5,8 @@ import {
     CodeSuggestion,
     Repository,
     ReviewModeResponse,
-} from '@libs/core/domain/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { IASTAnalysisService } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
 import { LLMResponseProcessor } from '@libs/code-review/infrastructure/utils/transforms/llmResponseProcessor.transform';
 import type { ContextAugmentationsMap } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';

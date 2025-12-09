@@ -8,18 +8,18 @@ import {
     EnhancedJSONParser,
     createLogger,
 } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { ConfigService } from '@nestjs/config';
-import { DatabaseConnection } from '@libs/core/domain/types';
+import { DatabaseConnection } from '@libs/core/infrastructure/config/types';
 import { LLMModelProvider, PromptRunnerService } from '@kodus/kodus-common/llm';
 import { SDKOrchestrator } from '@kodus/flow/dist/orchestration';
 import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
-import { MCPManagerService } from '@libs/mcp-server/infrastructure/services/mcp-manager.service';
+import { MCPManagerService } from '@libs/core/mcp-server/infrastructure/services/mcp-manager.service';
 import { BaseAgentProvider } from './base-agent.provider';
 import type {
     CodeReviewConfig,
     FileChange,
-} from '@libs/core/domain/types/general/codeReview.type';
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import type { ContextEvidence } from '@context-os-core/interfaces';
 import { IKodyRule } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import { convertTiptapJSONToText } from '@libs/core/utils/tiptap-json';

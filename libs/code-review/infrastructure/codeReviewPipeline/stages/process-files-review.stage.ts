@@ -17,10 +17,10 @@ import {
     CodeSuggestion,
     FileChange,
     IFinalAnalysisResult,
-} from '@libs/core/domain/types/general/codeReview.type';
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { benchmark } from '@libs/core/utils/benchmark.util';
 import { createOptimizedBatches } from '@libs/core/utils/batch.helper';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 
 import {
     IPullRequestsService,

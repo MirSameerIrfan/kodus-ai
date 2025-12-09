@@ -6,8 +6,8 @@ import {
     ICommentManagerService,
 } from '@libs/code-review/domain/contracts/CommentManagerService.contract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
-import { PullRequestMessageStatus } from '@libs/core/domain/types/general/pullRequestMessages.type';
-import { BehaviourForNewCommits } from '@libs/core/domain/types/general/codeReview.type';
+import { PullRequestMessageStatus } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
+import { BehaviourForNewCommits } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 
 @Injectable()
 export class UpdateCommentsAndGenerateSummaryStage extends BaseStage {

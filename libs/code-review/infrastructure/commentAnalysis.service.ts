@@ -40,7 +40,7 @@ import {
     BehaviourForExistingDescription,
     CodeReviewConfig,
     ReviewOptions,
-} from '@libs/core/domain/types/general/codeReview.type';
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
 import * as filteredLibraryKodyRules from './data/filtered-rules.json';
 import { KodyRuleSeverity } from '@libs/common/dtos/create-kody-rule.dto';
@@ -50,11 +50,11 @@ import {
 } from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
 import { v4 } from 'uuid';
 import { SUPPORTED_LANGUAGES } from '@libs/code-review/domain/contracts/SupportedLanguages';
-import { LibraryKodyRule } from '@libs/core/domain/types/kodyRules.type';
+import { LibraryKodyRule } from '@libs/core/infrastructure/config/types/kodyRules.type';
 import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
 import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
 import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 
 @Injectable()
 export class CommentAnalysisService {

@@ -1,4 +1,4 @@
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { ParametersEntity } from '../entities/parameters.entity';
 import { IParameters } from '../interfaces/parameters.interface';
 import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';

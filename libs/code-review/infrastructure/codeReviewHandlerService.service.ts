@@ -4,13 +4,13 @@ import { createLogger } from '@kodus/flow';
  * Kodus Tech. All rights reserved.
  */
 import { Injectable, Inject } from '@nestjs/common';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { CodeReviewPipelineContext } from './codeReviewPipeline/context/code-review-pipeline.context';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
 import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
 import { ConfigService } from '@nestjs/config';
-import { DatabaseConnection } from '@libs/core/domain/types';
+import { DatabaseConnection } from '@libs/core/infrastructure/config/types';
 import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
 import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 import {

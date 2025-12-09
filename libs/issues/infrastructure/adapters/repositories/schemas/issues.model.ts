@@ -1,4 +1,4 @@
-import { IssueStatus } from '@libs/core/domain/types/general/issues.type';
+import { IssueStatus } from '@libs/core/infrastructure/config/types/general/issues.type';
 import { CoreDocument } from '@libs/core/infrastructure/repositories/model/mongodb';
 import { LabelType } from '@libs/core/utils/codeManagement/labels';
 import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';

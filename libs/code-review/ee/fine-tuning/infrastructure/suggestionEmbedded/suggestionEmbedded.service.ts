@@ -5,7 +5,7 @@ import { ISuggestionEmbedded } from '@libs/code-review/ee/fine-tuning/domain/sug
 import { SuggestionEmbeddedEntity } from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/entities/suggestionEmbedded.entity';
 import { ISuggestionToEmbed } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import { FindManyOptions } from 'typeorm';
-import { CodeSuggestion } from '@libs/core/domain/types/general/codeReview.type';
+import { CodeSuggestion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { KodyFineTuningService } from '../kodyFineTuning.service';
 import { getOpenAIEmbedding } from '@libs/core/utils/langchainCommon/document';
 import { FeedbackType } from '@libs/code-review/ee/fine-tuning/domain/enums/feedbackType.enum';

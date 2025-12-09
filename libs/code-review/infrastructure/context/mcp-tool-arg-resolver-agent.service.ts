@@ -1,5 +1,5 @@
-import { DatabaseConnection } from '@libs/core/domain/types';
-import type { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { DatabaseConnection } from '@libs/core/infrastructure/config/types';
+import type { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
 import type {
     ContextDependency,

@@ -8,7 +8,7 @@ import {
     AnalysisContext,
     FileChange,
     ReviewModeResponse,
-} from '@libs/core/domain/types/general/codeReview.type';
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
 import {
     IFileReviewContextPreparation,
@@ -27,9 +27,7 @@ import { Injectable } from '@nestjs/common';
  * and allow subclasses to customize specific behaviors
  */
 @Injectable()
-export abstract class BaseFileReviewContextPreparation
-    implements IFileReviewContextPreparation
-{
+export abstract class BaseFileReviewContextPreparation implements IFileReviewContextPreparation {
     protected readonly logger = createLogger(
         BaseFileReviewContextPreparation.name,
     );

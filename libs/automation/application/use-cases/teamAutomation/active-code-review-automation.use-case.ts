@@ -1,10 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
-import {
-    AutomationType,
-} from '@libs/automation/domain/enums/automation-type';
 import { REQUEST } from '@nestjs/core';
 import { UpdateTeamAutomationStatusUseCase } from './updateTeamAutomationStatusUseCase';
-import { ITeamAutomationService, TEAM_AUTOMATION_SERVICE_TOKEN } from '@libs/automation/domain/contracts/team-automation.service';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import { AutomationType } from '@libs/automation/domain/automation/enum/automation-type';
+import {
+    ITeamAutomationService,
+    TEAM_AUTOMATION_SERVICE_TOKEN,
+} from '@libs/automation/domain/teamAutomation/contracts/team-automation.service';
 
 interface IAutomation {
     automationUuid: string;
@@ -13,7 +15,7 @@ interface IAutomation {
 }
 
 @Injectable()
-export class ActiveCodeReviewAutomationUseCase {
+export class ActiveCodeReviewAutomationUseCase implements IUseCase {
     constructor(
         private readonly updateTeamAutomationStatusUseCase: UpdateTeamAutomationStatusUseCase,
 
@@ -24,18 +26,26 @@ export class ActiveCodeReviewAutomationUseCase {
         private readonly request: Request & {
             user: { organization: { uuid: string } };
         },
-    ) { }
+    ) {}
 
-    async execute(teamId: string, codeManagementTeamAutomations: IAutomation[]) {
-        const codeReviewAutomation = codeManagementTeamAutomations.find((automation) =>
-            automation.automationType === AutomationType.AUTOMATION_CODE_REVIEW,
+    async execute(
+        teamId: string,
+        codeManagementTeamAutomations: IAutomation[],
+    ) {
+        const codeReviewAutomation = codeManagementTeamAutomations.find(
+            (automation) =>
+                automation.automationType ===
+                AutomationType.AUTOMATION_CODE_REVIEW,
         );
 
         const [teamAutomation] = await this.teamAutomationService.find({
             team: { uuid: teamId },
-            automation: { uuid: codeReviewAutomation.automationUuid }
-        })
+            automation: { uuid: codeReviewAutomation.automationUuid },
+        });
 
-        await this.updateTeamAutomationStatusUseCase.execute(teamAutomation.uuid, true);
+        await this.updateTeamAutomationStatusUseCase.execute(
+            teamAutomation.uuid,
+            true,
+        );
     }
 }

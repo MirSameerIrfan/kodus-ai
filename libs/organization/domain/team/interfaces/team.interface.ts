@@ -1,4 +1,4 @@
-import { STATUS } from '@libs/core/domain/types/database/status.type';
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
 import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 

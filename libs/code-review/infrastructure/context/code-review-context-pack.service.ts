@@ -5,12 +5,12 @@ import {
     createLogger,
 } from '@kodus/flow';
 import { createHash } from 'crypto';
-import type { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import type { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import type {
     CodeReviewConfig,
     Repository,
     AnalysisContext,
-} from '@libs/core/domain/types/general/codeReview.type';
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import type {
     ContextDependency,
     ContextLayer,
@@ -48,7 +48,7 @@ import { formatMCPOutput } from './mcp-output-formatter';
 import {
     MCPToolMetadata,
     MCPToolMetadataService,
-} from '@libs/mcp-server/infrastructure/services/mcp-tool-metadata.service';
+} from '@libs/core/mcp-server/infrastructure/services/mcp-tool-metadata.service';
 
 export interface ContextAugmentationOutput {
     provider?: string;

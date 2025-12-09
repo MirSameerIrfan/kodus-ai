@@ -1,5 +1,5 @@
 import { createLogger } from '@kodus/flow';
-import { ActionType } from '@libs/core/domain/types/general/codeReviewSettingsLog.type';
+import { ActionType } from '@libs/core/infrastructure/config/types/general/codeReviewSettingsLog.type';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';

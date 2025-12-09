@@ -4,7 +4,7 @@ import {
     KODY_RULES_SERVICE_TOKEN,
 } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
 import { REQUEST } from '@nestjs/core';
-import { UserRequest } from '@libs/core/domain/types/http/user-request.type';
+import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
 
 @Injectable()
 export class GetRulesLimitStatusUseCase {

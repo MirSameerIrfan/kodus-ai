@@ -1,4 +1,4 @@
-import { JWT } from '@libs/core/domain/types/jwt/jwt';
+import { JWT } from '@libs/core/infrastructure/config/types/jwt/jwt';
 import { registerAs } from '@nestjs/config';
 import type { StringValue } from 'ms';
 

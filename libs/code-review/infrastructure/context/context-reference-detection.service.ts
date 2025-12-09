@@ -1,4 +1,4 @@
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
     CONTEXT_REFERENCE_SERVICE_TOKEN,
     IContextReferenceService,
@@ -15,7 +15,7 @@ import {
 import {
     MCPToolMetadata,
     MCPToolMetadataService,
-} from '@libs/mcp-server/infrastructure/services/mcp-tool-metadata.service';
+} from '@libs/core/mcp-server/infrastructure/services/mcp-tool-metadata.service';
 import type {
     ContextConsumerKind,
     ContextDependency,

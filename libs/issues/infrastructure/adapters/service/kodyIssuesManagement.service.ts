@@ -30,8 +30,8 @@ import {
     IRepresentativeSuggestion,
 } from '@libs/issues/domain/interfaces/kodyIssuesManagement.interface';
 import { ParametersKey } from '@libs/core/domain/enums';
-import { IssueStatus } from '@libs/core/domain/types/general/issues.type';
-import { CodeSuggestion } from '@libs/core/domain/types/general/codeReview.type';
+import { IssueStatus } from '@libs/core/infrastructure/config/types/general/issues.type';
+import { CodeSuggestion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { LabelType } from '@libs/core/utils/codeManagement/labels';
 import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
 import { ImplementationStatus } from '@libs/code-review/domain/pull-requests/enums/implementationStatus.enum';

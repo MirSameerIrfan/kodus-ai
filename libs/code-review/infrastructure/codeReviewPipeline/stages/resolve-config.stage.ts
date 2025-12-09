@@ -19,7 +19,7 @@ import {
     IDryRunService,
 } from '@libs/dry-run/domain/contracts/dryRun.service.contract';
 import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
-import { ConfigLevel } from '@libs/core/domain/types/general/pullRequestMessages.type';
+import { ConfigLevel } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
 import {
     IPullRequestMessagesService,
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,

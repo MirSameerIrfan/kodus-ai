@@ -7,7 +7,7 @@ import {
 import mongoose from 'mongoose';
 import { ConnectionString } from 'connection-string';
 import { MongooseConnectionFactory } from './mongoose-connection.factory';
-import { DatabaseConnection } from '@libs/core/domain/types';
+import { DatabaseConnection } from '@libs/core/infrastructure/config/types';
 
 mongoose.set('debug', false);
 

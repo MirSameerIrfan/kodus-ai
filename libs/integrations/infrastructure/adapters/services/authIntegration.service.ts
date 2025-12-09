@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { IAuthIntegrationService } from '@libs/integrations/domain/authIntegrations/contracts/auth-integration.service.contracts';
 import {
     AUTH_INTEGRATION_REPOSITORY_TOKEN,

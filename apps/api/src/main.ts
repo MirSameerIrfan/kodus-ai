@@ -10,7 +10,7 @@ import helmet from 'helmet';
 import * as volleyball from 'volleyball';
 import * as bodyParser from 'body-parser';
 import { useContainer } from 'class-validator';
-import { HttpServerConfiguration } from '@libs/core/domain/types/http/http-server.type';
+import { HttpServerConfiguration } from '@libs/core/infrastructure/config/types/http/http-server.type';
 import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
 import { setupSentryAndOpenTelemetry } from '@libs/core/infrastructure/config/log/otel';
 import { ApiModule } from './api.module';

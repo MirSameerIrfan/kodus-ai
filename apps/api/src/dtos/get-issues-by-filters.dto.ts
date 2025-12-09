@@ -1,7 +1,7 @@
 import { IsOptional, IsString, IsNumber } from 'class-validator';
 import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
 import { LabelType } from '@libs/core/utils/codeManagement/labels';
-import { IssueStatus } from '@libs/core/domain/types/general/issues.type';
+import { IssueStatus } from '@libs/core/infrastructure/config/types/general/issues.type';
 
 export class GetIssuesByFiltersDto {
     @IsOptional()

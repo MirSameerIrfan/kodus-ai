@@ -7,7 +7,7 @@ import {
 } from '@libs/code-review/domain/contracts/CommentManagerService.contract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
-import { PullRequestMessageStatus } from '@libs/core/domain/types/general/pullRequestMessages.type';
+import { PullRequestMessageStatus } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
 
 @Injectable()
 export class InitialCommentStage extends BaseStage {

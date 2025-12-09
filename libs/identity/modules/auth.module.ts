@@ -1,5 +1,5 @@
 import { jwtConfigLoader } from '@libs/core/infrastructure/config/loaders/jwt.config.loader';
-import { JWT } from '@libs/core/domain/types/jwt/jwt';
+import { JWT } from '@libs/core/infrastructure/config/types/jwt/jwt';
 import { UseCases as AuthUseCases } from '@libs/identity/application/use-cases/auth';
 import { UseCases as SSOConfigUseCases } from '@libs/identity/application/use-cases/sso';
 import { AUTH_REPOSITORY_TOKEN } from '@libs/identity/domain/auth/contracts/auth.repository.contracts';

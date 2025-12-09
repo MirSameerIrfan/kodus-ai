@@ -1,6 +1,6 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import {
     IParametersService,
@@ -17,7 +17,7 @@ import {
     ReviewOptions,
     SuggestionControlConfig,
     SummaryConfig,
-} from '@libs/core/domain/types/general/codeReview.type';
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
@@ -51,15 +51,15 @@ import { OrganizationParametersKey } from '@libs/core/domain/enums/organization-
 import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 import { ICodeBaseConfigService } from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
 import { KodyRulesValidationService } from '@libs/kody-rules/infrastructure/services/kody-rules-validation.service';
-import { ReviewCadenceType } from '@libs/core/domain/types/general/codeReview.type';
-import { ConfigLevel } from '@libs/core/domain/types/general/pullRequestMessages.type';
+import { ReviewCadenceType } from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { ConfigLevel } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
 import {
     CodeReviewParameter,
     RepositoryCodeReviewConfig,
     GetKodusConfigFileResponse,
     CodeReviewParameterBaseConfig,
     DirectoryCodeReviewConfig,
-} from '@libs/core/domain/types/general/codeReviewConfig.type';
+} from '@libs/core/infrastructure/config/types/general/codeReviewConfig.type';
 import { deepMerge } from '@libs/core/utils/deep';
 
 @Injectable()

@@ -1,5 +1,5 @@
 import { registerAs } from '@nestjs/config';
-import { WorkflowQueueConfig } from '@libs/core/domain/types/environment/workflow-queue.type';
+import { WorkflowQueueConfig } from '@libs/core/infrastructure/config/types/environment/workflow-queue.type';
 
 export const WorkflowQueueLoader = registerAs(
     'workflowQueue',

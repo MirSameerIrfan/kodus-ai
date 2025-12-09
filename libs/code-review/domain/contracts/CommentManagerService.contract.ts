@@ -5,8 +5,8 @@ import {
     CommentResult,
     FileChange,
     SummaryConfig,
-} from '@libs/core/domain/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';

@@ -1,7 +1,7 @@
 import { Entity } from '@libs/core/domain/interfaces/entity';
 import { IUser } from '../interfaces/user.interface';
 
-import { STATUS } from '@libs/core/domain/types/database/status.type';
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
 import { Role } from '../../permissions/enums/permissions.enum';
 import { IPermissions } from '../../permissions/types/permissions.types';
 import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';

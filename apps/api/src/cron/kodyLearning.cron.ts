@@ -5,7 +5,7 @@ import {
     TEAM_SERVICE_TOKEN,
     ITeamService,
 } from '@libs/organization/domain/team/contracts/team.service.contract';
-import { STATUS } from '@libs/core/domain/types/database/status.type';
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
 import { IntegrationStatusFilter } from '@libs/organization/domain/team/interfaces/team.interface';
 import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 import {

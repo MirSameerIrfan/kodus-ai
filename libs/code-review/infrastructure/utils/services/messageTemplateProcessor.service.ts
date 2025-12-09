@@ -3,9 +3,9 @@ import { Injectable } from '@nestjs/common';
 import {
     FileChange,
     ReviewCadenceType,
-} from '@libs/core/domain/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
-import { CodeReviewConfig } from '@libs/core/domain/types/general/codeReview.type';
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { CodeReviewConfig } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { LanguageValue } from '@libs/core/domain/enums/language-parameter.enum';
 import {

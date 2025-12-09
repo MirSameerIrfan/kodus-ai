@@ -10,7 +10,7 @@ import * as volleyball from 'volleyball';
 import * as bodyParser from 'body-parser';
 import { WebhookHandlerModule } from './modules/webhook-handler.module';
 import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
-import { HttpServerConfiguration } from '@libs/core/domain/types';
+import { HttpServerConfiguration } from '@libs/core/infrastructure/config/types';
 import { environment } from '@libs/ee/shared/configs/environment';
 
 async function bootstrap() {

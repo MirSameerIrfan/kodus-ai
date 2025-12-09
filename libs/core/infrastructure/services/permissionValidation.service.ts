@@ -10,7 +10,7 @@ import {
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/organizationParameters/contracts/organizationParameters.service.contract';
 import { PinoLoggerService } from '../logging/pino.service';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { OrganizationParametersKey } from '@libs/core/domain/enums';
 import { environment } from '@libs/ee/configs/environment';
 

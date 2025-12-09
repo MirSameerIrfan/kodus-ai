@@ -3,12 +3,8 @@
  * Kodus Tech. All rights reserved.
  */
 
-import {
-    IClusterizedSuggestion,
-    IKodyFineTuning,
-} from '@libs/ee/kodyFineTuning/interfaces/kodyFineTuning.interface';
-import { IFile } from '@libs/core/domain/types/interfaces';
-import { CodeSuggestion } from '@libs/core/domain/types/general/codeReview.type';
+import { IClusterizedSuggestion } from '@libs/code-review/ee/fine-tuning/domain/interfaces/kodyFineTuning.interface';
+import { CodeSuggestion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 
 export const KODY_FINE_TUNING_CONTEXT_PREPARATION_TOKEN = Symbol(
     'KodyFineTuningContextPreparation',

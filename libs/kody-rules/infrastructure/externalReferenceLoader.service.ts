@@ -1,7 +1,7 @@
 import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 import { IKodyRule } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
-import { AnalysisContext } from '@libs/core/domain/types/general/codeReview.type';
+import { AnalysisContext } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { CodeReviewContextPackService } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';
 
 export interface LoadedReference {

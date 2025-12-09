@@ -17,8 +17,8 @@ import {
     CodeReviewConfig,
     CodeReviewConfigWithoutLLMProvider,
     FileChange,
-} from '@libs/core/domain/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
 import { deepSort } from '@libs/core/utils/deep';
 import {

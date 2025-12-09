@@ -6,7 +6,7 @@ import {
     prompt_kodyissues_merge_suggestions_into_issues_system,
     prompt_kodyissues_resolve_issues_system,
 } from '@libs/core/utils/langchainCommon/prompts/kodyIssuesManagement';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { contextToGenerateIssues } from '../../core/infrastructure/adapters/services/kodyIssuesManagement/domain/kodyIssuesManagement.interface';
 import {
     LLMModelProvider,

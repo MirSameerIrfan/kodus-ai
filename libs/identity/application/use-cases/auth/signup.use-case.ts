@@ -1,5 +1,5 @@
 import { createLogger } from '@kodus/flow';
-import { STATUS } from '@libs/core/domain/types/database/status.type';
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
 import {
     ORGANIZATION_SERVICE_TOKEN,
     IOrganizationService,

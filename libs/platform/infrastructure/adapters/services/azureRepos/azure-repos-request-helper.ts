@@ -18,7 +18,7 @@ import {
     AzureRepoSubscription,
 } from '@libs/platform/domain/azure/entities/azureRepoExtras.type';
 import { decrypt } from '@libs/core/utils/crypto';
-import { FileChange } from '@libs/core/domain/types/general/codeReview.type';
+import { FileChange } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 
 @Injectable()
 export class AzureReposRequestHelper {

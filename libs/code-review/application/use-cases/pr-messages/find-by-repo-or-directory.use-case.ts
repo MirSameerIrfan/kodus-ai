@@ -3,8 +3,8 @@ import {
     FormattedConfig,
     FormattedConfigLevel,
     IFormattedConfigProperty,
-} from '@libs/core/domain/types/general/codeReviewConfig.type';
-import { ConfigLevel } from '@libs/core/domain/types/general/pullRequestMessages.type';
+} from '@libs/core/infrastructure/config/types/general/codeReviewConfig.type';
+import { ConfigLevel } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
 import {
     IPullRequestMessagesService,
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,

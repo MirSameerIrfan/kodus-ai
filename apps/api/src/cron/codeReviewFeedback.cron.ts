@@ -4,7 +4,7 @@ import { MESSAGE_BROKER_SERVICE_TOKEN } from '@libs/core/domain/contracts/messag
 import { Inject, Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
-import { STATUS } from '@libs/core/domain/types/database/status.type';
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
 import {
     ITeamService,
     TEAM_SERVICE_TOKEN,

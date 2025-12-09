@@ -1,10 +1,10 @@
 import {
     CommentResult,
     Repository,
-} from '@libs/core/domain/types/general/codeReview.type';
-import { Commit } from '@libs/core/domain/types/general/commit.type';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
-import { TreeItem } from '@libs/core/domain/types/general/tree.type';
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { Commit } from '@libs/core/infrastructure/config/types/general/commit.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { TreeItem } from '@libs/core/infrastructure/config/types/general/tree.type';
 import {
     GitHubReaction,
     GitlabReaction,

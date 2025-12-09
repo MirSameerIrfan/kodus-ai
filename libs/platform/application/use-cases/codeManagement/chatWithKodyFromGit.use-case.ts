@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { createThreadId, createLogger } from '@kodus/flow';
 import { PlatformResponsePolicyFactory } from './policies/platform-response.policy';
 import { ConversationAgentUseCase } from '@libs/agents/application/use-cases/conversation-agent.use-case';

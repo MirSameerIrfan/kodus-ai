@@ -1,5 +1,8 @@
-import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
-import { IPullRequests, IRepository } from '../../pullRequests/interfaces/pullRequests.interface';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import {
+    IPullRequests,
+    IRepository,
+} from '../../pullRequests/interfaces/pullRequests.interface';
 import { CodeReviewFeedbackEntity } from '../entities/codeReviewFeedback.entity';
 import { ICodeReviewFeedbackRepository } from './codeReviewFeedback.repository';
 
@@ -7,8 +10,7 @@ export const CODE_REVIEW_FEEDBACK_SERVICE_TOKEN = Symbol(
     'CodeReviewFeedbackService',
 );
 
-export interface ICodeReviewFeedbackService
-    extends ICodeReviewFeedbackRepository {
+export interface ICodeReviewFeedbackService extends ICodeReviewFeedbackRepository {
     getByOrganizationId(
         organizationId: string,
     ): Promise<CodeReviewFeedbackEntity[]>;

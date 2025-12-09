@@ -23,7 +23,7 @@ import { DeleteRepositoryCodeReviewParameterDto } from '../dtos/delete-repositor
 import { DeleteRepositoryCodeReviewParameterUseCase } from '@libs/organization/application/use-cases/delete-repository-code-review-parameter.use-case';
 import { PreviewPrSummaryDto } from '../dtos/preview-pr-summary.dto';
 import { PreviewPrSummaryUseCase } from '@libs/organization/application/use-cases/preview-pr-summary.use-case';
-import { CodeReviewVersion } from '@libs/core/domain/types/general/codeReview.type';
+import { CodeReviewVersion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import {
     CheckPolicies,
     PolicyGuard,
@@ -39,7 +39,7 @@ import {
 import { GetDefaultConfigUseCase } from '@libs/organization/application/use-cases/get-default-config.use-case';
 import { GetCodeReviewParameterUseCase } from '@libs/organization/application/use-cases/get-code-review-parameter.use-case';
 import { REQUEST } from '@nestjs/core';
-import { UserRequest } from '@libs/core/domain/types/http/user-request.type';
+import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
 
 @Controller('parameters')
 export class ParametersController {
