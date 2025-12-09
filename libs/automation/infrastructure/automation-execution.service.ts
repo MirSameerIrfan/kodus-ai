@@ -13,8 +13,8 @@ import {
 import { Inject, Injectable } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { CacheService } from '@libs/common/utils/cache/cache.service';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { CacheService } from '@libs/core/utils/cache/cache.service';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 
 @Injectable()
 export class AutomationExecutionService implements IAutomationExecutionService {

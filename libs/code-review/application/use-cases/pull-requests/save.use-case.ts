@@ -1,5 +1,5 @@
 import { createLogger } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
@@ -10,10 +10,10 @@ import {
     PULL_REQUESTS_SERVICE_TOKEN,
 } from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
 import { IPullRequests } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
-import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
-import { PlatformType } from '@libs/common/enums/platform-type.enum';
-import { getMappedPlatform } from '@libs/common/utils/webhooks';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
+import { getMappedPlatform } from '@libs/core/utils/webhooks';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

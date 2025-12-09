@@ -4,7 +4,7 @@ import {
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { FinishOnboardingDTO } from '@libs/common/dtos/finish-onboarding.dto';
-import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
+import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';

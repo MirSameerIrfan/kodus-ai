@@ -1,7 +1,7 @@
 import {
     CodeReviewConfig,
     FileChange,
-} from '@libs/common/types/general/codeReview.type';
+} from '@libs/core/domain/types/general/codeReview.type';
 
 export interface LogInfo {
     message: string;

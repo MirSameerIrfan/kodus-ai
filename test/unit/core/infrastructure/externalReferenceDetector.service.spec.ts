@@ -20,7 +20,7 @@ jest.mock('@/shared/utils/crypto', () => ({
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { ExternalReferenceDetectorService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceDetector.service';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
 import { PromptRunnerService } from '@kodus/kodus-common/llm';

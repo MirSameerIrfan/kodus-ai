@@ -12,9 +12,9 @@ import { IJobStatusService } from '@libs/workflow-queue/domain/contracts/job-sta
 import { Inject } from '@nestjs/common';
 import { JobStatus } from '@libs/workflow-queue/domain/enums/job-status.enum';
 import { WorkflowType } from '@libs/workflow-queue/domain/enums/workflow-type.enum';
-import { PolicyGuard } from '@libs/identity/infrastructure/permissions/policy.guard';
-import { CheckPolicies } from '@libs/identity/infrastructure/permissions/policy.guard';
-import { checkPermissions } from '@libs/identity/infrastructure/permissions/policy.handlers';
+import { PolicyGuard } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
+import { CheckPolicies } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
+import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
 import {
     Action,
     ResourceType,
@@ -29,7 +29,9 @@ export class WorkflowQueueController {
     ) {}
 
     @Get('/jobs/:jobId')
-    @CheckPolicies(checkPermissions(Action.Read, ResourceType.CodeReview))
+    @CheckPolicies(
+        checkPermissions(Action.Read, ResourceType.CodeReviewSettings),
+    )
     @HttpCode(HttpStatus.OK)
     async getJobStatus(@Param('jobId') jobId: string) {
         const job = await this.jobStatusService.getJobStatus(jobId);
@@ -48,7 +50,9 @@ export class WorkflowQueueController {
     }
 
     @Get('/jobs/:jobId/detail')
-    @CheckPolicies(checkPermissions(Action.Read, ResourceType.CodeReview))
+    @CheckPolicies(
+        checkPermissions(Action.Read, ResourceType.CodeReviewSettings),
+    )
     @HttpCode(HttpStatus.OK)
     async getJobDetail(@Param('jobId') jobId: string) {
         const detail = await this.jobStatusService.getJobDetail(jobId);
@@ -67,7 +71,9 @@ export class WorkflowQueueController {
     }
 
     @Get('/metrics')
-    @CheckPolicies(checkPermissions(Action.Read, ResourceType.CodeReview))
+    @CheckPolicies(
+        checkPermissions(Action.Read, ResourceType.CodeReviewSettings),
+    )
     @HttpCode(HttpStatus.OK)
     async getMetrics() {
         const metrics = await this.jobStatusService.getMetrics();

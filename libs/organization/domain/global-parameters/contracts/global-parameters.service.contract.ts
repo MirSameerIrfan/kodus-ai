@@ -1,5 +1,5 @@
 import { IGlobalParametersRepository } from './global-parameters.repository.contracts';
-import { GlobalParametersKey } from '@libs/common/enums/global-parameters-key.enum';
+import { GlobalParametersKey } from '@libs/core/domain/enums/global-parameters-key.enum';
 import { GlobalParametersEntity } from '../entities/global-parameters.entity';
 
 export const GLOBAL_PARAMETERS_SERVICE_TOKEN = Symbol(

@@ -6,7 +6,7 @@ import { HeavyStage } from '../stages/base/heavy-stage.interface';
 import { WorkflowPausedError } from '@libs/workflow-queue/domain/errors/workflow-paused.error';
 import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
 import { PipelineStateManager } from './pipeline-state-manager.service';
-import { ObservabilityService } from '@libs/common/logging/observability.service';
+import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
 
 /**
  * PipelineExecutor for CodeReviewPipeline

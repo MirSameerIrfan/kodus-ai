@@ -1,4 +1,4 @@
-import { STATUS } from '@libs/common/types/database/status.type';
+import { STATUS } from '@libs/core/domain/types/database/status.type';
 import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 import { ITeamMember } from '@libs/organization/domain/team-members/interfaces/team-members.interface';
 import { Role } from '../../permissions/enums/permissions.enum';

@@ -1,4 +1,4 @@
-import { UserRequest } from '@libs/common/types/http/user-request.type';
+import { UserRequest } from '@libs/core/domain/types/http/user-request.type';
 import { CreateOrUpdatePullRequestMessagesUseCase } from '@libs/code-review/application/use-cases/pr-messages/create-or-update-pull-request-messages.use-case';
 import { FindByRepositoryOrDirectoryIdPullRequestMessagesUseCase } from '@libs/code-review/application/use-cases/pr-messages/find-by-repo-or-directory.use-case';
 import {
@@ -19,11 +19,11 @@ import { REQUEST } from '@nestjs/core';
 import {
     CheckPolicies,
     PolicyGuard,
-} from '@libs/identity/infrastructure/permissions/policy.guard';
+} from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
 import {
     checkPermissions,
     checkRepoPermissions,
-} from '@libs/identity/infrastructure/permissions/policy.handlers';
+} from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
 
 @Controller('pull-request-messages')
 export class PullRequestMessagesController {

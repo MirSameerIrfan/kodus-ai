@@ -3,9 +3,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthController } from './controllers/auth.controller';
 import { HealthController } from './controllers/health.controller';
 import { WorkflowQueueController } from './controllers/workflow-queue.controller';
-import { ParametersController } from './controllers/parameters.controller';
-import { TeamController } from './controllers/team.controller';
-import { TeamMembersController } from './controllers/teamMembers.controller';
+
 import { IntegrationController } from './controllers/integrations/integration.controller';
 import { CodeManagementController } from './controllers/platformIntegration/codeManagement.controller';
 import { IntegrationConfigController } from './controllers/integrations/integrationConfig.controller';
@@ -22,9 +20,6 @@ import { UsersController } from './controllers/user.controller';
 import { IssuesController } from './controllers/issues.controller';
 import { PermissionsController } from './controllers/permissions.controller';
 import { TokenUsageController } from './controllers/tokenUsage.controller';
-import { OrganizationParametersController } from './controllers/organizationParameters.controller';
-import { AppModule } from './app.module';
-import { JwtAuthGuard } from '@libs/identity/infrastructure/guards/jwt-auth.guard';
 
 /**
  * API REST Module
@@ -38,7 +33,6 @@ import { JwtAuthGuard } from '@libs/identity/infrastructure/guards/jwt-auth.guar
  * Entry point: main.ts (porta 3331)
  */
 @Module({
-    imports: [AppModule],
     controllers: [
         // Auth
         AuthController,
@@ -47,11 +41,11 @@ import { JwtAuthGuard } from '@libs/identity/infrastructure/guards/jwt-auth.guar
         // Workflow Queue API
         WorkflowQueueController,
         // Parameters
-        ParametersController,
-        OrganizationParametersController,
+        // ParametersController,
+        // OrganizationParametersController,
         // Organization & Teams
-        TeamController,
-        TeamMembersController,
+        // TeamController,
+        // TeamMembersController,
         // Platform Integration (includes webhook endpoints for backward compatibility)
         CodeManagementController,
         IntegrationController,
@@ -72,12 +66,6 @@ import { JwtAuthGuard } from '@libs/identity/infrastructure/guards/jwt-auth.guar
         IssuesController,
         TokenUsageController,
         PermissionsController,
-    ],
-    providers: [
-        {
-            provide: APP_GUARD,
-            useClass: JwtAuthGuard,
-        },
     ],
 })
 export class ApiModule {}

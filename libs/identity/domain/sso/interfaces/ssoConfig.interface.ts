@@ -1,4 +1,4 @@
-import { IOrganization } from '../../organization/interfaces/organization.interface';
+import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 
 export enum SSOProtocol {
     SAML = 'saml',

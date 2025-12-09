@@ -5,7 +5,7 @@ import pLimit from 'p-limit';
 import {
     CodeReviewConfig,
     FileChange,
-} from '@libs/common/types/general/codeReview.type';
+} from '@libs/core/domain/types/general/codeReview.type';
 import {
     CodeReviewPipelineContext,
     FileContextAgentResult,

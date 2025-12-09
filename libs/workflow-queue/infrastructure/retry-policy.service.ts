@@ -4,7 +4,7 @@ import {
     calculateBackoffInterval,
     BackoffOptions,
     BackoffPresets,
-} from '@libs/common/utils/polling/exponential-backoff';
+} from '@libs/core/utils/polling/exponential-backoff';
 
 export interface RetryPolicy {
     maxAttempts: number;

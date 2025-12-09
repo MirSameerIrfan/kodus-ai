@@ -1,12 +1,12 @@
-import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
+import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { Inject, NotFoundException } from '@nestjs/common';
 
 import {
     IUsersService,
     USER_SERVICE_TOKEN,
-} from '@libs/identity/domain/user/contracts/user.service.contract';
-import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
-import { STATUS } from '@libs/common/types/database/status.type';
+} from '@/core/domain/user/contracts/user.service.contract';
+import { IUser } from '@/core/domain/user/interfaces/user.interface';
+import { STATUS } from '@/config/types/database/status.type';
 
 // @Case()
 export class InviteDataUserUseCase implements IUseCase {

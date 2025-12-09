@@ -1,6 +1,6 @@
 import { createLogger } from '@kodus/flow';
 import { CommentAnalysisService } from '@libs/code-review/infrastructure/commentAnalysis.service';
-import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 import { GenerateKodyRulesDTO } from '@libs/common/dtos/generate-kody-rules.dto';
 import { Inject, Injectable } from '@nestjs/common';
 
@@ -11,7 +11,7 @@ import {
 } from '@libs/common/dtos/create-kody-rule.dto';
 import { KodyRulesStatus } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from './find-rules-in-organization-by-filter.use-case';
-import { generateDateFilter } from '@libs/common/utils/transforms/date';
+import { generateDateFilter } from '@libs/core/utils/transforms/date';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
@@ -20,16 +20,16 @@ import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
 } from '@libs/integrations/domain/contracts/integration.service.contracts';
-import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
+import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
 import { Repositories } from '@libs/platform/domain/types/codeManagement/repositories.type';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
-import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
+import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import { KodyLearningStatus } from '@libs/organization/domain/parameters/types/configValue.type';
 import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 import { SendRulesNotificationUseCase } from './send-rules-notification.use-case';
 
 @Injectable()

@@ -9,7 +9,7 @@ import { Request } from 'express';
 import {
     EXECUTE_AUTOMATION_SERVICE_TOKEN,
     IExecuteAutomationService,
-} from '@libs/common/contracts/execute.automation.service.contracts';
+} from '@libs/core/domain/contracts/execute.automation.service.contracts';
 import { AutomationType } from '@libs/automation/domain/enums/automation-type';
 import {
     IProfileConfigService,

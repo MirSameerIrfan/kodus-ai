@@ -1,5 +1,5 @@
-import { DatabaseConnection } from '@libs/common/types';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { DatabaseConnection } from '@libs/core/domain/types';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
 import {
     DRY_RUN_SERVICE_TOKEN,
@@ -17,12 +17,12 @@ import {
 import { Repositories } from '@libs/platform/domain/types/codeManagement/repositories.type';
 import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/codeReviewPipeline/context/code-review-pipeline.context';
 import { DryRunCodeReviewPipeline } from '@libs/dry-run/infrastructure/dryRunPipeline';
-import { ObservabilityService } from '@libs/common/logging/observability.service';
-import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
+import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
-import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
-import { OrganizationParametersKey } from '@libs/common/enums/organization-parameters-key.enum';
-import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
+import { OrganizationParametersKey } from '@libs/core/domain/enums/organization-parameters-key.enum';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { IdGenerator, createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';

@@ -5,12 +5,12 @@ import {
     createLogger,
 } from '@kodus/flow';
 import { createHash } from 'crypto';
-import type { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import type { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 import type {
     CodeReviewConfig,
     Repository,
     AnalysisContext,
-} from '@libs/common/types/general/codeReview.type';
+} from '@libs/core/domain/types/general/codeReview.type';
 import type {
     ContextDependency,
     ContextLayer,
@@ -41,7 +41,7 @@ import {
     deepClone,
 } from './code-review-context.utils';
 
-import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 import { PromptReferenceErrorType } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
 import type { IPromptReferenceSyncError } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
 import { formatMCPOutput } from './mcp-output-formatter';

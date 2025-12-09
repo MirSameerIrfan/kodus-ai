@@ -44,7 +44,7 @@ import { PinoLoggerService } from '../../../src/core/infrastructure/adapters/ser
 import { SavePullRequestUseCase } from '../../../src/core/application/use-cases/pullRequests/save.use-case';
 import { RunCodeReviewAutomationUseCase } from '../../../src/ee/automation/runCodeReview.use-case';
 import { ChatWithKodyFromGitUseCase } from '../../../src/core/application/use-cases/platformIntegration/codeManagement/chatWithKodyFromGit.use-case';
-import { CodeManagementService } from '../../../src/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 import { GenerateIssuesFromPrClosedUseCase } from '../../../src/core/application/use-cases/issues/generate-issues-from-pr-closed.use-case';
 import { KodyRulesSyncService } from '../../../src/core/infrastructure/adapters/services/kodyRules/kody-rules-sync.service';
 import { CreateOrUpdateKodyRulesUseCase } from '../../../src/core/application/use-cases/kodyRules/create-or-update.use-case';

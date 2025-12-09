@@ -1,11 +1,11 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
-import { PinoLoggerService } from '@libs/common/logging/pino.service';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
 import {
     IJobProcessorService,
     JOB_PROCESSOR_SERVICE_TOKEN,
 } from '@libs/workflow-queue/domain/contracts/job-processor.service.contract';
-import { ObservabilityService } from '@libs/common/logging/observability.service';
+import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
 
 export interface ProcessWorkflowJobInput {
     jobId: string;

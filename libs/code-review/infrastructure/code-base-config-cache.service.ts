@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { createLogger } from '@kodus/flow';
-import { CacheService } from '@libs/common/utils/cache/cache.service';
+import { CacheService } from '@libs/core/utils/cache/cache.service';
 import {
     CODE_BASE_CONFIG_SERVICE_TOKEN,
     ICodeBaseConfigService,
@@ -9,8 +9,8 @@ import {
     CodeReviewConfig,
     FileChange,
     Repository,
-} from '@libs/common/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+} from '@libs/core/domain/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 import { createHash } from 'crypto';
 
 @Injectable()

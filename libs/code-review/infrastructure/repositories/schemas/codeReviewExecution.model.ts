@@ -1,4 +1,4 @@
-import { CoreModel } from '@libs/common/infrastructure/repositories/model/typeOrm';
+import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { AutomationExecutionModel } from './automationExecution.model';
 import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';

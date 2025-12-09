@@ -1,4 +1,4 @@
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 import { IAuthIntegrationRepository } from './auth-integration.repository.contracts';
 
 export const AUTH_INTEGRATION_SERVICE_TOKEN = Symbol('AuthIntegrationService');

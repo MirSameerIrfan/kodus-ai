@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
-import { PlatformType } from '@libs/common/enums/platform-type.enum';
-import { PinoLoggerService } from '@libs/common/logging/pino.service';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
+import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
 import {
     IJobQueueService,
     JOB_QUEUE_SERVICE_TOKEN,

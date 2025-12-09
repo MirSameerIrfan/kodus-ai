@@ -1,4 +1,4 @@
-import { BackoffPresets } from '@libs/common/utils/polling/exponential-backoff';
+import { BackoffPresets } from '@libs/core/utils/polling/exponential-backoff';
 import { RetryPolicy } from './retry-policy.service';
 
 /**

@@ -1,43 +1,48 @@
-import { createLogger } from '@kodus/flow';
 import {
-    ORGANIZATION_SERVICE_TOKEN,
     IOrganizationService,
-} from '@libs/organization/domain/organization/contracts/organization.service.contract';
+    ORGANIZATION_SERVICE_TOKEN,
+} from '@/core/domain/organization/contracts/organization.service.contract';
 import {
-    TEAM_SERVICE_TOKEN,
     ITeamService,
-} from '@libs/organization/domain/team/contracts/team.service.contract';
+    TEAM_SERVICE_TOKEN,
+} from '@/core/domain/team/contracts/team.service.contract';
 import {
-    TEAM_MEMBERS_SERVICE_TOKEN,
     ITeamMemberService,
-} from '@libs/organization/domain/team-members/contracts/teamMembers.service.contracts';
+    TEAM_MEMBERS_SERVICE_TOKEN,
+} from '@/core/domain/teamMembers/contracts/teamMembers.service.contracts';
 import {
-    USER_SERVICE_TOKEN,
     IUsersService,
-} from '@libs/identity/domain/user/contracts/user.service.contract';
-import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
-import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
+    USER_SERVICE_TOKEN,
+} from '@/core/domain/user/contracts/user.service.contract';
+import { IUser } from '@/core/domain/user/interfaces/user.interface';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { UpdateAnotherUserDto } from '@/core/infrastructure/http/dtos/update-another-user.dto';
+import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
-import { UpdateAnotherUserDto } from 'apps/api/src/dtos/update-another-user.dto';
 
 @Injectable()
 export class UpdateAnotherUserUseCase implements IUseCase {
-    private readonly logger = createLogger(UpdateAnotherUserUseCase.name);
     constructor(
         @Inject(USER_SERVICE_TOKEN)
         private readonly usersService: IUsersService,
+
         @Inject(ORGANIZATION_SERVICE_TOKEN)
         private readonly organizationService: IOrganizationService,
+
         @Inject(TEAM_SERVICE_TOKEN)
         private readonly teamService: ITeamService,
+
         @Inject(TEAM_MEMBERS_SERVICE_TOKEN)
         private readonly teamMembersService: ITeamMemberService,
+
+        private readonly logger: PinoLoggerService,
     ) {}
 
     async execute(
         userId: string,
         targetUserId: string,
         data: UpdateAnotherUserDto,
+        organizationId: string,
     ): Promise<IUser> {
         const { role, status } = data;
 
@@ -50,7 +55,7 @@ export class UpdateAnotherUserUseCase implements IUseCase {
             }
 
             const organization = await this.organizationService.findOne({
-                uuid: targetUser.organization?.uuid,
+                uuid: organizationId,
             });
             if (!organization) {
                 throw new Error('Organization not found');

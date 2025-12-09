@@ -1,5 +1,5 @@
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
-import { Entity } from '@libs/common/domain/interfaces/entity';
+import { Entity } from '@libs/core/domain/interfaces/entity';
 import { IOrganization } from '../interfaces/organization.interface';
 import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';
 

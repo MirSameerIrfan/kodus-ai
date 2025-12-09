@@ -9,8 +9,8 @@ import { CodeReviewPipelineContext } from '../context/code-review-pipeline.conte
 import {
     handlePatchDeletions,
     convertToHunksWithLinesNumbers,
-} from '@libs/common/utils/patch';
-import { FileChange } from '@libs/common/types/general/codeReview.type';
+} from '@libs/core/utils/patch';
+import { FileChange } from '@libs/core/domain/types/general/codeReview.type';
 import {
     AutomationMessage,
     AutomationStatus,

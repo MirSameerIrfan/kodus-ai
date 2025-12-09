@@ -1,4 +1,4 @@
-import { UserRequest } from '@libs/common/types/http/user-request.type';
+import { UserRequest } from '@libs/core/domain/types/http/user-request.type';
 import { ExecuteDryRunUseCase } from '@libs/dry-run/application/use-cases/execute-dry-run.use-case';
 import { GetStatusDryRunUseCase } from '@libs/dry-run/application/use-cases/get-status-dry-run.use-case';
 import {
@@ -19,11 +19,11 @@ import { ExecuteDryRunDto } from '../dtos/execute-dry-run.dto';
 import {
     CheckPolicies,
     PolicyGuard,
-} from '@libs/identity/infrastructure/permissions/policy.guard';
+} from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
 import {
     checkPermissions,
     checkRepoPermissions,
-} from '@libs/identity/infrastructure/permissions/policy.handlers';
+} from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
 import {
     Action,
     ResourceType,

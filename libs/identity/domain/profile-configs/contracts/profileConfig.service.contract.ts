@@ -1,4 +1,4 @@
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 import { ProfileConfigKey } from '../enum/profileConfigKey.enum';
 import { IProfileConfigRepository } from './profileConfig.repository.contract';
 import { ProfileConfigEntity } from '../entities/profileConfig.entity';

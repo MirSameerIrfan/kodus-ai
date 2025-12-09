@@ -2,7 +2,7 @@ import { JobStatus } from '../enums/job-status.enum';
 import { ErrorClassification } from '../enums/error-classification.enum';
 import { WorkflowType } from '../enums/workflow-type.enum';
 import { HandlerType } from '../enums/handler-type.enum';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 
 export interface IWorkflowJob {
     id: string;

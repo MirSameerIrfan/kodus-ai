@@ -5,12 +5,12 @@ import { AuthIntegrationModule } from '@libs/integrations/modules/authIntegratio
 import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
 import { PlatformIntegrationModule } from '@libs/platform/platform.module';
 import { ProfileConfigModule } from '@libs/identity/modules/profileConfig.module';
-import { IntegrationModel } from '@libs/core/database/typeorm/schema/integration.model';
+import { IntegrationModel } from '@libs/core/infrastructure/database/typeorm/schema/integration.model';
 import { INTEGRATION_SERVICE_TOKEN } from './domain/contracts/integration.service.contracts';
 import { IntegrationService } from './infrastructure/integration.service';
 import { INTEGRATION_REPOSITORY_TOKEN } from './domain/contracts/integration.repository.contracts';
 import { IntegrationController } from 'apps/api/src/controllers/integrations/integration.controller';
-import { IntegrationRepository } from '@libs/core/database/typeorm/repositories/integration.repository';
+import { IntegrationRepository } from '@libs/core/infrastructure/database/typeorm/repositories/integration.repository';
 
 @Module({
     imports: [

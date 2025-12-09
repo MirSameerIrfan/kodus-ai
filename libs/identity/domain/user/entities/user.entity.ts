@@ -1,10 +1,11 @@
-import { Entity } from '@libs/common/domain/interfaces/entity';
+import { Entity } from '@libs/core/domain/interfaces/entity';
 import { IUser } from '../interfaces/user.interface';
-import { IOrganization } from '../../organization/interfaces/organization.interface';
-import { ITeamMember } from '../../teamMembers/interfaces/team-members.interface';
-import { STATUS } from '@libs/common/types/database/status.type';
+
+import { STATUS } from '@libs/core/domain/types/database/status.type';
 import { Role } from '../../permissions/enums/permissions.enum';
 import { IPermissions } from '../../permissions/types/permissions.types';
+import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
+import { ITeamMember } from '@libs/organization/domain/team-members/interfaces/team-members.interface';
 
 export class UserEntity implements Entity<IUser> {
     private _uuid: string;
@@ -24,6 +25,7 @@ export class UserEntity implements Entity<IUser> {
         this._organization = user.organization;
         this._status = user.status;
         this._teamMember = user.teamMember;
+        this._permissions = user.permissions;
     }
 
     public static create(user: IUser | Partial<IUser>): UserEntity {
@@ -58,6 +60,10 @@ export class UserEntity implements Entity<IUser> {
         return this._teamMember;
     }
 
+    public get permissions() {
+        return this._permissions;
+    }
+
     public toObject(): IUser {
         return {
             uuid: this._uuid,
@@ -67,6 +73,7 @@ export class UserEntity implements Entity<IUser> {
             organization: this._organization,
             status: this._status,
             teamMember: this._teamMember,
+            permissions: this._permissions,
         };
     }
 

@@ -11,8 +11,8 @@ import {
 import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
-} from '@libs/common/infrastructure/repositories/mappers';
-import { KodyRulesModel } from '@libs/core/database/mongoose/schemas/kodyRules.model';
+} from '@libs/core/infrastructure/repositories/mappers';
+import { KodyRulesModel } from '@libs/core/infrastructure/database/mongoose/schemas/kodyRules.model';
 import { KodyRulesValidationService } from '../service/kody-rules-validation.service';
 
 @Injectable()

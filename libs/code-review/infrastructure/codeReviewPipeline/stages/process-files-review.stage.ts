@@ -17,10 +17,10 @@ import {
     CodeSuggestion,
     FileChange,
     IFinalAnalysisResult,
-} from '@libs/common/types/general/codeReview.type';
-import { benchmark } from '@libs/common/utils/benchmark.util';
-import { createOptimizedBatches } from '@libs/common/utils/batch.helper';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+} from '@libs/core/domain/types/general/codeReview.type';
+import { benchmark } from '@libs/core/utils/benchmark.util';
+import { createOptimizedBatches } from '@libs/core/utils/batch.helper';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 
 import {
     IPullRequestsService,
@@ -33,7 +33,7 @@ import {
 import {
     FILE_REVIEW_CONTEXT_PREPARATION_TOKEN,
     IFileReviewContextPreparation,
-} from '@libs/common/interfaces/file-review-context-preparation.interface';
+} from '@libs/core/domain/interfaces/file-review-context-preparation.interface';
 import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
 import { ImplementationStatus } from '@libs/code-review/domain/pull-requests/enums/implementationStatus.enum';
 import { PriorityStatus } from '@libs/code-review/domain/pull-requests/enums/priorityStatus.enum';
@@ -44,11 +44,11 @@ import {
 import {
     IKodyFineTuningContextPreparationService,
     KODY_FINE_TUNING_CONTEXT_PREPARATION_TOKEN,
-} from '@libs/common/interfaces/kody-fine-tuning-context-preparation.interface';
+} from '@libs/core/domain/interfaces/kody-fine-tuning-context-preparation.interface';
 import {
     IKodyASTAnalyzeContextPreparationService,
     KODY_AST_ANALYZE_CONTEXT_PREPARATION_TOKEN,
-} from '@libs/common/interfaces/kody-ast-analyze-context-preparation.interface';
+} from '@libs/core/domain/interfaces/kody-ast-analyze-context-preparation.interface';
 import { CodeAnalysisOrchestrator } from '@libs/code-review/ee/analysis/codeAnalysisOrchestrator.service';
 import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
 

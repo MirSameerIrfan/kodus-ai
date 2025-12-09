@@ -6,8 +6,8 @@ import { IAuthIntegrationService } from '@libs/integrations/domain/auth/contract
 import { AuthIntegrationEntity } from '@libs/integrations/domain/auth/entities/auth-integration.entity';
 import { IAuthIntegration } from '@libs/integrations/domain/auth/interfaces/auth-integration.interface';
 import { Inject, Injectable } from '@nestjs/common';
-import { PlatformType } from '@libs/common/enums/platform-type.enum';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 
 @Injectable()
 export class AuthIntegrationService implements IAuthIntegrationService {

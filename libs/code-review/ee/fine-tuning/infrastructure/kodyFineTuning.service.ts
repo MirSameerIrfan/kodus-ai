@@ -14,13 +14,13 @@ import {
     IPullRequests,
     ISuggestionToEmbed,
 } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
-import { PullRequestState } from '@libs/common/enums/pullRequestState.enum';
+import { PullRequestState } from '@libs/core/domain/enums/pullRequestState.enum';
 import { Injectable, Inject } from '@nestjs/common';
-import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
+import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
 import {
     CodeSuggestion,
     Repository,
-} from '@libs/common/types/general/codeReview.type';
+} from '@libs/core/domain/types/general/codeReview.type';
 
 import { kmeans } from 'ml-kmeans';
 import { FeedbackType } from '@libs/code-review/ee/fine-tuning/domain/enums/feedbackType.enum';
@@ -33,9 +33,9 @@ import {
 } from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/contracts/suggestionEmbedded.service.contract';
 import { IGlobalParametersService } from '@libs/organization/domain/global-parameters/contracts/global-parameters.service.contract';
 import { GLOBAL_PARAMETERS_SERVICE_TOKEN } from '@libs/organization/domain/global-parameters/contracts/global-parameters.service.contract';
-import { GlobalParametersKey } from '@libs/common/enums/global-parameters-key.enum';
+import { GlobalParametersKey } from '@libs/core/domain/enums/global-parameters-key.enum';
 import { ISuggestionEmbedded } from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/interfaces/suggestionEmbedded.interface';
-import { LabelType } from '@libs/common/utils/codeManagement/labels';
+import { LabelType } from '@libs/core/utils/codeManagement/labels';
 
 @Injectable()
 export class KodyFineTuningService {

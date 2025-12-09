@@ -9,7 +9,7 @@ import {
     FileChange,
     ReviewModeConfig,
     ReviewModeResponse,
-} from '@libs/common/types/general/codeReview.type';
+} from '@libs/core/domain/types/general/codeReview.type';
 import { IAIAnalysisService } from '@libs/code-review/domain/contracts/AIAnalysisService.contract';
 import {
     AST_ANALYSIS_SERVICE_TOKEN,
@@ -17,8 +17,8 @@ import {
 } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
 import { LLM_ANALYSIS_SERVICE_TOKEN } from '@libs/code-review/infrastructure/llmAnalysis.service';
 import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
-import { ReviewModeOptions } from '@libs/common/interfaces/file-review-context-preparation.interface';
-import { BackoffPresets } from '@libs/common/utils/polling';
+import { ReviewModeOptions } from '@libs/core/domain/interfaces/file-review-context-preparation.interface';
+import { BackoffPresets } from '@libs/core/utils/polling';
 import { WorkflowPausedError } from '@libs/code-review/infrastructure/pipeline/errors/workflow-paused.error';
 import { Inject, Injectable } from '@nestjs/common';
 import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';

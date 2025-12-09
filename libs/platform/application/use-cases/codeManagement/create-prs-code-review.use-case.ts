@@ -1,6 +1,6 @@
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
-import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';

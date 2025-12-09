@@ -17,9 +17,9 @@ import {
     GroupingModeSuggestions,
     LimitationType,
     ReviewCadenceType,
-} from '@libs/common/types/general/codeReview.type';
-import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
-import { PullRequestMessageStatus } from '@libs/common/types/general/pullRequestMessages.type';
+} from '@libs/core/domain/types/general/codeReview.type';
+import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
+import { PullRequestMessageStatus } from '@libs/core/domain/types/general/pullRequestMessages.type';
 
 class ReviewOptionsDto {
     @IsBoolean()

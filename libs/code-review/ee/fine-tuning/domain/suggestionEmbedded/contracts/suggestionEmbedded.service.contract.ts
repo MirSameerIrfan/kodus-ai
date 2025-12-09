@@ -1,4 +1,4 @@
-import { CodeSuggestion } from '@libs/common/types/general/codeReview.type';
+import { CodeSuggestion } from '@libs/core/domain/types/general/codeReview.type';
 import { SuggestionEmbeddedEntity } from '../entities/suggestionEmbedded.entity';
 import { ISuggestionEmbeddedRepository } from './suggestionEmbedded.repository.contract';
 

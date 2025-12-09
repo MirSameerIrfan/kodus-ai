@@ -1,4 +1,4 @@
-import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
+import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
 import { IIntegration } from '@libs/integrations/domain/interfaces/integration.interface';
 import { IIntegrationConfig } from '../interfaces/integration-config.interface';
 import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';

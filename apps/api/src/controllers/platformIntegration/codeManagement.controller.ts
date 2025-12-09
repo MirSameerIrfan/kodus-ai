@@ -17,12 +17,12 @@ import {
 import {
     CheckPolicies,
     PolicyGuard,
-} from '@libs/identity/infrastructure/permissions/policy.guard';
+} from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
 import {
     checkPermissions,
     checkRepoPermissions,
-} from '@libs/identity/infrastructure/permissions/policy.handlers';
-import { PullRequestState } from '@libs/common/enums/pullRequestState.enum';
+} from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
+import { PullRequestState } from '@libs/core/domain/enums/pullRequestState.enum';
 import {
     Body,
     Controller,

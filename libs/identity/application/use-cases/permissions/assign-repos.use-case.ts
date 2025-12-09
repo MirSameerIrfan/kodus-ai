@@ -12,8 +12,8 @@ import {
     IUsersService,
     USER_SERVICE_TOKEN,
 } from '@libs/identity/domain/user/contracts/user.service.contract';
-import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
-import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
+import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

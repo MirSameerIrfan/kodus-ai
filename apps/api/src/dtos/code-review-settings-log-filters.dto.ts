@@ -3,8 +3,8 @@ import { Transform } from 'class-transformer';
 import {
     ActionType,
     ConfigLevel,
-} from '@libs/common/types/general/codeReviewSettingsLog.type';
-import { PaginationDto } from './pagination.dto';
+} from '@libs/core/domain/types/general/codeReviewSettingsLog.type';
+import { PaginationDto } from '@libs/core/domain/dtos/pagination.dto';
 
 export class CodeReviewSettingsLogFiltersDto extends PaginationDto {
     @IsOptional()

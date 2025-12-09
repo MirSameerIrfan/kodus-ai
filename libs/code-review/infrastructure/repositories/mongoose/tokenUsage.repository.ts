@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { LogModel } from '@libs/common/infrastructure/repositories/model/mongodb/log.model';
+import { LogModel } from '@libs/core/infrastructure/repositories/model/mongodb/log.model';
 import { ITokenUsageRepository } from '@libs/analytics/domain/token-usage/contracts/tokenUsage.repository.contract';
-import { ObservabilityTelemetryModel } from '@libs/core/database/mongoose/schemas/observabilityTelemetry.model';
+import { ObservabilityTelemetryModel } from '@libs/core/infrastructure/database/mongoose/schemas/observabilityTelemetry.model';
 import {
     TokenUsageQueryContract,
     DailyUsageResultContract,

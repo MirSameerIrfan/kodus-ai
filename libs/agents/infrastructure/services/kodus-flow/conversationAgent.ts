@@ -8,21 +8,21 @@ import {
     LLMAdapter,
     createLogger,
 } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 import { MCPManagerService } from '@libs/mcp-server/infrastructure/services/mcp-manager.service';
 import { ConfigService } from '@nestjs/config';
-import { DatabaseConnection } from '@libs/common/types';
+import { DatabaseConnection } from '@libs/core/domain/types';
 import { LLMModelProvider, PromptRunnerService } from '@kodus/kodus-common/llm';
 import { SDKOrchestrator } from '@kodus/flow/dist/orchestration';
-import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
+import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import {
     PARAMETERS_SERVICE_TOKEN,
     IParametersService,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { Inject } from '@nestjs/common';
-import { PermissionValidationService } from '@libs/common/ee/services/permissionValidation.service';
+import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
 import { BaseAgentProvider } from './base-agent.provider';
-import { ObservabilityService } from '@libs/common/logging/observability.service';
+import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
 
 @Injectable()
 export class ConversationAgentProvider extends BaseAgentProvider {

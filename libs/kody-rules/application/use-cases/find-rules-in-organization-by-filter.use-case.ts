@@ -1,5 +1,5 @@
 import { createLogger } from '@kodus/flow';
-import { UserRequest } from '@libs/common/types/http/user-request.type';
+import { UserRequest } from '@libs/core/domain/types/http/user-request.type';
 import {
     KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,
@@ -9,7 +9,7 @@ import {
     Action,
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
+import { AuthorizationService } from '@libs/identity/infrastructure/adapters/services/permissions/authorization.service';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import {

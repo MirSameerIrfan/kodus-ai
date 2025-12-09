@@ -5,10 +5,10 @@ import {
     CommentResult,
     FileChange,
     SummaryConfig,
-} from '@libs/common/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+} from '@libs/core/domain/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';
-import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import {
     IPullRequestMessageContent,

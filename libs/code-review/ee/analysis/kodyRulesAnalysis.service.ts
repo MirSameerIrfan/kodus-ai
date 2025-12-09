@@ -9,9 +9,9 @@ import {
     ReviewOptions,
     SuggestionControlConfig,
     CodeReviewConfig,
-} from '@libs/common/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
-import { tryParseJSONObject } from '@libs/common/utils/transforms/json';
+} from '@libs/core/domain/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { tryParseJSONObject } from '@libs/core/utils/transforms/json';
 import {
     KodyRulesClassifierSchema,
     kodyRulesClassifierSchema,
@@ -26,7 +26,7 @@ import {
     prompt_kodyrules_suggestiongeneration_user,
     prompt_kodyrules_updatestdsuggestions_system,
     prompt_kodyrules_updatestdsuggestions_user,
-} from '@libs/common/utils/langchainCommon/prompts/kodyRules';
+} from '@libs/core/utils/langchainCommon/prompts/kodyRules';
 import {
     IKodyRule,
     KodyRulesScope,
@@ -34,8 +34,8 @@ import {
 import { v4 as uuidv4, validate as uuidValidate } from 'uuid';
 import { KodyRulesService } from '@libs/kody-rules/infrastructure/services/kodyRules.service';
 import { KODY_RULES_SERVICE_TOKEN } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
-import { LabelType } from '@libs/common/utils/codeManagement/labels';
-import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
+import { LabelType } from '@libs/core/utils/codeManagement/labels';
+import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
 import { IKodyRulesAnalysisService } from '@libs/code-review/domain/contracts/KodyRulesAnalysisService.contract';
 import {
     LLMModelProvider,
@@ -49,8 +49,8 @@ import {
     CODE_BASE_CONFIG_SERVICE_TOKEN,
     ICodeBaseConfigService,
 } from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
-import { ObservabilityService } from '@libs/common/logging/observability.service';
-import { BYOKPromptRunnerService } from '@libs/common/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
+import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
 import { ExternalReferenceLoaderService } from '@libs/kody-rules/infrastructure/externalReferenceLoader.service';
 import type { ContextAugmentationsMap } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';
 import {
@@ -703,7 +703,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
                 extendedContext,
             );
 
-            let finalOutput: AIAnalysisResult = {
+            const finalOutput: AIAnalysisResult = {
                 codeSuggestions: [
                     ...(generatedKodyRulesSuggestions?.codeSuggestions ?? []),
                 ],

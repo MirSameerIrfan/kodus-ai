@@ -1,7 +1,7 @@
-import { Entity } from '@libs/common/domain/interfaces/entity';
-import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
+import { Entity } from '@libs/core/domain/interfaces/entity';
+import { IUser } from '../../user/interfaces/user.interface';
 import { IAuth } from '../interfaces/auth.interface';
-import { AuthProvider } from '@libs/common/enums/auth-provider.enum';
+import { AuthProvider } from '@libs/core/domain/enums';
 
 export class AuthEntity implements Entity<IAuth> {
     private _uuid: string;

@@ -12,7 +12,7 @@ import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
 } from '@libs/integrations/domain/contracts/integration.service.contracts';
-import { AutomationLevel } from '@libs/common/enums/automations-level.enum';
+import { AutomationLevel } from '@libs/core/domain/enums/automations-level.enum';
 import { UpdateOrCreateTeamAutomationUseCase } from './updateOrCreateTeamAutomationUseCase';
 import {
     AutomationCategoryMapping,

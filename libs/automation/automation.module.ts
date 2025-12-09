@@ -9,27 +9,27 @@ import { IntegrationConfigModule } from '@libs/integrations/modules/config.modul
 import { OrganizationModule } from '@libs/organization/organization.module';
 import { OrganizationParametersModule } from '@libs/organization/modules/org-parameters.module';
 import { ParametersModule } from '@libs/organization/modules/parameters.module';
-import { PlatformIntegrationModule } from '@libs/platform/platform.module';
+import { PlatformModule } from '@libs/platform/platform.module';
 import { PullRequestsModule } from '@libs/code-review/modules/pull-requests.module';
 import { TeamsModule } from '@libs/organization/modules/team.module';
-import { AutomationModel } from '@libs/core/database/typeorm/schema/automation.model';
-import { AutomationExecutionModel } from '@libs/core/database/typeorm/schema/automationExecution.model';
+import { AutomationModel } from '@libs/core/infrastructure/database/typeorm/schema/automation.model';
+import { AutomationExecutionModel } from '@libs/core/infrastructure/database/typeorm/schema/automationExecution.model';
 import { TeamAutomationModule } from '@libs/automation/modules/teamAutomation.module';
 import { AutomationStrategyModule } from '@libs/automation/modules/automationStrategy.module';
-import { LicenseModule } from '@libs/organization/ee/license/license.module';
+import { LicenseModule } from '@libs/ee/license/license.module';
 import { CodeReviewExecutionModule } from '@libs/code-review/modules/codeReviewExecution.module';
-import { PermissionValidationModule } from '@libs/common/ee/permission-validation.module';
+import { PermissionValidationModule } from '@libs/ee/shared/permission-validation.module';
 import { PromptService } from '@libs/agents/infrastructure/services/prompt.service';
 import { RunCodeReviewAutomationUseCase } from './ee/runCodeReview.use-case';
 import { SaveCodeReviewFeedbackUseCase } from '@libs/code-review/application/use-cases/feedback/save-feedback.use-case';
 import { AUTOMATION_REPOSITORY_TOKEN } from './domain/contracts/automation.repository';
-import { AutomationRepository } from '@libs/core/database/typeorm/repositories/automation.repository';
+import { AutomationRepository } from '@libs/core/infrastructure/database/typeorm/repositories/automation.repository';
 import { AUTOMATION_SERVICE_TOKEN } from './domain/contracts/automation.service';
 import { AutomationService } from './infrastructure/automation.service';
 import { AUTOMATION_EXECUTION_SERVICE_TOKEN } from './domain/contracts/automation-execution.service';
 import { AutomationExecutionService } from './infrastructure/automation-execution.service';
 import { AUTOMATION_EXECUTION_REPOSITORY_TOKEN } from './domain/contracts/automation-execution.repository';
-import { AutomationExecutionRepository } from '@libs/core/database/typeorm/repositories/automationExecution.repository';
+import { AutomationExecutionRepository } from '@libs/core/infrastructure/database/typeorm/repositories/automationExecution.repository';
 
 @Module({
     imports: [
@@ -38,7 +38,7 @@ import { AutomationExecutionRepository } from '@libs/core/database/typeorm/repos
         forwardRef(() => GithubModule),
         forwardRef(() => TeamAutomationModule),
         forwardRef(() => AutomationStrategyModule),
-        forwardRef(() => PlatformIntegrationModule),
+        forwardRef(() => PlatformModule),
         forwardRef(() => IntegrationModule),
         forwardRef(() => IntegrationConfigModule),
         forwardRef(() => OrganizationModule),

@@ -3,7 +3,7 @@ import { FindByKeyParametersUseCase } from '@libs/organization/application/use-c
 import { UpdateCodeReviewParameterRepositoriesUseCase } from '@libs/organization/application/use-cases/update-code-review-parameter-repositories-use-case';
 import { UpdateOrCreateCodeReviewParameterUseCase } from '@libs/organization/application/use-cases/update-or-create-code-review-parameter-use-case';
 
-import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
+import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import {
     Body,
     Controller,
@@ -23,15 +23,15 @@ import { DeleteRepositoryCodeReviewParameterDto } from '../dtos/delete-repositor
 import { DeleteRepositoryCodeReviewParameterUseCase } from '@libs/organization/application/use-cases/delete-repository-code-review-parameter.use-case';
 import { PreviewPrSummaryDto } from '../dtos/preview-pr-summary.dto';
 import { PreviewPrSummaryUseCase } from '@libs/organization/application/use-cases/preview-pr-summary.use-case';
-import { CodeReviewVersion } from '@libs/common/types/general/codeReview.type';
+import { CodeReviewVersion } from '@libs/core/domain/types/general/codeReview.type';
 import {
     CheckPolicies,
     PolicyGuard,
-} from '@libs/identity/infrastructure/permissions/policy.guard';
+} from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
 import {
     checkPermissions,
     checkRepoPermissions,
-} from '@libs/identity/infrastructure/permissions/policy.handlers';
+} from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
 import {
     Action,
     ResourceType,
@@ -39,7 +39,7 @@ import {
 import { GetDefaultConfigUseCase } from '@libs/organization/application/use-cases/get-default-config.use-case';
 import { GetCodeReviewParameterUseCase } from '@libs/organization/application/use-cases/get-code-review-parameter.use-case';
 import { REQUEST } from '@nestjs/core';
-import { UserRequest } from '@libs/common/types/http/user-request.type';
+import { UserRequest } from '@libs/core/domain/types/http/user-request.type';
 
 @Controller('parameters')
 export class ParametersController {

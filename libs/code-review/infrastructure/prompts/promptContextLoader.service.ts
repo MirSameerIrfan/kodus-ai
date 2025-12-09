@@ -1,7 +1,7 @@
 import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
-import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 import {
     IFileReference,
     ILoadedFileReference,

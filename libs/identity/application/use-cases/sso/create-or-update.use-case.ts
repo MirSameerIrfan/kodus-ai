@@ -6,7 +6,7 @@ import {
     SSOProtocol,
     SSOProtocolConfigMap,
 } from '@libs/identity/domain/sso/interfaces/ssoConfig.interface';
-import { PinoLoggerService } from '@libs/common/logging/pino.service';
+import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

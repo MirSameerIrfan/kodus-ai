@@ -1,4 +1,4 @@
-import { AuthProvider } from '@libs/common/enums/auth-provider.enum';
+import { AuthProvider } from '@libs/core/domain/enums';
 import { IUser } from '../../user/interfaces/user.interface';
 
 export interface IAuth {

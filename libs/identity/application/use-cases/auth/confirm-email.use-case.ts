@@ -13,8 +13,8 @@ import {
     IUsersService,
     USER_SERVICE_TOKEN,
 } from '@libs/identity/domain/user/contracts/user.service.contract';
-import { STATUS } from '@libs/common/types/database/status.type';
-import { IUseCase } from '@libs/common/interfaces/use-case.interface';
+import { STATUS } from '@libs/core/domain/types/database/status.type';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 
 interface DecodedPayload {
     readonly email: string;

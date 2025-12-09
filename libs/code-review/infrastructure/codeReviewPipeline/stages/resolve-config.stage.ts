@@ -19,7 +19,7 @@ import {
     IDryRunService,
 } from '@libs/dry-run/domain/contracts/dryRun.service.contract';
 import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
-import { ConfigLevel } from '@libs/common/types/general/pullRequestMessages.type';
+import { ConfigLevel } from '@libs/core/domain/types/general/pullRequestMessages.type';
 import {
     IPullRequestMessagesService,
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
@@ -28,7 +28,7 @@ import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
-import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
+import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import { CODE_BASE_CONFIG_CACHE_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/CodeBaseConfigCacheService.contract';
 import { CodeBaseConfigCacheService } from '@libs/code-review/infrastructure/code-base-config-cache.service';
 

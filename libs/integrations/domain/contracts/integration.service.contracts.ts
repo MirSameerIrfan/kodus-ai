@@ -1,7 +1,7 @@
-import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { IIntegrationRepository } from './integration.repository.contracts';
-import { IntegrationCategory } from '@libs/common/enums/integration-category.enum';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 
 export const INTEGRATION_SERVICE_TOKEN = Symbol('IntegrationService');
 

@@ -2,14 +2,14 @@ import {
     IIssuesService,
     ISSUES_SERVICE_TOKEN,
 } from '@libs/issues/domain/contracts/issues.service.contract';
-import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { IssuesEntity } from '@libs/issues/domain/entities/issues.entity';
 import {
     CODE_REVIEW_FEEDBACK_SERVICE_TOKEN,
     ICodeReviewFeedbackService,
 } from '@libs/code-review/domain/feedback/contracts/codeReviewFeedback.service.contract';
-import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import {
     IContributingSuggestion,
     IIssueDetails,
@@ -17,7 +17,7 @@ import {
 import { KodyIssuesManagementService } from '@libs/issues/infrastructure/service/kodyIssuesManagement.service';
 import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/KodyIssuesManagement.contract';
 import { REQUEST } from '@nestjs/core';
-import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
+import { AuthorizationService } from '@libs/identity/infrastructure/adapters/services/permissions/authorization.service';
 import {
     Action,
     ResourceType,
@@ -26,7 +26,7 @@ import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
 } from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
-import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
+import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
 
 @Injectable()
 export class GetIssueByIdUseCase implements IUseCase {

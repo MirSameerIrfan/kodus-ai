@@ -3,9 +3,9 @@ import 'source-map-support/register';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { WorkerModule } from './worker.module';
-import { PinoLoggerService } from '@libs/common/logging/pino.service';
-import { setupSentryAndOpenTelemetry } from '@libs/core/config/log/otel';
-import { WorkflowQueueLoader } from '@libs/core/config/loaders/workflow-queue.loader';
+import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
+import { setupSentryAndOpenTelemetry } from '@libs/core/infrastructure/config/log/otel';
+import { WorkflowQueueLoader } from '@libs/core/infrastructure/config/loaders/workflow-queue.loader';
 
 async function bootstrap() {
     // Define tipo de componente para configuração de pool de DB

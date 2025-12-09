@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { AppModule } from './app.module';
 
 /**
  * Worker Module
@@ -13,9 +12,7 @@ import { AppModule } from './app.module';
  * Entry point: worker.ts (sem HTTP, apenas processamento)
  */
 @Module({
-    imports: [
-        AppModule, // Workers, consumers, processors
-    ],
+    imports: [],
     // No controllers - workers don't expose HTTP endpoints
     // No APP_GUARD - workers don't handle HTTP requests
 })

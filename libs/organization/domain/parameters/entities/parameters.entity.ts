@@ -1,5 +1,5 @@
 import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';
-import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
+import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import { IParameters } from '../interfaces/parameters.interface';
 import { ConfigValueMap } from '../types/configValue.type';
 

@@ -4,9 +4,9 @@ import { IIssuesRepository } from '@libs/issues/domain/contracts/issues.reposito
 import { IssuesEntity } from '@libs/issues/domain/entities/issues.entity';
 import { IIssue } from '@libs/issues/domain/interfaces/issues.interface';
 import { IIssuesService } from '@libs/issues/domain/contracts/issues.service.contract';
-import { IssueStatus } from '@libs/common/types/general/issues.type';
-import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
-import { LabelType } from '@libs/common/utils/codeManagement/labels';
+import { IssueStatus } from '@libs/core/domain/types/general/issues.type';
+import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
+import { LabelType } from '@libs/core/utils/codeManagement/labels';
 import { GetIssuesByFiltersDto } from '@libs/common/dtos/get-issues-by-filters.dto';
 
 @Injectable()

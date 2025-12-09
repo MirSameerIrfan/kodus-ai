@@ -1,5 +1,5 @@
 import { createLogger } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 import {
     DRY_RUN_SERVICE_TOKEN,
     IDryRunService,

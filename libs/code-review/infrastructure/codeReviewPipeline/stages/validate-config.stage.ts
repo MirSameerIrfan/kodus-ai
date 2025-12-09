@@ -15,20 +15,20 @@ import {
     ReviewCadenceType,
     ReviewCadenceState,
     CodeReviewConfig,
-} from '@libs/common/types/general/codeReview.type';
+} from '@libs/core/domain/types/general/codeReview.type';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 import {
     AutomationMessage,
     AutomationStatus,
 } from '@libs/automation/domain/enums/automation-status';
-import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { OrganizationParametersKey } from '@libs/common/enums/organization-parameters-key.enum';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+import { OrganizationParametersKey } from '@libs/core/domain/enums/organization-parameters-key.enum';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/org-parameters/contracts/organizationParameters.service.contract';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
-import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 
 @Injectable()
 export class ValidateConfigStage extends BaseStage {

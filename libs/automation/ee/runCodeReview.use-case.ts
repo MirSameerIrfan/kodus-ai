@@ -1,5 +1,5 @@
 import { createLogger } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 import {
     AUTOMATION_SERVICE_TOKEN,
     IAutomationService,
@@ -22,20 +22,20 @@ import {
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/org-parameters/contracts/organizationParameters.service.contract';
 import { stripCurlyBracesFromUUIDs } from '@libs/platform/domain/types/webhooks/webhooks-bitbucket.type';
-import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { AutoAssignLicenseUseCase } from '@libs/organization/ee/license/use-cases/auto-assign-license.use-case';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+import { AutoAssignLicenseUseCase } from '@libs/ee/license/use-cases/auto-assign-license.use-case';
 import {
     PermissionValidationService,
     ValidationErrorType,
-} from '@libs/common/ee/services/permissionValidation.service';
+} from '@libs/ee/shared/services/permissionValidation.service';
 import {
     EXECUTE_AUTOMATION_SERVICE_TOKEN,
     IExecuteAutomationService,
-} from '@libs/common/domain/contracts/execute.automation.service.contracts';
-import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
-import { OrganizationParametersKey } from '@libs/common/enums/organization-parameters-key.enum';
-import { PlatformType } from '@libs/common/enums/platform-type.enum';
-import { getMappedPlatform } from '@libs/common/utils/webhooks';
+} from '@libs/core/domain/contracts/execute.automation.service.contracts';
+import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
+import { OrganizationParametersKey } from '@libs/core/domain/enums/organization-parameters-key.enum';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
+import { getMappedPlatform } from '@libs/core/utils/webhooks';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 

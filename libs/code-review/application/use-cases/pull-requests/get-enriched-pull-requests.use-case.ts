@@ -13,8 +13,8 @@ import {
     CODE_REVIEW_EXECUTION_SERVICE,
     ICodeReviewExecutionService,
 } from '@libs/code-review/domain/executions/contracts/codeReviewExecution.service.contract';
-import { UserRequest } from '@libs/common/types/http/user-request.type';
-import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
+import { UserRequest } from '@libs/core/domain/types/http/user-request.type';
+import { AuthorizationService } from '@libs/identity/infrastructure/adapters/services/permissions/authorization.service';
 import {
     Action,
     ResourceType,
@@ -27,7 +27,7 @@ import {
     PaginationMetadata,
 } from 'apps/api/src/dtos/paginated-enriched-pull-requests.dto';
 import { EnrichedPullRequestResponse } from 'apps/api/src/dtos/enriched-pull-request-response.dto';
-import { IUseCase } from '@libs/common/interfaces/use-case.interface';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 
 @Injectable()
 export class GetEnrichedPullRequestsUseCase implements IUseCase {

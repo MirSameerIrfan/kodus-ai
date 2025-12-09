@@ -2,9 +2,9 @@ import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
 } from '@libs/identity/domain/auth/contracts/auth.service.contracts';
-import { AuthProvider } from '@libs/common/enums/auth-provider.enum';
+import { AuthProvider } from '@libs/core/domain/enums/auth-provider.enum';
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { IUseCase } from '@libs/common/interfaces/use-case.interface';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 
 @Injectable()
 export class LoginUseCase implements IUseCase {

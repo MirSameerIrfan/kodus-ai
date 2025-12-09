@@ -2,7 +2,7 @@ import { createLogger } from '@kodus/flow';
 import { Injectable, Inject } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 import { ISuggestionService } from '@libs/code-review/domain/contracts/SuggestionService.contract';
 import {
     CodeSuggestion,
@@ -16,22 +16,22 @@ import {
     CodeReviewConfig,
     CommentResult,
     CodeReviewVersion,
-} from '@libs/common/types/general/codeReview.type';
+} from '@libs/core/domain/types/general/codeReview.type';
 import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
 import { PriorityStatus } from '@libs/code-review/domain/pull-requests/enums/priorityStatus.enum';
-import { extractLinesFromDiffHunk } from '@libs/common/utils/patch';
+import { extractLinesFromDiffHunk } from '@libs/core/utils/patch';
 import { IAIAnalysisService } from '@libs/code-review/domain/contracts/AIAnalysisService.contract';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
 } from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
-import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
+import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
 import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
 } from '@libs/code-review/domain/contracts/CommentManagerService.contract';
 import { ImplementationStatus } from '@libs/code-review/domain/pull-requests/enums/implementationStatus.enum';
-import { LabelType } from '@libs/common/utils/codeManagement/labels';
+import { LabelType } from '@libs/core/utils/codeManagement/labels';
 import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';
 import { LLM_ANALYSIS_SERVICE_TOKEN } from './llmAnalysis.service';

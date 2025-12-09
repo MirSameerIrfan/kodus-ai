@@ -5,8 +5,8 @@ import {
     FileChange,
     FileChangeContext,
     ReviewModeResponse,
-} from '@libs/common/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+} from '@libs/core/domain/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';
 
 export interface IAIAnalysisService {

@@ -3,14 +3,14 @@ import {
     INTEGRATION_SERVICE_TOKEN,
 } from '@libs/integrations/domain/contracts/integration.service.contracts';
 import { Inject, Injectable } from '@nestjs/common';
-import * as prompts from '@libs/common/utils/langchainCommon/prompts';
-import { IntegrationCategory } from '@libs/common/enums/integration-category.enum';
+import * as prompts from '@libs/core/utils/langchainCommon/prompts';
+import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 import {
     ChatPromptTemplate,
     HumanMessagePromptTemplate,
     MessagesPlaceholder,
 } from '@langchain/core/prompts';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 import {
     ITeamService,
     TEAM_SERVICE_TOKEN,
@@ -19,12 +19,12 @@ import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
 } from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
-import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
+import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
-import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
+import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 
 const platformDataDictionary = {
     JIRA: 'Issues, changelogs, board columns',

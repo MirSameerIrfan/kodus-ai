@@ -1,5 +1,5 @@
 import { createLogger } from '@kodus/flow';
-import { STATUS } from '@libs/common/types/database/status.type';
+import { STATUS } from '@libs/core/domain/types/database/status.type';
 import {
     ORGANIZATION_SERVICE_TOKEN,
     IOrganizationService,
@@ -12,13 +12,13 @@ import {
 import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import { SignUpDTO } from '@libs/identity/infrastructure/http/dtos/create-user-organization.dto';
-import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
-import { DuplicateRecordException } from '@libs/common/infrastructure/filters/duplicate-record.exception';
-import { generateRandomOrgName } from '@libs/common/utils/helpers';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import { DuplicateRecordException } from '@libs/core/infrastructure/filters/duplicate-record.exception';
+import { generateRandomOrgName } from '@libs/core/utils/helpers';
 import { Inject, Injectable } from '@nestjs/common';
 import { CreateProfileUseCase } from '../profile/create.use-case';
-import { identify, track } from '@libs/common/utils/segment';
-import posthogClient from '@libs/common/utils/posthog';
+import { identify, track } from '@libs/core/utils/segment';
+import posthogClient from '@libs/core/utils/posthog';
 import {
     ITeamMemberService,
     TEAM_MEMBERS_SERVICE_TOKEN,

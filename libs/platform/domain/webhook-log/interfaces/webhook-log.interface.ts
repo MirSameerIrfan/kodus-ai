@@ -1,4 +1,4 @@
-import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 
 export interface IWebhookLog {
     uuid: string;

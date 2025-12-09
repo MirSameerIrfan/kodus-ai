@@ -7,7 +7,7 @@ import { createLogger } from '@kodus/flow';
 import {
     AIAnalysisResult,
     AnalysisContext,
-} from '@libs/common/types/general/codeReview.type';
+} from '@libs/core/domain/types/general/codeReview.type';
 import { BaseKodyASTAnalyzeContextPreparation } from '@libs/code-review/ee/ast-analyze/base-ast-analyze.service';
 import { Injectable } from '@nestjs/common';
 import { CodeAnalysisOrchestrator } from '../codeBase/codeAnalysisOrchestrator.service';

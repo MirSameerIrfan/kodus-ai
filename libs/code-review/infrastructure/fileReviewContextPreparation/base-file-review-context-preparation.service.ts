@@ -8,16 +8,16 @@ import {
     AnalysisContext,
     FileChange,
     ReviewModeResponse,
-} from '@libs/common/types/general/codeReview.type';
+} from '@libs/core/domain/types/general/codeReview.type';
 import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
 import {
     IFileReviewContextPreparation,
     ReviewModeOptions,
-} from '@libs/common/interfaces/file-review-context-preparation.interface';
+} from '@libs/core/domain/interfaces/file-review-context-preparation.interface';
 import {
     convertToHunksWithLinesNumbers,
     handlePatchDeletions,
-} from '@libs/common/utils/patch';
+} from '@libs/core/utils/patch';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 import { Injectable } from '@nestjs/common';
 

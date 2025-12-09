@@ -1,11 +1,11 @@
 import {
     ReviewOptions,
     reviewOptionsSchema,
-} from '@libs/common/types/general/codeReview.type';
+} from '@libs/core/domain/types/general/codeReview.type';
 import {
     SeverityLevel,
     severityLevelSchema,
-} from '@libs/common/utils/enums/severityLevel.enum';
+} from '@libs/core/utils/enums/severityLevel.enum';
 import z from 'zod';
 
 export interface UncategorizedComment {

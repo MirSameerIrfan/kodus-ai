@@ -6,9 +6,9 @@ import {
     IPullRequestWithDeliveredSuggestions,
 } from '../interfaces/pullRequests.interface';
 import { DeliveryStatus } from '../enums/deliveryStatus.enum';
-import { PullRequestState } from '@libs/common/enums/pullRequestState.enum';
-import { Repository } from '@libs/common/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { PullRequestState } from '@libs/core/domain/enums/pullRequestState.enum';
+import { Repository } from '@libs/core/domain/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 
 export const PULL_REQUESTS_REPOSITORY_TOKEN = Symbol('PullRequestsRepository');
 

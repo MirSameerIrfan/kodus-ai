@@ -9,12 +9,12 @@ import {
 import { IIntegrationService } from '@libs/integrations/domain/contracts/integration.service.contracts';
 import { IntegrationEntity } from '@libs/integrations/domain/entities/integration.entity';
 import { IIntegration } from '@libs/integrations/domain/interfaces/integration.interface';
-import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
-import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { IntegrationCategory } from '@libs/common/enums/integration-category.enum';
-import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 
 @Injectable()
 export class IntegrationService implements IIntegrationService {

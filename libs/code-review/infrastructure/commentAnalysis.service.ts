@@ -19,7 +19,7 @@ import {
     prompt_CommentCategorizerUser,
     prompt_CommentIrrelevanceFilterSystem,
     prompt_CommentIrrelevanceFilterUser,
-} from '@libs/common/utils/langchainCommon/prompts/commentAnalysis';
+} from '@libs/core/utils/langchainCommon/prompts/commentAnalysis';
 import {
     IKodyRule,
     KodyRulesOrigin,
@@ -35,13 +35,13 @@ import {
     prompt_KodyRulesGeneratorQualityFilterUser,
     prompt_KodyRulesGeneratorSystem,
     prompt_KodyRulesGeneratorUser,
-} from '@libs/common/utils/langchainCommon/prompts/kodyRulesGenerator';
+} from '@libs/core/utils/langchainCommon/prompts/kodyRulesGenerator';
 import {
     BehaviourForExistingDescription,
     CodeReviewConfig,
     ReviewOptions,
-} from '@libs/common/types/general/codeReview.type';
-import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
+} from '@libs/core/domain/types/general/codeReview.type';
+import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
 import * as filteredLibraryKodyRules from './data/filtered-rules.json';
 import { KodyRuleSeverity } from '@libs/common/dtos/create-kody-rule.dto';
 import {
@@ -50,11 +50,11 @@ import {
 } from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
 import { v4 } from 'uuid';
 import { SUPPORTED_LANGUAGES } from '@libs/code-review/domain/contracts/SupportedLanguages';
-import { LibraryKodyRule } from '@libs/common/types/kodyRules.type';
-import { ObservabilityService } from '@libs/common/logging/observability.service';
-import { BYOKPromptRunnerService } from '@libs/common/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { PermissionValidationService } from '@libs/common/ee/services/permissionValidation.service';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { LibraryKodyRule } from '@libs/core/domain/types/kodyRules.type';
+import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
+import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 
 @Injectable()
 export class CommentAnalysisService {

@@ -3,10 +3,10 @@ import { ExecuteAutomationService } from '@libs/automation/infrastructure/proces
 import { AutomationRegistry } from '@libs/automation/infrastructure/process/config/register.automation';
 import { AutomationCodeReviewService } from '@libs/automation/infrastructure/process/strategies/automationCodeReview';
 import { PromptService } from '@libs/agents/infrastructure/services/prompt.service';
-import { LicenseModule } from '@libs/organization/ee/license/license.module';
-import { PermissionValidationModule } from '@libs/common/ee/permission-validation.module';
+import { LicenseModule } from '@libs/ee/license/license.module';
+import { PermissionValidationModule } from '@libs/ee/shared/permission-validation.module';
 import { TeamsModule } from '@libs/organization/modules/team.module';
-import { EXECUTE_AUTOMATION_SERVICE_TOKEN } from '@libs/common/contracts/execute.automation.service.contracts';
+import { EXECUTE_AUTOMATION_SERVICE_TOKEN } from '@libs/core/domain/contracts/execute.automation.service.contracts';
 import { Module, forwardRef } from '@nestjs/common';
 import { AuthIntegrationModule } from './authIntegration.module';
 import { AutomationModule } from './automation.module';

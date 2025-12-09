@@ -1,14 +1,14 @@
-import { Entity } from '@libs/common/domain/interfaces/entity';
-import { IOrganization } from '../../organization/interfaces/organization.interface';
+import { Entity } from '@libs/core/domain/interfaces/entity';
 import {
     SSOConfig,
     SSOProtocol,
     SSOProtocolConfigMap,
 } from '../interfaces/ssoConfig.interface';
+import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 
-export class SSOConfigEntity<P extends SSOProtocol>
-    implements Entity<SSOConfig<P>>
-{
+export class SSOConfigEntity<P extends SSOProtocol> implements Entity<
+    SSOConfig<P>
+> {
     private _uuid: string;
     private _organization: Partial<IOrganization>;
     private _protocol: P;

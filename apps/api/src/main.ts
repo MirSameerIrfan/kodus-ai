@@ -1,5 +1,5 @@
 import 'source-map-support/register';
-import { environment } from '@libs/common/ee/configs/environment';
+import { environment } from '@libs/ee/shared/configs/environment';
 
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -10,9 +10,9 @@ import helmet from 'helmet';
 import * as volleyball from 'volleyball';
 import * as bodyParser from 'body-parser';
 import { useContainer } from 'class-validator';
-import { HttpServerConfiguration } from '@libs/common/types/http/http-server.type';
-import { PinoLoggerService } from '@libs/common/logging/pino.service';
-import { setupSentryAndOpenTelemetry } from '@libs/core/config/log/otel';
+import { HttpServerConfiguration } from '@libs/core/domain/types/http/http-server.type';
+import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
+import { setupSentryAndOpenTelemetry } from '@libs/core/infrastructure/config/log/otel';
 import { ApiModule } from './api.module';
 
 async function bootstrap() {

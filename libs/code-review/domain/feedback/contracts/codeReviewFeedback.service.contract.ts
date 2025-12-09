@@ -1,4 +1,4 @@
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 import { IPullRequests, IRepository } from '../../pullRequests/interfaces/pullRequests.interface';
 import { CodeReviewFeedbackEntity } from '../entities/codeReviewFeedback.entity';
 import { ICodeReviewFeedbackRepository } from './codeReviewFeedback.repository';

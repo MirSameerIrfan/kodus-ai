@@ -9,9 +9,9 @@ import helmet from 'helmet';
 import * as volleyball from 'volleyball';
 import * as bodyParser from 'body-parser';
 import { WebhookHandlerModule } from './modules/webhook-handler.module';
-import { PinoLoggerService } from '@libs/common/logging/pino.service';
-import { HttpServerConfiguration } from '@libs/common/types';
-import { environment } from '@libs/common/ee/configs/environment';
+import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
+import { HttpServerConfiguration } from '@libs/core/domain/types';
+import { environment } from '@libs/ee/shared/configs/environment';
 
 async function bootstrap() {
     process.env.COMPONENT_TYPE = 'webhook';

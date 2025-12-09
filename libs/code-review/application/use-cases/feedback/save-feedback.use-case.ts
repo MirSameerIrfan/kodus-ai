@@ -2,11 +2,11 @@ import { createLogger } from '@kodus/flow';
 import { CodeReviewFeedbackEntity } from '@libs/code-review/domain/feedback/entities/codeReviewFeedback.entity';
 import { ICodeReviewFeedback } from '@libs/code-review/domain/feedback/interfaces/codeReviewFeedback.interface';
 import { CodeReviewFeedbackService } from '@libs/code-review/infrastructure/feedback/codeReviewFeedback.service';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 import { Inject, Injectable } from '@nestjs/common';
 import { CODE_REVIEW_FEEDBACK_SERVICE_TOKEN } from '@libs/code-review/domain/feedback/contracts/codeReviewFeedback.service.contract';
 import { GetReactionsUseCase } from './get-reactions.use-case';
-import { IUseCase } from '@libs/common/interfaces/use-case.interface';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 
 @Injectable()
 export class SaveCodeReviewFeedbackUseCase implements IUseCase {

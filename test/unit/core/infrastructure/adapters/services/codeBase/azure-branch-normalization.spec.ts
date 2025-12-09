@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ValidateConfigStage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/validate-config.stage';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
     IAutomationExecutionService,

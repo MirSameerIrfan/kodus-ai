@@ -12,7 +12,7 @@ import {
     InternalServerErrorException,
     UnauthorizedException,
 } from '@nestjs/common';
-import { IUseCase } from '@libs/common/interfaces/use-case.interface';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 
 interface DecodedPayload {
     readonly email: string;

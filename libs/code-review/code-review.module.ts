@@ -12,14 +12,14 @@ import {
 import { PullRequestHandlerService } from '@libs/core/infrastructure/adapters/services/codeBase/pullRequestManager.service';
 import { forwardRef, Module } from '@nestjs/common';
 import { AutomationModule } from '@libs/automation/automation.module';
-import { AutomationStrategyModule } from '@libs/automation/modules/strategy.module';
+import { AutomationStrategyModule } from '@libs/automation/modules/automationStrategy.module';
 import { CodeReviewFeedbackModule } from '@libs/code-review/modules/codeReviewFeedback.module';
 import { IntegrationModule } from '@libs/integrations/integrations.module';
 import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
 import { KodyRulesModule } from '@libs/kody-rules/kody-rules.module';
 import { OrganizationParametersModule } from '@libs/organization/modules/org-parameters.module';
 import { ParametersModule } from '@libs/organization/modules/parameters.module';
-import { PlatformIntegrationModule } from '@libs/platform/platform.module';
+import { PlatformModule } from '@libs/platform/platform.module';
 import { PullRequestsModule } from '@libs/code-review/modules/pull-requests.module';
 import { SuggestionEmbeddedModule } from '@libs/code-review/modules/suggestion.module';
 import { TeamsModule } from '@libs/organization/modules/team.module';
@@ -60,7 +60,7 @@ import { TokenChunkingModule } from '@libs/tokenChunking.module';
         forwardRef(() => IntegrationModule),
         forwardRef(() => IntegrationConfigModule),
         forwardRef(() => ParametersModule),
-        forwardRef(() => PlatformIntegrationModule),
+        forwardRef(() => PlatformModule),
         forwardRef(() => AutomationStrategyModule),
         forwardRef(() => AutomationModule),
         forwardRef(() => TeamsModule),

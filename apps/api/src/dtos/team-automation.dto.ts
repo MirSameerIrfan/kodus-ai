@@ -1,4 +1,4 @@
-import { TeamQueryDto } from './teamId-query-dto';
+import { TeamQueryDto } from './teamId-query.dto';
 import {
     IsArray,
     IsBoolean,

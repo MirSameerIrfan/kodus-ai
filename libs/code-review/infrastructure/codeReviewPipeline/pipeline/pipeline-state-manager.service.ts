@@ -5,7 +5,7 @@ import {
     serializeContext,
     deserializeContext,
 } from '../context/code-review-pipeline.context';
-import { WorkflowJobRepository } from '@libs/core/database/typeorm/repositories/workflow-job.repository';
+import { WorkflowJobRepository } from '@libs/core/infrastructure/database/typeorm/repositories/workflow-job.repository';
 import {
     StateSerializerService,
     SerializationStrategy,

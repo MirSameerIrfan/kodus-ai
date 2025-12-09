@@ -1,5 +1,5 @@
-import { PlatformType } from '@libs/common/enums/platform-type.enum';
-import { CoreDocument } from '@libs/common/infrastructure/repositories/model/mongodb';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
+import { CoreDocument } from '@libs/core/infrastructure/repositories/model/mongodb';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 @Schema({

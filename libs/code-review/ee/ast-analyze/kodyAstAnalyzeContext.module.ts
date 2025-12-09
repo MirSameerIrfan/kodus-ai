@@ -7,7 +7,7 @@ import { forwardRef, Module } from '@nestjs/common';
 
 import { CodebaseModule } from '@libs/code-review/code-review.module';
 import { KODY_AST_ANALYZE_CONTEXT_PREPARATION_PROVIDER } from '@libs/code-review/providers/kody-ast-analyze-context-preparation.provider.ee';
-import { KODY_AST_ANALYZE_CONTEXT_PREPARATION_TOKEN } from '@libs/common/interfaces/kody-ast-analyze-context-preparation.interface';
+import { KODY_AST_ANALYZE_CONTEXT_PREPARATION_TOKEN } from '@libs/core/domain/interfaces/kody-ast-analyze-context-preparation.interface';
 import { KodyASTAnalyzeContextPreparationService } from '@libs/code-review/ee/ast-analyze/kody-ast-analyze-context-preparation.service';
 
 @Module({

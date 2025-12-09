@@ -13,7 +13,7 @@ import { AutomationStrategyModule } from './automationStrategy.module';
 import { IntegrationModule } from '@libs/integrations/integrations.module';
 import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
 import { OrganizationModule } from '@libs/organization/organization.module';
-import { PlatformIntegrationModule } from '@libs/platform/platform.module';
+import { PlatformModule } from '@libs/platform/platform.module';
 import { ProfileConfigModule } from '@libs/identity/modules/profileConfig.module';
 import { TeamsModule } from '@libs/organization/modules/team.module';
 import { TeamMembersModule } from '@libs/organization/modules/teamMembers.module';
@@ -24,7 +24,7 @@ import { TeamMembersModule } from '@libs/organization/modules/teamMembers.module
         forwardRef(() => TeamsModule),
         forwardRef(() => AutomationStrategyModule),
         forwardRef(() => AutomationModule),
-        forwardRef(() => PlatformIntegrationModule),
+        forwardRef(() => PlatformModule),
         forwardRef(() => IntegrationModule),
         forwardRef(() => IntegrationConfigModule),
         forwardRef(() => TeamMembersModule),

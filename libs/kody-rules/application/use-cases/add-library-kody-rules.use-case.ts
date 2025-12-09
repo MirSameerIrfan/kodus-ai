@@ -8,7 +8,7 @@ import {
     IKodyRule,
     KodyRulesOrigin,
 } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
-import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
+import { AuthorizationService } from '@libs/identity/infrastructure/adapters/services/permissions/authorization.service';
 import {
     Action,
     ResourceType,

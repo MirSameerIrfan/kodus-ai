@@ -2,7 +2,7 @@ import {
     Action,
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { AuthorizationService } from '@libs/identity/infrastructure/permissions/authorization.service';
+import { AuthorizationService } from '@libs/identity/infrastructure/adapters/services/permissions/authorization.service';
 import { CodeReviewSettingsLogFiltersDto } from '@libs/analytics/infrastructure/http/dtos/code-review-settings-log-filters.dto';
 import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
@@ -89,11 +89,11 @@ export class FindCodeReviewSettingsLogsUseCase {
         const logs = await this.codeReviewSettingsLogService.find(filter);
 
         const assignedRepositoryIds =
-            await this.authorizationService.getRepositoryScope({
-                user: this.request.user,
-                action: Action.Read,
-                resource: ResourceType.Logs,
-            });
+            await this.authorizationService.getRepositoryScope(
+                this.request.user,
+                Action.Read,
+                ResourceType.Logs,
+            );
 
         let filteredLogs = logs;
         if (assignedRepositoryIds !== null) {

@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
-import { PinoLoggerService } from '@libs/common/logging/pino.service';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
 import {
     IJobStatusService,
     JOB_STATUS_SERVICE_TOKEN,

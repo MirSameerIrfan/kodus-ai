@@ -1,11 +1,11 @@
 import { Injectable, UseFilters } from '@nestjs/common';
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { PinoLoggerService } from '@libs/common/logging/pino.service';
-import { RabbitmqConsumeErrorFilter } from '@libs/common/infrastructure/filters/rabbitmq-consume-error.exception';
-import { WorkflowJobRepository } from '@libs/core/database/typeorm/repositories/workflow-job.repository';
+import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
+import { RabbitmqConsumeErrorFilter } from '@libs/core/infrastructure/filters/rabbitmq-consume-error.exception';
+import { WorkflowJobRepository } from '@libs/core/infrastructure/database/typeorm/repositories/workflow-job.repository';
 import { JobStatus } from '@libs/workflow-queue/domain/enums/job-status.enum';
-import { ObservabilityService } from '@libs/common/logging/observability.service';
+import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
 
 interface ASTCompletedMessage {
     taskId: string;

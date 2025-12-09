@@ -1,12 +1,12 @@
-import { AxiosASTService } from '@libs/core/config/axios/microservices/ast.axios';
+import { AxiosASTService } from '@libs/core/infrastructure/config/axios/microservices/ast.axios';
 import {
     AIAnalysisResult,
     AnalysisContext,
     CodeSuggestion,
     Repository,
     ReviewModeResponse,
-} from '@libs/common/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+} from '@libs/core/domain/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 import { IASTAnalysisService } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
 import { LLMResponseProcessor } from '@libs/code-review/infrastructure/utils/transforms/llmResponseProcessor.transform';
 import type { ContextAugmentationsMap } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';
@@ -14,11 +14,11 @@ import {
     getAugmentationsFromPack,
     getOverridesFromPack,
 } from '@libs/code-review/infrastructure/context/code-review-context.utils';
-import { ObservabilityService } from '@libs/common/logging/observability.service';
-import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
-import { prompt_detectBreakingChanges } from '@libs/common/utils/langchainCommon/prompts/detectBreakingChanges';
-import { calculateBackoffInterval } from '@libs/common/utils/polling/exponential-backoff';
+import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
+import { prompt_detectBreakingChanges } from '@libs/core/utils/langchainCommon/prompts/detectBreakingChanges';
+import { calculateBackoffInterval } from '@libs/core/utils/polling/exponential-backoff';
 import type { ContextPack } from '@context-os-core/interfaces';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { createLogger } from '@kodus/flow';

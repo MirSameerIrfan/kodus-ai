@@ -6,8 +6,8 @@ import { Body, Controller, Get, Patch, Query, UseGuards } from '@nestjs/common';
 import {
     CheckPolicies,
     PolicyGuard,
-} from '@libs/identity/infrastructure/permissions/policy.guard';
-import { checkPermissions } from '@libs/identity/infrastructure/permissions/policy.handlers';
+} from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
+import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
 import { UpdateInfoOrganizationAndPhoneDto } from '../dtos/updateInfoOrgAndPhone.dto';
 import { GetOrganizationNameUseCase } from '@libs/organization/application/use-cases/get-organization-name';
 import { UpdateInfoOrganizationAndPhoneUseCase } from '@libs/organization/application/use-cases/update-infos.use-case';

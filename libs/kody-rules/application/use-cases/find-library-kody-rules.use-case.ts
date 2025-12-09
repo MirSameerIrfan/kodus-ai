@@ -1,5 +1,5 @@
 import { createLogger } from '@kodus/flow';
-import { KodyRuleFilters } from '@libs/common/types/kodyRules.type';
+import { KodyRuleFilters } from '@libs/core/domain/types/kodyRules.type';
 import {
     KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,

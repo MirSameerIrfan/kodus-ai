@@ -1,4 +1,4 @@
-import { Entity } from '@libs/common/domain/interfaces/entity';
+import { Entity } from '@libs/core/domain/interfaces/entity';
 import { IWebhookLog } from '../interfaces/webhook-log.interface';
 
 export class WebhookLogEntity implements Entity<IWebhookLog> {

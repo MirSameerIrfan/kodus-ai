@@ -14,7 +14,7 @@ import { ORGANIZATION_PARAMETERS_SERVICE_TOKEN } from '@/core/domain/organizatio
 import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
 import CodeBaseConfigService from '@/ee/codeBase/codeBaseConfig.service';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 import { KodyRulesValidationService } from '@/ee/kodyRules/service/kody-rules-validation.service';
 import { INTEGRATION_SERVICE_TOKEN } from '@/core/domain/integrations/contracts/integration.service.contracts';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';

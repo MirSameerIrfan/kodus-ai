@@ -7,7 +7,7 @@ import {
     IsDefined,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
+import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
 
 class SourceFiltersDto {
     @IsBoolean()

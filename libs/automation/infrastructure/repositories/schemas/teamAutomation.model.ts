@@ -1,4 +1,4 @@
-import { CoreModel } from '@libs/common/infrastructure/repositories/model/typeOrm';
+import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 import { TeamModel } from './team.model';
 import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { AutomationModel } from './automation.model';

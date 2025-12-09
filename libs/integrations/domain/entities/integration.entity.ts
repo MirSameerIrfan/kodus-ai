@@ -1,6 +1,6 @@
-import { IntegrationCategory } from '@libs/common/enums/integration-category.enum';
+import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 import { IIntegration } from '../interfaces/integration.interface';
-import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 import { IAuthIntegration } from '../../authIntegrations/interfaces/auth-integration.interface';
 import { IIntegrationConfig } from '@libs/integrations/domain/configs/interfaces/integration-config.interface';

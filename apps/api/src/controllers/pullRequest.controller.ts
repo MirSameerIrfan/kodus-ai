@@ -1,4 +1,4 @@
-import { UserRequest } from '@libs/common/types/http/user-request.type';
+import { UserRequest } from '@libs/core/domain/types/http/user-request.type';
 import { BackfillHistoricalPRsUseCase } from '@libs/code-review/application/use-cases/pull-requests/backfill-historical-prs.use-case';
 import { GetEnrichedPullRequestsUseCase } from '@libs/code-review/application/use-cases/pull-requests/get-enriched-pull-requests.use-case';
 import {
@@ -18,9 +18,9 @@ import { REQUEST } from '@nestjs/core';
 import {
     CheckPolicies,
     PolicyGuard,
-} from '@libs/identity/infrastructure/permissions/policy.guard';
-import { checkPermissions } from '@libs/identity/infrastructure/permissions/policy.handlers';
-import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
+} from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
+import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 import { BackfillPRsDto } from '../dtos/backfill-prs.dto';
 import { EnrichedPullRequestsQueryDto } from '../dtos/enriched-pull-requests-query.dto';
 import { PaginatedEnrichedPullRequestsResponse } from '../dtos/paginated-enriched-pull-requests.dto';

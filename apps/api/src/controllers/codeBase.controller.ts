@@ -23,9 +23,9 @@ import { v4 as uuidv4 } from 'uuid';
 import {
     PolicyGuard,
     CheckPolicies,
-} from '@libs/identity/infrastructure/permissions/policy.guard';
-import { checkPermissions } from '@libs/identity/infrastructure/permissions/policy.handlers';
-import { BackoffPresets } from '@libs/common/utils/polling';
+} from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
+import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
+import { BackoffPresets } from '@libs/core/utils/polling';
 
 function replacer(key: any, value: any) {
     if (value instanceof Map) {

@@ -6,7 +6,7 @@ import {
 } from '@/config/types/general/codeReview.type';
 import { CommentManagerService } from '@/core/infrastructure/adapters/services/codeBase/commentManager.service';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 import { LanguageValue } from '@/shared/domain/enums/language-parameter.enum';
 import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
 import { Test, TestingModule } from '@nestjs/testing';

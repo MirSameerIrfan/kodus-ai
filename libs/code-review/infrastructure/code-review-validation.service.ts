@@ -1,6 +1,6 @@
 import { createLogger } from '@kodus/flow';
 import { Injectable, Inject } from '@nestjs/common';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
@@ -14,12 +14,12 @@ import {
     IAutomationService,
 } from '@libs/automation/domain/contracts/automation.service';
 import { AutomationType } from '@libs/automation/domain/enums/automation-type';
-import { PlatformType } from '@libs/common/enums/platform-type.enum';
-import { IntegrationConfigKey } from '@libs/common/enums/Integration-config-key.enum';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
+import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
 import {
     PermissionValidationService,
     ValidationErrorType,
-} from '@libs/common/ee/services/permissionValidation.service';
+} from '@libs/ee/shared/services/permissionValidation.service';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 
 export interface FindTeamWithActiveCodeReviewResult {

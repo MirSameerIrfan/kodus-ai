@@ -1,13 +1,13 @@
-import { Repository } from '@libs/common/types/general/codeReview.type';
-import { Commit } from '@libs/common/types/general/commit.type';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
-import { TreeItem } from '@libs/common/types/general/tree.type';
+import { Repository } from '@libs/core/domain/types/general/codeReview.type';
+import { Commit } from '@libs/core/domain/types/general/commit.type';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { TreeItem } from '@libs/core/domain/types/general/tree.type';
 import {
     GitHubReaction,
     GitlabReaction,
 } from '@libs/code-review/domain/feedback/enums/codeReviewCommentReaction.enum';
-import { PullRequestState } from '@libs/common/enums/pullRequestState.enum';
-import { CodeManagementConnectionStatus } from '@libs/common/utils/decorators/validate-code-management-integration.decorator';
+import { PullRequestState } from '@libs/core/domain/enums/pullRequestState.enum';
+import { CodeManagementConnectionStatus } from '@libs/core/utils/decorators/validate-code-management-integration.decorator';
 import { IntegrationConfigEntity } from '../../integrationConfigs/entities/integration-config.entity';
 import { GitCloneParams } from '../types/codeManagement/gitCloneParams.type';
 import { Organization } from '../types/codeManagement/organization.type';

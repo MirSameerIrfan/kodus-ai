@@ -1,9 +1,9 @@
 import { createLogger } from '@kodus/flow';
 import { Controller, HttpStatus, Inject, Post, Req, Res } from '@nestjs/common';
 import { Response, Request } from 'express';
-import { PlatformType } from '@libs/common/enums/platform-type.enum';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { EnqueueWebhookUseCase } from '@libs/platform/application/use-cases/webhook/enqueue-webhook.use-case';
-import { validateWebhookToken } from '@libs/common/utils/webhooks/webhookTokenCrypto';
+import { validateWebhookToken } from '@libs/core/utils/webhooks/webhookTokenCrypto';
 import {
     WEBHOOK_LOG_SERVICE,
     IWebhookLogService,

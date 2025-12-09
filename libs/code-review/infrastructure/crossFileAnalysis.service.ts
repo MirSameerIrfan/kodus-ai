@@ -1,18 +1,18 @@
 import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
-import { TokenChunkingService } from '@libs/common/utils/tokenChunking/tokenChunking.service';
+import { TokenChunkingService } from '@libs/core/infrastructure/services/tokenChunking/tokenChunking.service';
 import {
     CrossFileAnalysisPayload,
     CrossFileAnalysisSchema,
     CrossFileAnalysisSchemaType,
     prompt_codereview_cross_file_analysis,
-} from '@libs/common/utils/langchainCommon/prompts/codeReviewCrossFileAnalysis';
+} from '@libs/core/utils/langchainCommon/prompts/codeReviewCrossFileAnalysis';
 import {
     AnalysisContext,
     CodeSuggestion,
     SuggestionType,
-} from '@libs/common/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+} from '@libs/core/domain/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 import { v4 as uuidv4 } from 'uuid';
 import {
     LLMModelProvider,
@@ -21,9 +21,9 @@ import {
     PromptRunnerService,
     TokenUsage,
 } from '@kodus/kodus-common/llm';
-import { LabelType } from '@libs/common/utils/codeManagement/labels';
-import { BYOKPromptRunnerService } from '@libs/common/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { ObservabilityService } from '@libs/common/logging/observability.service';
+import { LabelType } from '@libs/core/utils/codeManagement/labels';
+import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
 
 //#region Interfaces
 interface BatchProcessingConfig {
@@ -129,7 +129,7 @@ export class CrossFileAnalysisService {
                     'analyzeCodeWithAI',
                 );
 
-            let finalSuggestions: CodeSuggestion[] =
+            const finalSuggestions: CodeSuggestion[] =
                 crossFileAnalysisSuggestions;
 
             this.logger.log({
@@ -450,7 +450,7 @@ export class CrossFileAnalysisService {
         };
 
         try {
-            let analysisBuilder = promptRunner
+            const analysisBuilder = promptRunner
                 .builder()
                 .setParser(ParserType.ZOD, CrossFileAnalysisSchema)
                 .setLLMJsonMode(true)

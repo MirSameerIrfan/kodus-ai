@@ -5,14 +5,14 @@ import {
     TEAM_SERVICE_TOKEN,
     ITeamService,
 } from '@libs/organization/domain/team/contracts/team.service.contract';
-import { STATUS } from '@libs/common/types/database/status.type';
+import { STATUS } from '@libs/core/domain/types/database/status.type';
 import { IntegrationStatusFilter } from '@libs/organization/domain/team/interfaces/team.interface';
-import { IntegrationCategory } from '@libs/common/enums/integration-category.enum';
+import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
-import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
+import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import { GenerateKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/generate-kody-rules.use-case';
 import { KodyLearningStatus } from '@libs/organization/domain/parameters/types/configValue.type';
 

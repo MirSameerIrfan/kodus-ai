@@ -1,10 +1,15 @@
-import { IUseCase } from '@libs/common/domain/interfaces/use-case.interface';
+import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import {
     IUsersService,
     USER_SERVICE_TOKEN,
-} from '@libs/identity/domain/user/contracts/user.service.contract';
-import { DuplicateRecordException } from '@libs/common/infrastructure/filters/duplicate-record.exception';
+} from '@/core/domain/user/contracts/user.service.contract';
+import { IUser } from '@/core/domain/user/interfaces/user.interface';
+import { CreateProfileUseCase } from '../profile/create.use-case';
+import { CreateTeamUseCase } from '../team/create.use-case';
+import { STATUS } from '@/config/types/database/status.type';
+import { Role } from '@/core/domain/permissions/enums/permissions.enum';
+import { DuplicateRecordException } from '@/shared/infrastructure/filters/duplicate-record.exception';
 
 @Injectable()
 export class CheckUserWithEmailUserUseCase implements IUseCase {
@@ -12,7 +17,7 @@ export class CheckUserWithEmailUserUseCase implements IUseCase {
         @Inject(USER_SERVICE_TOKEN)
         private readonly usersService: IUsersService,
     ) {}
-    public async execute(email: any): Promise<Boolean> {
+    public async execute(email: any): Promise<boolean> {
         const previousUser = await this.usersService.count({
             email,
         });

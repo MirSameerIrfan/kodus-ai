@@ -8,22 +8,22 @@ import {
     EnhancedJSONParser,
     createLogger,
 } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 import { ConfigService } from '@nestjs/config';
-import { DatabaseConnection } from '@libs/common/types';
+import { DatabaseConnection } from '@libs/core/domain/types';
 import { LLMModelProvider, PromptRunnerService } from '@kodus/kodus-common/llm';
 import { SDKOrchestrator } from '@kodus/flow/dist/orchestration';
-import { ObservabilityService } from '@libs/common/logging/observability.service';
-import { PermissionValidationService } from '@libs/common/ee/services/permissionValidation.service';
+import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
+import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
 import { MCPManagerService } from '@libs/mcp-server/infrastructure/services/mcp-manager.service';
 import { BaseAgentProvider } from './base-agent.provider';
 import type {
     CodeReviewConfig,
     FileChange,
-} from '@libs/common/types/general/codeReview.type';
+} from '@libs/core/domain/types/general/codeReview.type';
 import type { ContextEvidence } from '@context-os-core/interfaces';
 import { IKodyRule } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
-import { convertTiptapJSONToText } from '@libs/common/utils/tiptap-json';
+import { convertTiptapJSONToText } from '@libs/core/utils/tiptap-json';
 
 export interface ContextEvidenceAgentResult {
     evidences?: ContextEvidence[];

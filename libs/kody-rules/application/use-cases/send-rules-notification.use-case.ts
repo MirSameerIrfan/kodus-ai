@@ -8,8 +8,8 @@ import {
     IOrganizationService,
     ORGANIZATION_SERVICE_TOKEN,
 } from '@libs/organization/domain/organization/contracts/organization.service.contract';
-import { STATUS } from '@libs/common/types/database/status.type';
-import { sendKodyRulesNotification } from '@libs/common/utils/email/sendMail';
+import { STATUS } from '@libs/core/domain/types/database/status.type';
+import { sendKodyRulesNotification } from '@libs/core/utils/email/sendMail';
 
 @Injectable()
 export class SendRulesNotificationUseCase {

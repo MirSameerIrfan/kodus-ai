@@ -9,9 +9,9 @@ import { CodeReviewExecution } from '@libs/code-review/domain/executions/interfa
 import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
-} from '@libs/common/infrastructure/repositories/mappers';
+} from '@libs/core/infrastructure/repositories/mappers';
 import { IAutomationExecution } from '@libs/automation/domain/interfaces/automation-execution.interface';
-import { createNestedConditions } from '@libs/common/infrastructure/repositories/filters';
+import { createNestedConditions } from '@libs/core/infrastructure/repositories/filters';
 
 @Injectable()
 export class CodeReviewExecutionRepository

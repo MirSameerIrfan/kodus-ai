@@ -1,9 +1,9 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
-import { CodeManagementService } from '@libs/platform/infrastructure/facade/codeManagement.service';
-import { RULE_FILE_PATTERNS } from '@libs/common/utils/kody-rules/file-patterns';
-import { isFileMatchingGlob } from '@libs/common/utils/glob-utils';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+import { RULE_FILE_PATTERNS } from '@libs/core/utils/kody-rules/file-patterns';
+import { isFileMatchingGlob } from '@libs/core/utils/glob-utils';
 import {
     KodyRulesOrigin,
     KodyRulesScope,
@@ -24,16 +24,16 @@ import {
     LLMModelProvider,
 } from '@kodus/kodus-common/llm';
 import { UpdateOrCreateCodeReviewParameterUseCase } from '@libs/organization/application/use-cases/update-or-create-code-review-parameter-use-case';
-import { ParametersKey } from '@libs/common/enums/parameters-key.enum';
+import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import * as path from 'path';
-import { ObservabilityService } from '@libs/common/logging/observability.service';
-import { PermissionValidationService } from '@libs/common/ee/services/permissionValidation.service';
-import { BYOKPromptRunnerService } from '@libs/common/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { kodyRulesIDEGeneratorSchema } from '@libs/common/utils/langchainCommon/prompts/kodyRules';
+import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
+import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
+import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { kodyRulesIDEGeneratorSchema } from '@libs/core/utils/langchainCommon/prompts/kodyRules';
 import {
     ContextDetectionField,
     ContextReferenceDetectionService,
@@ -42,8 +42,8 @@ import { PromptSourceType } from '@libs/code-review/domain/prompts/interfaces/pr
 import {
     GET_ADDITIONAL_INFO_HELPER_TOKEN,
     IGetAdditionalInfoHelper,
-} from '@libs/common/domain/contracts/getAdditionalInfo.helper.contract';
-import type { UserInfo } from '@libs/common/types/general/codeReviewSettingsLog.type';
+} from '@libs/core/domain/contracts/getAdditionalInfo.helper.contract';
+import type { UserInfo } from '@libs/core/domain/types/general/codeReviewSettingsLog.type';
 
 type SyncTarget = {
     organizationAndTeamData: OrganizationAndTeamData;

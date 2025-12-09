@@ -1,4 +1,4 @@
-import { OrganizationAndTeamData } from '@libs/common/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/domain/types/general/organizationAndTeamData';
 import { DryRunEntity } from '../entities/dryRun.entity';
 import { IDryRun } from '../interfaces/dryRun.interface';
 

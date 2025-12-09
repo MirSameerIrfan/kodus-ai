@@ -1,11 +1,11 @@
 import { Global, Module } from '@nestjs/common';
 import { AST_ANALYSIS_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
 import { CodeAstAnalysisService } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
-import { PlatformIntegrationModule } from '@libs/platform/platform.module';
+import { PlatformModule } from '@libs/platform/platform.module';
 import { ContextReferenceModule } from '@libs/code-review/modules/context-reference.module';
 import { environment } from '../configs/environment';
 
-const staticImports = [PlatformIntegrationModule, ContextReferenceModule];
+const staticImports = [PlatformModule, ContextReferenceModule];
 
 const providers = [];
 const moduleExports = [AST_ANALYSIS_SERVICE_TOKEN];
