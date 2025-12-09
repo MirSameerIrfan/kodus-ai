@@ -1,9 +1,11 @@
-import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/context/code-review-pipeline.context';
-import { IPipeline } from '@libs/code-review/infrastructure/pipeline/interfaces/pipeline.interface';
 import { Injectable } from '@nestjs/common';
+
+import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/context/code-review-pipeline.context';
+import { IPipeline } from '@libs/core/infrastructure/pipeline/interfaces/pipeline.interface';
+import { PipelineExecutor } from '@libs/core/infrastructure/pipeline/services/pipeline-executor.service';
+
 import { DryRunCodeReviewPipelineStrategy } from './dry-run-cr-pipeline.strategy';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
-import { PipelineExecutor } from '@libs/code-review/infrastructure/pipeline/pipeline-executor.service';
+import { PinoLoggerService } from '@libs/log/pino.service';
 
 @Injectable()
 export class DryRunCodeReviewPipeline implements IPipeline<CodeReviewPipelineContext> {

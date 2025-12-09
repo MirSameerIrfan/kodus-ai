@@ -1,26 +1,26 @@
 import { createLogger } from '@kodus/flow';
-import { GenerateIssuesFromPrClosedUseCase } from '@libs/issues/application/use-cases/generate-issues-from-pr-closed.use-case';
-import { ChatWithKodyFromGitUseCase } from '@libs/platform/application/use-cases/codeManagement/chatWithKodyFromGit.use-case';
+import { Inject, Injectable } from '@nestjs/common';
+
 import { SavePullRequestUseCase } from '@libs/code-review/application/use-cases/pull-requests/save.use-case';
-import { IWebhookBitbucketPullRequestEvent } from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
 } from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
 import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
-import { getMappedPlatform } from '@libs/core/utils/webhooks';
-import { Inject, Injectable } from '@nestjs/common';
-import { KodyRulesSyncService } from '@libs/kody-rules/infrastructure/services/kodyRulesSync.service';
-import {
-    IWebhookEventHandler,
-    IWebhookEventParams,
-} from '@libs/platform/domain/platformIntegrations/interfaces/webhook-event-handler.interface';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
 } from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { CodeManagementService } from '../../services/codeManagement.service';
+import { GenerateIssuesFromPrClosedUseCase } from '@libs/issues/application/use-cases/generate-issues-from-pr-closed.use-case';
+import { ChatWithKodyFromGitUseCase } from '@libs/platform/application/use-cases/codeManagement/chatWithKodyFromGit.use-case';
+import {
+    IWebhookEventHandler,
+    IWebhookEventParams,
+} from '@libs/platform/domain/platformIntegrations/interfaces/webhook-event-handler.interface';
+import { IWebhookBitbucketPullRequestEvent } from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
+import { CodeManagementService } from '../../adapters/services/codeManagement.service';
+import { KodyRulesSyncService } from '@libs/kodyRules/infrastructure/adapters/services/kodyRulesSync.service';
 
 /**
  * Handler for Bitbucket webhook events.

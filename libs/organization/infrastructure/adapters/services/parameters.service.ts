@@ -1,3 +1,6 @@
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
+
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     IParametersRepository,
@@ -7,8 +10,6 @@ import { IParametersService } from '@/core/domain/parameters/contracts/parameter
 import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
 import { IParameters } from '@/core/domain/parameters/interfaces/parameters.interface';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class ParametersService implements IParametersService {

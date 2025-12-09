@@ -1,4 +1,15 @@
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { createHash } from 'crypto';
+
+import type {
+    ContextConsumerKind,
+    ContextDependency,
+    ContextDomain,
+    ContextRequirement,
+} from '@context-os-core/interfaces';
+import { MCPServerConfig, createLogger } from '@kodus/flow';
+import { BYOKConfig } from '@kodus/kodus-common/llm';
+import { Inject, Injectable } from '@nestjs/common';
+
 import {
     CONTEXT_REFERENCE_SERVICE_TOKEN,
     IContextReferenceService,
@@ -12,20 +23,13 @@ import {
     PromptReferenceErrorType,
     PromptSourceType,
 } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
     MCPToolMetadata,
     MCPToolMetadataService,
 } from '@libs/core/mcp-server/infrastructure/services/mcp-tool-metadata.service';
-import type {
-    ContextConsumerKind,
-    ContextDependency,
-    ContextDomain,
-    ContextRequirement,
-} from '@context-os-core/interfaces';
-import { MCPServerConfig, createLogger } from '@kodus/flow';
-import { BYOKConfig } from '@kodus/kodus-common/llm';
-import { Inject, Injectable } from '@nestjs/common';
-import { createHash } from 'crypto';
+
+
 
 export interface ContextDetectionField {
     fieldId?: string;

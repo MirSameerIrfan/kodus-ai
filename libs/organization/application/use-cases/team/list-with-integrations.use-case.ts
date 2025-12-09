@@ -1,16 +1,17 @@
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+
+import { STATUS } from '@/config/types/database/status.type';
 import {
     TEAM_SERVICE_TOKEN,
     ITeamService,
 } from '@/core/domain/team/contracts/team.service.contract';
-import { REQUEST } from '@nestjs/core';
-import { STATUS } from '@/config/types/database/status.type';
 import {
     IntegrationStatusFilter,
     ITeamWithIntegrations,
 } from '@/core/domain/team/interfaces/team.interface';
 import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
+import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 
 @Injectable()
 export class ListTeamsWithIntegrationsUseCase implements IUseCase {

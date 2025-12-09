@@ -1,7 +1,8 @@
 import { Type } from '@nestjs/common';
-import { AppAbility, Subject } from './permissions.types';
-import { Action } from '../enums/permissions.enum';
+
 import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
+
+import { AppAbility } from './permissions.types';
 
 export interface IPolicyHandler {
     handle(

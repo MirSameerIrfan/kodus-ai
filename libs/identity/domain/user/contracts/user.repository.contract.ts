@@ -1,7 +1,8 @@
 import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
+
+import { Role } from '../../permissions/enums/permissions.enum';
 import { UserEntity } from '../entities/user.entity';
 import { IUser } from '../interfaces/user.interface';
-import { Role } from '../../permissions/enums/permissions.enum';
 
 export const USER_REPOSITORY_TOKEN = Symbol('UserRepository');
 

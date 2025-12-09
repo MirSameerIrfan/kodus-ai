@@ -1,13 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
+
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { IAuthIntegrationService } from '@libs/integrations/domain/authIntegrations/contracts/auth-integration.service.contracts';
 import {
     AUTH_INTEGRATION_REPOSITORY_TOKEN,
     IAuthIntegrationRepository,
 } from '@libs/integrations/domain/authIntegrations/contracts/auth-integration.repository.contracts';
-import { IAuthIntegration } from '@libs/integrations/domain/authIntegrations/interfaces/auth-integration.interface';
+import { IAuthIntegrationService } from '@libs/integrations/domain/authIntegrations/contracts/auth-integration.service.contracts';
 import { AuthIntegrationEntity } from '@libs/integrations/domain/authIntegrations/entities/auth-integration.entity';
+import { IAuthIntegration } from '@libs/integrations/domain/authIntegrations/interfaces/auth-integration.interface';
 
 @Injectable()
 export class AuthIntegrationService implements IAuthIntegrationService {

@@ -1,12 +1,14 @@
+import { createThreadId, createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
+
+import { BusinessRulesValidationAgentUseCase } from '@libs/agents/application/use-cases/business-rules-validation-agent.use-case';
+import { ConversationAgentUseCase } from '@libs/agents/application/use-cases/conversation-agent.use-case';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { createThreadId, createLogger } from '@kodus/flow';
-import { PlatformResponsePolicyFactory } from './policies/platform-response.policy';
-import { ConversationAgentUseCase } from '@libs/agents/application/use-cases/conversation-agent.use-case';
-import { BusinessRulesValidationAgentUseCase } from '@libs/agents/application/use-cases/business-rules-validation-agent.use-case';
 import { IntegrationConfigEntity } from '@libs/integrations/domain/integrationConfigs/entities/integration-config.entity';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
+
+import { PlatformResponsePolicyFactory } from './policies/platform-response.policy';
 
 // Constants
 const KODY_COMMANDS = {

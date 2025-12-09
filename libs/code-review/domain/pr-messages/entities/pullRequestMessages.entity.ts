@@ -1,9 +1,10 @@
 import { Entity } from '@libs/core/domain/interfaces/entity';
+import { ConfigLevel } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
+
 import {
     IPullRequestMessageContent,
     IPullRequestMessages,
 } from '../interfaces/pullRequestMessages.interface';
-import { ConfigLevel } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
 
 export class PullRequestMessagesEntity implements Entity<IPullRequestMessages> {
     private readonly _uuid: string;

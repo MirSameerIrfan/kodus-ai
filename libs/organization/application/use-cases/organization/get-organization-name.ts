@@ -1,8 +1,8 @@
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import {
     IOrganizationService,
     ORGANIZATION_SERVICE_TOKEN,
-} from '@/core/domain/organization/contracts/organization.service.contract';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+} from '@libs/organization/domain/organization/contracts/organization.service.contract';
 import { Inject } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 
@@ -18,14 +18,10 @@ export class GetOrganizationNameUseCase implements IUseCase {
     ) {}
 
     public async execute(): Promise<string> {
-        try {
-            const org = await this.organizationService.findOne({
-                uuid: this.request.user.organization.uuid,
-            });
+        const org = await this.organizationService.findOne({
+            uuid: this.request.user.organization.uuid,
+        });
 
-            return org?.name;
-        } catch (error) {
-            throw error;
-        }
+        return org?.name;
     }
 }

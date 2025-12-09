@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
+
 import { KodyFineTuningService } from '@libs/code-review/ee/fine-tuning/infrastructure/kodyFineTuning.service';
-import { BaseStage } from '@libs/code-review/infrastructure/codeReviewPipeline/stages/base/base-stage.abstract';
 import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/codeReviewPipeline/context/code-review-pipeline.context';
+import { BaseStage } from '@libs/code-review/infrastructure/codeReviewPipeline/stages/base/base-stage.abstract';
 
 @Injectable()
 export class KodyFineTuningStage extends BaseStage {

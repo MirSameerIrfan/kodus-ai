@@ -1,6 +1,7 @@
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
 import { Column, Entity } from 'typeorm';
+
 import { GlobalParametersKey } from '@/shared/domain/enums/global-parameters-key.enum';
+import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
 
 @Entity('global_parameters')
 export class GlobalParametersModel extends CoreModel {

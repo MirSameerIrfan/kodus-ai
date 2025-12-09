@@ -1,6 +1,7 @@
 import z from 'zod';
-import { getDefaultKodusConfigFile } from '../../validateCodeReviewConfigFile';
+
 import { getTextOrDefault } from './prompt.helpers';
+import { getDefaultKodusConfigFile } from '../../validateCodeReviewConfigFile';
 
 //#region classifier
 export const kodyRulesClassifierSchema = z.object({

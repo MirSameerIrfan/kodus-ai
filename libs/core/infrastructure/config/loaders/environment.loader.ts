@@ -1,4 +1,5 @@
 import { registerAs } from '@nestjs/config';
+
 import { EnvironmentConfig } from '../types/environment/environment.type';
 
 export const environmentConfigLoader = registerAs(

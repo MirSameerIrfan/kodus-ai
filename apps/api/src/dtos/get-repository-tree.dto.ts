@@ -1,5 +1,6 @@
-import { RepositoryTreeType } from '@libs/core/utils/enums/repositoryTree.enum';
 import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
+
+import { RepositoryTreeType } from '@libs/core/utils/enums/repositoryTree.enum';
 
 export class GetRepositoryTreeDto {
     @IsString()

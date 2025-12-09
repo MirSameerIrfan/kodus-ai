@@ -1,3 +1,5 @@
+import { Injectable, Inject } from '@nestjs/common';
+
 import { GetIssuesByFiltersDto } from '@libs/core/domain/dtos/get-issues-by-filters.dto';
 import { IssueStatus } from '@libs/core/infrastructure/config/types/general/issues.type';
 import { LabelType } from '@libs/core/utils/codeManagement/labels';
@@ -9,7 +11,6 @@ import {
 import { IIssuesService } from '@libs/issues/domain/contracts/issues.service.contract';
 import { IssuesEntity } from '@libs/issues/domain/entities/issues.entity';
 import { IIssue } from '@libs/issues/domain/interfaces/issues.interface';
-import { Injectable, Inject } from '@nestjs/common';
 
 @Injectable()
 export class IssuesService implements IIssuesService {

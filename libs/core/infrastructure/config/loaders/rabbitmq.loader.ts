@@ -1,5 +1,6 @@
-import { RabbitMQConfig } from '@libs/core/infrastructure/config/types/environment/rabbitMQ.type';
 import { registerAs } from '@nestjs/config';
+
+import { RabbitMQConfig } from '@libs/core/infrastructure/config/types/environment/rabbitMQ.type';
 
 export const RabbitMQLoader = registerAs(
     'rabbitMQConfig',

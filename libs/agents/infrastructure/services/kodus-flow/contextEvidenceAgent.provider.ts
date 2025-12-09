@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import type { ContextEvidence } from '@context-os-core/interfaces';
 import {
     createMCPAdapter,
     createOrchestration,
@@ -8,22 +8,24 @@ import {
     EnhancedJSONParser,
     createLogger,
 } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { ConfigService } from '@nestjs/config';
-import { DatabaseConnection } from '@libs/core/infrastructure/config/types';
-import { LLMModelProvider, PromptRunnerService } from '@kodus/kodus-common/llm';
 import { SDKOrchestrator } from '@kodus/flow/dist/orchestration';
-import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
-import { MCPManagerService } from '@libs/core/mcp-server/infrastructure/services/mcp-manager.service';
-import { BaseAgentProvider } from './base-agent.provider';
+import { LLMModelProvider, PromptRunnerService } from '@kodus/kodus-common/llm';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+
+import { DatabaseConnection } from '@libs/core/infrastructure/config/types';
 import type {
     CodeReviewConfig,
     FileChange,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import type { ContextEvidence } from '@context-os-core/interfaces';
-import { IKodyRule } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
-import { convertTiptapJSONToText } from '@libs/core/utils/tiptap-json';
-import { PermissionValidationService } from '@libs/core/infrastructure/services/permissionValidation.service';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
+
+import { BaseAgentProvider } from './base-agent.provider';
+import { ObservabilityService } from '@libs/log/observability.service';
+import { MCPManagerService } from '@libs/core/mcp-server/services/mcp-manager.service';
+import { IKodyRule } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
+import { convertTiptapJSONToText } from '@libs/common/utils/tiptap-json';
 
 export interface ContextEvidenceAgentResult {
     evidences?: ContextEvidence[];

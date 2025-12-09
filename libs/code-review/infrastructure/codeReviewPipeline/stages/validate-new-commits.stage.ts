@@ -1,19 +1,22 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
-import { BaseStage } from './base/base-stage.abstract';
-import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
+
 import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
     IAutomationExecutionService,
 } from '@libs/automation/domain/contracts/automation-execution.service';
 import {
-    PULL_REQUEST_MANAGER_SERVICE_TOKEN,
-    IPullRequestManagerService,
-} from '@libs/code-review/domain/contracts/PullRequestManagerService.contract';
-import {
     AutomationMessage,
     AutomationStatus,
 } from '@libs/automation/domain/enums/automation-status';
+import {
+    PULL_REQUEST_MANAGER_SERVICE_TOKEN,
+    IPullRequestManagerService,
+} from '@libs/code-review/domain/contracts/PullRequestManagerService.contract';
+
+import { BaseStage } from './base/base-stage.abstract';
+import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
+
 
 @Injectable()
 export class ValidateNewCommitsStage extends BaseStage {

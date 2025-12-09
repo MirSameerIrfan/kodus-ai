@@ -1,4 +1,14 @@
 import { createLogger } from '@kodus/flow';
+import { Inject } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import {
+    toIntegrationCategory,
+    toPlatformType,
+} from '@libs/core/utils/enum-utils';
 import {
     AUTH_INTEGRATION_SERVICE_TOKEN,
     IAuthIntegrationService,
@@ -7,18 +17,6 @@ import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
 } from '@libs/integrations/domain/contracts/integration.service.contracts';
-import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
-import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
-import {
-    toIntegrationCategory,
-    toPlatformType,
-} from '@libs/core/utils/enum-utils';
-import { Inject } from '@nestjs/common';
-import { REQUEST } from '@nestjs/core';
-import { Request } from 'express';
-import { or } from 'ramda';
-import { v4 as uuidv4 } from 'uuid';
 
 export class CloneIntegrationUseCase implements IUseCase {
     private readonly logger = createLogger(CloneIntegrationUseCase.name);

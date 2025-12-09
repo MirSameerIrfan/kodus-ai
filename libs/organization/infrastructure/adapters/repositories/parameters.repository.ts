@@ -6,17 +6,19 @@ import {
     Repository,
     UpdateQueryBuilder,
 } from 'typeorm';
+
+import { ParametersModel } from './schema/parameters.model';
+
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { IParametersRepository } from '@/core/domain/parameters/contracts/parameters.repository.contracts';
+import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
+import { IParameters } from '@/core/domain/parameters/interfaces/parameters.interface';
+import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
 } from '@/shared/infrastructure/repositories/mappers';
-import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
-import { ParametersModel } from './schema/parameters.model';
-import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
-import { IParameters } from '@/core/domain/parameters/interfaces/parameters.interface';
-import { IParametersRepository } from '@/core/domain/parameters/contracts/parameters.repository.contracts';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 
 @Injectable()
 export class ParametersRepository implements IParametersRepository {

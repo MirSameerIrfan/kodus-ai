@@ -1,19 +1,20 @@
+import { createHash } from 'crypto';
+
 import { createLogger } from '@kodus/flow';
+import { Injectable } from '@nestjs/common';
+
+import { SavePullRequestUseCase } from '@libs/code-review/application/use-cases/pull-requests/save.use-case';
+import { CacheService } from '@libs/core/cache/cache.service';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { GenerateIssuesFromPrClosedUseCase } from '@libs/issues/application/use-cases/generate-issues-from-pr-closed.use-case';
 import { ChatWithKodyFromGitUseCase } from '@libs/platform/application/use-cases/codeManagement/chatWithKodyFromGit.use-case';
-import { SavePullRequestUseCase } from '@libs/code-review/application/use-cases/pull-requests/save.use-case';
-
-import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
-import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
-import { CacheService } from '@libs/core/cache/cache.service';
-import { getMappedPlatform } from '@libs/core/utils/webhooks';
-import { Injectable } from '@nestjs/common';
-import { createHash } from 'crypto';
-import { KodyRulesSyncService } from '@libs/kody-rules/infrastructure/services/kodyRulesSync.service';
 import {
     IWebhookEventHandler,
     IWebhookEventParams,
 } from '@libs/platform/domain/platformIntegrations/interfaces/webhook-event-handler.interface';
+import { KodyRulesSyncService } from '@libs/kodyRules/infrastructure/adapters/services/kodyRulesSync.service';
+import { CodeManagementService } from '../../adapters/services/codeManagement.service';
+import { getMappedPlatform } from '@libs/common/utils/webhooks';
 
 @Injectable()
 export class AzureReposPullRequestHandler implements IWebhookEventHandler {

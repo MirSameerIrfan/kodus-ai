@@ -1,7 +1,8 @@
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { TeamMemberEntity } from '../entities/teamMember.entity';
-import { IMembers, ITeamMember } from '../interfaces/team-members.interface';
 import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+
+import { TeamMemberEntity } from '../entities/teamMember.entity';
+import { IMembers, ITeamMember } from '../interfaces/teamMembers.interface';
 
 export const TEAM_MEMBERS_REPOSITORY_TOKEN = Symbol('TeamMembersRepository');
 

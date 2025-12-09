@@ -1,6 +1,7 @@
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { createLogger } from "@kodus/flow";
 import { Injectable, Optional } from '@nestjs/common';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+
 import {
     BrokerConfig,
     IMessageBrokerService,

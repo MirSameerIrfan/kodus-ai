@@ -1,6 +1,6 @@
-import { IWorkflowJob } from '../interfaces/workflow-job.interface';
 import { JobStatus } from '../enums/job-status.enum';
 import { WorkflowType } from '../enums/workflow-type.enum';
+import { IWorkflowJob } from '../interfaces/workflow-job.interface';
 
 export const JOB_QUEUE_SERVICE_TOKEN = Symbol('JobQueueService');
 

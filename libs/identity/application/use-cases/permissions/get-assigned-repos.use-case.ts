@@ -1,11 +1,11 @@
 import { createLogger } from '@kodus/flow';
+import { Inject, Injectable } from '@nestjs/common';
+
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import {
     IPermissionsService,
     PERMISSIONS_SERVICE_TOKEN,
 } from '@libs/identity/domain/permissions/contracts/permissions.service.contract';
-import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
-import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class GetAssignedReposUseCase implements IUseCase {

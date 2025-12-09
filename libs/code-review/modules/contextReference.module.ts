@@ -1,3 +1,7 @@
+import { Module, forwardRef } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { PromptsModule } from '@libs/code-review/modules/prompts.module';
 import { CONTEXT_REFERENCE_REPOSITORY_TOKEN } from '@libs/core/domain/contextReferences/contracts/context-reference.repository.contract';
 import { CONTEXT_REFERENCE_SERVICE_TOKEN } from '@libs/core/domain/contextReferences/contracts/context-reference.service.contract';
 import { MCPToolMetadataService } from '@libs/core/infrastructure/adapters/mcp/services/mcp-tool-metadata.service';
@@ -8,10 +12,7 @@ import { ContextReferenceDetectionService } from '@libs/core/infrastructure/adap
 import { ContextReferenceService } from '@libs/core/infrastructure/adapters/services/context/context-reference.service';
 import { MCPToolArgResolverAgentService } from '@libs/core/infrastructure/adapters/services/context/mcp-tool-arg-resolver-agent.service';
 import { PermissionValidationModule } from '@libs/ee/shared/permission-validation.module';
-import { Module, forwardRef } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { PlatformIntegrationModule } from '@libs/platform/platform.module';
-import { PromptsModule } from '@libs/code-review/modules/prompts.module';
 
 @Module({
     imports: [

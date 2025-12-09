@@ -1,9 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PipelineStateManager } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/pipeline/pipeline-state-manager.service';
+
+import { JobStatus } from '@/core/domain/workflowQueue/enums/job-status.enum';
+import { IWorkflowJob } from '@/core/domain/workflowQueue/interfaces/workflow-job.interface';
 import { WorkflowJobRepository } from '@/core/infrastructure/adapters/repositories/typeorm/workflow-job.repository';
 import { CodeReviewPipelineContext } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/context/code-review-pipeline.context';
-import { IWorkflowJob } from '@/core/domain/workflowQueue/interfaces/workflow-job.interface';
-import { JobStatus } from '@/core/domain/workflowQueue/enums/job-status.enum';
+import { PipelineStateManager } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/pipeline/pipeline-state-manager.service';
 
 describe('PipelineStateManager', () => {
     let stateManager: PipelineStateManager;

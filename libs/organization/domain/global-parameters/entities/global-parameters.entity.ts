@@ -1,4 +1,5 @@
 import { GlobalParametersKey } from '@libs/core/domain/enums/global-parameters-key.enum';
+
 import { IGlobalParameters } from '../interfaces/global-parameters.interface';
 
 export class GlobalParametersEntity implements IGlobalParameters {

@@ -1,17 +1,18 @@
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { decrypt } from '@libs/common/utils/crypto';
+import { OrganizationParametersKey } from '@libs/core/domain/enums';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { PinoLoggerService } from '@libs/log/pino.service';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
-import { OrganizationParametersEntity } from '@/core/domain/organizationParameters/entities/organizationParameters.entity';
-import { IOrganizationParameters } from '@/core/domain/organizationParameters/interfaces/organizationParameters.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
-import { decrypt } from '@/shared/utils/crypto';
+} from '@libs/organization/domain/organizationParameters/contracts/organizationParameters.service.contract';
+import { OrganizationParametersEntity } from '@libs/organization/domain/organizationParameters/entities/organizationParameters.entity';
+import { IOrganizationParameters } from '@libs/organization/domain/organizationParameters/interfaces/organizationParameters.interface';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 
 @Injectable()
-export class FindByKeyOrganizationParametersUseCase {
+export class FindByKeyOrganizationParametersUseCase implements IUseCase {
     constructor(
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
         private readonly organizationParametersService: IOrganizationParametersService,

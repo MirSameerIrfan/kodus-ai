@@ -1,17 +1,18 @@
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
-import {
-    ITeamAutomationService,
-    TEAM_AUTOMATION_SERVICE_TOKEN,
-} from '@libs/automation/domain/teamAutomation/contracts/team-automation.service';
+
+import { AutomationStatus } from '@libs/automation/domain/automation/enum/automation-status';
 import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
     IAutomationExecutionService,
 } from '@libs/automation/domain/automationExecution/contracts/automation-execution.service';
-import { AutomationStatus } from '@libs/automation/domain/automation/enum/automation-status';
+import {
+    ITeamAutomationService,
+    TEAM_AUTOMATION_SERVICE_TOKEN,
+} from '@libs/automation/domain/teamAutomation/contracts/team-automation.service';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 
 @Injectable()

@@ -1,6 +1,6 @@
+import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
 import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
-import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 
 export interface ITeam {
     uuid: string;

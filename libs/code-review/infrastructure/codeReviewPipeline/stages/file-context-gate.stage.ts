@@ -1,8 +1,9 @@
 import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
+
 import { BaseStage } from './base/base-stage.abstract';
-import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 import { FileContextAugmentationService } from '../../context/file-context-augmentation.service';
+import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 
 @Injectable()
 export class FileContextGateStage extends BaseStage {

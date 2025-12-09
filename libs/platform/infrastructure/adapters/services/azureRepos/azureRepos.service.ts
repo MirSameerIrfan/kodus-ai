@@ -1,3 +1,8 @@
+import { BadRequestException, Inject, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { createTwoFilesPatch } from 'diff';
+import { v4 } from 'uuid';
+
 import {
     CreateAuthIntegrationStatus,
     IntegrationCategory,
@@ -6,7 +11,18 @@ import {
     PlatformType,
     PullRequestState,
 } from '@libs/core/domain/enums';
+import {
+    Comment,
+    CommentResult,
+    FileChange,
+    Repository,
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { Commit } from '@libs/core/infrastructure/config/types/general/commit.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { TreeItem } from '@libs/core/infrastructure/config/types/general/tree.type';
 import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
+import { MCPManagerService } from '@libs/core/mcp-server/infrastructure/services/mcp-manager.service';
+import { hasKodyMarker } from '@libs/core/utils/codeManagement/codeCommentMarkers';
 import { IntegrationServiceDecorator } from '@libs/core/utils/decorators/integration-service.decorator';
 import {
     AUTH_INTEGRATION_SERVICE_TOKEN,
@@ -21,13 +37,8 @@ import {
     INTEGRATION_SERVICE_TOKEN,
 } from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
 import { ICodeManagementService } from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
-import { BadRequestException, Inject, NotFoundException } from '@nestjs/common';
-import { createTwoFilesPatch } from 'diff';
-import { v4 } from 'uuid';
-import { AzureReposRequestHelper } from './azure-repos-request-helper';
-import { ConfigService } from '@nestjs/config';
-import { MCPManagerService } from '@libs/core/mcp-server/infrastructure/services/mcp-manager.service';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+
+import { GitCloneParams } from '@libs/platform/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
 import {
     OneSentenceSummaryItem,
     PullRequest,
@@ -37,13 +48,10 @@ import {
     PullRequestWithFiles,
     ReactionsInComments,
 } from '@libs/platform/domain/platformIntegrations/types/codeManagement/pullRequests.type';
+
+import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
+import { AzureReposRequestHelper } from './azure-repos-request-helper';
 import { IntegrationConfigEntity } from '@libs/integrations/domain/integrationConfigs/entities/integration-config.entity';
-import {
-    Comment,
-    CommentResult,
-    FileChange,
-    Repository,
-} from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import {
     AzurePullRequestVote,
     AzureRepoCommit,
@@ -55,24 +63,19 @@ import {
     getTranslationsForLanguageByCategory,
     TranslationsCategory,
 } from '@libs/core/utils/translations/translations';
-import { GitCloneParams } from '@libs/platform/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
-import { hasKodyMarker } from '@libs/core/utils/codeManagement/codeCommentMarkers';
 import { AzureReposAuthDetail } from '@libs/integrations/domain/authIntegrations/types/azure-repos-auth-detail';
 import { AuthMode } from '@libs/platform/domain/platformIntegrations/enums/codeManagement/authMode.enum';
-import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
 import { decrypt, encrypt } from '@libs/core/utils/crypto';
 import { IntegrationEntity } from '@libs/integrations/domain/integrations/entities/integration.entity';
 import {
     AzurePRStatus,
     AzureRepoPullRequest,
 } from '@libs/platform/domain/azure/entities/azureRepoPullRequest.type';
-import { Commit } from '@libs/core/infrastructure/config/types/general/commit.type';
 import { CodeManagementConnectionStatus } from '@libs/core/utils/decorators/validate-code-management-integration.decorator';
 import { generateWebhookToken } from '@libs/core/utils/webhooks/webhookTokenCrypto';
 import { getSeverityLevelShield } from '@libs/core/utils/codeManagement/severityLevel';
 import { getCodeReviewBadge } from '@libs/core/utils/codeManagement/codeReviewBadge';
 import { getLabelShield } from '@libs/core/utils/codeManagement/labels';
-import { TreeItem } from '@libs/core/infrastructure/config/types/general/tree.type';
 import { RepositoryFile } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
 import {
     isFileMatchingGlob,

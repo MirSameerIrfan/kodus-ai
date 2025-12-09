@@ -1,15 +1,16 @@
-import { LicenseModule } from '@libs/ee/license/license.module';
-import { TeamsModule } from '@libs/organization/modules/team.module';
-import { UsersModule } from '@libs/identity/modules/user.module';
 import { Module, forwardRef } from '@nestjs/common';
-import { AuthIntegrationModule } from '@libs/integrations/modules/authIntegration.module';
+
 import { AutomationStrategyModule } from '@libs/automation/modules/automationStrategy.module';
-import { GlobalCacheModule } from '@libs/core/cache/cache.module';
+import { TeamAutomationModule } from '@libs/automation/modules/teamAutomation.module';
 import { CodebaseModule } from '@libs/code-review/code-review.module';
 import { CodeReviewFeedbackModule } from '@libs/code-review/modules/codeReviewFeedback.module';
+import { GlobalCacheModule } from '@libs/core/cache/cache.module';
+import { LicenseModule } from '@libs/ee/license/license.module';
+import { UsersModule } from '@libs/identity/modules/user.module';
+import { AuthIntegrationModule } from '@libs/integrations/modules/authIntegration.module';
 import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
 import { ParametersModule } from '@libs/organization/modules/parameters.module';
-import { TeamAutomationModule } from '@libs/automation/modules/teamAutomation.module';
+import { TeamsModule } from '@libs/organization/modules/team.module';
 
 @Module({
     imports: [

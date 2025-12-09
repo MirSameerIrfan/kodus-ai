@@ -1,4 +1,3 @@
-import { AutomationType } from '@libs/automation/domain/enums/automation-type';
 import {
     IsEnum,
     IsNotEmpty,
@@ -6,6 +5,8 @@ import {
     IsString,
     IsUUID,
 } from 'class-validator';
+
+import { AutomationType } from '@libs/automation/domain/enums/automation-type';
 
 export class AutomationRunDto {
     @IsEnum(AutomationType)

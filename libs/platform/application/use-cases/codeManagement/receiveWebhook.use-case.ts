@@ -1,7 +1,8 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import {
     IWebhookEventHandler,
     IWebhookEventParams,

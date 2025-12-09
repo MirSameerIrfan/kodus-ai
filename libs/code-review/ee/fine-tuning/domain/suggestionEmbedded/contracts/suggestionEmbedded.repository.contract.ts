@@ -1,4 +1,5 @@
 import { FindManyOptions } from 'typeorm';
+
 import { SuggestionEmbeddedEntity } from '../entities/suggestionEmbedded.entity';
 import { ISuggestionEmbedded } from '../interfaces/suggestionEmbedded.interface';
 

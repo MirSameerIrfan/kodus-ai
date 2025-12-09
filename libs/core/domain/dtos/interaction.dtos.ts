@@ -1,6 +1,7 @@
-import { OrganizationAndTeamDataDto } from '@libs/common/dtos/organizationAndTeamData.dto';
 import { Type } from 'class-transformer';
 import { IsIn, IsOptional, IsString, ValidateNested } from 'class-validator';
+
+import { OrganizationAndTeamDataDto } from './organizationAndTeamData.dto';
 
 export class InteractionDto {
     // Type of interaction

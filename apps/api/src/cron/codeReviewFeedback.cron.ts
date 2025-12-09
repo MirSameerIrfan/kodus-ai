@@ -1,8 +1,23 @@
 import { createLogger } from '@kodus/flow';
-import { IMessageBrokerService } from '@libs/core/domain/contracts/message-broker.service.contracts';
-import { MESSAGE_BROKER_SERVICE_TOKEN } from '@libs/core/domain/contracts/message-broker.service.contracts';
 import { Inject, Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+
+import {
+    AUTOMATION_EXECUTION_SERVICE_TOKEN,
+    IAutomationExecutionService,
+} from '@libs/automation/domain/contracts/automation-execution.service';
+import {
+    AUTOMATION_SERVICE_TOKEN,
+    IAutomationService,
+} from '@libs/automation/domain/contracts/automation.service';
+import {
+    ITeamAutomationService,
+    TEAM_AUTOMATION_SERVICE_TOKEN,
+} from '@libs/automation/domain/contracts/team-automation.service';
+import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
+import { AutomationType } from '@libs/automation/domain/enums/automation-type';
+import { IMessageBrokerService } from '@libs/core/domain/contracts/message-broker.service.contracts';
+import { MESSAGE_BROKER_SERVICE_TOKEN } from '@libs/core/domain/contracts/message-broker.service.contracts';
 import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
 import {
@@ -13,20 +28,6 @@ import {
     IntegrationStatusFilter,
     ITeamWithIntegrations,
 } from '@libs/organization/domain/team/interfaces/team.interface';
-import {
-    AUTOMATION_EXECUTION_SERVICE_TOKEN,
-    IAutomationExecutionService,
-} from '@libs/automation/domain/contracts/automation-execution.service';
-import {
-    AUTOMATION_SERVICE_TOKEN,
-    IAutomationService,
-} from '@libs/automation/domain/contracts/automation.service';
-import { AutomationType } from '@libs/automation/domain/enums/automation-type';
-import {
-    ITeamAutomationService,
-    TEAM_AUTOMATION_SERVICE_TOKEN,
-} from '@libs/automation/domain/contracts/team-automation.service';
-import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
 
 const API_CRON_SYNC_CODE_REVIEW_REACTIONS =
     process.env.API_CRON_SYNC_CODE_REVIEW_REACTIONS;

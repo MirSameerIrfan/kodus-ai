@@ -1,8 +1,3 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
-import * as moment from 'moment-timezone';
-import { v4 as uuidv4 } from 'uuid';
 import {
     CommitSchema,
     Gitlab,
@@ -11,8 +6,17 @@ import {
     RepositoryTreeSchema,
 } from '@gitbeaker/rest';
 import { LLMModelProvider, LLMProviderService } from '@kodus/kodus-common/llm';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
+import * as moment from 'moment-timezone';
+import { v4 as uuidv4 } from 'uuid';
 
-import { IntegrationServiceDecorator } from '@libs/core/utils/decorators/integration-service.decorator';
+import {
+    GitHubReaction,
+    GitlabReaction,
+} from '@libs/code-review/domain/feedback/enums/codeReviewCommentReaction.enum';
+import { CacheService } from '@libs/core/cache/cache.service';
 import {
     CreateAuthIntegrationStatus,
     GitlabPullRequestState,
@@ -23,6 +27,17 @@ import {
     PlatformType,
     PullRequestState,
 } from '@libs/core/domain/enums';
+import {
+    Repository,
+    ReviewComment,
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { Commit } from '@libs/core/infrastructure/config/types/general/commit.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { TreeItem } from '@libs/core/infrastructure/config/types/general/tree.type';
+import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
+import { MCPManagerService } from '@libs/core/mcp-server/infrastructure/services/mcp-manager.service';
+import { decrypt, encrypt } from '@libs/core/utils/crypto';
+import { IntegrationServiceDecorator } from '@libs/core/utils/decorators/integration-service.decorator';
 import { ICodeManagementService } from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
 import {
     IIntegrationService,
@@ -40,10 +55,7 @@ import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
-import { CacheService } from '@libs/core/cache/cache.service';
-import { MCPManagerService } from '@libs/core/mcp-server/infrastructure/services/mcp-manager.service';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { GitCloneParams } from '@libs/platform/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
 import {
     PullRequest,
     PullRequestAuthor,
@@ -54,9 +66,7 @@ import {
 } from '@libs/platform/domain/platformIntegrations/types/codeManagement/pullRequests.type';
 import { GitlabAuthDetail } from '@libs/integrations/domain/authIntegrations/types/gitlab-auth-detail.type';
 import { AuthMode } from '@libs/platform/domain/platformIntegrations/enums/codeManagement/authMode.enum';
-import { decrypt, encrypt } from '@libs/core/utils/crypto';
 import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
-import { Commit } from '@libs/core/infrastructure/config/types/general/commit.type';
 import { CodeManagementConnectionStatus } from '@libs/core/utils/decorators/validate-code-management-integration.decorator';
 import { IntegrationEntity } from '@libs/integrations/domain/integrations/entities/integration.entity';
 import { safelyParseMessageContent } from '@libs/core/utils/safelyParseMessageContent';
@@ -64,26 +74,16 @@ import { getSeverityLevelShield } from '@libs/core/utils/codeManagement/severity
 import { getCodeReviewBadge } from '@libs/core/utils/codeManagement/codeReviewBadge';
 import { getLabelShield } from '@libs/core/utils/codeManagement/labels';
 import {
-    Repository,
-    ReviewComment,
-} from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import {
     getTranslationsForLanguageByCategory,
     TranslationsCategory,
 } from '@libs/core/utils/translations/translations';
 import { IntegrationConfigEntity } from '@libs/integrations/domain/integrationConfigs/entities/integration-config.entity';
-import {
-    GitHubReaction,
-    GitlabReaction,
-} from '@libs/code-review/domain/feedback/enums/codeReviewCommentReaction.enum';
-import { GitCloneParams } from '@libs/platform/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
 import { hasKodyMarker } from '@libs/core/utils/codeManagement/codeCommentMarkers';
 import { RepositoryFile } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
 import {
     isFileMatchingGlob,
     isFileMatchingGlobCaseInsensitive,
 } from '@libs/core/utils/glob-utils';
-import { TreeItem } from '@libs/core/infrastructure/config/types/general/tree.type';
 
 @Injectable()
 @IntegrationServiceDecorator(PlatformType.GITLAB, 'codeManagement')

@@ -1,8 +1,21 @@
+import type { ContextDependency } from '@context-os-core/interfaces';
 import { createLogger } from '@kodus/flow';
-import { KODY_RULES_SERVICE_TOKEN } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
-import { KodyRulesService } from '@libs/kody-rules/infrastructure/services/kodyRules.service';
+import {
+    LLMModelProvider,
+    PromptRunnerService,
+    PromptRole,
+    ParserType,
+    BYOKConfig,
+    TokenUsage,
+} from '@kodus/kodus-common/llm';
 import { Inject, Injectable } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
+
 import { IKodyRulesAnalysisService } from '@libs/code-review/domain/contracts/KodyRulesAnalysisService.contract';
+import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
+import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { ContextAugmentationsMap } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';
+import { FileContextAugmentationService } from '@libs/code-review/infrastructure/context/file-context-augmentation.service';
 import {
     FileChangeContext,
     ReviewModeResponse,
@@ -13,36 +26,24 @@ import {
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
-    IKodyRule,
-    KodyRulesScope,
-} from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
-import {
     KodyRulesPrLevelPayload,
     prompt_kodyrules_prlevel_analyzer,
     prompt_kodyrules_prlevel_group_rules,
 } from '@libs/core/utils/langchainCommon/prompts/kodyRulesPrLevel';
+import {
+    IKodyRule,
+    KodyRulesScope,
+} from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import { tryParseJSONObject } from '@libs/core/utils/transforms/json';
-import { v4 as uuidv4, validate as uuidValidate } from 'uuid';
 import { LabelType } from '@libs/core/utils/codeManagement/labels';
-import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
-import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
 import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
 import { TokenChunkingService } from '@libs/core/infrastructure/services/tokenChunking/tokenChunking.service';
-import {
-    LLMModelProvider,
-    PromptRunnerService,
-    PromptRole,
-    ParserType,
-    BYOKConfig,
-    TokenUsage,
-} from '@kodus/kodus-common/llm';
 import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
 import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
 import { ExternalReferenceLoaderService } from '@libs/kody-rules/infrastructure/externalReferenceLoader.service';
-import { FileContextAugmentationService } from '@libs/code-review/infrastructure/context/file-context-augmentation.service';
-import { ContextAugmentationsMap } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';
-import type { ContextDependency } from '@context-os-core/interfaces';
+import { KODY_RULES_SERVICE_TOKEN } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
 import { KodyRuleDependencyService } from '@libs/kody-rules/infrastructure/kodyRulesDependency.service';
+import { KodyRulesService } from '@libs/kody-rules/infrastructure/services/kodyRules.service';
 
 //#region Interfaces
 // Interface for analyzer response

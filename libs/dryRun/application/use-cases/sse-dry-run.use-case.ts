@@ -1,4 +1,9 @@
 import { createLogger } from '@kodus/flow';
+import { Inject, Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Observable, concat, from, fromEvent, merge } from 'rxjs';
+import { map, takeWhile, mergeMap } from 'rxjs/operators';
+
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
     DRY_RUN_SERVICE_TOKEN,
@@ -9,10 +14,6 @@ import {
     DryRunEventType,
     DryRunStatus,
 } from '@libs/dry-run/domain/interfaces/dryRun.interface';
-import { Inject, Injectable } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Observable, concat, from, fromEvent, merge, of } from 'rxjs';
-import { map, take, first, filter, takeWhile, mergeMap } from 'rxjs/operators';
 
 @Injectable()
 export class SseDryRunUseCase {

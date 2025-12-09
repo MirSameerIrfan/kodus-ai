@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
     IsOptional,
     IsString,
@@ -6,12 +7,13 @@ import {
     IsArray,
     ValidateNested,
 } from 'class-validator';
-import { KodyRulesExampleDto } from './create-kody-rule.dto';
-import { Type } from 'class-transformer';
+
 import {
     KodyRulesOrigin,
     KodyRulesStatus,
 } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
+
+import { KodyRulesExampleDto } from './create-kody-rule.dto';
 
 export enum KodyRuleSeverity {
     LOW = 'low',

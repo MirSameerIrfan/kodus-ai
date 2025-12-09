@@ -1,20 +1,20 @@
-import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/KodyIssuesManagement.contract';
-import {
-    IIssuesService,
-    ISSUES_SERVICE_TOKEN,
-} from '@libs/issues/domain/contracts/issues.service.contract';
-import { PERMISSIONS_SERVICE_TOKEN } from '@libs/identity/domain/permissions/contracts/permissions.service.contract';
-import { GetIssuesByFiltersDto } from '@libs/common/dtos/get-issues-by-filters.dto';
-import { KodyIssuesManagementService } from '@libs/issues/infrastructure/adapters/service/kodyIssuesManagement.service';
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import { AuthorizationService } from '@libs/identity/infrastructure/adapters/services/permissions/authorization.service';
+
+import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/KodyIssuesManagement.contract';
+import { GetIssuesByFiltersDto } from '@libs/common/dtos/get-issues-by-filters.dto';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
 import {
     Action,
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
+import { AuthorizationService } from '@libs/identity/infrastructure/adapters/services/permissions/authorization.service';
+import {
+    IIssuesService,
+    ISSUES_SERVICE_TOKEN,
+} from '@libs/issues/domain/contracts/issues.service.contract';
+import { KodyIssuesManagementService } from '@libs/issues/infrastructure/adapters/service/kodyIssuesManagement.service';
 
 @Injectable()
 export class GetTotalIssuesUseCase implements IUseCase {

@@ -1,8 +1,5 @@
-import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
-import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
 import { IPullRequests } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
-import { CodeReviewParameter } from '@libs/core/infrastructure/config/types/general/codeReviewConfig.type';
-import { string } from 'joi';
+
 
 export enum DryRunStatus {
     IN_PROGRESS = 'IN_PROGRESS',

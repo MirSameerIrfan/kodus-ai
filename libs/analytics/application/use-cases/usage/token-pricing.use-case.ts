@@ -1,8 +1,9 @@
 import { createLogger } from "@kodus/flow";
-import { CacheService } from '@libs/core/cache/cache.service';
 import { BYOKProvider } from '@kodus/kodus-common/llm';
 import { Injectable } from '@nestjs/common';
 import { Axios } from 'axios';
+
+import { CacheService } from '@libs/core/cache/cache.service';
 
 type ModelInfo = {
     id: string;

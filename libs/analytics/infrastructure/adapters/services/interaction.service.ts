@@ -1,16 +1,17 @@
-import { IInteractionService } from '@/core/domain/interactions/contracts/interaction.service.contracts';
 import { Inject } from '@nestjs/common';
+
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     IInteractionExecutionRepository,
     INTERACTION_EXECUTION_REPOSITORY_TOKEN,
 } from '@/core/domain/interactions/contracts/interaction.repository.contracts';
+import { IInteractionService } from '@/core/domain/interactions/contracts/interaction.service.contracts';
 import {
     ITeamService,
     TEAM_SERVICE_TOKEN,
 } from '@/core/domain/team/contracts/team.service.contract';
-import { InteractionDto } from '@/shared/domain/dtos/interaction.dtos';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { InteractionDto } from '@/shared/domain/dtos/interaction.dtos';
 
 export class InteractionService implements IInteractionService {
     constructor(

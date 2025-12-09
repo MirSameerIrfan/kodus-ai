@@ -1,6 +1,7 @@
 import { Entity } from '@libs/core/domain/interfaces/entity';
-import { ISuggestionEmbedded } from '../interfaces/suggestionEmbedded.interface';
 import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
+
+import { ISuggestionEmbedded } from '../interfaces/suggestionEmbedded.interface';
 
 export class SuggestionEmbeddedEntity implements Entity<ISuggestionEmbedded> {
     private _uuid: string;

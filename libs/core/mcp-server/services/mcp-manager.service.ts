@@ -1,10 +1,11 @@
-import { AxiosMCPManagerService } from '@libs/core/infrastructure/config/axios/microservices/mcpManager.axios';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { MCPServerConfig, createLogger } from '@kodus/flow';
+import { TransportType } from '@kodus/flow/dist/core/types/allTypes';
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { TransportType } from '@kodus/flow/dist/core/types/allTypes';
-import { PermissionValidationService } from '@libs/core/infrastructure/services/permissionValidation.service';
+
+import { AxiosMCPManagerService } from '@libs/core/infrastructure/config/axios/microservices/mcpManager.axios';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
 
 type MCPConnection = {
     id: string;

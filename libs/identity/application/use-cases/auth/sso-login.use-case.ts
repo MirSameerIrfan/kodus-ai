@@ -1,13 +1,19 @@
+import { randomBytes } from 'crypto';
+
+import { Inject, Injectable } from '@nestjs/common';
+
+import { AuthProvider } from '@libs/core/domain/enums/auth-provider.enum';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
 import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
 } from '@libs/identity/domain/auth/contracts/auth.service.contracts';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
-import { AuthProvider } from '@libs/core/domain/enums/auth-provider.enum';
-import { Inject, Injectable } from '@nestjs/common';
-import { randomBytes } from 'crypto';
+
+
+
 import { SignUpUseCase } from './signup.use-case';
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+
 
 @Injectable()
 export class SSOLoginUseCase implements IUseCase {

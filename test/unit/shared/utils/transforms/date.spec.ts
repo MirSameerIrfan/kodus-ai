@@ -1,4 +1,5 @@
 import * as moment from 'moment';
+
 import { getDayForFilter } from '../../../../../src/shared/utils/transforms/date';
 
 describe('getDayForFilter Function', () => {

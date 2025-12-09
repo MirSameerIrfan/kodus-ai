@@ -7,6 +7,7 @@ import {
     IMappedUsers,
     MappedAction,
 } from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-common.type';
+
 import { extractRepoFullName } from '.';
 
 /**

@@ -1,24 +1,25 @@
-import { Inject, Injectable } from '@nestjs/common';
-import {
-    IParametersService,
-    PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { REQUEST } from '@nestjs/core';
-import { KodusConfigFile } from '@/config/types/general/codeReview.type';
-
-import * as yaml from 'js-yaml';
 import * as fs from 'node:fs';
+
+import { Inject, Injectable } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+import * as yaml from 'js-yaml';
+
+import { KodusConfigFile } from '@/config/types/general/codeReview.type';
 import {
     CODE_BASE_CONFIG_SERVICE_TOKEN,
     ICodeBaseConfigService,
 } from '@/core/domain/codeBase/contracts/CodeBaseConfigService.contract';
-import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
+import {
+    IParametersService,
+    PARAMETERS_SERVICE_TOKEN,
+} from '@/core/domain/parameters/contracts/parameters.service.contract';
 import {
     Action,
     ResourceType,
 } from '@/core/domain/permissions/enums/permissions.enum';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
+import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
 
 @Injectable()
 export class GenerateKodusConfigFileUseCase {

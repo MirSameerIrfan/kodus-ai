@@ -1,3 +1,6 @@
+import { Inject } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
 import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
@@ -7,8 +10,6 @@ import {
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { AuthorizationService } from '@libs/identity/infrastructure/adapters/services/permissions/authorization.service';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
-import { Inject } from '@nestjs/common';
-import { REQUEST } from '@nestjs/core';
 
 export class GetRepositoriesUseCase implements IUseCase {
     constructor(

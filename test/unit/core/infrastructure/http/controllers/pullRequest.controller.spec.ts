@@ -1,9 +1,10 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { CacheModule } from '@nestjs/cache-manager';
-import { PullRequestController } from '@/core/infrastructure/http/controllers/pullRequest.controller';
+import { Test, TestingModule } from '@nestjs/testing';
+
+import { GetEnrichedPullRequestsUseCase } from '@/core/application/use-cases/pullRequests/get-enriched-pull-requests.use-case';
 import { GetPullRequestAuthorsUseCase } from '@/core/application/use-cases/pullRequests/get-pull-request-authors-orderedby-contributions.use-case';
 import { UpdatePullRequestToNewFormatUseCase } from '@/core/application/use-cases/pullRequests/update-pull-request-to-new-format.use-case';
-import { GetEnrichedPullRequestsUseCase } from '@/core/application/use-cases/pullRequests/get-enriched-pull-requests.use-case';
+import { PullRequestController } from '@/core/infrastructure/http/controllers/pullRequest.controller';
 import { EnrichedPullRequestsQueryDto } from '@/core/infrastructure/http/dtos/enriched-pull-requests-query.dto';
 import { PaginatedEnrichedPullRequestsResponse } from '@/core/infrastructure/http/dtos/paginated-enriched-pull-requests.dto';
 

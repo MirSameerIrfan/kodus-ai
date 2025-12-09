@@ -1,14 +1,15 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { GetIntegrationConfigsByIntegrationCategoryUseCase } from '@libs/integrations/application/use-cases/integrationConfig/getIntegrationConfigsByIntegrationCategory.use-case';
+
+import {
+    Action,
+    ResourceType,
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
     CheckPolicies,
     PolicyGuard,
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
 import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
-import {
-    Action,
-    ResourceType,
-} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { GetIntegrationConfigsByIntegrationCategoryUseCase } from '@libs/integrations/application/use-cases/integrationConfig/getIntegrationConfigsByIntegrationCategory.use-case';
 
 @Controller('integration-config')
 export class IntegrationConfigController {

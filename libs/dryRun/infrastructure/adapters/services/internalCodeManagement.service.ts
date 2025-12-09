@@ -1,3 +1,5 @@
+import { Inject, Injectable } from '@nestjs/common';
+
 import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/context/code-review-pipeline.context';
 import { PlatformType } from '@libs/core/domain/enums';
@@ -13,7 +15,6 @@ import {
     IDryRunService,
 } from '@libs/dryRun/domain/contracts/dryRun.service.contract';
 import { ICodeManagementService } from '@libs/platform/domain/interfaces/code-management.interface';
-import { Inject, Injectable } from '@nestjs/common';
 
 type PartialICodeManagementService = Pick<
     ICodeManagementService,

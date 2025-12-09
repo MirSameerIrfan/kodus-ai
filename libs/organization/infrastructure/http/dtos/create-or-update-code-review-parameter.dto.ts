@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
     IsObject,
     IsString,
@@ -8,8 +9,8 @@ import {
     IsNumber,
     IsEnum,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-import { OrganizationAndTeamDataDto } from './organizationAndTeamData.dto';
+
+
 import {
     BehaviourForExistingDescription,
     BehaviourForNewCommits,
@@ -18,8 +19,10 @@ import {
     LimitationType,
     ReviewCadenceType,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
 import { PullRequestMessageStatus } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
+import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
+
+import { OrganizationAndTeamDataDto } from './organizationAndTeamData.dto';
 
 class ReviewOptionsDto {
     @IsBoolean()

@@ -1,11 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
+
+import { ListCodeReviewAutomationLabelsUseCase } from './list-code-review-automation-labels-use-case';
+
 import { CodeReviewVersion } from '@/config/types/general/codeReview.type';
 import {
     CODE_BASE_CONFIG_SERVICE_TOKEN,
     ICodeBaseConfigService,
 } from '@/core/domain/codeBase/contracts/CodeBaseConfigService.contract';
-import { ListCodeReviewAutomationLabelsUseCase } from './list-code-review-automation-labels-use-case';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 
 @Injectable()

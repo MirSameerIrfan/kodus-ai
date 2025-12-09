@@ -1,14 +1,15 @@
+import { FeedbackType } from '@libs/code-review/ee/fine-tuning/domain/enums/feedbackType.enum';
 import {
     ClusteringType,
     ReviewModeResponse,
     SuggestionType,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { LabelType } from '@libs/core/utils/codeManagement/labels';
+import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
+
 import { DeliveryStatus } from '../enums/deliveryStatus.enum';
 import { ImplementationStatus } from '../enums/implementationStatus.enum';
 import { PriorityStatus } from '../enums/priorityStatus.enum';
-import { LabelType } from '@libs/core/utils/codeManagement/labels';
-import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
-import { FeedbackType } from '@libs/code-review/ee/fine-tuning/domain/enums/feedbackType.enum';
 
 export interface IPullRequests {
     uuid?: string;

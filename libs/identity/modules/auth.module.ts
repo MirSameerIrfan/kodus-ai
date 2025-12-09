@@ -1,3 +1,11 @@
+import { Module, forwardRef } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { AuthController } from '@apps/api/controllers/auth.controller';
+import { SSOConfigController } from '@apps/api/controllers/ssoConfig.controller';
 import { jwtConfigLoader } from '@libs/core/infrastructure/config/loaders/jwt.config.loader';
 import { JWT } from '@libs/core/infrastructure/config/types/jwt/jwt';
 import { UseCases as AuthUseCases } from '@libs/identity/application/use-cases/auth';
@@ -6,21 +14,16 @@ import { AUTH_REPOSITORY_TOKEN } from '@libs/identity/domain/auth/contracts/auth
 import { AUTH_SERVICE_TOKEN } from '@libs/identity/domain/auth/contracts/auth.service.contracts';
 import { SSO_CONFIG_REPOSITORY_TOKEN } from '@libs/identity/domain/sso/contracts/ssoConfig.repository.contract';
 import { SSO_CONFIG_SERVICE_TOKEN } from '@libs/identity/domain/sso/contracts/ssoConfig.service.contract';
+import { AuthService } from '@libs/identity/infrastructure/adapters/services/auth/auth.service';
+import { JwtStrategy } from '@libs/identity/infrastructure/adapters/services/auth/jwt-auth.strategy';
+import { SamlStrategy } from '@libs/identity/infrastructure/adapters/services/auth/saml-auth.strategy';
 import { AuthRepository } from '@libs/identity/infrastructure/repositories/auth.repository';
 import { AuthModel } from '@libs/identity/infrastructure/repositories/schemas/auth.model';
 import { SSOConfigModel } from '@libs/identity/infrastructure/repositories/sso/ssoConfig.model';
 import { SSOConfigRepository } from '@libs/identity/infrastructure/repositories/sso/ssoConfig.repository';
-import { AuthService } from '@libs/identity/infrastructure/adapters/services/auth/auth.service';
-import { JwtStrategy } from '@libs/identity/infrastructure/adapters/services/auth/jwt-auth.strategy';
-import { SamlStrategy } from '@libs/identity/infrastructure/adapters/services/auth/saml-auth.strategy';
 import { SSOConfigService } from '@libs/identity/infrastructure/adapters/services/auth/ssoConfig.service';
-import { AuthController } from '@apps/api/controllers/auth.controller';
-import { SSOConfigController } from '@apps/api/controllers/ssoConfig.controller';
-import { Module, forwardRef } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtModule } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
-import { TypeOrmModule } from '@nestjs/typeorm';
+
+
 import { OrganizationModule } from './organization.module';
 import { ProfilesModule } from './profiles.module';
 import { TeamsModule } from './team.module';

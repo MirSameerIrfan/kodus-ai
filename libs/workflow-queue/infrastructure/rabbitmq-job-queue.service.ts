@@ -1,13 +1,16 @@
-import { Injectable, Inject, Optional } from '@nestjs/common';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { Injectable, Optional } from '@nestjs/common';
+import { DataSource } from 'typeorm';
+
+import { WorkflowJobRepository } from '@libs/core/infrastructure/database/typeorm/repositories/workflow-job.repository';
+import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
 import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
 import { IJobQueueService } from '@libs/workflow-queue/domain/contracts/job-queue.service.contract';
 import { IWorkflowJob } from '@libs/workflow-queue/domain/interfaces/workflow-job.interface';
-import { WorkflowJobRepository } from '@libs/core/infrastructure/database/typeorm/repositories/workflow-job.repository';
+
 import { TransactionalOutboxService } from './transactional-outbox.service';
-import { v4 as uuid } from 'uuid';
-import { DataSource } from 'typeorm';
-import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
+
+
 
 @Injectable()
 export class RabbitMQJobQueueService implements IJobQueueService {

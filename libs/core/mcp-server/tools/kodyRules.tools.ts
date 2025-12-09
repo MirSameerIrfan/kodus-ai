@@ -1,8 +1,8 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { z } from 'zod';
-import { wrapToolHandler } from '../utils/mcp-protocol.utils';
-import { BaseResponse, McpToolDefinition } from '../types/mcp-tool.interface';
+
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
     IKodyRulesService,
     KODY_RULES_SERVICE_TOKEN,
@@ -18,7 +18,9 @@ import {
     KodyRuleSeverity,
     CreateKodyRuleDto,
 } from '@libs/kody-rules/infrastructure/http/dtos/create-kody-rule.dto';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+
+import { BaseResponse, McpToolDefinition } from '../types/mcp-tool.interface';
+import { wrapToolHandler } from '../utils/mcp-protocol.utils';
 
 type KodyRuleInput = Required<
     Omit<

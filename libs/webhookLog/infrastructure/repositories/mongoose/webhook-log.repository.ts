@@ -2,14 +2,16 @@ import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+
 import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
 } from '@libs/core/infrastructure/repositories/mappers';
-import { WebhookLogModel } from './schemas/webhook-log.model';
 import { IWebhookLogRepository } from '@libs/webhookLog/domain/contracts/webhook-log.repository.contract';
-import { IWebhookLog } from '@libs/webhookLog/domain/interfaces/webhook-log.interface';
 import { WebhookLogEntity } from '@libs/webhookLog/domain/entities/webhook-log.entity';
+import { IWebhookLog } from '@libs/webhookLog/domain/interfaces/webhook-log.interface';
+
+import { WebhookLogModel } from './schemas/webhook-log.model';
 
 @Injectable()
 export class WebhookLogRepository implements IWebhookLogRepository {

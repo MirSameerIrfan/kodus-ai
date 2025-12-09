@@ -1,3 +1,6 @@
+import { Inject, Injectable } from '@nestjs/common';
+
+import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
 import {
     ISSOConfigService,
     SSO_CONFIG_SERVICE_TOKEN,
@@ -6,8 +9,6 @@ import {
     SSOProtocol,
     SSOProtocolConfigMap,
 } from '@libs/identity/domain/sso/interfaces/ssoConfig.interface';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
-import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class CreateOrUpdateSSOConfigUseCase {

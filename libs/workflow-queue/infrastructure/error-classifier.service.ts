@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+
 import { IErrorClassifierService } from '@libs/workflow-queue/domain/contracts/error-classifier.service.contract';
 import { ErrorClassification } from '@libs/workflow-queue/domain/enums/error-classification.enum';
 

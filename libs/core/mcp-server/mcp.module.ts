@@ -1,13 +1,15 @@
-import { IssuesModule } from '@libs/issues/issues.module';
-import { KodyRulesModule } from '@libs/kody-rules/kody-rules.module';
 import { DynamicModule, Module, Provider, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+
 import { PullRequestsModule } from '@libs/code-review/modules/pull-requests.module';
-import { MCPManagerService } from './services/mcp-manager.service';
+import { IssuesModule } from '@libs/issues/issues.module';
+import { KodyRulesModule } from '@libs/kody-rules/kody-rules.module';
+
 import { McpController } from './controllers/mcp.controller';
-import { McpServerService } from './services/mcp-server.service';
 import { McpEnabledGuard } from './guards/mcp-enabled.guard';
+import { MCPManagerService } from './services/mcp-manager.service';
+import { McpServerService } from './services/mcp-server.service';
 import { CodeManagementTools, KodyIssuesTools, KodyRulesTools } from './tools';
 
 @Module({})

@@ -1,3 +1,5 @@
+import { Inject, Injectable } from '@nestjs/common';
+
 import {
     IOrganizationService,
     ORGANIZATION_SERVICE_TOKEN,
@@ -18,7 +20,6 @@ import { IUser } from '@/core/domain/user/interfaces/user.interface';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { UpdateAnotherUserDto } from '@/core/infrastructure/http/dtos/update-another-user.dto';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
-import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class UpdateAnotherUserUseCase implements IUseCase {

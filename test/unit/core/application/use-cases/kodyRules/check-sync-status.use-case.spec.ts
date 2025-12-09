@@ -1,14 +1,15 @@
+import { REQUEST } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
+
 import { CheckSyncStatusUseCase } from '@/core/application/use-cases/kodyRules/check-sync-status.use-case';
-import { INTEGRATION_SERVICE_TOKEN } from '@/core/domain/integrations/contracts/integration.service.contracts';
-import { INTEGRATION_CONFIG_SERVICE_TOKEN } from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { PARAMETERS_SERVICE_TOKEN } from '@/core/domain/parameters/contracts/parameters.service.contract';
 import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-rules-in-organization-by-filter.use-case';
+import { INTEGRATION_CONFIG_SERVICE_TOKEN } from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import { INTEGRATION_SERVICE_TOKEN } from '@/core/domain/integrations/contracts/integration.service.contracts';
+import { KodyRulesStatus } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+import { PARAMETERS_SERVICE_TOKEN } from '@/core/domain/parameters/contracts/parameters.service.contract';
+import { KodyLearningStatus } from '@/core/domain/parameters/types/configValue.type';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { KodyLearningStatus } from '@/core/domain/parameters/types/configValue.type';
-import { KodyRulesStatus } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
-import { REQUEST } from '@nestjs/core';
 
 describe('CheckSyncStatusUseCase', () => {
     let useCase: CheckSyncStatusUseCase;

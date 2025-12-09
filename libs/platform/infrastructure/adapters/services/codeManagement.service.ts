@@ -1,3 +1,14 @@
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
+
+import {
+    GitHubReaction,
+    GitlabReaction,
+} from '@libs/code-review/domain/feedback/enums/codeReviewCommentReaction.enum';
+import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/codeReviewPipeline/context/code-review-pipeline.context';
+import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
+import { PullRequestState } from '@libs/core/domain/enums/pullRequestState.enum';
 import {
     CommentResult,
     Repository,
@@ -6,13 +17,10 @@ import { Commit } from '@libs/core/infrastructure/config/types/general/commit.ty
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { TreeItem } from '@libs/core/infrastructure/config/types/general/tree.type';
 import {
-    GitHubReaction,
-    GitlabReaction,
-} from '@libs/code-review/domain/feedback/enums/codeReviewCommentReaction.enum';
-import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
 } from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
+import { ICodeManagementService } from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
 import { GitCloneParams } from '@libs/platform/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
 import {
     PullRequest,
@@ -23,16 +31,10 @@ import {
 } from '@libs/platform/domain/platformIntegrations/types/codeManagement/pullRequests.type';
 import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
 import { RepositoryFile } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
-import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
-import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
-import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
-import { PullRequestState } from '@libs/core/domain/enums/pullRequestState.enum';
-import { CodeManagementConnectionStatus } from '@libs/core/utils/decorators/validate-code-management-integration.decorator';
-import { extractOrganizationAndTeamData } from '@libs/core/utils/helpers';
-import { Inject, Injectable, forwardRef } from '@nestjs/common';
-import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/codeReviewPipeline/context/code-review-pipeline.context';
+
 import { PlatformIntegrationFactory } from './platformIntegration.factory';
-import { ICodeManagementService } from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
+import { extractOrganizationAndTeamData } from '@libs/common/utils/helpers';
+import { CodeManagementConnectionStatus } from '@libs/common/utils/decorators/validate-code-management-integration.decorator';
 
 @Injectable()
 export class CodeManagementService implements ICodeManagementService {

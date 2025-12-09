@@ -1,10 +1,11 @@
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+
 import { OrganizationModel } from '@libs/core/infrastructure/database/typeorm/schema/organization.model';
 import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 import {
     SSOProtocol,
     SSOProtocolConfigMap,
 } from '@libs/identity/domain/sso/interfaces/ssoConfig.interface';
-import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 
 @Entity('sso_config')
 @Index('IDX_SSOConfig_Domains_GIN', { synchronize: false })

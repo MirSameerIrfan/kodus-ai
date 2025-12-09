@@ -1,13 +1,15 @@
-import { Repository } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { Commit } from '@libs/core/infrastructure/config/types/general/commit.type';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { TreeItem } from '@libs/core/infrastructure/config/types/general/tree.type';
 import {
     GitHubReaction,
     GitlabReaction,
 } from '@libs/code-review/domain/feedback/enums/codeReviewCommentReaction.enum';
 import { PullRequestState } from '@libs/core/domain/enums/pullRequestState.enum';
-import { CodeManagementConnectionStatus } from '@libs/core/utils/decorators/validate-code-management-integration.decorator';
+import { Repository } from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { Commit } from '@libs/core/infrastructure/config/types/general/commit.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { TreeItem } from '@libs/core/infrastructure/config/types/general/tree.type';
+import { IntegrationConfigEntity } from '@libs/integrations/domain/integrationConfigs/entities/integration-config.entity';
+
+import { ICommonPlatformIntegrationService } from './common.interface';
 import { GitCloneParams } from '../types/codeManagement/gitCloneParams.type';
 import { Organization } from '../types/codeManagement/organization.type';
 import {
@@ -22,8 +24,7 @@ import {
 import { Repositories } from '../types/codeManagement/repositories.type';
 import { RepositoryFile } from '../types/codeManagement/repositoryFile.type';
 import { Workflow } from '../types/codeManagement/workflow.type';
-import { ICommonPlatformIntegrationService } from './common.interface';
-import { IntegrationConfigEntity } from '@libs/integrations/domain/integrationConfigs/entities/integration-config.entity';
+import { CodeManagementConnectionStatus } from '@libs/common/utils/decorators/validate-code-management-integration.decorator';
 
 export interface ICodeManagementService extends ICommonPlatformIntegrationService {
     getPullRequests(params: {

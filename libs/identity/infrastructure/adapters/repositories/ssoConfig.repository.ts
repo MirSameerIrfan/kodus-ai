@@ -1,16 +1,18 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { ArrayContains, FindOptionsWhere, Repository } from 'typeorm';
+
+import {
+    mapSimpleModelsToEntities,
+    mapSimpleModelToEntity,
+} from '@libs/core/infrastructure/repositories/mappers';
 import { ISSOConfigRepository } from '@libs/identity/domain/sso/contracts/ssoConfig.repository.contract';
 import { SSOConfigEntity } from '@libs/identity/domain/sso/entities/ssoConfig.entity';
 import {
     SSOConfig,
     SSOProtocol,
 } from '@libs/identity/domain/sso/interfaces/ssoConfig.interface';
-import {
-    mapSimpleModelsToEntities,
-    mapSimpleModelToEntity,
-} from '@libs/core/infrastructure/repositories/mappers';
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { ArrayContains, FindOptionsWhere, Repository } from 'typeorm';
+
 import { SSOConfigModel } from './schema/ssoConfig.model';
 
 @Injectable()

@@ -1,10 +1,11 @@
-import { IsOptional, IsString, IsEnum, IsUUID } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { IsOptional, IsString, IsEnum, IsUUID } from 'class-validator';
+
+import { PaginationDto } from '@libs/core/domain/dtos/pagination.dto';
 import {
     ActionType,
     ConfigLevel,
 } from '@libs/core/infrastructure/config/types/general/codeReviewSettingsLog.type';
-import { PaginationDto } from '@libs/core/domain/dtos/pagination.dto';
 
 export class CodeReviewSettingsLogFiltersDto extends PaginationDto {
     @IsOptional()

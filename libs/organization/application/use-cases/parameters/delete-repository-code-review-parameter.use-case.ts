@@ -1,29 +1,33 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import {
-    IParametersService,
-    PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { DeleteRepositoryCodeReviewParameterDto } from '@/core/infrastructure/http/dtos/delete-repository-code-review-parameter.dto';
-import { ActionType } from '@/config/types/general/codeReviewSettingsLog.type';
-import { RepositoryWithDirectoriesException } from '@/shared/infrastructure/filters/repository-with-directories.exception';
+import { produce } from 'immer';
+
 import { DeleteByRepositoryOrDirectoryPullRequestMessagesUseCase } from '../pullRequestMessages/delete-by-repository-or-directory.use-case';
+
+import { CodeReviewParameter } from '@/config/types/general/codeReviewConfig.type';
+import { ActionType } from '@/config/types/general/codeReviewSettingsLog.type';
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { UserRequest } from '@/config/types/http/user-request.type';
 import {
     IKodyRulesService,
     KODY_RULES_SERVICE_TOKEN,
 } from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
 import { KodyRulesStatus } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
-import { CodeReviewParameter } from '@/config/types/general/codeReviewConfig.type';
-import { produce } from 'immer';
+import {
+    IParametersService,
+    PARAMETERS_SERVICE_TOKEN,
+} from '@/core/domain/parameters/contracts/parameters.service.contract';
+import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { DeleteRepositoryCodeReviewParameterDto } from '@/core/infrastructure/http/dtos/delete-repository-code-review-parameter.dto';
+
+
 import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
     ICodeReviewSettingsLogService,
 } from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
-import { UserRequest } from '@/config/types/http/user-request.type';
+import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+import { RepositoryWithDirectoriesException } from '@/shared/infrastructure/filters/repository-with-directories.exception';
 
 @Injectable()
 export class DeleteRepositoryCodeReviewParameterUseCase {

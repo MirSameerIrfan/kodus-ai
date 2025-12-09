@@ -1,11 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ILogService } from './domain/contracts/log.service.contracts';
+
 import {
     ILogRepository,
     LOG_REPOSITORY_TOKEN,
 } from './domain/contracts/log.repository.contracts';
-import { ILog } from './domain/interfaces/log.interface';
+import { ILogService } from './domain/contracts/log.service.contracts';
 import { LogEntity } from './domain/entities/log.entity';
+import { ILog } from './domain/interfaces/log.interface';
 
 @Injectable()
 export class LogService implements ILogService {

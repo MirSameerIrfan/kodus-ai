@@ -1,8 +1,8 @@
-import { Injectable, Inject } from '@nestjs/common';
 import {
-    ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
     IOrganizationParametersService,
-} from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
+    ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
+} from '@libs/organization/domain/organizationParameters/contracts/organizationParameters.service.contract';
+import { Injectable, Inject } from '@nestjs/common';
 
 @Injectable()
 export class DeleteByokConfigUseCase {

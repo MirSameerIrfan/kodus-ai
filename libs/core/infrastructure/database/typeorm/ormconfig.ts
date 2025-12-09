@@ -1,7 +1,9 @@
 import 'dotenv/config';
 import { join } from 'path';
+
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { SeederOptions } from 'typeorm-extension';
+
 import MainSeeder from './seed/main.seeder';
 
 const env = process.env.API_DATABASE_ENV ?? process.env.API_NODE_ENV;

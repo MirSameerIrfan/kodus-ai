@@ -1,13 +1,15 @@
-import { IAuthIntegrationRepository } from '@libs/integrations/domain/authIntegrations/contracts/auth-integration.repository.contracts';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, Raw, Repository, UpdateQueryBuilder } from 'typeorm';
-import { AuthIntegrationModel } from './schemas/authIntegration.model';
-import { IAuthIntegration } from '@libs/integrations/domain/authIntegrations/interfaces/auth-integration.interface';
-import { AuthIntegrationEntity } from '@libs/integrations/domain/authIntegrations/entities/auth-integration.entity';
-import { createNestedConditions } from '@libs/core/infrastructure/repositories/model/filters';
-import { mapSimpleModelToEntity } from '@libs/core/infrastructure/repositories/mappers';
+
 import { PlatformType } from '@libs/core/domain/enums';
+import { mapSimpleModelToEntity } from '@libs/core/infrastructure/repositories/mappers';
+import { createNestedConditions } from '@libs/core/infrastructure/repositories/model/filters';
+import { IAuthIntegrationRepository } from '@libs/integrations/domain/authIntegrations/contracts/auth-integration.repository.contracts';
+import { AuthIntegrationEntity } from '@libs/integrations/domain/authIntegrations/entities/auth-integration.entity';
+import { IAuthIntegration } from '@libs/integrations/domain/authIntegrations/interfaces/auth-integration.interface';
+
+import { AuthIntegrationModel } from './schemas/authIntegration.model';
 
 @Injectable()
 export class AuthIntegrationRepository implements IAuthIntegrationRepository {

@@ -1,28 +1,27 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { KodyIssuesManagementService } from '@/ee/kodyIssuesManagement/service/kodyIssuesManagement.service';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { IssuesService } from '@/core/infrastructure/adapters/services/issues/issues.service';
-import {
-    IPullRequestsService,
-    PULL_REQUESTS_SERVICE_TOKEN,
-} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
-import {
-    KODY_ISSUES_ANALYSIS_SERVICE_TOKEN,
-    KodyIssuesAnalysisService,
-} from '@/ee/codeBase/kodyIssuesAnalysis.service';
+
+import { IssueStatus } from '@/config/types/general/issues.type';
 import {
     IPullRequestManagerService,
     PULL_REQUEST_MANAGER_SERVICE_TOKEN,
 } from '@/core/domain/codeBase/contracts/PullRequestManagerService.contract';
-import { CacheService } from '@/shared/utils/cache/cache.service';
+import { ISSUES_SERVICE_TOKEN } from '@/core/domain/issues/contracts/issues.service.contract';
 import { IssuesEntity } from '@/core/domain/issues/entities/issues.entity';
-import { IssueStatus } from '@/config/types/general/issues.type';
+import {
+    PULL_REQUESTS_SERVICE_TOKEN,
+} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
+import { IssuesService } from '@/core/infrastructure/adapters/services/issues/issues.service';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import {
+    KODY_ISSUES_ANALYSIS_SERVICE_TOKEN,
+    KodyIssuesAnalysisService,
+} from '@/ee/codeBase/kodyIssuesAnalysis.service';
+import { contextToGenerateIssues } from '@/ee/kodyIssuesManagement/domain/kodyIssuesManagement.interface';
+import { KodyIssuesManagementService } from '@/ee/kodyIssuesManagement/service/kodyIssuesManagement.service';
+import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
+import { CacheService } from '@/shared/utils/cache/cache.service';
 import { LabelType } from '@/shared/utils/codeManagement/labels';
 import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-
-import { contextToGenerateIssues } from '@/ee/kodyIssuesManagement/domain/kodyIssuesManagement.interface';
-import { ISSUES_SERVICE_TOKEN } from '@/core/domain/issues/contracts/issues.service.contract';
 
 describe('KodyIssuesManagementService - resolveExistingIssues', () => {
     let service: KodyIssuesManagementService;

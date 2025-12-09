@@ -1,16 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ValidateConfigStage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/validate-config.stage';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+
 import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
-    IAutomationExecutionService,
 } from '@/core/domain/automation/contracts/automation-execution.service';
 import {
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
-    IOrganizationParametersService,
 } from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { ValidateConfigStage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/validate-config.stage';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 
 describe('Azure Branch Normalization', () => {

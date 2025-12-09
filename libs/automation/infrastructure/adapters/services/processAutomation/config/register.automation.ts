@@ -1,5 +1,6 @@
-import { IAutomationFactory } from '@libs/automation/domain/automationExecution/processAutomation/automation.factory';
 import { Inject, Injectable } from '@nestjs/common';
+
+import { IAutomationFactory } from '@libs/automation/domain/automationExecution/processAutomation/automation.factory';
 
 @Injectable()
 export class AutomationRegistry {

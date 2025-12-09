@@ -1,8 +1,8 @@
-import { Controller, Get, HttpStatus, Res } from '@nestjs/common';
-import { Response } from 'express';
-import { InjectConnection } from '@nestjs/typeorm';
-import { Connection } from 'typeorm';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { Controller, Get, HttpStatus, Res } from '@nestjs/common';
+import { InjectConnection } from '@nestjs/typeorm';
+import { Response } from 'express';
+import { Connection } from 'typeorm';
 
 /**
  * WebhookHealthController - Health Check Simplificado para Webhook Handler

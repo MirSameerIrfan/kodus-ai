@@ -1,3 +1,10 @@
+import { LLMProviderService } from '@kodus/kodus-common/llm';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
+
+import { PinoLoggerService } from './logger/pino.service';
+import { PromptService } from './prompt.service';
+
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     IOrganizationParametersRepository,
@@ -7,11 +14,8 @@ import { IOrganizationParametersService } from '@/core/domain/organizationParame
 import { OrganizationParametersEntity } from '@/core/domain/organizationParameters/entities/organizationParameters.entity';
 import { IOrganizationParameters } from '@/core/domain/organizationParameters/interfaces/organizationParameters.interface';
 import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
-import { PromptService } from './prompt.service';
-import { PinoLoggerService } from './logger/pino.service';
-import { LLMProviderService, LLMModelProvider } from '@kodus/kodus-common/llm';
+
+
 
 @Injectable()
 export class OrganizationParametersService implements IOrganizationParametersService {

@@ -1,6 +1,4 @@
 import { createLogger } from '@kodus/flow';
-import { GetPermissionsUseCase } from '@libs/identity/application/use-cases/permissions/get-permissions.use-case';
-import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import {
     Body,
     Controller,
@@ -9,22 +7,22 @@ import {
     Post,
     Query,
     UseGuards,
-    UseInterceptors,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
+
+import { AssignReposUseCase } from '@libs/identity/application/use-cases/permissions/assign-repos.use-case';
+import { CanAccessUseCase } from '@libs/identity/application/use-cases/permissions/can-access.use-case';
+import { GetAssignedReposUseCase } from '@libs/identity/application/use-cases/permissions/get-assigned-repos.use-case';
+import { GetPermissionsUseCase } from '@libs/identity/application/use-cases/permissions/get-permissions.use-case';
 import {
     Action,
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { CanAccessUseCase } from '@libs/identity/application/use-cases/permissions/can-access.use-case';
-import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
-import { GetAssignedReposUseCase } from '@libs/identity/application/use-cases/permissions/get-assigned-repos.use-case';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import {
     CheckPolicies,
     PolicyGuard,
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
-import { subject } from '@casl/ability';
-import { AssignReposUseCase } from '@libs/identity/application/use-cases/permissions/assign-repos.use-case';
 import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
 
 @Controller('permissions')

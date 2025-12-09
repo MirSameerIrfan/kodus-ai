@@ -1,11 +1,3 @@
-import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
-import { CreateOrUpdatePullRequestMessagesUseCase } from '@libs/code-review/application/use-cases/pr-messages/create-or-update-pull-request-messages.use-case';
-import { FindByRepositoryOrDirectoryIdPullRequestMessagesUseCase } from '@libs/code-review/application/use-cases/pr-messages/find-by-repo-or-directory.use-case';
-import {
-    Action,
-    ResourceType,
-} from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
 import {
     Body,
     Controller,
@@ -16,6 +8,15 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
+
+import { CreateOrUpdatePullRequestMessagesUseCase } from '@libs/code-review/application/use-cases/pr-messages/create-or-update-pull-request-messages.use-case';
+import { FindByRepositoryOrDirectoryIdPullRequestMessagesUseCase } from '@libs/code-review/application/use-cases/pr-messages/find-by-repo-or-directory.use-case';
+import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
+import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
+import {
+    Action,
+    ResourceType,
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
     CheckPolicies,
     PolicyGuard,

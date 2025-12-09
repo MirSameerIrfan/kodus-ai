@@ -1,18 +1,19 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { IAutomationExecutionService } from '@libs/automation/domain/automationExecution/contracts/automation-execution.service';
+
 import {
     AUTOMATION_EXECUTION_REPOSITORY_TOKEN,
     IAutomationExecutionRepository,
 } from '@libs/automation/domain/automationExecution/contracts/automation-execution.repository';
+import { IAutomationExecutionService } from '@libs/automation/domain/automationExecution/contracts/automation-execution.service';
+import { AutomationExecutionEntity } from '@libs/automation/domain/automationExecution/entities/automation-execution.entity';
+import { IAutomationExecution } from '@libs/automation/domain/automationExecution/interfaces/automation-execution.interface';
 import {
     CODE_REVIEW_EXECUTION_SERVICE,
     ICodeReviewExecutionService,
 } from '@libs/automation/domain/codeReviewExecutions/contracts/codeReviewExecution.service.contract';
 import { CacheService } from '@libs/core/cache/cache.service';
-import { AutomationExecutionEntity } from '@libs/automation/domain/automationExecution/entities/automation-execution.entity';
-import { IAutomationExecution } from '@libs/automation/domain/automationExecution/interfaces/automation-execution.interface';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 
 @Injectable()
 export class AutomationExecutionService implements IAutomationExecutionService {

@@ -5,6 +5,9 @@ import {
     UnauthorizedException,
     InternalServerErrorException,
 } from '@nestjs/common';
+
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
 import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
@@ -13,8 +16,6 @@ import {
     IUsersService,
     USER_SERVICE_TOKEN,
 } from '@libs/identity/domain/user/contracts/user.service.contract';
-import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 
 interface DecodedPayload {
     readonly email: string;

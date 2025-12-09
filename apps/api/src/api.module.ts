@@ -1,25 +1,25 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
-import { AuthController } from './controllers/auth.controller';
-import { HealthController } from './controllers/health.controller';
-import { WorkflowQueueController } from './controllers/workflow-queue.controller';
 
-import { IntegrationController } from './controllers/integrations/integration.controller';
-import { CodeManagementController } from './controllers/platformIntegration/codeManagement.controller';
-import { IntegrationConfigController } from './controllers/integrations/integrationConfig.controller';
-import { KodyRulesController } from './controllers/kodyRules.controller';
-import { DryRunController } from './controllers/dryRun.controller';
-import { CodeReviewSettingLogController } from './controllers/codeReviewSettingLog.controller';
-import { CodeBaseController } from './controllers/codeBase.controller';
+
 import { PullRequestMessagesController } from './controllers/pullRequestMessages.controller';
 import { PullRequestController } from './controllers/pullRequest.controller';
 import { AgentController } from './controllers/agent.controller';
-import { SegmentController } from './controllers/segment.controller';
-import { RuleLikeController } from './controllers/ruleLike.controller';
-import { UsersController } from './controllers/user.controller';
+import { AuthController } from './controllers/auth.controller';
+import { CodeBaseController } from './controllers/codeBase.controller';
+import { CodeReviewSettingLogController } from './controllers/codeReviewSettingLog.controller';
+import { DryRunController } from './controllers/dryRun.controller';
+import { HealthController } from './controllers/health.controller';
+import { IntegrationController } from './controllers/integrations/integration.controller';
+import { IntegrationConfigController } from './controllers/integrations/integrationConfig.controller';
 import { IssuesController } from './controllers/issues.controller';
+import { KodyRulesController } from './controllers/kodyRules.controller';
 import { PermissionsController } from './controllers/permissions.controller';
+import { CodeManagementController } from './controllers/platformIntegration/codeManagement.controller';
+import { RuleLikeController } from './controllers/ruleLike.controller';
+import { SegmentController } from './controllers/segment.controller';
 import { TokenUsageController } from './controllers/tokenUsage.controller';
+import { UsersController } from './controllers/user.controller';
+import { WorkflowQueueController } from './controllers/workflow-queue.controller';
 
 /**
  * API REST Module

@@ -1,18 +1,21 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { GithubModule } from '@libs/platform/modules/github.module';
-import { GitlabModule } from '@libs/platform/modules/gitlab.module';
+
+import { CodeReviewFeedbackModelInstance } from '@libs/core/infrastructure/database/mongoose/schemas';
+import { UsersModule } from '@libs/identity/modules/user.module';
 import { IntegrationModule } from '@libs/integrations/integrations.module';
 import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
-import { OrganizationModule } from '@libs/organization/organization.module';
-import { PlatformIntegrationModule } from '@libs/platform/platform.module';
+import { ParametersModule } from '@libs/organization/modules/parameters.module';
 import { TeamsModule } from '@libs/organization/modules/team.module';
-import { UsersModule } from '@libs/identity/modules/user.module';
+import { OrganizationModule } from '@libs/organization/organization.module';
+import { GithubModule } from '@libs/platform/modules/github.module';
+import { GitlabModule } from '@libs/platform/modules/gitlab.module';
+import { PlatformIntegrationModule } from '@libs/platform/platform.module';
+
+import { PullRequestsModule } from './pull-requests.module';
 import { GetReactionsUseCase } from '../application/use-cases/feedback/get-reactions.use-case';
 import { SaveCodeReviewFeedbackUseCase } from '../application/use-cases/feedback/save-feedback.use-case';
-import { CodeReviewFeedbackModelInstance } from '@libs/core/infrastructure/database/mongoose/schemas';
-import { ParametersModule } from '@libs/organization/modules/parameters.module';
-import { PullRequestsModule } from './pull-requests.module';
+
 
 const UseCases = [GetReactionsUseCase, SaveCodeReviewFeedbackUseCase] as const;
 

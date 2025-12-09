@@ -1,3 +1,5 @@
+import { Inject, Injectable } from '@nestjs/common';
+
 import { PULL_REQUEST_MANAGER_SERVICE_TOKEN } from '@/core/domain/codeBase/contracts/PullRequestManagerService.contract';
 import {
     IOrganizationParametersService,
@@ -8,7 +10,6 @@ import { PullRequestHandlerService } from '@/core/infrastructure/adapters/servic
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
-import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class IgnoreBotsUseCase {

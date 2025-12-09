@@ -1,8 +1,9 @@
+import { IsObject, IsOptional, IsString } from 'class-validator';
+
 import {
     PullRequestMessageStatus,
     PullRequestMessageType,
 } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
-import { IsObject, IsOptional, IsString } from 'class-validator';
 
 export class PullRequestMessagesDto {
     @IsString()

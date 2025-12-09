@@ -1,3 +1,6 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { DeepPartial } from 'typeorm';
+
 import { CodeReviewConfigWithoutLLMProvider } from '@/config/types/general/codeReview.type';
 import {
     FormattedCodeReviewConfig,
@@ -19,18 +22,17 @@ import {
     Action,
     ResourceType,
 } from '@/core/domain/permissions/enums/permissions.enum';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { getDefaultKodusConfigFile } from '@/shared/utils/validateCodeReviewConfigFile';
-import { Inject, Injectable } from '@nestjs/common';
-import { DeepPartial } from 'typeorm';
 import {
     IPromptExternalReferenceManagerService,
     PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
 } from '@/core/domain/prompts/contracts/promptExternalReferenceManager.contract';
 import { PromptSourceType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
+import { IUser } from '@/core/domain/user/interfaces/user.interface';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
+import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+import { getDefaultKodusConfigFile } from '@/shared/utils/validateCodeReviewConfigFile';
+
 
 @Injectable()
 export class GetCodeReviewParameterUseCase {

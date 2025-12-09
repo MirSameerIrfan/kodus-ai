@@ -4,14 +4,17 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import * as bodyParser from 'body-parser';
 import expressRateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import * as volleyball from 'volleyball';
-import * as bodyParser from 'body-parser';
-import { WebhookHandlerModule } from './modules/webhook-handler.module';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
+
+
 import { HttpServerConfiguration } from '@libs/core/infrastructure/config/types';
+import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
 import { environment } from '@libs/ee/shared/configs/environment';
+
+import { WebhookHandlerModule } from './modules/webhook-handler.module';
 
 async function bootstrap() {
     process.env.COMPONENT_TYPE = 'webhook';

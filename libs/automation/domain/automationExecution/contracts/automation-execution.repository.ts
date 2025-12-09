@@ -1,6 +1,7 @@
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+
 import { AutomationExecutionEntity } from '../entities/automation-execution.entity';
 import { IAutomationExecution } from '../interfaces/automation-execution.interface';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 
 export const AUTOMATION_EXECUTION_REPOSITORY_TOKEN = Symbol(
     'AutomationExecutionRepository',

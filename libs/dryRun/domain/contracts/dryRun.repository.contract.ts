@@ -1,4 +1,3 @@
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { DryRunEntity } from '../entities/dryRun.entity';
 import { IDryRun } from '../interfaces/dryRun.interface';
 

@@ -1,8 +1,9 @@
 import { DataSource } from 'typeorm';
 import { Seeder, SeederFactoryManager } from 'typeorm-extension';
-import { AutomationModel } from '@libs/core/infrastructure/database/typeorm/schema/automation.model';
+
 import { AutomationType } from '@libs/automation/domain/enums/automation-type';
 import { AutomationLevel } from '@libs/core/domain/enums/automations-level.enum';
+import { AutomationModel } from '@libs/core/infrastructure/database/typeorm/schema/automation.model';
 
 async function seedAutomation(dataSource: DataSource) {
     const anotherTableDataList = [

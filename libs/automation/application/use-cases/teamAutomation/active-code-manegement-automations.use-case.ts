@@ -1,24 +1,26 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import { AutomationLevel } from '@libs/core/domain/enums/automations-level.enum';
-import { UpdateOrCreateTeamAutomationUseCase } from './updateOrCreateTeamAutomationUseCase';
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+
 import {
     AUTOMATION_SERVICE_TOKEN,
     IAutomationService,
 } from '@libs/automation/domain/automation/contracts/automation.service';
 import {
-    IIntegrationService,
-    INTEGRATION_SERVICE_TOKEN,
-} from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
+    AutomationCategoryMapping,
+    AutomationTypeCategory,
+} from '@libs/automation/domain/automation/enum/automation-type';
+import { AutomationLevel } from '@libs/core/domain/enums/automations-level.enum';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
 } from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
 import {
-    AutomationCategoryMapping,
-    AutomationTypeCategory,
-} from '@libs/automation/domain/automation/enum/automation-type';
+    IIntegrationService,
+    INTEGRATION_SERVICE_TOKEN,
+} from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
+
+import { UpdateOrCreateTeamAutomationUseCase } from './updateOrCreateTeamAutomationUseCase';
 
 @Injectable()
 export class ActiveCodeManagementTeamAutomationsUseCase implements IUseCase {

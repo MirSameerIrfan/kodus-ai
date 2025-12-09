@@ -1,6 +1,7 @@
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
+
 import { AuthIntegrationEntity } from '../entities/auth-integration.entity';
 import { IAuthIntegration } from '../interfaces/auth-integration.interface';
-import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 
 export const AUTH_INTEGRATION_REPOSITORY_TOKEN = Symbol(
     'AuthIntegrationRepository',

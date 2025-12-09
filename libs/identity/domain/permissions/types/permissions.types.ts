@@ -1,6 +1,8 @@
-import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
-import { Action, ResourceType } from '../enums/permissions.enum';
 import { MongoAbility } from '@casl/ability';
+
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
+
+import { Action, ResourceType } from '../enums/permissions.enum';
 
 export type Subject = ResourceType | 'all';
 

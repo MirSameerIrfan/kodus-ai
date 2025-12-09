@@ -3,7 +3,9 @@ import type {
     ContextRevisionActor,
     ContextRevisionScope,
 } from '@context-os-core/interfaces';
+
 import { Entity } from '@libs/core/domain/interfaces/entity';
+
 import { IContextReference } from '../interfaces/context-reference.interface';
 
 export class ContextReferenceEntity implements Entity<IContextReference> {

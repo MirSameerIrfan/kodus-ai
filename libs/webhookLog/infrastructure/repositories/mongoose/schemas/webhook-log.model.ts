@@ -1,6 +1,7 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { CoreDocument } from '@libs/core/infrastructure/repositories/model/mongodb';
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 @Schema({
     collection: 'webhook_logs',

@@ -1,4 +1,5 @@
 import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
+
 import { FeedbackType } from '../enums/feedbackType.enum';
 import { FineTuningDecision } from '../enums/fineTuningDecision.enum';
 import { ISuggestionEmbedded } from '../suggestionEmbedded/interfaces/suggestionEmbedded.interface';

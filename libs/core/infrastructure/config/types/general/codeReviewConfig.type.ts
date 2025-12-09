@@ -1,13 +1,15 @@
-import { DeepPartial } from 'typeorm';
-import {
-    CodeReviewConfigWithoutLLMProvider,
-    KodusConfigFile,
-} from './codeReview.type';
 import { ErrorObject } from 'ajv';
+import { DeepPartial } from 'typeorm';
+
 import { 
     IFileReference, 
     IPromptReferenceSyncError 
 } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
+
+import {
+    CodeReviewConfigWithoutLLMProvider,
+    KodusConfigFile,
+} from './codeReview.type';
 
 export interface GetKodusConfigFileResponse {
     kodusConfigFile: Omit<KodusConfigFile, 'version'> | null;

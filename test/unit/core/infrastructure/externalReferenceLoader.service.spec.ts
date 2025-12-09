@@ -24,11 +24,12 @@ jest.mock(
 );
 
 import { Test, TestingModule } from '@nestjs/testing';
+
+import { AnalysisContext } from '@/config/types/general/codeReview.type';
+import { IKodyRule } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+import { CodeReviewContextPackService } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
 import { ExternalReferenceLoaderService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceLoader.service';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { CodeReviewContextPackService } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
-import { IKodyRule } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
-import { AnalysisContext } from '@/config/types/general/codeReview.type';
 
 describe('ExternalReferenceLoaderService', () => {
     let service: ExternalReferenceLoaderService;

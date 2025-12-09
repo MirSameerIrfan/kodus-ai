@@ -3,9 +3,10 @@
  * Kodus Tech. All rights reserved.
  */
 
-import { OrganizationParametersModule } from '@libs/organization/modules/org-parameters.module';
-import { PullRequestsModule } from '@libs/code-review/modules/pull-requests.module';
 import { forwardRef, Module } from '@nestjs/common';
+
+import { PullRequestsModule } from '@libs/code-review/modules/pull-requests.module';
+
 import { LICENSE_SERVICE_TOKEN } from './interfaces/license.interface';
 import { LicenseService } from './license.service';
 import { AutoAssignLicenseUseCase } from './use-cases/auto-assign-license.use-case';

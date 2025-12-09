@@ -1,20 +1,21 @@
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+
+import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
-import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { IIntegrationService } from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
-import {
-    IIntegrationRepository,
-    INTEGRATION_REPOSITORY_TOKEN,
-} from '@libs/integrations/domain/integrations/contracts/integration.repository.contracts';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
 } from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import {
+    IIntegrationRepository,
+    INTEGRATION_REPOSITORY_TOKEN,
+} from '@libs/integrations/domain/integrations/contracts/integration.repository.contracts';
+import { IIntegrationService } from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
 import { IntegrationEntity } from '@libs/integrations/domain/integrations/entities/integration.entity';
 import { IIntegration } from '@libs/integrations/domain/integrations/interfaces/integration.interface';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 
 @Injectable()
 export class IntegrationService implements IIntegrationService {

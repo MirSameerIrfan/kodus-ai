@@ -1,4 +1,12 @@
 import {
+    Inject,
+    Injectable,
+    InternalServerErrorException,
+    UnauthorizedException,
+} from '@nestjs/common';
+
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
 } from '@libs/identity/domain/auth/contracts/auth.service.contracts';
@@ -6,13 +14,6 @@ import {
     IUsersService,
     USER_SERVICE_TOKEN,
 } from '@libs/identity/domain/user/contracts/user.service.contract';
-import {
-    Inject,
-    Injectable,
-    InternalServerErrorException,
-    UnauthorizedException,
-} from '@nestjs/common';
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 
 interface DecodedPayload {
     readonly email: string;

@@ -1,3 +1,5 @@
+import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';
+
 import {
     AIAnalysisResult,
     AnalysisContext,
@@ -7,7 +9,6 @@ import {
     ReviewModeResponse,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';
 
 export interface IAIAnalysisService {
     analyzeCodeWithAI(

@@ -1,6 +1,7 @@
 import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';
-import { ITeamAutomation } from '../interfaces/team-automation.interface';
+
 import { IAutomation } from '../../automation/interfaces/automation.interface';
+import { ITeamAutomation } from '../interfaces/team-automation.interface';
 
 export class TeamAutomationEntity implements ITeamAutomation {
     private _uuid: string;

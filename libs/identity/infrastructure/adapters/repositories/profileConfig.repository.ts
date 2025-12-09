@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ProfileConfigModel } from './schema/profileConfig.model';
 import {
     FindManyOptions,
     FindOneOptions,
@@ -8,6 +7,9 @@ import {
     Repository,
     UpdateQueryBuilder,
 } from 'typeorm';
+
+import { ProfileConfigModel } from './schema/profileConfig.model';
+
 import { IProfileConfigRepository } from '@/core/domain/profileConfigs/contracts/profileConfig.repository.contract';
 import { ProfileConfigEntity } from '@/core/domain/profileConfigs/entities/profileConfig.entity';
 import { IProfileConfig } from '@/core/domain/profileConfigs/interfaces/profileConfig.interface';

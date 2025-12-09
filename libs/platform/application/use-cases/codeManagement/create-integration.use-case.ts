@@ -1,8 +1,9 @@
 import { createLogger } from '@kodus/flow';
-import { ActionType } from '@libs/core/infrastructure/config/types/general/codeReviewSettingsLog.type';
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
+
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import { ActionType } from '@libs/core/infrastructure/config/types/general/codeReviewSettingsLog.type';
 import {
     AUTH_INTEGRATION_SERVICE_TOKEN,
     IAuthIntegrationService,

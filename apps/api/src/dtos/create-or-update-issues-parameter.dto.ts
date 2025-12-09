@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
     IsBoolean,
     IsEnum,
@@ -6,7 +7,7 @@ import {
     ValidateNested,
     IsDefined,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+
 import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
 
 class SourceFiltersDto {

@@ -1,14 +1,14 @@
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { BYOKConfig } from '@kodus/kodus-common/llm';
+import { encrypt } from '@libs/common/utils/crypto';
+import { OrganizationParametersKey } from '@libs/core/domain/enums';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { PinoLoggerService } from '@libs/log/pino.service';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
-import { OrganizationParametersEntity } from '@/core/domain/organizationParameters/entities/organizationParameters.entity';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
-import { encrypt } from '@/shared/utils/crypto';
-import { BYOKConfig } from '@kodus/kodus-common/llm';
+} from '@libs/organization/domain/organizationParameters/contracts/organizationParameters.service.contract';
+import { OrganizationParametersEntity } from '@libs/organization/domain/organizationParameters/entities/organizationParameters.entity';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

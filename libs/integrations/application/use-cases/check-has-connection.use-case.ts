@@ -1,15 +1,16 @@
-import {
-    IIntegrationService,
-    INTEGRATION_SERVICE_TOKEN,
-} from '@libs/integrations/domain/contracts/integration.service.contracts';
+import { Inject } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
+
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import {
     toIntegrationCategory,
     toPlatformType,
 } from '@libs/core/utils/enum-utils';
-import { Inject } from '@nestjs/common';
-import { REQUEST } from '@nestjs/core';
-import { Request } from 'express';
+import {
+    IIntegrationService,
+    INTEGRATION_SERVICE_TOKEN,
+} from '@libs/integrations/domain/contracts/integration.service.contracts';
 
 export class CheckHasIntegrationByPlatformUseCase implements IUseCase {
     constructor(

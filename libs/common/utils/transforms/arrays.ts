@@ -1,6 +1,7 @@
 import { equals, join, pipe, props, sortBy } from 'ramda';
-import { createDocument } from '../langchainCommon/document';
+
 import { transformObjectKeys } from './objects';
+import { createDocument } from '../langchainCommon/document';
 
 /**
  * A function that joins the values of an array into a string, separated by commas.

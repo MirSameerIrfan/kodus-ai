@@ -1,7 +1,7 @@
 import { Entity } from '@libs/core/domain/interfaces/entity';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 
 import { IProfile } from '../interfaces/profile.interface';
-import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 
 export class ProfileEntity implements Entity<IProfile> {
     private _uuid: string;

@@ -3,27 +3,28 @@
  * Kodus Tech. All rights reserved.
  */
 import { Injectable } from '@nestjs/common';
-import { IPipelineStrategy } from '../../../pipeline/interfaces/pipeline-strategy.interface';
-import { ValidateConfigStage } from '../stages/validate-config.stage';
-import { FetchChangedFilesStage } from '../stages/fetch-changed-files.stage';
-import { InitialCommentStage } from '../stages/initial-comment.stage';
-import { ProcessFilesReview } from '../stages/process-files-review.stage';
-import { AggregateResultsStage } from '../stages/aggregate-result.stage';
-import { UpdateCommentsAndGenerateSummaryStage } from '../stages/finish-comments.stage';
-import { RequestChangesOrApproveStage } from '../stages/finish-process-review.stage';
-import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
+import { Inject } from '@nestjs/common';
+
 import { BasePipelineStage } from '../../../pipeline/base-stage.abstract';
-import { ProcessFilesPrLevelReviewStage } from '../stages/process-files-pr-level-review.stage';
-import { CreatePrLevelCommentsStage } from '../stages/create-pr-level-comments.stage';
-import { CreateFileCommentsStage } from '../stages/create-file-comments.stage';
-import { ValidateNewCommitsStage } from '../stages/validate-new-commits.stage';
-import { ResolveConfigStage } from '../stages/resolve-config.stage';
+import { IPipelineStrategy } from '../../../pipeline/interfaces/pipeline-strategy.interface';
+import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
+import { AggregateResultsStage } from '../stages/aggregate-result.stage';
 import {
     ILoadExternalContextStage,
     LOAD_EXTERNAL_CONTEXT_STAGE_TOKEN,
 } from '../stages/contracts/loadExternalContextStage.contract';
-import { Inject } from '@nestjs/common';
+import { CreateFileCommentsStage } from '../stages/create-file-comments.stage';
+import { CreatePrLevelCommentsStage } from '../stages/create-pr-level-comments.stage';
+import { FetchChangedFilesStage } from '../stages/fetch-changed-files.stage';
 import { FileContextGateStage } from '../stages/file-context-gate.stage';
+import { UpdateCommentsAndGenerateSummaryStage } from '../stages/finish-comments.stage';
+import { InitialCommentStage } from '../stages/initial-comment.stage';
+import { ProcessFilesReview } from '../stages/process-files-review.stage';
+import { RequestChangesOrApproveStage } from '../stages/finish-process-review.stage';
+import { ProcessFilesPrLevelReviewStage } from '../stages/process-files-pr-level-review.stage';
+import { ResolveConfigStage } from '../stages/resolve-config.stage';
+import { ValidateConfigStage } from '../stages/validate-config.stage';
+import { ValidateNewCommitsStage } from '../stages/validate-new-commits.stage';
 
 @Injectable()
 export class CodeReviewPipelineStrategy implements IPipelineStrategy<CodeReviewPipelineContext> {

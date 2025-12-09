@@ -1,16 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
+
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     GetCockpitMetricsVisibilityUseCase,
     GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN,
 } from '@/core/application/use-cases/organizationParameters/get-cockpit-metrics-visibility.use-case';
 import { ORGANIZATION_PARAMETERS_SERVICE_TOKEN } from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
 import {
     DEFAULT_COCKPIT_METRICS_VISIBILITY,
     ICockpitMetricsVisibility,
 } from '@/core/domain/organizationParameters/interfaces/cockpit-metrics-visibility.interface';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
 
 describe('GetCockpitMetricsVisibilityUseCase', () => {
     let useCase: GetCockpitMetricsVisibilityUseCase;

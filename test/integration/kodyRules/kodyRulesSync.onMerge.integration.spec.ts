@@ -38,17 +38,19 @@ jest.mock('@kodus/flow', () => {
     } as any;
 });
 
-import { Test, TestingModule } from '@nestjs/testing';
-import { GitHubPullRequestHandler } from '../../../src/core/infrastructure/adapters/webhooks/github/githubPullRequest.handler';
-import { PinoLoggerService } from '../../../src/core/infrastructure/adapters/services/logger/pino.service';
-import { SavePullRequestUseCase } from '../../../src/core/application/use-cases/pullRequests/save.use-case';
-import { RunCodeReviewAutomationUseCase } from '../../../src/ee/automation/runCodeReview.use-case';
-import { ChatWithKodyFromGitUseCase } from '../../../src/core/application/use-cases/platformIntegration/codeManagement/chatWithKodyFromGit.use-case';
-import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
-import { GenerateIssuesFromPrClosedUseCase } from '../../../src/core/application/use-cases/issues/generate-issues-from-pr-closed.use-case';
-import { KodyRulesSyncService } from '../../../src/core/infrastructure/adapters/services/kodyRules/kody-rules-sync.service';
-import { CreateOrUpdateKodyRulesUseCase } from '../../../src/core/application/use-cases/kodyRules/create-or-update.use-case';
 import { LLMModule, PromptRunnerService } from '@kodus/kodus-common/llm';
+import { Test, TestingModule } from '@nestjs/testing';
+
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+
+import { GenerateIssuesFromPrClosedUseCase } from '../../../src/core/application/use-cases/issues/generate-issues-from-pr-closed.use-case';
+import { CreateOrUpdateKodyRulesUseCase } from '../../../src/core/application/use-cases/kodyRules/create-or-update.use-case';
+import { ChatWithKodyFromGitUseCase } from '../../../src/core/application/use-cases/platformIntegration/codeManagement/chatWithKodyFromGit.use-case';
+import { SavePullRequestUseCase } from '../../../src/core/application/use-cases/pullRequests/save.use-case';
+import { KodyRulesSyncService } from '../../../src/core/infrastructure/adapters/services/kodyRules/kody-rules-sync.service';
+import { PinoLoggerService } from '../../../src/core/infrastructure/adapters/services/logger/pino.service';
+import { GitHubPullRequestHandler } from '../../../src/core/infrastructure/adapters/webhooks/github/githubPullRequest.handler';
+import { RunCodeReviewAutomationUseCase } from '../../../src/ee/automation/runCodeReview.use-case';
 import { PlatformType } from '../../../src/shared/domain/enums/platform-type.enum';
 
 describe('GitHubPullRequestHandler - KodyRules sync on PR merged', () => {

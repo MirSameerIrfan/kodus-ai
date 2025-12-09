@@ -1,5 +1,6 @@
-import { CoreDocument } from '@libs/core/infrastructure/repositories/model/mongodb';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+
+import { CoreDocument } from '@libs/core/infrastructure/repositories/model/mongodb';
 
 @Schema({
     collection: 'observability_telemetry',

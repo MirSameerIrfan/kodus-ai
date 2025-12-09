@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
+
 import { OutboxMessageRepository } from '@libs/core/infrastructure/database/typeorm/repositories/outbox-message.repository';
 import { OutboxMessageModel } from '@libs/core/infrastructure/database/typeorm/repositories/schema/outbox-message.model';
 import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';

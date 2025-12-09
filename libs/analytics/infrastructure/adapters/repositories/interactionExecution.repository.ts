@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { InteractionModel } from './schemas/interaction.model';
-import { IInteractionExecutionRepository } from '@libs/analytics/domain/interactions/contracts/interaction.repository.contracts';
 import { Model } from 'mongoose';
+
+import { IInteractionExecutionRepository } from '@libs/analytics/domain/interactions/contracts/interaction.repository.contracts';
 import { IInteractionExecution } from '@libs/analytics/domain/interactions/interfaces/interactions-execution.interface';
+
+import { InteractionModel } from './schemas/interaction.model';
 
 @Injectable()
 export class InteractionExecutionDatabaseRepository implements IInteractionExecutionRepository {

@@ -10,6 +10,7 @@ import {
     IWebhookGithubPullRequestEvent,
     IWebhookGithubPullRequestCommentEvent,
 } from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-github.type';
+
 import { extractRepoFullName } from '.';
 
 export class GithubMappedPlatform implements IMappedPlatform {

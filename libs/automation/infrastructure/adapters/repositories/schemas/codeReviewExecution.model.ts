@@ -1,7 +1,9 @@
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
-import { AutomationExecutionModel } from './automationExecution.model';
-import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
+
 import { AutomationStatus } from '@libs/automation/domain/automation/enum/automation-status';
+import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
+
+import { AutomationExecutionModel } from './automationExecution.model';
 
 @Entity('code_review_execution')
 export class CodeReviewExecutionModel extends CoreModel {

@@ -1,13 +1,16 @@
 import { createLogger } from '@kodus/flow';
 import { Injectable, Inject } from '@nestjs/common';
-import { BaseStage } from './base/base-stage.abstract';
+
 import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
 } from '@libs/code-review/domain/contracts/CommentManagerService.contract';
-import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
-import { PullRequestMessageStatus } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
 import { BehaviourForNewCommits } from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { PullRequestMessageStatus } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
+
+import { BaseStage } from './base/base-stage.abstract';
+import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
+
 
 @Injectable()
 export class UpdateCommentsAndGenerateSummaryStage extends BaseStage {

@@ -1,4 +1,5 @@
 import { registerAs } from '@nestjs/config';
+
 import { DatabaseConnection } from '@libs/core/infrastructure/config/types';
 
 export const postgresConfigLoader = registerAs(

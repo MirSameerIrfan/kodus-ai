@@ -1,10 +1,11 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+
 import { AutomationExecutionEntity } from '@/core/domain/automation/entities/automation-execution.entity';
 import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
 import { AutomationExecutionRepository } from '@/core/infrastructure/adapters/repositories/typeorm/automationExecution.repository';
 import { AutomationExecutionModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/automationExecution.model';
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 
 describe('AutomationExecutionRepository - Forward Compatibility', () => {
     let repository: AutomationExecutionRepository;

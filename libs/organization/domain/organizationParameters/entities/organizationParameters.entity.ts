@@ -1,6 +1,6 @@
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
-import { IOrganizationParameters } from '../interfaces/organizationParameters.interface';
+import { OrganizationParametersKey } from '@libs/core/domain/enums';
 import { IOrganization } from '../../organization/interfaces/organization.interface';
+import { IOrganizationParameters } from '../interfaces/organizationParameters.interface';
 
 export class OrganizationParametersEntity implements IOrganizationParameters {
     private _uuid: string;

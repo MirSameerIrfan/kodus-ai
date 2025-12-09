@@ -1,26 +1,3 @@
-import {
-    BehaviourForExistingDescription,
-    BehaviourForNewCommits,
-    ClusteringType,
-    CodeReviewConfig,
-    CodeSuggestion,
-    Comment,
-    CommentResult,
-    FileChange,
-    SummaryConfig,
-} from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import {
-    IParametersService,
-    PARAMETERS_SERVICE_TOKEN,
-} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
-import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
-import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
-import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
-import { LanguageValue } from '@libs/core/domain/enums/language-parameter.enum';
-import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
-import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
-import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
 import { prompt_repeated_suggestion_clustering_system } from '@libs/core/utils/langchainCommon/prompts/repeatedCodeReviewSuggestionClustering';
 import {
     getTranslationsForLanguageByCategory,
@@ -35,8 +12,32 @@ import {
     PromptRunnerService,
 } from '@kodus/kodus-common/llm';
 import { Inject, Injectable } from '@nestjs/common';
+import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
+import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { LanguageValue } from '@libs/core/domain/enums/language-parameter.enum';
+import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
+import {
+    BehaviourForExistingDescription,
+    BehaviourForNewCommits,
+    ClusteringType,
+    CodeReviewConfig,
+    CodeSuggestion,
+    Comment,
+    CommentResult,
+    FileChange,
+    SummaryConfig,
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
+import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
+import {
+    IParametersService,
+    PARAMETERS_SERVICE_TOKEN,
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+
 import { CodeReviewPipelineContext } from './codeReviewPipeline/context/code-review-pipeline.context';
 import {
     MessageTemplateProcessor,

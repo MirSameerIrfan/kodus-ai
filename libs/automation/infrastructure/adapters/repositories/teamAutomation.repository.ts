@@ -6,15 +6,17 @@ import {
     Repository,
     UpdateQueryBuilder,
 } from 'typeorm';
+
+import { ITeamAutomationRepository } from '@libs/automation/domain/teamAutomation/contracts/team-automation.repository';
+import { TeamAutomationEntity } from '@libs/automation/domain/teamAutomation/entities/team-automation.entity';
 import { ITeamAutomation } from '@libs/automation/domain/teamAutomation/interfaces/team-automation.interface';
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
 } from '@libs/core/infrastructure/repositories/mappers';
-import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
-import { ITeamAutomationRepository } from '@libs/automation/domain/teamAutomation/contracts/team-automation.repository';
-import { TeamAutomationEntity } from '@libs/automation/domain/teamAutomation/entities/team-automation.entity';
 import { createNestedConditions } from '@libs/core/infrastructure/repositories/model/filters';
+
 import { TeamAutomationModel } from './schemas/teamAutomation.model';
 
 @Injectable()

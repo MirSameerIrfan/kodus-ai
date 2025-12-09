@@ -1,7 +1,8 @@
 import { Entity } from '@libs/core/domain/interfaces/entity';
-import { ITeam } from '../interfaces/team.interface';
-import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
+import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
+
+import { ITeam } from '../interfaces/team.interface';
 
 export class TeamEntity implements Entity<ITeam> {
     private _uuid: string;

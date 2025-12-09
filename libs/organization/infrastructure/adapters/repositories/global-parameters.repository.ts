@@ -6,15 +6,17 @@ import {
     Repository,
     UpdateQueryBuilder,
 } from 'typeorm';
+
+import { GlobalParametersModel } from './schema/global-parameters.model';
+
+import { IGlobalParametersRepository } from '@/core/domain/global-parameters/contracts/global-parameters.repository.contracts';
+import { GlobalParametersEntity } from '@/core/domain/global-parameters/entities/global-parameters.entity';
+import { IGlobalParameters } from '@/core/domain/global-parameters/interfaces/global-parameters.interface';
+import { GlobalParametersKey } from '@/shared/domain/enums/global-parameters-key.enum';
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
 } from '@/shared/infrastructure/repositories/mappers';
-import { GlobalParametersModel } from './schema/global-parameters.model';
-import { GlobalParametersEntity } from '@/core/domain/global-parameters/entities/global-parameters.entity';
-import { IGlobalParameters } from '@/core/domain/global-parameters/interfaces/global-parameters.interface';
-import { IGlobalParametersRepository } from '@/core/domain/global-parameters/contracts/global-parameters.repository.contracts';
-import { GlobalParametersKey } from '@/shared/domain/enums/global-parameters-key.enum';
 
 @Injectable()
 export class GlobalParametersRepository implements IGlobalParametersRepository {

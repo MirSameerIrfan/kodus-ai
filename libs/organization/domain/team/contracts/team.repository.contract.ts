@@ -1,11 +1,13 @@
+import { FindManyOptions } from 'typeorm';
+
 import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
+
 import { TeamEntity } from '../entities/team.entity';
 import {
     ITeam,
     TeamsFilter,
     ITeamWithIntegrations,
 } from '../interfaces/team.interface';
-import { FindManyOptions } from 'typeorm';
 
 export const TEAM_REPOSITORY_TOKEN = Symbol('TeamRepository');
 

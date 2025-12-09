@@ -1,12 +1,15 @@
 import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
-import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
-import { Stage } from '../stages/base/stage.interface';
-import { HeavyStage } from '../stages/base/heavy-stage.interface';
-import { WorkflowPausedError } from '@libs/workflow-queue/domain/errors/workflow-paused.error';
-import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
-import { PipelineStateManager } from './pipeline-state-manager.service';
+
 import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
+import { WorkflowPausedError } from '@libs/workflow-queue/domain/errors/workflow-paused.error';
+
+import { PipelineStateManager } from './pipeline-state-manager.service';
+import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
+import { HeavyStage } from '../stages/base/heavy-stage.interface';
+import { Stage } from '../stages/base/stage.interface';
+
+
 
 /**
  * PipelineExecutor for CodeReviewPipeline

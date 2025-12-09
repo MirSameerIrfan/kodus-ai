@@ -1,7 +1,9 @@
-import { RemoveRuleLikeUseCase } from '@libs/kody-rules/application/use-cases/rule-like/remove-rule-like.use-case';
-import { SetRuleLikeUseCase } from '@libs/kody-rules/application/use-cases/rule-like/set-rule-like.use-case';
 import { Body, Controller, Delete, Inject, Param, Post } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
+
+import { RemoveRuleLikeUseCase } from '@libs/kody-rules/application/use-cases/rule-like/remove-rule-like.use-case';
+import { SetRuleLikeUseCase } from '@libs/kody-rules/application/use-cases/rule-like/set-rule-like.use-case';
+
 import { SetRuleFeedbackDto } from '../dtos/set-rule-feedback.dto';
 
 @Controller('rule-like')

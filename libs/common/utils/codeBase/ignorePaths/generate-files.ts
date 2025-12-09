@@ -1,6 +1,7 @@
-import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
+
+import axios from 'axios';
 
 // type for gitignore.io response
 type GitignoreIoResponse = {

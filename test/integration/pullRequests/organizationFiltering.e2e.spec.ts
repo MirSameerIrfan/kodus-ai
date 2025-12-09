@@ -1,11 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { CacheModule } from '@nestjs/cache-manager';
 import { INestApplication } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
-import { PullRequestController } from '@/core/infrastructure/http/controllers/pullRequest.controller';
+
 import { GetEnrichedPullRequestsUseCase } from '@/core/application/use-cases/pullRequests/get-enriched-pull-requests.use-case';
 import { GetPullRequestAuthorsUseCase } from '@/core/application/use-cases/pullRequests/get-pull-request-authors-orderedby-contributions.use-case';
 import { UpdatePullRequestToNewFormatUseCase } from '@/core/application/use-cases/pullRequests/update-pull-request-to-new-format.use-case';
-import { CacheModule } from '@nestjs/cache-manager';
+import { PullRequestController } from '@/core/infrastructure/http/controllers/pullRequest.controller';
+
 
 describe('Pull Request Organization Filtering (e2e)', () => {
     let app: INestApplication;

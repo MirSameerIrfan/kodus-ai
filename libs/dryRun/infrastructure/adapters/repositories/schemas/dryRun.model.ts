@@ -1,6 +1,7 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+
 import { CoreDocument } from '@libs/core/infrastructure/repositories/model/mongodb';
 import { IDryRunData } from '@libs/dryRun/domain/interfaces/dryRun.interface';
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 @Schema({
     collection: 'dryRun',

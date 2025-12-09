@@ -1,3 +1,6 @@
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
+
 import {
     IGlobalParametersRepository,
     GLOBAL_PARAMETERS_REPOSITORY_TOKEN,
@@ -6,8 +9,6 @@ import { IGlobalParametersService } from '@/core/domain/global-parameters/contra
 import { GlobalParametersEntity } from '@/core/domain/global-parameters/entities/global-parameters.entity';
 import { IGlobalParameters } from '@/core/domain/global-parameters/interfaces/global-parameters.interface';
 import { GlobalParametersKey } from '@/shared/domain/enums/global-parameters-key.enum';
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class GlobalParametersService implements IGlobalParametersService {

@@ -1,27 +1,30 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+
+import { CodeReviewParameter } from '@/config/types/general/codeReviewConfig.type';
+import {
+    ActionType,
+    ConfigLevel,
+} from '@/config/types/general/codeReviewSettingsLog.type';
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import {
+    IIntegrationConfigService,
+    INTEGRATION_CONFIG_SERVICE_TOKEN,
+} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@/core/domain/parameters/contracts/parameters.service.contract';
 import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import {
-    IIntegrationConfigService,
-    INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
 import {
     ICodeReviewSettingsLogService,
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
 } from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
-import { REQUEST } from '@nestjs/core';
-import {
-    ActionType,
-    ConfigLevel,
-} from '@/config/types/general/codeReviewSettingsLog.type';
-import { CodeReviewParameter } from '@/config/types/general/codeReviewConfig.type';
+import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
+import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+
+
 interface ICodeRepository {
     avatar_url?: string;
     default_branch: string;

@@ -1,9 +1,10 @@
-import { IMappedPlatform } from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-common.type';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
+import { IMappedPlatform } from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-common.type';
+
+import { AzureReposMappedPlatform } from './azureRepos';
+import { BitbucketMappedPlatform } from './bitbucket';
 import { GithubMappedPlatform } from './github';
 import { GitlabMappedPlatform } from './gitlab';
-import { BitbucketMappedPlatform } from './bitbucket';
-import { AzureReposMappedPlatform } from './azureRepos';
 
 const platformMaps = new Map<PlatformType, IMappedPlatform>([
     [PlatformType.GITHUB, new GithubMappedPlatform()],

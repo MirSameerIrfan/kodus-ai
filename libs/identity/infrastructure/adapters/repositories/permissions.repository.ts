@@ -1,11 +1,15 @@
-import { IPermissionsRepository } from '@/core/domain/permissions/contracts/permissions.repository.contract';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { PermissionsModel } from './schema/permissions.model';
 import { FindOptionsWhere, Repository } from 'typeorm';
+
+import { PermissionsModel } from './schema/permissions.model';
+import { PinoLoggerService } from '../../services/logger/pino.service';
+
+import { IPermissionsRepository } from '@/core/domain/permissions/contracts/permissions.repository.contract';
 import { IPermissions } from '@/core/domain/permissions/types/permissions.types';
 import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
-import { PinoLoggerService } from '../../services/logger/pino.service';
+
+
 
 @Injectable()
 export class PermissionsRepository implements IPermissionsRepository {

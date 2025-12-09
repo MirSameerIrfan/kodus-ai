@@ -1,4 +1,3 @@
-import { IssuesEntity } from '@libs/issues/domain/entities/issues.entity';
 import {
     Body,
     Controller,
@@ -8,20 +7,24 @@ import {
     Query,
     UseGuards,
 } from '@nestjs/common';
-import { GetIssuesByFiltersDto } from '../dtos/get-issues-by-filters.dto';
-import { GetTotalIssuesUseCase } from '@libs/issues/application/use-cases/get-total-issues.use-case';
-import { GetIssueByIdUseCase } from '@libs/issues/application/use-cases/get-issue-by-id.use-case';
-import { UpdateIssuePropertyUseCase } from '@libs/issues/application/use-cases/update-issue-property.use-case';
-import { GetIssuesUseCase } from '@libs/issues/application/use-cases/get-issues.use-case';
+
+import {
+    Action,
+    ResourceType,
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
     CheckPolicies,
     PolicyGuard,
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
 import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
-import {
-    Action,
-    ResourceType,
-} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { GetIssueByIdUseCase } from '@libs/issues/application/use-cases/get-issue-by-id.use-case';
+import { GetIssuesUseCase } from '@libs/issues/application/use-cases/get-issues.use-case';
+import { GetTotalIssuesUseCase } from '@libs/issues/application/use-cases/get-total-issues.use-case';
+import { UpdateIssuePropertyUseCase } from '@libs/issues/application/use-cases/update-issue-property.use-case';
+import { IssuesEntity } from '@libs/issues/domain/entities/issues.entity';
+
+import { GetIssuesByFiltersDto } from '../dtos/get-issues-by-filters.dto';
+
 
 @Controller('issues')
 export class IssuesController {

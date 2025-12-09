@@ -1,3 +1,7 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { FindManyOptions } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
+
 import { STATUS } from '@/config/types/database/status.type';
 import { TeamAutomationEntity } from '@/core/domain/automation/entities/team-automation.entity';
 import {
@@ -11,9 +15,6 @@ import {
     ITeamWithIntegrations,
     TeamsFilter,
 } from '@/core/domain/team/interfaces/team.interface';
-import { Inject, Injectable } from '@nestjs/common';
-import { FindManyOptions } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class TeamService implements ITeamService {

@@ -1,18 +1,21 @@
+import type { ContextLayer } from '@context-os-core/interfaces';
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
-import { BaseStage } from './base/base-stage.abstract';
-import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
-import type { ContextLayer } from '@context-os-core/interfaces';
-import {
-    IPromptExternalReferenceManagerService,
-    PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
-} from '@libs/code-review/domain/prompts/contracts/promptExternalReferenceManager.contract';
+
 import {
     IPromptContextLoaderService,
     PROMPT_CONTEXT_LOADER_SERVICE_TOKEN,
 } from '@libs/code-review/domain/prompts/contracts/promptContextLoader.contract';
-import { ILoadExternalContextStage } from './contracts/loadExternalContextStage.contract';
+import {
+    IPromptExternalReferenceManagerService,
+    PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
+} from '@libs/code-review/domain/prompts/contracts/promptExternalReferenceManager.contract';
 import { CodeReviewContextPackService } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';
+
+import { BaseStage } from './base/base-stage.abstract';
+import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
+import { ILoadExternalContextStage } from './contracts/loadExternalContextStage.contract';
+
 
 @Injectable()
 export class LoadExternalContextStage

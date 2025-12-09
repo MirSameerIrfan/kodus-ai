@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { ConnectionString } from 'connection-string';
 import { getObservability, IdGenerator } from '@kodus/flow';
 import { TokenTrackingHandler } from '@kodus/kodus-common/llm';
-import { PinoLoggerService } from './pino.service';
+import { Injectable } from '@nestjs/common';
+import { ConnectionString } from 'connection-string';
+
 import { DatabaseConnection } from '@libs/core/infrastructure/config/types';
+
+import { PinoLoggerService } from './pino.service';
 
 export type TokenUsage = {
     input_tokens?: number;

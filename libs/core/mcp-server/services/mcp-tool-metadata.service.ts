@@ -1,16 +1,19 @@
-import { Injectable } from '@nestjs/common';
-import {
-    createMCPAdapter,
-    type MCPServerConfig,
-    createLogger,
-} from '@kodus/flow';
-import type { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { MCPManagerService } from './mcp-manager.service';
 import {
     markProviderHasMetadata,
     normalizeProviderKey,
     normalizeToolKey,
 } from '@context-os-core/mcp/utils';
+import {
+    createMCPAdapter,
+    type MCPServerConfig,
+    createLogger,
+} from '@kodus/flow';
+import { Injectable } from '@nestjs/common';
+
+import type { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+
+import { MCPManagerService } from './mcp-manager.service';
+
 
 export interface MCPToolMetadata {
     requiredArgs: string[];

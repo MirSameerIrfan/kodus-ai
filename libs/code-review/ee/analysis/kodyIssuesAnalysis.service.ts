@@ -1,13 +1,5 @@
+import { environment } from '@config/ee/environment/environment.dev';
 import { createLogger } from '@kodus/flow';
-import { Injectable } from '@nestjs/common';
-import { tryParseJSONObject } from '@libs/core/utils/transforms/json';
-import { Inject } from '@nestjs/common';
-import {
-    prompt_kodyissues_merge_suggestions_into_issues_system,
-    prompt_kodyissues_resolve_issues_system,
-} from '@libs/core/utils/langchainCommon/prompts/kodyIssuesManagement';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { contextToGenerateIssues } from '../../core/infrastructure/adapters/services/kodyIssuesManagement/domain/kodyIssuesManagement.interface';
 import {
     LLMModelProvider,
     PromptRunnerService,
@@ -15,9 +7,18 @@ import {
     PromptRole,
     BYOKConfig,
 } from '@kodus/kodus-common/llm';
-import { environment } from '@config/ee/environment/environment.dev';
-import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { Injectable } from '@nestjs/common';
+
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
+import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import {
+    prompt_kodyissues_merge_suggestions_into_issues_system,
+    prompt_kodyissues_resolve_issues_system,
+} from '@libs/core/utils/langchainCommon/prompts/kodyIssuesManagement';
+import { tryParseJSONObject } from '@libs/core/utils/transforms/json';
+
+import { contextToGenerateIssues } from '../../core/infrastructure/adapters/services/kodyIssuesManagement/domain/kodyIssuesManagement.interface';
 
 export const KODY_ISSUES_ANALYSIS_SERVICE_TOKEN = Symbol(
     'KodyIssuesAnalysisService',

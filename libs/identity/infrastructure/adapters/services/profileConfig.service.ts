@@ -1,5 +1,12 @@
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
+
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
+import {
+    IProfileService,
+    PROFILE_SERVICE_TOKEN,
+} from '@libs/identity/domain/profile/contracts/profile.service.contract';
 import {
     IProfileConfigRepository,
     PROFILE_CONFIG_REPOSITORY_TOKEN,
@@ -9,15 +16,9 @@ import { ProfileConfigEntity } from '@libs/identity/domain/profile-configs/entit
 import { ProfileConfigKey } from '@libs/identity/domain/profile-configs/enum/profileConfigKey.enum';
 import { IProfileConfig } from '@libs/identity/domain/profile-configs/interfaces/profileConfig.interface';
 import {
-    IProfileService,
-    PROFILE_SERVICE_TOKEN,
-} from '@libs/identity/domain/profile/contracts/profile.service.contract';
-import {
     IUsersService,
     USER_SERVICE_TOKEN,
 } from '@libs/identity/domain/user/contracts/user.service.contract';
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class ProfileConfigService implements IProfileConfigService {

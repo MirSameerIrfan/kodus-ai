@@ -27,25 +27,27 @@ jest.mock('@/shared/utils/crypto', () => ({
     decrypt: jest.fn((text) => text.replace('encrypted_', '')),
 }));
 
+import { PromptRunnerService } from '@kodus/kodus-common/llm';
 import { Test, TestingModule } from '@nestjs/testing';
-import { CreateOrUpdateKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/create-or-update.use-case';
-import { ExternalReferenceDetectorService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceDetector.service';
-import { ExternalReferenceLoaderService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceLoader.service';
+
 import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
-import {
-    CreateKodyRuleDto,
-    KodyRuleSeverity,
-} from '@/core/infrastructure/http/dtos/create-kody-rule.dto';
+
+import { AnalysisContext } from '@/config/types/general/codeReview.type';
+import { CreateOrUpdateKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/create-or-update.use-case';
 import {
     KodyRulesOrigin,
     KodyRulesStatus,
     KodyRulesScope,
 } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
-import { AnalysisContext } from '@/config/types/general/codeReview.type';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
-import { PromptRunnerService } from '@kodus/kodus-common/llm';
 import { CodeReviewContextPackService } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
+import { ExternalReferenceDetectorService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceDetector.service';
+import { ExternalReferenceLoaderService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceLoader.service';
+import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import {
+    CreateKodyRuleDto,
+    KodyRuleSeverity,
+} from '@/core/infrastructure/http/dtos/create-kody-rule.dto';
 
 describe('External References - Integration Tests', () => {
     let createOrUpdateUseCase: CreateOrUpdateKodyRulesUseCase;

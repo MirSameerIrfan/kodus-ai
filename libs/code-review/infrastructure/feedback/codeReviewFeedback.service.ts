@@ -1,16 +1,17 @@
 import { Injectable } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
+import { Collection } from 'mongoose';
+
 import { CODE_REVIEW_FEEDBACK_REPOSITORY_TOKEN } from '@libs/code-review/domain/feedback/contracts/codeReviewFeedback.repository';
 import { ICodeReviewFeedbackRepository } from '@libs/code-review/domain/feedback/contracts/codeReviewFeedback.repository';
 import { ICodeReviewFeedbackService } from '@libs/code-review/domain/feedback/contracts/codeReviewFeedback.service.contract';
-import { Inject } from '@nestjs/common';
 import { CodeReviewFeedbackEntity } from '@libs/code-review/domain/feedback/entities/codeReviewFeedback.entity';
 import { ICodeReviewFeedback } from '@libs/code-review/domain/feedback/interfaces/codeReviewFeedback.interface';
-import { Collection } from 'mongoose';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
     IPullRequests,
     IRepository,
 } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 
 @Injectable()
 export class CodeReviewFeedbackService implements ICodeReviewFeedbackService {

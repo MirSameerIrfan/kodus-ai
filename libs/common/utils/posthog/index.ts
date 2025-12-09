@@ -1,9 +1,8 @@
-import { IPostHog, PostHog } from 'posthog-node';
-
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';
-import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { IPostHog, PostHog } from 'posthog-node';
 
 class PostHogClient {
     private readonly posthog: IPostHog | null = null;

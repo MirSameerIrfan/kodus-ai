@@ -1,5 +1,3 @@
-import { STATUS } from '@/config/types/database/status.type';
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
 import {
     Column,
     Entity,
@@ -8,6 +6,7 @@ import {
     ManyToOne,
     OneToMany,
 } from 'typeorm';
+
 import { AuthIntegrationModel } from './authIntegration.model';
 import { IntegrationModel } from './integration.model';
 import { IntegrationConfigModel } from './integrationConfig.model';
@@ -15,6 +14,9 @@ import { OrganizationModel } from './organization.model';
 import { ParametersModel } from './parameters.model';
 import { TeamAutomationModel } from './teamAutomation.model';
 import { TeamMemberModel } from './teamMember.model';
+
+import { STATUS } from '@/config/types/database/status.type';
+import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
 
 @Entity('teams')
 @Index('IDX_teams_org_status', ['organization', 'status'], { concurrent: true })

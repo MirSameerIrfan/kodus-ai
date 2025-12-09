@@ -1,13 +1,15 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository, InsertResult } from 'typeorm';
+
+import { AUTOMATION_EXECUTION_REPOSITORY_TOKEN } from '@/core/domain/automation/contracts/automation-execution.repository';
 import { AutomationExecutionEntity } from '@/core/domain/automation/entities/automation-execution.entity';
 import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
 import { IAutomationExecution } from '@/core/domain/automation/interfaces/automation-execution.interface';
 import { AutomationExecutionRepository } from '@/core/infrastructure/adapters/repositories/typeorm/automationExecution.repository';
 import { AutomationExecutionModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/automationExecution.model';
 import { AutomationExecutionService } from '@/core/infrastructure/adapters/services/automation/automation-execution.service';
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository, QueryBuilder, InsertResult } from 'typeorm';
-import { AUTOMATION_EXECUTION_REPOSITORY_TOKEN } from '@/core/domain/automation/contracts/automation-execution.repository';
+
 
 describe('AutomationExecutionService - Data Persistence', () => {
     let service: AutomationExecutionService;

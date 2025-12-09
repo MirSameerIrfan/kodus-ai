@@ -1,17 +1,21 @@
 import { createLogger } from '@kodus/flow';
-import { Inject, Injectable } from '@nestjs/common';
-import {
-    AlignmentLevel,
-    CategorizedComment,
-    UncategorizedComment,
-    CommentFrequency,
-} from './types/commentAnalysis.type';
 import {
     LLMModelProvider,
     ParserType,
     PromptRole,
     PromptRunnerService,
 } from '@kodus/kodus-common/llm';
+import { Injectable } from '@nestjs/common';
+import { v4 } from 'uuid';
+
+
+
+import { SUPPORTED_LANGUAGES } from '@libs/code-review/domain/contracts/SupportedLanguages';
+import { KodyRuleSeverity } from '@libs/common/dtos/create-kody-rule.dto';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { LibraryKodyRule } from '@libs/core/infrastructure/config/types/kodyRules.type';
+import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
+import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
 import {
     commentCategorizerSchema,
     commentIrrelevanceFilterSchema,
@@ -20,11 +24,6 @@ import {
     prompt_CommentIrrelevanceFilterSystem,
     prompt_CommentIrrelevanceFilterUser,
 } from '@libs/core/utils/langchainCommon/prompts/commentAnalysis';
-import {
-    IKodyRule,
-    KodyRulesOrigin,
-    KodyRulesStatus,
-} from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import {
     kodyRulesGeneratorDuplicateFilterSchema,
     kodyRulesGeneratorQualityFilterSchema,
@@ -36,25 +35,18 @@ import {
     prompt_KodyRulesGeneratorSystem,
     prompt_KodyRulesGeneratorUser,
 } from '@libs/core/utils/langchainCommon/prompts/kodyRulesGenerator';
-import {
-    BehaviourForExistingDescription,
-    CodeReviewConfig,
-    ReviewOptions,
-} from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
-import * as filteredLibraryKodyRules from './data/filtered-rules.json';
-import { KodyRuleSeverity } from '@libs/common/dtos/create-kody-rule.dto';
-import {
-    CODE_BASE_CONFIG_SERVICE_TOKEN,
-    ICodeBaseConfigService,
-} from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
-import { v4 } from 'uuid';
-import { SUPPORTED_LANGUAGES } from '@libs/code-review/domain/contracts/SupportedLanguages';
-import { LibraryKodyRule } from '@libs/core/infrastructure/config/types/kodyRules.type';
-import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
-import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
 import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import {
+    IKodyRule,
+    KodyRulesOrigin,
+    KodyRulesStatus,
+} from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
+
+import * as filteredLibraryKodyRules from './data/filtered-rules.json';
+import {
+    CategorizedComment,
+    UncategorizedComment,
+} from './types/commentAnalysis.type';
 
 @Injectable()
 export class CommentAnalysisService {

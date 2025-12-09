@@ -1,5 +1,5 @@
-import { IWebhookLog } from '../interfaces/webhook-log.interface';
 import { WebhookLogEntity } from '../entities/webhook-log.entity';
+import { IWebhookLog } from '../interfaces/webhook-log.interface';
 
 export const WEBHOOK_LOG_REPOSITORY_TOKEN = Symbol('WEBHOOK_LOG_REPOSITORY');
 

@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { TypeORMFactory } from '@libs/core/infrastructure/database/typeorm/typeORM.factory';
-import { postgresConfigLoader } from '@libs/core/infrastructure/config/loaders/postgres.config.loader';
 import { MongooseModule } from '@nestjs/mongoose';
-import { MongooseFactory } from '@libs/core/infrastructure/database/mongodb/mongoose.factory';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { mongoDBConfigLoader } from '@libs/core/infrastructure/config/loaders/mongodb.config.loader';
+import { postgresConfigLoader } from '@libs/core/infrastructure/config/loaders/postgres.config.loader';
+import { MongooseFactory } from '@libs/core/infrastructure/database/mongodb/mongoose.factory';
+import { TypeORMFactory } from '@libs/core/infrastructure/database/typeorm/typeORM.factory';
+
 
 @Module({
     imports: [

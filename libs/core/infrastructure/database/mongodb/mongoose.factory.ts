@@ -4,10 +4,13 @@ import {
     MongooseModuleOptions,
     MongooseOptionsFactory,
 } from '@nestjs/mongoose';
-import mongoose from 'mongoose';
 import { ConnectionString } from 'connection-string';
-import { MongooseConnectionFactory } from './mongoose-connection.factory';
+import mongoose from 'mongoose';
+
 import { DatabaseConnection } from '@libs/core/infrastructure/config/types';
+
+import { MongooseConnectionFactory } from './mongoose-connection.factory';
+
 
 mongoose.set('debug', false);
 

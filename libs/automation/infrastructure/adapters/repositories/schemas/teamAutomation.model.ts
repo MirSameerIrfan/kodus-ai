@@ -1,6 +1,8 @@
+import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
+
 import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 import { TeamModel } from '@libs/organization/infrastructure/adapters/repositories/schemas/team.model';
-import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
+
 import { AutomationModel } from './automation.model';
 import { AutomationExecutionModel } from './automationExecution.model';
 

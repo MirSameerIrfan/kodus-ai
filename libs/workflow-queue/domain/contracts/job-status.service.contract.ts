@@ -1,5 +1,5 @@
-import { IWorkflowJob } from '../interfaces/workflow-job.interface';
 import { IJobExecutionHistory } from '../interfaces/job-execution-history.interface';
+import { IWorkflowJob } from '../interfaces/workflow-job.interface';
 
 export const JOB_STATUS_SERVICE_TOKEN = Symbol('JobStatusService');
 

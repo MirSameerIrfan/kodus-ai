@@ -1,10 +1,3 @@
-import { IOrganizationRepository } from '@/core/domain/organization/contracts/organization.repository.contract';
-import { OrganizationEntity } from '@/core/domain/organization/entities/organization.entity';
-import { IOrganization } from '@/core/domain/organization/interfaces/organization.interface';
-import {
-    mapSimpleModelToEntity,
-    mapSimpleModelsToEntities,
-} from '@/shared/infrastructure/repositories/mappers';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -14,8 +7,17 @@ import {
     Repository,
     UpdateQueryBuilder,
 } from 'typeorm';
+
 import { OrganizationModel } from './schema/organization.model';
+
+import { IOrganizationRepository } from '@/core/domain/organization/contracts/organization.repository.contract';
+import { OrganizationEntity } from '@/core/domain/organization/entities/organization.entity';
+import { IOrganization } from '@/core/domain/organization/interfaces/organization.interface';
 import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
+import {
+    mapSimpleModelToEntity,
+    mapSimpleModelsToEntities,
+} from '@/shared/infrastructure/repositories/mappers';
 
 @Injectable()
 export class OrganizationDatabaseRepository implements IOrganizationRepository {

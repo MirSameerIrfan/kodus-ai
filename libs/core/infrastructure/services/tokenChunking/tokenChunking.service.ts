@@ -1,8 +1,9 @@
 import { createLogger } from '@kodus/flow';
-import { Injectable } from '@nestjs/common';
-import { estimateTokenCount } from '@libs/core/utils/langchainCommon/document';
-import { encoding_for_model, TiktokenModel } from 'tiktoken';
 import { LLMModelProvider, MODEL_STRATEGIES } from '@kodus/kodus-common/llm';
+import { Injectable } from '@nestjs/common';
+import { encoding_for_model, TiktokenModel } from 'tiktoken';
+
+import { estimateTokenCount } from '@libs/core/utils/langchainCommon/document';
 
 export interface TokenChunkingOptions {
     model?: LLMModelProvider | string;

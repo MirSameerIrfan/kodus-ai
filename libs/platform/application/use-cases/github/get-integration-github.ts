@@ -1,5 +1,6 @@
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { Inject } from '@nestjs/common';
+
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import {
     GITHUB_SERVICE_TOKEN,
     IGithubService,

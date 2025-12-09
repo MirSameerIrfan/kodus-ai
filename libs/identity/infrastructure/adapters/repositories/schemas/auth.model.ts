@@ -1,4 +1,5 @@
 import { Column, Entity, ManyToOne } from 'typeorm';
+
 import { AuthProvider } from '@libs/core/domain/enums/auth-provider.enum';
 import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 

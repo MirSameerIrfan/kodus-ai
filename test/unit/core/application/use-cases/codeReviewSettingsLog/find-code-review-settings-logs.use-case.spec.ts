@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
+
+import {
+    ActionType,
+    ConfigLevel,
+} from '@/config/types/general/codeReviewSettingsLog.type';
 import { FindCodeReviewSettingsLogsUseCase } from '@/core/application/use-cases/codeReviewSettingsLog/find-code-review-settings-logs.use-case';
 import {
     ICodeReviewSettingsLogService,
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
 } from '@/core/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
-import { CodeReviewSettingsLogEntity } from '@/core/domain/codeReviewSettingsLog/entities/codeReviewSettingsLog.entity';
 import { CodeReviewSettingsLogFiltersDto } from '@/core/infrastructure/http/dtos/code-review-settings-log-filters.dto';
-import {
-    ActionType,
-    ConfigLevel,
-} from '@/config/types/general/codeReviewSettingsLog.type';
 
 describe('FindCodeReviewSettingsLogsUseCase', () => {
     let useCase: FindCodeReviewSettingsLogsUseCase;

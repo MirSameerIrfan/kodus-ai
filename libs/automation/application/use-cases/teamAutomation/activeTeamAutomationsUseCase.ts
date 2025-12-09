@@ -1,22 +1,24 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
 import { REQUEST } from '@nestjs/core';
-import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
-import { AutomationLevel } from '@libs/core/domain/enums/automations-level.enum';
-import { UpdateOrCreateTeamAutomationUseCase } from './updateOrCreateTeamAutomationUseCase';
+
 import {
     AUTOMATION_SERVICE_TOKEN,
     IAutomationService,
 } from '@libs/automation/domain/automation/contracts/automation.service';
-import {
-    IIntegrationService,
-    INTEGRATION_SERVICE_TOKEN,
-} from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
+import { AutomationLevel } from '@libs/core/domain/enums/automations-level.enum';
+import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
+import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
 } from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import {
+    IIntegrationService,
+    INTEGRATION_SERVICE_TOKEN,
+} from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
+
+import { UpdateOrCreateTeamAutomationUseCase } from './updateOrCreateTeamAutomationUseCase';
 
 @Injectable()
 export class ActiveTeamAutomationsUseCase implements IUseCase {

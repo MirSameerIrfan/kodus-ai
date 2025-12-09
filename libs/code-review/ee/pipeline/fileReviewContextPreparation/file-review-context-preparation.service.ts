@@ -4,25 +4,28 @@ import { createLogger } from '@kodus/flow';
  * © Kodus Tech. All rights reserved.
  */
 
+import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';
+import { Inject, Injectable } from '@nestjs/common';
+
+import { IAIAnalysisService } from '@libs/code-review/domain/contracts/AIAnalysisService.contract';
+import {
+    AST_ANALYSIS_SERVICE_TOKEN,
+    IASTAnalysisService,
+} from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
+import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
+import { BaseFileReviewContextPreparation } from '@libs/code-review/infrastructure/fileReviewContextPreparation/base-file-review-context-preparation.service';
+import { LLM_ANALYSIS_SERVICE_TOKEN } from '@libs/code-review/infrastructure/llmAnalysis.service';
+import { WorkflowPausedError } from '@libs/code-review/infrastructure/pipeline/errors/workflow-paused.error';
+import { ReviewModeOptions } from '@libs/core/domain/interfaces/file-review-context-preparation.interface';
 import {
     AnalysisContext,
     FileChange,
     ReviewModeConfig,
     ReviewModeResponse,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { IAIAnalysisService } from '@libs/code-review/domain/contracts/AIAnalysisService.contract';
-import {
-    AST_ANALYSIS_SERVICE_TOKEN,
-    IASTAnalysisService,
-} from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
-import { LLM_ANALYSIS_SERVICE_TOKEN } from '@libs/code-review/infrastructure/llmAnalysis.service';
-import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
-import { ReviewModeOptions } from '@libs/core/domain/interfaces/file-review-context-preparation.interface';
 import { BackoffPresets } from '@libs/core/utils/polling';
-import { WorkflowPausedError } from '@libs/code-review/infrastructure/pipeline/errors/workflow-paused.error';
-import { Inject, Injectable } from '@nestjs/common';
-import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';
-import { BaseFileReviewContextPreparation } from '@libs/code-review/infrastructure/fileReviewContextPreparation/base-file-review-context-preparation.service';
+
+
 
 /**
  * Enterprise (cloud) implementation of the file review context preparation service

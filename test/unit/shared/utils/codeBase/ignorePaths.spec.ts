@@ -1,5 +1,5 @@
-import { isFileMatchingGlob } from '@/shared/utils/glob-utils';
 import * as globalPathsJsonFile from '@/shared/utils/codeBase/ignorePaths/generated/paths.json';
+import { isFileMatchingGlob } from '@/shared/utils/glob-utils';
 
 describe('ignorePaths', () => {
     const globalFilePaths = globalPathsJsonFile.paths;

@@ -1,15 +1,15 @@
 import {
-    AIAnalysisResult,
-    AnalysisContext,
-    ReviewModeResponse,
-} from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import {
     GetImpactAnalysisResponse,
     InitializeImpactAnalysisResponse,
     InitializeRepositoryResponse,
     GetTaskInfoResponse,
 } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
+import {
+    AIAnalysisResult,
+    AnalysisContext,
+    ReviewModeResponse,
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 
 export const AST_ANALYSIS_SERVICE_TOKEN = Symbol('ASTAnalysisService');
 

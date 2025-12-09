@@ -1,12 +1,13 @@
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
+import { Request } from 'express';
+import { MultiSamlStrategy } from 'passport-saml';
+
 import {
     ISSOConfigService,
     SSO_CONFIG_SERVICE_TOKEN,
 } from '@/core/domain/auth/contracts/ssoConfig.service.contract';
 import { SSOProtocol } from '@/core/domain/auth/interfaces/ssoConfig.interface';
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
-import { Request } from 'express';
-import { MultiSamlStrategy } from 'passport-saml';
 
 @Injectable()
 export class SamlStrategy extends PassportStrategy(MultiSamlStrategy, 'saml') {

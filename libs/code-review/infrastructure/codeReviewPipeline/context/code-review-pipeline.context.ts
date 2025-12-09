@@ -1,3 +1,17 @@
+import type {
+    ContextLayer,
+    ContextPack,
+    ContextEvidence,
+} from '@context-os-core/interfaces';
+
+import { AutomationExecutionEntity } from '@libs/automation/domain/entities/automation-execution.entity';
+import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
+import { IExternalPromptContext } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
+import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
+import { IClusterizedSuggestion } from '@libs/code-review/ee/fine-tuning/domain/interfaces/kodyFineTuning.interface';
+import type { ContextAugmentationsMap } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import {
     AnalysisContext,
     AutomaticReviewStatus,
@@ -8,19 +22,7 @@ import {
     Repository,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { AutomationExecutionEntity } from '@libs/automation/domain/entities/automation-execution.entity';
-import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
-import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
-import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
-import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
-import { IClusterizedSuggestion } from '@libs/code-review/ee/fine-tuning/domain/interfaces/kodyFineTuning.interface';
-import { IExternalPromptContext } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
-import type {
-    ContextLayer,
-    ContextPack,
-    ContextEvidence,
-} from '@context-os-core/interfaces';
-import type { ContextAugmentationsMap } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';
+
 import { PipelineContext } from '../../pipeline/interfaces/pipeline-context.interface';
 
 export interface CodeReviewPipelineContext extends PipelineContext {

@@ -1,14 +1,15 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+
 import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
-import { REQUEST } from '@nestjs/core';
 import { ActionType } from '@libs/core/infrastructure/config/types/general/codeReviewSettingsLog.type';
-import { INTEGRATION_SERVICE_TOKEN } from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
-import { IntegrationService } from '@libs/integrations/infrastructure/adapters/services/integration.service';
 import { AUTH_INTEGRATION_SERVICE_TOKEN } from '@libs/integrations/domain/authIntegrations/contracts/auth-integration.service.contracts';
-import { AuthIntegrationService } from '@libs/integrations/infrastructure/adapters/services/authIntegration.service';
 import { INTEGRATION_CONFIG_SERVICE_TOKEN } from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import { INTEGRATION_SERVICE_TOKEN } from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
+import { AuthIntegrationService } from '@libs/integrations/infrastructure/adapters/services/authIntegration.service';
+import { IntegrationService } from '@libs/integrations/infrastructure/adapters/services/integration.service';
 import { IntegrationConfigService } from '@libs/integrations/infrastructure/adapters/services/integrationConfig.service';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 

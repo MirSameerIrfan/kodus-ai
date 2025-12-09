@@ -1,6 +1,7 @@
+import * as moment from 'moment-timezone';
+
 import { Repository } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import * as moment from 'moment-timezone';
 
 export function extractRepoNames(
     urls: { http_url: string }[] | string[],

@@ -5,6 +5,9 @@ import {
     UnauthorizedException,
     InternalServerErrorException,
 } from '@nestjs/common';
+
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import { sendConfirmationEmail } from '@libs/core/utils/email/sendMail';
 import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
@@ -13,8 +16,6 @@ import {
     IUsersService,
     USER_SERVICE_TOKEN,
 } from '@libs/identity/domain/user/contracts/user.service.contract';
-import { sendConfirmationEmail } from '@libs/core/utils/email/sendMail';
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 
 @Injectable()
 export class ResendEmailUseCase implements IUseCase {

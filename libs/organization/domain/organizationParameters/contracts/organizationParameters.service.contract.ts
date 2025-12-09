@@ -1,7 +1,7 @@
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { IOrganizationParametersRepository } from './organizationParameters.repository.contract';
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
 import { OrganizationParametersEntity } from '../entities/organizationParameters.entity';
+import { OrganizationParametersKey } from '@libs/core/domain/enums';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 
 export const ORGANIZATION_PARAMETERS_SERVICE_TOKEN = Symbol(
     'OrganizationParametersService',

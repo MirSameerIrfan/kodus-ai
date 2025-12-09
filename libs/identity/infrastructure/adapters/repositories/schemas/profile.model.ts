@@ -1,7 +1,9 @@
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
 import { Column, Entity, JoinColumn, OneToMany, OneToOne } from 'typeorm';
-import { UserModel } from './user.model';
+
 import { ProfileConfigModel } from './profileConfig.model';
+import { UserModel } from './user.model';
+
+import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
 
 @Entity('profiles')
 export class ProfileModel extends CoreModel {

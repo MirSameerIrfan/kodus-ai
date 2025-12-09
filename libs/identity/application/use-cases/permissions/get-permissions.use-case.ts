@@ -1,21 +1,16 @@
 import { createLogger } from '@kodus/flow';
-import {
-    IPermissionsService,
-    PERMISSIONS_SERVICE_TOKEN,
-} from '@libs/identity/domain/permissions/contracts/permissions.service.contract';
+import { Injectable } from '@nestjs/common';
+
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import {
     Action,
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
     AppAbility,
-    Subject,
 } from '@libs/identity/domain/permissions/types/permissions.types';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import { PermissionsAbilityFactory } from '@libs/identity/infrastructure/adapters/services/permissions/permissionsAbility.factory';
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
-import { MongoQuery } from '@casl/ability';
-import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class GetPermissionsUseCase implements IUseCase {

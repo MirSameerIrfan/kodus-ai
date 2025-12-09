@@ -2,18 +2,19 @@ import { createLogger } from '@kodus/flow';
 import {
     BadRequestException,
     Inject,
-    UseInterceptors,
     Scope,
 } from '@nestjs/common';
+import { Query, Controller, Get } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
+
+import { CostEstimateUseCase } from '@libs/analytics/application/use-cases/usage/cost-estimate.use-case';
+import { TokenPricingUseCase } from '@libs/analytics/application/use-cases/usage/token-pricing.use-case';
+import { TokensByDeveloperUseCase } from '@libs/analytics/application/use-cases/usage/tokens-developer.use-case';
 import {
     ITokenUsageService,
     TOKEN_USAGE_SERVICE_TOKEN,
 } from '@libs/analytics/domain/token-usage/contracts/tokenUsage.service.contract';
-import {
-    TokenPricingQueryDto,
-    TokenUsageQueryDto,
-} from '@libs/analytics/infrastructure/http/dtos/token-usage.dto';
-import { Query, Controller, Get } from '@nestjs/common';
 import {
     DailyUsageResultContract,
     TokenUsageQueryContract,
@@ -24,12 +25,10 @@ import {
     UsageByDeveloperResultContract,
     CostEstimateContract,
 } from '@libs/analytics/domain/token-usage/types/tokenUsage.types';
-import { TokensByDeveloperUseCase } from '@libs/analytics/application/use-cases/usage/tokens-developer.use-case';
-import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
-import { TokenPricingUseCase } from '@libs/analytics/application/use-cases/usage/token-pricing.use-case';
-import { CostEstimateUseCase } from '@libs/analytics/application/use-cases/usage/cost-estimate.use-case';
-import { REQUEST } from '@nestjs/core';
-import { Request } from 'express';
+import {
+    TokenPricingQueryDto,
+    TokenUsageQueryDto,
+} from '@libs/analytics/infrastructure/http/dtos/token-usage.dto';
 
 @Controller({ path: 'usage', scope: Scope.REQUEST })
 export class TokenUsageController {

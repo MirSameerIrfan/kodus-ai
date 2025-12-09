@@ -1,11 +1,12 @@
+import { Inject } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
+
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
 } from '@libs/integrations/domain/contracts/integration.service.contracts';
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
-import { Inject } from '@nestjs/common';
-import { REQUEST } from '@nestjs/core';
-import { Request } from 'express';
 
 export class GetConnectionsUseCase implements IUseCase {
     constructor(

@@ -1,4 +1,3 @@
-import { IAutomationExecutionRepository } from '@libs/automation/domain/automationExecution/contracts/automation-execution.repository';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -7,16 +6,19 @@ import {
     FindOptionsWhere,
     Repository,
 } from 'typeorm';
-import { AutomationExecutionModel } from './schemas/automationExecution.model';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
-import { IAutomationExecution } from '@libs/automation/domain/automationExecution/interfaces/automation-execution.interface';
+
+import { IAutomationExecutionRepository } from '@libs/automation/domain/automationExecution/contracts/automation-execution.repository';
 import { AutomationExecutionEntity } from '@libs/automation/domain/automationExecution/entities/automation-execution.entity';
+import { IAutomationExecution } from '@libs/automation/domain/automationExecution/interfaces/automation-execution.interface';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
 import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
 } from '@libs/core/infrastructure/repositories/mappers';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { createNestedConditions } from '@libs/core/infrastructure/repositories/model/filters';
+
+import { AutomationExecutionModel } from './schemas/automationExecution.model';
 
 @Injectable()
 export class AutomationExecutionRepository implements IAutomationExecutionRepository {

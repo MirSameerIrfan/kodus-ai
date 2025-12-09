@@ -1,6 +1,6 @@
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Controller, Get, HttpStatus, Res } from '@nestjs/common';
 import { Response } from 'express';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 
 /**
  * WebhookHealthController - Health Check Simplificado para Webhook Handler

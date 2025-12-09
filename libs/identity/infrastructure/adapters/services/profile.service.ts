@@ -1,3 +1,5 @@
+import { Inject, Injectable } from '@nestjs/common';
+
 import {
     IProfileRepository,
     PROFILE_REPOSITORY_TOKEN,
@@ -5,7 +7,6 @@ import {
 import { IProfileService } from '@libs/identity/domain/profile/contracts/profile.service.contract';
 import { ProfileEntity } from '@libs/identity/domain/profile/entities/profile.entity';
 import { IProfile } from '@libs/identity/domain/profile/interfaces/profile.interface';
-import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class ProfilesService implements IProfileService {

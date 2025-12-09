@@ -5,11 +5,11 @@ import { createLogger } from '@kodus/flow';
  */
 
 import { Injectable } from '@nestjs/common';
-import { KodyFineTuningService } from '@libs/code-review/ee/fine-tuning/infrastructure/kodyFineTuning.service';
-import { CodeSuggestion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/codeReviewPipeline/context/code-review-pipeline.context';
+
 import { IClusterizedSuggestion } from '@libs/code-review/ee/fine-tuning/domain/interfaces/kodyFineTuning.interface';
+import { KodyFineTuningService } from '@libs/code-review/ee/fine-tuning/infrastructure/kodyFineTuning.service';
 import { IKodyFineTuningContextPreparationService } from '@libs/core/domain/interfaces/kody-fine-tuning-context-preparation.interface';
+import { CodeSuggestion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 /**
  * Enterprise implementation of fine tuning service
  * Extends the base class and adds advanced functionality

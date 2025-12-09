@@ -1,3 +1,11 @@
+import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';
+
+import {
+    IPullRequestMessages,
+} from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
+import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/codeReviewPipeline/context/code-review-pipeline.context';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import {
     CodeReviewConfig,
     CodeSuggestion,
@@ -7,14 +15,6 @@ import {
     SummaryConfig,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';
-import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
-import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
-import {
-    IPullRequestMessageContent,
-    IPullRequestMessages,
-} from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
-import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/codeReviewPipeline/context/code-review-pipeline.context';
 
 export const COMMENT_MANAGER_SERVICE_TOKEN = Symbol('CommentManagerService');
 

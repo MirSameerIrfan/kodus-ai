@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
 import {
     BYOKConfig,
     LLMModelProvider,
     PromptBuilder,
     PromptRunnerService,
 } from '@kodus/kodus-common/llm';
+import { Injectable } from '@nestjs/common';
+
 import { decrypt } from '@libs/core/utils/crypto';
 
 @Injectable()
@@ -25,7 +26,7 @@ export class BYOKPromptRunnerService {
         this.defaultProvider = provider;
         this.fallbackProvider = fallbackProvider;
         this.byokConfig = byokConfig;
-        this.executeMode = !!byokConfig ? 'byok' : 'system';
+        this.executeMode = byokConfig ? 'byok' : 'system';
     }
 
     /**

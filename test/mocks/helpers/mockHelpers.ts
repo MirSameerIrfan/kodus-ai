@@ -1,5 +1,4 @@
 // Importe o módulo que você deseja mockar
-import * as documentModule from '@/shared/utils/langchainCommon/document';
 import * as jiraTransforms from '@/shared/utils/transforms/jira';
 import * as jsonTransforms from '@/shared/utils/transforms/json';
 import * as numberTransforms from '@/shared/utils/transforms/numbers';

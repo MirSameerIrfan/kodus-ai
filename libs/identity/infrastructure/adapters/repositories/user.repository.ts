@@ -8,13 +8,14 @@ import {
     Repository,
 } from 'typeorm';
 
+import { UserModel } from './schema/user.model';
+
+import { STATUS } from '@/config/types/database/status.type';
+import { Role } from '@/core/domain/permissions/enums/permissions.enum';
 import { IUserRepository } from '@/core/domain/user/contracts/user.repository.contract';
 import { UserEntity } from '@/core/domain/user/entities/user.entity';
 import { IUser } from '@/core/domain/user/interfaces/user.interface';
 import { mapSimpleModelToEntity } from '@/shared/infrastructure/repositories/mappers';
-import { UserModel } from './schema/user.model';
-import { Role } from '@/core/domain/permissions/enums/permissions.enum';
-import { STATUS } from '@/config/types/database/status.type';
 
 @Injectable()
 export class UserDatabaseRepository implements IUserRepository {

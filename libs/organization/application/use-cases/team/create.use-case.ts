@@ -1,18 +1,20 @@
+import { ConflictException, Inject } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+
+import { CreateOrUpdateParametersUseCase } from '../parameters/create-or-update-use-case';
+
+import { STATUS } from '@/config/types/database/status.type';
+import {
+    KodyLearningStatus,
+    PlatformConfigValue,
+} from '@/core/domain/parameters/types/configValue.type';
 import {
     TEAM_SERVICE_TOKEN,
     ITeamService,
 } from '@/core/domain/team/contracts/team.service.contract';
 import { TeamEntity } from '@/core/domain/team/entities/team.entity';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
-import { ConflictException, Inject } from '@nestjs/common';
-import { REQUEST } from '@nestjs/core';
-import { CreateOrUpdateParametersUseCase } from '../parameters/create-or-update-use-case';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import {
-    KodyLearningStatus,
-    PlatformConfigValue,
-} from '@/core/domain/parameters/types/configValue.type';
-import { STATUS } from '@/config/types/database/status.type';
+import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import posthogClient from '@/shared/utils/posthog';
 
 export class CreateTeamUseCase implements IUseCase {

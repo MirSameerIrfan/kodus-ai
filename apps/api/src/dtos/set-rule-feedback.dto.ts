@@ -1,4 +1,5 @@
 import { IsEnum, IsNotEmpty } from 'class-validator';
+
 import { RuleFeedbackType } from '@libs/kody-rules/domain/entities/ruleLike.entity';
 
 export class SetRuleFeedbackDto {

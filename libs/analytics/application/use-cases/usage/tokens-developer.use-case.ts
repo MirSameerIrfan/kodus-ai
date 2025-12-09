@@ -1,8 +1,5 @@
-import {
-    IPullRequestsService,
-    PULL_REQUESTS_SERVICE_TOKEN,
-} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
-import { IPullRequests } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { Inject, Injectable } from '@nestjs/common';
+
 import {
     TOKEN_USAGE_SERVICE_TOKEN,
     ITokenUsageService,
@@ -14,7 +11,12 @@ import {
     DailyUsageByDeveloperResultContract,
     UsageByDeveloperResultContract,
 } from '@libs/analytics/domain/token-usage/types/tokenUsage.types';
-import { Inject, Injectable } from '@nestjs/common';
+import {
+    IPullRequestsService,
+    PULL_REQUESTS_SERVICE_TOKEN,
+} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
+import { IPullRequests } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+
 
 @Injectable()
 export class TokensByDeveloperUseCase {

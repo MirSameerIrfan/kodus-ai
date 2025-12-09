@@ -1,17 +1,18 @@
-import { trace } from '@opentelemetry/api';
-import * as Sentry from '@sentry/node';
 import {
     ExecutionContext,
     Inject,
     Injectable,
     LoggerService,
 } from '@nestjs/common';
+import { trace } from '@opentelemetry/api';
+import * as Sentry from '@sentry/node';
 import pino from 'pino';
-import { ILog } from './domain/interfaces/log.interface';
+
 import {
     ILogService,
     LOG_SERVICE_TOKEN,
 } from './domain/contracts/log.service.contracts';
+import { ILog } from './domain/interfaces/log.interface';
 
 type LogLevel = 'info' | 'error' | 'warn' | 'debug' | 'verbose';
 

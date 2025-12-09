@@ -1,9 +1,11 @@
+import { Inject, Injectable } from '@nestjs/common';
+
+import { DeleteUserUseCase } from '../user/delete.use-case';
+
 import { TEAM_MEMBERS_SERVICE_TOKEN } from '@/core/domain/teamMembers/contracts/teamMembers.service.contracts';
 import { TeamMemberEntity } from '@/core/domain/teamMembers/entities/teamMember.entity';
 import { TeamMemberService } from '@/core/infrastructure/adapters/services/teamMembers.service';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
-import { Inject, Injectable } from '@nestjs/common';
-import { DeleteUserUseCase } from '../user/delete.use-case';
 
 @Injectable()
 export class DeleteTeamMembersUseCase implements IUseCase {

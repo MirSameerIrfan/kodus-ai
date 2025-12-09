@@ -1,13 +1,14 @@
 // services/message-template-processor.service.ts
 import { Injectable } from '@nestjs/common';
+
+import { LanguageValue } from '@libs/core/domain/enums/language-parameter.enum';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import {
     FileChange,
     ReviewCadenceType,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { CodeReviewConfig } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
-import { LanguageValue } from '@libs/core/domain/enums/language-parameter.enum';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
     getTranslationsForLanguageByCategory,
     TranslationsCategory,

@@ -6,10 +6,12 @@ import {
     ManyToOne,
     OneToMany,
 } from 'typeorm';
+
+import { AutomationStatus } from '@libs/automation/domain/automation/enum/automation-status';
+import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
+
 import { CodeReviewExecutionModel } from './codeReviewExecution.model';
 import { TeamAutomationModel } from './teamAutomation.model';
-import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
-import { AutomationStatus } from '@libs/automation/domain/automation/enum/automation-status';
 
 @Entity('automation_execution')
 @Index('IDX_automation_exec_team_status', ['teamAutomation', 'status'], {

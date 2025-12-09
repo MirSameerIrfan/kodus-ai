@@ -2,6 +2,7 @@ import type {
     ContextDependency,
     ContextPack,
 } from '@context-os-core/interfaces';
+
 import { PromptSourceType } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
 
 export interface ContextMarkerPattern {
@@ -93,7 +94,7 @@ export function extractDependenciesFromText(
             GLOBAL_REGEX_FLAGS(pattern.regex),
         );
         let match: RegExpExecArray | null;
-        // eslint-disable-next-line no-cond-assign
+         
         while ((match = regex.exec(text)) !== null) {
             const dependency = pattern.toDependency(match);
             if (!dependency) {

@@ -1,16 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import {
-    createMCPAdapter,
-    type MCPServerConfig,
-    createLogger,
-} from '@kodus/flow';
 import { createHash } from 'crypto';
-import type { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import type {
-    CodeReviewConfig,
-    Repository,
-    AnalysisContext,
-} from '@libs/core/infrastructure/config/types/general/codeReview.type';
+
 import type {
     ContextDependency,
     ContextLayer,
@@ -28,8 +17,28 @@ import type {
 import { MCPOrchestrator } from '@context-os-core/mcp/orchestrator';
 import { InMemoryMCPRegistry } from '@context-os-core/mcp/registry';
 import { SequentialPackAssemblyPipeline } from '@context-os-core/pipeline/sequential-pack-pipeline';
-import { ContextReferenceService } from './context-reference.service';
-import { MCPToolArgResolverAgentService } from './mcp-tool-arg-resolver-agent.service';
+import {
+    createMCPAdapter,
+    type MCPServerConfig,
+    createLogger,
+} from '@kodus/flow';
+import { Injectable } from '@nestjs/common';
+
+
+import { PromptReferenceErrorType } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
+import type { IPromptReferenceSyncError } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
+import type {
+    CodeReviewConfig,
+    Repository,
+    AnalysisContext,
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import type { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import {
+    MCPToolMetadata,
+    MCPToolMetadataService,
+} from '@libs/core/mcp-server/infrastructure/services/mcp-tool-metadata.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+
 import {
     CODE_REVIEW_CONTEXT_PATTERNS,
     pathToKey,
@@ -40,15 +49,9 @@ import {
     resolveDependencyToolName,
     deepClone,
 } from './code-review-context.utils';
-
-import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
-import { PromptReferenceErrorType } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
-import type { IPromptReferenceSyncError } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
+import { ContextReferenceService } from './context-reference.service';
 import { formatMCPOutput } from './mcp-output-formatter';
-import {
-    MCPToolMetadata,
-    MCPToolMetadataService,
-} from '@libs/core/mcp-server/infrastructure/services/mcp-tool-metadata.service';
+import { MCPToolArgResolverAgentService } from './mcp-tool-arg-resolver-agent.service';
 
 export interface ContextAugmentationOutput {
     provider?: string;

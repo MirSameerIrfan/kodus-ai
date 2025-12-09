@@ -1,5 +1,5 @@
-import { Repository } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { PullRequestState } from '@libs/core/domain/enums/pullRequestState.enum';
+import { Repository } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 
 export type PullRequest = {
     id: string;

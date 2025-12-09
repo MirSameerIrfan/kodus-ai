@@ -1,6 +1,6 @@
+import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { createLogger } from '@kodus/flow';
 
 export interface DistributedLockOptions {
     ttl?: number; // Time to live em ms (opcional, para auto-release)

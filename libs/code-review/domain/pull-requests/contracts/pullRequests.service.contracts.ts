@@ -1,5 +1,7 @@
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
-import { PullRequestState } from '@libs/core/domain/enums/pullRequestState.enum';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+
+import { IPullRequestsRepository } from './pullRequests.repository';
 import { PullRequestsEntity } from '../entities/pullRequests.entity';
 import {
     ICommit,
@@ -8,8 +10,7 @@ import {
     ISuggestion,
     ISuggestionByPR,
 } from '../interfaces/pullRequests.interface';
-import { IPullRequestsRepository } from './pullRequests.repository';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+
 
 export const PULL_REQUESTS_SERVICE_TOKEN = Symbol('PullRequestsService');
 

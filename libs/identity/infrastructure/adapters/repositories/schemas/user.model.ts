@@ -1,6 +1,3 @@
-import { STATUS } from '@/config/types/database/status.type';
-import { Role } from '@/core/domain/permissions/enums/permissions.enum';
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
 import {
     Column,
     Entity,
@@ -10,11 +7,16 @@ import {
     OneToMany,
     OneToOne,
 } from 'typeorm';
+
 import { AuthModel } from './auth.model';
 import { OrganizationModel } from './organization.model';
 import { PermissionsModel } from './permissions.model';
 import { ProfileModel } from './profile.model';
 import { TeamMemberModel } from './teamMember.model';
+
+import { STATUS } from '@/config/types/database/status.type';
+import { Role } from '@/core/domain/permissions/enums/permissions.enum';
+import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
 
 @Entity('users')
 @Index('IDX_users_email', ['email'], { concurrent: true })

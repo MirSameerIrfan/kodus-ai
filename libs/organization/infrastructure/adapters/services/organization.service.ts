@@ -1,3 +1,6 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
+
 import {
     IOrganizationRepository,
     ORGANIZATION_REPOSITORY_TOKEN,
@@ -5,8 +8,6 @@ import {
 import { IOrganizationService } from '@/core/domain/organization/contracts/organization.service.contract';
 import { OrganizationEntity } from '@/core/domain/organization/entities/organization.entity';
 import { IOrganization } from '@/core/domain/organization/interfaces/organization.interface';
-import { Inject, Injectable } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class OrganizationService implements IOrganizationService {

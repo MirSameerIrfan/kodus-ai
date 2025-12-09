@@ -1,12 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import { UpdateTeamAutomationStatusUseCase } from './updateTeamAutomationStatusUseCase';
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+
 import { AutomationType } from '@libs/automation/domain/automation/enum/automation-type';
 import {
     ITeamAutomationService,
     TEAM_AUTOMATION_SERVICE_TOKEN,
 } from '@libs/automation/domain/teamAutomation/contracts/team-automation.service';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+
+import { UpdateTeamAutomationStatusUseCase } from './updateTeamAutomationStatusUseCase';
 
 interface IAutomation {
     automationUuid: string;

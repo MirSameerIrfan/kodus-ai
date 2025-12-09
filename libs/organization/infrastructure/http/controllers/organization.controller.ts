@@ -1,17 +1,19 @@
+import { Body, Controller, Get, Patch, Query, UseGuards } from '@nestjs/common';
+
 import {
     Action,
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { Body, Controller, Get, Patch, Query, UseGuards } from '@nestjs/common';
 import {
     CheckPolicies,
     PolicyGuard,
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
 import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
-import { UpdateInfoOrganizationAndPhoneDto } from '../dtos/updateInfoOrgAndPhone.dto';
 import { GetOrganizationNameUseCase } from '@libs/organization/application/use-cases/get-organization-name';
-import { UpdateInfoOrganizationAndPhoneUseCase } from '@libs/organization/application/use-cases/update-infos.use-case';
 import { GetOrganizationsByDomainUseCase } from '@libs/organization/application/use-cases/get-organizations-domain.use-case';
+import { UpdateInfoOrganizationAndPhoneUseCase } from '@libs/organization/application/use-cases/update-infos.use-case';
+
+import { UpdateInfoOrganizationAndPhoneDto } from '../dtos/updateInfoOrgAndPhone.dto';
 
 @Controller('organization')
 export class OrganizationController {

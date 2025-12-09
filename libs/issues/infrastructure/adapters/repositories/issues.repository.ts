@@ -1,15 +1,17 @@
-import { IIssuesRepository } from '@libs/issues/domain/contracts/issues.repository';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { IssuesModel } from './schemas/issues.model';
-import { IIssue } from '@libs/issues/domain/interfaces/issues.interface';
-import { IssuesEntity } from '@libs/issues/domain/entities/issues.entity';
+
 import { IssueStatus } from '@libs/core/infrastructure/config/types/general/issues.type';
 import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
 } from '@libs/core/infrastructure/repositories/mappers';
+import { IIssuesRepository } from '@libs/issues/domain/contracts/issues.repository';
+import { IssuesEntity } from '@libs/issues/domain/entities/issues.entity';
+import { IIssue } from '@libs/issues/domain/interfaces/issues.interface';
+
+import { IssuesModel } from './schemas/issues.model';
 
 @Injectable()
 export class IssuesRepository implements IIssuesRepository {

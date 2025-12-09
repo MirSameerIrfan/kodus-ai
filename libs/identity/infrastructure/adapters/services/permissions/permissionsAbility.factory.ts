@@ -1,4 +1,6 @@
 import { AbilityBuilder, createMongoAbility, Subject } from '@casl/ability';
+import { Inject, Injectable } from '@nestjs/common';
+
 import {
     IPermissionsService,
     PERMISSIONS_SERVICE_TOKEN,
@@ -10,7 +12,6 @@ import {
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { AppAbility } from '@libs/identity/domain/permissions/types/permissions.types';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
-import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class PermissionsAbilityFactory {

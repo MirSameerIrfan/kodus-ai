@@ -1,4 +1,3 @@
-import { IIntegrationConfigRepository } from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.repository.contracts';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -8,17 +7,20 @@ import {
     Repository,
     UpdateQueryBuilder,
 } from 'typeorm';
-import { IntegrationConfigModel } from './schemas/integrationConfig.model';
+
 import { IntegrationConfigKey, PlatformType } from '@libs/core/domain/enums';
-import { IIntegrationConfig } from '@libs/integrations/domain/integrationConfigs/interfaces/integration-config.interface';
-import { IntegrationConfigEntity } from '@libs/integrations/domain/integrationConfigs/entities/integration-config.entity';
-import { createNestedConditions } from '@libs/core/infrastructure/repositories/model/filters';
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
 } from '@libs/core/infrastructure/repositories/mappers';
-import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { createNestedConditions } from '@libs/core/infrastructure/repositories/model/filters';
+import { IIntegrationConfigRepository } from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.repository.contracts';
+import { IntegrationConfigEntity } from '@libs/integrations/domain/integrationConfigs/entities/integration-config.entity';
+import { IIntegrationConfig } from '@libs/integrations/domain/integrationConfigs/interfaces/integration-config.interface';
+
+import { IntegrationConfigModel } from './schemas/integrationConfig.model';
 
 @Injectable()
 export class IntegrationConfigRepository implements IIntegrationConfigRepository {

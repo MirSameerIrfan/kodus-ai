@@ -1,8 +1,10 @@
-import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
-import { IntegrationModel } from './integration.model';
+
+import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 import { OrganizationModel } from '@libs/organization/infrastructure/adapters/repositories/schemas/organization.model';
 import { TeamModel } from '@libs/organization/infrastructure/adapters/repositories/schemas/team.model';
+
+import { IntegrationModel } from './integration.model';
 
 @Entity('auth_integrations')
 export class AuthIntegrationModel extends CoreModel {

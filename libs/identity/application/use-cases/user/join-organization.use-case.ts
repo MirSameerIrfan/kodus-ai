@@ -1,8 +1,15 @@
+import { Inject, Injectable } from '@nestjs/common';
+
 import { STATUS } from '@/config/types/database/status.type';
+import {
+    AUTH_SERVICE_TOKEN,
+    IAuthService,
+} from '@/core/domain/auth/contracts/auth.service.contracts';
 import {
     IOrganizationService,
     ORGANIZATION_SERVICE_TOKEN,
 } from '@/core/domain/organization/contracts/organization.service.contract';
+import { Role } from '@/core/domain/permissions/enums/permissions.enum';
 import {
     IProfileService,
     PROFILE_SERVICE_TOKEN,
@@ -20,17 +27,11 @@ import {
     IUsersService,
     USER_SERVICE_TOKEN,
 } from '@/core/domain/user/contracts/user.service.contract';
-import { Role } from '@/core/domain/permissions/enums/permissions.enum';
 import { IUser } from '@/core/domain/user/interfaces/user.interface';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { JoinOrganizationDto } from '@/core/infrastructure/http/dtos/join-organization.dto';
 import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
-import { Inject, Injectable } from '@nestjs/common';
 import { sendConfirmationEmail } from '@/shared/utils/email/sendMail';
-import {
-    AUTH_SERVICE_TOKEN,
-    IAuthService,
-} from '@/core/domain/auth/contracts/auth.service.contracts';
 
 @Injectable()
 export class JoinOrganizationUseCase implements IUseCase {

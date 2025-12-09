@@ -1,7 +1,8 @@
-import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import { Entity } from '@libs/core/domain/interfaces/entity';
-import { IOrganization } from '../interfaces/organization.interface';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';
+
+import { IOrganization } from '../interfaces/organization.interface';
 
 export class OrganizationEntity implements Entity<IOrganization> {
     private _uuid: string;

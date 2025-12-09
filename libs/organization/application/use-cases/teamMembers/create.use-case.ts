@@ -1,13 +1,14 @@
 import { Inject } from '@nestjs/common';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
-import { IMembers } from '@/core/domain/teamMembers/interfaces/team-members.interface';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
+
 import {
     ITeamMemberService,
     TEAM_MEMBERS_SERVICE_TOKEN,
 } from '@/core/domain/teamMembers/contracts/teamMembers.service.contracts';
-import { Request } from 'express';
-import { REQUEST } from '@nestjs/core';
+import { IMembers } from '@/core/domain/teamMembers/interfaces/team-members.interface';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 
 export class CreateOrUpdateTeamMembersUseCase implements IUseCase {
     constructor(

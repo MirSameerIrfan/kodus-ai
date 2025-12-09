@@ -1,14 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { AutomationExecutionRepository } from '@/core/infrastructure/adapters/repositories/typeorm/automationExecution.repository';
-import { AutomationExecutionModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/automationExecution.model';
-import { TeamAutomationModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/teamAutomation.model';
-import { TeamModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/team.model';
-import { OrganizationModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/organization.model';
-import { AutomationModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/automation.model';
+
 import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
 import { IAutomationExecution } from '@/core/domain/automation/interfaces/automation-execution.interface';
+import { AutomationExecutionRepository } from '@/core/infrastructure/adapters/repositories/typeorm/automationExecution.repository';
+import { AutomationModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/automation.model';
+import { AutomationExecutionModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/automationExecution.model';
+import { OrganizationModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/organization.model';
+import { TeamModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/team.model';
+import { TeamAutomationModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/teamAutomation.model';
 
 describe('AutomationExecutionRepository - Organization Filtering Integration', () => {
     let module: TestingModule;

@@ -1,4 +1,5 @@
 import { Entity } from '@libs/core/domain/interfaces/entity';
+
 import { IDryRun } from '../interfaces/dryRun.interface';
 
 export class DryRunEntity implements Entity<IDryRun> {

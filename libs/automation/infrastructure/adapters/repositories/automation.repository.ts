@@ -1,4 +1,3 @@
-import { IAutomationRepository } from '@libs/automation/domain/automation/contracts/automation.repository';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -10,13 +9,16 @@ import {
     Repository,
     UpdateQueryBuilder,
 } from 'typeorm';
-import { AutomationModel } from './schemas/automation.model';
+
+import { IAutomationRepository } from '@libs/automation/domain/automation/contracts/automation.repository';
 import { AutomationEntity } from '@libs/automation/domain/automation/entities/automation.entity';
 import { IAutomation } from '@libs/automation/domain/automation/interfaces/automation.interface';
 import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
 } from '@libs/core/infrastructure/repositories/mappers';
+
+import { AutomationModel } from './schemas/automation.model';
 
 @Injectable()
 export class AutomationRepository implements IAutomationRepository {

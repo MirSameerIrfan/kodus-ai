@@ -1,19 +1,21 @@
 import { createLogger } from '@kodus/flow';
+import { Inject, Injectable } from '@nestjs/common';
+import { DeepPartial } from 'typeorm';
+
+import {
+    IPullRequestMessagesService,
+    PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
+} from '@libs/code-review/domain/pr-messages/contracts/pullRequestMessages.service.contract';
+import { PullRequestMessagesEntity } from '@libs/code-review/domain/pr-messages/entities/pullRequestMessages.entity';
 import {
     FormattedConfig,
     FormattedConfigLevel,
     IFormattedConfigProperty,
 } from '@libs/core/infrastructure/config/types/general/codeReviewConfig.type';
 import { ConfigLevel } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
-import {
-    IPullRequestMessagesService,
-    PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
-} from '@libs/code-review/domain/pr-messages/contracts/pullRequestMessages.service.contract';
-import { PullRequestMessagesEntity } from '@libs/code-review/domain/pr-messages/entities/pullRequestMessages.entity';
 import { deepDifference, deepMerge } from '@libs/core/utils/deep';
 import { getDefaultKodusConfigFile } from '@libs/core/utils/validateCodeReviewConfigFile';
-import { Inject, Injectable } from '@nestjs/common';
-import { DeepPartial } from 'typeorm';
+
 
 type CustomMessagesConfig = ReturnType<
     typeof getDefaultKodusConfigFile

@@ -1,5 +1,7 @@
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import type { ContextLayer } from '@context-os-core/interfaces';
+
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+
 import { PromptExternalReferenceEntity } from '../entities/promptExternalReference.entity';
 import { IExternalPromptContext } from '../interfaces/promptExternalReference.interface';
 

@@ -1,23 +1,26 @@
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { BaseStage } from './base/base-stage.abstract';
-import { HeavyStage } from './base/heavy-stage.interface';
-import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
-import { KodyRulesScope } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
+
 import {
     KODY_RULES_PR_LEVEL_ANALYSIS_SERVICE_TOKEN,
     KodyRulesPrLevelAnalysisService,
 } from '@libs/code-review/ee/analysis/kodyRulesPrLevelAnalysis.service';
 import { ReviewModeResponse } from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { KodyRulesScope } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
+import { EventType } from '@libs/workflow-queue/domain/enums/event-type.enum';
+import { WorkflowPausedError } from '@libs/workflow-queue/domain/errors/workflow-paused.error';
+import { StageCompletedEvent } from '@libs/workflow-queue/domain/interfaces/stage-completed-event.interface';
+
+import { BaseStage } from './base/base-stage.abstract';
+import { HeavyStage } from './base/heavy-stage.interface';
 import {
     CROSS_FILE_ANALYSIS_SERVICE_TOKEN,
     CrossFileAnalysisService,
 } from '../../crossFileAnalysis.service';
-import { EventType } from '@libs/workflow-queue/domain/enums/event-type.enum';
-import { StageCompletedEvent } from '@libs/workflow-queue/domain/interfaces/stage-completed-event.interface';
-import { WorkflowPausedError } from '@libs/workflow-queue/domain/errors/workflow-paused.error';
+import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
+
 
 @Injectable()
 export class ProcessFilesPrLevelReviewStage

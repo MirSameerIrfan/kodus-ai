@@ -1,34 +1,37 @@
 import { createLogger } from '@kodus/flow';
+import { Inject, Injectable } from '@nestjs/common';
+
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
+import { DuplicateRecordException } from '@libs/core/infrastructure/filters/duplicate-record.exception';
+import { generateRandomOrgName } from '@libs/core/utils/helpers';
+import posthogClient from '@libs/core/utils/posthog';
+import { identify, track } from '@libs/core/utils/segment';
+import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
+import {
+    USER_SERVICE_TOKEN,
+    IUsersService,
+} from '@libs/identity/domain/user/contracts/user.service.contract';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
+import { SignUpDTO } from '@libs/identity/infrastructure/http/dtos/create-user-organization.dto';
 import {
     ORGANIZATION_SERVICE_TOKEN,
     IOrganizationService,
 } from '@libs/organization/domain/organization/contracts/organization.service.contract';
 import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 import {
-    USER_SERVICE_TOKEN,
-    IUsersService,
-} from '@libs/identity/domain/user/contracts/user.service.contract';
-import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
-import { SignUpDTO } from '@libs/identity/infrastructure/http/dtos/create-user-organization.dto';
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
-import { DuplicateRecordException } from '@libs/core/infrastructure/filters/duplicate-record.exception';
-import { generateRandomOrgName } from '@libs/core/utils/helpers';
-import { Inject, Injectable } from '@nestjs/common';
-import { CreateProfileUseCase } from '../profile/create.use-case';
-import { identify, track } from '@libs/core/utils/segment';
-import posthogClient from '@libs/core/utils/posthog';
+    ITeamService,
+    TEAM_SERVICE_TOKEN,
+} from '@libs/organization/domain/team/contracts/team.service.contract';
+import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';
 import {
     ITeamMemberService,
     TEAM_MEMBERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/team-members/contracts/teamMembers.service.contracts';
-import {
-    ITeamService,
-    TEAM_SERVICE_TOKEN,
-} from '@libs/organization/domain/team/contracts/team.service.contract';
 import { TeamMemberRole } from '@libs/organization/domain/team-members/enums/teamMemberRole.enum';
-import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';
+
+import { CreateProfileUseCase } from '../profile/create.use-case';
+
 
 @Injectable()
 export class SignUpUseCase implements IUseCase {

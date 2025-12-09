@@ -1,35 +1,18 @@
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable, Optional } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
 import pLimit from 'p-limit';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { v4 as uuidv4 } from 'uuid';
 
-import { BaseStage } from './base/base-stage.abstract';
-import { HeavyStage } from './base/heavy-stage.interface';
-import { EventType } from '@libs/workflow-queue/domain/enums/event-type.enum';
-import { StageCompletedEvent } from '@libs/workflow-queue/domain/interfaces/stage-completed-event.interface';
-import { WorkflowPausedError } from '@libs/workflow-queue/domain/errors/workflow-paused.error';
-import {
-    AIAnalysisResult,
-    AnalysisContext,
-    CodeReviewVersion,
-    CodeReviewConfig,
-    CodeSuggestion,
-    FileChange,
-    IFinalAnalysisResult,
-} from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { benchmark } from '@libs/core/utils/benchmark.util';
-import { createOptimizedBatches } from '@libs/core/utils/batch.helper';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 
-import {
-    IPullRequestsService,
-    PULL_REQUESTS_SERVICE_TOKEN,
-} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
 import {
     ISuggestionService,
     SUGGESTION_SERVICE_TOKEN,
 } from '@libs/code-review/domain/contracts/SuggestionService.contract';
+import {
+    IPullRequestsService,
+    PULL_REQUESTS_SERVICE_TOKEN,
+} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
 import {
     FILE_REVIEW_CONTEXT_PREPARATION_TOKEN,
     IFileReviewContextPreparation,
@@ -37,10 +20,7 @@ import {
 import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
 import { ImplementationStatus } from '@libs/code-review/domain/pull-requests/enums/implementationStatus.enum';
 import { PriorityStatus } from '@libs/code-review/domain/pull-requests/enums/priorityStatus.enum';
-import {
-    CodeReviewPipelineContext,
-    FileContextAgentResult,
-} from '../context/code-review-pipeline.context';
+
 import {
     IKodyFineTuningContextPreparationService,
     KODY_FINE_TUNING_CONTEXT_PREPARATION_TOKEN,
@@ -51,6 +31,28 @@ import {
 } from '@libs/core/domain/interfaces/kody-ast-analyze-context-preparation.interface';
 import { CodeAnalysisOrchestrator } from '@libs/code-review/ee/analysis/codeAnalysisOrchestrator.service';
 import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
+import {
+    AIAnalysisResult,
+    AnalysisContext,
+    CodeReviewVersion,
+    CodeReviewConfig,
+    CodeSuggestion,
+    FileChange,
+    IFinalAnalysisResult,
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { createOptimizedBatches } from '@libs/core/utils/batch.helper';
+import { benchmark } from '@libs/core/utils/benchmark.util';
+import { EventType } from '@libs/workflow-queue/domain/enums/event-type.enum';
+import { WorkflowPausedError } from '@libs/workflow-queue/domain/errors/workflow-paused.error';
+import { StageCompletedEvent } from '@libs/workflow-queue/domain/interfaces/stage-completed-event.interface';
+import {
+    CodeReviewPipelineContext,
+    FileContextAgentResult,
+} from '../context/code-review-pipeline.context';
+
+import { BaseStage } from './base/base-stage.abstract';
+import { HeavyStage } from './base/heavy-stage.interface';
 
 @Injectable()
 export class ProcessFilesReview extends BaseStage implements HeavyStage {
@@ -983,7 +985,7 @@ export class ProcessFilesReview extends BaseStage implements HeavyStage {
             codeSuggestions: suggestionsWithId,
         };
 
-        let filteredSuggestionsByOptions =
+        const filteredSuggestionsByOptions =
             this.suggestionService.filterCodeSuggestionsByReviewOptions(
                 context?.codeReviewConfig?.reviewOptions,
                 combinedResult,

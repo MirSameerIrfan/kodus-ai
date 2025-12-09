@@ -1,20 +1,23 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
-import { BaseStage } from './base/base-stage.abstract';
-import {
-    IPullRequestManagerService,
-    PULL_REQUEST_MANAGER_SERVICE_TOKEN,
-} from '@libs/code-review/domain/contracts/PullRequestManagerService.contract';
-import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
-import {
-    handlePatchDeletions,
-    convertToHunksWithLinesNumbers,
-} from '@libs/core/utils/patch';
-import { FileChange } from '@libs/core/infrastructure/config/types/general/codeReview.type';
+
 import {
     AutomationMessage,
     AutomationStatus,
 } from '@libs/automation/domain/enums/automation-status';
+import {
+    IPullRequestManagerService,
+    PULL_REQUEST_MANAGER_SERVICE_TOKEN,
+} from '@libs/code-review/domain/contracts/PullRequestManagerService.contract';
+import { FileChange } from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import {
+    handlePatchDeletions,
+    convertToHunksWithLinesNumbers,
+} from '@libs/core/utils/patch';
+
+import { BaseStage } from './base/base-stage.abstract';
+import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
+
 
 @Injectable()
 export class FetchChangedFilesStage extends BaseStage {

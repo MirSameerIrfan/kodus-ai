@@ -1,15 +1,18 @@
 import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
-import { ISuggestionEmbeddedService } from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/contracts/suggestionEmbedded.service.contract';
-import { ISuggestionEmbedded } from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/interfaces/suggestionEmbedded.interface';
-import { SuggestionEmbeddedEntity } from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/entities/suggestionEmbedded.entity';
-import { ISuggestionToEmbed } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import { FindManyOptions } from 'typeorm';
-import { CodeSuggestion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { KodyFineTuningService } from '../kodyFineTuning.service';
-import { getOpenAIEmbedding } from '@libs/core/utils/langchainCommon/document';
+
+import { ISuggestionToEmbed } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import { FeedbackType } from '@libs/code-review/ee/fine-tuning/domain/enums/feedbackType.enum';
+import { ISuggestionEmbeddedService } from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/contracts/suggestionEmbedded.service.contract';
+import { SuggestionEmbeddedEntity } from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/entities/suggestionEmbedded.entity';
+import { ISuggestionEmbedded } from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/interfaces/suggestionEmbedded.interface';
+import { CodeSuggestion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { getOpenAIEmbedding } from '@libs/core/utils/langchainCommon/document';
+
 import { SuggestionEmbeddedDatabaseRepository } from '../../../repositories/typeorm/suggestionEmbedded.repository';
+import { KodyFineTuningService } from '../kodyFineTuning.service';
+
 
 export interface SuggestionEmbeddedFeedbacks {
     positiveFeedbacks: number;

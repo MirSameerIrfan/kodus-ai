@@ -1,4 +1,16 @@
 import {
+    LLMModelProvider,
+    LLMProviderService,
+    MODEL_STRATEGIES,
+} from '@kodus/kodus-common/llm';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { APIClient, Bitbucket, Schema } from 'bitbucket';
+import { Response as BitbucketResponse } from 'bitbucket/src/request/types';
+import moment from 'moment';
+import { v4 } from 'uuid';
+
+import {
     CommentResult,
     FileChange,
     Repository,
@@ -61,20 +73,6 @@ import {
     isFileMatchingGlobCaseInsensitive,
 } from '@/shared/utils/glob-utils';
 import { safelyParseMessageContent } from '@/shared/utils/safelyParseMessageContent';
-import {
-    LLMModelProvider,
-    LLMProviderService,
-    MODEL_STRATEGIES,
-} from '@kodus/kodus-common/llm';
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { APIClient, Bitbucket, Schema } from 'bitbucket';
-import { Response as BitbucketResponse } from 'bitbucket/src/request/types';
-import moment from 'moment';
-import { v4 } from 'uuid';
-import { MCPManagerService } from '../../mcp/services/mcp-manager.service';
-import { PinoLoggerService } from '../logger/pino.service';
-import { PromptService } from '../prompt.service';
 
 @Injectable()
 @IntegrationServiceDecorator(PlatformType.BITBUCKET, 'codeManagement')

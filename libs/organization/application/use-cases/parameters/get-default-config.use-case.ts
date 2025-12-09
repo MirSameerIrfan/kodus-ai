@@ -1,6 +1,7 @@
+import { Injectable } from '@nestjs/common';
+
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { getDefaultKodusConfigFile } from '@/shared/utils/validateCodeReviewConfigFile';
-import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class GetDefaultConfigUseCase {

@@ -1,9 +1,21 @@
 import { createLogger } from '@kodus/flow';
+import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';
 import { Injectable, Inject } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
 
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { IAIAnalysisService } from '@libs/code-review/domain/contracts/AIAnalysisService.contract';
+import {
+    COMMENT_MANAGER_SERVICE_TOKEN,
+    ICommentManagerService,
+} from '@libs/code-review/domain/contracts/CommentManagerService.contract';
 import { ISuggestionService } from '@libs/code-review/domain/contracts/SuggestionService.contract';
+import {
+    IPullRequestsService,
+    PULL_REQUESTS_SERVICE_TOKEN,
+} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
+import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
+import { ImplementationStatus } from '@libs/code-review/domain/pull-requests/enums/implementationStatus.enum';
+import { PriorityStatus } from '@libs/code-review/domain/pull-requests/enums/priorityStatus.enum';
+import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import {
     CodeSuggestion,
     SuggestionControlConfig,
@@ -17,23 +29,11 @@ import {
     CommentResult,
     CodeReviewVersion,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
-import { PriorityStatus } from '@libs/code-review/domain/pull-requests/enums/priorityStatus.enum';
-import { extractLinesFromDiffHunk } from '@libs/core/utils/patch';
-import { IAIAnalysisService } from '@libs/code-review/domain/contracts/AIAnalysisService.contract';
-import {
-    IPullRequestsService,
-    PULL_REQUESTS_SERVICE_TOKEN,
-} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
-import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
-import {
-    COMMENT_MANAGER_SERVICE_TOKEN,
-    ICommentManagerService,
-} from '@libs/code-review/domain/contracts/CommentManagerService.contract';
-import { ImplementationStatus } from '@libs/code-review/domain/pull-requests/enums/implementationStatus.enum';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { LabelType } from '@libs/core/utils/codeManagement/labels';
-import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
-import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';
+import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
+import { extractLinesFromDiffHunk } from '@libs/core/utils/patch';
+
 import { LLM_ANALYSIS_SERVICE_TOKEN } from './llmAnalysis.service';
 
 @Injectable()
@@ -757,8 +757,8 @@ export class SuggestionService implements ISuggestionService {
             },
         });
 
-        let allPrioritized: any[] = [];
-        let allDiscarded: any[] = [];
+        const allPrioritized: any[] = [];
+        const allDiscarded: any[] = [];
 
         // Processa sugestões normais com filtros
         if (normalSuggestions.length > 0) {

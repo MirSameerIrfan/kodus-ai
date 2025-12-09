@@ -1,7 +1,9 @@
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+
+import { ProfileModel } from './profile.model';
+
 import { ProfileConfigKey } from '@/core/domain/profileConfigs/enum/profileConfigKey.enum';
 import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
-import { ProfileModel } from './profile.model';
 
 @Entity('profile_configs')
 export class ProfileConfigModel extends CoreModel {

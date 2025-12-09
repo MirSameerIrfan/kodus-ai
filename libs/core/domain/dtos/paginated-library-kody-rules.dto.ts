@@ -1,4 +1,4 @@
-import { LibraryKodyRule } from '@libs/core/infrastructure/config/types/kodyRules.type';
+import { LibraryKodyRule } from '@libs/core/infrastructure/config/types/general/kodyRules.type';
 
 export class PaginationMetadata {
     currentPage: number;

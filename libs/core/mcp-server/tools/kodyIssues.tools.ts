@@ -1,22 +1,24 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { z } from 'zod';
-import { wrapToolHandler } from '../utils/mcp-protocol.utils';
-import { McpToolDefinition } from '../types/mcp-tool.interface';
-import {
-    IIssuesService,
-    ISSUES_SERVICE_TOKEN,
-} from '@libs/issues/domain/contracts/issues.service.contract';
-import { LabelType } from '@libs/core/utils/codeManagement/labels';
-import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
-import { IssueStatus } from '@libs/core/infrastructure/config/types/general/issues.type';
-import { IIssue } from '@libs/issues/domain/interfaces/issues.interface';
+
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
 } from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
-import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
+import { IssueStatus } from '@libs/core/infrastructure/config/types/general/issues.type';
+import { LabelType } from '@libs/core/utils/codeManagement/labels';
+import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
+import {
+    IIssuesService,
+    ISSUES_SERVICE_TOKEN,
+} from '@libs/issues/domain/contracts/issues.service.contract';
+import { IIssue } from '@libs/issues/domain/interfaces/issues.interface';
+
+import { McpToolDefinition } from '../types/mcp-tool.interface';
+import { wrapToolHandler } from '../utils/mcp-protocol.utils';
 
 @Injectable()
 export class KodyIssuesTools {

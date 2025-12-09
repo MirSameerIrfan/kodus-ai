@@ -1,7 +1,9 @@
-import { Body, Controller, Post } from '@nestjs/common';
-import { ConversationAgentUseCase } from '@libs/agents/application/use-cases/conversation-agent.use-case';
-import { OrganizationAndTeamDataDto } from '../dtos/organizationAndTeamData.dto';
 import { createThreadId } from '@kodus/flow';
+import { Body, Controller, Post } from '@nestjs/common';
+
+import { ConversationAgentUseCase } from '@libs/agents/application/use-cases/conversation-agent.use-case';
+
+import { OrganizationAndTeamDataDto } from '@libs/core/domain/dtos/organizationAndTeamData.dto';
 
 @Controller('agent')
 export class AgentController {

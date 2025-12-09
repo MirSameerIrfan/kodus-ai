@@ -1,7 +1,6 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
-import { BaseStage } from './base/base-stage.abstract';
-import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
+
 import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
@@ -18,6 +17,9 @@ import {
     DRY_RUN_SERVICE_TOKEN,
     IDryRunService,
 } from '@libs/dry-run/domain/contracts/dryRun.service.contract';
+
+import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
+import { BaseStage } from './base/base-stage.abstract';
 
 @Injectable()
 export class CreatePrLevelCommentsStage extends BaseStage {

@@ -1,35 +1,6 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
-import {
-    IParametersService,
-    PARAMETERS_SERVICE_TOKEN,
-} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
-import {
-    CodeReviewConfig,
-    CodeReviewConfigWithoutLLMProvider,
-    CodeReviewVersion,
-    FileChange,
-    KodusConfigFile,
-    KodyFineTuningConfig,
-    ReviewModeConfig,
-    ReviewOptions,
-    SuggestionControlConfig,
-    SummaryConfig,
-} from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import {
-    IIntegrationService,
-    INTEGRATION_SERVICE_TOKEN,
-} from '@libs/integrations/domain/contracts/integration.service.contracts';
-import {
-    IIntegrationConfigService,
-    INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
-import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
-import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
-import { ValidateCodeManagementIntegration } from '@libs/core/utils/decorators/validate-code-management-integration.decorator';
-import { decrypt } from '@libs/core/utils/crypto';
+
 import { AuthMode } from '@libs/platform/domain/enums/codeManagement/authMode.enum';
 import { LanguageValue } from '@libs/core/domain/enums/language-parameter.enum';
 import {
@@ -50,17 +21,40 @@ import {
 import { OrganizationParametersKey } from '@libs/core/domain/enums/organization-parameters-key.enum';
 import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 import { ICodeBaseConfigService } from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
-import { KodyRulesValidationService } from '@libs/kody-rules/infrastructure/services/kody-rules-validation.service';
-import { ReviewCadenceType } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { ConfigLevel } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
+import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
+import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
+import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
+import {
+    CodeReviewConfig,
+    CodeReviewConfigWithoutLLMProvider,
+    FileChange,
+    KodusConfigFile,
+    KodyFineTuningConfig,
+    ReviewModeConfig,
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import {
     CodeReviewParameter,
     RepositoryCodeReviewConfig,
-    GetKodusConfigFileResponse,
-    CodeReviewParameterBaseConfig,
     DirectoryCodeReviewConfig,
 } from '@libs/core/infrastructure/config/types/general/codeReviewConfig.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { ConfigLevel } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
+import { decrypt } from '@libs/core/utils/crypto';
+import { ValidateCodeManagementIntegration } from '@libs/core/utils/decorators/validate-code-management-integration.decorator';
 import { deepMerge } from '@libs/core/utils/deep';
+import {
+    IIntegrationConfigService,
+    INTEGRATION_CONFIG_SERVICE_TOKEN,
+} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
+import {
+    IIntegrationService,
+    INTEGRATION_SERVICE_TOKEN,
+} from '@libs/integrations/domain/contracts/integration.service.contracts';
+import { KodyRulesValidationService } from '@libs/kody-rules/infrastructure/services/kody-rules-validation.service';
+import {
+    IParametersService,
+    PARAMETERS_SERVICE_TOKEN,
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 
 @Injectable()
 export default class CodeBaseConfigService implements ICodeBaseConfigService {

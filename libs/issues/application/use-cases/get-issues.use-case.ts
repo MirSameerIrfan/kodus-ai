@@ -1,20 +1,21 @@
 import { createLogger } from '@kodus/flow';
-import {
-    IIssuesService,
-    ISSUES_SERVICE_TOKEN,
-} from '@libs/issues/domain/contracts/issues.service.contract';
+import { Inject, Injectable } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+
 import { GetIssuesByFiltersDto } from '@libs/common/dtos/get-issues-by-filters.dto';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
-import { Inject, Injectable } from '@nestjs/common';
-import { IIssue } from '@libs/issues/domain/interfaces/issues.interface';
+import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
 import { CacheService } from '@libs/core/utils/cache/cache.service';
-import { REQUEST } from '@nestjs/core';
-import { AuthorizationService } from '@libs/identity/infrastructure/adapters/services/permissions/authorization.service';
 import {
     Action,
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
+import { AuthorizationService } from '@libs/identity/infrastructure/adapters/services/permissions/authorization.service';
+import {
+    IIssuesService,
+    ISSUES_SERVICE_TOKEN,
+} from '@libs/issues/domain/contracts/issues.service.contract';
+import { IIssue } from '@libs/issues/domain/interfaces/issues.interface';
 
 @Injectable()
 export class GetIssuesUseCase implements IUseCase {

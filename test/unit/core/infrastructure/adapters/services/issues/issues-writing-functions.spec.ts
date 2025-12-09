@@ -1,16 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { IssuesService } from '@/core/infrastructure/adapters/services/issues/issues.service';
+import { v4 as uuidv4 } from 'uuid';
+
+import { IssueStatus } from '@/config/types/general/issues.type';
 import {
     IIssuesRepository,
     ISSUES_REPOSITORY_TOKEN,
 } from '@/core/domain/issues/contracts/issues.repository';
 import { IssuesEntity } from '@/core/domain/issues/entities/issues.entity';
 import { IIssue } from '@/core/domain/issues/interfaces/issues.interface';
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
-import { LabelType } from '@/shared/utils/codeManagement/labels';
-import { IssueStatus } from '@/config/types/general/issues.type';
+import { IssuesService } from '@/core/infrastructure/adapters/services/issues/issues.service';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { v4 as uuidv4 } from 'uuid';
+import { LabelType } from '@/shared/utils/codeManagement/labels';
+import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
+
 
 describe('IssuesService', () => {
     let service: IssuesService;

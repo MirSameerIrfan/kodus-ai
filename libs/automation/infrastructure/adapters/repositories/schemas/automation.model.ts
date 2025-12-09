@@ -1,8 +1,10 @@
 import { Column, Entity, JoinColumn, OneToMany } from 'typeorm';
-import { TeamAutomationModel } from './teamAutomation.model';
-import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
+
 import { AutomationType } from '@libs/automation/domain/automation/enum/automation-type';
 import { AutomationLevel } from '@libs/core/domain/enums';
+import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
+
+import { TeamAutomationModel } from './teamAutomation.model';
 
 @Entity('automation')
 export class AutomationModel extends CoreModel {

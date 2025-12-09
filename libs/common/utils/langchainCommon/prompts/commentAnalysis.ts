@@ -1,8 +1,9 @@
+import { z } from 'zod';
+
 import {
     categorizedCommentSchema,
     UncategorizedComment,
 } from '@libs/code-review/infrastructure/types/commentAnalysis.type';
-import { z } from 'zod';
 
 export const commentCategorizerSchema = z.object({
     suggestions: z.array(categorizedCommentSchema.omit({ body: true })),

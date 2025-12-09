@@ -1,4 +1,5 @@
 import { createLogger } from '@kodus/flow';
+
 import {
     AIAnalysisResult,
     ReviewModeResponse,
@@ -27,7 +28,7 @@ export class LLMResponseProcessor {
             }
 
             // Attempt to parse the JSON
-            let parsedResponse = tryParseJSONObject(cleanResponse);
+            const parsedResponse = tryParseJSONObject(cleanResponse);
 
             if (!parsedResponse) {
                 this.logger.error({

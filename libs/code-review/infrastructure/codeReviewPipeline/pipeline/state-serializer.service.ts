@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { createLogger } from '@kodus/flow';
-import * as zlib from 'zlib';
 import { promisify } from 'util';
+import * as zlib from 'zlib';
+
+import { createLogger } from '@kodus/flow';
+import { Injectable } from '@nestjs/common';
+
 import { CodeReviewPipelineContext } from '../../context/code-review-pipeline.context';
 
 const gzip = promisify(zlib.gzip);

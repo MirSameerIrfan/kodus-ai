@@ -1,8 +1,8 @@
 import { createLogger } from '@kodus/flow';
 import { BadRequestException, Injectable } from '@nestjs/common';
 
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 
 @Injectable()

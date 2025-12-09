@@ -1,18 +1,19 @@
 import { Test } from '@nestjs/testing';
-import { SuggestionService } from '@/core/infrastructure/adapters/services/codeBase/suggestion.service';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+
 import {
     CodeSuggestion,
     SuggestionControlConfig,
     GroupingModeSuggestions,
     LimitationType,
 } from '@/config/types/general/codeReview.type';
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { COMMENT_MANAGER_SERVICE_TOKEN } from '@/core/domain/codeBase/contracts/CommentManagerService.contract';
+import { PULL_REQUESTS_SERVICE_TOKEN } from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
 import { PriorityStatus } from '@/core/domain/pullRequests/enums/priorityStatus.enum';
 import { LLM_ANALYSIS_SERVICE_TOKEN } from '@/core/infrastructure/adapters/services/codeBase/llmAnalysis.service';
-import { PULL_REQUESTS_SERVICE_TOKEN } from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
-import { COMMENT_MANAGER_SERVICE_TOKEN } from '@/core/domain/codeBase/contracts/CommentManagerService.contract';
+import { SuggestionService } from '@/core/infrastructure/adapters/services/codeBase/suggestion.service';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
 
 describe('SuggestionService - Kody Rules Filter Control', () => {
     let service: SuggestionService;

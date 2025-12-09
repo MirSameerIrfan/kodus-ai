@@ -1,10 +1,10 @@
+import { AmqpConnection, Nack } from '@golevelup/nestjs-rabbitmq';
 import {
     ArgumentsHost,
     Catch,
     ExceptionFilter,
     UnprocessableEntityException,
 } from '@nestjs/common';
-import { AmqpConnection, Nack } from '@golevelup/nestjs-rabbitmq';
 import { ConsumeMessage, MessagePropertyHeaders } from 'amqplib';
 @Catch()
 export class RabbitmqConsumeErrorFilter implements ExceptionFilter {

@@ -2,32 +2,22 @@ import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
 // Domain
-import { ISSUES_REPOSITORY_TOKEN } from '@libs/domain/contracts/issues.repository';
-import { ISSUES_SERVICE_TOKEN } from '@libs/domain/contracts/issues.service.contract';
+import { IssuesController } from '@apps/api/controllers/issues.controller';
+import { GenerateIssuesFromPrClosedUseCase } from '@libs/application/use-cases/generate-issues-from-pr-closed.use-case';
 
 // Application - Use Cases
-import { GenerateIssuesFromPrClosedUseCase } from '@libs/application/use-cases/generate-issues-from-pr-closed.use-case';
 import { GetIssueByIdUseCase } from '@libs/application/use-cases/get-issue-by-id.use-case';
 import { GetIssuesUseCase } from '@libs/application/use-cases/get-issues.use-case';
 import { GetTotalIssuesUseCase } from '@libs/application/use-cases/get-total-issues.use-case';
 import { UpdateIssuePropertyUseCase } from '@libs/application/use-cases/update-issue-property.use-case';
 
 // Infrastructure
-import { IssuesService } from '@libs/infrastructure/issues.service';
 
 // External dependencies (from src/ - temporary during migration)
-import { IssuesRepository } from '@libs/core/infrastructure/database/mongoose/repositories/issues.repository';
-import {
-    IssuesModel,
-    IssuesSchema,
-} from '@libs/core/infrastructure/database/mongoose/schemas/issues.model';
-import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/KodyIssuesManagement.contract';
-import { KodyIssuesManagementService } from '@libs/issues/infrastructure/adapters/service/kodyIssuesManagement.service';
 import {
     KODY_ISSUES_ANALYSIS_SERVICE_TOKEN,
     KodyIssuesAnalysisService,
 } from '@libs/code-review/ee/analysis/kodyIssuesAnalysis.service';
-import { IssuesController } from '@apps/api/controllers/issues.controller';
 
 // Module dependencies (still from src/modules/ during migration)
 import { GlobalCacheModule } from '@libs/core/cache/cache.module';
@@ -38,9 +28,19 @@ import { OrganizationModule } from '@libs/organization/organization.module';
 import { OrganizationParametersModule } from '@libs/organization/organization.module';
 import { ParametersModule } from '@libs/organization/organization.module';
 import { PullRequestsModule } from '@libs/code-review/code-review.module';
-import { UsersModule } from '@libs/identity/identity.module';
+import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/KodyIssuesManagement.contract';
+import { IssuesRepository } from '@libs/core/infrastructure/database/mongoose/repositories/issues.repository';
+import {
+    IssuesModel,
+    IssuesSchema,
+} from '@libs/core/infrastructure/database/mongoose/schemas/issues.model';
+import { ISSUES_REPOSITORY_TOKEN } from '@libs/domain/contracts/issues.repository';
+import { ISSUES_SERVICE_TOKEN } from '@libs/domain/contracts/issues.service.contract';
 import { LicenseModule } from '@libs/ee/license/license.module';
 import { PermissionValidationModule } from '@libs/ee/shared/permission-validation.module';
+import { UsersModule } from '@libs/identity/identity.module';
+import { IssuesService } from '@libs/infrastructure/issues.service';
+import { KodyIssuesManagementService } from '@libs/issues/infrastructure/adapters/service/kodyIssuesManagement.service';
 
 const UseCases = [
     UpdateIssuePropertyUseCase,

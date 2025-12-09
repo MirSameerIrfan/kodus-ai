@@ -1,4 +1,3 @@
-import { BehaviourForExistingDescription } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import {
     IsEnum,
     IsNotEmpty,
@@ -6,6 +5,8 @@ import {
     IsOptional,
     IsString,
 } from 'class-validator';
+
+import { BehaviourForExistingDescription } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 
 export class PreviewPrSummaryDto {
     @IsNotEmpty()

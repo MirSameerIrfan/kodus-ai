@@ -1,20 +1,22 @@
+import { createHash } from 'crypto';
+
+import type { ContextLayer } from '@context-os-core/interfaces';
 import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
-import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+
+import {
+    IPromptContextLoaderService,
+    LoadContextParams,
+} from '@libs/code-review/domain/prompts/contracts/promptContextLoader.contract';
+import { PromptExternalReferenceEntity } from '@libs/code-review/domain/prompts/entities/promptExternalReference.entity';
 import {
     IFileReference,
     ILoadedFileReference,
     IExternalPromptContext,
     PromptSourceType,
 } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
-import { PromptExternalReferenceEntity } from '@libs/code-review/domain/prompts/entities/promptExternalReference.entity';
-import type { ContextLayer } from '@context-os-core/interfaces';
-import { createHash } from 'crypto';
-import {
-    IPromptContextLoaderService,
-    LoadContextParams,
-} from '@libs/code-review/domain/prompts/contracts/promptContextLoader.contract';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 
 @Injectable()
 export class PromptContextLoaderService implements IPromptContextLoaderService {

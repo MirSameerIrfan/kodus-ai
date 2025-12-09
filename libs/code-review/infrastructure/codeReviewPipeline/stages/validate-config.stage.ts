@@ -1,34 +1,36 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
-import { BaseStage } from './base/base-stage.abstract';
-import {
-    processExpression,
-    shouldReviewBranches,
-    mergeBaseBranches,
-} from '../../branchReview.service';
+
 import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
     IAutomationExecutionService,
 } from '@libs/automation/domain/contracts/automation-execution.service';
+import {
+    AutomationMessage,
+    AutomationStatus,
+} from '@libs/automation/domain/enums/automation-status';
+import { OrganizationParametersKey } from '@libs/core/domain/enums/organization-parameters-key.enum';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import {
     AutomaticReviewStatus,
     ReviewCadenceType,
     ReviewCadenceState,
     CodeReviewConfig,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
-import {
-    AutomationMessage,
-    AutomationStatus,
-} from '@libs/automation/domain/enums/automation-status';
-import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
-import { OrganizationParametersKey } from '@libs/core/domain/enums/organization-parameters-key.enum';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/org-parameters/contracts/organizationParameters.service.contract';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+
+import {
+    processExpression,
+    shouldReviewBranches,
+    mergeBaseBranches,
+} from '../../branchReview.service';
+import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
+import { BaseStage } from './base/base-stage.abstract';
 
 @Injectable()
 export class ValidateConfigStage extends BaseStage {

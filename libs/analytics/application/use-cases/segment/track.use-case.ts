@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+
 import { track } from '@libs/core/utils/segment';
 
 @Injectable()

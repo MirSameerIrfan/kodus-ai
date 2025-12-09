@@ -1,3 +1,6 @@
+import { Module, forwardRef } from '@nestjs/common';
+
+import { ContextReferenceModule } from '@libs/contextReference.module';
 import { PROMPT_CONTEXT_ENGINE_SERVICE_TOKEN } from '@libs/core/domain/prompts/contracts/promptContextEngine.contract';
 import { PROMPT_CONTEXT_LOADER_SERVICE_TOKEN } from '@libs/core/domain/prompts/contracts/promptContextLoader.contract';
 import { PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN } from '@libs/core/domain/prompts/contracts/promptExternalReferenceManager.contract';
@@ -6,8 +9,6 @@ import { LoadExternalContextStage } from '@libs/core/infrastructure/adapters/ser
 import { PromptContextEngineService } from '@libs/core/infrastructure/adapters/services/prompts/promptContextEngine.service';
 import { PromptContextLoaderService } from '@libs/core/infrastructure/adapters/services/prompts/promptContextLoader.service';
 import { PromptExternalReferenceManagerService } from '@libs/core/infrastructure/adapters/services/prompts/promptExternalReferenceManager.service';
-import { Module, forwardRef } from '@nestjs/common';
-import { ContextReferenceModule } from '@libs/contextReference.module';
 import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
 import { LogModule } from '@libs/log.module';
 import { PlatformIntegrationModule } from '@libs/platformIntegration.module';

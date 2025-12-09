@@ -1,9 +1,11 @@
 import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
+
 import { FileChange } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { createOptimizedBatches } from '@libs/core/utils/batch.helper';
-import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
+
 import { BasePipelineStage } from '../../pipeline/base-stage.abstract';
+import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 
 @Injectable()
 export class BatchCreationStage extends BasePipelineStage<CodeReviewPipelineContext> {

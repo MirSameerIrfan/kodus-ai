@@ -1,8 +1,10 @@
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
-import { IntegrationModel } from './integration.model';
+
 import { IntegrationConfigKey } from '@libs/core/domain/enums';
 import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 import { TeamModel } from '@libs/organization/infrastructure/adapters/repositories/schemas/team.model';
+
+import { IntegrationModel } from './integration.model';
 
 @Entity('integration_configs')
 export class IntegrationConfigModel extends CoreModel {

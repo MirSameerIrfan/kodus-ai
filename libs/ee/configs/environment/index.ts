@@ -9,6 +9,7 @@
 
 import { existsSync } from 'fs';
 import { join } from 'path';
+
 import { Environment } from './types';
 
 let environment: Environment;

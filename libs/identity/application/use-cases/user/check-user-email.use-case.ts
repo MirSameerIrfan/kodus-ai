@@ -1,14 +1,10 @@
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
+
 import {
     IUsersService,
     USER_SERVICE_TOKEN,
 } from '@/core/domain/user/contracts/user.service.contract';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { CreateProfileUseCase } from '../profile/create.use-case';
-import { CreateTeamUseCase } from '../team/create.use-case';
-import { STATUS } from '@/config/types/database/status.type';
-import { Role } from '@/core/domain/permissions/enums/permissions.enum';
+import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { DuplicateRecordException } from '@/shared/infrastructure/filters/duplicate-record.exception';
 
 @Injectable()

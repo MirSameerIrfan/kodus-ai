@@ -1,13 +1,13 @@
+import { registerInstrumentations } from '@opentelemetry/instrumentation';
+import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
+import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
+import { NestInstrumentation } from '@opentelemetry/instrumentation-nestjs-core';
+import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+import { SentryContextManager } from '@sentry/nestjs';
 import * as Sentry from '@sentry/node';
 import { SentryPropagator, SentrySampler } from '@sentry/opentelemetry';
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
-import { registerInstrumentations } from '@opentelemetry/instrumentation';
-import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
-import { NestInstrumentation } from '@opentelemetry/instrumentation-nestjs-core';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
-import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
-import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
-import { SentryContextManager } from '@sentry/nestjs';
 
 export function setupSentryAndOpenTelemetry() {
     const environment = process.env.API_NODE_ENV || 'development';

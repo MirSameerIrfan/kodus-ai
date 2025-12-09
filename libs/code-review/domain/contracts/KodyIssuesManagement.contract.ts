@@ -1,6 +1,7 @@
+import { BYOKConfig } from '@kodus/kodus-common/llm';
+
 import { CodeSuggestion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { contextToGenerateIssues } from '@libs/issues/domain/interfaces/kodyIssuesManagement.interface';
-import { BYOKConfig } from '@kodus/kodus-common/llm';
 
 export const KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN = Symbol(
     'KodyIssuesManagementService',

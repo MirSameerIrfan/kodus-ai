@@ -1,18 +1,19 @@
+import { REQUEST } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
-import { KodyRulesController } from '@/core/infrastructure/http/controllers/kodyRules.controller';
-import { CreateOrUpdateKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/create-or-update.use-case';
-import { FindByOrganizationIdKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-by-organization-id.use-case';
-import { FindRuleInOrganizationByIdKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-rule-in-organization-by-id.use-case';
-import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-rules-in-organization-by-filter.use-case';
-import { DeleteByOrganizationIdKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/delete-by-organization-id.use-case';
-import { DeleteRuleInOrganizationByIdKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/delete-rule-in-organization-by-id.use-case';
-import { FindLibraryKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-library-kody-rules.use-case';
+
 import { AddLibraryKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/add-library-kody-rules.use-case';
-import { GenerateKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/generate-kody-rules.use-case';
 import { ChangeStatusKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/change-status-kody-rules.use-case';
 import { CheckSyncStatusUseCase } from '@/core/application/use-cases/kodyRules/check-sync-status.use-case';
+import { CreateOrUpdateKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/create-or-update.use-case';
+import { DeleteByOrganizationIdKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/delete-by-organization-id.use-case';
+import { DeleteRuleInOrganizationByIdKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/delete-rule-in-organization-by-id.use-case';
+import { FindByOrganizationIdKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-by-organization-id.use-case';
+import { FindLibraryKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-library-kody-rules.use-case';
+import { FindRuleInOrganizationByIdKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-rule-in-organization-by-id.use-case';
+import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-rules-in-organization-by-filter.use-case';
+import { GenerateKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/generate-kody-rules.use-case';
+import { KodyRulesController } from '@/core/infrastructure/http/controllers/kodyRules.controller';
 import { CacheService } from '@/shared/utils/cache/cache.service';
-import { REQUEST } from '@nestjs/core';
 
 describe('KodyRulesController', () => {
     let controller: KodyRulesController;

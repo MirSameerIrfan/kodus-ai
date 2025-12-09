@@ -1,7 +1,10 @@
-import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+import { SimpleLogger } from '@kodus/flow/dist/observability/logger';
+
 import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 import { ConfigurationMissingException } from '@libs/core/infrastructure/filters/configuration-missing.exception';
-import { SimpleLogger } from '@kodus/flow/dist/observability/logger';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+
+
 import { extractOrganizationAndTeamData } from './extractOrganizationAndTeamData.helper';
 
 export type CodeManagementConnectionStatus = {

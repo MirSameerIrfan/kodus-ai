@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
 import { createLogger } from '@kodus/flow';
+import { Injectable } from '@nestjs/common';
+
 import {
     calculateBackoffInterval,
     BackoffOptions,
-    BackoffPresets,
 } from '@libs/core/utils/polling/exponential-backoff';
 
 export interface RetryPolicy {

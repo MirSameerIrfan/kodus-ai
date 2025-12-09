@@ -1,7 +1,5 @@
-import { CheckHasIntegrationByPlatformUseCase } from '@libs/integrations/application/use-cases/check-has-connection.use-case';
-import { CloneIntegrationUseCase } from '@libs/integrations/application/use-cases/clone-integration.use-case';
-import { GetConnectionsUseCase } from '@libs/integrations/application/use-cases/get-connections.use-case';
-import { GetOrganizationIdUseCase } from '@libs/integrations/application/use-cases/get-organization-id.use-case';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+
 import {
     Action,
     ResourceType,
@@ -11,7 +9,12 @@ import {
     PolicyGuard,
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
 import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { CheckHasIntegrationByPlatformUseCase } from '@libs/integrations/application/use-cases/check-has-connection.use-case';
+import { CloneIntegrationUseCase } from '@libs/integrations/application/use-cases/clone-integration.use-case';
+import { GetConnectionsUseCase } from '@libs/integrations/application/use-cases/get-connections.use-case';
+import { GetOrganizationIdUseCase } from '@libs/integrations/application/use-cases/get-organization-id.use-case';
+
+
 import { TeamQueryDto } from '../../dtos/teamId-query.dto';
 
 @Controller('integration')

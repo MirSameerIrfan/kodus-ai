@@ -1,7 +1,8 @@
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { Inject } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
+
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 
 export class GetOrganizationIdUseCase implements IUseCase {
     constructor(

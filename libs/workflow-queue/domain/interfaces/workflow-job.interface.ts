@@ -1,8 +1,10 @@
-import { JobStatus } from '../enums/job-status.enum';
-import { ErrorClassification } from '../enums/error-classification.enum';
-import { WorkflowType } from '../enums/workflow-type.enum';
-import { HandlerType } from '../enums/handler-type.enum';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+
+import { ErrorClassification } from '../enums/error-classification.enum';
+import { HandlerType } from '../enums/handler-type.enum';
+import { JobStatus } from '../enums/job-status.enum';
+import { WorkflowType } from '../enums/workflow-type.enum';
+
 
 export interface IWorkflowJob {
     id: string;

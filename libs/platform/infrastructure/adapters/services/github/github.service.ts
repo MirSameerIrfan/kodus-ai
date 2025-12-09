@@ -1,40 +1,70 @@
+import { LLMModelProvider, LLMProviderService } from '@kodus/kodus-common/llm';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { createAppAuth } from '@octokit/auth-app';
+import { graphql } from '@octokit/graphql';
+import { retry } from '@octokit/plugin-retry';
+import { throttling } from '@octokit/plugin-throttling';
+import { Octokit, RestEndpointMethodTypes } from '@octokit/rest';
+import type { EndpointDefaults } from '@octokit/types';
+
+import * as moment from 'moment-timezone';
+
+import pLimit from 'p-limit';
+import { v4 as uuidv4 } from 'uuid';
+
+import {
+    ALLOWLIST_TREES_ONLY,
+    attachETagHooksAllowlist,
+    ETagCacheEntry,
+    ETagStore,
+} from './octokit-etag-allowlist';
+import { IntegrationServiceDecorator } from '@libs/common/utils/decorators/integration-service.decorator';
+import {
+    CreateAuthIntegrationStatus,
+    InstallationStatus,
+    IntegrationCategory,
+    IntegrationConfigKey,
+    LanguageValue,
+    PlatformType,
+    PullRequestState,
+} from '@libs/core/domain/enums';
+import { IGithubService } from '@libs/platform/domain/github/contracts/github.service.contract';
+import { ICodeManagementService } from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
+import {
+    IIntegrationService,
+    INTEGRATION_SERVICE_TOKEN,
+} from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
+import {
+    AUTH_INTEGRATION_SERVICE_TOKEN,
+    IAuthIntegrationService,
+} from '@libs/integrations/domain/authIntegrations/contracts/auth-integration.service.contracts';
+import {
+    IIntegrationConfigService,
+    INTEGRATION_CONFIG_SERVICE_TOKEN,
+} from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import {
+    ITeamService,
+    TEAM_SERVICE_TOKEN,
+} from '@libs/organization/domain/team/contracts/team.service.contract';
+import {
+    IParametersService,
+    PARAMETERS_SERVICE_TOKEN,
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { CacheService } from '@libs/core/cache/cache.service';
+import { MCPManagerService } from '@libs/core/mcp-server/services/mcp-manager.service';
+import { PinoLoggerService } from '@libs/log/pino.service';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { AuthMode } from '@libs/platform/domain/platformIntegrations/enums/codeManagement/authMode.enum';
+import { decrypt, encrypt } from '@libs/common/utils/crypto';
+import { GithubAuthDetail } from '@libs/integrations/domain/authIntegrations/types/github-auth-detail.type';
 import {
     CommentResult,
     Repository,
     ReviewComment,
-} from '@/config/types/general/codeReview.type';
-import { Commit } from '@/config/types/general/commit.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { TreeItem } from '@/config/types/general/tree.type';
-import {
-    AUTH_INTEGRATION_SERVICE_TOKEN,
-    IAuthIntegrationService,
-} from '@/core/domain/authIntegrations/contracts/auth-integration.service.contracts';
-import { GithubAuthDetail } from '@/core/domain/authIntegrations/types/github-auth-detail.type';
-import {
-    GitHubReaction,
-    GitlabReaction,
-} from '@/core/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
-import { IGithubService } from '@/core/domain/github/contracts/github.service.contract';
-import {
-    IIntegrationConfigService,
-    INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { IntegrationConfigEntity } from '@/core/domain/integrationConfigs/entities/integration-config.entity';
-import {
-    IIntegrationService,
-    INTEGRATION_SERVICE_TOKEN,
-} from '@/core/domain/integrations/contracts/integration.service.contracts';
-import { IntegrationEntity } from '@/core/domain/integrations/entities/integration.entity';
-import {
-    IParametersService,
-    PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { AuthMode } from '@/core/domain/platformIntegrations/enums/codeManagement/authMode.enum';
-import { ICodeManagementService } from '@/core/domain/platformIntegrations/interfaces/code-management.interface';
-import { CommitLeadTimeForChange } from '@/core/domain/platformIntegrations/types/codeManagement/commitLeadTimeForChange.type';
-import { DeployFrequency } from '@/core/domain/platformIntegrations/types/codeManagement/deployFrequency.type';
-import { GitCloneParams } from '@/core/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { Commit } from '@libs/core/infrastructure/config/types/general/commit.type';
+import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
 import {
     OneSentenceSummaryItem,
     PullRequest,
@@ -45,91 +75,40 @@ import {
     PullRequestReviewState,
     PullRequestsWithChangesRequested,
     PullRequestWithFiles,
-} from '@/core/domain/platformIntegrations/types/codeManagement/pullRequests.type';
-import { Repositories } from '@/core/domain/platformIntegrations/types/codeManagement/repositories.type';
+} from '@libs/platform/domain/platformIntegrations/types/codeManagement/pullRequests.type';
+import { IntegrationEntity } from '@libs/integrations/domain/integrations/entities/integration.entity';
+import { CodeManagementConnectionStatus } from '@libs/common/utils/decorators/validate-code-management-integration.decorator';
+import { extractRepoData, extractRepoNames } from '@libs/common/utils/helpers';
+import { safelyParseMessageContent } from '@libs/common/utils/safelyParseMessageContent';
 import {
     RepositoryFile,
     RepositoryFileWithContent,
-} from '@/core/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
-import { IRepository } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
-import {
-    ITeamService,
-    TEAM_SERVICE_TOKEN,
-} from '@/core/domain/team/contracts/team.service.contract';
-import { CreateAuthIntegrationStatus } from '@/shared/domain/enums/create-auth-integration-status.enum';
-import { InstallationStatus } from '@/shared/domain/enums/github-installation-status.enum';
-import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { LanguageValue } from '@/shared/domain/enums/language-parameter.enum';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
-import { CacheService } from '@/shared/utils/cache/cache.service';
-import { getCodeReviewBadge } from '@/shared/utils/codeManagement/codeReviewBadge';
-import { getLabelShield } from '@/shared/utils/codeManagement/labels';
-import { getSeverityLevelShield } from '@/shared/utils/codeManagement/severityLevel';
-import { decrypt, encrypt } from '@/shared/utils/crypto';
-import { IntegrationServiceDecorator } from '@/shared/utils/decorators/integration-service.decorator';
-import { CodeManagementConnectionStatus } from '@/shared/utils/decorators/validate-code-management-integration.decorator';
-import {
-    isFileMatchingGlob,
-    isFileMatchingGlobCaseInsensitive,
-} from '@/shared/utils/glob-utils';
-import { extractRepoData, extractRepoNames } from '@/shared/utils/helpers';
-import { safelyParseMessageContent } from '@/shared/utils/safelyParseMessageContent';
+} from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
 import {
     getTranslationsForLanguageByCategory,
     TranslationsCategory,
-} from '@/shared/utils/translations/translations';
-import { LLMModelProvider, LLMProviderService } from '@kodus/kodus-common/llm';
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { createAppAuth } from '@octokit/auth-app';
-import { graphql } from '@octokit/graphql';
-import { retry } from '@octokit/plugin-retry';
-import { throttling } from '@octokit/plugin-throttling';
-import { Octokit, RestEndpointMethodTypes } from '@octokit/rest';
-import type { EndpointDefaults } from '@octokit/types';
-import * as moment from 'moment-timezone';
-import pLimit from 'p-limit';
-import { v4 as uuidv4 } from 'uuid';
-import { MCPManagerService } from '../../mcp/services/mcp-manager.service';
-import { PinoLoggerService } from '../logger/pino.service';
-import { PromptService } from '../prompt.service';
+} from '@libs/common/utils/translations/translations';
+import { getLabelShield } from '@libs/common/utils/codeManagement/labels';
+import { getCodeReviewBadge } from '@libs/common/utils/codeManagement/codeReviewBadge';
+import { getSeverityLevelShield } from '@libs/common/utils/codeManagement/severityLevel';
+import { TreeItem } from '@libs/core/infrastructure/config/types/general/tree.type';
 import {
-    ALLOWLIST_TREES_ONLY,
-    attachETagHooksAllowlist,
-    ETagCacheEntry,
-    ETagStore,
-} from './octokit-etag-allowlist';
+    GitHubReaction,
+    GitlabReaction,
+} from '@libs/code-review/domain/feedback/enums/codeReviewCommentReaction.enum';
+import { IntegrationConfigEntity } from '@libs/integrations/domain/integrationConfigs/entities/integration-config.entity';
+import {
+    isFileMatchingGlob,
+    isFileMatchingGlobCaseInsensitive,
+} from '@libs/common/utils/glob-utils';
+import { GitCloneParams } from '@libs/platform/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
+import { IRepository } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 
 interface GitHubAuthResponse {
     token: string;
     expiresAt: string;
     permissions?: Record<string, string>;
     repositorySelection?: string;
-}
-
-interface PullRequestChange {
-    filename: string;
-    additions: number;
-    deletions: number;
-    changes: number;
-    patch: string;
-}
-
-interface PullRequestData {
-    id: number;
-    repository: string;
-    repositoryId: string | number;
-    pull_number: number;
-    author_id: number;
-    author_name: string;
-    author_created_at: string;
-    message: string;
-    state: string;
-    prURL?: string;
-    changes?: PullRequestChange[];
 }
 
 interface GitHubInstallationAccount {
@@ -237,10 +216,6 @@ export class GithubService
                 return;
             }
 
-            const team = await this.teamService.findOne({
-                uuid: params.organizationAndTeamData.teamId,
-            });
-
             await this.integrationConfigService.createOrUpdateConfig(
                 params.configKey,
                 params.configValue,
@@ -324,12 +299,11 @@ export class GithubService
                     : 'organization';
 
             const authDetails = {
-                // @ts-ignore
+                // @ts-expect-error property not found in type
                 authToken: installationAuthentication?.token,
                 installationId:
-                    // @ts-ignore
+                    // @ts-expect-error property not found in type
                     installationAuthentication?.installationId || null,
-                // @ts-ignore
                 org: accountLogin || null,
                 authMode: params.authMode || AuthMode.OAUTH,
                 accountType: accountType as 'organization' | 'user',
@@ -431,7 +405,7 @@ export class GithubService
                 success: true,
                 status: CreateAuthIntegrationStatus.SUCCESS,
             };
-        } catch (err) {
+        } catch {
             throw new BadRequestException(
                 'Error authenticating with GITHUB PAT.',
             );
@@ -1182,7 +1156,7 @@ export class GithubService
                             pull_number: prNumber,
                         });
                         return data;
-                    } catch (error) {
+                    } catch {
                         return null;
                     }
                 }),
@@ -1269,7 +1243,7 @@ export class GithubService
                     return { owner, repo, prNumber };
                 }
             }
-        } catch (error) {
+        } catch {
             // Invalid URL, ignore
         }
 
@@ -1805,7 +1779,7 @@ export class GithubService
 
             await octokit.rest.rateLimit.get();
             return true;
-        } catch (error) {
+        } catch {
             return false;
         }
     }
@@ -1862,7 +1836,6 @@ export class GithubService
                 const MyOctokit = Octokit.plugin(retry, throttling);
 
                 const octokit = new MyOctokit({
-                    // @ts-ignore
                     auth: installationAuthentication.token,
                     request: { retries: 2 },
                     throttle: {
@@ -2105,7 +2078,6 @@ export class GithubService
                 installationId: code,
             });
 
-            // @ts-ignore
             const installLogin = await appOctokit.rest.apps.getInstallation({
                 installation_id: parseInt(code),
             });
@@ -2121,12 +2093,11 @@ export class GithubService
             });
 
             const authDetails = {
-                // @ts-ignore
+                // @ts-expect-error property not found in type
                 authToken: installationAuthentication?.token,
                 installationId:
-                    // @ts-ignore
+                    // @ts-expect-error property not found in type
                     installationAuthentication?.installationId || null,
-                // @ts-ignore
                 org: installationData.account.login || null,
             };
 
@@ -2135,14 +2106,13 @@ export class GithubService
             } else {
                 await this.updateAuthIntegration({
                     organizationAndTeamData,
-                    // @ts-ignore
+                    // @ts-expect-error property not found in type
                     accessToken: installationAuthentication?.token,
                     authIntegrationId: integration?.authIntegration?.uuid,
                     integrationId: integration?.uuid,
                     installationId:
-                        // @ts-ignore
+                        // @ts-expect-error property not found in type
                         installationAuthentication?.installationId,
-                    // @ts-ignore
                     org: installationData.account.login,
                 });
             }
@@ -2159,7 +2129,7 @@ export class GithubService
                 );
             }
 
-            // @ts-ignore
+            // @ts-expect-error property not found in type
             return `${installationAuthentication.tokenType} - ${installationAuthentication?.token}`;
         } catch (err) {
             throw new BadRequestException(err);
@@ -2541,201 +2511,6 @@ export class GithubService
         return repos;
     }
 
-    async getDataForCalculateDeployFrequency(
-        params: any,
-    ): Promise<DeployFrequency[]> {
-        try {
-            let deployFrequency: DeployFrequency[] = [];
-
-            const { organizationAndTeamData, doraMetricsConfig } = params;
-
-            const githubAuthDetail = await this.getGithubAuthDetails(
-                organizationAndTeamData,
-            );
-
-            const octokit = await this.instanceOctokit(organizationAndTeamData);
-
-            const repositories =
-                await this.findOneByOrganizationAndTeamDataAndConfigKey(
-                    organizationAndTeamData,
-                    IntegrationConfigKey.REPOSITORIES,
-                );
-
-            if (!repositories) {
-                return;
-            }
-
-            const formatRepo = extractRepoNames(repositories);
-
-            const teamConfig = await this.parameterService.findOne({
-                configKey: ParametersKey.DEPLOYMENT_TYPE,
-                team: {
-                    uuid: organizationAndTeamData?.teamId,
-                },
-            });
-
-            const startDate = moment(
-                doraMetricsConfig?.analysisPeriod?.startTime,
-            ).format('YYYY-MM-DD');
-            const endDate = moment(
-                doraMetricsConfig?.analysisPeriod?.endTime,
-            ).format('YYYY-MM-DD');
-
-            const deployFrequencyPromises = formatRepo
-                .map((repo) => {
-                    const workflow =
-                        teamConfig?.configValue?.value?.workflows.find(
-                            (config: any) => config.repo === repo,
-                        );
-
-                    if (
-                        teamConfig?.configValue?.type === 'deployment' &&
-                        !workflow &&
-                        !workflow?.id
-                    ) {
-                        return;
-                    }
-
-                    return this.getRepoData(
-                        octokit,
-                        githubAuthDetail,
-                        repo,
-                        teamConfig,
-                        startDate,
-                        endDate,
-                    );
-                })
-                ?.filter((deployFrequencyPromise) => !!deployFrequencyPromise);
-
-            const deployFrequencyResults = await Promise.all(
-                deployFrequencyPromises,
-            );
-            deployFrequency = deployFrequencyResults.flat();
-
-            return deployFrequency.filter((deploy) => !!deploy);
-        } catch (error) {
-            this.logger.error({
-                message: `Error getDataForCalculateDeployFrequency`,
-                context: GithubService.name,
-                error: error,
-                metadata: {
-                    ...params.organizationAndTeamData,
-                },
-            });
-        }
-    }
-
-    async getCommitsByReleaseMode(
-        params: any,
-    ): Promise<CommitLeadTimeForChange[]> {
-        try {
-            const { organizationAndTeamData, deployFrequencyData } = params;
-
-            const githubAuthDetail = await this.getGithubAuthDetails(
-                organizationAndTeamData,
-            );
-
-            const octokit = await this.instanceOctokit(organizationAndTeamData);
-
-            const repositories =
-                await this.findOneByOrganizationAndTeamDataAndConfigKey(
-                    organizationAndTeamData,
-                    IntegrationConfigKey.REPOSITORIES,
-                );
-
-            if (!repositories) {
-                return;
-            }
-
-            const formatRepo = extractRepoNames(repositories);
-            const commitsLeadTimeForChange: CommitLeadTimeForChange[] = [];
-
-            for (let index = 0; index < formatRepo.length; index++) {
-                const repo = formatRepo[index];
-
-                const deployFrequencyFiltered = deployFrequencyData.filter(
-                    (deployFrequency) => deployFrequency.repository === repo,
-                );
-
-                const getDate = (deploy) => new Date(deploy.created_at);
-
-                const sortDeploysByDate = (a, b) =>
-                    getDate(b).getTime() - getDate(a).getTime();
-
-                const sortedDeploys =
-                    deployFrequencyFiltered.sort(sortDeploysByDate);
-
-                for (let i = 0; i < sortedDeploys.length - 1; i++) {
-                    let commits: Commit[] = [];
-
-                    const lastDeploy = sortedDeploys[i];
-                    const secondToLastDeploy = sortedDeploys[i + 1];
-
-                    if (lastDeploy && secondToLastDeploy) {
-                        if (
-                            secondToLastDeploy &&
-                            lastDeploy.teamConfig?.configValue?.type ===
-                                'deployment'
-                        ) {
-                            commits = await this.getCommitsForTagName(
-                                octokit,
-                                githubAuthDetail?.org,
-                                lastDeploy,
-                                secondToLastDeploy,
-                            );
-                        } else if (
-                            secondToLastDeploy &&
-                            lastDeploy.teamConfig?.configValue?.type ===
-                                'releases'
-                        ) {
-                            commits = await this.getCommitsForTagName(
-                                octokit,
-                                githubAuthDetail?.org,
-                                lastDeploy,
-                                secondToLastDeploy,
-                            );
-                        } else if (
-                            secondToLastDeploy &&
-                            lastDeploy.teamConfig?.configValue?.type === 'PRs'
-                        ) {
-                            commits = await this.getCommitsForPullRequest(
-                                octokit,
-                                githubAuthDetail?.org,
-                                lastDeploy?.repository,
-                                lastDeploy?.id,
-                            );
-                        }
-
-                        if (commits.length > 0) {
-                            const firstCommitDate = commits[0];
-
-                            const commitLeadTimeForChange = {
-                                lastDeploy,
-                                secondToLastDeploy,
-                                commit: firstCommitDate,
-                            };
-
-                            commitsLeadTimeForChange.push(
-                                commitLeadTimeForChange,
-                            );
-                        }
-                    }
-                }
-            }
-
-            return commitsLeadTimeForChange;
-        } catch (error) {
-            this.logger.error({
-                message: `Error getCommitsByReleaseMode`,
-                context: GithubService.name,
-                error: error,
-                metadata: {
-                    ...params.organizationAndTeamData,
-                },
-            });
-        }
-    }
-
     async getCommitsForTagName(
         octokit: any,
         owner: string,
@@ -2813,109 +2588,10 @@ export class GithubService
             }) as Commit[];
     }
 
-    private async getRepoData(
-        octokit: any,
-        githubAuthDetail: any,
-        repo: string,
-        teamConfig: any,
-        startDate: string,
-        endDate: string,
-    ): Promise<DeployFrequency[]> {
-        try {
-            const workflow = teamConfig?.configValue?.value?.workflows.find(
-                (config: any) => config.repo === repo,
-            );
-            let releasesFromRepo: any[] = [];
-
-            if (teamConfig?.configValue?.type === 'deployment') {
-                releasesFromRepo = await this.getDeployRuns(
-                    octokit,
-                    githubAuthDetail,
-                    repo,
-                    workflow.id,
-                    startDate,
-                    endDate,
-                );
-            } else if (teamConfig?.configValue?.type === 'releases') {
-                releasesFromRepo = await this.getReleasesForDeployFrequency(
-                    octokit,
-                    githubAuthDetail,
-                    repo,
-                    startDate,
-                    endDate,
-                );
-            } else if (teamConfig?.configValue?.type === 'PRs') {
-                releasesFromRepo = await this.getAllPrMessages(
-                    octokit,
-                    githubAuthDetail?.org,
-                    repo,
-                    startDate,
-                    endDate,
-                    'closed',
-                );
-            }
-
-            return releasesFromRepo?.map((release) => ({
-                id: release.number ?? release?.id,
-                created_at: release?.created_at,
-                repository: repo,
-                teamConfig,
-                tag_name: release?.tag_name || release?.head_branch,
-                published_at: release?.published_at,
-            }));
-        } catch (error) {
-            this.logger.error({
-                message: `Error getRepoData`,
-                context: GithubService.name,
-                error: error,
-            });
-        }
-    }
-
-    private async getDeployRuns(
-        octokit: any,
-        githubAuthDetail: any,
-        repo: string,
-        workflowId: number,
-        startDate: string,
-        endDate: string,
-    ): Promise<any[]> {
-        return await octokit.paginate(octokit.actions.listWorkflowRuns, {
-            owner: githubAuthDetail?.org,
-            repo: repo,
-            workflow_id: workflowId,
-            status: 'completed',
-            created: `${startDate}..${endDate}`,
-            per_page: 100,
-        });
-    }
-
-    private async getReleasesForDeployFrequency(
-        octokit: any,
-        githubAuthDetail: any,
-        repo: string,
-        startDate: string,
-        endDate: string,
-    ): Promise<any[]> {
-        const releases = await octokit.paginate(octokit.repos.listReleases, {
-            owner: githubAuthDetail?.org,
-            repo: repo,
-        });
-
-        return releases.filter((release) => {
-            const releaseDate = moment(release.created_at).format('YYYY-MM-DD');
-
-            return (
-                (!startDate || releaseDate >= startDate) &&
-                (!endDate || releaseDate <= endDate)
-            );
-        });
-    }
-
     async getPullRequestsWithFiles(
         params,
     ): Promise<PullRequestWithFiles[] | null> {
-        let repositories;
+        let repositories = null;
 
         if (!params?.organizationAndTeamData.organizationId) {
             return null;
@@ -5643,7 +5319,7 @@ export class GithubService
                     size: item.size,
                     url: item.url,
                 }));
-            } catch (recursiveError) {
+            } catch {
                 // Fallback to safe manual approach
                 return await this.getRepositoryTreeByLevelSafe({
                     owner,

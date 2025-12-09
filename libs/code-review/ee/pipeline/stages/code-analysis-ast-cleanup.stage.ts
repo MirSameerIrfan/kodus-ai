@@ -1,11 +1,12 @@
 import { createLogger } from '@kodus/flow';
 import { Injectable, Inject } from '@nestjs/common';
+
 import {
     AST_ANALYSIS_SERVICE_TOKEN,
     IASTAnalysisService,
 } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
-import { BaseStage } from '@libs/code-review/infrastructure/codeReviewPipeline/stages/base/base-stage.abstract';
 import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/codeReviewPipeline/context/code-review-pipeline.context';
+import { BaseStage } from '@libs/code-review/infrastructure/codeReviewPipeline/stages/base/base-stage.abstract';
 
 const ENABLE_CODE_REVIEW_AST =
     process.env.API_ENABLE_CODE_REVIEW_AST === 'true';

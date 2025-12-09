@@ -1,6 +1,7 @@
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { SimpleLogger } from '@kodus/flow/dist/observability/logger';
 import { EmailParams, MailerSend, Recipient, Sender } from 'mailersend';
+
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 
 const sendInvite = async (
     user,

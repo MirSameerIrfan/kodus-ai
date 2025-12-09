@@ -1,5 +1,5 @@
-import { JobStatus } from '../enums/job-status.enum';
 import { ErrorClassification } from '../enums/error-classification.enum';
+import { JobStatus } from '../enums/job-status.enum';
 
 export interface IJobExecutionHistory {
     id: string;

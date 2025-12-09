@@ -1,7 +1,8 @@
 import { CodeReviewExecution } from '@libs/code-review/domain/executions/interfaces/codeReviewExecution.interface';
-import { IAutomationExecution } from '../interfaces/automation-execution.interface';
-import { ITeamAutomation } from '../../teamAutomation/interfaces/team-automation.interface';
+
 import { AutomationStatus } from '../../automation/enum/automation-status';
+import { ITeamAutomation } from '../../teamAutomation/interfaces/team-automation.interface';
+import { IAutomationExecution } from '../interfaces/automation-execution.interface';
 
 export class AutomationExecutionEntity implements IAutomationExecution {
     private _uuid: string;

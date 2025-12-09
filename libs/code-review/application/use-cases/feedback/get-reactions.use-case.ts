@@ -1,14 +1,15 @@
 import { createLogger } from '@kodus/flow';
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { Inject, Injectable } from '@nestjs/common';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
-import { IPullRequestWithDeliveredSuggestions } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+
 import {
     PULL_REQUESTS_SERVICE_TOKEN,
     IPullRequestsService,
 } from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
+import { IPullRequestWithDeliveredSuggestions } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
 import { PullRequestState } from '@libs/core/domain/enums/pullRequestState.enum';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 
 @Injectable()
 export class GetReactionsUseCase implements IUseCase {

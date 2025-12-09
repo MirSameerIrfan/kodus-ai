@@ -1,14 +1,15 @@
+import { PullRequestState } from '@libs/core/domain/enums/pullRequestState.enum';
+import { Repository } from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+
 import { PullRequestsEntity } from '../entities/pullRequests.entity';
+import { DeliveryStatus } from '../enums/deliveryStatus.enum';
 import {
     IPullRequests,
     IFile,
     ISuggestion,
     IPullRequestWithDeliveredSuggestions,
 } from '../interfaces/pullRequests.interface';
-import { DeliveryStatus } from '../enums/deliveryStatus.enum';
-import { PullRequestState } from '@libs/core/domain/enums/pullRequestState.enum';
-import { Repository } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 
 export const PULL_REQUESTS_REPOSITORY_TOKEN = Symbol('PullRequestsRepository');
 

@@ -13,8 +13,8 @@ import { ProcessFilesReview } from '@libs/code-review/infrastructure/codeReviewP
 import { ResolveConfigStage } from '@libs/code-review/infrastructure/codeReviewPipeline/stages/resolve-config.stage';
 import { ValidateConfigStage } from '@libs/code-review/infrastructure/codeReviewPipeline/stages/validate-config.stage';
 import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/context/code-review-pipeline.context';
-import { IPipelineStrategy } from '@libs/code-review/infrastructure/pipeline/interfaces/pipeline-strategy.interface';
-import { PipelineStage } from '@libs/code-review/infrastructure/pipeline/interfaces/pipeline.interface';
+import { IPipelineStrategy } from '@libs/core/infrastructure/pipeline/interfaces/pipeline-strategy.interface';
+import { PipelineStage } from '@libs/core/infrastructure/pipeline/interfaces/pipeline.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()

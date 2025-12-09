@@ -1,8 +1,8 @@
 import { Module, OnModuleInit, forwardRef } from '@nestjs/common';
 import { ModulesContainer } from '@nestjs/core';
 
-import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
 import { AuthIntegrationModule } from '@libs/integrations/modules/authIntegration.module';
+import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
 
 @Module({
     imports: [

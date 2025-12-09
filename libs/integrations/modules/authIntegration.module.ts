@@ -1,10 +1,11 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { AUTH_INTEGRATION_REPOSITORY_TOKEN } from '@libs/core/domain/authIntegrations/contracts/auth-integration.repository.contracts';
 import { AUTH_INTEGRATION_SERVICE_TOKEN } from '@libs/core/domain/authIntegrations/contracts/auth-integration.service.contracts';
 import { AuthIntegrationRepository } from '@libs/core/infrastructure/adapters/repositories/typeorm/authIntegration.repository';
 import { AuthIntegrationModel } from '@libs/core/infrastructure/adapters/repositories/typeorm/schema/authIntegration.model';
 import { AuthIntegrationService } from '@libs/core/infrastructure/adapters/services/integrations/authIntegration.service';
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
     imports: [TypeOrmModule.forFeature([AuthIntegrationModel])],

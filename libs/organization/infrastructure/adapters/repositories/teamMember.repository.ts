@@ -1,21 +1,23 @@
-import {
-    mapSimpleModelToEntity,
-    mapSimpleModelsToEntities,
-} from '@/shared/infrastructure/repositories/mappers';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOneOptions, Repository, UpdateQueryBuilder } from 'typeorm';
+import { In } from 'typeorm';
+
+import { TeamMemberModel } from './schema/teamMember.model';
+
+import { STATUS } from '@/config/types/database/status.type';
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { ITeamMemberRepository } from '@/core/domain/teamMembers/contracts/teamMembers.repository.contracts';
+import { TeamMemberEntity } from '@/core/domain/teamMembers/entities/teamMember.entity';
+import { TeamMemberRole } from '@/core/domain/teamMembers/enums/teamMemberRole.enum';
 import {
     IMembers,
     ITeamMember,
 } from '@/core/domain/teamMembers/interfaces/team-members.interface';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { TeamMemberModel } from './schema/teamMember.model';
-import { TeamMemberEntity } from '@/core/domain/teamMembers/entities/teamMember.entity';
-import { ITeamMemberRepository } from '@/core/domain/teamMembers/contracts/teamMembers.repository.contracts';
-import { TeamMemberRole } from '@/core/domain/teamMembers/enums/teamMemberRole.enum';
-import { STATUS } from '@/config/types/database/status.type';
-import { In } from 'typeorm';
+import {
+    mapSimpleModelToEntity,
+    mapSimpleModelsToEntities,
+} from '@/shared/infrastructure/repositories/mappers';
 
 @Injectable()
 export class TeamMemberDatabaseRepository implements ITeamMemberRepository {

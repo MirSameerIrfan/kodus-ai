@@ -1,5 +1,34 @@
+import type {
+    ContextDependency,
+    ContextPack,
+} from '@context-os-core/interfaces';
 import { createLogger } from '@kodus/flow';
+import {
+    LLMModelProvider,
+    PromptRunnerService,
+    ParserType,
+    PromptRole,
+    BYOKConfig,
+} from '@kodus/kodus-common/llm';
 import { Inject, Injectable } from '@nestjs/common';
+import { v4 as uuidv4, validate as uuidValidate } from 'uuid';
+
+import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
+import { IKodyRulesAnalysisService } from '@libs/code-review/domain/contracts/KodyRulesAnalysisService.contract';
+import { KodyRulesValidationService } from '@libs/kody-rules/infrastructure/services/kody-rules-validation.service';
+import {
+    CODE_BASE_CONFIG_SERVICE_TOKEN,
+    ICodeBaseConfigService,
+} from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
+import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
+import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { ExternalReferenceLoaderService } from '@libs/kody-rules/infrastructure/externalReferenceLoader.service';
+import type { ContextAugmentationsMap } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';
+import {
+    getAugmentationsFromPack,
+    getOverridesFromPack,
+} from '@libs/code-review/infrastructure/context/code-review-context.utils';
+import { FileContextAugmentationService } from '@libs/code-review/infrastructure/context/file-context-augmentation.service';
 import {
     FileChangeContext,
     AnalysisContext,
@@ -11,7 +40,7 @@ import {
     CodeReviewConfig,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { tryParseJSONObject } from '@libs/core/utils/transforms/json';
+import { LabelType } from '@libs/core/utils/codeManagement/labels';
 import {
     KodyRulesClassifierSchema,
     kodyRulesClassifierSchema,
@@ -27,43 +56,14 @@ import {
     prompt_kodyrules_updatestdsuggestions_system,
     prompt_kodyrules_updatestdsuggestions_user,
 } from '@libs/core/utils/langchainCommon/prompts/kodyRules';
+import { tryParseJSONObject } from '@libs/core/utils/transforms/json';
+import { KODY_RULES_SERVICE_TOKEN } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
 import {
     IKodyRule,
     KodyRulesScope,
 } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
-import { v4 as uuidv4, validate as uuidValidate } from 'uuid';
-import { KodyRulesService } from '@libs/kody-rules/infrastructure/services/kodyRules.service';
-import { KODY_RULES_SERVICE_TOKEN } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
-import { LabelType } from '@libs/core/utils/codeManagement/labels';
-import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
-import { IKodyRulesAnalysisService } from '@libs/code-review/domain/contracts/KodyRulesAnalysisService.contract';
-import {
-    LLMModelProvider,
-    PromptRunnerService,
-    ParserType,
-    PromptRole,
-    BYOKConfig,
-} from '@kodus/kodus-common/llm';
-import { KodyRulesValidationService } from '@libs/kody-rules/infrastructure/services/kody-rules-validation.service';
-import {
-    CODE_BASE_CONFIG_SERVICE_TOKEN,
-    ICodeBaseConfigService,
-} from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
-import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
-import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { ExternalReferenceLoaderService } from '@libs/kody-rules/infrastructure/externalReferenceLoader.service';
-import type { ContextAugmentationsMap } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';
-import {
-    getAugmentationsFromPack,
-    getOverridesFromPack,
-} from '@libs/code-review/infrastructure/context/code-review-context.utils';
-import type {
-    ContextDependency,
-    ContextPack,
-} from '@context-os-core/interfaces';
-import { FileContextAugmentationService } from '@libs/code-review/infrastructure/context/file-context-augmentation.service';
-import { ContextReferenceService } from '@libs/code-review/infrastructure/context/context-reference.service';
 import { KodyRuleDependencyService } from '@libs/kody-rules/infrastructure/kodyRulesDependency.service';
+import { KodyRulesService } from '@libs/kody-rules/infrastructure/services/kodyRules.service';
 
 interface KodyRulesExtendedContext {
     pullRequest: any;

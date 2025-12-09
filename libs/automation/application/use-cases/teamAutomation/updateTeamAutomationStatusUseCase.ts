@@ -1,11 +1,11 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
+
 import {
     ITeamAutomationService,
     TEAM_AUTOMATION_SERVICE_TOKEN,
 } from '@libs/automation/domain/teamAutomation/contracts/team-automation.service';
-import { Inject, Injectable } from '@nestjs/common';
-
-import { REQUEST } from '@nestjs/core';
-import { Request } from 'express';
 
 @Injectable()
 export class UpdateTeamAutomationStatusUseCase {

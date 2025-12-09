@@ -1,20 +1,22 @@
 import { createLogger } from '@kodus/flow';
-import {
-    IIntegrationConfigService,
-    INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
+import { Inject, Injectable } from '@nestjs/common';
+
+import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import {
     IPermissionsService,
     PERMISSIONS_SERVICE_TOKEN,
 } from '@libs/identity/domain/permissions/contracts/permissions.service.contract';
-import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
 import {
     IUsersService,
     USER_SERVICE_TOKEN,
 } from '@libs/identity/domain/user/contracts/user.service.contract';
-import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
-import { Inject, Injectable } from '@nestjs/common';
+import {
+    IIntegrationConfigService,
+    INTEGRATION_CONFIG_SERVICE_TOKEN,
+} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
+import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
+
 
 @Injectable()
 export class AssignReposUseCase implements IUseCase {

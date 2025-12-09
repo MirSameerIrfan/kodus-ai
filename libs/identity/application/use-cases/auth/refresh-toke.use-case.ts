@@ -1,9 +1,10 @@
+import { Inject, Injectable } from '@nestjs/common';
+
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
 } from '@libs/identity/domain/auth/contracts/auth.service.contracts';
-import { Inject, Injectable } from '@nestjs/common';
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 
 @Injectable()
 export class RefreshTokenUseCase implements IUseCase {

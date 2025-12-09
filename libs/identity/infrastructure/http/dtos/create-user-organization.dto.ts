@@ -1,11 +1,8 @@
 import {
     IsEmail,
-    IsNotEmpty,
     IsOptional,
-    IsPhoneNumber,
     IsString,
     IsStrongPassword,
-    IsUUID,
 } from 'class-validator';
 
 export class SignUpDTO {

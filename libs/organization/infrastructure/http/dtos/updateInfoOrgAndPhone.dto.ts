@@ -2,7 +2,6 @@ import {
     IsNotEmpty,
     IsOptional,
     IsString,
-    IsPhoneNumber,
 } from 'class-validator';
 
 export class UpdateInfoOrganizationAndPhoneDto {

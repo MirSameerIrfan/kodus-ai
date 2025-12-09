@@ -1,43 +1,41 @@
-import { Injectable, Inject, Optional } from '@nestjs/common';
-import { IJobProcessorService } from '@libs/workflow-queue/domain/contracts/job-processor.service.contract';
-import { WorkflowJobRepository } from '@libs/core/infrastructure/database/typeorm/repositories/workflow-job.repository';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
-import { JobStatus } from '@libs/workflow-queue/domain/enums/job-status.enum';
-import { ErrorClassification } from '@libs/workflow-queue/domain/enums/error-classification.enum';
-import { WorkflowType } from '@libs/workflow-queue/domain/enums/workflow-type.enum';
-import { HandlerType } from '@libs/workflow-queue/domain/enums/handler-type.enum';
-import { ERROR_CLASSIFIER_SERVICE_TOKEN } from '@libs/workflow-queue/domain/contracts/error-classifier.service.contract';
-import { IErrorClassifierService } from '@libs/workflow-queue/domain/contracts/error-classifier.service.contract';
-import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
-import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
-import { getMappedPlatform } from '@libs/core/utils/webhooks';
-import { CodeReviewValidationService } from '@libs/code-review/infrastructure/code-review-validation.service';
-import { CodeReviewPipelineExecutor } from '@libs/code-review/infrastructure/codeReviewPipeline/pipeline/pipeline-executor.service';
-import { PipelineStateManager } from '@libs/code-review/infrastructure/codeReviewPipeline/pipeline/pipeline-state-manager.service';
-import { CodeReviewPipelineStrategy } from '@libs/code-review/infrastructure/codeReviewPipeline/strategies/code-review-pipeline.strategy';
-import { CodeReviewPipelineStrategyEE } from '@libs/code-review/ee/pipeline/strategies/code-review-pipeline.strategy.ee';
-import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/codeReviewPipeline/context/code-review-pipeline.context';
-import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
-import {
-    AUTOMATION_EXECUTION_SERVICE_TOKEN,
-    IAutomationExecutionService,
-} from '@libs/automation/domain/contracts/automation-execution.service';
+import { environment } from '@config/ee/environment/environment.dev';
+import { Injectable, Inject } from '@nestjs/common';
+import { MoreThanOrEqual } from 'typeorm';
+
 import {
     AUTOMATION_EXECUTION_REPOSITORY_TOKEN,
     IAutomationExecutionRepository,
 } from '@libs/automation/domain/contracts/automation-execution.repository';
 import {
+    AUTOMATION_EXECUTION_SERVICE_TOKEN,
+    IAutomationExecutionService,
+} from '@libs/automation/domain/contracts/automation-execution.service';
+import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
+import {
     CODE_REVIEW_EXECUTION_SERVICE,
     ICodeReviewExecutionService,
 } from '@libs/code-review/domain/executions/contracts/codeReviewExecution.service.contract';
+import { CodeReviewPipelineStrategyEE } from '@libs/code-review/ee/pipeline/strategies/code-review-pipeline.strategy.ee';
+import { CodeReviewValidationService } from '@libs/code-review/infrastructure/code-review-validation.service';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
+import { IJobProcessorService } from '@libs/workflow-queue/domain/contracts/job-processor.service.contract';
+import { ErrorClassification } from '@libs/workflow-queue/domain/enums/error-classification.enum';
+import { JobStatus } from '@libs/workflow-queue/domain/enums/job-status.enum';
+import { WorkflowType } from '@libs/workflow-queue/domain/enums/workflow-type.enum';
+import { ERROR_CLASSIFIER_SERVICE_TOKEN } from '@libs/workflow-queue/domain/contracts/error-classifier.service.contract';
+import { IErrorClassifierService } from '@libs/workflow-queue/domain/contracts/error-classifier.service.contract';
+
+import { CodeReviewPipelineExecutor } from '@libs/code-review/infrastructure/codeReviewPipeline/pipeline/pipeline-executor.service';
+import { PipelineStateManager } from '@libs/code-review/infrastructure/codeReviewPipeline/pipeline/pipeline-state-manager.service';
+import { CodeReviewPipelineStrategy } from '@libs/code-review/infrastructure/codeReviewPipeline/strategies/code-review-pipeline.strategy';
+import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/codeReviewPipeline/context/code-review-pipeline.context';
 import { WorkflowPausedError } from '@libs/workflow-queue/domain/errors/workflow-paused.error';
-import { MoreThanOrEqual } from 'typeorm';
-import { environment } from '@config/ee/environment/environment.dev';
 import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
 import { Repository } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { RetryPolicyService } from './retry-policy.service';
-import { DEFAULT_RETRY_POLICY } from './retry-policy.config';
+
 import { DistributedLockService } from './distributed-lock.service';
+import { DEFAULT_RETRY_POLICY } from './retry-policy.config';
+import { RetryPolicyService } from './retry-policy.service';
 
 @Injectable()
 export class CodeReviewJobProcessorService implements IJobProcessorService {

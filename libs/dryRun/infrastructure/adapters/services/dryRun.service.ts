@@ -1,3 +1,10 @@
+import { createHash } from 'crypto';
+
+import { Inject, Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { produce } from 'immer';
+import { v4 } from 'uuid';
+
 import {
     CODE_BASE_CONFIG_SERVICE_TOKEN,
     ICodeBaseConfigService,
@@ -38,11 +45,6 @@ import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
-import { Inject, Injectable } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { produce } from 'immer';
-import { createHash } from 'crypto';
-import { v4 } from 'uuid';
 
 @Injectable()
 export class DryRunService implements IDryRunService {

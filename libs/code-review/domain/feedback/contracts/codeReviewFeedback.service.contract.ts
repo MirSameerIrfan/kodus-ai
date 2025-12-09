@@ -1,10 +1,11 @@
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+
+import { ICodeReviewFeedbackRepository } from './codeReviewFeedback.repository';
 import {
     IPullRequests,
     IRepository,
 } from '../../pullRequests/interfaces/pullRequests.interface';
 import { CodeReviewFeedbackEntity } from '../entities/codeReviewFeedback.entity';
-import { ICodeReviewFeedbackRepository } from './codeReviewFeedback.repository';
 
 export const CODE_REVIEW_FEEDBACK_SERVICE_TOKEN = Symbol(
     'CodeReviewFeedbackService',

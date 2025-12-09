@@ -1,16 +1,17 @@
 import { createLogger } from '@kodus/flow';
 import {
-    AUTH_SERVICE_TOKEN,
-    IAuthService,
-} from '@libs/identity/domain/auth/contracts/auth.service.contracts';
-import { sendForgotPasswordEmail } from '@libs/core/utils/email/sendMail';
-import {
     Inject,
     Injectable,
     InternalServerErrorException,
     NotFoundException,
 } from '@nestjs/common';
+
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import { sendForgotPasswordEmail } from '@libs/core/utils/email/sendMail';
+import {
+    AUTH_SERVICE_TOKEN,
+    IAuthService,
+} from '@libs/identity/domain/auth/contracts/auth.service.contracts';
 
 @Injectable()
 export class ForgotPasswordUseCase implements IUseCase {

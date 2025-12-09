@@ -1,29 +1,31 @@
 import { createLogger } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { Inject, Injectable } from '@nestjs/common';
+
 import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/KodyIssuesManagement.contract';
-import {
-    IIntegrationConfigService,
-    INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
-import { stripCurlyBracesFromUUIDs } from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
-import {
-    IMappedPullRequest,
-    IMappedRepository,
-} from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-common.type';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
 } from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
+import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { getMappedPlatform } from '@libs/core/utils/webhooks';
+import {
+    IIntegrationConfigService,
+    INTEGRATION_CONFIG_SERVICE_TOKEN,
+} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
 import {
     contextToGenerateIssues,
     IRepositoryToIssues,
 } from '@libs/issues/domain/interfaces/kodyIssuesManagement.interface';
 import { KodyIssuesManagementService } from '@libs/issues/infrastructure/adapters/service/kodyIssuesManagement.service';
-import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
-import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
-import { getMappedPlatform } from '@libs/core/utils/webhooks';
-import { Inject, Injectable } from '@nestjs/common';
+import { stripCurlyBracesFromUUIDs } from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
+import {
+    IMappedPullRequest,
+    IMappedRepository,
+} from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-common.type';
+
 
 @Injectable()
 export class GenerateIssuesFromPrClosedUseCase implements IUseCase {

@@ -1,4 +1,29 @@
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Inject,
+    Post,
+    Query,
+    UseGuards,
+} from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+
+import { CacheService } from '@libs/core/cache/cache.service';
 import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
+import {
+    Action,
+    ResourceType,
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import {
+    CheckPolicies,
+    PolicyGuard,
+} from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
+import {
+    checkPermissions,
+    checkRepoPermissions,
+} from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
 import { AddLibraryKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/add-library-kody-rules.use-case';
 import { ChangeStatusKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/change-status-kody-rules.use-case';
 import { CheckSyncStatusUseCase } from '@libs/kody-rules/application/use-cases/check-sync-status.use-case';
@@ -15,36 +40,13 @@ import { GetInheritedRulesKodyRulesUseCase } from '@libs/kody-rules/application/
 import { GetRulesLimitStatusUseCase } from '@libs/kody-rules/application/use-cases/get-rules-limit-status.use-case';
 import { ResyncRulesFromIdeUseCase } from '@libs/kody-rules/application/use-cases/resync-rules-from-ide.use-case';
 import { SyncSelectedRepositoriesKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/sync-selected-repositories.use-case';
-import {
-    Action,
-    ResourceType,
-} from '@libs/identity/domain/permissions/enums/permissions.enum';
-import {
-    Body,
-    Controller,
-    Delete,
-    Get,
-    Inject,
-    Post,
-    Query,
-    UseGuards,
-} from '@nestjs/common';
-import { REQUEST } from '@nestjs/core';
-import {
-    CheckPolicies,
-    PolicyGuard,
-} from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
-import {
-    checkPermissions,
-    checkRepoPermissions,
-} from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
+
 import { AddLibraryKodyRulesDto } from '../dtos/add-library-kody-rules.dto';
 import { ChangeStatusKodyRulesDTO } from '../dtos/change-status-kody-rules.dto';
-import { CreateKodyRuleDto } from '../dtos/create-kody-rule.dto';
+import { CreateKodyRuleDto } from '@libs/ee/kodyRules/dtos/create-kody-rule.dto';
 import { FindLibraryKodyRulesDto } from '../dtos/find-library-kody-rules.dto';
 import { FindSuggestionsByRuleDto } from '../dtos/find-suggestions-by-rule.dto';
 import { GenerateKodyRulesDTO } from '../dtos/generate-kody-rules.dto';
-import { CacheService } from '@libs/core/cache/cache.service';
 
 @Controller('kody-rules')
 export class KodyRulesController {

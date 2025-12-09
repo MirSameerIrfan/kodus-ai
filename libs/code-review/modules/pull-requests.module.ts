@@ -1,3 +1,9 @@
+import { forwardRef, Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+
+import { AutomationModule } from '@libs/automation/automation.module';
+import { CodebaseModule } from '@libs/code-review/code-review.module';
+import { CodeReviewExecutionModule } from '@libs/codeReviewExecution.module';
 import { UseCases } from '@libs/core/application/use-cases/pullRequests';
 import { SavePullRequestUseCase } from '@libs/core/application/use-cases/pullRequests/save.use-case';
 import { PULL_REQUESTS_REPOSITORY_TOKEN } from '@libs/core/domain/pullRequests/contracts/pullRequests.repository';
@@ -8,14 +14,9 @@ import {
     PullRequestsSchema,
 } from '@libs/core/infrastructure/adapters/repositories/mongoose/schema/pullRequests.model';
 import { PullRequestsService } from '@libs/core/infrastructure/adapters/services/pullRequests/pullRequests.service';
-import { forwardRef, Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
+import { PullRequestController } from '@libs/core/infrastructure/http/controllers/pullRequest.controller';
 import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
 import { PlatformIntegrationModule } from '@libs/platform/platform.module';
-import { PullRequestController } from '@libs/core/infrastructure/http/controllers/pullRequest.controller';
-import { CodebaseModule } from '@libs/code-review/code-review.module';
-import { AutomationModule } from '@libs/automation/automation.module';
-import { CodeReviewExecutionModule } from '@libs/codeReviewExecution.module';
 
 @Module({
     imports: [

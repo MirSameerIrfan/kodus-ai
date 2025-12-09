@@ -1,10 +1,11 @@
 import { Entity } from '@libs/core/domain/interfaces/entity';
+import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
+
 import {
     SSOConfig,
     SSOProtocol,
     SSOProtocolConfigMap,
 } from '../interfaces/ssoConfig.interface';
-import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 
 export class SSOConfigEntity<P extends SSOProtocol> implements Entity<
     SSOConfig<P>

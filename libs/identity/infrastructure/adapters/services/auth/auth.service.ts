@@ -4,35 +4,37 @@ import {
     InternalServerErrorException,
     UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import axios from 'axios';
 import * as bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
-import { JwtService } from '@nestjs/jwt';
+import { UserModel } from '../../repositories/typeorm/schema/user.model';
+
 import { JWT, TokenResponse } from '@/config/types/jwt/jwt';
-import { ConfigService } from '@nestjs/config';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
 import {
     AUTH_REPOSITORY_TOKEN,
     IAuthRepository,
 } from '@/core/domain/auth/contracts/auth.repository.contracts';
 import { IAuthService } from '@/core/domain/auth/contracts/auth.service.contracts';
-import {
-    IUserRepository,
-    USER_REPOSITORY_TOKEN,
-} from '@/core/domain/user/contracts/user.repository.contract';
-import { UserEntity } from '@/core/domain/user/entities/user.entity';
 import { IAuth } from '@/core/domain/auth/interfaces/auth.interface';
-import { mapSimpleEntityToModel } from '@/shared/infrastructure/repositories/mappers';
-import { UserModel } from '../../repositories/typeorm/schema/user.model';
-import { getExpiryDate } from '@/shared/utils/transforms/date';
 import {
     ITeamMemberService,
     TEAM_MEMBERS_SERVICE_TOKEN,
 } from '@/core/domain/teamMembers/contracts/teamMembers.service.contracts';
 import { TeamMemberEntity } from '@/core/domain/teamMembers/entities/teamMember.entity';
-import { AuthProvider } from '@/shared/domain/enums/auth-provider.enum';
-import axios, { AxiosResponse } from 'axios';
+import {
+    IUserRepository,
+    USER_REPOSITORY_TOKEN,
+} from '@/core/domain/user/contracts/user.repository.contract';
+import { UserEntity } from '@/core/domain/user/entities/user.entity';
+import { IUser } from '@/core/domain/user/interfaces/user.interface';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { AuthProvider } from '@/shared/domain/enums/auth-provider.enum';
+import { mapSimpleEntityToModel } from '@/shared/infrastructure/repositories/mappers';
+import { getExpiryDate } from '@/shared/utils/transforms/date';
+
 
 @Injectable()
 export class AuthService implements IAuthService {

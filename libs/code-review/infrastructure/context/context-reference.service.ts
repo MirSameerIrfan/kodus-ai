@@ -1,13 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
-
-import { Inject, Injectable } from '@nestjs/common';
-import {
-    CONTEXT_REFERENCE_REPOSITORY_TOKEN,
-    IContextReferenceRepository,
-} from '@libs/code-review/domain/context/contracts/context-reference.repository.contract';
-import { IContextReferenceService } from '@libs/code-review/domain/context/contracts/context-reference.service.contract';
-import { ContextReferenceEntity } from '@libs/code-review/domain/context/entities/context-reference.entity';
-import { IContextReference } from '@libs/code-review/domain/context/interfaces/context-reference.interface';
 import {
     ContextRevisionScope,
     ContextRequirement,
@@ -17,6 +7,17 @@ import {
     createRevisionEntry,
     computeRequirementsHash,
 } from '@context-os-core/utils/context-requirements';
+import { Inject, Injectable } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
+
+import {
+    CONTEXT_REFERENCE_REPOSITORY_TOKEN,
+    IContextReferenceRepository,
+} from '@libs/code-review/domain/context/contracts/context-reference.repository.contract';
+import { IContextReferenceService } from '@libs/code-review/domain/context/contracts/context-reference.service.contract';
+import { ContextReferenceEntity } from '@libs/code-review/domain/context/entities/context-reference.entity';
+import { IContextReference } from '@libs/code-review/domain/context/interfaces/context-reference.interface';
+
 
 @Injectable()
 export class ContextReferenceService implements IContextReferenceService {

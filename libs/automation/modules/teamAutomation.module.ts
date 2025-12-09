@@ -1,3 +1,6 @@
+import { Module, forwardRef } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { UseCases } from '@libs/automation/application/use-cases/teamAutomation';
 import { ActiveCodeManagementTeamAutomationsUseCase } from '@libs/automation/application/use-cases/teamAutomation/active-code-manegement-automations.use-case';
 import { ActiveCodeReviewAutomationUseCase } from '@libs/automation/application/use-cases/teamAutomation/active-code-review-automation.use-case';
@@ -6,17 +9,16 @@ import { TEAM_AUTOMATION_SERVICE_TOKEN } from '@libs/automation/domain/contracts
 import { TeamAutomationModel } from '@libs/automation/infrastructure/adapters/repositories/schemas/teamAutomation.model';
 import { TeamAutomationRepository } from '@libs/automation/infrastructure/adapters/repositories/teamAutomation.repository';
 import { TeamAutomationService } from '@libs/automation/infrastructure/adapters/services/team-automation.service';
-import { Module, forwardRef } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { AutomationModule } from '../automation.module';
-import { AutomationStrategyModule } from './automationStrategy.module';
+import { ProfileConfigModule } from '@libs/identity/modules/profileConfig.module';
 import { IntegrationModule } from '@libs/integrations/integrations.module';
 import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
-import { OrganizationModule } from '@libs/organization/organization.module';
-import { PlatformModule } from '@libs/platform/platform.module';
-import { ProfileConfigModule } from '@libs/identity/modules/profileConfig.module';
 import { TeamsModule } from '@libs/organization/modules/team.module';
 import { TeamMembersModule } from '@libs/organization/modules/teamMembers.module';
+import { OrganizationModule } from '@libs/organization/organization.module';
+import { PlatformModule } from '@libs/platform/platform.module';
+
+import { AutomationStrategyModule } from './automationStrategy.module';
+import { AutomationModule } from '../automation.module';
 
 @Module({
     imports: [

@@ -1,12 +1,14 @@
-import { Injectable, Optional } from '@nestjs/common';
-import { createLogger } from '@kodus/flow';
 import { RabbitSubscribe, AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { StageCompletedEvent } from '@libs/workflow-queue/domain/interfaces/stage-completed-event.interface';
+import { createLogger } from '@kodus/flow';
+import { Injectable, Optional } from '@nestjs/common';
+
 import { WorkflowJobRepository } from '@libs/core/infrastructure/database/typeorm/repositories/workflow-job.repository';
-import { PipelineStateManager } from '../pipeline/pipeline-state-manager.service';
-import { JobStatus } from '@libs/workflow-queue/domain/enums/job-status.enum';
 import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
+import { JobStatus } from '@libs/workflow-queue/domain/enums/job-status.enum';
+import { StageCompletedEvent } from '@libs/workflow-queue/domain/interfaces/stage-completed-event.interface';
+
 import { EventBufferService } from './event-buffer.service';
+import { PipelineStateManager } from '../pipeline/pipeline-state-manager.service';
 
 /**
  * Generic handler for heavy stage completion events

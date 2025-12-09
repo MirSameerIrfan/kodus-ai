@@ -1,22 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
+
 import { GetEnrichedPullRequestsUseCase } from '@/core/application/use-cases/pullRequests/get-enriched-pull-requests.use-case';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
     IAutomationExecutionService,
 } from '@/core/domain/automation/contracts/automation-execution.service';
-import {
-    PULL_REQUESTS_SERVICE_TOKEN,
-    IPullRequestsService,
-} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
+import { AutomationExecutionEntity } from '@/core/domain/automation/entities/automation-execution.entity';
+import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
 import {
     CODE_REVIEW_EXECUTION_SERVICE,
     ICodeReviewExecutionService,
 } from '@/core/domain/codeReviewExecutions/contracts/codeReviewExecution.service.contract';
-import { AutomationExecutionEntity } from '@/core/domain/automation/entities/automation-execution.entity';
-import { PullRequestsEntity } from '@/core/domain/pullRequests/entities/pullRequests.entity';
 import { CodeReviewExecutionEntity } from '@/core/domain/codeReviewExecutions/entities/codeReviewExecution.entity';
-import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
+import {
+    PULL_REQUESTS_SERVICE_TOKEN,
+    IPullRequestsService,
+} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
+import { PullRequestsEntity } from '@/core/domain/pullRequests/entities/pullRequests.entity';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
 
 const buildAutomationExecution = (

@@ -1,4 +1,5 @@
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
+
 import { IWebhookLogRepository } from './webhook-log.repository.contract';
 
 export const WEBHOOK_LOG_SERVICE_TOKEN = Symbol('WEBHOOK_LOG_SERVICE');

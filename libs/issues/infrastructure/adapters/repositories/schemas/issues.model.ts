@@ -1,3 +1,5 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+
 import { IssueStatus } from '@libs/core/infrastructure/config/types/general/issues.type';
 import { CoreDocument } from '@libs/core/infrastructure/repositories/model/mongodb';
 import { LabelType } from '@libs/core/utils/codeManagement/labels';
@@ -6,7 +8,6 @@ import {
     IContributingSuggestion,
     IRepositoryToIssues,
 } from '@libs/issues/domain/interfaces/kodyIssuesManagement.interface';
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 @Schema({
     collection: 'issues',

@@ -1,4 +1,5 @@
 import { AutomationLevel } from '@libs/core/domain/enums';
+
 import { AutomationType } from '../enum/automation-type';
 
 export interface IAutomation {

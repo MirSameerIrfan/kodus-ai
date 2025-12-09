@@ -1,3 +1,16 @@
+import type { ContextPack } from '@context-os-core/interfaces';
+import { createLogger } from '@kodus/flow';
+import {
+    BYOKConfig,
+    LLMModelProvider,
+    ParserType,
+    PromptRole,
+    PromptRunnerService,
+    PromptScope,
+} from '@kodus/kodus-common/llm';
+import { Injectable } from '@nestjs/common';
+import { z } from 'zod';
+
 import {
     AIAnalysisResult,
     AnalysisContext,
@@ -8,9 +21,7 @@ import {
     ReviewModeResponse,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { createLogger } from '@kodus/flow';
-import { Injectable } from '@nestjs/common';
-
+import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
 import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
 import { prompt_codeReviewSafeguard_system } from '@libs/core/utils/langchainCommon/prompts';
 import {
@@ -23,24 +34,15 @@ import {
 import { prompt_selectorLightOrHeavyMode_system } from '@libs/core/utils/langchainCommon/prompts/seletorLightOrHeavyMode';
 import { prompt_severity_analysis_user } from '@libs/core/utils/langchainCommon/prompts/severityAnalysis';
 import { prompt_validateImplementedSuggestions } from '@libs/core/utils/langchainCommon/prompts/validateImplementedSuggestions';
-import type { ContextPack } from '@context-os-core/interfaces';
-import {
-    BYOKConfig,
-    LLMModelProvider,
-    ParserType,
-    PromptRole,
-    PromptRunnerService,
-    PromptScope,
-} from '@kodus/kodus-common/llm';
-import { z } from 'zod';
-import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
-import { LLMResponseProcessor } from './utils/transforms/llmResponseProcessor.transform';
-import { IAIAnalysisService } from '../domain/contracts/AIAnalysisService.contract';
+
+
+import { ContextAugmentationsMap } from './context/code-review-context-pack.service';
 import {
     getAugmentationsFromPack,
     getOverridesFromPack,
 } from './context/code-review-context.utils';
-import { ContextAugmentationsMap } from './context/code-review-context-pack.service';
+import { LLMResponseProcessor } from './utils/transforms/llmResponseProcessor.transform';
+import { IAIAnalysisService } from '../domain/contracts/AIAnalysisService.contract';
 
 export const LLM_ANALYSIS_SERVICE_TOKEN = Symbol('LLMAnalysisService');
 

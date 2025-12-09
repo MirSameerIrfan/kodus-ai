@@ -1,23 +1,22 @@
 import { Inject, Injectable } from '@nestjs/common';
-
-import { TeamAutomationsDto } from '@libs/automation/infrastructure/http/dtos/team-automation.dto';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 
+import {
+    EXECUTE_AUTOMATION_SERVICE_TOKEN,
+    IExecuteAutomationService,
+} from '@libs/automation/domain/automationExecution/contracts/execute.automation.service.contracts';
+import {
+    ITeamAutomationService,
+    TEAM_AUTOMATION_SERVICE_TOKEN,
+} from '@libs/automation/domain/teamAutomation/contracts/team-automation.service';
+import { TeamAutomationsDto } from '@libs/automation/infrastructure/http/dtos/team-automation.dto';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import {
     IProfileConfigService,
     PROFILE_CONFIG_SERVICE_TOKEN,
 } from '@libs/identity/domain/profile-configs/contracts/profileConfig.service.contract';
 import { ProfileConfigKey } from '@libs/identity/domain/profile-configs/enum/profileConfigKey.enum';
-import {
-    ITeamAutomationService,
-    TEAM_AUTOMATION_SERVICE_TOKEN,
-} from '@libs/automation/domain/teamAutomation/contracts/team-automation.service';
-import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
-import {
-    EXECUTE_AUTOMATION_SERVICE_TOKEN,
-    IExecuteAutomationService,
-} from '@libs/automation/domain/automationExecution/contracts/execute.automation.service.contracts';
 
 @Injectable()
 export class UpdateOrCreateTeamAutomationUseCase implements IUseCase {

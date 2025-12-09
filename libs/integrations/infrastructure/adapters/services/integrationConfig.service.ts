@@ -1,15 +1,16 @@
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 
-import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
-import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { isString } from 'class-validator';
 import { v4 as uuidv4 } from 'uuid';
-import { IIntegrationConfigService } from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
+
+import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
     IIntegrationConfigRepository,
     INTEGRATION_CONFIG_REPOSITORY_TOKEN,
 } from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.repository.contracts';
+import { IIntegrationConfigService } from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
 import { IntegrationConfigEntity } from '@libs/integrations/domain/integrationConfigs/entities/integration-config.entity';
 import { IIntegrationConfig } from '@libs/integrations/domain/integrationConfigs/interfaces/integration-config.interface';
 

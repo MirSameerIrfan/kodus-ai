@@ -1,4 +1,3 @@
-import { ICodeReviewJob } from '../interfaces/code-review-job.interface';
 
 export const JOB_PROCESSOR_SERVICE_TOKEN = Symbol('JobProcessorService');
 

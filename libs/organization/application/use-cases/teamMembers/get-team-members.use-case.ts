@@ -1,11 +1,12 @@
 import { Inject } from '@nestjs/common';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
+
 import {
     ITeamMemberService,
     TEAM_MEMBERS_SERVICE_TOKEN,
 } from '@/core/domain/teamMembers/contracts/teamMembers.service.contracts';
-import { REQUEST } from '@nestjs/core';
-import { Request } from 'express';
+import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 
 export class GetTeamMembersUseCase implements IUseCase {
     constructor(

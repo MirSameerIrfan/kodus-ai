@@ -1,6 +1,6 @@
+import { IOrganizationRepository } from './organization.repository.contract';
 import { OrganizationEntity } from '../entities/organization.entity';
 import { IOrganization } from '../interfaces/organization.interface';
-import { IOrganizationRepository } from './organization.repository.contract';
 
 export const ORGANIZATION_SERVICE_TOKEN = Symbol('OrganizationService');
 

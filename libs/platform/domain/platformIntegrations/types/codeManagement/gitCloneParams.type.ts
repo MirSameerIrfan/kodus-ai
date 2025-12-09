@@ -1,4 +1,5 @@
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
+
 import { AuthMode } from '../../enums/codeManagement/authMode.enum';
 
 export type GitCloneParams = {

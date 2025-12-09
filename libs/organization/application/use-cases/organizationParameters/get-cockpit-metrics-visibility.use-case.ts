@@ -1,14 +1,14 @@
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationParametersKey } from '@libs/core/domain/enums';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { PinoLoggerService } from '@libs/log/pino.service';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
+} from '@libs/organization/domain/organizationParameters/contracts/organizationParameters.service.contract';
 import {
-    ICockpitMetricsVisibility,
     DEFAULT_COCKPIT_METRICS_VISIBILITY,
-} from '@/core/domain/organizationParameters/interfaces/cockpit-metrics-visibility.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
+    ICockpitMetricsVisibility,
+} from '@libs/organization/domain/organizationParameters/interfaces/cockpit-metrics-visibility.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
 export const GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN = Symbol(

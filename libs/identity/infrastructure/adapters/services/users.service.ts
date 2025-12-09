@@ -1,3 +1,6 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
+
 import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
 import {
     AUTH_SERVICE_TOKEN,
@@ -11,8 +14,6 @@ import {
 import { IUsersService } from '@libs/identity/domain/user/contracts/user.service.contract';
 import { UserEntity } from '@libs/identity/domain/user/entities/user.entity';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
-import { Inject, Injectable } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class UsersService implements IUsersService {

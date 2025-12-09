@@ -1,13 +1,15 @@
 // rabbitMQWrapper.module.ts
-import { Module, DynamicModule, Provider, Global } from '@nestjs/common';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import { Module, DynamicModule, Provider, Global } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+
+import { MESSAGE_BROKER_SERVICE_TOKEN } from '@libs/core/domain/contracts/message-broker.service.contracts';
 import { RabbitMQLoader } from '@libs/core/infrastructure/config/loaders/rabbitmq.loader';
 import { RabbitmqConsumeErrorFilter } from '@libs/core/infrastructure/filters/rabbitmq-consume-error.exception';
-import { MESSAGE_BROKER_SERVICE_TOKEN } from '@libs/core/domain/contracts/message-broker.service.contracts';
-import { MessageBrokerService } from '@libs/core/infrastructure/queue/messageBroker/messageBroker.service';
-import { AutomationStrategyModule } from './automationStrategy.module';
 import { CodeReviewFeedbackConsumer } from '@libs/core/infrastructure/queue/messageBroker/consumers/codeReviewFeedback.consumer';
+import { MessageBrokerService } from '@libs/core/infrastructure/queue/messageBroker/messageBroker.service';
+
+import { AutomationStrategyModule } from './automationStrategy.module';
 import { CodeReviewFeedbackModule } from './codeReviewFeedback.module';
 
 @Global()

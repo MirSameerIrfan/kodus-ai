@@ -1,5 +1,7 @@
-import { LanguageValue } from '@libs/core/domain/enums/language-parameter.enum';
 import * as path from 'path';
+
+import { LanguageValue } from '@libs/core/domain/enums/language-parameter.enum';
+
 import { loadJsonFile } from '../transforms/file';
 
 const getTranslationsForLanguage = (

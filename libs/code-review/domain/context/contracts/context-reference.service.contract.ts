@@ -3,8 +3,9 @@ import type {
     ContextRevisionActor,
     ContextRevisionScope,
 } from '@context-os-core/interfaces';
-import { ContextReferenceEntity } from '../entities/context-reference.entity';
+
 import { IContextReferenceRepository } from './context-reference.repository.contract';
+import { ContextReferenceEntity } from '../entities/context-reference.entity';
 
 export const CONTEXT_REFERENCE_SERVICE_TOKEN = Symbol(
     'ContextReferenceService',

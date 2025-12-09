@@ -1,10 +1,12 @@
 import { createLogger } from '@kodus/flow';
+import { Injectable, Inject } from '@nestjs/common';
+import { kmeans } from 'ml-kmeans';
+
 import {
     CODE_REVIEW_FEEDBACK_SERVICE_TOKEN,
     ICodeReviewFeedbackService,
 } from '@libs/code-review/domain/feedback/contracts/codeReviewFeedback.service.contract';
 import { ICodeReviewFeedback } from '@libs/code-review/domain/feedback/interfaces/codeReviewFeedback.interface';
-
 import {
     PULL_REQUESTS_SERVICE_TOKEN,
     IPullRequestsService,
@@ -14,28 +16,25 @@ import {
     IPullRequests,
     ISuggestionToEmbed,
 } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
-import { PullRequestState } from '@libs/core/domain/enums/pullRequestState.enum';
-import { Injectable, Inject } from '@nestjs/common';
-import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
-import {
-    CodeSuggestion,
-    Repository,
-} from '@libs/core/infrastructure/config/types/general/codeReview.type';
-
-import { kmeans } from 'ml-kmeans';
 import { FeedbackType } from '@libs/code-review/ee/fine-tuning/domain/enums/feedbackType.enum';
-import { IClusterizedSuggestion } from '@libs/code-review/ee/fine-tuning/domain/interfaces/kodyFineTuning.interface';
-import { FineTuningType } from '@libs/code-review/ee/fine-tuning/domain/enums/fineTuningType.enum';
 import { FineTuningDecision } from '@libs/code-review/ee/fine-tuning/domain/enums/fineTuningDecision.enum';
+import { FineTuningType } from '@libs/code-review/ee/fine-tuning/domain/enums/fineTuningType.enum';
+import { IClusterizedSuggestion } from '@libs/code-review/ee/fine-tuning/domain/interfaces/kodyFineTuning.interface';
 import {
     ISuggestionEmbeddedService,
     SUGGESTION_EMBEDDED_SERVICE_TOKEN,
 } from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/contracts/suggestionEmbedded.service.contract';
-import { IGlobalParametersService } from '@libs/organization/domain/global-parameters/contracts/global-parameters.service.contract';
-import { GLOBAL_PARAMETERS_SERVICE_TOKEN } from '@libs/organization/domain/global-parameters/contracts/global-parameters.service.contract';
-import { GlobalParametersKey } from '@libs/core/domain/enums/global-parameters-key.enum';
 import { ISuggestionEmbedded } from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/interfaces/suggestionEmbedded.interface';
+import { GlobalParametersKey } from '@libs/core/domain/enums/global-parameters-key.enum';
+import { PullRequestState } from '@libs/core/domain/enums/pullRequestState.enum';
+import {
+    CodeSuggestion,
+    Repository,
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { LabelType } from '@libs/core/utils/codeManagement/labels';
+import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
+import { GLOBAL_PARAMETERS_SERVICE_TOKEN } from '@libs/organization/domain/global-parameters/contracts/global-parameters.service.contract';
+import { IGlobalParametersService } from '@libs/organization/domain/global-parameters/contracts/global-parameters.service.contract';
 
 @Injectable()
 export class KodyFineTuningService {
@@ -435,7 +434,7 @@ export class KodyFineTuningService {
             }
 
             if (embeddedSuggestions?.length > 0) {
-                let suggestionIds: string[] = [
+                const suggestionIds: string[] = [
                     ...new Set(
                         embeddedSuggestions?.map(
                             (suggestion) => suggestion?.suggestionId,
@@ -600,7 +599,7 @@ export class KodyFineTuningService {
                 Math.ceil(suggestions.length / divisor_for_cluster_quantity),
             );
 
-            let result = kmeans(vectors, numberOfClusters, {
+            const result = kmeans(vectors, numberOfClusters, {
                 initialization: 'kmeans++',
                 maxIterations: 1,
             });

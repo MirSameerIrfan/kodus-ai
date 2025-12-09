@@ -1,3 +1,5 @@
+import { Inject, Injectable } from '@nestjs/common';
+
 import {
     AUTOMATION_REPOSITORY_TOKEN,
     IAutomationRepository,
@@ -5,7 +7,6 @@ import {
 import { IAutomationService } from '@libs/automation/domain/automation/contracts/automation.service';
 import { AutomationEntity } from '@libs/automation/domain/automation/entities/automation.entity';
 import { IAutomation } from '@libs/automation/domain/automation/interfaces/automation.interface';
-import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class AutomationService implements IAutomationService {

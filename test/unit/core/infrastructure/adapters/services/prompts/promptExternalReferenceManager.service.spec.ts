@@ -1,18 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PromptExternalReferenceManagerService } from '@/core/infrastructure/adapters/services/prompts/promptExternalReferenceManager.service';
+
 import {
-    IPromptExternalReferenceRepository,
-    PROMPT_EXTERNAL_REFERENCE_REPOSITORY_TOKEN,
-} from '@/core/domain/prompts/contracts/promptExternalReferenceRepository.contract';
-import {
-    IPromptContextEngineService,
     PROMPT_CONTEXT_ENGINE_SERVICE_TOKEN,
 } from '@/core/domain/prompts/contracts/promptContextEngine.contract';
 import {
     IPromptExternalReferenceManagerService,
     PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
 } from '@/core/domain/prompts/contracts/promptExternalReferenceManager.contract';
+import {
+    PROMPT_EXTERNAL_REFERENCE_REPOSITORY_TOKEN,
+} from '@/core/domain/prompts/contracts/promptExternalReferenceRepository.contract';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { PromptExternalReferenceManagerService } from '@/core/infrastructure/adapters/services/prompts/promptExternalReferenceManager.service';
 
 describe('PromptExternalReferenceManagerService - hasLikelyExternalReferences', () => {
     let service: IPromptExternalReferenceManagerService;

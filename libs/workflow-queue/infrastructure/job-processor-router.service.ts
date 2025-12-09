@@ -1,7 +1,9 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { IJobProcessorService } from '@libs/workflow-queue/domain/contracts/job-processor.service.contract';
+import { Injectable } from '@nestjs/common';
+
 import { WorkflowJobRepository } from '@libs/core/infrastructure/database/typeorm/repositories/workflow-job.repository';
+import { IJobProcessorService } from '@libs/workflow-queue/domain/contracts/job-processor.service.contract';
 import { WorkflowType } from '@libs/workflow-queue/domain/enums/workflow-type.enum';
+
 import { CodeReviewJobProcessorService } from './code-review-job-processor.service';
 import { WebhookProcessingJobProcessorService } from './webhook-processing-job-processor.service';
 

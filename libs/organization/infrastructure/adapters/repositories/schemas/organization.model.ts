@@ -1,5 +1,5 @@
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
 import { Column, Entity, OneToMany } from 'typeorm';
+
 import { AuthIntegrationModel } from './authIntegration.model';
 import { IntegrationModel } from './integration.model';
 import { OrganizationParametersModel } from './organizationParameters.model';
@@ -7,6 +7,8 @@ import { SSOConfigModel } from './ssoConfig.model';
 import { TeamModel } from './team.model';
 import { TeamMemberModel } from './teamMember.model';
 import { UserModel } from './user.model';
+
+import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
 
 @Entity('organizations')
 export class OrganizationModel extends CoreModel {

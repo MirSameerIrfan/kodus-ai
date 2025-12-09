@@ -1,6 +1,3 @@
-import { IntegrationCategory, PlatformType } from '@libs/core/domain/enums';
-import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
-import { OrganizationModel } from '@libs/organization/infrastructure/adapters/repositories/schemas/organization.model';
 import {
     Column,
     Entity,
@@ -10,8 +7,13 @@ import {
     OneToMany,
     OneToOne,
 } from 'typeorm';
-import { AuthIntegrationModel } from './authIntegration.model';
+
+import { IntegrationCategory, PlatformType } from '@libs/core/domain/enums';
+import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
+import { OrganizationModel } from '@libs/organization/infrastructure/adapters/repositories/schemas/organization.model';
 import { TeamModel } from '@libs/organization/infrastructure/adapters/repositories/schemas/team.model';
+
+import { AuthIntegrationModel } from './authIntegration.model';
 import { IntegrationConfigModel } from './integrationConfig.model';
 
 @Entity('integrations')

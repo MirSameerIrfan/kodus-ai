@@ -1,5 +1,7 @@
-import { Timezone } from '@libs/core/domain/enums/timezones.enum';
 import * as moment from 'moment-timezone';
+
+import { Timezone } from '@libs/core/domain/enums/timezones.enum';
+
 import { STRING_TIME_INTERVAL } from '../enums/stringTimeInterval.enum';
 
 const generateDateFilter = (params: {

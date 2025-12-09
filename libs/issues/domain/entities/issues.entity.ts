@@ -1,12 +1,13 @@
 import { Entity } from '@libs/core/domain/interfaces/entity';
-import { IIssue } from '../interfaces/issues.interface';
+import { IssueStatus } from '@libs/core/infrastructure/config/types/general/issues.type';
 import { LabelType } from '@libs/core/utils/codeManagement/labels';
 import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
-import { IssueStatus } from '@libs/core/infrastructure/config/types/general/issues.type';
 import {
     IContributingSuggestion,
     IRepositoryToIssues,
 } from '@libs/issues/domain/interfaces/kodyIssuesManagement.interface';
+
+import { IIssue } from '../interfaces/issues.interface';
 
 export class IssuesEntity implements Entity<IIssue> {
     public uuid?: string;

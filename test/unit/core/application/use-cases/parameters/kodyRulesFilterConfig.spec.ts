@@ -1,17 +1,16 @@
 import { Test } from '@nestjs/testing';
-import { UpdateOrCreateCodeReviewParameterUseCase } from '@/core/application/use-cases/parameters/update-or-create-code-review-parameter-use-case';
-import { PARAMETERS_SERVICE_TOKEN } from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { INTEGRATION_CONFIG_SERVICE_TOKEN } from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
+
 import {
-    SuggestionControlConfig,
     LimitationType,
-    GroupingModeSuggestions,
 } from '@/config/types/general/codeReview.type';
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { UpdateOrCreateCodeReviewParameterUseCase } from '@/core/application/use-cases/parameters/update-or-create-code-review-parameter-use-case';
+import { INTEGRATION_CONFIG_SERVICE_TOKEN } from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import { PARAMETERS_SERVICE_TOKEN } from '@/core/domain/parameters/contracts/parameters.service.contract';
+import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
 
 describe('UpdateOrCreateCodeReviewParameterUseCase - Kody Rules Filter Config', () => {
     let useCase: UpdateOrCreateCodeReviewParameterUseCase;

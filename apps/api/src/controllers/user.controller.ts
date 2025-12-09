@@ -1,4 +1,3 @@
-import { InviteDataUserUseCase } from '@libs/identity/application/use-cases/user/invite-data.use-case';
 import {
     Body,
     Controller,
@@ -10,10 +9,12 @@ import {
     Query,
     UseGuards,
 } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
 
 import { AcceptUserInvitationUseCase } from '@libs/identity/application/use-cases/user/accept-user-invitation.use-case';
 import { CheckUserWithEmailUserUseCase } from '@libs/identity/application/use-cases/user/check-user-email.use-case';
 import { GetUserUseCase } from '@libs/identity/application/use-cases/user/get-user.use-case';
+import { InviteDataUserUseCase } from '@libs/identity/application/use-cases/user/invite-data.use-case';
 import { JoinOrganizationUseCase } from '@libs/identity/application/use-cases/user/join-organization.use-case';
 import { UpdateAnotherUserUseCase } from '@libs/identity/application/use-cases/user/update-another.use-case';
 import {
@@ -21,12 +22,12 @@ import {
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
-import { REQUEST } from '@nestjs/core';
 import {
     CheckPolicies,
     PolicyGuard,
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
 import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
+
 import { AcceptUserInvitationDto } from '../dtos/accept-user-invitation.dto';
 import { JoinOrganizationDto } from '../dtos/join-organization.dto';
 import { UpdateAnotherUserDto } from '../dtos/update-another-user.dto';

@@ -1,11 +1,3 @@
-import { CreateOrUpdateTeamMembersUseCase } from '@libs/organization/application/use-cases/create.use-case';
-import { DeleteTeamMembersUseCase } from '@libs/organization/application/use-cases/delete.use-case';
-import { GetTeamMembersUseCase } from '@libs/organization/application/use-cases/get-team-members.use-case';
-import {
-    Action,
-    ResourceType,
-} from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { IMembers } from '@libs/organization/domain/team-members/interfaces/team-members.interface';
 import {
     Body,
     Controller,
@@ -18,11 +10,23 @@ import {
     Query,
     UseGuards,
 } from '@nestjs/common';
+
+import {
+    Action,
+    ResourceType,
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
     CheckPolicies,
     PolicyGuard,
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
 import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
+import { CreateOrUpdateTeamMembersUseCase } from '@libs/organization/application/use-cases/create.use-case';
+import { DeleteTeamMembersUseCase } from '@libs/organization/application/use-cases/delete.use-case';
+import { GetTeamMembersUseCase } from '@libs/organization/application/use-cases/get-team-members.use-case';
+import { IMembers } from '@libs/organization/domain/team-members/interfaces/team-members.interface';
+
+
+
 import { TeamQueryDto } from '../dtos/teamId-query-dto';
 
 @Controller('team-members')

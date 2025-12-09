@@ -1,5 +1,6 @@
-import { ICodeManagementService } from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
 import { Injectable } from '@nestjs/common';
+
+import { ICodeManagementService } from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
 
 @Injectable()
 export class PlatformIntegrationFactory {

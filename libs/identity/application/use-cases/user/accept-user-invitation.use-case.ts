@@ -1,17 +1,18 @@
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 
-import {
-    IUsersService,
-    USER_SERVICE_TOKEN,
-} from '@/core/domain/user/contracts/user.service.contract';
+import { CreateProfileUseCase } from '../profile/create.use-case';
+
 import { STATUS } from '@/config/types/database/status.type';
-import { AcceptUserInvitationDto } from '@/core/infrastructure/http/dtos/accept-user-invitation.dto';
 import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
 } from '@/core/domain/auth/contracts/auth.service.contracts';
-import { CreateProfileUseCase } from '../profile/create.use-case';
+import {
+    IUsersService,
+    USER_SERVICE_TOKEN,
+} from '@/core/domain/user/contracts/user.service.contract';
+import { AcceptUserInvitationDto } from '@/core/infrastructure/http/dtos/accept-user-invitation.dto';
+import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 
 @Injectable()
 export class AcceptUserInvitationUseCase implements IUseCase {

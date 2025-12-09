@@ -1,7 +1,8 @@
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+
 import { USER_SERVICE_TOKEN } from '@/core/domain/user/contracts/user.service.contract';
 import { UsersService } from '@/core/infrastructure/adapters/services/users.service';
+import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
 
 @Injectable()
 export class DeleteUserUseCase implements IUseCase {

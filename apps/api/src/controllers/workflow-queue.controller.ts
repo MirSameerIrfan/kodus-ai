@@ -2,23 +2,21 @@ import {
     Controller,
     Get,
     Param,
-    Query,
     UseGuards,
     HttpStatus,
     HttpCode,
 } from '@nestjs/common';
-import { JOB_STATUS_SERVICE_TOKEN } from '@libs/workflow-queue/domain/contracts/job-status.service.contract';
-import { IJobStatusService } from '@libs/workflow-queue/domain/contracts/job-status.service.contract';
 import { Inject } from '@nestjs/common';
-import { JobStatus } from '@libs/workflow-queue/domain/enums/job-status.enum';
-import { WorkflowType } from '@libs/workflow-queue/domain/enums/workflow-type.enum';
-import { PolicyGuard } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
-import { CheckPolicies } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
-import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
+
 import {
     Action,
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { PolicyGuard } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
+import { CheckPolicies } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
+import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
+import { JOB_STATUS_SERVICE_TOKEN } from '@libs/workflow-queue/domain/contracts/job-status.service.contract';
+import { IJobStatusService } from '@libs/workflow-queue/domain/contracts/job-status.service.contract';
 
 @Controller('workflow-queue')
 @UseGuards(PolicyGuard)

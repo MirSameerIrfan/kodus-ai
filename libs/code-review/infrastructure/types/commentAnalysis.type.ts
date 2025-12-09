@@ -1,3 +1,5 @@
+import z from 'zod';
+
 import {
     ReviewOptions,
     reviewOptionsSchema,
@@ -5,8 +7,7 @@ import {
 import {
     SeverityLevel,
     severityLevelSchema,
-} from '@libs/core/utils/enums/severityLevel.enum';
-import z from 'zod';
+} from '@libs/common/utils/enums/severityLevel.enum';
 
 export interface UncategorizedComment {
     id: string;

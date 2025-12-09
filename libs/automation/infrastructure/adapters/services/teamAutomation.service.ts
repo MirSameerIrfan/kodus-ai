@@ -1,3 +1,6 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
+
 import {
     ITeamAutomationRepository,
     TEAM_AUTOMATION_REPOSITORY_TOKEN,
@@ -5,8 +8,6 @@ import {
 import { ITeamAutomationService } from '@libs/automation/domain/teamAutomation/contracts/team-automation.service';
 import { TeamAutomationEntity } from '@libs/automation/domain/teamAutomation/entities/team-automation.entity';
 import { ITeamAutomation } from '@libs/automation/domain/teamAutomation/interfaces/team-automation.interface';
-import { Inject, Injectable } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class TeamAutomationService implements ITeamAutomationService {

@@ -1,6 +1,7 @@
-import { IPasswordService } from '@libs/identity/domain/user/contracts/password.service.contract';
 import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
+
+import { IPasswordService } from '@libs/identity/domain/user/contracts/password.service.contract';
 
 @Injectable()
 export class BcryptService implements IPasswordService {

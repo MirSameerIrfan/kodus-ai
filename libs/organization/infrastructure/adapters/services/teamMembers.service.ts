@@ -1,31 +1,32 @@
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
+
+import { STATUS } from '@/config/types/database/status.type';
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import {
+    IMSTeamsService,
+    MSTEAMS_SERVICE_TOKEN,
+} from '@/core/domain/msTeams/msTeams.service.contract';
+import { Role } from '@/core/domain/permissions/enums/permissions.enum';
 import {
     ITeamMemberRepository,
     TEAM_MEMBERS_REPOSITORY_TOKEN,
 } from '@/core/domain/teamMembers/contracts/teamMembers.repository.contracts';
+import { ITeamMemberService } from '@/core/domain/teamMembers/contracts/teamMembers.service.contracts';
+import { TeamMemberEntity } from '@/core/domain/teamMembers/entities/teamMember.entity';
+import { TeamMemberRole } from '@/core/domain/teamMembers/enums/teamMemberRole.enum';
 import {
     IMembers,
     ITeamMember,
     IInviteResult,
     IUpdateOrCreateMembersResponse,
 } from '@/core/domain/teamMembers/interfaces/team-members.interface';
-import { Inject, Injectable, forwardRef } from '@nestjs/common';
-import {
-    IMSTeamsService,
-    MSTEAMS_SERVICE_TOKEN,
-} from '@/core/domain/msTeams/msTeams.service.contract';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { TeamMemberEntity } from '@/core/domain/teamMembers/entities/teamMember.entity';
-import { ITeamMemberService } from '@/core/domain/teamMembers/contracts/teamMembers.service.contracts';
 import {
     IUsersService,
     USER_SERVICE_TOKEN,
 } from '@/core/domain/user/contracts/user.service.contract';
-import { STATUS } from '@/config/types/database/status.type';
 import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { Role } from '@/core/domain/permissions/enums/permissions.enum';
-import { sendInvite } from '@/shared/utils/email/sendMail';
-import { TeamMemberRole } from '@/core/domain/teamMembers/enums/teamMemberRole.enum';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { sendInvite } from '@/shared/utils/email/sendMail';
 
 @Injectable()
 export class TeamMemberService implements ITeamMemberService {

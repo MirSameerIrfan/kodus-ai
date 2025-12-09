@@ -1,11 +1,12 @@
-import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
-import { Role } from '../../permissions/enums/permissions.enum';
-import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
-import { TeamMemberRole } from '../enums/teamMemberRole.enum';
+import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
+import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';
+
 import { ICodeManagementMemberConfig } from './codeManagementMemberConfig.interface';
 import { ICommuminicationMemberConfig } from './communicationMemberConfig.interface';
 import { IProjectManagementMemberConfig } from './projectManagementMemberConfig';
+import { TeamMemberRole } from '../enums/teamMemberRole.enum';
+import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
 
 export interface IMembers {
     uuid?: string;

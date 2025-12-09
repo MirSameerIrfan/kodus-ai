@@ -1,3 +1,5 @@
+import { Test, TestingModule } from '@nestjs/testing';
+
 import {
     CodeReviewConfigWithoutLLMProvider,
     LimitationType,
@@ -10,7 +12,6 @@ import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.e
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
 import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
-import { Test, TestingModule } from '@nestjs/testing';
 
 describe('UpdateOrCreateCodeReviewParameterUseCase', () => {
     let useCase: UpdateOrCreateCodeReviewParameterUseCase;

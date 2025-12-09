@@ -1,4 +1,4 @@
-import { TeamQueryDto } from './teamId-query-dto';
+import { Type } from 'class-transformer';
 import {
     IsArray,
     IsBoolean,
@@ -7,7 +7,8 @@ import {
     IsUUID,
     ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+
+import { TeamQueryDto } from './teamId-query-dto';
 
 export class AutomationDto {
     @IsUUID()

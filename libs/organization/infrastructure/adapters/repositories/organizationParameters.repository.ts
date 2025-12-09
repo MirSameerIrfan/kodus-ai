@@ -6,17 +6,19 @@ import {
     Repository,
     UpdateQueryBuilder,
 } from 'typeorm';
+
+import { OrganizationParametersModel } from './schema/organizationParameters.model';
+
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { IOrganizationParametersRepository } from '@/core/domain/organizationParameters/contracts/organizationParameters.repository.contract';
+import { OrganizationParametersEntity } from '@/core/domain/organizationParameters/entities/organizationParameters.entity';
+import { IOrganizationParameters } from '@/core/domain/organizationParameters/interfaces/organizationParameters.interface';
+import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
+import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
 } from '@/shared/infrastructure/repositories/mappers';
-import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { IOrganizationParametersRepository } from '@/core/domain/organizationParameters/contracts/organizationParameters.repository.contract';
-import { OrganizationParametersModel } from './schema/organizationParameters.model';
-import { OrganizationParametersEntity } from '@/core/domain/organizationParameters/entities/organizationParameters.entity';
-import { IOrganizationParameters } from '@/core/domain/organizationParameters/interfaces/organizationParameters.interface';
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
 
 @Injectable()
 export class OrganizationParametersRepository implements IOrganizationParametersRepository {

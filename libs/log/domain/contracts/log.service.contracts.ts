@@ -1,6 +1,6 @@
+import { ILogRepository } from './log.repository.contracts';
 import { LogEntity } from '../entities/log.entity';
 import { ILog } from '../interfaces/log.interface';
-import { ILogRepository } from './log.repository.contracts';
 
 export const LOG_SERVICE_TOKEN = Symbol('LogService');
 

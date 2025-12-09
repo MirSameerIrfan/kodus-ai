@@ -1,12 +1,11 @@
+import { Transform, Type } from 'class-transformer';
 import {
     IsOptional,
     IsString,
-    IsNumberString,
     Min,
     Max,
     IsBoolean,
 } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
 
 export class EnrichedPullRequestsQueryDto {
     @IsOptional()

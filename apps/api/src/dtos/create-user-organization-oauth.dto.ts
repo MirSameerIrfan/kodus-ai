@@ -1,5 +1,6 @@
-import { AuthProvider } from '@libs/core/domain/enums/auth-provider.enum';
 import { IsEmail, IsString, IsEnum } from 'class-validator';
+
+import { AuthProvider } from '@libs/core/domain/enums/auth-provider.enum';
 
 export class CreateUserOrganizationOAuthDto {
     @IsString()

@@ -1,12 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CodeReviewPipelineExecutor } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/pipeline/pipeline-executor.service';
-import { PipelineStateManager } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/pipeline/pipeline-state-manager.service';
-import { CodeReviewPipelineContext } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/context/code-review-pipeline.context';
-import { Stage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/base/stage.interface';
-import { HeavyStage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/base/heavy-stage.interface';
-import { WorkflowPausedError } from '@/core/domain/workflowQueue/errors/workflow-paused.error';
+
 import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
 import { EventType } from '@/core/domain/workflowQueue/enums/event-type.enum';
+import { WorkflowPausedError } from '@/core/domain/workflowQueue/errors/workflow-paused.error';
+import { CodeReviewPipelineContext } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/context/code-review-pipeline.context';
+import { CodeReviewPipelineExecutor } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/pipeline/pipeline-executor.service';
+import { PipelineStateManager } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/pipeline/pipeline-state-manager.service';
+import { HeavyStage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/base/heavy-stage.interface';
+import { Stage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/base/stage.interface';
 
 describe('CodeReviewPipelineExecutor', () => {
     let executor: CodeReviewPipelineExecutor;

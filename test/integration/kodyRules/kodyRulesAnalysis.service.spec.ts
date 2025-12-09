@@ -28,17 +28,18 @@ jest.mock('@opentelemetry/api', () => ({
 
 jest.mock('@/core/infrastructure/adapters/services/logger/pino.service');
 
-import { Test, TestingModule } from '@nestjs/testing';
-import { KodyRulesAnalysisService } from '@/ee/codeBase/kodyRulesAnalysis.service';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { PromptRunnerService } from '@kodus/kodus-common/llm';
-import { KODY_RULES_SERVICE_TOKEN } from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
-import { KodyRulesService } from '@/ee/kodyRules/service/kodyRules.service';
+import { Test, TestingModule } from '@nestjs/testing';
+
 import {
     AIAnalysisResult,
     CodeSuggestion,
 } from '@/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { KODY_RULES_SERVICE_TOKEN } from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import { KodyRulesAnalysisService } from '@/ee/codeBase/kodyRulesAnalysis.service';
+import { KodyRulesService } from '@/ee/kodyRules/service/kodyRules.service';
 import { LabelType } from '@/shared/utils/codeManagement/labels';
 
 describe('KodyRulesAnalysisService - replaceKodyRuleIdsWithLinks', () => {

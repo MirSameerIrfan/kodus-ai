@@ -1,8 +1,10 @@
 import { IssueStatus } from '@libs/core/infrastructure/config/types/general/issues.type';
+import { LabelType } from '@libs/core/utils/codeManagement/labels';
+import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
+
 import { IssuesEntity } from '../entities/issues.entity';
 import { IIssue } from '../interfaces/issues.interface';
-import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
-import { LabelType } from '@libs/core/utils/codeManagement/labels';
+
 
 export const ISSUES_REPOSITORY_TOKEN = Symbol('IssuesRepository');
 

@@ -1,6 +1,3 @@
-import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
-import { ExecuteDryRunUseCase } from '@libs/dry-run/application/use-cases/execute-dry-run.use-case';
-import { GetStatusDryRunUseCase } from '@libs/dry-run/application/use-cases/get-status-dry-run.use-case';
 import {
     BadRequestException,
     Body,
@@ -14,8 +11,17 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
+
+import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
+import { ExecuteDryRunUseCase } from '@libs/dry-run/application/use-cases/execute-dry-run.use-case';
+import { GetDryRunUseCase } from '@libs/dry-run/application/use-cases/get-dry-run.use-case';
+import { GetStatusDryRunUseCase } from '@libs/dry-run/application/use-cases/get-status-dry-run.use-case';
+import { ListDryRunsUseCase } from '@libs/dry-run/application/use-cases/list-dry-runs.use-case';
 import { SseDryRunUseCase } from '@libs/dry-run/application/use-cases/sse-dry-run.use-case';
-import { ExecuteDryRunDto } from '../dtos/execute-dry-run.dto';
+import {
+    Action,
+    ResourceType,
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
     CheckPolicies,
     PolicyGuard,
@@ -24,12 +30,8 @@ import {
     checkPermissions,
     checkRepoPermissions,
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
-import {
-    Action,
-    ResourceType,
-} from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { GetDryRunUseCase } from '@libs/dry-run/application/use-cases/get-dry-run.use-case';
-import { ListDryRunsUseCase } from '@libs/dry-run/application/use-cases/list-dry-runs.use-case';
+
+import { ExecuteDryRunDto } from '../dtos/execute-dry-run.dto';
 
 @Controller('dry-run')
 export class DryRunController {

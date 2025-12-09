@@ -1,10 +1,3 @@
-import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
-import { BackfillHistoricalPRsUseCase } from '@libs/code-review/application/use-cases/pull-requests/backfill-historical-prs.use-case';
-import { GetEnrichedPullRequestsUseCase } from '@libs/code-review/application/use-cases/pull-requests/get-enriched-pull-requests.use-case';
-import {
-    Action,
-    ResourceType,
-} from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
     Body,
     Controller,
@@ -15,12 +8,21 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
+
+import { BackfillHistoricalPRsUseCase } from '@libs/code-review/application/use-cases/pull-requests/backfill-historical-prs.use-case';
+import { GetEnrichedPullRequestsUseCase } from '@libs/code-review/application/use-cases/pull-requests/get-enriched-pull-requests.use-case';
+import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
+import {
+    Action,
+    ResourceType,
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
     CheckPolicies,
     PolicyGuard,
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
 import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
 import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+
 import { BackfillPRsDto } from '../dtos/backfill-prs.dto';
 import { EnrichedPullRequestsQueryDto } from '../dtos/enriched-pull-requests-query.dto';
 import { PaginatedEnrichedPullRequestsResponse } from '../dtos/paginated-enriched-pull-requests.dto';

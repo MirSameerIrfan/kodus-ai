@@ -1,4 +1,5 @@
 import { Entity } from '@libs/core/domain/interfaces/entity';
+
 import { ICodeReviewFeedback } from '../interfaces/codeReviewFeedback.interface';
 
 export class CodeReviewFeedbackEntity implements Entity<ICodeReviewFeedback> {

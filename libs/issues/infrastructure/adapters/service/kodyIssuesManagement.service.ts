@@ -1,45 +1,46 @@
-import { Injectable, Inject } from '@nestjs/common';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
+import { Injectable, Inject } from '@nestjs/common';
+
 import { IKodyIssuesManagementService } from '@libs/code-review/domain/contracts/KodyIssuesManagement.contract';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
-import {
-    IIssuesService,
-    ISSUES_SERVICE_TOKEN,
-} from '@libs/issues/domain/contracts/issues.service.contract';
-import {
-    KODY_ISSUES_ANALYSIS_SERVICE_TOKEN,
-    KodyIssuesAnalysisService,
-} from '@libs/code-review/ee/analysis/kodyIssuesAnalysis.service';
-import {
-    IPullRequestsService,
-    PULL_REQUESTS_SERVICE_TOKEN,
-} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
 import {
     IPullRequestManagerService,
     PULL_REQUEST_MANAGER_SERVICE_TOKEN,
 } from '@libs/code-review/domain/contracts/PullRequestManagerService.contract';
 import {
-    IParametersService,
-    PARAMETERS_SERVICE_TOKEN,
-} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+    IPullRequestsService,
+    PULL_REQUESTS_SERVICE_TOKEN,
+} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
+import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
+import { ImplementationStatus } from '@libs/code-review/domain/pull-requests/enums/implementationStatus.enum';
+import { PriorityStatus } from '@libs/code-review/domain/pull-requests/enums/priorityStatus.enum';
+import { ISuggestion } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import {
+    KODY_ISSUES_ANALYSIS_SERVICE_TOKEN,
+    KodyIssuesAnalysisService,
+} from '@libs/code-review/ee/analysis/kodyIssuesAnalysis.service';
 import { CacheService } from '@libs/core/cache/cache.service';
-import { PermissionValidationService } from '@libs/core/infrastructure/services/permissionValidation.service';
+import { GetIssuesByFiltersDto } from '@libs/core/domain/dtos/get-issues-by-filters.dto';
+import { ParametersKey } from '@libs/core/domain/enums';
+import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
+import {
+    IIssuesService,
+    ISSUES_SERVICE_TOKEN,
+} from '@libs/issues/domain/contracts/issues.service.contract';
+import { IssuesEntity } from '@libs/issues/domain/entities/issues.entity';
 import {
     contextToGenerateIssues,
     IContributingSuggestion,
     IRepresentativeSuggestion,
 } from '@libs/issues/domain/interfaces/kodyIssuesManagement.interface';
-import { ParametersKey } from '@libs/core/domain/enums';
+import {
+    IParametersService,
+    PARAMETERS_SERVICE_TOKEN,
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
 import { IssueStatus } from '@libs/core/infrastructure/config/types/general/issues.type';
 import { CodeSuggestion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { LabelType } from '@libs/core/utils/codeManagement/labels';
 import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
-import { ImplementationStatus } from '@libs/code-review/domain/pull-requests/enums/implementationStatus.enum';
-import { PriorityStatus } from '@libs/code-review/domain/pull-requests/enums/priorityStatus.enum';
-import { IssuesEntity } from '@libs/issues/domain/entities/issues.entity';
-import { GetIssuesByFiltersDto } from '@libs/core/domain/dtos/get-issues-by-filters.dto';
-import { ISuggestion } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
-import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
 import { IssueCreationConfig } from '@libs/issues/domain/entities/issue-creation-config.entity';
 
 @Injectable()

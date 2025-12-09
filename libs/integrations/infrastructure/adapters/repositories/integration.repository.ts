@@ -6,17 +6,19 @@ import {
     Repository,
     UpdateQueryBuilder,
 } from 'typeorm';
-import { IntegrationModel } from './schemas/integration.model';
-import { IIntegrationRepository } from '@libs/integrations/domain/integrations/contracts/integration.repository.contracts';
-import { IntegrationEntity } from '@libs/integrations/domain/integrations/entities/integration.entity';
-import { IIntegration } from '@libs/integrations/domain/integrations/interfaces/integration.interface';
-import { createNestedConditions } from '@libs/core/infrastructure/repositories/model/filters';
+
+import { PlatformType } from '@libs/core/domain/enums';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
 } from '@libs/core/infrastructure/repositories/mappers';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { PlatformType } from '@libs/core/domain/enums';
+import { createNestedConditions } from '@libs/core/infrastructure/repositories/model/filters';
+import { IIntegrationRepository } from '@libs/integrations/domain/integrations/contracts/integration.repository.contracts';
+import { IntegrationEntity } from '@libs/integrations/domain/integrations/entities/integration.entity';
+import { IIntegration } from '@libs/integrations/domain/integrations/interfaces/integration.interface';
+
+import { IntegrationModel } from './schemas/integration.model';
 
 @Injectable()
 export class IntegrationRepository implements IIntegrationRepository {

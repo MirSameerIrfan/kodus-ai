@@ -1,24 +1,3 @@
-import { CreateOrUpdateOrganizationParametersUseCase } from '@libs/organization/application/use-cases/create-or-update.use-case';
-import { FindByKeyOrganizationParametersUseCase } from '@libs/organization/application/use-cases/find-by-key.use-case';
-import {
-    GetModelsByProviderUseCase,
-    ModelResponse,
-} from '@libs/organization/application/use-cases/get-models-by-provider.use-case';
-import {
-    Action,
-    ResourceType,
-} from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { ProviderService } from '@libs/platform/infrastructure/services/provider.service';
-import { OrganizationParametersKey } from '@libs/core/domain/enums/organization-parameters-key.enum';
-
-import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
-import { DeleteByokConfigUseCase } from '@libs/organization/application/use-cases/delete-byok-config.use-case';
-import {
-    GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN,
-    GetCockpitMetricsVisibilityUseCase,
-} from '@libs/organization/application/use-cases/get-cockpit-metrics-visibility.use-case';
-import { IgnoreBotsUseCase } from '@libs/organization/application/use-cases/ignore-bots.use-case';
-import { ICockpitMetricsVisibility } from '@libs/organization/domain/org-parameters/interfaces/cockpit-metrics-visibility.interface';
 import {
     BadRequestException,
     Body,
@@ -31,11 +10,32 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
+
+import { OrganizationParametersKey } from '@libs/core/domain/enums/organization-parameters-key.enum';
+import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
+import {
+    Action,
+    ResourceType,
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
     CheckPolicies,
     PolicyGuard,
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
 import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
+import { CreateOrUpdateOrganizationParametersUseCase } from '@libs/organization/application/use-cases/create-or-update.use-case';
+import { DeleteByokConfigUseCase } from '@libs/organization/application/use-cases/delete-byok-config.use-case';
+import { FindByKeyOrganizationParametersUseCase } from '@libs/organization/application/use-cases/find-by-key.use-case';
+import {
+    GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN,
+    GetCockpitMetricsVisibilityUseCase,
+} from '@libs/organization/application/use-cases/get-cockpit-metrics-visibility.use-case';
+import {
+    GetModelsByProviderUseCase,
+    ModelResponse,
+} from '@libs/organization/application/use-cases/get-models-by-provider.use-case';
+import { IgnoreBotsUseCase } from '@libs/organization/application/use-cases/ignore-bots.use-case';
+import { ICockpitMetricsVisibility } from '@libs/organization/domain/org-parameters/interfaces/cockpit-metrics-visibility.interface';
+import { ProviderService } from '@libs/platform/infrastructure/services/provider.service';
 
 @Controller('organization-parameters')
 export class OrganizationParametersController {

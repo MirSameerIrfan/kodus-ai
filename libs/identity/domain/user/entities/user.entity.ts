@@ -1,11 +1,11 @@
 import { Entity } from '@libs/core/domain/interfaces/entity';
-import { IUser } from '../interfaces/user.interface';
-
 import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
-import { Role } from '../../permissions/enums/permissions.enum';
-import { IPermissions } from '../../permissions/types/permissions.types';
 import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 import { ITeamMember } from '@libs/organization/domain/team-members/interfaces/team-members.interface';
+
+import { Role } from '../../permissions/enums/permissions.enum';
+import { IPermissions } from '../../permissions/types/permissions.types';
+import { IUser } from '../interfaces/user.interface';
 
 export class UserEntity implements Entity<IUser> {
     private _uuid: string;

@@ -1,7 +1,15 @@
+import { randomUUID } from 'crypto';
+
+import type {
+    ContextRequirement,
+    ContextDependency,
+} from '@context-os-core/interfaces';
+import { computeRequirementsHash } from '@context-os-core/utils/context-requirements';
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { randomUUID } from 'crypto';
+
+import { CONTEXT_REFERENCE_SERVICE_TOKEN } from '@libs/code-review/domain/context/contracts/context-reference.service.contract';
+import { ContextReferenceEntity } from '@libs/code-review/domain/context/entities/context-reference.entity';
 import {
     IPromptExternalReferenceManagerService,
     PromptReferenceLookupOptions,
@@ -14,14 +22,10 @@ import {
     PromptReferenceErrorType,
     PromptSourceType,
 } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
-import { CONTEXT_REFERENCE_SERVICE_TOKEN } from '@libs/code-review/domain/context/contracts/context-reference.service.contract';
 import { ContextReferenceService } from '@libs/code-review/infrastructure/context/context-reference.service';
-import { ContextReferenceEntity } from '@libs/code-review/domain/context/entities/context-reference.entity';
-import { computeRequirementsHash } from '@context-os-core/utils/context-requirements';
-import type {
-    ContextRequirement,
-    ContextDependency,
-} from '@context-os-core/interfaces';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+
+
 import { resolveSourceTypeFromPath } from '../context/code-review-context.utils';
 
 type ParsedConfigKey = {

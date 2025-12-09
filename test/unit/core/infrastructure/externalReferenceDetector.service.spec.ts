@@ -18,13 +18,15 @@ jest.mock('@/shared/utils/crypto', () => ({
     decrypt: jest.fn((text) => text.replace('encrypted_', '')),
 }));
 
-import { Test, TestingModule } from '@nestjs/testing';
-import { ExternalReferenceDetectorService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceDetector.service';
-import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
 import { PromptRunnerService } from '@kodus/kodus-common/llm';
+import { Test, TestingModule } from '@nestjs/testing';
+
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { ExternalReferenceDetectorService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceDetector.service';
+import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 
 describe('ExternalReferenceDetectorService', () => {
     let service: ExternalReferenceDetectorService;
