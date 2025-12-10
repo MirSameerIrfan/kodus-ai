@@ -19,8 +19,8 @@ import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/
 import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
 import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 
-import { CodeReviewPipelineContext } from './codeReviewPipeline/context/code-review-pipeline.context';
-import { PipelineFactory } from './pipeline/pipeline-factory.service';
+import { CodeReviewPipelineContext } from '@libs/code-review/pipeline/context/code-review-pipeline.context';
+import { PipelineFactory } from '@libs/core/infrastructure/pipeline/services/pipeline-factory.service';
 
 @Injectable()
 export class CodeReviewHandlerService {

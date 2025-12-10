@@ -10,7 +10,7 @@ import {
     IWebhookEventHandler,
     IWebhookEventParams,
 } from '@libs/platform/domain/platformIntegrations/interfaces/webhook-event-handler.interface';
-import { EnqueueCodeReviewJobUseCase } from '@libs/workflow-queue/application/use-cases/enqueue-code-review-job.use-case';
+import { EnqueueCodeReviewJobUseCase } from '@libs/core/workflow/application/use-cases/enqueue-code-review-job.use-case';
 import { KodyRulesSyncService } from '@libs/kodyRules/infrastructure/adapters/services/kodyRulesSync.service';
 import { CodeManagementService } from '../../adapters/services/codeManagement.service';
 import { getMappedPlatform } from '@libs/common/utils/webhooks';

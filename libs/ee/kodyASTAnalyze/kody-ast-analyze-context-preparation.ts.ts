@@ -4,7 +4,7 @@
  */
 
 import { CodeAnalysisOrchestrator } from '@libs/code-review/ee/analysis/codeAnalysisOrchestrator.service';
-import { BaseKodyASTAnalyzeContextPreparation } from '@libs/code-review/ee/kodyASTAnalyze/base-ast-analyze.service';
+import { BaseKodyASTAnalyzeContextPreparation } from '@libs/code-review/kodyASTAnalyze/base-ast-analyze.service';
 import {
     AIAnalysisResult,
     AnalysisContext,

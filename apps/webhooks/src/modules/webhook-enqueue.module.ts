@@ -10,9 +10,9 @@ import { OutboxMessageModel } from '@libs/core/infrastructure/database/typeorm/s
 import { WorkflowJobModel } from '@libs/core/infrastructure/database/typeorm/schema/workflow-job.model';
 import { RabbitMQWrapperModule } from '@libs/core/infrastructure/queue/rabbitmq.module';
 import { EnqueueWebhookUseCase } from '@libs/platform/application/use-cases/webhook/enqueue-webhook.use-case';
-import { JOB_QUEUE_SERVICE_TOKEN } from '@libs/workflow-queue/domain/contracts/job-queue.service.contract';
-import { RabbitMQJobQueueService } from '@libs/workflow-queue/infrastructure/rabbitmq-job-queue.service';
-import { TransactionalOutboxService } from '@libs/workflow-queue/infrastructure/transactional-outbox.service';
+import { JOB_QUEUE_SERVICE_TOKEN } from '@libs/core/workflow/domain/contracts/job-queue.service.contract';
+import { RabbitMQJobQueueService } from '@libs/core/workflow/infrastructure/rabbitmq-job-queue.service';
+import { TransactionalOutboxService } from '@libs/core/workflow/infrastructure/transactional-outbox.service';
 
 @Module({
     imports: [

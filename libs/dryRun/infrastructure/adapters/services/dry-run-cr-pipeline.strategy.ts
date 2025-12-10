@@ -1,17 +1,17 @@
-import { AggregateResultsStage } from '@libs/code-review/infrastructure/codeReviewPipeline/stages/aggregate-result.stage';
+import { AggregateResultsStage } from '@libs/code-review/pipeline/base/stages/aggregate-result.stage';
 import {
     ILoadExternalContextStage,
     LOAD_EXTERNAL_CONTEXT_STAGE_TOKEN,
-} from '@libs/code-review/infrastructure/codeReviewPipeline/stages/contracts/loadExternalContextStage.contract';
-import { CreateFileCommentsStage } from '@libs/code-review/infrastructure/codeReviewPipeline/stages/create-file-comments.stage';
-import { CreatePrLevelCommentsStage } from '@libs/code-review/infrastructure/codeReviewPipeline/stages/create-pr-level-comments.stage';
-import { FetchChangedFilesStage } from '@libs/code-review/infrastructure/codeReviewPipeline/stages/fetch-changed-files.stage';
-import { UpdateCommentsAndGenerateSummaryStage } from '@libs/code-review/infrastructure/codeReviewPipeline/stages/finish-comments.stage';
-import { InitialCommentStage } from '@libs/code-review/infrastructure/codeReviewPipeline/stages/initial-comment.stage';
-import { ProcessFilesPrLevelReviewStage } from '@libs/code-review/infrastructure/codeReviewPipeline/stages/process-files-pr-level-review.stage';
-import { ProcessFilesReview } from '@libs/code-review/infrastructure/codeReviewPipeline/stages/process-files-review.stage';
-import { ResolveConfigStage } from '@libs/code-review/infrastructure/codeReviewPipeline/stages/resolve-config.stage';
-import { ValidateConfigStage } from '@libs/code-review/infrastructure/codeReviewPipeline/stages/validate-config.stage';
+} from '@libs/code-review/pipeline/base/stages/contracts/loadExternalContextStage.contract';
+import { CreateFileCommentsStage } from '@libs/code-review/pipeline/base/stages/create-file-comments.stage';
+import { CreatePrLevelCommentsStage } from '@libs/code-review/pipeline/base/stages/create-pr-level-comments.stage';
+import { FetchChangedFilesStage } from '@libs/code-review/pipeline/base/stages/fetch-changed-files.stage';
+import { UpdateCommentsAndGenerateSummaryStage } from '@libs/code-review/pipeline/base/stages/finish-comments.stage';
+import { InitialCommentStage } from '@libs/code-review/pipeline/base/stages/initial-comment.stage';
+import { ProcessFilesPrLevelReviewStage } from '@libs/code-review/pipeline/base/stages/process-files-pr-level-review.stage';
+import { ProcessFilesReview } from '@libs/code-review/pipeline/base/stages/process-files-review.stage';
+import { ResolveConfigStage } from '@libs/code-review/pipeline/base/stages/resolve-config.stage';
+import { ValidateConfigStage } from '@libs/code-review/pipeline/base/stages/validate-config.stage';
 import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/context/code-review-pipeline.context';
 import { IPipelineStrategy } from '@libs/core/infrastructure/pipeline/interfaces/pipeline-strategy.interface';
 import { PipelineStage } from '@libs/core/infrastructure/pipeline/interfaces/pipeline.interface';

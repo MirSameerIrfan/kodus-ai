@@ -452,7 +452,7 @@ export class MyNewHeavyStage extends BaseStage implements HeavyStage {
 ### 3. Registrar Stage no Módulo
 
 ```typescript
-// src/modules/codeReviewPipeline.module.ts
+// libs/code-review/pipeline/code-review-pipeline.module.ts
 @Module({
     providers: [
         // ... outros stages
@@ -471,7 +471,7 @@ export class CodeReviewPipelineModule {}
 ### 4. Adicionar ao Strategy
 
 ```typescript
-// src/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/strategies/code-review-pipeline.strategy.ts
+// libs/code-review/pipeline/ee/strategies/code-review-pipeline.strategy.ee.ts
 configureStages(): Stage[] {
     return [
         // ... outros stages

@@ -7,16 +7,15 @@ import {
 } from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
 import { OrganizationParametersKey } from '@libs/core/domain/enums/organization-parameters-key.enum';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import {
-    IOrganizationParametersService,
-    ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
-} from '@libs/organization/domain/org-parameters/contracts/organizationParameters.service.contract';
-
 
 import {
     ILicenseService,
     LICENSE_SERVICE_TOKEN,
 } from '../interfaces/license.interface';
+import {
+    IOrganizationParametersService,
+    ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
+} from '@libs/organization/domain/organizationParameters/contracts/organizationParameters.service.contract';
 
 @Injectable()
 export class AutoAssignLicenseUseCase {

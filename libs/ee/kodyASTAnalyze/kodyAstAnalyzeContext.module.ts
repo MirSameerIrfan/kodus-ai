@@ -3,7 +3,7 @@
  * Kodus Tech. All rights reserved.
  */
 
-import { KodyASTAnalyzeContextPreparationService } from '@libs/code-review/ee/kodyASTAnalyze/kody-ast-analyze-context-preparation.ts';
+import { KodyASTAnalyzeContextPreparationService } from '@libs/code-review/kodyASTAnalyze/kody-ast-analyze-context-preparation.ts';
 import { KODY_AST_ANALYZE_CONTEXT_PREPARATION_TOKEN } from '@libs/core/domain/interfaces/kody-ast-analyze-context-preparation.interface';
 import { KODY_AST_ANALYZE_CONTEXT_PREPARATION_PROVIDER } from '@libs/core/providers/kody-ast-analyze-context-preparation.provider.ee';
 import { forwardRef, Module } from '@nestjs/common';

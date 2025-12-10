@@ -15,8 +15,8 @@ import {
 import { PolicyGuard } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
 import { CheckPolicies } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
 import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
-import { JOB_STATUS_SERVICE_TOKEN } from '@libs/workflow-queue/domain/contracts/job-status.service.contract';
-import { IJobStatusService } from '@libs/workflow-queue/domain/contracts/job-status.service.contract';
+import { JOB_STATUS_SERVICE_TOKEN } from '@libs/core/workflow/domain/contracts/job-status.service.contract';
+import { IJobStatusService } from '@libs/core/workflow/domain/contracts/job-status.service.contract';
 
 @Controller('workflow-queue')
 @UseGuards(PolicyGuard)

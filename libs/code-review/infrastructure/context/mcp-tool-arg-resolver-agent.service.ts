@@ -16,10 +16,10 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { z } from 'zod';
 
-import { BaseAgentProvider } from '@libs/agents/infrastructure/kodus-flow/kodus-flow/base-agent.provider';
 import { DatabaseConnection } from '@libs/core/infrastructure/config/types';
 import type { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
+import { BaseAgentProvider } from '@libs/agents/infrastructure/services/kodus-flow/base-agent.provider';
+import { ObservabilityService } from '@libs/log/observability.service';
 import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
 
 type SDKOrchestrator = Awaited<ReturnType<typeof createOrchestration>>;

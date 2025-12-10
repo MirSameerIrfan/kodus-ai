@@ -1,6 +1,5 @@
-import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/codeReviewPipeline/context/code-review-pipeline.context';
+import { CodeReviewPipelineContext } from '@libs/code-review/pipeline/context/code-review-pipeline.context';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
-import { IClusterizedSuggestion } from '@libs/code-review/ee/fine-tuning/domain/interfaces/kodyFineTuning.interface';
 import { DeepPartial } from 'typeorm';
 import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
 import type { ContextLayer, ContextPack } from '@context-os-core/interfaces';
@@ -10,16 +9,18 @@ import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/del
 import { ImplementationStatus } from '@libs/code-review/domain/pull-requests/enums/implementationStatus.enum';
 import { PriorityStatus } from '@libs/code-review/domain/pull-requests/enums/priorityStatus.enum';
 import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
-import {
-    GetImpactAnalysisResponse,
-    TaskStatus,
-} from '@libs/code-review/ee/ast/codeASTAnalysis.service';
+
 import type { ContextAugmentationsMap } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';
 import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
-import { IKodyRule } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 
 import { OrganizationAndTeamData } from './organizationAndTeamData';
 import { ConfigLevel } from './pullRequestMessages.type';
+import {
+    GetImpactAnalysisResponse,
+    TaskStatus,
+} from '@libs/ee/kodyAST/codeASTAnalysis.service';
+import { IClusterizedSuggestion } from '@libs/code-review/fine-tuning/domain/interfaces/kodyFineTuning.interface';
+import { IKodyRule } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 
 export interface IFinalAnalysisResult {
     validSuggestionsToAnalyze: Partial<CodeSuggestion>[];

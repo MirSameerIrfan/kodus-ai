@@ -7,11 +7,10 @@ import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.servic
 import {
     IJobQueueService,
     JOB_QUEUE_SERVICE_TOKEN,
-} from '@libs/workflow-queue/domain/contracts/job-queue.service.contract';
-import { HandlerType } from '@libs/workflow-queue/domain/enums/handler-type.enum';
-import { JobStatus } from '@libs/workflow-queue/domain/enums/job-status.enum';
-import { WorkflowType } from '@libs/workflow-queue/domain/enums/workflow-type.enum';
-
+} from '@libs/core/workflow/domain/contracts/job-queue.service.contract';
+import { HandlerType } from '@libs/core/workflow/domain/enums/handler-type.enum';
+import { JobStatus } from '@libs/core/workflow/domain/enums/job-status.enum';
+import { WorkflowType } from '@libs/core/workflow/domain/enums/workflow-type.enum';
 
 export interface EnqueueWebhookInput {
     platformType: PlatformType | string;

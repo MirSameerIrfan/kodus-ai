@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 
 import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
 import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
-import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/codeReviewPipeline/context/code-review-pipeline.context';
+import { CodeReviewPipelineContext } from '@libs/code-review/pipeline/context/code-review-pipeline.context';
 import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
 import { OrganizationParametersKey } from '@libs/core/domain/enums/organization-parameters-key.enum';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
@@ -27,7 +27,6 @@ import {
 } from '@libs/organization/domain/org-parameters/contracts/organizationParameters.service.contract';
 import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
 import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
-
 
 @Injectable()
 export class ExecuteDryRunUseCase {
