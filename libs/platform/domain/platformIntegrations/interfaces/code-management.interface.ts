@@ -1,7 +1,7 @@
 import {
     GitHubReaction,
     GitlabReaction,
-} from '@libs/code-review/domain/feedback/enums/codeReviewCommentReaction.enum';
+} from '@libs/code-review/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
 import { PullRequestState } from '@libs/core/domain/enums/pullRequestState.enum';
 import { Repository } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { Commit } from '@libs/core/infrastructure/config/types/general/commit.type';
@@ -26,7 +26,8 @@ import { RepositoryFile } from '../types/codeManagement/repositoryFile.type';
 import { Workflow } from '../types/codeManagement/workflow.type';
 import { CodeManagementConnectionStatus } from '@libs/common/utils/decorators/validate-code-management-integration.decorator';
 
-export interface ICodeManagementService extends ICommonPlatformIntegrationService {
+export interface ICodeManagementService
+    extends ICommonPlatformIntegrationService {
     getPullRequests(params: {
         organizationAndTeamData: OrganizationAndTeamData;
         repository?: {

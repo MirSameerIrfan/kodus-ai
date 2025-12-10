@@ -1,5 +1,4 @@
-import { IPullRequests } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
-
+import { IPullRequests } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
 
 export enum DryRunStatus {
     IN_PROGRESS = 'IN_PROGRESS',

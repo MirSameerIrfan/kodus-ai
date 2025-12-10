@@ -5,10 +5,12 @@ import { IPipeline } from '@libs/core/infrastructure/pipeline/interfaces/pipelin
 import { PipelineExecutor } from '@libs/core/infrastructure/pipeline/services/pipeline-executor.service';
 
 import { DryRunCodeReviewPipelineStrategy } from './dry-run-cr-pipeline.strategy';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 
 @Injectable()
-export class DryRunCodeReviewPipeline implements IPipeline<CodeReviewPipelineContext> {
+export class DryRunCodeReviewPipeline
+    implements IPipeline<CodeReviewPipelineContext>
+{
     pipeLineName: string = 'DryRunCodeReviewPipeline';
 
     constructor(

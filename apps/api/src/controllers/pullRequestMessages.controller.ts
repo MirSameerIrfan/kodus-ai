@@ -9,9 +9,9 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 
-import { CreateOrUpdatePullRequestMessagesUseCase } from '@libs/code-review/application/use-cases/pr-messages/create-or-update-pull-request-messages.use-case';
-import { FindByRepositoryOrDirectoryIdPullRequestMessagesUseCase } from '@libs/code-review/application/use-cases/pr-messages/find-by-repo-or-directory.use-case';
-import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
+import { CreateOrUpdatePullRequestMessagesUseCase } from '@libs/code-review/application/use-cases/pullRequestMessages/create-or-update-pull-request-messages.use-case';
+import { FindByRepositoryOrDirectoryIdPullRequestMessagesUseCase } from '@libs/code-review/application/use-cases/pullRequestMessages/find-by-repo-or-directory.use-case';
+import { IPullRequestMessages } from '@libs/code-review/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
 import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
 import {
     Action,

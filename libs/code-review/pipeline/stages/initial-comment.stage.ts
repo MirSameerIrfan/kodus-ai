@@ -4,7 +4,7 @@ import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
 } from '@libs/code-review/domain/contracts/CommentManagerService.contract';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import { PlatformType } from '@libs/core/domain/enums';
 import { PullRequestMessageStatus } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';

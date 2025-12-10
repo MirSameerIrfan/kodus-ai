@@ -2,7 +2,6 @@ import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 
-
 import { PullRequestState } from '@libs/core/domain/enums/pullRequestState.enum';
 import { AzureRepoCommentTypeString } from '@libs/platform/domain/azure/entities/azureRepoExtras.type';
 import {
@@ -26,14 +25,14 @@ import {
 import {
     IPullRequestMessagesService,
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
-} from '@libs/code-review/domain/pr-messages/contracts/pullRequestMessages.service.contract';
-import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
+} from '@libs/code-review/domain/pullRequestMessages/contracts/pullRequestMessages.service.contract';
+import { IPullRequestMessages } from '@libs/code-review/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
-} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
+} from '@libs/platformData/domain/pullRequests/contracts/pullRequests.service.contracts';
 import { CodeReviewConfig } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { IPullRequestWithDeliveredSuggestions } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { IPullRequestWithDeliveredSuggestions } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
 import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';

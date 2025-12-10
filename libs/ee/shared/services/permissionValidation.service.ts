@@ -13,7 +13,7 @@ import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/organizationParameters/contracts/organizationParameters.service.contract';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 
 export enum PlanType {
     FREE = 'free',

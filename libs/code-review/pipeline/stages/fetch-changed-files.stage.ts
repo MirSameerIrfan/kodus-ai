@@ -5,7 +5,7 @@ import {
     IPullRequestManagerService,
     PULL_REQUEST_MANAGER_SERVICE_TOKEN,
 } from '@libs/code-review/domain/contracts/PullRequestManagerService.contract';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import {
     AutomationMessage,
     AutomationStatus,

@@ -4,7 +4,7 @@ import {
 } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
 import { CodeReviewPipelineContext } from '@libs/code-review/pipeline/context/code-review-pipeline.context';
 import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import { Injectable, Inject } from '@nestjs/common';
 
 const ENABLE_CODE_REVIEW_AST =

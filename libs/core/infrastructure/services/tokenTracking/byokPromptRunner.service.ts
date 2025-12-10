@@ -4,9 +4,8 @@ import {
     PromptBuilder,
     PromptRunnerService,
 } from '@kodus/kodus-common/llm';
+import { decrypt } from '@libs/common/utils/crypto';
 import { Injectable } from '@nestjs/common';
-
-import { decrypt } from '@libs/core/utils/crypto';
 
 @Injectable()
 export class BYOKPromptRunnerService {

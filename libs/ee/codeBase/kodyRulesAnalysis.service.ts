@@ -19,12 +19,12 @@ import {
     ICodeBaseConfigService,
 } from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
 import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import type { ContextAugmentationsMap } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';
+import type { ContextAugmentationsMap } from '@libs/core/ai-engine/services/context/code-review-context-pack.service';
 import {
     getAugmentationsFromPack,
     getOverridesFromPack,
-} from '@libs/code-review/infrastructure/context/code-review-context.utils';
-import { FileContextAugmentationService } from '@libs/code-review/infrastructure/context/file-context-augmentation.service';
+} from '@libs/core/ai-engine/services/context/code-review-context.utils';
+import { FileContextAugmentationService } from '@libs/core/ai-engine/services/context/file-context-augmentation.service';
 import {
     FileChangeContext,
     AnalysisContext,
@@ -47,7 +47,7 @@ import {
     KODY_RULES_SERVICE_TOKEN,
 } from '@libs/kodyRules/domain/contracts/kodyRules.service.contract';
 import { KodyRuleDependencyService } from '@libs/kodyRules/infrastructure/adapters/services/kodyRulesDependency.service';
-import { ObservabilityService } from '@libs/log/observability.service';
+import { ObservabilityService } from '@libs/core/log/observability.service';
 import { ExternalReferenceLoaderService } from '@libs/kodyRules/infrastructure/adapters/services/externalReferenceLoader.service';
 import { LabelType } from '@libs/common/utils/codeManagement/labels';
 import {

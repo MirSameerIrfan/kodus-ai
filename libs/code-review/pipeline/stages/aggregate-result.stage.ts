@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 
 @Injectable()

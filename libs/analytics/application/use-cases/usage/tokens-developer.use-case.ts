@@ -14,9 +14,8 @@ import {
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
-} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
-import { IPullRequests } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
-
+} from '@libs/platformData/domain/pullRequests/contracts/pullRequests.service.contracts';
+import { IPullRequests } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
 
 @Injectable()
 export class TokensByDeveloperUseCase {

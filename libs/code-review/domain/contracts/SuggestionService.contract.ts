@@ -1,7 +1,7 @@
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 
-import { PriorityStatus } from '@libs/code-review/domain/pull-requests/enums/priorityStatus.enum';
-import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { PriorityStatus } from '@libs/platformData/domain/pullRequests/enums/priorityStatus.enum';
+import { ISuggestionByPR } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
 import {
     CodeSuggestion,
     SuggestionControlConfig,
@@ -14,7 +14,6 @@ import {
     CodeReviewVersion,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-
 
 /**
  * Contract for the service that handles code suggestions lifecycle,

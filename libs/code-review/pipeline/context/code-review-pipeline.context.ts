@@ -4,11 +4,9 @@ import type {
     ContextEvidence,
 } from '@context-os-core/interfaces';
 import { AutomationExecutionEntity } from '@libs/automation/domain/automationExecution/entities/automation-execution.entity';
-import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
-import { IExternalPromptContext } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
-import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { IPullRequestMessages } from '@libs/code-review/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
+import { ISuggestionByPR } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
 import { IClusterizedSuggestion } from '@libs/kodyFineTuning/domain/interfaces/kodyFineTuning.interface';
-import { ContextAugmentationsMap } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';
 import { PlatformType } from '@libs/core/domain/enums';
 import {
     AnalysisContext,
@@ -22,6 +20,8 @@ import {
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { PipelineContext } from '@libs/core/infrastructure/pipeline/interfaces/pipeline-context.interface';
 import { TaskStatus } from '@libs/ee/kodyAST/codeASTAnalysis.service';
+import { IExternalPromptContext } from '@libs/ai-engine/domain/prompt/interfaces/promptExternalReference.interface';
+import { ContextAugmentationsMap } from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context-pack.service';
 
 export interface CodeReviewPipelineContext extends PipelineContext {
     dryRun: {

@@ -10,7 +10,7 @@ import {
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
-} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
+} from '@libs/platformData/domain/pullRequests/contracts/pullRequests.service.contracts';
 import {
     FILE_REVIEW_CONTEXT_PREPARATION_TOKEN,
     IFileReviewContextPreparation,
@@ -23,7 +23,7 @@ import {
     IKodyASTAnalyzeContextPreparationService,
     KODY_AST_ANALYZE_CONTEXT_PREPARATION_TOKEN,
 } from '@libs/core/domain/interfaces/kody-ast-analyze-context-preparation.interface';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import {
     AIAnalysisResult,
     AnalysisContext,
@@ -34,9 +34,9 @@ import {
     IFinalAnalysisResult,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { createOptimizedBatches } from '@libs/common/utils/batch.helper';
-import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
-import { ImplementationStatus } from '@libs/code-review/domain/pull-requests/enums/implementationStatus.enum';
-import { PriorityStatus } from '@libs/code-review/domain/pull-requests/enums/priorityStatus.enum';
+import { DeliveryStatus } from '@libs/platformData/domain/pullRequests/enums/deliveryStatus.enum';
+import { ImplementationStatus } from '@libs/platformData/domain/pullRequests/enums/implementationStatus.enum';
+import { PriorityStatus } from '@libs/platformData/domain/pullRequests/enums/priorityStatus.enum';
 import { TaskStatus } from '@libs/ee/kodyAST/codeASTAnalysis.service';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { CodeAnalysisOrchestrator } from '@libs/ee/codeBase/codeAnalysisOrchestrator.service';

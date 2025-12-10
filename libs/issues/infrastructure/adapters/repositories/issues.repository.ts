@@ -12,6 +12,8 @@ import { IssuesEntity } from '@libs/issues/domain/entities/issues.entity';
 import { IIssue } from '@libs/issues/domain/interfaces/issues.interface';
 
 import { IssuesModel } from './schemas/issues.model';
+import { LabelType } from '@libs/common/utils/codeManagement/labels';
+import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
 
 @Injectable()
 export class IssuesRepository implements IIssuesRepository {

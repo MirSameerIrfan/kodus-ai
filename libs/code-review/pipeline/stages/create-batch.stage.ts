@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import { FileChange } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { createOptimizedBatches } from '@libs/common/utils/batch.helper';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';

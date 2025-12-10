@@ -1,7 +1,7 @@
-import { CodeReviewContextPackService } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';
+import { CodeReviewContextPackService } from '@libs/core/ai-engine/services/context/code-review-context-pack.service';
 import { AnalysisContext } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { IKodyRule } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import { Injectable } from '@nestjs/common';
 
 export interface LoadedReference {

@@ -15,7 +15,7 @@ import { Injectable } from '@nestjs/common';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
 import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { ObservabilityService } from '@libs/log/observability.service';
+import { ObservabilityService } from '@libs/core/log/observability.service';
 
 @Injectable()
 export abstract class BaseAgentProvider {

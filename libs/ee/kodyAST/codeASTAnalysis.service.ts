@@ -19,14 +19,14 @@ import {
 import {
     getAugmentationsFromPack,
     getOverridesFromPack,
-} from '@libs/code-review/infrastructure/context/code-review-context.utils';
-import { ContextAugmentationsMap } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';
+} from '@libs/core/ai-engine/services/context/code-review-context.utils';
+import { ContextAugmentationsMap } from '@libs/core/ai-engine/services/context/code-review-context-pack.service';
 import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
 import { prompt_detectBreakingChanges } from '@libs/common/utils/langchainCommon/prompts/detectBreakingChanges';
 import { AxiosASTService } from '@libs/core/infrastructure/config/axios/microservices/ast.axios';
 import { LLMResponseProcessor } from '@libs/code-review/infrastructure/utils/transforms/llmResponseProcessor.transform';
-import { ObservabilityService } from '@libs/log/observability.service';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { ObservabilityService } from '@libs/core/log/observability.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 import { IASTAnalysisService } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
 

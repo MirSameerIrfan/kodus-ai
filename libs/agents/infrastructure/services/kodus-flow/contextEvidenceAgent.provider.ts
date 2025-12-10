@@ -22,8 +22,8 @@ import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/
 import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
 
 import { BaseAgentProvider } from './base-agent.provider';
-import { ObservabilityService } from '@libs/log/observability.service';
-import { MCPManagerService } from '@libs/core/mcp-server/services/mcp-manager.service';
+import { ObservabilityService } from '@libs/core/log/observability.service';
+import { MCPManagerService } from '@libs/mcp-server/services/mcp-manager.service';
 import { IKodyRule } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 import { convertTiptapJSONToText } from '@libs/common/utils/tiptap-json';
 

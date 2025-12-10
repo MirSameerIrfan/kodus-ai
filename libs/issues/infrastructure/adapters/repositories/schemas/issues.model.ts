@@ -2,12 +2,12 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 import { IssueStatus } from '@libs/core/infrastructure/config/types/general/issues.type';
 import { CoreDocument } from '@libs/core/infrastructure/repositories/model/mongodb';
-import { LabelType } from '@libs/core/utils/codeManagement/labels';
-import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
 import {
     IContributingSuggestion,
     IRepositoryToIssues,
 } from '@libs/issues/domain/interfaces/kodyIssuesManagement.interface';
+import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
+import { LabelType } from '@libs/common/utils/codeManagement/labels';
 
 @Schema({
     collection: 'issues',

@@ -1,8 +1,8 @@
 import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
 import { Injectable } from '@nestjs/common';
-import { PinoLoggerService } from '@libs/log/pino.service';
-import { FileContextAugmentationService } from '@libs/code-review/infrastructure/context/file-context-augmentation.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
+import { FileContextAugmentationService } from '@libs/ai-engine/infrastructure/adapters/services/context/file-context-augmentation.service';
 
 @Injectable()
 export class FileContextGateStage extends BasePipelineStage<CodeReviewPipelineContext> {

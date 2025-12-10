@@ -1,7 +1,7 @@
 import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';
 
-import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
-import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { IPullRequestMessages } from '@libs/code-review/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
+import { ISuggestionByPR } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
 import { CodeReviewPipelineContext } from '@libs/code-review/pipeline/context/code-review-pipeline.context';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import {

@@ -1,16 +1,16 @@
 import { CodeReviewPipelineContext } from '@libs/code-review/pipeline/context/code-review-pipeline.context';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 import { DeepPartial } from 'typeorm';
-import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
+import { IPullRequestMessages } from '@libs/code-review/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
 import type { ContextLayer, ContextPack } from '@context-os-core/interfaces';
 import { LLMModelProvider } from '@kodus/kodus-common/llm';
 import z from 'zod';
-import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
-import { ImplementationStatus } from '@libs/code-review/domain/pull-requests/enums/implementationStatus.enum';
-import { PriorityStatus } from '@libs/code-review/domain/pull-requests/enums/priorityStatus.enum';
-import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { DeliveryStatus } from '@libs/platformData/domain/pullRequests/enums/deliveryStatus.enum';
+import { ImplementationStatus } from '@libs/platformData/domain/pullRequests/enums/implementationStatus.enum';
+import { PriorityStatus } from '@libs/platformData/domain/pullRequests/enums/priorityStatus.enum';
+import { ISuggestionByPR } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
 
-import type { ContextAugmentationsMap } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';
+import type { ContextAugmentationsMap } from '@libs/core/ai-engine/services/context/code-review-context-pack.service';
 import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
 
 import { OrganizationAndTeamData } from './organizationAndTeamData';

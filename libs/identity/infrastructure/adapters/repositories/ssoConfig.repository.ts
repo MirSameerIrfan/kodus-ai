@@ -12,8 +12,7 @@ import {
     SSOConfig,
     SSOProtocol,
 } from '@libs/identity/domain/sso/interfaces/ssoConfig.interface';
-
-import { SSOConfigModel } from './schema/ssoConfig.model';
+import { SSOConfigModel } from './schemas/ssoConfig.model';
 
 @Injectable()
 export class SSOConfigRepository implements ISSOConfigRepository {

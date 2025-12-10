@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
     IAutomationExecutionService,
@@ -16,7 +16,7 @@ import {
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
-} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
+} from '@libs/platformData/domain/pullRequests/contracts/pullRequests.service.contracts';
 import {
     ISuggestionService,
     SUGGESTION_SERVICE_TOKEN,
@@ -40,9 +40,9 @@ import { AutomationExecutionEntity } from '@libs/automation/domain/automationExe
 import { AutomationStatus } from '@libs/automation/domain/automation/enum/automation-status';
 import { AutomationType } from '@libs/automation/domain/automation/enum/automation-type';
 import { PullRequestReviewComment } from '@libs/platform/domain/platformIntegrations/types/codeManagement/pullRequests.type';
-import { PullRequestsEntity } from '@libs/code-review/domain/pull-requests/entities/pullRequests.entity';
-import { ImplementationStatus } from '@libs/code-review/domain/pull-requests/enums/implementationStatus.enum';
-import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
+import { PullRequestsEntity } from '@libs/platformData/domain/pullRequests/entities/pullRequests.entity';
+import { ImplementationStatus } from '@libs/platformData/domain/pullRequests/enums/implementationStatus.enum';
+import { DeliveryStatus } from '@libs/platformData/domain/pullRequests/enums/deliveryStatus.enum';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 
 @Injectable()

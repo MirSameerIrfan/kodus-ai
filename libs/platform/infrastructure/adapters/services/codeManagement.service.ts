@@ -3,8 +3,8 @@ import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import {
     GitHubReaction,
     GitlabReaction,
-} from '@libs/code-review/domain/feedback/enums/codeReviewCommentReaction.enum';
-import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+} from '@libs/code-review/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
+import { ISuggestionByPR } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
 import { CodeReviewPipelineContext } from '@libs/code-review/pipeline/context/code-review-pipeline.context';
 import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';

@@ -1,7 +1,7 @@
 import { OrganizationParametersKey } from '@libs/core/domain/enums';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import {
     IOrganizationService,
     ORGANIZATION_SERVICE_TOKEN,

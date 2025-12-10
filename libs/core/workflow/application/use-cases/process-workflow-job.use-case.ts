@@ -5,8 +5,8 @@ import {
     IJobProcessorService,
     JOB_PROCESSOR_SERVICE_TOKEN,
 } from '@libs/core/workflow/domain/contracts/job-processor.service.contract';
-import { PinoLoggerService } from '@libs/log/pino.service';
-import { ObservabilityService } from '@libs/log/observability.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { ObservabilityService } from '@libs/core/log/observability.service';
 
 export interface ProcessWorkflowJobInput {
     jobId: string;

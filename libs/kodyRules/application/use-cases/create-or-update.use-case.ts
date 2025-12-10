@@ -2,9 +2,9 @@ import { createLogger } from '@kodus/flow';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 
-import { PromptSourceType } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
-import { ContextReferenceDetectionService } from '@libs/code-review/infrastructure/context/context-reference-detection.service';
-import type { ContextDetectionField } from '@libs/code-review/infrastructure/context/context-reference-detection.service';
+import { PromptSourceType } from '@libs/core/ai-engine/domain/interfaces/promptExternalReference.interface';
+import { ContextReferenceDetectionService } from '@libs/core/ai-engine/services/context/context-reference-detection.service';
+import type { ContextDetectionField } from '@libs/core/ai-engine/services/context/context-reference-detection.service';
 import { CreateKodyRuleDto } from '@libs/common/dtos/create-kody-rule.dto';
 import {
     IGetAdditionalInfoHelper,

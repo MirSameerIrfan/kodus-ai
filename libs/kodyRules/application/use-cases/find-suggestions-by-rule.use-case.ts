@@ -10,8 +10,8 @@ import { REQUEST } from '@nestjs/core';
 import {
     PULL_REQUESTS_REPOSITORY_TOKEN,
     IPullRequestsRepository,
-} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.repository';
-import { ISuggestion } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+} from '@libs/platformData/domain/pullRequests/contracts/pullRequests.repository';
+import { ISuggestion } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
 import {
     KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,

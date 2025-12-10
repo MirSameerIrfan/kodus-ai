@@ -5,7 +5,7 @@ import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@libs/code-review/domain/c
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
-} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
+} from '@libs/platformData/domain/pullRequests/contracts/pullRequests.service.contracts';
 import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
@@ -25,7 +25,6 @@ import {
     IMappedPullRequest,
     IMappedRepository,
 } from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-common.type';
-
 
 @Injectable()
 export class GenerateIssuesFromPrClosedUseCase implements IUseCase {

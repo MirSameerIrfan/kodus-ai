@@ -5,7 +5,7 @@ import { REQUEST } from '@nestjs/core';
 import {
     CONTEXT_REFERENCE_SERVICE_TOKEN,
     IContextReferenceService,
-} from '@libs/code-review/domain/context/contracts/context-reference.service.contract';
+} from '@libs/core/ai-engine/domain/contracts/context-reference.service.contract';
 import {
     KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,

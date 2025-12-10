@@ -1,9 +1,9 @@
-import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
+import { IPullRequestMessages } from '@libs/code-review/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
 import {
     IPullRequests,
     ISuggestion,
     ISuggestionByPR,
-} from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+} from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
 import {
     CodeReviewConfig,
     FileChange,
@@ -13,7 +13,6 @@ import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/
 import { IDryRunRepository } from './dryRun.repository.contract';
 import { DryRunEntity } from '../entities/dryRun.entity';
 import { DryRunStatus, IDryRun } from '../interfaces/dryRun.interface';
-
 
 export const DRY_RUN_SERVICE_TOKEN = Symbol('DRY_RUN_SERVICE_TOKEN');
 

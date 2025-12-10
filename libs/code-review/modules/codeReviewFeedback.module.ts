@@ -13,9 +13,8 @@ import { GitlabModule } from '@libs/platform/modules/gitlab.module';
 import { PlatformIntegrationModule } from '@libs/platform/platform.module';
 
 import { PullRequestsModule } from './pull-requests.module';
-import { GetReactionsUseCase } from '../application/use-cases/feedback/get-reactions.use-case';
-import { SaveCodeReviewFeedbackUseCase } from '../application/use-cases/feedback/save-feedback.use-case';
-
+import { GetReactionsUseCase } from '../application/use-cases/codeReviewFeedback/get-reactions.use-case';
+import { SaveCodeReviewFeedbackUseCase } from '../application/use-cases/codeReviewFeedback/save-feedback.use-case';
 
 const UseCases = [GetReactionsUseCase, SaveCodeReviewFeedbackUseCase] as const;
 

@@ -1,7 +1,7 @@
 import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
 import { Injectable } from '@nestjs/common';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { CommentResult } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { PullRequestReviewState } from '@libs/platform/domain/platformIntegrations/types/codeManagement/pullRequests.type';

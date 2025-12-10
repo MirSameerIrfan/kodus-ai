@@ -3,17 +3,18 @@ import type { ContextLayer } from '@context-os-core/interfaces';
 
 import { ILoadExternalContextStage } from './contracts/loadExternalContextStage.contract';
 import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
+
+import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 import {
     IPromptExternalReferenceManagerService,
     PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
-} from '@libs/code-review/domain/prompts/contracts/promptExternalReferenceManager.contract';
+} from '@libs/ai-engine/domain/prompt/contracts/promptExternalReferenceManager.contract';
 import {
     IPromptContextLoaderService,
     PROMPT_CONTEXT_LOADER_SERVICE_TOKEN,
-} from '@libs/code-review/domain/prompts/contracts/promptContextLoader.contract';
-import { PinoLoggerService } from '@libs/log/pino.service';
-import { CodeReviewContextPackService } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';
-import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
+} from '@libs/ai-engine/domain/prompt/contracts/promptContextLoader.contract';
+import { CodeReviewContextPackService } from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context-pack.service';
 
 @Injectable()
 export class LoadExternalContextStage

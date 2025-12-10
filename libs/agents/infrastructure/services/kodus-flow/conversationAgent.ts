@@ -16,15 +16,15 @@ import { ConfigService } from '@nestjs/config';
 import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import { DatabaseConnection } from '@libs/core/infrastructure/config/types';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
 import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
-import { MCPManagerService } from '@libs/core/mcp-server/infrastructure/services/mcp-manager.service';
 import {
     PARAMETERS_SERVICE_TOKEN,
     IParametersService,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 
 import { BaseAgentProvider } from './base-agent.provider';
+import { ObservabilityService } from '@libs/core/log/observability.service';
+import { MCPManagerService } from '@libs/mcp-server/services/mcp-manager.service';
 
 @Injectable()
 export class ConversationAgentProvider extends BaseAgentProvider {

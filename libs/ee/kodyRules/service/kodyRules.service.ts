@@ -18,7 +18,7 @@ import {
     IRuleLikeService,
     RULE_LIKE_SERVICE_TOKEN,
 } from '@libs/kodyRules/domain/contracts/ruleLike.service.contract';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import {
     IKodyRule,
     IKodyRules,

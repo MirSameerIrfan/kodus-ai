@@ -8,9 +8,9 @@ import {
     IKodyASTAnalyzeContextPreparationService,
     KODY_AST_ANALYZE_CONTEXT_PREPARATION_TOKEN,
 } from '../domain/interfaces/kody-ast-analyze-context-preparation.interface';
-import { KodyASTAnalyzeContextPreparationService } from '@libs/code-review/kodyASTAnalyze/kody-ast-analyze-context-preparation.ts';
+import { KodyASTAnalyzeContextPreparationService } from '@libs/code-review/infrastructure/adapters/services/code-analysis/ast/noop-ast-analyze.service';
 import { CodeAnalysisOrchestrator } from '@libs/code-review/ee/analysis/codeAnalysisOrchestrator.service';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import { environment } from '@libs/ee/configs/environment';
 import { KodyASTAnalyzeContextPreparationServiceEE } from '@libs/ee/kodyASTAnalyze/kody-ast-analyze-context-preparation.ts';
 

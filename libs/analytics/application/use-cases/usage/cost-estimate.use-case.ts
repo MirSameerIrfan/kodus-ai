@@ -8,8 +8,7 @@ import { CostEstimateContract } from '@libs/analytics/domain/token-usage/types/t
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
-} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
-
+} from '@libs/platformData/domain/pullRequests/contracts/pullRequests.service.contracts';
 
 const GPT_5_1_PRICING = {
     INPUT_PER_MILLION: 1.25,
@@ -49,7 +48,8 @@ export class CostEstimateUseCase {
         const developerCount = Math.max(uniqueDevelopers, 1);
 
         const inputCost =
-            (totals.inputTokens / 1_000_000) * GPT_5_1_PRICING.INPUT_PER_MILLION;
+            (totals.inputTokens / 1_000_000) *
+            GPT_5_1_PRICING.INPUT_PER_MILLION;
         const outputCost =
             (totals.outputTokens / 1_000_000) *
             GPT_5_1_PRICING.OUTPUT_PER_MILLION;
@@ -145,4 +145,3 @@ export class CostEstimateUseCase {
         return Math.round(value * 100) / 100;
     }
 }
-

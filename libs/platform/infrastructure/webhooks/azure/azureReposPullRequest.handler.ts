@@ -3,7 +3,7 @@ import { createHash } from 'crypto';
 import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 
-import { SavePullRequestUseCase } from '@libs/code-review/application/use-cases/pull-requests/save.use-case';
+import { SavePullRequestUseCase } from '@libs/controlData/application/pull-requests/save.use-case';
 import { CacheService } from '@libs/core/cache/cache.service';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { GenerateIssuesFromPrClosedUseCase } from '@libs/issues/application/use-cases/generate-issues-from-pr-closed.use-case';

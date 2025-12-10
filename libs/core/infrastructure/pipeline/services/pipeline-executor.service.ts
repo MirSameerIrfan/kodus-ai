@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import { PipelineContext } from '../interfaces/pipeline-context.interface';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import { PipelineStage } from '../interfaces/pipeline.interface';
 import { AutomationStatus } from '@libs/automation/domain/automation/enum/automation-status';
 

@@ -1,10 +1,10 @@
 import { ErrorObject } from 'ajv';
 import { DeepPartial } from 'typeorm';
 
-import { 
-    IFileReference, 
-    IPromptReferenceSyncError 
-} from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
+import {
+    IFileReference,
+    IPromptReferenceSyncError,
+} from '@libs/core/ai-engine/domain/interfaces/promptExternalReference.interface';
 
 import {
     CodeReviewConfigWithoutLLMProvider,

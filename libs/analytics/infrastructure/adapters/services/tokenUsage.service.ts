@@ -1,5 +1,3 @@
-import { Inject, Injectable } from '@nestjs/common';
-
 import {
     ITokenUsageRepository,
     TOKEN_USAGE_REPOSITORY_TOKEN,
@@ -12,6 +10,7 @@ import {
     UsageByPrResultContract,
     UsageSummaryContract,
 } from '@libs/analytics/domain/token-usage/types/tokenUsage.types';
+import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class TokenUsageService implements ITokenUsageService {

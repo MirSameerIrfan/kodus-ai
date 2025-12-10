@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
@@ -12,7 +12,7 @@ import {
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
-} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
+} from '@libs/platformData/domain/pullRequests/contracts/pullRequests.service.contracts';
 import {
     DRY_RUN_SERVICE_TOKEN,
     IDryRunService,

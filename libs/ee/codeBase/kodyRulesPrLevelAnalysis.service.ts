@@ -12,10 +12,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 
 import { IKodyRulesAnalysisService } from '@libs/code-review/domain/contracts/KodyRulesAnalysisService.contract';
-import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
-import { ISuggestionByPR } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
-import { ContextAugmentationsMap } from '@libs/code-review/infrastructure/context/code-review-context-pack.service';
-import { FileContextAugmentationService } from '@libs/code-review/infrastructure/context/file-context-augmentation.service';
+import { DeliveryStatus } from '@libs/platformData/domain/pullRequests/enums/deliveryStatus.enum';
+import { ISuggestionByPR } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
+import { ContextAugmentationsMap } from '@libs/core/ai-engine/services/context/code-review-context-pack.service';
+import { FileContextAugmentationService } from '@libs/core/ai-engine/services/context/file-context-augmentation.service';
 import {
     FileChangeContext,
     ReviewModeResponse,
@@ -35,7 +35,7 @@ import {
     IKodyRulesService,
     KODY_RULES_SERVICE_TOKEN,
 } from '@libs/kodyRules/domain/contracts/kodyRules.service.contract';
-import { ObservabilityService } from '@libs/log/observability.service';
+import { ObservabilityService } from '@libs/core/log/observability.service';
 import { ExternalReferenceLoaderService } from '@libs/kodyRules/infrastructure/adapters/services/externalReferenceLoader.service';
 import { KodyRuleDependencyService } from '@libs/kodyRules/infrastructure/adapters/services/kodyRulesDependency.service';
 import { tryParseJSONObject } from '@libs/common/utils/transforms/json';
@@ -98,7 +98,9 @@ export const KODY_RULES_PR_LEVEL_ANALYSIS_SERVICE_TOKEN = Symbol(
 );
 
 @Injectable()
-export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisService {
+export class KodyRulesPrLevelAnalysisService
+    implements IKodyRulesAnalysisService
+{
     private readonly logger = createLogger(
         KodyRulesPrLevelAnalysisService.name,
     );

@@ -4,12 +4,11 @@ import { PromptService } from '@libs/agents/infrastructure/services/prompt.servi
 import { ExecuteAutomationService } from '@libs/automation/infrastructure/process/config/execute.automation';
 import { AutomationRegistry } from '@libs/automation/infrastructure/process/config/register.automation';
 import { AutomationCodeReviewService } from '@libs/automation/infrastructure/process/strategies/automationCodeReview';
-import { UseCases as SaveCodeReviewFeedbackUseCase } from '@libs/code-review/application/use-cases/feedback';
+import { UseCases as SaveCodeReviewFeedbackUseCase } from '@libs/code-review/application/use-cases/codeReviewFeedback';
 import { EXECUTE_AUTOMATION_SERVICE_TOKEN } from '@libs/core/domain/contracts/execute.automation.service.contracts';
 import { LicenseModule } from '@libs/ee/license/license.module';
 import { PermissionValidationModule } from '@libs/ee/shared/permission-validation.module';
 import { TeamsModule } from '@libs/organization/modules/team.module';
-
 
 import { AuthIntegrationModule } from './authIntegration.module';
 import { AutomationModule } from './automation.module';

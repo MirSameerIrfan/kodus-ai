@@ -1,11 +1,6 @@
-import {
-    IsEnum,
-    IsNumber,
-    IsOptional,
-    IsString,
-} from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
 
-import { AlignmentLevel } from '@libs/code-review/infrastructure/types/commentAnalysis.type';
+import { AlignmentLevel } from '@libs/code-review/domain/types/commentAnalysis.type';
 
 export class GenerateCodeReviewParameterDTO {
     @IsString()

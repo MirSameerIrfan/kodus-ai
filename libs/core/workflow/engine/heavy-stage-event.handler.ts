@@ -6,7 +6,7 @@ import { JobStatus } from '../../domain/enums/job-status.enum';
 import { StageCompletedEvent } from '../../domain/interfaces/stage-completed-event.interface';
 import { PipelineStateManager } from './state/pipeline-state-manager.service';
 import { EventBufferService } from '../event-buffer.service';
-import { ObservabilityService } from '@libs/log/observability.service';
+import { ObservabilityService } from '@libs/core/log/observability.service';
 import {
     WORKFLOW_JOB_REPOSITORY_TOKEN,
     IWorkflowJobRepository,

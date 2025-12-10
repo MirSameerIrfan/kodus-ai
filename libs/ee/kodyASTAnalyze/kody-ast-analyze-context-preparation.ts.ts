@@ -3,14 +3,14 @@
  * Kodus Tech. All rights reserved.
  */
 
-import { CodeAnalysisOrchestrator } from '@libs/code-review/ee/analysis/codeAnalysisOrchestrator.service';
-import { BaseKodyASTAnalyzeContextPreparation } from '@libs/code-review/kodyASTAnalyze/base-ast-analyze.service';
+import { BaseKodyASTAnalyzeContextPreparation } from '@libs/code-review/infrastructure/adapters/services/code-analysis/ast/base-ast-analyze.abstract';
 import {
     AIAnalysisResult,
     AnalysisContext,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import { Injectable } from '@nestjs/common';
+import { CodeAnalysisOrchestrator } from '../codeBase/codeAnalysisOrchestrator.service';
 
 /**
  * Enterprise implementation of AST analysis service

@@ -4,7 +4,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
     CONTEXT_REFERENCE_SERVICE_TOKEN,
     IContextReferenceService,
-} from '@libs/code-review/domain/context/contracts/context-reference.service.contract';
+} from '@libs/core/ai-engine/domain/contracts/context-reference.service.contract';
 import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
@@ -20,7 +20,6 @@ import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
-
 
 import { enrichRulesWithContextReferences } from './utils/enrich-rules-with-context-references.util';
 

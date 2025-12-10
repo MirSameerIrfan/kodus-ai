@@ -5,7 +5,7 @@ import { REQUEST } from '@nestjs/core';
 import {
     CONTEXT_REFERENCE_SERVICE_TOKEN,
     IContextReferenceService,
-} from '@libs/code-review/domain/context/contracts/context-reference.service.contract';
+} from '@libs/core/ai-engine/domain/contracts/context-reference.service.contract';
 import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
 import {
     Action,
@@ -17,7 +17,6 @@ import {
     IKodyRulesService,
 } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
 import { IKodyRule } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
-
 
 import { enrichRulesWithContextReferences } from './utils/enrich-rules-with-context-references.util';
 

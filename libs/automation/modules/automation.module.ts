@@ -4,7 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PromptService } from '@libs/agents/infrastructure/services/prompt.service';
 import { AutomationStrategyModule } from '@libs/automation/modules/automationStrategy.module';
 import { TeamAutomationModule } from '@libs/automation/modules/teamAutomation.module';
-import { SaveCodeReviewFeedbackUseCase } from '@libs/code-review/application/use-cases/feedback/save-feedback.use-case';
+import { SaveCodeReviewFeedbackUseCase } from '@libs/code-review/application/use-cases/codeReviewFeedback/save-feedback.use-case';
 import { CodebaseModule } from '@libs/code-review/code-review.module';
 import { CodeReviewExecutionModule } from '@libs/code-review/modules/codeReviewExecution.module';
 import { CodeReviewFeedbackModule } from '@libs/code-review/modules/codeReviewFeedback.module';

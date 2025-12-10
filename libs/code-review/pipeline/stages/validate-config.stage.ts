@@ -9,7 +9,7 @@ import {
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/organizationParameters/contracts/organizationParameters.service.contract';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import {
     AutomationMessage,
     AutomationStatus,
@@ -25,12 +25,13 @@ import {
     ReviewCadenceType,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+
+import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 import {
     mergeBaseBranches,
     processExpression,
     shouldReviewBranches,
-} from '@libs/code-review/infrastructure/branchReview.service';
-import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
+} from '@libs/code-review/infrastructure/adapters/services/branchReview.service';
 
 @Injectable()
 export class ValidateConfigStage extends BasePipelineStage<CodeReviewPipelineContext> {

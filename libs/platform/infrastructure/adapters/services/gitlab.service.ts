@@ -15,7 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
     GitHubReaction,
     GitlabReaction,
-} from '@libs/code-review/domain/feedback/enums/codeReviewCommentReaction.enum';
+} from '@libs/code-review/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
 import { CacheService } from '@libs/core/cache/cache.service';
 import {
     CreateAuthIntegrationStatus,
@@ -87,17 +87,20 @@ import {
 
 @Injectable()
 @IntegrationServiceDecorator(PlatformType.GITLAB, 'codeManagement')
-export class GitlabService implements Omit<
-    ICodeManagementService,
-    | 'getOrganizations'
-    | 'getPullRequestsWithChangesRequested'
-    | 'getListOfValidReviews'
-    | 'getPullRequestReviewThreads'
-    | 'getAuthenticationOAuthToken'
-    | 'getCommitsByReleaseMode'
-    | 'getDataForCalculateDeployFrequency'
-    | 'requestChangesPullRequest'
-> {
+export class GitlabService
+    implements
+        Omit<
+            ICodeManagementService,
+            | 'getOrganizations'
+            | 'getPullRequestsWithChangesRequested'
+            | 'getListOfValidReviews'
+            | 'getPullRequestReviewThreads'
+            | 'getAuthenticationOAuthToken'
+            | 'getCommitsByReleaseMode'
+            | 'getDataForCalculateDeployFrequency'
+            | 'requestChangesPullRequest'
+        >
+{
     constructor(
         @Inject(INTEGRATION_SERVICE_TOKEN)
         private readonly integrationService: IIntegrationService,

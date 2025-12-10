@@ -9,8 +9,8 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 
-import { BackfillHistoricalPRsUseCase } from '@libs/code-review/application/use-cases/pull-requests/backfill-historical-prs.use-case';
-import { GetEnrichedPullRequestsUseCase } from '@libs/code-review/application/use-cases/pull-requests/get-enriched-pull-requests.use-case';
+import { BackfillHistoricalPRsUseCase } from '@libs/controlData/application/pull-requests/backfill-historical-prs.use-case';
+import { GetEnrichedPullRequestsUseCase } from '@libs/controlData/application/pull-requests/get-enriched-pull-requests.use-case';
 import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
 import {
     Action,

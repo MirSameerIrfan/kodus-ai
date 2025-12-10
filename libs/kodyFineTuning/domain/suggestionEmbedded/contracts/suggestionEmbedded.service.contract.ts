@@ -1,4 +1,4 @@
-import { ISuggestionToEmbed } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { ISuggestionToEmbed } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
 
 import { CodeSuggestion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 
@@ -13,7 +13,8 @@ export const SUGGESTION_EMBEDDED_SERVICE_TOKEN = Symbol(
     'SuggestionEmbeddedService',
 );
 
-export interface ISuggestionEmbeddedService extends ISuggestionEmbeddedRepository {
+export interface ISuggestionEmbeddedService
+    extends ISuggestionEmbeddedRepository {
     bulkCreateFromMongoData(
         suggestions: ISuggestionToEmbed[],
     ): Promise<SuggestionEmbeddedEntity[] | undefined>;

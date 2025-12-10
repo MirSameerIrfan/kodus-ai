@@ -52,8 +52,8 @@ import {
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { CacheService } from '@libs/core/cache/cache.service';
-import { MCPManagerService } from '@libs/core/mcp-server/services/mcp-manager.service';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { MCPManagerService } from '@libs/mcp-server/services/mcp-manager.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { AuthMode } from '@libs/platform/domain/platformIntegrations/enums/codeManagement/authMode.enum';
 import { decrypt, encrypt } from '@libs/common/utils/crypto';
@@ -95,14 +95,14 @@ import { TreeItem } from '@libs/core/infrastructure/config/types/general/tree.ty
 import {
     GitHubReaction,
     GitlabReaction,
-} from '@libs/code-review/domain/feedback/enums/codeReviewCommentReaction.enum';
+} from '@libs/code-review/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
 import { IntegrationConfigEntity } from '@libs/integrations/domain/integrationConfigs/entities/integration-config.entity';
 import {
     isFileMatchingGlob,
     isFileMatchingGlobCaseInsensitive,
 } from '@libs/common/utils/glob-utils';
 import { GitCloneParams } from '@libs/platform/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
-import { IRepository } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { IRepository } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
 
 interface GitHubAuthResponse {
     token: string;

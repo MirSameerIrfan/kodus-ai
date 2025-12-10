@@ -1,4 +1,5 @@
 import { forwardRef, Module } from '@nestjs/common';
+import { AIEngineModule } from '@libs/core/ai-engine/ai-engine.module';
 
 @Module({
     imports: [
@@ -24,6 +25,7 @@ import { forwardRef, Module } from '@nestjs/common';
         forwardRef(() => LicenseModule),
         forwardRef(() => ContextReferenceModule),
         forwardRef(() => PermissionValidationModule),
+        AIEngineModule,
     ],
     providers: [
         {

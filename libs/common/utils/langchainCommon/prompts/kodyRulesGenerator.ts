@@ -1,11 +1,11 @@
 import z from 'zod';
 
-import { UncategorizedComment } from '@libs/code-review/infrastructure/types/commentAnalysis.type';
+import { UncategorizedComment } from '@libs/code-review/domain/types/commentAnalysis.type';
 import { LibraryKodyRule } from '@libs/core/infrastructure/config/types/general/kodyRules.type';
 import {
     IKodyRule,
     kodyRuleSchema,
-} from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
+} from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 
 export const kodyRulesGeneratorSchema = z.object({
     rules: z.array(

@@ -6,7 +6,7 @@ import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/cont
 import { PipelineContext } from '@libs/core/infrastructure/pipeline/interfaces/pipeline-context.interface';
 import { IPipeline } from '@libs/core/infrastructure/pipeline/interfaces/pipeline.interface';
 import { PipelineFactory } from '@libs/code-review/infrastructure/pipeline/pipeline-factory.service';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import { Provider } from '@nestjs/common';
 
 export const PIPELINE_PROVIDER_TOKEN = 'PIPELINE_PROVIDER';

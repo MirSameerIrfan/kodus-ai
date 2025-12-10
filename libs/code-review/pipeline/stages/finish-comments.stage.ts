@@ -3,7 +3,7 @@ import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
 } from '@libs/code-review/domain/contracts/CommentManagerService.contract';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import { PullRequestMessageStatus } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
 import { BehaviourForNewCommits } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';

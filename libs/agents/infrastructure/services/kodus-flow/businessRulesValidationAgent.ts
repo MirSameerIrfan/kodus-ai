@@ -23,8 +23,8 @@ import {
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 
 import { BaseAgentProvider } from './base-agent.provider';
-import { ObservabilityService } from '@libs/log/observability.service';
-import { MCPManagerService } from '@libs/core/mcp-server/services/mcp-manager.service';
+import { ObservabilityService } from '@libs/core/log/observability.service';
+import { MCPManagerService } from '@libs/mcp-server/services/mcp-manager.service';
 
 export interface ValidationResult {
     needsMoreInfo?: boolean;

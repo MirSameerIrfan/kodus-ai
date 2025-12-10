@@ -12,7 +12,7 @@ import {
     CODE_REVIEW_SETTINGS_LOG_REPOSITORY_TOKEN,
     ICodeReviewSettingsLogRepository,
 } from '@libs/ee/codeReviewSettingsLog/domain/contracts/codeReviewSettingsLog.repository.contract';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import { Injectable, Inject } from '@nestjs/common';
 
 export interface ChangedDataToExport {

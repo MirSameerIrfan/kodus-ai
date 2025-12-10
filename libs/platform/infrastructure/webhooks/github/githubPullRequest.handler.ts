@@ -2,7 +2,7 @@ import { createLogger } from '@kodus/flow';
 import { Injectable, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { SavePullRequestUseCase } from '@libs/code-review/application/use-cases/pull-requests/save.use-case';
+import { SavePullRequestUseCase } from '@libs/controlData/application/pull-requests/save.use-case';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { GenerateIssuesFromPrClosedUseCase } from '@libs/issues/application/use-cases/generate-issues-from-pr-closed.use-case';
 import { ChatWithKodyFromGitUseCase } from '@libs/platform/application/use-cases/codeManagement/chatWithKodyFromGit.use-case';

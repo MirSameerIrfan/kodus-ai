@@ -1,11 +1,11 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 
-import { SavePullRequestUseCase } from '@libs/code-review/application/use-cases/pull-requests/save.use-case';
+import { SavePullRequestUseCase } from '@libs/controlData/application/pull-requests/save.use-case';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
-} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
+} from '@libs/platformData/domain/pullRequests/contracts/pullRequests.service.contracts';
 import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import {

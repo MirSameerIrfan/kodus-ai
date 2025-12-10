@@ -10,7 +10,7 @@ import { Injectable } from '@nestjs/common';
 
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { ObservabilityService } from '@libs/log/observability.service';
+import { ObservabilityService } from '@libs/core/log/observability.service';
 import { environment } from '../configs/environment';
 import {
     prompt_kodyissues_merge_suggestions_into_issues_system,

@@ -18,14 +18,14 @@ import {
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import { UpdateOrCreateCodeReviewParameterUseCase } from '@libs/organization/application/use-cases/parameters/update-or-create-code-review-parameter-use-case';
 import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
 import {
     ContextDetectionField,
     ContextReferenceDetectionService,
-} from '@libs/code-review/infrastructure/context/context-reference-detection.service';
-import { ObservabilityService } from '@libs/log/observability.service';
+} from '@libs/core/ai-engine/services/context/context-reference-detection.service';
+import { ObservabilityService } from '@libs/core/log/observability.service';
 import {
     GET_ADDITIONAL_INFO_HELPER_TOKEN,
     IGetAdditionalInfoHelper,
@@ -44,7 +44,7 @@ import {
 } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
 import { kodyRulesIDEGeneratorSchema } from '@libs/common/utils/langchainCommon/prompts/kodyRules';
-import { PromptSourceType } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
+import { PromptSourceType } from '@libs/core/ai-engine/domain/interfaces/promptExternalReference.interface';
 
 type SyncTarget = {
     organizationAndTeamData: OrganizationAndTeamData;

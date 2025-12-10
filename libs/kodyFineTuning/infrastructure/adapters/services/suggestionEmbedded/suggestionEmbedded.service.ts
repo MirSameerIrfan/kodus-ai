@@ -2,7 +2,7 @@ import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 import { FindManyOptions } from 'typeorm';
 
-import { ISuggestionToEmbed } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+import { ISuggestionToEmbed } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
 
 import { CodeSuggestion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 

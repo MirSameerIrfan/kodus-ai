@@ -5,17 +5,17 @@ import { kmeans } from 'ml-kmeans';
 import {
     CODE_REVIEW_FEEDBACK_SERVICE_TOKEN,
     ICodeReviewFeedbackService,
-} from '@libs/code-review/domain/feedback/contracts/codeReviewFeedback.service.contract';
-import { ICodeReviewFeedback } from '@libs/code-review/domain/feedback/interfaces/codeReviewFeedback.interface';
+} from '@libs/code-review/domain/codeReviewFeedback/contracts/codeReviewFeedback.service.contract';
+import { ICodeReviewFeedback } from '@libs/code-review/domain/codeReviewFeedback/interfaces/codeReviewFeedback.interface';
 import {
     PULL_REQUESTS_SERVICE_TOKEN,
     IPullRequestsService,
-} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
-import { ImplementationStatus } from '@libs/code-review/domain/pull-requests/enums/implementationStatus.enum';
+} from '@libs/platformData/domain/pullRequests/contracts/pullRequests.service.contracts';
+import { ImplementationStatus } from '@libs/platformData/domain/pullRequests/enums/implementationStatus.enum';
 import {
     IPullRequests,
     ISuggestionToEmbed,
-} from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+} from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
 
 import { GlobalParametersKey } from '@libs/core/domain/enums/global-parameters-key.enum';
 import { PullRequestState } from '@libs/core/domain/enums/pullRequestState.enum';

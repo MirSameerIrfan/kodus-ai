@@ -14,7 +14,7 @@ export const kodyRulesClassifierSchema = z.object({
 });
 
 //#region classifier
-export const kodyRulesGeneratorSchema = z.object({
+export const kodyRulesSchema = z.object({
     codeSuggestions: z.array(
         z.object({
             id: z.string(),

@@ -11,7 +11,7 @@ import {
 import {
     IPullRequestMessagesService,
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
-} from '@libs/code-review/domain/pr-messages/contracts/pullRequestMessages.service.contract';
+} from '@libs/code-review/domain/pullRequestMessages/contracts/pullRequestMessages.service.contract';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
@@ -20,13 +20,13 @@ import {
     DRY_RUN_SERVICE_TOKEN,
     IDryRunService,
 } from '@libs/dryRun/domain/contracts/dryRun.service.contract';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import { ParametersKey } from '@libs/core/domain/enums';
 import {
     AutomationMessage,
     AutomationStatus,
 } from '@libs/automation/domain/automation/enum/automation-status';
-import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
+import { IPullRequestMessages } from '@libs/code-review/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
 import { ConfigLevel } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 

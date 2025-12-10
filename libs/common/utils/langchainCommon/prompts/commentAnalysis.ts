@@ -3,7 +3,7 @@ import { z } from 'zod';
 import {
     categorizedCommentSchema,
     UncategorizedComment,
-} from '@libs/code-review/infrastructure/types/commentAnalysis.type';
+} from '@libs/code-review/domain/types/commentAnalysis.type';
 
 export const commentCategorizerSchema = z.object({
     suggestions: z.array(categorizedCommentSchema.omit({ body: true })),

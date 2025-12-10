@@ -3,7 +3,7 @@ import { encrypt } from '@libs/common/utils/crypto';
 import { OrganizationParametersKey } from '@libs/core/domain/enums';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,

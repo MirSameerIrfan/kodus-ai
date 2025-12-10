@@ -9,19 +9,15 @@ import {
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
-} from '@libs/code-review/domain/pull-requests/contracts/pullRequests.service.contracts';
-import { DeliveryStatus } from '@libs/code-review/domain/pull-requests/enums/deliveryStatus.enum';
-import { ImplementationStatus } from '@libs/code-review/domain/pull-requests/enums/implementationStatus.enum';
-import { PriorityStatus } from '@libs/code-review/domain/pull-requests/enums/priorityStatus.enum';
-import { ISuggestion } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
-import {
-    KODY_ISSUES_ANALYSIS_SERVICE_TOKEN,
-    KodyIssuesAnalysisService,
-} from '@libs/code-review/ee/analysis/kodyIssuesAnalysis.service';
+} from '@libs/platformData/domain/pullRequests/contracts/pullRequests.service.contracts';
+import { DeliveryStatus } from '@libs/platformData/domain/pullRequests/enums/deliveryStatus.enum';
+import { ImplementationStatus } from '@libs/platformData/domain/pullRequests/enums/implementationStatus.enum';
+import { PriorityStatus } from '@libs/platformData/domain/pullRequests/enums/priorityStatus.enum';
+import { ISuggestion } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
+
 import { CacheService } from '@libs/core/cache/cache.service';
 import { GetIssuesByFiltersDto } from '@libs/core/domain/dtos/get-issues-by-filters.dto';
 import { ParametersKey } from '@libs/core/domain/enums';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
 import {
     IIssuesService,
     ISSUES_SERVICE_TOKEN,
@@ -39,12 +35,20 @@ import {
 import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
 import { IssueStatus } from '@libs/core/infrastructure/config/types/general/issues.type';
 import { CodeSuggestion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { LabelType } from '@libs/core/utils/codeManagement/labels';
-import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
+
 import { IssueCreationConfig } from '@libs/issues/domain/entities/issue-creation-config.entity';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
+import {
+    KODY_ISSUES_ANALYSIS_SERVICE_TOKEN,
+    KodyIssuesAnalysisService,
+} from '@libs/ee/codeBase/kodyIssuesAnalysis.service';
+import { LabelType } from '@libs/common/utils/codeManagement/labels';
+import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
 
 @Injectable()
-export class KodyIssuesManagementService implements IKodyIssuesManagementService {
+export class KodyIssuesManagementService
+    implements IKodyIssuesManagementService
+{
     constructor(
         private readonly logger: PinoLoggerService,
 

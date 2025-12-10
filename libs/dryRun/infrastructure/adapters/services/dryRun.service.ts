@@ -12,14 +12,14 @@ import {
 import {
     IPullRequestMessagesService,
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
-} from '@libs/code-review/domain/pr-messages/contracts/pullRequestMessages.service.contract';
-import { IPullRequestMessages } from '@libs/code-review/domain/pr-messages/interfaces/pullRequestMessages.interface';
+} from '@libs/code-review/domain/pullRequestMessages/contracts/pullRequestMessages.service.contract';
+import { IPullRequestMessages } from '@libs/code-review/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
 import {
     IFile,
     IPullRequests,
     ISuggestion,
     ISuggestionByPR,
-} from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
+} from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
 import {
     CodeReviewConfig,
     CodeReviewConfigWithoutLLMProvider,

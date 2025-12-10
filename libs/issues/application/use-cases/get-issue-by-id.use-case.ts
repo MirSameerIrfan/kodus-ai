@@ -5,7 +5,7 @@ import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@libs/code-review/domain/c
 import {
     CODE_REVIEW_FEEDBACK_SERVICE_TOKEN,
     ICodeReviewFeedbackService,
-} from '@libs/code-review/domain/feedback/contracts/codeReviewFeedback.service.contract';
+} from '@libs/code-review/domain/codeReviewFeedback/contracts/codeReviewFeedback.service.contract';
 import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
@@ -24,9 +24,7 @@ import {
 } from '@libs/issues/domain/contracts/issues.service.contract';
 
 import { IssuesEntity } from '@libs/issues/domain/entities/issues.entity';
-import {
-    IIssueDetails,
-} from '@libs/issues/domain/interfaces/kodyIssuesManagement.interface';
+import { IIssueDetails } from '@libs/issues/domain/interfaces/kodyIssuesManagement.interface';
 import { KodyIssuesManagementService } from '@libs/issues/infrastructure/adapters/service/kodyIssuesManagement.service';
 
 @Injectable()

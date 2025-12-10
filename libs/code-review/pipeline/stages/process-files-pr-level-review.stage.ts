@@ -1,11 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
-import { PinoLoggerService } from '@libs/log/pino.service';
+import { PinoLoggerService } from '@libs/core/log/pino.service';
 
-import {
-    CROSS_FILE_ANALYSIS_SERVICE_TOKEN,
-    CrossFileAnalysisService,
-} from '@libs/code-review/infrastructure/crossFileAnalysis.service';
 import { KodyRulesScope } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 import { ReviewModeResponse } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
@@ -13,6 +9,10 @@ import {
     KODY_RULES_PR_LEVEL_ANALYSIS_SERVICE_TOKEN,
     KodyRulesPrLevelAnalysisService,
 } from '@libs/ee/codeBase/kodyRulesPrLevelAnalysis.service';
+import {
+    CROSS_FILE_ANALYSIS_SERVICE_TOKEN,
+    CrossFileAnalysisService,
+} from '@libs/code-review/infrastructure/adapters/services/crossFileAnalysis.service';
 
 @Injectable()
 export class ProcessFilesPrLevelReviewStage extends BasePipelineStage<CodeReviewPipelineContext> {
