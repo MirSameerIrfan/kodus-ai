@@ -3,7 +3,6 @@ import { v4 as uuid } from 'uuid';
 
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
 import {
     IJobQueueService,
     JOB_QUEUE_SERVICE_TOKEN,
@@ -11,6 +10,7 @@ import {
 import { HandlerType } from '@libs/core/workflow/domain/enums/handler-type.enum';
 import { JobStatus } from '@libs/core/workflow/domain/enums/job-status.enum';
 import { WorkflowType } from '@libs/core/workflow/domain/enums/workflow-type.enum';
+import { createLogger } from '@kodus/flow';
 
 export interface EnqueueCodeReviewJobInput {
     platformType: PlatformType;
@@ -24,10 +24,11 @@ export interface EnqueueCodeReviewJobInput {
 
 @Injectable()
 export class EnqueueCodeReviewJobUseCase implements IUseCase {
+    private readonly logger = createLogger(EnqueueCodeReviewJobUseCase.name);
+
     constructor(
         @Inject(JOB_QUEUE_SERVICE_TOKEN)
         private readonly jobQueueService: IJobQueueService,
-        private readonly logger: PinoLoggerService,
     ) {}
 
     async execute(input: EnqueueCodeReviewJobInput): Promise<string> {
@@ -57,8 +58,10 @@ export class EnqueueCodeReviewJobUseCase implements IUseCase {
                     pullRequestNumber: input.pullRequestNumber,
                     pullRequestData: input.pullRequestData,
                 },
-                organizationId: input.organizationId,
-                teamId: input.teamId,
+                organizationAndTeam: {
+                    organizationId: input.organizationId,
+                    teamId: input.teamId,
+                },
                 status: JobStatus.PENDING,
                 priority: 0,
                 retryCount: 0,

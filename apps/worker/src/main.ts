@@ -2,10 +2,10 @@ import 'source-map-support/register';
 
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { createLogger } from '@kodus/flow';
 
 import { WorkflowQueueLoader } from '@libs/core/infrastructure/config/loaders/workflow-queue.loader';
 import { setupSentryAndOpenTelemetry } from '@libs/core/infrastructure/config/log/otel';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
 
 import { WorkerModule } from './worker.module';
 
@@ -20,14 +20,15 @@ async function bootstrap() {
         logger: false,
     });
 
-    const pinoLogger = app.get(PinoLoggerService);
+    const logger = createLogger('WorkerBootstrap');
+
     const configService: ConfigService = app.get(ConfigService);
     const workflowConfig = configService.get<
         ReturnType<typeof WorkflowQueueLoader>
     >('workflowQueueConfig');
 
     if (!workflowConfig?.WORKFLOW_QUEUE_WORKER_ENABLED) {
-        pinoLogger.warn({
+        logger.warn({
             message: 'Workflow queue worker is disabled. Exiting.',
             context: 'WorkerBootstrap',
         });
@@ -35,7 +36,7 @@ async function bootstrap() {
         process.exit(0);
     }
 
-    pinoLogger.log({
+    logger.log({
         message: 'Workflow queue worker started',
         context: 'WorkerBootstrap',
         metadata: {
@@ -49,7 +50,7 @@ async function bootstrap() {
     });
 
     process.on('uncaughtException', (error) => {
-        pinoLogger.error({
+        logger.error({
             message: `Uncaught Exception: ${error.message}`,
             context: 'WorkerGlobalExceptionHandler',
             error,
@@ -57,7 +58,7 @@ async function bootstrap() {
     });
 
     process.on('unhandledRejection', (reason: any) => {
-        pinoLogger.error({
+        logger.error({
             message: `Unhandled Rejection: ${reason?.message || reason}`,
             context: 'WorkerGlobalExceptionHandler',
             error:
@@ -68,20 +69,20 @@ async function bootstrap() {
     });
 
     const shutdown = async (signal: string) => {
-        pinoLogger.log({
+        logger.log({
             message: `Received ${signal}, shutting down gracefully...`,
             context: 'WorkerShutdown',
         });
 
         try {
             await app.close();
-            pinoLogger.log({
+            logger.log({
                 message: 'Worker shutdown complete',
                 context: 'WorkerShutdown',
             });
             process.exit(0);
         } catch (error) {
-            pinoLogger.error({
+            logger.error({
                 message: 'Error during worker shutdown',
                 context: 'WorkerShutdown',
                 error,
@@ -93,7 +94,7 @@ async function bootstrap() {
     process.on('SIGTERM', () => shutdown('SIGTERM'));
     process.on('SIGINT', () => shutdown('SIGINT'));
 
-    pinoLogger.log({
+    logger.log({
         message: 'Workflow queue worker is ready and listening for jobs',
         context: 'WorkerBootstrap',
     });

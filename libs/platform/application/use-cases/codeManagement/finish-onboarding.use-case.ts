@@ -4,17 +4,17 @@ import { REQUEST } from '@nestjs/core';
 import { FinishOnboardingDTO } from 'apps/api/src/dtos/finish-onboarding.dto';
 
 import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
-import { ChangeStatusKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/change-status-kody-rules.use-case';
-import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/find-rules-in-organization-by-filter.use-case';
-import { GenerateKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/generate-kody-rules.use-case';
-import { SyncSelectedRepositoriesKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/sync-selected-repositories.use-case';
-import { KodyRulesStatus } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 
 import { CreatePRCodeReviewUseCase } from './create-prs-code-review.use-case';
+import { GenerateKodyRulesUseCase } from '@libs/kodyRules/application/use-cases/generate-kody-rules.use-case';
+import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from '@libs/kodyRules/application/use-cases/find-rules-in-organization-by-filter.use-case';
+import { ChangeStatusKodyRulesUseCase } from '@libs/kodyRules/application/use-cases/change-status-kody-rules.use-case';
+import { SyncSelectedRepositoriesKodyRulesUseCase } from '@libs/kodyRules/application/use-cases/sync-selected-repositories.use-case';
+import { KodyRulesStatus } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 
 @Injectable()
 export class FinishOnboardingUseCase {

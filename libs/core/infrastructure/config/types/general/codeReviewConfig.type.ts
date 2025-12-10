@@ -4,7 +4,7 @@ import { DeepPartial } from 'typeorm';
 import {
     IFileReference,
     IPromptReferenceSyncError,
-} from '@libs/core/ai-engine/domain/interfaces/promptExternalReference.interface';
+} from '@libs/ai-engine/domain/prompt/interfaces/promptExternalReference.interface';
 
 import {
     CodeReviewConfigWithoutLLMProvider,

@@ -4,34 +4,36 @@
  */
 import { Injectable, Inject } from '@nestjs/common';
 
-import { CodeReviewPipelineContext } from '../../base/context/code-review-pipeline.context';
-import { AggregateResultsStage } from '../../base/stages/aggregate-result.stage';
+import { CodeReviewPipelineContext } from '@libs/code-review/pipeline/context/code-review-pipeline.context';
+import { AggregateResultsStage } from '@libs/code-review/pipeline/stages/aggregate-result.stage';
 import {
     ILoadExternalContextStage,
     LOAD_EXTERNAL_CONTEXT_STAGE_TOKEN,
-} from '../../base/stages/contracts/loadExternalContextStage.contract';
-import { CreateFileCommentsStage } from '../../base/stages/create-file-comments.stage';
-import { CreatePrLevelCommentsStage } from '../../base/stages/create-pr-level-comments.stage';
-import { FetchChangedFilesStage } from '../../base/stages/fetch-changed-files.stage';
-import { UpdateCommentsAndGenerateSummaryStage } from '../../base/stages/finish-comments.stage';
-import { InitialCommentStage } from '../../base/stages/initial-comment.stage';
-import { ValidateConfigStage } from '../../base/stages/validate-config.stage';
+} from '@libs/code-review/pipeline/stages/contracts/loadExternalContextStage.contract';
+import { CreateFileCommentsStage } from '@libs/code-review/pipeline/stages/create-file-comments.stage';
+import { CreatePrLevelCommentsStage } from '@libs/code-review/pipeline/stages/create-pr-level-comments.stage';
+import { FetchChangedFilesStage } from '@libs/code-review/pipeline/stages/fetch-changed-files.stage';
+import { UpdateCommentsAndGenerateSummaryStage } from '@libs/code-review/pipeline/stages/finish-comments.stage';
+import { InitialCommentStage } from '@libs/code-review/pipeline/stages/initial-comment.stage';
+import { ValidateConfigStage } from '@libs/code-review/pipeline/stages/validate-config.stage';
 import { IPipelineStrategy } from '@libs/core/infrastructure/pipeline/interfaces/pipeline-strategy.interface';
 import { PipelineStage } from '@libs/core/infrastructure/pipeline/interfaces/pipeline.interface';
-import { ProcessFilesReview } from '../../base/stages/process-files-review.stage';
-import { RequestChangesOrApproveStage } from '../../base/stages/finish-process-review.stage';
+import { ProcessFilesReview } from '@libs/code-review/pipeline/stages/process-files-review.stage';
+import { RequestChangesOrApproveStage } from '@libs/code-review/pipeline/stages/finish-process-review.stage';
 
 import { CodeAnalysisASTCleanupStage } from '../stages/code-analysis-ast-cleanup.stage';
 import { CodeAnalysisASTStage } from '../stages/code-analysis-ast.stage';
 import { KodyFineTuningStage } from '../stages/kody-fine-tuning.stage';
 
-import { ProcessFilesPrLevelReviewStage } from '../../base/stages/process-files-pr-level-review.stage';
-import { ValidateNewCommitsStage } from '../../base/stages/validate-new-commits.stage';
-import { ResolveConfigStage } from '../../base/stages/resolve-config.stage';
-import { FileContextGateStage } from '../../base/stages/file-context-gate.stage';
+import { ProcessFilesPrLevelReviewStage } from '@libs/code-review/pipeline/stages/process-files-pr-level-review.stage';
+import { ValidateNewCommitsStage } from '@libs/code-review/pipeline/stages/validate-new-commits.stage';
+import { ResolveConfigStage } from '@libs/code-review/pipeline/stages/resolve-config.stage';
+import { FileContextGateStage } from '@libs/code-review/pipeline/stages/file-context-gate.stage';
 
 @Injectable()
-export class CodeReviewPipelineStrategyEE implements IPipelineStrategy<CodeReviewPipelineContext> {
+export class CodeReviewPipelineStrategyEE
+    implements IPipelineStrategy<CodeReviewPipelineContext>
+{
     constructor(
         private readonly validateNewCommitsStage: ValidateNewCommitsStage,
         private readonly resolveConfigStage: ResolveConfigStage,

@@ -23,7 +23,7 @@ import {
     IKodyASTAnalyzeContextPreparationService,
     KODY_AST_ANALYZE_CONTEXT_PREPARATION_TOKEN,
 } from '@libs/core/domain/interfaces/kody-ast-analyze-context-preparation.interface';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 import {
     AIAnalysisResult,
     AnalysisContext,
@@ -68,9 +68,10 @@ export class ProcessFilesReview extends BasePipelineStage<CodeReviewPipelineCont
         private readonly kodyAstAnalyzeContextPreparation: IKodyASTAnalyzeContextPreparationService,
 
         private readonly codeAnalysisOrchestrator: CodeAnalysisOrchestrator,
-        private logger: PinoLoggerService,
+        private logger: ReturnType<typeof createLogger>,
     ) {
         super();
+        this.logger = createLogger(ProcessFilesReview.name);
     }
 
     protected async executeStage(

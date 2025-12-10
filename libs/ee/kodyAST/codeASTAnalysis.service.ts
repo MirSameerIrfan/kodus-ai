@@ -19,14 +19,14 @@ import {
 import {
     getAugmentationsFromPack,
     getOverridesFromPack,
-} from '@libs/core/ai-engine/services/context/code-review-context.utils';
-import { ContextAugmentationsMap } from '@libs/core/ai-engine/services/context/code-review-context-pack.service';
+} from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context.utils';
+import { ContextAugmentationsMap } from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context-pack.service';
 import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
 import { prompt_detectBreakingChanges } from '@libs/common/utils/langchainCommon/prompts/detectBreakingChanges';
 import { AxiosASTService } from '@libs/core/infrastructure/config/axios/microservices/ast.axios';
-import { LLMResponseProcessor } from '@libs/code-review/infrastructure/utils/transforms/llmResponseProcessor.transform';
+import { LLMResponseProcessor } from '@libs/ai-engine/infrastructure/adapters/services/llmResponseProcessor.transform';
 import { ObservabilityService } from '@libs/core/log/observability.service';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 import { IASTAnalysisService } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
 
@@ -131,13 +131,14 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
     private readonly llmResponseProcessor: LLMResponseProcessor;
     private readonly astAxios: AxiosASTService;
 
+    private readonly logger = createLogger(CodeAstAnalysisService.name);
+
     constructor(
         private readonly codeManagementService: CodeManagementService,
-        private readonly logger: PinoLoggerService,
         private readonly promptRunnerService: PromptRunnerService,
         private readonly observabilityService: ObservabilityService,
     ) {
-        this.llmResponseProcessor = new LLMResponseProcessor(logger);
+        this.llmResponseProcessor = new LLMResponseProcessor(this.logger);
         this.astAxios = new AxiosASTService();
     }
 

@@ -12,9 +12,9 @@ import {
     AST_ANALYSIS_SERVICE_TOKEN,
     IASTAnalysisService,
 } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
-import { TaskStatus } from '@libs/code-review/ee/ast/codeASTAnalysis.service';
+import { TaskStatus } from '@libs/ee/kodyAST/codeASTAnalysis.service';
 import { BaseFileReviewContextPreparation } from '@libs/code-review/infrastructure/adapters/services/code-analysis/file/base-file-review.abstract';
-import { LLM_ANALYSIS_SERVICE_TOKEN } from '@libs/code-review/infrastructure/llmAnalysis.service';
+import { LLM_ANALYSIS_SERVICE_TOKEN } from '@libs/code-review/infrastructure/adapters/services/llmAnalysis.service';
 import { WorkflowPausedError } from '@libs/core/infrastructure/pipeline/errors/workflow-paused.error';
 import { ReviewModeOptions } from '@libs/core/domain/interfaces/file-review-context-preparation.interface';
 import {

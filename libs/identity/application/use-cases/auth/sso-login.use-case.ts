@@ -4,24 +4,22 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { AuthProvider } from '@libs/core/domain/enums/auth-provider.enum';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
+import { createLogger } from '@kodus/flow';
 import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
 } from '@libs/identity/domain/auth/contracts/auth.service.contracts';
 
-
-
 import { SignUpUseCase } from './signup.use-case';
-
 
 @Injectable()
 export class SSOLoginUseCase implements IUseCase {
+    private readonly logger = createLogger(SSOLoginUseCase.name);
+
     constructor(
         @Inject(AUTH_SERVICE_TOKEN)
         private readonly authService: IAuthService,
         private readonly signUpUseCase: SignUpUseCase,
-        private readonly logger: PinoLoggerService,
     ) {}
 
     async execute(profile: any, organizationId: string) {

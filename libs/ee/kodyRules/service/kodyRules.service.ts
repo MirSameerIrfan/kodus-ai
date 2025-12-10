@@ -18,7 +18,7 @@ import {
     IRuleLikeService,
     RULE_LIKE_SERVICE_TOKEN,
 } from '@libs/kodyRules/domain/contracts/ruleLike.service.contract';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 import {
     IKodyRule,
     IKodyRules,
@@ -39,9 +39,15 @@ import {
     LibraryKodyRule,
 } from '@libs/core/infrastructure/config/types/general/kodyRules.type';
 import { ProgrammingLanguage } from '@libs/core/domain/enums';
+import {
+    CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
+    ICodeReviewSettingsLogService,
+} from '@libs/ee/codeReviewSettingsLog/domain/contracts/codeReviewSettingsLog.service.contract';
 
 @Injectable()
 export class KodyRulesService implements IKodyRulesService {
+    private readonly logger = createLogger(KodyRulesService.name);
+
     constructor(
         @Inject(KODY_RULES_REPOSITORY_TOKEN)
         private readonly kodyRulesRepository: IKodyRulesRepository,
@@ -51,8 +57,6 @@ export class KodyRulesService implements IKodyRulesService {
 
         @Inject(RULE_LIKE_SERVICE_TOKEN)
         private readonly ruleLikeService: IRuleLikeService,
-
-        private readonly logger: PinoLoggerService,
 
         private readonly kodyRulesValidationService: KodyRulesValidationService,
     ) {}

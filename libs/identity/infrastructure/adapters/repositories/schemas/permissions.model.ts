@@ -1,9 +1,8 @@
 import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
 
 import { UserModel } from './user.model';
-
-import { IPermissions } from '@/core/domain/permissions/types/permissions.types';
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
+import { IPermissions } from '@libs/identity/domain/permissions/types/permissions.types';
 
 @Entity('permissions')
 export class PermissionsModel extends CoreModel {

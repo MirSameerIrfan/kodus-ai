@@ -11,9 +11,14 @@ import {
 import { REQUEST } from '@nestjs/core';
 import { Response } from 'express';
 
-import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
-import { CodeReviewVersion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
+import { CodeReviewVersion } from '@/config/types/general/codeReview.type';
+import { UserRequest } from '@/config/types/http/user-request.type';
+import { DeleteRepositoryCodeReviewParameterUseCase } from '@/core/application/use-cases/parameters/delete-repository-code-review-parameter.use-case';
+import { GenerateKodusConfigFileUseCase } from '@/core/application/use-cases/parameters/generate-kodus-config-file.use-case';
+import { GetCodeReviewParameterUseCase } from '@/core/application/use-cases/parameters/get-code-review-parameter.use-case';
+import { GetDefaultConfigUseCase } from '@/core/application/use-cases/parameters/get-default-config.use-case';
+import { PreviewPrSummaryUseCase } from '@/core/application/use-cases/parameters/preview-pr-summary.use-case';
+import { ApplyCodeReviewPresetUseCase } from '@/core/application/use-cases/parameters/apply-code-review-preset.use-case';
 import {
     Action,
     ResourceType,
@@ -25,22 +30,13 @@ import {
 import {
     checkPermissions,
     checkRepoPermissions,
-} from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
-import { CreateOrUpdateParametersUseCase } from '@libs/organization/application/use-cases/create-or-update-use-case';
-import { DeleteRepositoryCodeReviewParameterUseCase } from '@libs/organization/application/use-cases/delete-repository-code-review-parameter.use-case';
-import { FindByKeyParametersUseCase } from '@libs/organization/application/use-cases/find-by-key-use-case';
-import { UpdateCodeReviewParameterRepositoriesUseCase } from '@libs/organization/application/use-cases/update-code-review-parameter-repositories-use-case';
-import { UpdateOrCreateCodeReviewParameterUseCase } from '@libs/organization/application/use-cases/update-or-create-code-review-parameter-use-case';
-
-
-import { ListCodeReviewAutomationLabelsWithStatusUseCase } from '@libs/organization/application/use-cases/list-code-review-automation-labels-with-status.use-case';
-
+} from '../../adapters/services/permissions/policy.handlers';
+import { ApplyCodeReviewPresetDto } from '../dtos/apply-code-review-preset.dto';
 import { CreateOrUpdateCodeReviewParameterDto } from '../dtos/create-or-update-code-review-parameter.dto';
 
 import { GenerateKodusConfigFileUseCase } from '@libs/organization/application/use-cases/generate-kodus-config-file.use-case';
 
 import { DeleteRepositoryCodeReviewParameterDto } from '../dtos/delete-repository-code-review-parameter.dto';
-
 
 import { PreviewPrSummaryDto } from '../dtos/preview-pr-summary.dto';
 
@@ -64,6 +60,7 @@ export class ParametersController {
         private readonly listCodeReviewAutomationLabelsWithStatusUseCase: ListCodeReviewAutomationLabelsWithStatusUseCase,
         private readonly getDefaultConfigUseCase: GetDefaultConfigUseCase,
         private readonly getCodeReviewParameterUseCase: GetCodeReviewParameterUseCase,
+        private readonly applyCodeReviewPresetUseCase: ApplyCodeReviewPresetUseCase,
     ) {}
 
     //#region Parameters
@@ -77,13 +74,22 @@ export class ParametersController {
         body: {
             key: ParametersKey;
             configValue: any;
-            organizationAndTeamData: { organizationId: string; teamId: string };
+            organizationAndTeamData: { teamId: string };
         },
     ) {
+        const organizationId = this.request?.user?.organization?.uuid;
+
+        if (!organizationId) {
+            throw new Error('Organization ID is missing from request');
+        }
+
         return await this.createOrUpdateParametersUseCase.execute(
             body.key,
             body.configValue,
-            body.organizationAndTeamData,
+            {
+                organizationId,
+                teamId: body.organizationAndTeamData.teamId,
+            },
         );
     }
 
@@ -128,9 +134,34 @@ export class ParametersController {
         @Body()
         body: CreateOrUpdateCodeReviewParameterDto,
     ) {
-        return await this.updateOrCreateCodeReviewParameterUseCase.execute(
-            body,
-        );
+        const organizationId = this.request?.user?.organization?.uuid;
+
+        if (!organizationId) {
+            throw new Error('Organization ID is missing from request');
+        }
+
+        return await this.updateOrCreateCodeReviewParameterUseCase.execute({
+            ...body,
+            organizationAndTeamData: {
+                ...body.organizationAndTeamData,
+                organizationId,
+            },
+        });
+    }
+
+    @Post('/apply-code-review-preset')
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Create,
+            resource: ResourceType.CodeReviewSettings,
+        }),
+    )
+    public async applyCodeReviewPreset(
+        @Body()
+        body: ApplyCodeReviewPresetDto,
+    ) {
+        return await this.applyCodeReviewPresetUseCase.execute(body);
     }
 
     @Post('/update-code-review-parameter-repositories')
@@ -141,12 +172,22 @@ export class ParametersController {
     public async UpdateCodeReviewParameterRepositories(
         @Body()
         body: {
-            organizationAndTeamData: { organizationId: string; teamId: string };
+            organizationAndTeamData: { teamId: string };
         },
     ) {
-        return await this.updateCodeReviewParameterRepositoriesUseCase.execute(
-            body,
-        );
+        const organizationId = this.request?.user?.organization?.uuid;
+
+        if (!organizationId) {
+            throw new Error('Organization ID is missing from request');
+        }
+
+        return await this.updateCodeReviewParameterRepositoriesUseCase.execute({
+            ...body,
+            organizationAndTeamData: {
+                ...body.organizationAndTeamData,
+                organizationId,
+            },
+        });
     }
 
     @Get('/code-review-parameter')
@@ -222,6 +263,15 @@ export class ParametersController {
         @Body()
         body: PreviewPrSummaryDto,
     ) {
-        return this.previewPrSummaryUseCase.execute(body);
+        const organizationId = this.request?.user?.organization?.uuid;
+
+        if (!organizationId) {
+            throw new Error('Organization ID is missing from request');
+        }
+
+        return this.previewPrSummaryUseCase.execute({
+            ...body,
+            organizationId,
+        });
     }
 }

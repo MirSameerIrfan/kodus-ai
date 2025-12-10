@@ -4,12 +4,12 @@ import { UseFilters } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 
 import { RabbitmqConsumeErrorFilter } from '@libs/core/infrastructure/filters/rabbitmq-consume-error.exception';
-import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
 import { IJobProcessorService } from '@libs/core/workflow/domain/contracts/job-processor.service.contract';
 import { JOB_PROCESSOR_SERVICE_TOKEN } from '@libs/core/workflow/domain/contracts/job-processor.service.contract';
 
 import { TransactionalInboxService } from './transactional-inbox.service';
+import { ObservabilityService } from '@libs/core/log/observability.service';
+import { createLogger } from '@kodus/flow';
 
 interface WorkflowJobMessage {
     jobId: string;
@@ -20,12 +20,13 @@ interface WorkflowJobMessage {
 @UseFilters(RabbitmqConsumeErrorFilter)
 @Injectable()
 export class WorkflowJobConsumer {
+    private readonly logger = createLogger(WorkflowJobConsumer.name);
+
     constructor(
         @Inject(JOB_PROCESSOR_SERVICE_TOKEN)
         private readonly jobProcessor: IJobProcessorService,
         private readonly inboxService: TransactionalInboxService,
         private readonly dataSource: DataSource,
-        private readonly logger: PinoLoggerService,
         private readonly observability: ObservabilityService,
     ) {}
 

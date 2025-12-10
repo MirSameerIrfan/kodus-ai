@@ -1,4 +1,3 @@
-import { LLMModelProvider, LLMProviderService } from '@kodus/kodus-common/llm';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createAppAuth } from '@octokit/auth-app';
@@ -43,17 +42,8 @@ import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
 } from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import {
-    ITeamService,
-    TEAM_SERVICE_TOKEN,
-} from '@libs/organization/domain/team/contracts/team.service.contract';
-import {
-    IParametersService,
-    PARAMETERS_SERVICE_TOKEN,
-} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { CacheService } from '@libs/core/cache/cache.service';
 import { MCPManagerService } from '@libs/mcp-server/services/mcp-manager.service';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { AuthMode } from '@libs/platform/domain/platformIntegrations/enums/codeManagement/authMode.enum';
 import { decrypt, encrypt } from '@libs/common/utils/crypto';
@@ -79,7 +69,6 @@ import {
 import { IntegrationEntity } from '@libs/integrations/domain/integrations/entities/integration.entity';
 import { CodeManagementConnectionStatus } from '@libs/common/utils/decorators/validate-code-management-integration.decorator';
 import { extractRepoData, extractRepoNames } from '@libs/common/utils/helpers';
-import { safelyParseMessageContent } from '@libs/common/utils/safelyParseMessageContent';
 import {
     RepositoryFile,
     RepositoryFileWithContent,
@@ -103,6 +92,8 @@ import {
 } from '@libs/common/utils/glob-utils';
 import { GitCloneParams } from '@libs/platform/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
 import { IRepository } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
+import { createLogger } from '@kodus/flow';
+import { Workflow } from '@libs/platform/domain/platformIntegrations/types/codeManagement/workflow.type';
 
 interface GitHubAuthResponse {
     token: string;
@@ -135,10 +126,13 @@ export class GithubService
             | 'getUserById'
             | 'getLanguageRepository'
             | 'createSingleIssueComment'
+            | 'getWorkflows'
         >
 {
     private readonly MAX_RETRY_ATTEMPTS = 2;
     private readonly TTL = 50 * 60 * 1000; // 50 minutes
+
+    private readonly logger = createLogger(GithubService.name);
 
     constructor(
         @Inject(INTEGRATION_SERVICE_TOKEN)
@@ -149,19 +143,7 @@ export class GithubService
 
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
         private readonly integrationConfigService: IIntegrationConfigService,
-
-        @Inject(TEAM_SERVICE_TOKEN)
-        private readonly teamService: ITeamService,
-
-        @Inject(PARAMETERS_SERVICE_TOKEN)
-        private readonly parameterService: IParametersService,
-
-        private readonly llmProviderService: LLMProviderService,
-
         private readonly cacheService: CacheService,
-
-        private readonly promptService: PromptService,
-        private readonly logger: PinoLoggerService,
         private readonly configService: ConfigService,
         private readonly mcpManagerService?: MCPManagerService,
     ) {}
@@ -1402,6 +1384,11 @@ export class GithubService
             visibility?: 'all' | 'public' | 'private';
             language?: string;
         };
+        options?: {
+            includePullRequestMetrics?: {
+                lastNDays?: number;
+            };
+        };
     }): Promise<Repositories[]> {
         try {
             const githubAuthDetail = await this.getGithubAuthDetails(
@@ -1487,6 +1474,7 @@ export class GithubService
                     (repository: { name: string }) =>
                         repository?.name === repo?.name,
                 ),
+                lastActivityAt: (repo as any)?.pushed_at || repo.updated_at,
             }));
         } catch (err) {
             throw new BadRequestException(err);
@@ -2331,186 +2319,6 @@ export class GithubService
         }
     }
 
-    async getWorkflows(organizationAndTeamData: OrganizationAndTeamData) {
-        const githubAuthDetail = await this.getGithubAuthDetails(
-            organizationAndTeamData,
-        );
-
-        const repositories =
-            await this.findOneByOrganizationAndTeamDataAndConfigKey(
-                organizationAndTeamData,
-                IntegrationConfigKey.REPOSITORIES,
-            );
-
-        if (!githubAuthDetail || !repositories) {
-            return null;
-        }
-
-        const octokit = await this.instanceOctokit(organizationAndTeamData);
-
-        const formatRepo = extractRepoNames(repositories);
-        const workflows = [];
-
-        for (const repo of formatRepo) {
-            let workflowsFromRepo;
-            try {
-                workflowsFromRepo = (
-                    await octokit.actions.listRepoWorkflows({
-                        owner: githubAuthDetail?.org,
-                        repo: repo,
-                    })
-                )?.data;
-            } catch (error) {
-                this.logger.warn({
-                    message: `Error fetching workflows for repository ${repo}: ${error}`,
-                    context: GithubService.name,
-                    serviceName: 'GetWorkflows',
-                    metadata: {
-                        teamId: organizationAndTeamData.teamId,
-                        repo,
-                    },
-                });
-                continue;
-            }
-
-            const workflowsFromRepoActive =
-                workflowsFromRepo?.workflows?.filter(
-                    (workflow) => workflow.state === 'active',
-                );
-
-            if (workflowsFromRepoActive.length <= 0) {
-                continue;
-            }
-
-            workflows.push({
-                repo: repo,
-                workflows: workflowsFromRepoActive,
-            });
-        }
-
-        if (!workflows || workflows.length <= 0) {
-            return [];
-        }
-
-        const llm = this.llmProviderService.getLLMProvider({
-            model: LLMModelProvider.OPENAI_GPT_4O,
-            temperature: 0,
-            jsonMode: true,
-        });
-
-        const promptWorkflows =
-            await this.promptService.getCompleteContextPromptByName(
-                'prompt_getProductionWorkflows',
-                {
-                    organizationAndTeamData,
-                    payload: JSON.stringify(workflows),
-                    promptIsForChat: false,
-                },
-            );
-
-        const chain = await llm.invoke(
-            await promptWorkflows.format({
-                organizationAndTeamData,
-                payload: JSON.stringify(workflows),
-                promptIsForChat: false,
-            }),
-            {
-                metadata: {
-                    module: 'Setup',
-                    submodule: 'GetProductionDeployment',
-                },
-            },
-        );
-
-        return safelyParseMessageContent(chain.content).repos;
-    }
-
-    async getReleases(organizationAndTeamData: OrganizationAndTeamData) {
-        const githubAuthDetail = await this.getGithubAuthDetails(
-            organizationAndTeamData,
-        );
-
-        const repositories =
-            await this.findOneByOrganizationAndTeamDataAndConfigKey(
-                organizationAndTeamData,
-                IntegrationConfigKey.REPOSITORIES,
-            );
-
-        if (!githubAuthDetail || !repositories) {
-            return null;
-        }
-
-        const octokit = await this.instanceOctokit(organizationAndTeamData);
-
-        const formatRepo = extractRepoNames(repositories);
-        const releases = [];
-
-        for (const repo of formatRepo) {
-            const releasesFromRepo = await octokit.paginate(
-                octokit.repos.listReleases,
-                {
-                    owner: githubAuthDetail?.org,
-                    repo: repo,
-                },
-            );
-
-            releases.push({
-                repo: repo,
-                releases: releasesFromRepo.filter((release) => {
-                    return (
-                        moment().diff(moment(release.created_at), 'days') <= 90
-                    );
-                }),
-            });
-        }
-
-        if (!releases || releases.length <= 0) {
-            return [];
-        }
-
-        const llm = this.llmProviderService.getLLMProvider({
-            model: LLMModelProvider.OPENAI_GPT_4O,
-            temperature: 0,
-            jsonMode: true,
-        });
-
-        const promptReleases =
-            await this.promptService.getCompleteContextPromptByName(
-                'prompt_getProductionReleases',
-                {
-                    organizationAndTeamData,
-                    payload: JSON.stringify(releases),
-                    promptIsForChat: false,
-                },
-            );
-
-        const chain = await llm.invoke(
-            await promptReleases.format({
-                organizationAndTeamData,
-                payload: JSON.stringify(releases),
-                promptIsForChat: false,
-            }),
-            {
-                metadata: {
-                    module: 'Setup',
-                    submodule: 'GetProductionReleases',
-                },
-            },
-        );
-
-        const repos = safelyParseMessageContent(chain.content).repos;
-
-        if (
-            repos.filter((repo) => {
-                return repo.productionReleases;
-            }).length <= 0
-        ) {
-            return [];
-        }
-
-        return repos;
-    }
-
     async getCommitsForTagName(
         octokit: any,
         owner: string,
@@ -2591,13 +2399,13 @@ export class GithubService
     async getPullRequestsWithFiles(
         params,
     ): Promise<PullRequestWithFiles[] | null> {
-        let repositories = null;
-
         if (!params?.organizationAndTeamData.organizationId) {
             return null;
         }
 
         const filters = params?.filters ?? {};
+        const perRepoLimit = Math.min(Math.max(filters?.limit || 5, 1), 10);
+        const useFastPath = Boolean(filters?.repositoryId || filters?.limit);
         const { startDate, endDate } = filters?.period || {};
         const prStatus = filters?.prStatus || 'all';
 
@@ -2605,16 +2413,30 @@ export class GithubService
             params.organizationAndTeamData,
         );
 
-        repositories = await this.findOneByOrganizationAndTeamDataAndConfigKey(
-            params?.organizationAndTeamData,
-            IntegrationConfigKey.REPOSITORIES,
-        );
+        const repositories =
+            (await this.findOneByOrganizationAndTeamDataAndConfigKey(
+                params?.organizationAndTeamData,
+                IntegrationConfigKey.REPOSITORIES,
+            )) || [];
 
         if (!githubAuthDetail || !repositories) {
             return null;
         }
 
         const formatRepo = extractRepoNames(repositories);
+        const repoFilter = filters?.repositoryId
+            ? new Set([String(filters.repositoryId)])
+            : null;
+
+        const selectedRepos = formatRepo.filter((repo) => {
+            if (!repoFilter) return true;
+            const data = extractRepoData(repositories, repo, 'github');
+            return (
+                repoFilter.has(String(data?.id)) ||
+                repoFilter.has(String(data?.name)) ||
+                repoFilter.has(String(repo))
+            );
+        });
 
         const octokit = await this.instanceOctokit(
             params?.organizationAndTeamData,
@@ -2622,13 +2444,59 @@ export class GithubService
 
         const pullRequestsWithFiles: PullRequestWithFiles[] = [];
 
-        for (const repo of formatRepo) {
+        for (const repo of selectedRepos) {
             const respositoryData = extractRepoData(
                 repositories,
                 repo,
                 'github',
             );
 
+            // Fast path: limited PRs for specific repo/limit (used in onboarding presets)
+            if (useFastPath) {
+                const pullRequests =
+                    (
+                        await octokit.pulls.list({
+                            owner: githubAuthDetail.org,
+                            repo,
+                            state: 'all',
+                            sort: 'created',
+                            direction: 'desc',
+                            per_page: perRepoLimit,
+                            page: 1,
+                        })
+                    )?.data ?? [];
+
+                const pullRequestDetails = await Promise.all(
+                    pullRequests.map(async (pullRequest) => {
+                        const files = filters?.skipFiles
+                            ? []
+                            : await this.getPullRequestFiles(
+                                  octokit,
+                                  githubAuthDetail.org,
+                                  repo,
+                                  pullRequest?.number,
+                              );
+                        return {
+                            id: pullRequest.id,
+                            pull_number: pullRequest?.number,
+                            state: pullRequest?.state as any,
+                            title: pullRequest?.title,
+                            repository: repo,
+                            repositoryData: respositoryData,
+                            pullRequestFiles: files,
+                            created_at: pullRequest?.created_at,
+                            updated_at: pullRequest?.updated_at,
+                            closed_at: pullRequest?.closed_at,
+                            merged_at: pullRequest?.merged_at,
+                        };
+                    }),
+                );
+
+                pullRequestsWithFiles.push(...pullRequestDetails);
+                continue;
+            }
+
+            // Legacy path: full pagination for all configured repos
             const pullRequests = await this.getAllPrMessages(
                 octokit,
                 githubAuthDetail.org,
@@ -2649,11 +2517,15 @@ export class GithubService
                     return {
                         id: pullRequest.id,
                         pull_number: pullRequest?.number,
-                        state: pullRequest?.state,
+                        state: pullRequest?.state as any,
                         title: pullRequest?.title,
                         repository: repo,
                         repositoryData: respositoryData,
                         pullRequestFiles: files,
+                        created_at: pullRequest?.created_at,
+                        updated_at: pullRequest?.updated_at,
+                        closed_at: pullRequest?.closed_at,
+                        merged_at: pullRequest?.merged_at,
                     };
                 }),
             );
@@ -4864,6 +4736,35 @@ export class GithubService
         userName: string;
     }): Promise<any> {
         throw new Error('Method not implemented.');
+    }
+
+    async getCurrentUser(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+    }): Promise<any | null> {
+        try {
+            const githubAuthDetail = await this.getGithubAuthDetails(
+                params.organizationAndTeamData,
+            );
+
+            if (!githubAuthDetail?.authToken) {
+                return null;
+            }
+
+            const token = decrypt(githubAuthDetail.authToken);
+            const userOctokit = new Octokit({ auth: token });
+            const { data } = await userOctokit.rest.users.getAuthenticated();
+
+            return data || null;
+        } catch (error) {
+            this.logger.error({
+                message: 'Error retrieving current GitHub user',
+                context: GithubService.name,
+                serviceName: 'GithubService getCurrentUser',
+                error: error,
+                metadata: params,
+            });
+            return null;
+        }
     }
 
     async getPullRequestsByRepository(params: {

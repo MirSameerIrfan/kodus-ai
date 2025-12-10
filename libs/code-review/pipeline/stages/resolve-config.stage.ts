@@ -20,7 +20,7 @@ import {
     DRY_RUN_SERVICE_TOKEN,
     IDryRunService,
 } from '@libs/dryRun/domain/contracts/dryRun.service.contract';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 import { ParametersKey } from '@libs/core/domain/enums';
 import {
     AutomationMessage,
@@ -34,6 +34,8 @@ import { CodeReviewPipelineContext } from '../context/code-review-pipeline.conte
 export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineContext> {
     readonly stageName = 'ResolveConfigStage';
 
+    private readonly logger = createLogger(ResolveConfigStage.name);
+
     constructor(
         @Inject(CODE_BASE_CONFIG_SERVICE_TOKEN)
         private readonly codeBaseConfigService: ICodeBaseConfigService,
@@ -46,7 +48,6 @@ export class ResolveConfigStage extends BasePipelineStage<CodeReviewPipelineCont
 
         @Inject(DRY_RUN_SERVICE_TOKEN)
         private readonly dryRunService: IDryRunService,
-        private readonly logger: PinoLoggerService,
     ) {
         super();
     }

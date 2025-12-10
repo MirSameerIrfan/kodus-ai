@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
@@ -23,9 +23,9 @@ import { CodeReviewPipelineContext } from '../context/code-review-pipeline.conte
 export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipelineContext> {
     readonly stageName = 'CreatePrLevelCommentsStage';
 
-    constructor(
-        private readonly logger: PinoLoggerService,
+    private readonly logger = createLogger(CreatePrLevelCommentsStage.name);
 
+    constructor(
         @Inject(COMMENT_MANAGER_SERVICE_TOKEN)
         private readonly commentManagerService: ICommentManagerService,
 

@@ -21,16 +21,13 @@ import { OutboxRelayService } from './infrastructure/outbox-relay.service';
 import { JobProcessorRouterService } from './infrastructure/job-processor-router.service';
 import { WebhookProcessingJobProcessorService } from './infrastructure/webhook-processing-job-processor.service';
 
-// Use Cases
-import { EnqueueCodeReviewJobUseCase } from './application/use-cases/enqueue-code-review-job.use-case.ts';
-import { ProcessWorkflowJobUseCase } from './application/use-cases/process-workflow-job.use-case.ts';
-import { GetJobStatusUseCase } from './application/use-cases/get-job-status.use-case.ts';
-
-// Contracts
 import { JOB_QUEUE_SERVICE_TOKEN } from './domain/contracts/job-queue.service.contract';
 import { JOB_STATUS_SERVICE_TOKEN } from './domain/contracts/job-status.service.contract';
 import { JOB_PROCESSOR_SERVICE_TOKEN } from './domain/contracts/job-processor.service.contract';
 import { ERROR_CLASSIFIER_SERVICE_TOKEN } from './domain/contracts/error-classifier.service.contract';
+import { EnqueueCodeReviewJobUseCase } from './application/use-cases/enqueue-code-review-job.use-case';
+import { ProcessWorkflowJobUseCase } from './application/use-cases/process-workflow-job.use-case';
+import { GetJobStatusUseCase } from './application/use-cases/get-job-status.use-case';
 
 @Global()
 @Module({

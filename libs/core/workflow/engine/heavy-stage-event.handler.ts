@@ -2,15 +2,15 @@ import { RabbitSubscribe, AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { createLogger } from '@kodus/flow';
 import { Injectable, Optional, Inject } from '@nestjs/common';
 
-import { JobStatus } from '../../domain/enums/job-status.enum';
-import { StageCompletedEvent } from '../../domain/interfaces/stage-completed-event.interface';
-import { PipelineStateManager } from './state/pipeline-state-manager.service';
-import { EventBufferService } from '../event-buffer.service';
 import { ObservabilityService } from '@libs/core/log/observability.service';
 import {
-    WORKFLOW_JOB_REPOSITORY_TOKEN,
     IWorkflowJobRepository,
-} from '../../domain/contracts/workflow-job.repository.contract';
+    WORKFLOW_JOB_REPOSITORY_TOKEN,
+} from '../domain/contracts/workflow-job.repository.contract';
+import { PipelineStateManager } from './state/pipeline-state-manager.service';
+import { EventBufferService } from './event-buffer.service';
+import { StageCompletedEvent } from '../domain/interfaces/stage-completed-event.interface';
+import { JobStatus } from '../domain/enums/job-status.enum';
 
 /**
  * Generic handler for heavy stage completion events

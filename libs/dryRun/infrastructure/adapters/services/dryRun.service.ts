@@ -26,8 +26,7 @@ import {
     FileChange,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
-import { deepSort } from '@libs/core/utils/deep';
+
 import {
     DRY_RUN_REPOSITORY_TOKEN,
     IDryRunRepository,
@@ -45,9 +44,13 @@ import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { deepSort } from '@libs/common/utils/deep';
+import { createLogger } from '@kodus/flow';
 
 @Injectable()
 export class DryRunService implements IDryRunService {
+    private readonly logger = createLogger(DryRunService.name);
+
     constructor(
         @Inject(DRY_RUN_REPOSITORY_TOKEN)
         private readonly dryRunRepository: IDryRunRepository,
@@ -60,8 +63,6 @@ export class DryRunService implements IDryRunService {
 
         @Inject(CODE_BASE_CONFIG_SERVICE_TOKEN)
         private readonly codeBaseConfigService: ICodeBaseConfigService,
-
-        private readonly logger: PinoLoggerService,
 
         private readonly eventEmitter: EventEmitter2,
     ) {}

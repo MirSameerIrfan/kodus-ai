@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 
 import { KodyRulesScope } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 import { ReviewModeResponse } from '@libs/core/infrastructure/config/types/general/codeReview.type';
@@ -16,11 +16,10 @@ import {
 
 @Injectable()
 export class ProcessFilesPrLevelReviewStage extends BasePipelineStage<CodeReviewPipelineContext> {
+    private readonly logger = createLogger(ProcessFilesPrLevelReviewStage.name);
     readonly stageName = 'PRLevelReviewStage';
 
     constructor(
-        private readonly logger: PinoLoggerService,
-
         @Inject(KODY_RULES_PR_LEVEL_ANALYSIS_SERVICE_TOKEN)
         private readonly kodyRulesPrLevelAnalysisService: KodyRulesPrLevelAnalysisService,
 

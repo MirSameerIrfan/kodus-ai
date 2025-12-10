@@ -1,21 +1,21 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { PULL_REQUEST_MANAGER_SERVICE_TOKEN } from '@/core/domain/codeBase/contracts/PullRequestManagerService.contract';
+import { createLogger } from '@kodus/flow';
+import { PULL_REQUEST_MANAGER_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/PullRequestManagerService.contract';
+import { PullRequestHandlerService } from '@libs/code-review/infrastructure/adapters/services/pullRequestManager.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
-import { OrganizationParametersAutoAssignConfig } from '@/core/domain/organizationParameters/types/organizationParameters.types';
-import { PullRequestHandlerService } from '@/core/infrastructure/adapters/services/codeBase/pullRequestManager.service';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
+} from '@libs/organization/domain/organizationParameters/contracts/organizationParameters.service.contract';
+import { OrganizationParametersKey } from '@libs/core/domain/enums';
+import { OrganizationParametersAutoAssignConfig } from '@libs/organization/domain/organizationParameters/types/organizationParameters.types';
 
 @Injectable()
 export class IgnoreBotsUseCase {
-    constructor(
-        private readonly logger: PinoLoggerService,
+    private readonly logger = createLogger(IgnoreBotsUseCase.name);
 
+    constructor(
         @Inject(PULL_REQUEST_MANAGER_SERVICE_TOKEN)
         private readonly pullRequestHandlerService: PullRequestHandlerService,
 
@@ -82,6 +82,7 @@ export class IgnoreBotsUseCase {
                 {
                     enabled: false,
                     ignoredUsers: botIds,
+                    allowedUsers: [],
                 },
                 organizationAndTeamData,
             );
@@ -97,6 +98,9 @@ export class IgnoreBotsUseCase {
 
             const autoLicenseConfig =
                 autoLicenseEntity.configValue as OrganizationParametersAutoAssignConfig;
+
+            autoLicenseConfig.allowedUsers =
+                autoLicenseConfig.allowedUsers || [];
 
             const allIgnored = new Set([
                 ...autoLicenseConfig.ignoredUsers,

@@ -6,8 +6,7 @@ import { mapSimpleModelToEntity } from '@libs/core/infrastructure/repositories/m
 import { IAuthRepository } from '@libs/identity/domain/auth/contracts/auth.repository.contracts';
 import { AuthEntity } from '@libs/identity/domain/auth/entities/auth.entity';
 import { IAuth } from '@libs/identity/domain/auth/interfaces/auth.interface';
-
-import { AuthModel } from './schema/auth.model';
+import { AuthModel } from './schemas/auth.model';
 
 @Injectable()
 export class AuthRepository implements IAuthRepository {

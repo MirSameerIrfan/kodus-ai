@@ -1,16 +1,14 @@
+import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 
-import { InboxMessageRepository } from '@libs/core/infrastructure/database/typeorm/repositories/inbox-message.repository';
-import { InboxMessageModel } from '@libs/core/infrastructure/database/typeorm/repositories/schema/inbox-message.model';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
-
 @Injectable()
 export class TransactionalInboxService {
+    private readonly logger = createLogger(TransactionalInboxService.name);
+
     constructor(
         private readonly dataSource: DataSource,
         private readonly inboxRepository: InboxMessageRepository,
-        private readonly logger: PinoLoggerService,
     ) {}
 
     /**

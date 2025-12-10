@@ -1,20 +1,20 @@
 import { Inject, Injectable } from '@nestjs/common';
 
 import { ISuggestionByPR } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
-import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/context/code-review-pipeline.context';
+import { CodeReviewPipelineContext } from '@libs/code-review/pipeline/context/code-review-pipeline.context';
 import { PlatformType } from '@libs/core/domain/enums';
 import {
     CodeSuggestion,
     Comment,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
-import { IntegrationServiceDecorator } from '@libs/core/utils/decorators/integration-service.decorator';
+import { createLogger } from '@kodus/flow';
+import { IntegrationServiceDecorator } from '@libs/common/utils/decorators/integration-service.decorator';
 import {
     DRY_RUN_SERVICE_TOKEN,
     IDryRunService,
 } from '@libs/dryRun/domain/contracts/dryRun.service.contract';
-import { ICodeManagementService } from '@libs/platform/domain/interfaces/code-management.interface';
+import { ICodeManagementService } from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
 
 type PartialICodeManagementService = Pick<
     ICodeManagementService,
@@ -31,11 +31,11 @@ type PartialICodeManagementService = Pick<
 export class InternalCodeManagementService
     implements PartialICodeManagementService
 {
+    private readonly logger = createLogger(InternalCodeManagementService.name);
+
     constructor(
         @Inject(DRY_RUN_SERVICE_TOKEN)
         private readonly dryRunService: IDryRunService,
-
-        private readonly logger: PinoLoggerService,
     ) {}
 
     minimizeComment(params: any): Promise<any | null> {

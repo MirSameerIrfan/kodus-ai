@@ -13,7 +13,7 @@ import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/organizationParameters/contracts/organizationParameters.service.contract';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 
 export enum PlanType {
     FREE = 'free',
@@ -53,12 +53,13 @@ export class PermissionValidationService {
     private readonly isCloud: boolean;
     private readonly isDevelopment: boolean;
 
+    private readonly logger = createLogger(PermissionValidationService.name);
+
     constructor(
         @Inject(LICENSE_SERVICE_TOKEN)
         private readonly licenseService: ILicenseService,
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
         private readonly organizationParametersService: IOrganizationParametersService,
-        private readonly logger: PinoLoggerService,
     ) {
         this.isCloud = environment.API_CLOUD_MODE;
         this.isDevelopment = environment.API_DEVELOPMENT_MODE;

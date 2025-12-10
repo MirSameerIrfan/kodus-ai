@@ -10,11 +10,11 @@ import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { getMappedPlatform } from '@libs/core/utils/webhooks';
+import { getMappedPlatform } from '@libs/common/utils/webhooks';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
+} from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
 import {
     contextToGenerateIssues,
     IRepositoryToIssues,

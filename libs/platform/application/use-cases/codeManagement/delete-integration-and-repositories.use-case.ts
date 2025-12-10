@@ -5,13 +5,15 @@ import { PULL_REQUEST_MESSAGES_SERVICE_TOKEN } from '@libs/code-review/domain/pu
 import { IPullRequestMessagesService } from '@libs/code-review/domain/pullRequestMessages/contracts/pullRequestMessages.service.contract';
 import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import { ConfigLevel } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
-import { KODY_RULES_SERVICE_TOKEN } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
-import { IKodyRulesService } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
-import { KodyRulesStatus } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
 import { IParametersService } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { PARAMETERS_SERVICE_TOKEN } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 
 import { DeleteIntegrationUseCase } from './delete-integration.use-case';
+import {
+    IKodyRulesService,
+    KODY_RULES_SERVICE_TOKEN,
+} from '@libs/kodyRules/domain/contracts/kodyRules.service.contract';
+import { KodyRulesStatus } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 
 @Injectable()
 export class DeleteIntegrationAndRepositoriesUseCase {

@@ -3,10 +3,9 @@ import {
     getModelCapabilities,
     ReasoningConfig,
 } from '@kodus/kodus-common/llm';
+import { ProviderService } from '@libs/core/infrastructure/services/providers/provider.service';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import axios from 'axios';
-
-import { ProviderService } from '@/core/infrastructure/adapters/services/providers/provider.service';
 
 // Interfaces para as respostas das APIs
 interface OpenAIModel {

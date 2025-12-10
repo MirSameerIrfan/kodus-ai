@@ -1,7 +1,7 @@
-import { CodeReviewContextPackService } from '@libs/core/ai-engine/services/context/code-review-context-pack.service';
+import { CodeReviewContextPackService } from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context-pack.service';
 import { AnalysisContext } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { IKodyRule } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 
 export interface LoadedReference {
@@ -17,8 +17,9 @@ export interface LoadedReferencesResult {
 
 @Injectable()
 export class ExternalReferenceLoaderService {
+    private readonly logger = createLogger(ExternalReferenceLoaderService.name);
+
     constructor(
-        private readonly logger: PinoLoggerService,
         private readonly contextPackService: CodeReviewContextPackService,
     ) {}
 

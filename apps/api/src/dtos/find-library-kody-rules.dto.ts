@@ -1,9 +1,8 @@
-import { Transform } from 'class-transformer';
 import { IsString, IsOptional, IsArray } from 'class-validator';
-
-import { PaginationDto } from '@libs/core/domain/dtos/pagination.dto';
+import { Transform } from 'class-transformer';
 import { ProgrammingLanguage } from '@libs/core/domain/enums/programming-language.enum';
-import { KodyRuleFilters } from '@libs/core/infrastructure/config/types/kodyRules.type';
+import { PaginationDto } from '@libs/core/domain/dtos/pagination.dto';
+import { KodyRuleFilters } from '@libs/core/infrastructure/config/types/general/kodyRules.type';
 
 const transformToArray = ({ value }: { value: unknown }): string[] => {
     if (typeof value === 'string') {

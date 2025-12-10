@@ -2,19 +2,19 @@ import { Inject, Injectable } from '@nestjs/common';
 import { FindManyOptions } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 
-import { STATUS } from '@/config/types/database/status.type';
-import { TeamAutomationEntity } from '@/core/domain/automation/entities/team-automation.entity';
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
+import { TeamAutomationEntity } from '@libs/automation/domain/teamAutomation/entities/team-automation.entity';
 import {
     ITeamRepository,
     TEAM_REPOSITORY_TOKEN,
-} from '@/core/domain/team/contracts/team.repository.contract';
-import { ITeamService } from '@/core/domain/team/contracts/team.service.contract';
-import { TeamEntity } from '@/core/domain/team/entities/team.entity';
+} from '@libs/organization/domain/team/contracts/team.repository.contract';
+import { ITeamService } from '@libs/organization/domain/team/contracts/team.service.contract';
+import { TeamEntity } from '@libs/organization/domain/team/entities/team.entity';
 import {
     ITeam,
     ITeamWithIntegrations,
     TeamsFilter,
-} from '@/core/domain/team/interfaces/team.interface';
+} from '@libs/organization/domain/team/interfaces/team.interface';
 
 @Injectable()
 export class TeamService implements ITeamService {

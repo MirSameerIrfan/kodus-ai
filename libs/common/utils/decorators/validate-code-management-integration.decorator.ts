@@ -2,8 +2,7 @@ import { SimpleLogger } from '@kodus/flow/dist/observability/logger';
 
 import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 import { ConfigurationMissingException } from '@libs/core/infrastructure/filters/configuration-missing.exception';
-import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
-
+import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 
 import { extractOrganizationAndTeamData } from './extractOrganizationAndTeamData.helper';
 

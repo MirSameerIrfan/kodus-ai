@@ -3,15 +3,14 @@ import { Injectable, UseFilters } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 
-import { WorkflowQueueConfig } from '@libs/core/infrastructure/config/types/environment/workflow-queue.type';
-import { WorkflowJobRepository } from '@libs/core/infrastructure/database/typeorm/repositories/workflow-job.repository';
 import { RabbitmqConsumeErrorFilter } from '@libs/core/infrastructure/filters/rabbitmq-consume-error.exception';
-import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
+import { createLogger } from '@kodus/flow';
 import { ProcessWorkflowJobUseCase } from '@libs/core/workflow/application/use-cases/process-workflow-job.use-case';
 import { JobStatus } from '@libs/core/workflow/domain/enums/job-status.enum';
 
 import { TransactionalInboxService } from './transactional-inbox.service';
+import { ObservabilityService } from '@libs/core/log/observability.service';
+import { WorkflowQueueConfig } from '@libs/core/infrastructure/config/types/general/workflow-queue.type';
 
 interface WorkflowResumedMessage {
     jobId: string;
@@ -21,6 +20,7 @@ interface WorkflowResumedMessage {
 @UseFilters(RabbitmqConsumeErrorFilter)
 @Injectable()
 export class WorkflowResumedConsumer {
+    private readonly logger = createLogger(WorkflowResumedConsumer.name);
     private readonly workerEnabled: boolean;
     private readonly consumerId = 'workflow-resumed-consumer';
 
@@ -29,7 +29,6 @@ export class WorkflowResumedConsumer {
         private readonly transactionalInboxService: TransactionalInboxService,
         private readonly jobRepository: WorkflowJobRepository,
         private readonly dataSource: DataSource,
-        private readonly logger: PinoLoggerService,
         private readonly configService: ConfigService,
         private readonly observability: ObservabilityService,
     ) {

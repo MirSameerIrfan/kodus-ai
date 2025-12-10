@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
+import { createLogger } from '@kodus/flow';
 import {
     IJobStatusService,
     JOB_STATUS_SERVICE_TOKEN,
@@ -28,10 +28,11 @@ export interface GetJobStatusOutput {
 
 @Injectable()
 export class GetJobStatusUseCase implements IUseCase {
+    private readonly logger = createLogger(GetJobStatusUseCase.name);
+
     constructor(
         @Inject(JOB_STATUS_SERVICE_TOKEN)
         private readonly jobStatusService: IJobStatusService,
-        private readonly logger: PinoLoggerService,
     ) {}
 
     async execute(input: GetJobStatusInput): Promise<GetJobStatusOutput> {

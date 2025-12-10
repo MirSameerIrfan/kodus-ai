@@ -12,7 +12,7 @@ import {
     CODE_REVIEW_SETTINGS_LOG_REPOSITORY_TOKEN,
     ICodeReviewSettingsLogRepository,
 } from '@libs/ee/codeReviewSettingsLog/domain/contracts/codeReviewSettingsLog.repository.contract';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 import { Injectable, Inject } from '@nestjs/common';
 
 export interface ChangedDataToExport {
@@ -41,12 +41,13 @@ export interface UnifiedLogParams extends BaseLogParams {
 
 @Injectable()
 export class UnifiedLogHandler {
+    private readonly logger = createLogger(UnifiedLogHandler.name);
+
     constructor(
         @Inject(CODE_REVIEW_SETTINGS_LOG_REPOSITORY_TOKEN)
         private readonly codeReviewSettingsLogRepository: ICodeReviewSettingsLogRepository,
         @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
         private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
-        private readonly logger: PinoLoggerService,
     ) {}
 
     public async logAction(params: UnifiedLogParams): Promise<void> {

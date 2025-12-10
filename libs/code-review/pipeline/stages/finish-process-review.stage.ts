@@ -1,7 +1,7 @@
 import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
 import { Injectable } from '@nestjs/common';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { CommentResult } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { PullRequestReviewState } from '@libs/platform/domain/platformIntegrations/types/codeManagement/pullRequests.type';
@@ -12,10 +12,9 @@ import { CodeReviewPipelineContext } from '../context/code-review-pipeline.conte
 export class RequestChangesOrApproveStage extends BasePipelineStage<CodeReviewPipelineContext> {
     readonly stageName = 'RequestChangesOrApproveStage';
 
-    constructor(
-        private readonly codeManagementService: CodeManagementService,
-        private readonly logger: PinoLoggerService,
-    ) {
+    private readonly logger = createLogger(RequestChangesOrApproveStage.name);
+
+    constructor(private readonly codeManagementService: CodeManagementService) {
         super();
     }
 

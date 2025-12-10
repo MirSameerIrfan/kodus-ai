@@ -9,8 +9,8 @@ import { RabbitmqConsumeErrorFilter } from '@libs/core/infrastructure/filters/ra
 import { CodeReviewFeedbackConsumer } from '@libs/core/infrastructure/queue/messageBroker/consumers/codeReviewFeedback.consumer';
 import { MessageBrokerService } from '@libs/core/infrastructure/queue/messageBroker/messageBroker.service';
 
-import { AutomationStrategyModule } from './automationStrategy.module';
-import { CodeReviewFeedbackModule } from './codeReviewFeedback.module';
+import { AutomationStrategyModule } from '@libs/automation/modules/automationStrategy.module';
+import { CodeReviewFeedbackModule } from '@libs/code-review/modules/codeReviewFeedback.module';
 
 @Global()
 @Module({})

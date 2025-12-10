@@ -144,6 +144,9 @@ KEYS=(
 
     "/prod/kodus-orchestrator/API_URL"
     "/prod/kodus-orchestrator/API_FRONTEND_URL"
+
+    "/prod/kodus-orchestrator/API_GROQ_BASE_URL"
+    "/prod/kodus-orchestrator/API_GROQ_API_KEY"
 )
 
 # Lista de todas as chaves que você precisa

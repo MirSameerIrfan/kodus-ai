@@ -4,23 +4,23 @@ import { z } from 'zod';
 
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
-    IKodyRulesService,
-    KODY_RULES_SERVICE_TOKEN,
-} from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
+    KodyRuleSeverity,
+    CreateKodyRuleDto,
+} from '@libs/ee/kodyRules/dtos/create-kody-rule.dto';
+
+import { BaseResponse, McpToolDefinition } from '../types/mcp-tool.interface';
+import { wrapToolHandler } from '../utils/mcp-protocol.utils';
 import {
     IKodyRule,
     IKodyRulesExample,
     KodyRulesOrigin,
     KodyRulesScope,
     KodyRulesStatus,
-} from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
+} from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 import {
-    KodyRuleSeverity,
-    CreateKodyRuleDto,
-} from '@libs/kody-rules/infrastructure/http/dtos/create-kody-rule.dto';
-
-import { BaseResponse, McpToolDefinition } from '../types/mcp-tool.interface';
-import { wrapToolHandler } from '../utils/mcp-protocol.utils';
+    IKodyRulesService,
+    KODY_RULES_SERVICE_TOKEN,
+} from '@libs/kodyRules/domain/contracts/kodyRules.service.contract';
 
 type KodyRuleInput = Required<
     Omit<

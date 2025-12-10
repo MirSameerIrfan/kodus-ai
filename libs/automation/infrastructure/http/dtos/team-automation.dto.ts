@@ -8,7 +8,7 @@ import {
     ValidateNested,
 } from 'class-validator';
 
-import { TeamQueryDto } from './teamId-query-dto';
+import { TeamQueryDto } from '@libs/organization/infrastructure/http/dtos/teamId-query-dto';
 
 export class AutomationDto {
     @IsUUID()
@@ -33,7 +33,6 @@ export class TeamAutomationsDto {
     @Type(() => AutomationDto)
     automations: AutomationDto[];
 }
-
 
 export class OrganizationAutomationsDto {
     @Type(() => TeamQueryDto)

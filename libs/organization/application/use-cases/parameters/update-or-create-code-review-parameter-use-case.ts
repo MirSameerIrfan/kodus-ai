@@ -1,64 +1,68 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 
-import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
-import {
-    Action,
-    ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import { UserRequest } from '@/config/types/http/user-request.type';
-import { getDefaultKodusConfigFile } from '@/shared/utils/validateCodeReviewConfigFile';
 import { produce } from 'immer';
-import { deepDifference, deepMerge } from '@/shared/utils/deep';
-import { CreateOrUpdateCodeReviewParameterDto } from '@/core/infrastructure/http/dtos/create-or-update-code-review-parameter.dto';
 import { v4 as uuidv4 } from 'uuid';
-import { PromptSourceType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
-import {
-    IPromptExternalReferenceManagerService,
-    PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
-} from '@/core/domain/prompts/contracts/promptExternalReferenceManager.contract';
-import { CodeReviewVersion } from '@/config/types/general/codeReview.type';
-import {
-    ICodeRepository,
-    CodeReviewParameter,
-    DirectoryCodeReviewConfig,
-    RepositoryCodeReviewConfig,
-} from '@/config/types/general/codeReviewConfig.type';
-import {
-    ActionType,
-    ConfigLevel,
-} from '@/config/types/general/codeReviewSettingsLog.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import {
-    IIntegrationConfigService,
-    INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
+
+import { createLogger } from '@kodus/flow';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import {
-    CODE_REVIEW_CONTEXT_PATTERNS,
-    pathToKey,
-    resolveSourceTypeFromPath,
-    extractDependenciesFromValue,
-} from '@/core/infrastructure/adapters/services/context/code-review-context.utils';
-import {
-    ContextReferenceDetectionService,
-    type ContextDetectionField,
-} from '@/core/infrastructure/adapters/services/context/context-reference-detection.service';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { convertTiptapJSONToText } from '@/core/utils/tiptap-json';
+    IIntegrationConfigService,
+    INTEGRATION_CONFIG_SERVICE_TOKEN,
+} from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
 import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
     ICodeReviewSettingsLogService,
-} from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+} from '@libs/ee/codeReviewSettingsLog/domain/contracts/codeReviewSettingsLog.service.contract';
+import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
+import { AuthorizationService } from '@libs/identity/infrastructure/adapters/services/permissions/authorization.service';
+import {
+    ContextDetectionField,
+    ContextReferenceDetectionService,
+} from '@libs/ai-engine/infrastructure/adapters/services/context/context-reference-detection.service';
+import {
+    IPromptExternalReferenceManagerService,
+    PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
+} from '@libs/ai-engine/domain/prompt/contracts/promptExternalReferenceManager.contract';
+import { CreateOrUpdateCodeReviewParameterDto } from '@libs/organization/infrastructure/http/dtos/create-or-update-code-review-parameter.dto';
+import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
+import { IntegrationConfigKey, ParametersKey } from '@libs/core/domain/enums';
+import {
+    Action,
+    ResourceType,
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import {
+    CodeReviewParameter,
+    DirectoryCodeReviewConfig,
+    ICodeRepository,
+    RepositoryCodeReviewConfig,
+} from '@libs/core/infrastructure/config/types/general/codeReviewConfig.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { getDefaultKodusConfigFile } from '@libs/common/utils/validateCodeReviewConfigFile';
+import { deepDifference, deepMerge } from '@libs/common/utils/deep';
+import {
+    ActionType,
+    ConfigLevel,
+} from '@libs/core/infrastructure/config/types/general/codeReviewSettingsLog.type';
+import { PromptSourceType } from '@libs/ai-engine/domain/prompt/interfaces/promptExternalReference.interface';
+import { convertTiptapJSONToText } from '@libs/common/utils/tiptap-json';
+import {
+    CODE_REVIEW_CONTEXT_PATTERNS,
+    extractDependenciesFromValue,
+    pathToKey,
+    resolveSourceTypeFromPath,
+} from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context.utils';
+import { CodeReviewVersion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 
 @Injectable()
 export class UpdateOrCreateCodeReviewParameterUseCase {
+    private readonly logger = createLogger(
+        UpdateOrCreateCodeReviewParameterUseCase.name,
+    );
+
     constructor(
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
@@ -71,8 +75,6 @@ export class UpdateOrCreateCodeReviewParameterUseCase {
 
         @Inject(REQUEST)
         private readonly request: UserRequest,
-
-        private readonly logger: PinoLoggerService,
 
         private readonly authorizationService: AuthorizationService,
 

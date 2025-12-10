@@ -6,8 +6,6 @@ import { PipelineStage } from '@libs/core/infrastructure/pipeline/interfaces/pip
 import { WorkflowPausedError } from '../../domain/errors/workflow-paused.error';
 import { PipelineStateManager } from '../state/pipeline-state-manager.service';
 import { EventBufferService } from '../event-buffer.service';
-import { topologicalSort } from '@libs/core/infrastructure/pipeline/utils/topological-sort.util';
-import { HeavyStage } from '@libs/core/infrastructure/pipeline/interfaces/heavy-stage.interface';
 
 /**
  * Generic Durable Pipeline Executor

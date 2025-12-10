@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common';
 
 import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 
 @Injectable()
 export class AggregateResultsStage extends BasePipelineStage<CodeReviewPipelineContext> {
     readonly stageName = 'AggregateResultsStage';
 
-    constructor(private readonly logger: PinoLoggerService) {
+    private readonly logger = createLogger(AggregateResultsStage.name);
+
+    constructor() {
         super();
     }
 

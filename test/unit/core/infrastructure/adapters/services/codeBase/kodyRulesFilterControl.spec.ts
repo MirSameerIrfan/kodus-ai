@@ -5,19 +5,17 @@ import {
     SuggestionControlConfig,
     GroupingModeSuggestions,
     LimitationType,
-} from '@/config/types/general/codeReview.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { COMMENT_MANAGER_SERVICE_TOKEN } from '@/core/domain/codeBase/contracts/CommentManagerService.contract';
-import { PULL_REQUESTS_SERVICE_TOKEN } from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
-import { PriorityStatus } from '@/core/domain/pullRequests/enums/priorityStatus.enum';
-import { LLM_ANALYSIS_SERVICE_TOKEN } from '@/core/infrastructure/adapters/services/codeBase/llmAnalysis.service';
-import { SuggestionService } from '@/core/infrastructure/adapters/services/codeBase/suggestion.service';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { COMMENT_MANAGER_SERVICE_TOKEN } from '@libs/core/domain/codeBase/contracts/CommentManagerService.contract';
+import { PULL_REQUESTS_SERVICE_TOKEN } from '@libs/platformData/domain/pullRequests/contracts/pullRequests.service.contracts';
+import { PriorityStatus } from '@libs/platformData/domain/pullRequests/enums/priorityStatus.enum';
+import { LLM_ANALYSIS_SERVICE_TOKEN } from '@libs/core/infrastructure/adapters/services/codeBase/llmAnalysis.service';
+import { SuggestionService } from '@libs/core/infrastructure/adapters/services/codeBase/suggestion.service';
+import { SeverityLevel } from '@libs/common/enums/severityLevel.enum';
 
 describe('SuggestionService - Kody Rules Filter Control', () => {
     let service: SuggestionService;
-    let mockLogger: jest.Mocked<PinoLoggerService>;
 
     const mockOrgData: OrganizationAndTeamData = {
         organizationId: 'org1',
@@ -41,17 +39,9 @@ describe('SuggestionService - Kody Rules Filter Control', () => {
     });
 
     beforeEach(async () => {
-        mockLogger = {
-            log: jest.fn(),
-            error: jest.fn(),
-            warn: jest.fn(),
-            debug: jest.fn(),
-        } as any;
-
         const module = await Test.createTestingModule({
             providers: [
                 SuggestionService,
-                { provide: PinoLoggerService, useValue: mockLogger },
                 {
                     provide: LLM_ANALYSIS_SERVICE_TOKEN,
                     useValue: {

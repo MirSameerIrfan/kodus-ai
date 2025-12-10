@@ -1,46 +1,40 @@
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
 
-import { STATUS } from '@/config/types/database/status.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import {
-    IMSTeamsService,
-    MSTEAMS_SERVICE_TOKEN,
-} from '@/core/domain/msTeams/msTeams.service.contract';
-import { Role } from '@/core/domain/permissions/enums/permissions.enum';
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+
+import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
     ITeamMemberRepository,
     TEAM_MEMBERS_REPOSITORY_TOKEN,
-} from '@/core/domain/teamMembers/contracts/teamMembers.repository.contracts';
-import { ITeamMemberService } from '@/core/domain/teamMembers/contracts/teamMembers.service.contracts';
-import { TeamMemberEntity } from '@/core/domain/teamMembers/entities/teamMember.entity';
-import { TeamMemberRole } from '@/core/domain/teamMembers/enums/teamMemberRole.enum';
+} from '@libs/organization/domain/teamMembers/contracts/teamMembers.repository.contracts';
+import { ITeamMemberService } from '@libs/organization/domain/teamMembers/contracts/teamMembers.service.contracts';
+import { TeamMemberEntity } from '@libs/organization/domain/teamMembers/entities/teamMember.entity';
+import { TeamMemberRole } from '@libs/organization/domain/teamMembers/enums/teamMemberRole.enum';
 import {
     IMembers,
     ITeamMember,
     IInviteResult,
     IUpdateOrCreateMembersResponse,
-} from '@/core/domain/teamMembers/interfaces/team-members.interface';
+} from '@libs/organization/domain/teamMembers/interfaces/teamMembers.interface';
 import {
     IUsersService,
     USER_SERVICE_TOKEN,
-} from '@/core/domain/user/contracts/user.service.contract';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { sendInvite } from '@/shared/utils/email/sendMail';
+} from '@libs/identity/domain/user/contracts/user.service.contract';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
+import { createLogger } from '@kodus/flow';
+import { sendInvite } from '@libs/common/utils/email/sendMail';
 
 @Injectable()
 export class TeamMemberService implements ITeamMemberService {
+    private readonly logger = createLogger(TeamMemberService.name);
+
     constructor(
         @Inject(TEAM_MEMBERS_REPOSITORY_TOKEN)
         private readonly teamMembersRepository: ITeamMemberRepository,
 
-        @Inject(forwardRef(() => MSTEAMS_SERVICE_TOKEN))
-        private readonly msTeamsService: IMSTeamsService,
-
         @Inject(USER_SERVICE_TOKEN)
         private readonly usersService: IUsersService,
-
-        private readonly logger: PinoLoggerService,
     ) {}
 
     findManyById(ids: string[]): Promise<TeamMemberEntity[]> {

@@ -2,26 +2,28 @@ import { createLogger } from '@kodus/flow';
 import { Injectable, Inject, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { CodeReviewValidationService } from '@libs/code-review/infrastructure/code-review-validation.service';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
-import { WorkflowJobRepository } from '@libs/core/infrastructure/database/typeorm/repositories/workflow-job.repository';
-import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
-import {
-    IWebhookEventHandler,
-    IWebhookEventParams,
-} from '@libs/platform/domain/interfaces/webhook-event-handler.interface';
+
 import { EnqueueCodeReviewJobUseCase } from '@libs/core/workflow/application/use-cases/enqueue-code-review-job.use-case';
 import { IJobProcessorService } from '@libs/core/workflow/domain/contracts/job-processor.service.contract';
 import { ErrorClassification } from '@libs/core/workflow/domain/enums/error-classification.enum';
 import { JobStatus } from '@libs/core/workflow/domain/enums/job-status.enum';
 import { WorkflowType } from '@libs/core/workflow/domain/enums/workflow-type.enum';
+import {
+    IWebhookEventHandler,
+    IWebhookEventParams,
+} from '@libs/platform/domain/platformIntegrations/interfaces/webhook-event-handler.interface';
+import { CodeReviewValidationService } from '@libs/code-review/infrastructure/adapters/services/code-review-validation.service';
+import { ObservabilityService } from '@libs/core/log/observability.service';
 
 /**
  * Processor for WEBHOOK_PROCESSING jobs
  * Processes raw webhook payloads, saves PRs, validates, and enqueues CODE_REVIEW jobs
  */
 @Injectable()
-export class WebhookProcessingJobProcessorService implements IJobProcessorService {
+export class WebhookProcessingJobProcessorService
+    implements IJobProcessorService
+{
     private readonly logger = createLogger(
         WebhookProcessingJobProcessorService.name,
     );

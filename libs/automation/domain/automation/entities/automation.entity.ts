@@ -1,7 +1,7 @@
 import { AutomationLevel } from '@libs/core/domain/enums/automations-level.enum';
 
-import { AutomationType } from '../enums/automation-type';
 import { IAutomation } from '../interfaces/automation.interface';
+import { AutomationType } from '../enum/automation-type';
 
 export class AutomationEntity implements IAutomation {
     private _uuid: string;

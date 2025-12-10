@@ -7,21 +7,23 @@ import {
     UpdateQueryBuilder,
 } from 'typeorm';
 
-import { OrganizationParametersModel } from './schema/organizationParameters.model';
+import { OrganizationParametersModel } from './schemas/organizationParameters.model';
 
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { IOrganizationParametersRepository } from '@/core/domain/organizationParameters/contracts/organizationParameters.repository.contract';
-import { OrganizationParametersEntity } from '@/core/domain/organizationParameters/entities/organizationParameters.entity';
-import { IOrganizationParameters } from '@/core/domain/organizationParameters/interfaces/organizationParameters.interface';
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
-import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { IOrganizationParametersRepository } from '@libs/organization/domain/organizationParameters/contracts/organizationParameters.repository.contract';
+import { OrganizationParametersEntity } from '@libs/organization/domain/organizationParameters/entities/organizationParameters.entity';
+import { IOrganizationParameters } from '@libs/organization/domain/organizationParameters/interfaces/organizationParameters.interface';
+import { OrganizationParametersKey } from '@libs/core/domain/enums/organization-parameters-key.enum';
+import { createNestedConditions } from '@libs/core/infrastructure/repositories/model/filters';
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
-} from '@/shared/infrastructure/repositories/mappers';
+} from '@libs/core/infrastructure/repositories/mappers';
 
 @Injectable()
-export class OrganizationParametersRepository implements IOrganizationParametersRepository {
+export class OrganizationParametersRepository
+    implements IOrganizationParametersRepository
+{
     constructor(
         @InjectRepository(OrganizationParametersModel)
         private readonly organizationParametersRepository: Repository<OrganizationParametersModel>,

@@ -5,7 +5,7 @@ import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/
 import {
     DRY_RUN_SERVICE_TOKEN,
     IDryRunService,
-} from '@libs/dry-run/domain/contracts/dryRun.service.contract';
+} from '@libs/dryRun/domain/contracts/dryRun.service.contract';
 
 @Injectable()
 export class ListDryRunsUseCase {

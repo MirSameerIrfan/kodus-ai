@@ -8,15 +8,15 @@ import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import {
     toIntegrationCategory,
     toPlatformType,
-} from '@libs/core/utils/enum-utils';
+} from '@libs/common/utils/enum-utils';
 import {
     AUTH_INTEGRATION_SERVICE_TOKEN,
     IAuthIntegrationService,
-} from '@libs/integrations/domain/auth/contracts/auth-integration.service.contracts';
+} from '@libs/integrations/domain/authIntegrations/contracts/auth-integration.service.contracts';
 import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
-} from '@libs/integrations/domain/contracts/integration.service.contracts';
+} from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
 
 export class CloneIntegrationUseCase implements IUseCase {
     private readonly logger = createLogger(CloneIntegrationUseCase.name);

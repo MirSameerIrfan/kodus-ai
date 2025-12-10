@@ -3,7 +3,7 @@ import { v4 as uuid } from 'uuid';
 
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
+import { createLogger } from '@kodus/flow';
 import {
     IJobQueueService,
     JOB_QUEUE_SERVICE_TOKEN,
@@ -21,11 +21,11 @@ export interface EnqueueWebhookInput {
 
 @Injectable()
 export class EnqueueWebhookUseCase implements IUseCase {
+    private readonly logger = createLogger(EnqueueWebhookUseCase.name);
+
     constructor(
         @Inject(JOB_QUEUE_SERVICE_TOKEN)
         private readonly jobQueueService: IJobQueueService,
-        //TODO não usamos mais assim
-        private readonly logger: PinoLoggerService,
     ) {}
 
     async execute(input: EnqueueWebhookInput): Promise<void> {

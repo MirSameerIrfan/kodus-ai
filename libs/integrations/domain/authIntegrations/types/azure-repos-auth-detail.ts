@@ -1,4 +1,4 @@
-import { AuthMode } from '@libs/platform/domain/enums/codeManagement/authMode.enum';
+import { AuthMode } from '@libs/platform/domain/platformIntegrations/enums/codeManagement/authMode.enum';
 
 export type AzureReposAuthDetail = {
     orgUrl: string;

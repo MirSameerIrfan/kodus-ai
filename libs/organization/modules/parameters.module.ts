@@ -12,7 +12,6 @@ import { ParametersModel } from '@libs/core/infrastructure/database/typeorm/sche
 import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
 import { CreateOrUpdateParametersUseCase } from '../application/use-cases/parameters/create-or-update-use-case';
 import { PARAMETERS_REPOSITORY_TOKEN } from '../domain/parameters/contracts/parameters.repository.contracts';
-import { PARAMETERS_SERVICE_TOKEN } from '../domain/parameters/contracts/parameters.service.contract';
 
 import { ParametersController } from '../infrastructure/http/controllers/parameters.controller';
 

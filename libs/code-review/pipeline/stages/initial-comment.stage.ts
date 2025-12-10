@@ -4,7 +4,7 @@ import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
 } from '@libs/code-review/domain/contracts/CommentManagerService.contract';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 import { PlatformType } from '@libs/core/domain/enums';
 import { PullRequestMessageStatus } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
@@ -13,11 +13,11 @@ import { CodeReviewPipelineContext } from '../context/code-review-pipeline.conte
 export class InitialCommentStage extends BasePipelineStage<CodeReviewPipelineContext> {
     stageName = 'InitialCommentStage';
 
+    private readonly logger = createLogger(InitialCommentStage.name);
+
     constructor(
         @Inject(COMMENT_MANAGER_SERVICE_TOKEN)
         private commentManagerService: ICommentManagerService,
-
-        private readonly logger: PinoLoggerService,
     ) {
         super();
     }

@@ -4,24 +4,24 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
     CONTEXT_REFERENCE_SERVICE_TOKEN,
     IContextReferenceService,
-} from '@libs/core/ai-engine/domain/contracts/context-reference.service.contract';
+} from '@libs/ai-engine/domain/contextReference/contracts/context-reference.service.contract';
 import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
     IKodyRulesService,
     KODY_RULES_SERVICE_TOKEN,
-} from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
+} from '@libs/kodyRules/domain/contracts/kodyRules.service.contract';
 import {
     IKodyRule,
     KodyRulesStatus,
-} from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
-import { KodyRulesValidationService } from '@libs/kody-rules/ee/service/kody-rules-validation.service';
+} from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 
 import { enrichRulesWithContextReferences } from './utils/enrich-rules-with-context-references.util';
+import { KodyRulesValidationService } from '@libs/ee/kodyRules/service/kody-rules-validation.service';
 
 type KodyRuleWithInheritance = Partial<IKodyRule> & {
     inherited?: 'global' | 'repository' | 'directory';

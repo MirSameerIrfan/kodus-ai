@@ -20,17 +20,16 @@ import {
     TEAM_AUTOMATION_SERVICE_TOKEN,
 } from '@libs/automation/domain/teamAutomation/contracts/team-automation.service';
 import { ITeamAutomation } from '@libs/automation/domain/teamAutomation/interfaces/team-automation.interface';
-import { CodeReviewHandlerService } from '@libs/code-review/infrastructure/codeReviewHandlerService.service';
+import { CodeReviewHandlerService } from '@libs/code-review/infrastructure/adapters/services/codeReviewHandlerService.service';
 import {
     IOrganizationService,
     ORGANIZATION_SERVICE_TOKEN,
 } from '@libs/organization/domain/organization/contracts/organization.service.contract';
 
 @Injectable()
-export class AutomationCodeReviewService implements Omit<
-    IAutomationFactory,
-    'stop'
-> {
+export class AutomationCodeReviewService
+    implements Omit<IAutomationFactory, 'stop'>
+{
     private readonly logger = createLogger(AutomationCodeReviewService.name);
     automationType = AutomationType.AUTOMATION_CODE_REVIEW;
 

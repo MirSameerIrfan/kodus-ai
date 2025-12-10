@@ -1,20 +1,19 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { createLogger } from '@kodus/flow';
+import { ObservabilityService } from '@libs/core/log/observability.service';
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-
-import { OutboxMessageRepository } from '@libs/core/infrastructure/database/typeorm/repositories/outbox-message.repository';
-import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
 
 @Injectable()
 export class OutboxRelayService implements OnModuleInit, OnModuleDestroy {
     private isProcessing = false;
     private processingInterval?: NodeJS.Timeout;
 
+    private readonly logger = createLogger(OutboxRelayService.name);
+
     constructor(
         private readonly outboxRepository: OutboxMessageRepository,
         private readonly amqpConnection: AmqpConnection,
-        private readonly logger: PinoLoggerService,
         private readonly observability: ObservabilityService,
     ) {}
 

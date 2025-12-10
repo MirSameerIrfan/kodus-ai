@@ -13,10 +13,10 @@ import { v4 as uuidv4 } from 'uuid';
 import {
     CONTEXT_REFERENCE_REPOSITORY_TOKEN,
     IContextReferenceRepository,
-} from '@libs/code-review/domain/contextReferences/contracts/context-reference.repository.contract';
-import { IContextReferenceService } from '@libs/code-review/domain/contextReferences/contracts/context-reference.service.contract';
-import { ContextReferenceEntity } from '@libs/core/ai-engine/domain/entities/context-reference.entity';
-import { IContextReference } from '@libs/code-review/domain/contextReferences/interfaces/context-reference.interface';
+} from '@libs/ai-engine/domain/contextReference/contracts/context-reference.repository.contract';
+import { IContextReferenceService } from '@libs/ai-engine/domain/contextReference/contracts/context-reference.service.contract';
+import { ContextReferenceEntity } from '@libs/ai-engine/domain/contextReference/entities/context-reference.entity';
+import { IContextReference } from '@libs/ai-engine/domain/contextReference/interfaces/context-reference.interface';
 
 @Injectable()
 export class ContextReferenceService implements IContextReferenceService {

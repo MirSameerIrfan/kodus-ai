@@ -4,25 +4,27 @@ import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import * as yaml from 'js-yaml';
 
-import { KodusConfigFile } from '@/config/types/general/codeReview.type';
-import {
-    CODE_BASE_CONFIG_SERVICE_TOKEN,
-    ICodeBaseConfigService,
-} from '@/core/domain/codeBase/contracts/CodeBaseConfigService.contract';
+import { createLogger } from '@kodus/flow';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import {
+    CODE_BASE_CONFIG_SERVICE_TOKEN,
+    ICodeBaseConfigService,
+} from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
+import { AuthorizationService } from '@libs/identity/infrastructure/adapters/services/permissions/authorization.service';
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { ParametersKey } from '@libs/core/domain/enums';
+import { KodusConfigFile } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 
 @Injectable()
 export class GenerateKodusConfigFileUseCase {
+    private readonly logger = createLogger(GenerateKodusConfigFileUseCase.name);
+
     constructor(
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
@@ -34,8 +36,6 @@ export class GenerateKodusConfigFileUseCase {
         private readonly request: Request & {
             user: { organization: { uuid: string }; uuid: string };
         },
-
-        private readonly logger: PinoLoggerService,
 
         private readonly authorizationService: AuthorizationService,
     ) {}

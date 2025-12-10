@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
+import { createLogger } from '@kodus/flow';
 import {
     ISSOConfigService,
     SSO_CONFIG_SERVICE_TOKEN,
@@ -12,10 +12,11 @@ import {
 
 @Injectable()
 export class CreateOrUpdateSSOConfigUseCase {
+    private readonly logger = createLogger(CreateOrUpdateSSOConfigUseCase.name);
+
     constructor(
         @Inject(SSO_CONFIG_SERVICE_TOKEN)
         private readonly ssoConfigService: ISSOConfigService,
-        private readonly logger: PinoLoggerService,
     ) {}
 
     async execute(params: {

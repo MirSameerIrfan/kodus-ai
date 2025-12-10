@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
-import { sendConfirmationEmail } from '@libs/core/utils/email/sendMail';
+import { sendConfirmationEmail } from '@libs/common/utils/email/sendMail';
 import {
     AUTH_SERVICE_TOKEN,
     IAuthService,

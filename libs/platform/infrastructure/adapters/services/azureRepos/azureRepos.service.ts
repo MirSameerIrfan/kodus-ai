@@ -20,10 +20,6 @@ import {
 import { Commit } from '@libs/core/infrastructure/config/types/general/commit.type';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { TreeItem } from '@libs/core/infrastructure/config/types/general/tree.type';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
-import { MCPManagerService } from '@libs/core/mcp-server/infrastructure/services/mcp-manager.service';
-import { hasKodyMarker } from '@libs/core/utils/codeManagement/codeCommentMarkers';
-import { IntegrationServiceDecorator } from '@libs/core/utils/decorators/integration-service.decorator';
 import {
     AUTH_INTEGRATION_SERVICE_TOKEN,
     IAuthIntegrationService,
@@ -59,43 +55,53 @@ import {
     AzureRepoPRThread,
     EventConfig,
 } from '@libs/platform/domain/azure/entities/azureRepoExtras.type';
+import axios, { AxiosInstance } from 'axios';
+import { createLogger } from '@kodus/flow';
+import { IntegrationServiceDecorator } from '@libs/common/utils/decorators/integration-service.decorator';
+import { MCPManagerService } from '@libs/mcp-server/services/mcp-manager.service';
 import {
     getTranslationsForLanguageByCategory,
     TranslationsCategory,
-} from '@libs/core/utils/translations/translations';
+} from '@libs/common/utils/translations/translations';
+import { decrypt, encrypt } from '@libs/common/utils/crypto';
+import { hasKodyMarker } from '@libs/common/utils/codeManagement/codeCommentMarkers';
 import { AzureReposAuthDetail } from '@libs/integrations/domain/authIntegrations/types/azure-repos-auth-detail';
 import { AuthMode } from '@libs/platform/domain/platformIntegrations/enums/codeManagement/authMode.enum';
-import { decrypt, encrypt } from '@libs/core/utils/crypto';
 import { IntegrationEntity } from '@libs/integrations/domain/integrations/entities/integration.entity';
 import {
     AzurePRStatus,
     AzureRepoPullRequest,
 } from '@libs/platform/domain/azure/entities/azureRepoPullRequest.type';
-import { CodeManagementConnectionStatus } from '@libs/core/utils/decorators/validate-code-management-integration.decorator';
-import { generateWebhookToken } from '@libs/core/utils/webhooks/webhookTokenCrypto';
-import { getSeverityLevelShield } from '@libs/core/utils/codeManagement/severityLevel';
-import { getCodeReviewBadge } from '@libs/core/utils/codeManagement/codeReviewBadge';
-import { getLabelShield } from '@libs/core/utils/codeManagement/labels';
+import { generateWebhookToken } from '@libs/common/utils/webhooks/webhookTokenCrypto';
+import { CodeManagementConnectionStatus } from '@libs/common/utils/decorators/validate-code-management-integration.decorator';
+import { getSeverityLevelShield } from '@libs/common/utils/codeManagement/severityLevel';
+import { getCodeReviewBadge } from '@libs/common/utils/codeManagement/codeReviewBadge';
+import { getLabelShield } from '@libs/common/utils/codeManagement/labels';
 import { RepositoryFile } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
 import {
     isFileMatchingGlob,
     isFileMatchingGlobCaseInsensitive,
-} from '@libs/core/utils/glob-utils';
+} from '@libs/common/utils/glob-utils';
 
 @IntegrationServiceDecorator(PlatformType.AZURE_REPOS, 'codeManagement')
-export class AzureReposService implements Omit<
-    ICodeManagementService,
-    | 'getOrganizations'
-    | 'getWorkflows'
-    | 'getCommitsByReleaseMode'
-    | 'getPullRequestsForRTTM'
-    | 'getPullRequestReviewThreads'
-    | 'getListOfValidReviews'
-    | 'getPullRequestsWithChangesRequested'
-    | 'getAuthenticationOAuthToken'
-    | 'mergePullRequest'
-    | 'getUserById'
-> {
+export class AzureReposService
+    implements
+        Omit<
+            ICodeManagementService,
+            | 'getOrganizations'
+            | 'getWorkflows'
+            | 'getCommitsByReleaseMode'
+            | 'getPullRequestsForRTTM'
+            | 'getPullRequestReviewThreads'
+            | 'getListOfValidReviews'
+            | 'getPullRequestsWithChangesRequested'
+            | 'getAuthenticationOAuthToken'
+            | 'mergePullRequest'
+            | 'getUserById'
+        >
+{
+    private readonly logger = createLogger(AzureReposService.name);
+
     constructor(
         @Inject(INTEGRATION_SERVICE_TOKEN)
         private readonly integrationService: IIntegrationService,
@@ -104,7 +110,6 @@ export class AzureReposService implements Omit<
         @Inject(AUTH_INTEGRATION_SERVICE_TOKEN)
         private readonly authIntegrationService: IAuthIntegrationService,
 
-        private readonly logger: PinoLoggerService,
         private readonly azureReposRequestHelper: AzureReposRequestHelper,
         private readonly configService: ConfigService,
         private readonly mcpManagerService?: MCPManagerService,
@@ -1699,6 +1704,121 @@ export class AzureReposService implements Omit<
         }
     }
 
+    async getCurrentUser(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+    }): Promise<any | null> {
+        try {
+            const authDetails = await this.getAuthDetails(
+                params.organizationAndTeamData,
+            );
+
+            if (!authDetails?.orgName || !authDetails?.token) {
+                return null;
+            }
+
+            const { orgName, token } = authDetails;
+
+            const instance = axios.create({
+                baseURL: `https://vssps.dev.azure.com/${orgName}`,
+                headers: {
+                    'Authorization': `Basic ${Buffer.from(`:${decrypt(token)}`).toString('base64')}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            const { data } = await instance.get(
+                '/_apis/profile/profiles/me?api-version=7.1-preview',
+            );
+
+            const descriptor = await this.resolveCurrentUserDescriptor({
+                instance,
+                profile: data,
+                orgName,
+            });
+
+            const normalizedUser = {
+                ...data,
+                descriptor,
+                originId: data?.id,
+            };
+
+            if (descriptor) {
+                normalizedUser.id = descriptor;
+            }
+
+            return normalizedUser || null;
+        } catch (error) {
+            this.logger.error({
+                message: 'Error retrieving current Azure Repos user',
+                context: AzureReposService.name,
+                serviceName: 'AzureReposService getCurrentUser',
+                error: error,
+                metadata: params,
+            });
+            return null;
+        }
+    }
+
+    private async resolveCurrentUserDescriptor(params: {
+        instance: AxiosInstance;
+        profile?: any;
+        orgName: string;
+    }): Promise<string | undefined> {
+        const { instance, profile, orgName } = params;
+
+        const descriptorFromProfile =
+            profile?.coreAttributes?.SubjectDescriptor?.value ||
+            profile?.coreAttributes?.Descriptor?.value ||
+            profile?.descriptor;
+
+        if (descriptorFromProfile) {
+            return descriptorFromProfile;
+        }
+
+        try {
+            const { data } = await instance.get(
+                '/_apis/connectionData?connectOptions=IncludeServices&api-version=7.1-preview',
+            );
+
+            const descriptorFromConnection =
+                data?.authenticatedUser?.subjectDescriptor ??
+                data?.authenticatedUser?.descriptor;
+
+            if (descriptorFromConnection) {
+                return descriptorFromConnection;
+            }
+        } catch (error) {
+            this.logger.warn({
+                message:
+                    'Failed to fetch connectionData while resolving Azure descriptor',
+                context: AzureReposService.name,
+                serviceName: 'AzureReposService getCurrentUser',
+                error,
+                metadata: { orgName },
+            });
+        }
+
+        if (profile?.id) {
+            try {
+                const { data } = await instance.get(
+                    `/_apis/graph/descriptors/${profile.id}?api-version=7.1-preview.1`,
+                );
+                return data?.value;
+            } catch (error) {
+                this.logger.warn({
+                    message:
+                        'Failed to map Azure storage key to descriptor for current user',
+                    context: AzureReposService.name,
+                    serviceName: 'AzureReposService getCurrentUser',
+                    error,
+                    metadata: { orgName },
+                });
+            }
+        }
+
+        return undefined;
+    }
+
     async createWebhook(
         organizationAndTeamData: OrganizationAndTeamData,
     ): Promise<void> {
@@ -2293,6 +2413,9 @@ export class AzureReposService implements Omit<
         filters?: {
             period?: { startDate?: string; endDate?: string };
             prStatus?: string;
+            repositoryId?: string;
+            limit?: number;
+            skipFiles?: boolean;
         };
     }): Promise<PullRequestWithFiles[] | null> {
         try {
@@ -2300,6 +2423,13 @@ export class AzureReposService implements Omit<
             const filters = params.filters ?? {};
 
             const { prStatus } = filters;
+            const perRepoLimit = Math.min(Math.max(filters?.limit || 5, 1), 10);
+            const repoFilter = filters?.repositoryId
+                ? new Set([String(filters.repositoryId)])
+                : null;
+            const useFastPath = Boolean(
+                filters?.repositoryId || filters?.limit,
+            );
 
             const stateMap = {
                 open: AzurePRStatus.ACTIVE,
@@ -2330,6 +2460,14 @@ export class AzureReposService implements Omit<
 
             const reposWithPRs = await Promise.all(
                 repositories.map(async (repo) => {
+                    if (
+                        repoFilter &&
+                        !repoFilter.has(String(repo.id)) &&
+                        !repoFilter.has(String(repo.name))
+                    ) {
+                        return { repo, prs: [] };
+                    }
+
                     const prs =
                         await this.azureReposRequestHelper.getPullRequestsByRepo(
                             {
@@ -2344,7 +2482,19 @@ export class AzureReposService implements Omit<
                                 },
                             },
                         );
-                    return { repo, prs };
+                    let filteredPrs = prs;
+
+                    if (useFastPath) {
+                        filteredPrs = prs
+                            .sort(
+                                (a, b) =>
+                                    new Date(b.creationDate).getTime() -
+                                    new Date(a.creationDate).getTime(),
+                            )
+                            .slice(0, perRepoLimit);
+                    }
+
+                    return { repo, prs: filteredPrs };
                 }),
             );
 
@@ -2354,6 +2504,24 @@ export class AzureReposService implements Omit<
                 reposWithPRs.map(async ({ repo, prs }) => {
                     const prsWithDiffs = await Promise.all(
                         prs.map(async (pr) => {
+                            if (useFastPath && filters?.skipFiles) {
+                                const prWithFileChanges: PullRequestWithFiles =
+                                    {
+                                        id: pr.pullRequestId,
+                                        pull_number: pr.pullRequestId,
+                                        state: pr.status,
+                                        title: pr.title,
+                                        repository: {
+                                            id: repo.id,
+                                            name: repo.name,
+                                        },
+                                        repositoryData: repo as any,
+                                        pullRequestFiles: [],
+                                    };
+
+                                return prWithFileChanges;
+                            }
+
                             const iterations =
                                 await this.azureReposRequestHelper.getIterations(
                                     {
@@ -2525,6 +2693,11 @@ export class AzureReposService implements Omit<
             visibility?: 'all' | 'public' | 'private';
             language?: string;
         };
+        options?: {
+            includePullRequestMetrics?: {
+                lastNDays?: number;
+            };
+        };
     }): Promise<Repositories[]> {
         try {
             const { organizationAndTeamData } = params;
@@ -2574,20 +2747,11 @@ export class AzureReposService implements Omit<
                 }),
             );
 
-            const repositories = projectsWithRepos.reduce<Repositories[]>(
-                (acc, { project, repositories }) => {
-                    repositories.forEach((repo) => {
-                        acc.push(
-                            this.transformRepo(
-                                repo,
-                                project,
-                                integrationConfig,
-                            ),
-                        );
-                    });
-                    return acc;
-                },
-                [],
+            const repositories: Repositories[] = projectsWithRepos.flatMap(
+                ({ project, repositories }) =>
+                    repositories.map((repo) =>
+                        this.transformRepo(repo, project, integrationConfig),
+                    ),
             );
 
             return repositories;
@@ -2626,6 +2790,7 @@ export class AzureReposService implements Omit<
                 id: project?.id,
                 name: project?.name ?? '',
             },
+            lastActivityAt: repo?.lastUpdateTime ?? project?.lastUpdateTime,
         };
     }
 

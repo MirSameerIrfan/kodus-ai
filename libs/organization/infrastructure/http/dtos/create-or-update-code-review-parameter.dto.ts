@@ -10,7 +10,6 @@ import {
     IsEnum,
 } from 'class-validator';
 
-
 import {
     BehaviourForExistingDescription,
     BehaviourForNewCommits,
@@ -20,9 +19,8 @@ import {
     ReviewCadenceType,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { PullRequestMessageStatus } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
-import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
-
-import { OrganizationAndTeamDataDto } from './organizationAndTeamData.dto';
+import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
+import { OrganizationAndTeamDataDto } from '@libs/core/domain/dtos/organizationAndTeamData.dto';
 
 class ReviewOptionsDto {
     @IsBoolean()

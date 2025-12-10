@@ -7,16 +7,16 @@ import {
     OneToMany,
 } from 'typeorm';
 
-import { AuthIntegrationModel } from './authIntegration.model';
-import { IntegrationModel } from './integration.model';
-import { IntegrationConfigModel } from './integrationConfig.model';
-import { OrganizationModel } from './organization.model';
-import { ParametersModel } from './parameters.model';
-import { TeamAutomationModel } from './teamAutomation.model';
-import { TeamMemberModel } from './teamMember.model';
+import { AuthIntegrationModel } from '@libs/integrations/infrastructure/adapters/repositories/schemas/authIntegration.model';
+import { IntegrationModel } from '@libs/integrations/infrastructure/adapters/repositories/schemas/integration.model';
+import { IntegrationConfigModel } from '@libs/integrations/infrastructure/adapters/repositories/schemas/integrationConfig.model';
+import { OrganizationModel } from '@libs/organization/infrastructure/adapters/repositories/schemas/organization.model';
+import { ParametersModel } from '@libs/organization/infrastructure/adapters/repositories/schemas/parameters.model';
+import { TeamAutomationModel } from '@libs/automation/infrastructure/adapters/repositories/schemas/teamAutomation.model';
+import { TeamMemberModel } from '@libs/organization/infrastructure/adapters/repositories/schemas/teamMember.model';
 
-import { STATUS } from '@/config/types/database/status.type';
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
+import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 
 @Entity('teams')
 @Index('IDX_teams_org_status', ['organization', 'status'], { concurrent: true })

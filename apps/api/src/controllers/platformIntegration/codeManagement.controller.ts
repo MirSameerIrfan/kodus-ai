@@ -1,40 +1,43 @@
+import { UserRequest } from '@/config/types/http/user-request.type';
+import { CreateIntegrationUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/create-integration.use-case';
+import { CreateRepositoriesUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/create-repositories';
+import { DeleteIntegrationAndRepositoriesUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/delete-integration-and-repositories.use-case';
+import { DeleteIntegrationUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/delete-integration.use-case';
+import { FinishOnboardingUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/finish-onboarding.use-case';
+import { GetCodeManagementMemberListUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-code-management-members-list.use-case';
+import { GetPRsByRepoUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-prs-repo.use-case';
+import { GetPRsUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-prs.use-case';
+import { GetRepositoriesUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-repositories';
+import { GetRepositoryTreeByDirectoryUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-repository-tree-by-directory.use-case';
+import { GetWebhookStatusUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-webhook-status.use-case';
+import { GetCurrentCodeManagementUserUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/get-current-code-management-user.use-case';
+import { SearchCodeManagementUsersUseCase } from '@/core/application/use-cases/platformIntegration/codeManagement/search-code-management-users.use-case';
+import { Repository } from '@/core/domain/integrationConfigs/types/codeManagement/repositories.type';
 import {
+    Action,
+    ResourceType,
+} from '@/core/domain/permissions/enums/permissions.enum';
+import {
+    CheckPolicies,
+    PolicyGuard,
+} from '@/core/infrastructure/adapters/services/permissions/policy.guard';
+import {
+    checkPermissions,
+    checkRepoPermissions,
+} from '@/core/infrastructure/adapters/services/permissions/policy.handlers';
+import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
+import {
+    BadRequestException,
     Body,
     Controller,
     Delete,
     Get,
+    Inject,
     Post,
     Query,
     UseGuards,
 } from '@nestjs/common';
-
-import { PullRequestState } from '@libs/core/domain/enums/pullRequestState.enum';
-import {
-    Action,
-    ResourceType,
-} from '@libs/identity/domain/permissions/enums/permissions.enum';
-import {
-    CheckPolicies,
-    PolicyGuard,
-} from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
-import {
-    checkPermissions,
-    checkRepoPermissions,
-} from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
-import { Repository } from '@libs/integrations/domain/configs/types/codeManagement/repositories.type';
-import { CreateIntegrationUseCase } from '@libs/platform/application/use-cases/codeManagement/create-integration.use-case';
-import { CreateRepositoriesUseCase } from '@libs/platform/application/use-cases/codeManagement/create-repositories';
-import { DeleteIntegrationAndRepositoriesUseCase } from '@libs/platform/application/use-cases/codeManagement/delete-integration-and-repositories.use-case';
-import { DeleteIntegrationUseCase } from '@libs/platform/application/use-cases/codeManagement/delete-integration.use-case';
-import { FinishOnboardingUseCase } from '@libs/platform/application/use-cases/codeManagement/finish-onboarding.use-case';
-import { GetCodeManagementMemberListUseCase } from '@libs/platform/application/use-cases/codeManagement/get-code-management-members-list.use-case';
-import { GetPRsByRepoUseCase } from '@libs/platform/application/use-cases/codeManagement/get-prs-repo.use-case';
-import { GetPRsUseCase } from '@libs/platform/application/use-cases/codeManagement/get-prs.use-case';
-import { GetRepositoriesUseCase } from '@libs/platform/application/use-cases/codeManagement/get-repositories';
-import { GetRepositoryTreeByDirectoryUseCase } from '@libs/platform/application/use-cases/codeManagement/get-repository-tree-by-directory.use-case';
-import { GetWebhookStatusUseCase } from '@libs/platform/application/use-cases/codeManagement/get-webhook-status.use-case';
-
-
+import { REQUEST } from '@nestjs/core';
 import { FinishOnboardingDTO } from '../../dtos/finish-onboarding.dto';
 import { GetRepositoryTreeByDirectoryDto } from '../../dtos/get-repository-tree-by-directory.dto';
 import { WebhookStatusQueryDto } from '../../dtos/webhook-status-query.dto';
@@ -53,6 +56,11 @@ export class CodeManagementController {
         private readonly getRepositoryTreeByDirectoryUseCase: GetRepositoryTreeByDirectoryUseCase,
         private readonly getPRsByRepoUseCase: GetPRsByRepoUseCase,
         private readonly getWebhookStatusUseCase: GetWebhookStatusUseCase,
+        private readonly searchCodeManagementUsersUseCase: SearchCodeManagementUsersUseCase,
+        private readonly getCurrentCodeManagementUserUseCase: GetCurrentCodeManagementUserUseCase,
+
+        @Inject(REQUEST)
+        private readonly request: UserRequest,
     ) {}
 
     @Get('/repositories/org')
@@ -66,6 +74,8 @@ export class CodeManagementController {
             teamId: string;
             organizationSelected: any;
             isSelected?: boolean;
+            page?: number;
+            perPage?: number;
         },
     ) {
         return this.getRepositoriesUseCase.execute(query);
@@ -160,22 +170,45 @@ export class CodeManagementController {
 
     @Delete('/delete-integration')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Delete, ResourceType.GitSettings))
-    public async deleteIntegration(
-        @Query() query: { organizationId: string; teamId: string },
-    ) {
-        return await this.deleteIntegrationUseCase.execute(query);
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Delete,
+            resource: ResourceType.GitSettings,
+        }),
+    )
+    public async deleteIntegration(@Query() query: { teamId: string }) {
+        const organizationId = this.request?.user?.organization?.uuid;
+
+        if (!organizationId) {
+            throw new BadRequestException(
+                'organizationId not found in request',
+            );
+        }
+
+        return await this.deleteIntegrationUseCase.execute({
+            organizationId,
+            teamId: query.teamId,
+        });
     }
 
     @Delete('/delete-integration-and-repositories')
     @UseGuards(PolicyGuard)
     @CheckPolicies(checkPermissions(Action.Delete, ResourceType.GitSettings))
     public async deleteIntegrationAndRepositories(
-        @Query() query: { organizationId: string; teamId: string },
+        @Query() query: { teamId: string },
     ) {
-        return await this.deleteIntegrationAndRepositoriesUseCase.execute(
-            query,
-        );
+        const organizationId = this.request?.user?.organization?.uuid;
+
+        if (!organizationId) {
+            throw new BadRequestException(
+                'organizationId not found in request',
+            );
+        }
+
+        return await this.deleteIntegrationAndRepositoriesUseCase.execute({
+            organizationId,
+            teamId: query.teamId,
+        });
     }
 
     @Get('/get-repository-tree-by-directory')
@@ -188,7 +221,66 @@ export class CodeManagementController {
     public async getRepositoryTreeByDirectory(
         @Query() query: GetRepositoryTreeByDirectoryDto,
     ) {
-        return await this.getRepositoryTreeByDirectoryUseCase.execute(query);
+        const organizationId = this.request?.user?.organization?.uuid;
+
+        if (!organizationId) {
+            throw new BadRequestException(
+                'organizationId not found in request',
+            );
+        }
+
+        return await this.getRepositoryTreeByDirectoryUseCase.execute({
+            ...query,
+            organizationId,
+        });
+    }
+
+    @Get('/search-users')
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.UserSettings,
+        }),
+    )
+    public async searchUsers(
+        @Query()
+        query: {
+            organizationId: string;
+            teamId?: string;
+            q?: string;
+            userId?: string;
+            limit?: number;
+        },
+    ) {
+        return await this.searchCodeManagementUsersUseCase.execute({
+            organizationId: query.organizationId,
+            teamId: query.teamId,
+            query: query.q,
+            userId: query.userId,
+            limit: query.limit ? Number(query.limit) : undefined,
+        });
+    }
+
+    @Get('/current-user')
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.UserSettings,
+        }),
+    )
+    public async getCurrentUser(
+        @Query()
+        query: {
+            organizationId: string;
+            teamId?: string;
+        },
+    ) {
+        return await this.getCurrentCodeManagementUserUseCase.execute({
+            organizationId: query.organizationId,
+            teamId: query.teamId,
+        });
     }
 
     // NOT USED IN WEB - INTERNAL USE ONLY

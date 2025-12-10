@@ -1,15 +1,14 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
-
-import { FindLibraryKodyRulesDto } from '@libs/common/dtos/find-library-kody-rules.dto';
-import {
-    PaginatedLibraryKodyRulesResponse,
-    PaginationMetadata,
-} from '@libs/common/dtos/paginated-library-kody-rules.dto';
 import {
     KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,
-} from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
+} from '@libs/kodyRules/domain/contracts/kodyRules.service.contract';
+import { FindLibraryKodyRulesDto } from '@libs/core/domain/dtos/find-library-kody-rules.dto';
+import {
+    PaginatedLibraryKodyRulesResponse,
+    PaginationMetadata,
+} from '@libs/core/domain/dtos/paginated-library-kody-rules.dto';
 
 @Injectable()
 export class FindLibraryKodyRulesUseCase {

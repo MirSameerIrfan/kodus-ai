@@ -11,7 +11,7 @@ import { IAutomationExecutionRepository } from '@libs/automation/domain/automati
 import { AutomationExecutionEntity } from '@libs/automation/domain/automationExecution/entities/automation-execution.entity';
 import { IAutomationExecution } from '@libs/automation/domain/automationExecution/interfaces/automation-execution.interface';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
+import { createLogger } from '@kodus/flow';
 import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
@@ -21,11 +21,14 @@ import { createNestedConditions } from '@libs/core/infrastructure/repositories/m
 import { AutomationExecutionModel } from './schemas/automationExecution.model';
 
 @Injectable()
-export class AutomationExecutionRepository implements IAutomationExecutionRepository {
+export class AutomationExecutionRepository
+    implements IAutomationExecutionRepository
+{
+    private readonly logger = createLogger(AutomationExecutionRepository.name);
+
     constructor(
         @InjectRepository(AutomationExecutionModel)
         private readonly automationExecutionRepository: Repository<AutomationExecutionModel>,
-        private readonly logger: PinoLoggerService,
     ) {}
 
     async create(

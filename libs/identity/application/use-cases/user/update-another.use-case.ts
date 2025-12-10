@@ -1,28 +1,30 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import {
-    IOrganizationService,
-    ORGANIZATION_SERVICE_TOKEN,
-} from '@/core/domain/organization/contracts/organization.service.contract';
-import {
-    ITeamService,
-    TEAM_SERVICE_TOKEN,
-} from '@/core/domain/team/contracts/team.service.contract';
-import {
-    ITeamMemberService,
-    TEAM_MEMBERS_SERVICE_TOKEN,
-} from '@/core/domain/teamMembers/contracts/teamMembers.service.contracts';
+import { createLogger } from '@kodus/flow';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import {
     IUsersService,
     USER_SERVICE_TOKEN,
-} from '@/core/domain/user/contracts/user.service.contract';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { UpdateAnotherUserDto } from '@/core/infrastructure/http/dtos/update-another-user.dto';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+} from '@libs/identity/domain/user/contracts/user.service.contract';
+import {
+    IOrganizationService,
+    ORGANIZATION_SERVICE_TOKEN,
+} from '@libs/organization/domain/organization/contracts/organization.service.contract';
+import {
+    ITeamService,
+    TEAM_SERVICE_TOKEN,
+} from '@libs/organization/domain/team/contracts/team.service.contract';
+import {
+    ITeamMemberService,
+    TEAM_MEMBERS_SERVICE_TOKEN,
+} from '@libs/organization/domain/teamMembers/contracts/teamMembers.service.contracts';
+import { UpdateAnotherUserDto } from 'apps/api/src/dtos/update-another-user.dto';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 
 @Injectable()
 export class UpdateAnotherUserUseCase implements IUseCase {
+    private readonly logger = createLogger(UpdateAnotherUserUseCase.name);
+
     constructor(
         @Inject(USER_SERVICE_TOKEN)
         private readonly usersService: IUsersService,
@@ -35,8 +37,6 @@ export class UpdateAnotherUserUseCase implements IUseCase {
 
         @Inject(TEAM_MEMBERS_SERVICE_TOKEN)
         private readonly teamMembersService: ITeamMemberService,
-
-        private readonly logger: PinoLoggerService,
     ) {}
 
     async execute(

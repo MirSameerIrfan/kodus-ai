@@ -103,3 +103,6 @@ scripts/duplicate-prs
 # Custom
 test.json
 specs
+.cursor/rules/bmad/
+.cursor
+.specify

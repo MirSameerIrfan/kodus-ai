@@ -14,9 +14,8 @@ import {
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
+} from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
 import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
-
 
 @Injectable()
 export class AssignReposUseCase implements IUseCase {

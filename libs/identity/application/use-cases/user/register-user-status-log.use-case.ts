@@ -1,20 +1,21 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { ActionType } from '@/config/types/general/codeReviewSettingsLog.type';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { UserStatusDto } from '@/core/infrastructure/http/dtos/user-status-change.dto';
+import { ActionType } from '@libs/core/infrastructure/config/types/general/codeReviewSettingsLog.type';
+import { createLogger } from '@kodus/flow';
+
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
     ICodeReviewSettingsLogService,
-} from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+} from '@libs/ee/codeReviewSettingsLog/domain/contracts/codeReviewSettingsLog.service.contract';
+import { UserStatusDto } from 'apps/api/src/dtos/user-status-change.dto';
 
 @Injectable()
 export class RegisterUserStatusLogUseCase implements IUseCase {
+    private readonly logger = createLogger(RegisterUserStatusLogUseCase.name);
     constructor(
         @Inject(CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN)
         private readonly codeReviewSettingsLogService: ICodeReviewSettingsLogService,
-        private readonly logger: PinoLoggerService,
     ) {}
 
     public async execute(userStatusDto: UserStatusDto): Promise<void> {

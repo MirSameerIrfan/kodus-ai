@@ -12,19 +12,19 @@ import { Injectable } from '@nestjs/common';
 import {
     IDetectedReference,
     IFileReference,
-} from '@libs/core/ai-engine/domain/interfaces/promptExternalReference.interface';
+} from '@libs/ai-engine/domain/prompt/interfaces/promptExternalReference.interface';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
+import { ObservabilityService } from '@libs/core/log/observability.service';
 import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
 import {
     prompt_detect_external_references_system,
     prompt_detect_external_references_user,
-} from '@libs/core/utils/langchainCommon/prompts/externalReferences';
+} from '@libs/common/utils/langchainCommon/prompts/externalReferences';
 import {
     prompt_kodyrules_detect_references_system,
     prompt_kodyrules_detect_references_user,
-} from '@libs/core/utils/langchainCommon/prompts/kodyRulesExternalReferences';
-import { extractJsonFromResponse } from '../../../utils/prompt-parser.utils';
+} from '@libs/common/utils/langchainCommon/prompts/kodyRulesExternalReferences';
+import { extractJsonFromResponse } from '@libs/common/utils/prompt-parser.utils';
 
 export interface DetectReferencesParams {
     requirementId: string;

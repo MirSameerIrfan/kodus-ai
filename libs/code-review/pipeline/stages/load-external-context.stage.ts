@@ -4,7 +4,7 @@ import type { ContextLayer } from '@context-os-core/interfaces';
 import { ILoadExternalContextStage } from './contracts/loadExternalContextStage.contract';
 import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
 
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 import {
     IPromptExternalReferenceManagerService,
@@ -23,13 +23,14 @@ export class LoadExternalContextStage
 {
     readonly stageName = 'LoadExternalContextStage';
 
+    private readonly logger = createLogger(LoadExternalContextStage.name);
+
     constructor(
         @Inject(PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN)
         private readonly promptReferenceManager: IPromptExternalReferenceManagerService,
         @Inject(PROMPT_CONTEXT_LOADER_SERVICE_TOKEN)
         private readonly promptContextLoader: IPromptContextLoaderService,
         private readonly contextPackService: CodeReviewContextPackService,
-        private readonly logger: PinoLoggerService,
     ) {
         super();
     }

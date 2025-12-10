@@ -14,6 +14,7 @@ import {
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
+import { AutomationType } from '@libs/automation/domain/automation/enum/automation-type';
 
 @Injectable()
 export class CreatePRCodeReviewUseCase implements IUseCase {

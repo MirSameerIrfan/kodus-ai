@@ -7,15 +7,16 @@ import { Injectable } from '@nestjs/common';
 import {
     IPromptContextLoaderService,
     LoadContextParams,
-} from '@libs/code-review/domain/prompts/contracts/promptContextLoader.contract';
-import { PromptExternalReferenceEntity } from '@libs/core/ai-engine/domain/entities/promptExternalReference.entity';
+} from '@libs/ai-engine/domain/prompt/contracts/promptContextLoader.contract';
+import { PromptExternalReferenceEntity } from '@libs/ai-engine/domain/prompt/entities/promptExternalReference.entity';
 import {
     IFileReference,
     ILoadedFileReference,
     IExternalPromptContext,
     PromptSourceType,
-} from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
+} from '@libs/ai-engine/domain/prompt/interfaces/promptExternalReference.interface';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 
 @Injectable()
 export class PromptContextLoaderService implements IPromptContextLoaderService {

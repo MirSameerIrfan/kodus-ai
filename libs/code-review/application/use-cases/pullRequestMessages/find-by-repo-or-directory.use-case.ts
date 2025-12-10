@@ -13,8 +13,8 @@ import {
     IFormattedConfigProperty,
 } from '@libs/core/infrastructure/config/types/general/codeReviewConfig.type';
 import { ConfigLevel } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
-import { deepDifference, deepMerge } from '@libs/core/utils/deep';
-import { getDefaultKodusConfigFile } from '@libs/core/utils/validateCodeReviewConfigFile';
+import { deepDifference, deepMerge } from '@libs/common/utils/deep';
+import { getDefaultKodusConfigFile } from '@libs/common/utils/validateCodeReviewConfigFile';
 
 type CustomMessagesConfig = ReturnType<
     typeof getDefaultKodusConfigFile

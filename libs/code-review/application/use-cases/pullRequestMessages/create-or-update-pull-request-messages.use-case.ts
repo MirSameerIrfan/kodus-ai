@@ -4,8 +4,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
     ICodeReviewSettingsLogService,
-} from '@libs/analytics/ee/settings-log/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
-import { PullRequestMessagesLogParams } from '@libs/analytics/ee/settings-log/services/pullRequestMessageLog.handler';
+} from '@libs/ee/codeReviewSettingsLog/domain/contracts/codeReviewSettingsLog.service.contract';
+import { PullRequestMessagesLogParams } from '@libs/ee/codeReviewSettingsLog/infrastructure/adapters/services/pullRequestMessageLog.handler';
 import {
     IPullRequestMessagesService,
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
@@ -18,7 +18,7 @@ import {
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { ActionType } from '@libs/core/infrastructure/config/types/general/codeReviewSettingsLog.type';
 import { ConfigLevel } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
-import { getDefaultKodusConfigFile } from '@libs/core/utils/validateCodeReviewConfigFile';
+import { getDefaultKodusConfigFile } from '@libs/common/utils/validateCodeReviewConfigFile';
 import {
     Action,
     ResourceType,

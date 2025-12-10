@@ -37,7 +37,7 @@ import { IssueStatus } from '@libs/core/infrastructure/config/types/general/issu
 import { CodeSuggestion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 
 import { IssueCreationConfig } from '@libs/issues/domain/entities/issue-creation-config.entity';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 import {
     KODY_ISSUES_ANALYSIS_SERVICE_TOKEN,
     KodyIssuesAnalysisService,
@@ -49,9 +49,9 @@ import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
 export class KodyIssuesManagementService
     implements IKodyIssuesManagementService
 {
-    constructor(
-        private readonly logger: PinoLoggerService,
+    private readonly logger = createLogger(KodyIssuesManagementService.name);
 
+    constructor(
         @Inject(ISSUES_SERVICE_TOKEN)
         private readonly issuesService: IIssuesService,
 

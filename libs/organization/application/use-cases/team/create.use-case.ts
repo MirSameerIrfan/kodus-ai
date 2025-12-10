@@ -2,20 +2,19 @@ import { ConflictException, Inject } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 
 import { CreateOrUpdateParametersUseCase } from '../parameters/create-or-update-use-case';
-
-import { STATUS } from '@/config/types/database/status.type';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import {
+    ITeamService,
+    TEAM_SERVICE_TOKEN,
+} from '@libs/organization/domain/team/contracts/team.service.contract';
+import { TeamEntity } from '@libs/organization/domain/team/entities/team.entity';
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
 import {
     KodyLearningStatus,
     PlatformConfigValue,
-} from '@/core/domain/parameters/types/configValue.type';
-import {
-    TEAM_SERVICE_TOKEN,
-    ITeamService,
-} from '@/core/domain/team/contracts/team.service.contract';
-import { TeamEntity } from '@/core/domain/team/entities/team.entity';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
-import posthogClient from '@/shared/utils/posthog';
+} from '@libs/organization/domain/parameters/types/configValue.type';
+import { ParametersKey } from '@libs/core/domain/enums';
+import posthogClient from '@libs/common/utils/posthog';
 
 export class CreateTeamUseCase implements IUseCase {
     constructor(
@@ -29,6 +28,7 @@ export class CreateTeamUseCase implements IUseCase {
 
         private readonly createOrUpdateParametersUseCase: CreateOrUpdateParametersUseCase,
     ) {}
+
     public async execute(payload: {
         teamName: string;
         organizationId: string;

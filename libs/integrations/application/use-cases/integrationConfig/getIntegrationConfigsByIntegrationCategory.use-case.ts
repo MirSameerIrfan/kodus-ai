@@ -9,15 +9,16 @@ import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
-import { IntegrationConfigEntity } from '@libs/integrations/domain/configs/entities/integration-config.entity';
+} from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import { IntegrationConfigEntity } from '@libs/integrations/domain/integrationConfigs/entities/integration-config.entity';
 import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
-} from '@libs/integrations/domain/contracts/integration.service.contracts';
+} from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
 
-
-export class GetIntegrationConfigsByIntegrationCategoryUseCase implements IUseCase {
+export class GetIntegrationConfigsByIntegrationCategoryUseCase
+    implements IUseCase
+{
     private readonly logger = createLogger(
         GetIntegrationConfigsByIntegrationCategoryUseCase.name,
     );

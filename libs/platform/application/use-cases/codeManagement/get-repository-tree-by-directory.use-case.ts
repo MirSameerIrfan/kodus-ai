@@ -1,7 +1,4 @@
 import { createLogger } from '@kodus/flow';
-import { Inject, Injectable } from '@nestjs/common';
-import { GetRepositoryTreeByDirectoryDto } from 'apps/api/src/dtos/get-repository-tree-by-directory.dto';
-
 import { CacheService } from '@libs/core/cache/cache.service';
 import {
     GET_ADDITIONAL_INFO_HELPER_TOKEN,
@@ -10,6 +7,8 @@ import {
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { TreeItem } from '@libs/core/infrastructure/config/types/general/tree.type';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
+import { Inject, Injectable } from '@nestjs/common';
+import { GetRepositoryTreeByDirectoryDto } from 'apps/api/src/dtos/get-repository-tree-by-directory.dto';
 
 export interface DirectoryItem {
     name: string;
@@ -31,14 +30,14 @@ export class GetRepositoryTreeByDirectoryUseCase implements IUseCase {
         GetRepositoryTreeByDirectoryUseCase.name,
     );
     constructor(
-        private readonly codeManagementService: CodeManagementService,
         @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
         private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
         private readonly cacheService: CacheService,
+        private readonly codeManagementService: CodeManagementService,
     ) {}
 
     public async execute(
-        params: GetRepositoryTreeByDirectoryDto,
+        params: GetRepositoryTreeByDirectoryDto & { organizationId: string },
     ): Promise<RepositoryTreeByDirectoryResponse> {
         try {
             const cacheKey = this.buildCacheKey(

@@ -1,14 +1,14 @@
 import { Column, Entity, OneToMany } from 'typeorm';
 
-import { AuthIntegrationModel } from './authIntegration.model';
-import { IntegrationModel } from './integration.model';
+import { AuthIntegrationModel } from '@libs/integrations/infrastructure/adapters/repositories/schemas/authIntegration.model';
+import { IntegrationModel } from '@libs/integrations/infrastructure/adapters/repositories/schemas/integration.model';
 import { OrganizationParametersModel } from './organizationParameters.model';
-import { SSOConfigModel } from './ssoConfig.model';
+import { SSOConfigModel } from '@libs/identity/infrastructure/adapters/repositories/schemas/ssoConfig.model';
 import { TeamModel } from './team.model';
 import { TeamMemberModel } from './teamMember.model';
-import { UserModel } from './user.model';
+import { UserModel } from '@libs/identity/infrastructure/adapters/repositories/schemas/user.model';
 
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 
 @Entity('organizations')
 export class OrganizationModel extends CoreModel {

@@ -1,23 +1,24 @@
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { createLogger } from '@kodus/flow';
+import { getMappedPlatform } from '@libs/common/utils/webhooks';
+import { IntegrationConfigKey, PlatformType } from '@libs/core/domain/enums';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { stripCurlyBracesFromUUIDs } from '@/core/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
+} from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import { stripCurlyBracesFromUUIDs } from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
+import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
-} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
-import { IPullRequests } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { getMappedPlatform } from '@/shared/utils/webhooks';
+} from '@libs/platformData/domain/pullRequests/contracts/pullRequests.service.contracts';
+import { IPullRequests } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class SavePullRequestUseCase {
+    private readonly logger = createLogger(SavePullRequestUseCase.name);
+
     constructor(
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
         private readonly integrationConfigService: IIntegrationConfigService,
@@ -26,8 +27,6 @@ export class SavePullRequestUseCase {
         private readonly pullRequestsService: IPullRequestsService,
 
         private readonly codeManagement: CodeManagementService,
-
-        private readonly logger: PinoLoggerService,
     ) {}
 
     public async execute(params: {
@@ -113,7 +112,7 @@ export class SavePullRequestUseCase {
                     payload: sanitizedPayload,
                 });
 
-                let pullRequestWithUserData: any = {
+                const pullRequestWithUserData: any = {
                     ...pullRequest,
                     ...relevantUsers,
                 };

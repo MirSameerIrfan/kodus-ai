@@ -60,10 +60,15 @@ export class PullRequestMessagesController {
         }),
     )
     public async findByRepoOrDirectoryId(
-        @Query('organizationId') organizationId: string,
         @Query('repositoryId') repositoryId: string,
         @Query('directoryId') directoryId?: string,
     ) {
+        const organizationId = this.request?.user?.organization?.uuid;
+
+        if (!organizationId) {
+            throw new Error('Organization ID is missing from request');
+        }
+
         return await this.findByRepositoryOrDirectoryIdPullRequestMessagesUseCase.execute(
             organizationId,
             repositoryId,

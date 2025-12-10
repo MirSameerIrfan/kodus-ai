@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
-
+import { createLogger } from '@kodus/flow';
 import { OutboxMessageRepository } from '@libs/core/infrastructure/database/typeorm/repositories/outbox-message.repository';
 import { OutboxMessageModel } from '@libs/core/infrastructure/database/typeorm/repositories/schema/outbox-message.model';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
 
 export interface OutboxMessage {
     jobId: string;
@@ -14,10 +13,11 @@ export interface OutboxMessage {
 
 @Injectable()
 export class TransactionalOutboxService {
+    private readonly logger = createLogger(TransactionalOutboxService.name);
+
     constructor(
         private readonly dataSource: DataSource,
         private readonly outboxRepository: OutboxMessageRepository,
-        private readonly logger: PinoLoggerService,
     ) {}
 
     /**

@@ -5,7 +5,6 @@ import { HandlerType } from '../enums/handler-type.enum';
 import { JobStatus } from '../enums/job-status.enum';
 import { WorkflowType } from '../enums/workflow-type.enum';
 
-
 export interface IWorkflowJob {
     id: string;
     correlationId: string;

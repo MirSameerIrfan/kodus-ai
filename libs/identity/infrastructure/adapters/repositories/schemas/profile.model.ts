@@ -3,7 +3,7 @@ import { Column, Entity, JoinColumn, OneToMany, OneToOne } from 'typeorm';
 import { ProfileConfigModel } from './profileConfig.model';
 import { UserModel } from './user.model';
 
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 
 @Entity('profiles')
 export class ProfileModel extends CoreModel {

@@ -1,29 +1,27 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 
-import { CodeReviewParameter } from '@/config/types/general/codeReviewConfig.type';
-import {
-    ActionType,
-    ConfigLevel,
-} from '@/config/types/general/codeReviewSettingsLog.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import {
-    IIntegrationConfigService,
-    INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import { createLogger } from '@kodus/flow';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import {
-    ICodeReviewSettingsLogService,
+    IIntegrationConfigService,
+    INTEGRATION_CONFIG_SERVICE_TOKEN,
+} from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
-} from '@/ee/codeReviewSettingsLog/domain/codeReviewSettingsLog/contracts/codeReviewSettingsLog.service.contract';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-
+    ICodeReviewSettingsLogService,
+} from '@libs/ee/codeReviewSettingsLog/domain/contracts/codeReviewSettingsLog.service.contract';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
+import { IntegrationConfigKey, ParametersKey } from '@libs/core/domain/enums';
+import { CodeReviewParameter } from '@libs/core/infrastructure/config/types/general/codeReviewConfig.type';
+import {
+    ActionType,
+    ConfigLevel,
+} from '@libs/core/infrastructure/config/types/general/codeReviewSettingsLog.type';
 
 interface ICodeRepository {
     avatar_url?: string;
@@ -39,6 +37,10 @@ interface ICodeRepository {
 
 @Injectable()
 export class UpdateCodeReviewParameterRepositoriesUseCase {
+    private readonly logger = createLogger(
+        UpdateCodeReviewParameterRepositoriesUseCase.name,
+    );
+
     constructor(
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
@@ -57,8 +59,6 @@ export class UpdateCodeReviewParameterRepositoriesUseCase {
                 email: string;
             };
         },
-
-        private readonly logger: PinoLoggerService,
     ) {}
 
     async execute(body: {

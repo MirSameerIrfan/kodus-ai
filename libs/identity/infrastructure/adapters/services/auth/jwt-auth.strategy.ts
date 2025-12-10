@@ -3,12 +3,12 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
-import { STATUS } from '@/config/types/database/status.type';
-import { JWT } from '@/config/types/jwt/jwt';
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
+import { JWT } from '@libs/core/infrastructure/config/types/jwt/jwt';
 import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
-} from '@/core/domain/auth/contracts/auth.service.contracts';
+} from '@libs/identity/domain/auth/contracts/auth.service.contracts';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {

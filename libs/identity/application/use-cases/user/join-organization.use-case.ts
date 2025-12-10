@@ -1,40 +1,42 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { STATUS } from '@/config/types/database/status.type';
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
 import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
-} from '@/core/domain/auth/contracts/auth.service.contracts';
+} from '@libs/identity/domain/auth/contracts/auth.service.contracts';
 import {
     IOrganizationService,
     ORGANIZATION_SERVICE_TOKEN,
-} from '@/core/domain/organization/contracts/organization.service.contract';
-import { Role } from '@/core/domain/permissions/enums/permissions.enum';
+} from '@libs/organization/domain/organization/contracts/organization.service.contract';
+import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
     IProfileService,
     PROFILE_SERVICE_TOKEN,
-} from '@/core/domain/profile/contracts/profile.service.contract';
+} from '@libs/identity/domain/profile/contracts/profile.service.contract';
 import {
     ITeamService,
     TEAM_SERVICE_TOKEN,
-} from '@/core/domain/team/contracts/team.service.contract';
+} from '@libs/organization/domain/team/contracts/team.service.contract';
 import {
     ITeamMemberService,
     TEAM_MEMBERS_SERVICE_TOKEN,
-} from '@/core/domain/teamMembers/contracts/teamMembers.service.contracts';
-import { TeamMemberRole } from '@/core/domain/teamMembers/enums/teamMemberRole.enum';
+} from '@libs/organization/domain/teamMembers/contracts/teamMembers.service.contracts';
+import { TeamMemberRole } from '@libs/organization/domain/teamMembers/enums/teamMemberRole.enum';
 import {
     IUsersService,
     USER_SERVICE_TOKEN,
-} from '@/core/domain/user/contracts/user.service.contract';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { JoinOrganizationDto } from '@/core/infrastructure/http/dtos/join-organization.dto';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
-import { sendConfirmationEmail } from '@/shared/utils/email/sendMail';
+} from '@libs/identity/domain/user/contracts/user.service.contract';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
+import { createLogger } from '@kodus/flow';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import { sendConfirmationEmail } from '@libs/common/utils/email/sendMail';
+import { JoinOrganizationDto } from 'apps/api/src/dtos/join-organization.dto';
 
 @Injectable()
 export class JoinOrganizationUseCase implements IUseCase {
+    private readonly logger = createLogger(JoinOrganizationUseCase.name);
+
     constructor(
         @Inject(USER_SERVICE_TOKEN)
         private readonly userService: IUsersService,
@@ -53,8 +55,6 @@ export class JoinOrganizationUseCase implements IUseCase {
 
         @Inject(AUTH_SERVICE_TOKEN)
         private readonly authService: IAuthService,
-
-        private readonly logger: PinoLoggerService,
     ) {}
 
     public async execute(data: JoinOrganizationDto): Promise<IUser> {

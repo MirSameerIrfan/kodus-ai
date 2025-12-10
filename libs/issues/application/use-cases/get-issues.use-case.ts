@@ -2,10 +2,10 @@ import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 
-import { GetIssuesByFiltersDto } from '@libs/common/dtos/get-issues-by-filters.dto';
+import { GetIssuesByFiltersDto } from '@libs/core/domain/dtos/get-issues-by-filters.dto';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
-import { CacheService } from '@libs/core/utils/cache/cache.service';
+import { CacheService } from '@libs/core/cache/cache.service';
 import {
     Action,
     ResourceType,
@@ -73,11 +73,11 @@ export class GetIssuesUseCase implements IUseCase {
             }
 
             const assignedRepositoryIds =
-                await this.authorizationService.getRepositoryScope(
-                    this.request.user,
-                    Action.Read,
-                    ResourceType.Issues,
-                );
+                await this.authorizationService.getRepositoryScope({
+                    user: this.request.user,
+                    action: Action.Read,
+                    resource: ResourceType.Issues,
+                });
 
             if (assignedRepositoryIds !== null) {
                 allIssues = allIssues.filter((issue) =>

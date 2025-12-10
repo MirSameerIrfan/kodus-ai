@@ -1,17 +1,16 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-
-import { SummaryConfig } from '@/config/types/general/codeReview.type';
 import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
-} from '@/core/domain/codeBase/contracts/CommentManagerService.contract';
+} from '@libs/code-review/domain/contracts/CommentManagerService.contract';
+import { ParametersKey } from '@libs/core/domain/enums';
+import { SummaryConfig } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { PreviewPrSummaryDto } from '@/core/infrastructure/http/dtos/preview-pr-summary.dto';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { PreviewPrSummaryDto } from '@libs/organization/infrastructure/http/dtos/preview-pr-summary.dto';
+import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class PreviewPrSummaryUseCase {

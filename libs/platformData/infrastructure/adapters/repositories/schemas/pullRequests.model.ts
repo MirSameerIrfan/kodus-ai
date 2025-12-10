@@ -1,8 +1,8 @@
 import { LabelType } from '@libs/common/utils/codeManagement/labels';
 import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
-import { DeliveryStatus } from '@libs/controlData/domain/pullRequests/enums/deliveryStatus.enum';
-import { PriorityStatus } from '@libs/controlData/domain/pullRequests/enums/priorityStatus.enum';
-import { ICommit } from '@libs/controlData/domain/pullRequests/interfaces/pullRequests.interface';
+import { DeliveryStatus } from '@libs/platformData/domain/pullRequests/enums/deliveryStatus.enum';
+import { PriorityStatus } from '@libs/platformData/domain/pullRequests/enums/priorityStatus.enum';
+import { ICommit } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
 import { ReviewModeResponse } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { CoreDocument } from '@libs/core/infrastructure/repositories/model/mongodb';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
@@ -85,7 +85,7 @@ export class PullRequestsModel extends CoreDocument {
             priorityStatus: PriorityStatus;
             deliveryStatus: DeliveryStatus;
             implementationStatus: {
-                type: String;
+                type: string;
                 default: 'not_implemented';
                 enum: [
                     'implemented',

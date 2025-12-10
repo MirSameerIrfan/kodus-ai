@@ -37,6 +37,7 @@ export class BusinessRulesValidationAgentProvider extends BaseAgentProvider {
     private readonly logger = createLogger(
         BusinessRulesValidationAgentProvider.name,
     );
+
     protected config: DatabaseConnection;
 
     private orchestration: SDKOrchestrator;

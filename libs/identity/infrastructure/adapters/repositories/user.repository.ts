@@ -8,14 +8,14 @@ import {
     Repository,
 } from 'typeorm';
 
-import { UserModel } from './schema/user.model';
+import { UserModel } from './schemas/user.model';
 
-import { STATUS } from '@/config/types/database/status.type';
-import { Role } from '@/core/domain/permissions/enums/permissions.enum';
-import { IUserRepository } from '@/core/domain/user/contracts/user.repository.contract';
-import { UserEntity } from '@/core/domain/user/entities/user.entity';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { mapSimpleModelToEntity } from '@/shared/infrastructure/repositories/mappers';
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
+import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { IUserRepository } from '@libs/identity/domain/user/contracts/user.repository.contract';
+import { UserEntity } from '@libs/identity/domain/user/entities/user.entity';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
+import { mapSimpleModelToEntity } from '@libs/core/infrastructure/repositories/mappers';
 
 @Injectable()
 export class UserDatabaseRepository implements IUserRepository {

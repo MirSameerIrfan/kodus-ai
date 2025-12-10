@@ -2,8 +2,6 @@ import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 
-import { AddLibraryKodyRulesDto } from '@libs/common/dtos/add-library-kody-rules.dto';
-import { CreateKodyRuleDto } from '@libs/common/dtos/create-kody-rule.dto';
 import {
     Action,
     ResourceType,
@@ -12,9 +10,11 @@ import { AuthorizationService } from '@libs/identity/infrastructure/adapters/ser
 import {
     IKodyRule,
     KodyRulesOrigin,
-} from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
+} from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 
 import { CreateOrUpdateKodyRulesUseCase } from './create-or-update.use-case';
+import { AddLibraryKodyRulesDto } from 'apps/api/src/dtos/add-library-kody-rules.dto';
+import { CreateKodyRuleDto } from '@libs/ee/kodyRules/dtos/create-kody-rule.dto';
 
 @Injectable()
 export class AddLibraryKodyRulesUseCase {

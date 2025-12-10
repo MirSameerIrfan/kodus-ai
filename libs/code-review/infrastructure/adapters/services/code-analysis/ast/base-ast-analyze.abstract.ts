@@ -8,7 +8,7 @@ import {
     AIAnalysisResult,
     AnalysisContext,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 
 /**
@@ -20,7 +20,10 @@ import { Injectable } from '@nestjs/common';
 export abstract class BaseKodyASTAnalyzeContextPreparation
     implements IKodyASTAnalyzeContextPreparationService
 {
-    constructor(protected readonly logger: PinoLoggerService) {}
+    protected readonly logger = createLogger(
+        BaseKodyASTAnalyzeContextPreparation.name,
+    );
+    constructor() {}
 
     async prepareKodyASTAnalyzeContext(
         context: AnalysisContext,

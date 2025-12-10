@@ -12,8 +12,7 @@ import * as volleyball from 'volleyball';
 
 import { setupSentryAndOpenTelemetry } from '@libs/core/infrastructure/config/log/otel';
 import { HttpServerConfiguration } from '@libs/core/infrastructure/config/types/http/http-server.type';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
-import { environment } from '@libs/ee/shared/configs/environment';
+import { createLogger } from '@kodus/flow';
 
 import { ApiModule } from './api.module';
 

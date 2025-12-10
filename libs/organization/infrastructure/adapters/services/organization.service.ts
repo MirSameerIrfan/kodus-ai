@@ -4,10 +4,10 @@ import { v4 as uuidv4 } from 'uuid';
 import {
     IOrganizationRepository,
     ORGANIZATION_REPOSITORY_TOKEN,
-} from '@/core/domain/organization/contracts/organization.repository.contract';
-import { IOrganizationService } from '@/core/domain/organization/contracts/organization.service.contract';
-import { OrganizationEntity } from '@/core/domain/organization/entities/organization.entity';
-import { IOrganization } from '@/core/domain/organization/interfaces/organization.interface';
+} from '@libs/organization/domain/organization/contracts/organization.repository.contract';
+import { IOrganizationService } from '@libs/organization/domain/organization/contracts/organization.service.contract';
+import { OrganizationEntity } from '@libs/organization/domain/organization/entities/organization.entity';
+import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 
 @Injectable()
 export class OrganizationService implements IOrganizationService {

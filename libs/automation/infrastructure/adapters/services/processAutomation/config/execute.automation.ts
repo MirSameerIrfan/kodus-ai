@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { IExecuteAutomationService } from '@libs/core/domain/contracts/execute.automation.service.contracts';
+import { IExecuteAutomationService } from '@libs/automation/domain/automationExecution/contracts/execute.automation.service.contracts';
 
 import { AutomationRegistry } from './register.automation';
 

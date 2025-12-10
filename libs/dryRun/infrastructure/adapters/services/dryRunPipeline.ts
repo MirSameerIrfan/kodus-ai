@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
-import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/context/code-review-pipeline.context';
+import { CodeReviewPipelineContext } from '@libs/code-review/pipeline/context/code-review-pipeline.context';
 import { IPipeline } from '@libs/core/infrastructure/pipeline/interfaces/pipeline.interface';
 import { PipelineExecutor } from '@libs/core/infrastructure/pipeline/services/pipeline-executor.service';
 
 import { DryRunCodeReviewPipelineStrategy } from './dry-run-cr-pipeline.strategy';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 
 @Injectable()
 export class DryRunCodeReviewPipeline
@@ -13,9 +13,10 @@ export class DryRunCodeReviewPipeline
 {
     pipeLineName: string = 'DryRunCodeReviewPipeline';
 
+    private readonly logger = createLogger(DryRunCodeReviewPipeline.name);
+
     constructor(
         private readonly dryRunCodeReviewPipelineStrategy: DryRunCodeReviewPipelineStrategy,
-        private readonly logger: PinoLoggerService,
     ) {}
 
     async execute(

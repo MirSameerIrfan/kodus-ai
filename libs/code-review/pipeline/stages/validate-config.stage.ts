@@ -9,7 +9,7 @@ import {
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/organizationParameters/contracts/organizationParameters.service.contract';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 import {
     AutomationMessage,
     AutomationStatus,
@@ -37,13 +37,14 @@ import {
 export class ValidateConfigStage extends BasePipelineStage<CodeReviewPipelineContext> {
     stageName = 'ValidateConfigStage';
 
+    private readonly logger = createLogger(ValidateConfigStage.name);
+
     constructor(
         @Inject(AUTOMATION_EXECUTION_SERVICE_TOKEN)
         private automationExecutionService: IAutomationExecutionService,
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
         private organizationParametersService: IOrganizationParametersService,
         private codeManagementService: CodeManagementService,
-        private logger: PinoLoggerService,
     ) {
         super();
     }

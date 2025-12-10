@@ -11,6 +11,7 @@ import { McpEnabledGuard } from './guards/mcp-enabled.guard';
 import { MCPManagerService } from './services/mcp-manager.service';
 import { McpServerService } from './services/mcp-server.service';
 import { CodeManagementTools, KodyIssuesTools, KodyRulesTools } from './tools';
+import { PermissionValidationModule } from '@libs/ee/shared/permission-validation.module';
 
 @Module({})
 export class McpModule {

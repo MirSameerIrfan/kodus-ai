@@ -10,35 +10,38 @@ import axios from 'axios';
 import * as bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
-import { UserModel } from '../../repositories/typeorm/schema/user.model';
-
-import { JWT, TokenResponse } from '@/config/types/jwt/jwt';
+import { createLogger } from '@kodus/flow';
+import { IAuthService } from '@libs/identity/domain/auth/contracts/auth.service.contracts';
 import {
     AUTH_REPOSITORY_TOKEN,
     IAuthRepository,
-} from '@/core/domain/auth/contracts/auth.repository.contracts';
-import { IAuthService } from '@/core/domain/auth/contracts/auth.service.contracts';
-import { IAuth } from '@/core/domain/auth/interfaces/auth.interface';
-import {
-    ITeamMemberService,
-    TEAM_MEMBERS_SERVICE_TOKEN,
-} from '@/core/domain/teamMembers/contracts/teamMembers.service.contracts';
-import { TeamMemberEntity } from '@/core/domain/teamMembers/entities/teamMember.entity';
+} from '@libs/identity/domain/auth/contracts/auth.repository.contracts';
 import {
     IUserRepository,
     USER_REPOSITORY_TOKEN,
-} from '@/core/domain/user/contracts/user.repository.contract';
-import { UserEntity } from '@/core/domain/user/entities/user.entity';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { AuthProvider } from '@/shared/domain/enums/auth-provider.enum';
-import { mapSimpleEntityToModel } from '@/shared/infrastructure/repositories/mappers';
-import { getExpiryDate } from '@/shared/utils/transforms/date';
-
+} from '@libs/identity/domain/user/contracts/user.repository.contract';
+import {
+    ITeamMemberService,
+    TEAM_MEMBERS_SERVICE_TOKEN,
+} from '@libs/organization/domain/teamMembers/contracts/teamMembers.service.contracts';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
+import { UserEntity } from '@libs/identity/domain/user/entities/user.entity';
+import { AuthProvider } from '@libs/core/domain/enums';
+import { TeamMemberEntity } from '@libs/organization/domain/teamMembers/entities/teamMember.entity';
+import {
+    JWT,
+    TokenResponse,
+} from '@libs/core/infrastructure/config/types/jwt/jwt';
+import { mapSimpleEntityToModel } from '@libs/core/infrastructure/repositories/mappers';
+import { UserModel } from '../../repositories/schemas/user.model';
+import { getExpiryDate } from '@libs/common/utils/transforms/date';
+import { IAuth } from '@libs/identity/domain/auth/interfaces/auth.interface';
 
 @Injectable()
 export class AuthService implements IAuthService {
     protected jwtConfig: JWT;
+
+    private readonly logger = createLogger(AuthService.name);
 
     constructor(
         private readonly configService: ConfigService,
@@ -49,7 +52,6 @@ export class AuthService implements IAuthService {
         private readonly userRepository: IUserRepository,
         @Inject(TEAM_MEMBERS_SERVICE_TOKEN)
         private readonly teamMemberService: ITeamMemberService,
-        private readonly logger: PinoLoggerService,
     ) {
         this.jwtConfig = this.configService.get<JWT>('jwtConfig');
     }

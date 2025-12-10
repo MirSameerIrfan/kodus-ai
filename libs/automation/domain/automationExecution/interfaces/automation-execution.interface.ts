@@ -1,7 +1,7 @@
-import { CodeReviewExecution } from '@libs/code-review/domain/executions/interfaces/codeReviewExecution.interface';
+import { CodeReviewExecution } from '@libs/automation/domain/codeReviewExecutions/interfaces/codeReviewExecution.interface';
 
-import { ITeamAutomation } from './team-automation.interface';
-import { AutomationStatus } from '../enums/automation-status';
+import { ITeamAutomation } from '@libs/automation/domain/teamAutomation/interfaces/team-automation.interface';
+import { AutomationStatus } from '@libs/automation/domain/automation/enum/automation-status';
 
 export interface IAutomationExecution {
     uuid: string;

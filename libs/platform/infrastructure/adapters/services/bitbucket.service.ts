@@ -1,8 +1,79 @@
+import { createLogger } from '@kodus/flow';
 import {
     LLMModelProvider,
     LLMProviderService,
     MODEL_STRATEGIES,
 } from '@kodus/kodus-common/llm';
+import {
+    GitHubReaction,
+    GitlabReaction,
+} from '@libs/code-review/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
+import { hasKodyMarker } from '@libs/common/utils/codeManagement/codeCommentMarkers';
+import { decrypt, encrypt } from '@libs/common/utils/crypto';
+import { IntegrationServiceDecorator } from '@libs/common/utils/decorators/integration-service.decorator';
+import { CodeManagementConnectionStatus } from '@libs/common/utils/decorators/validate-code-management-integration.decorator';
+import {
+    isFileMatchingGlobCaseInsensitive,
+    isFileMatchingGlob,
+} from '@libs/common/utils/glob-utils';
+import { safelyParseMessageContent } from '@libs/common/utils/safelyParseMessageContent';
+import { CacheService } from '@libs/core/cache/cache.service';
+import {
+    CreateAuthIntegrationStatus,
+    IntegrationCategory,
+    IntegrationConfigKey,
+    ParametersKey,
+    PlatformType,
+    PullRequestState,
+} from '@libs/core/domain/enums';
+import {
+    FileChange,
+    CommentResult,
+    Repository,
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { Commit } from '@libs/core/infrastructure/config/types/general/commit.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { TreeItem } from '@libs/core/infrastructure/config/types/general/tree.type';
+import {
+    AUTH_INTEGRATION_SERVICE_TOKEN,
+    IAuthIntegrationService,
+} from '@libs/integrations/domain/authIntegrations/contracts/auth-integration.service.contracts';
+import { BitbucketAuthDetail } from '@libs/integrations/domain/authIntegrations/types/bitbucket-auth-detail.type';
+import {
+    IIntegrationConfigService,
+    INTEGRATION_CONFIG_SERVICE_TOKEN,
+} from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import { IntegrationConfigEntity } from '@libs/integrations/domain/integrationConfigs/entities/integration-config.entity';
+import {
+    IIntegrationService,
+    INTEGRATION_SERVICE_TOKEN,
+} from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
+import { IntegrationEntity } from '@libs/integrations/domain/integrations/entities/integration.entity';
+import { MCPManagerService } from '@libs/mcp-server/services/mcp-manager.service';
+import {
+    PARAMETERS_SERVICE_TOKEN,
+    IParametersService,
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { AuthMode } from '@libs/platform/domain/platformIntegrations/enums/codeManagement/authMode.enum';
+import { ICodeManagementService } from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
+import { GitCloneParams } from '@libs/platform/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
+import {
+    PullRequestAuthor,
+    PullRequestsWithChangesRequested,
+    PullRequestReviewState,
+    PullRequest,
+    PullRequestWithFiles,
+    PullRequestFile,
+    PullRequestCodeReviewTime,
+    OneSentenceSummaryItem,
+    PullRequestReviewComment,
+    ReactionsInComments,
+} from '@libs/platform/domain/platformIntegrations/types/codeManagement/pullRequests.type';
+import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
+import { RepositoryFile } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
+import { Workflow } from '@libs/platform/domain/platformIntegrations/types/codeManagement/workflow.type';
+import { AuthorContribution } from '@libs/platformData/domain/pullRequests/interfaces/authorContributor.interface';
+import { IRepository } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { APIClient, Bitbucket, Schema } from 'bitbucket';
@@ -10,75 +81,10 @@ import { Response as BitbucketResponse } from 'bitbucket/src/request/types';
 import moment from 'moment';
 import { v4 } from 'uuid';
 
-import {
-    CommentResult,
-    FileChange,
-    Repository,
-} from '@/config/types/general/codeReview.type';
-import { Commit } from '@/config/types/general/commit.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { TreeItem } from '@/config/types/general/tree.type';
-import {
-    AUTH_INTEGRATION_SERVICE_TOKEN,
-    IAuthIntegrationService,
-} from '@/core/domain/authIntegrations/contracts/auth-integration.service.contracts';
-import { BitbucketAuthDetail } from '@/core/domain/authIntegrations/types/bitbucket-auth-detail.type';
-import { IBitbucketService } from '@/core/domain/bitbucket/contracts/bitbucket.service.contract';
-import {
-    IIntegrationConfigService,
-    INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { IntegrationConfigEntity } from '@/core/domain/integrationConfigs/entities/integration-config.entity';
-import {
-    IIntegrationService,
-    INTEGRATION_SERVICE_TOKEN,
-} from '@/core/domain/integrations/contracts/integration.service.contracts';
-import { IntegrationEntity } from '@/core/domain/integrations/entities/integration.entity';
-import {
-    IParametersService,
-    PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { AuthMode } from '@/core/domain/platformIntegrations/enums/codeManagement/authMode.enum';
-import { ICodeManagementService } from '@/core/domain/platformIntegrations/interfaces/code-management.interface';
-import { GitCloneParams } from '@/core/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
-import {
-    OneSentenceSummaryItem,
-    PullRequest,
-    PullRequestAuthor,
-    PullRequestCodeReviewTime,
-    PullRequestFile,
-    PullRequestReviewComment,
-    PullRequestReviewState,
-    PullRequestsWithChangesRequested,
-    PullRequestWithFiles,
-    ReactionsInComments,
-} from '@/core/domain/platformIntegrations/types/codeManagement/pullRequests.type';
-import { Repositories } from '@/core/domain/platformIntegrations/types/codeManagement/repositories.type';
-import { RepositoryFile } from '@/core/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
-import { AuthorContribution } from '@/core/domain/pullRequests/interfaces/authorContributor.interface';
-import { IRepository } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
-import { CreateAuthIntegrationStatus } from '@/shared/domain/enums/create-auth-integration-status.enum';
-import { IntegrationCategory } from '@/shared/domain/enums/integration-category.enum';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { PullRequestState } from '@/shared/domain/enums/pullRequestState.enum';
-import { CacheService } from '@/shared/utils/cache/cache.service';
-import { hasKodyMarker } from '@/shared/utils/codeManagement/codeCommentMarkers';
-import { decrypt, encrypt } from '@/shared/utils/crypto';
-import { IntegrationServiceDecorator } from '@/shared/utils/decorators/integration-service.decorator';
-import { CodeManagementConnectionStatus } from '@/shared/utils/decorators/validate-code-management-integration.decorator';
-import {
-    isFileMatchingGlob,
-    isFileMatchingGlobCaseInsensitive,
-} from '@/shared/utils/glob-utils';
-import { safelyParseMessageContent } from '@/shared/utils/safelyParseMessageContent';
-
 @Injectable()
 @IntegrationServiceDecorator(PlatformType.BITBUCKET, 'codeManagement')
 export class BitbucketService
     implements
-        IBitbucketService,
         Omit<
             ICodeManagementService,
             | 'getOrganizations'
@@ -91,6 +97,8 @@ export class BitbucketService
             | 'getAuthenticationOAuthToken'
         >
 {
+    private readonly logger = createLogger(BitbucketService.name);
+
     constructor(
         @Inject(INTEGRATION_SERVICE_TOKEN)
         private readonly integrationService: IIntegrationService,
@@ -101,19 +109,48 @@ export class BitbucketService
         @Inject(AUTH_INTEGRATION_SERVICE_TOKEN)
         private readonly authIntegrationService: IAuthIntegrationService,
 
-        @Inject(PARAMETERS_SERVICE_TOKEN)
-        private readonly parameterService: IParametersService,
-
-        private readonly llmProviderService: LLMProviderService,
-
-        private readonly promptService: PromptService,
-
-        private readonly logger: PinoLoggerService,
-
         private readonly configService: ConfigService,
         private readonly cacheService: CacheService,
         private readonly mcpManagerService?: MCPManagerService,
     ) {}
+
+    getWorkflows(params: any): Promise<Workflow[]> {
+        throw new Error('Method not implemented.');
+    }
+    addReactionToPR?(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+        repository: { id?: string; name?: string };
+        prNumber: number;
+        reaction: GitHubReaction | GitlabReaction;
+    }): Promise<void> {
+        throw new Error('Method not implemented.');
+    }
+    addReactionToComment?(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+        repository: { id?: string; name?: string };
+        prNumber: number;
+        commentId: number;
+        reaction: GitHubReaction | GitlabReaction;
+    }): Promise<void> {
+        throw new Error('Method not implemented.');
+    }
+    removeReactionsFromPR?(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+        repository: { id?: string; name?: string };
+        prNumber: number;
+        reactions: (GitHubReaction | GitlabReaction)[];
+    }): Promise<void> {
+        throw new Error('Method not implemented.');
+    }
+    removeReactionsFromComment?(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+        repository: { id?: string; name?: string };
+        prNumber: number;
+        commentId: number;
+        reactions: (GitHubReaction | GitlabReaction)[];
+    }): Promise<void> {
+        throw new Error('Method not implemented.');
+    }
 
     private readonly USER_CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
@@ -760,6 +797,12 @@ export class BitbucketService
             visibility?: 'all' | 'public' | 'private';
             language?: string;
         };
+        options?: {
+            includePullRequestMetrics?: {
+                lastNDays?: number;
+                limit?: number;
+            };
+        };
     }): Promise<Repositories[]> {
         try {
             const { organizationAndTeamData } = params;
@@ -809,20 +852,11 @@ export class BitbucketService
                 ),
             );
 
-            const repositories = workspacesWithRepos.reduce<Repositories[]>(
-                (acc, { workspace, repos }) => {
-                    repos.forEach((repo) => {
-                        acc.push(
-                            this.transformRepo(
-                                repo,
-                                workspace,
-                                integrationConfig,
-                            ),
-                        );
-                    });
-                    return acc;
-                },
-                [],
+            const repositories: Repositories[] = workspacesWithRepos.flatMap(
+                ({ workspace, repos }) =>
+                    repos.map((repo) =>
+                        this.transformRepo(repo, workspace, integrationConfig),
+                    ),
             );
 
             return repositories;
@@ -837,6 +871,50 @@ export class BitbucketService
                 },
             });
             throw new BadRequestException(error);
+        }
+    }
+
+    private async getRecentPullRequestsCount(params: {
+        bitbucketAPI: InstanceType<typeof Bitbucket>;
+        repoId: string;
+        workspaceId: string;
+        days: number;
+        organizationAndTeamData: OrganizationAndTeamData;
+    }): Promise<number> {
+        try {
+            const sinceDate = moment()
+                .subtract(Math.max(params.days, 1), 'days')
+                .toISOString();
+
+            const response = await params.bitbucketAPI.pullrequests.list({
+                repo_slug: `{${params.repoId}}`,
+                workspace: `{${params.workspaceId}}`,
+                q: `created_on >= "${sinceDate}"`,
+                sort: '-created_on',
+                pagelen: 50,
+            });
+
+            const pullRequests = await this.getPaginatedResults(
+                params.bitbucketAPI,
+                response,
+            );
+
+            return pullRequests.length;
+        } catch (error) {
+            this.logger.warn({
+                message:
+                    'Failed to count recent pull requests from Bitbucket repository',
+                context: BitbucketService.name,
+                error: error,
+                metadata: {
+                    repoId: params.repoId,
+                    workspaceId: params.workspaceId,
+                    organizationId:
+                        params.organizationAndTeamData?.organizationId,
+                    teamId: params.organizationAndTeamData?.teamId,
+                },
+            });
+            return 0;
         }
     }
 
@@ -865,94 +943,8 @@ export class BitbucketService
                 id: this.sanitizeUUID(project?.uuid),
                 name: project?.name ?? '',
             },
+            lastActivityAt: repo?.updated_on || repo?.created_on,
         };
-    }
-
-    async getWorkflows(organizationAndTeamData: OrganizationAndTeamData) {
-        try {
-            const bitbucketAuthDetail = await this.getAuthDetails(
-                organizationAndTeamData,
-            );
-
-            const repositories = <Repositories[]>(
-                await this.findOneByOrganizationAndTeamDataAndConfigKey(
-                    organizationAndTeamData,
-                    IntegrationConfigKey.REPOSITORIES,
-                )
-            );
-
-            if (!bitbucketAuthDetail || !repositories) {
-                return [];
-            }
-
-            const bitbucketAPI = this.instanceBitbucketApi(bitbucketAuthDetail);
-
-            const allWorkflows = await Promise.all(
-                repositories.map((repo) =>
-                    bitbucketAPI.pipelines
-                        .list({
-                            repo_slug: `{${repo.id}}`,
-                            workspace: `{${repo.workspaceId}}`,
-                            pagelen: 50,
-                        })
-                        .then((res) =>
-                            this.getPaginatedResults(bitbucketAPI, res),
-                        )
-                        .then((res) => ({ repo, workflows: res })),
-                ),
-            );
-
-            const workflows = allWorkflows.filter(
-                ({ workflows }) => workflows.length > 0,
-            );
-
-            if (!workflows || workflows.length === 0) {
-                return [];
-            }
-
-            const llm = this.llmProviderService.getLLMProvider({
-                model: MODEL_STRATEGIES[LLMModelProvider.OPENAI_GPT_4O]
-                    .modelName,
-                temperature: 0,
-                jsonMode: true,
-            });
-
-            const promptWorkflows =
-                await this.promptService.getCompleteContextPromptByName(
-                    'prompt_getProductionWorkflows',
-                    {
-                        organizationAndTeamData,
-                        payload: JSON.stringify(workflows),
-                        promptIsForChat: false,
-                    },
-                );
-
-            const chain = await llm.invoke(
-                await promptWorkflows.format({
-                    organizationAndTeamData,
-                    payload: JSON.stringify(workflows),
-                    promptIsForChat: false,
-                }),
-                {
-                    metadata: {
-                        module: 'Setup',
-                        submodule: 'GetProductionDeployment',
-                    },
-                },
-            );
-            return safelyParseMessageContent(chain.content).repos;
-        } catch (error) {
-            this.logger.error({
-                message: 'Error to get workflows',
-                context: BitbucketService.name,
-                serviceName: 'BitbucketService getWorkflows',
-                error: error,
-                metadata: {
-                    organizationAndTeamData,
-                },
-            });
-            return [];
-        }
     }
 
     async getListMembers(params: {
@@ -1145,56 +1137,6 @@ export class BitbucketService
         }
     }
 
-    async predictDeploymentType(params: {
-        organizationAndTeamData: OrganizationAndTeamData;
-    }) {
-        const { organizationAndTeamData } = params;
-        try {
-            const workflows = await this.getWorkflows(organizationAndTeamData);
-
-            if (workflows && workflows.length > 0) {
-                return this.formatDeploymentTypeFromDeploy(workflows);
-            }
-
-            const deployments = await this.getDeployments(
-                organizationAndTeamData,
-            );
-
-            if (deployments && deployments.length > 0) {
-                return {
-                    type: 'releases',
-                    madeBy: 'Kody',
-                };
-            }
-
-            const prs = await this.getPullRequests({
-                organizationAndTeamData,
-                filters: {
-                    startDate: moment().subtract(90, 'days').toDate(),
-                    endDate: moment().toDate(),
-                },
-            });
-
-            if (prs && prs.length > 0) {
-                return {
-                    type: 'PRs',
-                    madeBy: 'Kody',
-                };
-            }
-        } catch (error) {
-            this.logger.error({
-                message: 'Error to predict deployment type',
-                context: BitbucketService.name,
-                serviceName: 'PredictDeploymentType',
-                error: error,
-                metadata: {
-                    teamId: organizationAndTeamData.teamId,
-                },
-            });
-            return null;
-        }
-    }
-
     private async getDeployments(
         organizationAndTeamData: OrganizationAndTeamData,
     ) {
@@ -1249,65 +1191,6 @@ export class BitbucketService
         }
     }
 
-    private formatDeploymentTypeFromDeploy(workflows) {
-        return {
-            type: 'deployment',
-            madeBy: 'Kody',
-            value: {
-                workflows: workflows.flatMap((repo) =>
-                    repo.productionWorkflows.map((workflow) => ({
-                        id: workflow.id,
-                        name: workflow.name,
-                        repo: repo.repo,
-                    })),
-                ),
-            },
-        };
-    }
-
-    async savePredictedDeploymentType(params: {
-        organizationAndTeamData: OrganizationAndTeamData;
-    }) {
-        try {
-            const integration = await this.integrationService.findOne({
-                organization: {
-                    uuid: params.organizationAndTeamData.organizationId,
-                },
-                team: {
-                    uuid: params.organizationAndTeamData.teamId,
-                },
-                platform: PlatformType.BITBUCKET,
-            });
-
-            if (!integration) {
-                return null;
-            }
-
-            const deploymentType = await this.predictDeploymentType(params);
-
-            if (!deploymentType) {
-                return null;
-            }
-
-            return await this.parameterService.createOrUpdateConfig(
-                ParametersKey.DEPLOYMENT_TYPE,
-                deploymentType,
-                params.organizationAndTeamData,
-            );
-        } catch (error) {
-            this.logger.error({
-                message: 'Error to save predicted deployment type',
-                context: BitbucketService.name,
-                serviceName: 'BitbucketService savePredictedDeploymentType',
-                error: error,
-                metadata: {
-                    params,
-                },
-            });
-            return null;
-        }
-    }
-
     async getPullRequestsWithFiles(params: {
         organizationAndTeamData: OrganizationAndTeamData;
         filters?: any;
@@ -1317,6 +1200,13 @@ export class BitbucketService
 
             const filters = params?.filters ?? {};
             const { prStatus } = filters ?? 'OPEN';
+            const perRepoLimit = Math.min(Math.max(filters?.limit || 5, 1), 10);
+            const repoFilter = filters?.repositoryId
+                ? new Set([String(filters.repositoryId)])
+                : null;
+            const useFastPath = Boolean(
+                filters?.repositoryId || filters?.limit,
+            );
 
             const stateMap = {
                 open: PullRequestState.OPENED.toUpperCase(),
@@ -1349,6 +1239,14 @@ export class BitbucketService
 
             const reposWithPrs = await Promise.all(
                 repositories.map(async (repo) => {
+                    if (
+                        repoFilter &&
+                        !repoFilter.has(String(repo.id)) &&
+                        !repoFilter.has(String(repo.name))
+                    ) {
+                        return { repo, prs: [] };
+                    }
+
                     let prs = await bitbucketAPI.pullrequests
                         .list({
                             repo_slug: `{${repo.id}}`,
@@ -1370,6 +1268,16 @@ export class BitbucketService
                         });
                     }
 
+                    if (useFastPath) {
+                        prs = prs
+                            .sort(
+                                (a, b) =>
+                                    new Date(b.created_on).getTime() -
+                                    new Date(a.created_on).getTime(),
+                            )
+                            .slice(0, perRepoLimit);
+                    }
+
                     return { repo, prs };
                 }),
             );
@@ -1379,8 +1287,12 @@ export class BitbucketService
             await Promise.all(
                 reposWithPrs.map(async ({ repo, prs }) => {
                     const prsWithDiffs = await Promise.all(
-                        prs.map((pr) =>
-                            bitbucketAPI.pullrequests
+                        prs.map((pr) => {
+                            if (useFastPath && filters?.skipFiles) {
+                                return Promise.resolve({ pr, diffs: [] });
+                            }
+
+                            return bitbucketAPI.pullrequests
                                 .getDiffStat({
                                     pull_request_id: pr.id,
                                     repo_slug: `{${repo.id}}`,
@@ -1392,8 +1304,8 @@ export class BitbucketService
                                         res,
                                     ),
                                 )
-                                .then((res) => ({ pr, diffs: res })),
-                        ),
+                                .then((res) => ({ pr, diffs: res }));
+                        }),
                     );
 
                     const prsWithFiles: PullRequestWithFiles[] =
@@ -3884,6 +3796,51 @@ export class BitbucketService
                     username,
                     organizationAndTeamData,
                 },
+            });
+            return null;
+        }
+    }
+
+    async getCurrentUser(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+    }): Promise<any | null> {
+        try {
+            const bitbucketAuthDetail = await this.getAuthDetails(
+                params.organizationAndTeamData,
+            );
+
+            if (!bitbucketAuthDetail) {
+                return null;
+            }
+
+            const bitbucketAPI = this.instanceBitbucketApi(bitbucketAuthDetail);
+            const user = await bitbucketAPI.user
+                .get({})
+                .then((res) => res.data);
+
+            if (!user) {
+                return null;
+            }
+
+            const sanitizedUuid =
+                user?.uuid && this.sanitizeUUID(String(user.uuid));
+            const sanitizedId = user?.id && this.sanitizeUUID(String(user.id));
+            const sanitizedAccountId =
+                user?.account_id && this.sanitizeUUID(String(user.account_id));
+
+            return {
+                ...user,
+                ...(sanitizedUuid && { uuid: sanitizedUuid }),
+                ...(sanitizedId && { id: sanitizedId }),
+                ...(sanitizedAccountId && { account_id: sanitizedAccountId }),
+            };
+        } catch (error) {
+            this.logger.error({
+                message: 'Error retrieving current Bitbucket user',
+                context: BitbucketService.name,
+                serviceName: 'BitbucketService getCurrentUser',
+                error,
+                metadata: params,
             });
             return null;
         }

@@ -1,41 +1,42 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { DeepPartial } from 'typeorm';
 
-import { CodeReviewConfigWithoutLLMProvider } from '@/config/types/general/codeReview.type';
+import { createLogger } from '@kodus/flow';
+import {
+    IParametersService,
+    PARAMETERS_SERVICE_TOKEN,
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import {
+    CODE_BASE_CONFIG_SERVICE_TOKEN,
+    ICodeBaseConfigService,
+} from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
+import { AuthorizationService } from '@libs/identity/infrastructure/adapters/services/permissions/authorization.service';
+import {
+    IPromptExternalReferenceManagerService,
+    PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
+} from '@libs/ai-engine/domain/prompt/contracts/promptExternalReferenceManager.contract';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
+import { ParametersKey } from '@libs/core/domain/enums';
+import {
+    Action,
+    ResourceType,
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { IParameters } from '@libs/organization/domain/parameters/interfaces/parameters.interface';
 import {
     FormattedCodeReviewConfig,
     FormattedConfigLevel,
     FormattedGlobalCodeReviewConfig,
     IFormattedConfigProperty,
-} from '@/config/types/general/codeReviewConfig.type';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import {
-    CODE_BASE_CONFIG_SERVICE_TOKEN,
-    ICodeBaseConfigService,
-} from '@/core/domain/codeBase/contracts/CodeBaseConfigService.contract';
-import {
-    PARAMETERS_SERVICE_TOKEN,
-    IParametersService,
-} from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { IParameters } from '@/core/domain/parameters/interfaces/parameters.interface';
-import {
-    Action,
-    ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import {
-    IPromptExternalReferenceManagerService,
-    PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
-} from '@/core/domain/prompts/contracts/promptExternalReferenceManager.contract';
-import { PromptSourceType } from '@/core/domain/prompts/interfaces/promptExternalReference.interface';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { getDefaultKodusConfigFile } from '@/shared/utils/validateCodeReviewConfigFile';
-
+} from '@libs/core/infrastructure/config/types/general/codeReviewConfig.type';
+import { getDefaultKodusConfigFile } from '@libs/common/utils/validateCodeReviewConfigFile';
+import { CodeReviewConfigWithoutLLMProvider } from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { PromptSourceType } from '@libs/ai-engine/domain/prompt/interfaces/promptExternalReference.interface';
 
 @Injectable()
 export class GetCodeReviewParameterUseCase {
+    private readonly logger = createLogger(GetCodeReviewParameterUseCase.name);
+
     constructor(
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
@@ -47,8 +48,6 @@ export class GetCodeReviewParameterUseCase {
 
         @Inject(PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN)
         private readonly promptReferenceManager: IPromptExternalReferenceManagerService,
-
-        private readonly logger: PinoLoggerService,
     ) {}
 
     async execute(user: Partial<IUser>, teamId: string) {

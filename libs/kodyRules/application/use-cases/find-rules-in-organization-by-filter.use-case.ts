@@ -5,7 +5,7 @@ import { REQUEST } from '@nestjs/core';
 import {
     CONTEXT_REFERENCE_SERVICE_TOKEN,
     IContextReferenceService,
-} from '@libs/core/ai-engine/domain/contracts/context-reference.service.contract';
+} from '@libs/ai-engine/domain/contextReference/contracts/context-reference.service.contract';
 import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
 import {
     Action,
@@ -13,10 +13,10 @@ import {
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { AuthorizationService } from '@libs/identity/infrastructure/adapters/services/permissions/authorization.service';
 import {
-    KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,
-} from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
-import { IKodyRule } from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
+    KODY_RULES_SERVICE_TOKEN,
+} from '@libs/kodyRules/domain/contracts/kodyRules.service.contract';
+import { IKodyRule } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 
 import { enrichRulesWithContextReferences } from './utils/enrich-rules-with-context-references.util';
 
@@ -49,9 +49,21 @@ export class FindRulesInOrganizationByRuleFilterKodyRulesUseCase {
                 repoIds: [repositoryId],
             });
 
+            const ruleFilters: Partial<IKodyRule>[] = [];
+
+            if (repositoryId && directoryId) {
+                ruleFilters.push({ repositoryId, directoryId });
+                ruleFilters.push({ repositoryId: 'global' });
+            } else if (repositoryId) {
+                ruleFilters.push({ repositoryId });
+                ruleFilters.push({ repositoryId: 'global' });
+            } else if (directoryId) {
+                ruleFilters.push({ directoryId });
+            }
+
             const existingRules = await this.kodyRulesService.find({
                 organizationId,
-                rules: [{ repositoryId, directoryId }],
+                ...(ruleFilters.length ? { rules: ruleFilters } : {}),
             });
 
             if (!existingRules || existingRules.length === 0) {
@@ -65,10 +77,18 @@ export class FindRulesInOrganizationByRuleFilterKodyRulesUseCase {
             let filteredRules = allRules;
 
             if (repositoryId && !directoryId) {
-                filteredRules = allRules.filter((rule) => !rule.directoryId);
+                filteredRules = allRules.filter(
+                    (rule) =>
+                        rule.repositoryId === 'global' ||
+                        (rule.repositoryId === repositoryId &&
+                            !rule.directoryId),
+                );
             } else if (repositoryId && directoryId) {
                 filteredRules = allRules.filter(
-                    (rule) => rule.directoryId === directoryId,
+                    (rule) =>
+                        rule.repositoryId === 'global' ||
+                        (rule.repositoryId === repositoryId &&
+                            rule.directoryId === directoryId),
                 );
             }
 

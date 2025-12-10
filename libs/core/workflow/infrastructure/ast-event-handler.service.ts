@@ -2,11 +2,10 @@ import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Injectable, UseFilters } from '@nestjs/common';
 
-import { WorkflowJobRepository } from '@libs/core/infrastructure/database/typeorm/repositories/workflow-job.repository';
 import { RabbitmqConsumeErrorFilter } from '@libs/core/infrastructure/filters/rabbitmq-consume-error.exception';
-import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
+import { createLogger } from '@kodus/flow';
 import { JobStatus } from '@libs/core/workflow/domain/enums/job-status.enum';
+import { ObservabilityService } from '@libs/core/log/observability.service';
 
 interface ASTCompletedMessage {
     taskId: string;
@@ -16,10 +15,10 @@ interface ASTCompletedMessage {
 @UseFilters(RabbitmqConsumeErrorFilter)
 @Injectable()
 export class ASTEventHandler {
+    private readonly logger = createLogger(ASTEventHandler.name);
     constructor(
         private readonly jobRepository: WorkflowJobRepository,
         private readonly amqpConnection: AmqpConnection,
-        private readonly logger: PinoLoggerService,
         private readonly observability: ObservabilityService,
     ) {}
 

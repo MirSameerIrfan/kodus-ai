@@ -5,7 +5,7 @@ import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-re
 import {
     IKodyRulesService,
     KODY_RULES_SERVICE_TOKEN,
-} from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
+} from '@libs/kodyRules/domain/contracts/kodyRules.service.contract';
 
 @Injectable()
 export class GetRulesLimitStatusUseCase {

@@ -5,7 +5,6 @@ import { Request } from 'express';
 
 import { ActiveCodeManagementTeamAutomationsUseCase } from '@libs/automation/application/use-cases/teamAutomation/active-code-manegement-automations.use-case';
 import { ActiveCodeReviewAutomationUseCase } from '@libs/automation/application/use-cases/teamAutomation/active-code-review-automation.use-case';
-import { BackfillHistoricalPRsUseCase } from '@libs/controlData/application/pull-requests/backfill-historical-prs.use-case';
 import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
 import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
@@ -20,6 +19,7 @@ import {
     TEAM_SERVICE_TOKEN,
 } from '@libs/organization/domain/team/contracts/team.service.contract';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
+import { BackfillHistoricalPRsUseCase } from '@libs/platformData/application/use-cases/pullRequests/backfill-historical-prs.use-case';
 
 @Injectable()
 export class CreateRepositoriesUseCase implements IUseCase {
@@ -78,7 +78,6 @@ export class CreateRepositoriesUseCase implements IUseCase {
             const codeManagementTeamAutomations =
                 await this.activeCodeManagementTeamAutomationsUseCase.execute(
                     teamId,
-                    false,
                 );
 
             await this.activeCodeReviewAutomationUseCase.execute(

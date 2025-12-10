@@ -8,24 +8,24 @@ import { computeRequirementsHash } from '@context-os-core/utils/context-requirem
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 
-import { CONTEXT_REFERENCE_SERVICE_TOKEN } from '@libs/code-review/domain/contextReferences/contracts/context-reference.service.contract';
-import { ContextReferenceEntity } from '@libs/core/ai-engine/domain/entities/context-reference.entity';
+import { CONTEXT_REFERENCE_SERVICE_TOKEN } from '@libs/ai-engine/domain/contextReference/contracts/context-reference.service.contract';
+import { ContextReferenceEntity } from '@libs/ai-engine/domain/contextReference/entities/context-reference.entity';
 import {
     IPromptExternalReferenceManagerService,
     PromptReferenceLookupOptions,
-} from '@libs/code-review/domain/prompts/contracts/promptExternalReferenceManager.contract';
-import { PromptExternalReferenceEntity } from '@libs/core/ai-engine/domain/entities/promptExternalReference.entity';
+} from '@libs/ai-engine/domain/prompt/contracts/promptExternalReferenceManager.contract';
+import { PromptExternalReferenceEntity } from '@libs/ai-engine/domain/prompt/entities/promptExternalReference.entity';
 import {
     IFileReference,
     IPromptReferenceSyncError,
     PromptProcessingStatus,
     PromptReferenceErrorType,
     PromptSourceType,
-} from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
-import { ContextReferenceService } from '@libs/code-review/infrastructure/adapters/services/contextReferences/context-reference.service';
+} from '@libs/ai-engine/domain/prompt/interfaces/promptExternalReference.interface';
+import { ContextReferenceService } from '@libs/ai-engine/infrastructure/adapters/services/context/context-reference.service';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 
-import { resolveSourceTypeFromPath } from '../adapters/services/contextReferences/code-review-context.utils';
+import { resolveSourceTypeFromPath } from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context.utils';
 
 type ParsedConfigKey = {
     organizationAndTeamData: OrganizationAndTeamData;

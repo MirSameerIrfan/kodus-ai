@@ -6,24 +6,25 @@ import { createLogger } from '@kodus/flow';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 import { Inject, Injectable } from '@nestjs/common';
 
-import { IPromptContextEngineService } from '@libs/code-review/domain/prompts/contracts/promptContextEngine.contract';
+import { IPromptContextEngineService } from '@libs/ai-engine/domain/prompt/contracts/promptContextEngine.contract';
 import {
     PromptSourceType,
     IDetectedReference,
     IFileReference,
     IPromptReferenceSyncError,
     PromptReferenceErrorType,
-} from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
-import { calculatePromptHash } from '@libs/core/ai-engine/utils/prompt-parser.utils';
-import { ReferenceDetectorService } from '@libs/core/ai-engine/services/reference-detector.service';
+} from '@libs/ai-engine/domain/prompt/interfaces/promptExternalReference.interface';
+import { ReferenceDetectorService } from '@libs/ai-engine/infrastructure/adapters/services/reference-detector.service';
 import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
 import type { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+
+import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
+import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
-import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
-import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+} from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import { calculatePromptHash } from '@libs/common/utils/prompt-parser.utils';
 
 interface DetectReferencesParams {
     requirementId: string;

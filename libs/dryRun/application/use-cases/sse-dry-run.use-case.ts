@@ -8,12 +8,12 @@ import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/
 import {
     DRY_RUN_SERVICE_TOKEN,
     IDryRunService,
-} from '@libs/dry-run/domain/contracts/dryRun.service.contract';
+} from '@libs/dryRun/domain/contracts/dryRun.service.contract';
 import {
     IDryRunEvent,
     DryRunEventType,
     DryRunStatus,
-} from '@libs/dry-run/domain/interfaces/dryRun.interface';
+} from '@libs/dryRun/domain/interfaces/dryRun.interface';
 
 @Injectable()
 export class SseDryRunUseCase {

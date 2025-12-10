@@ -13,9 +13,9 @@ import {
 } from '@libs/platformData/domain/pullRequests/contracts/pullRequests.repository';
 import { ISuggestion } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
 import {
-    KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,
-} from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
+    KODY_RULES_SERVICE_TOKEN,
+} from '@libs/kodyRules/domain/contracts/kodyRules.service.contract';
 
 @Injectable()
 export class FindSuggestionsByRuleUseCase {

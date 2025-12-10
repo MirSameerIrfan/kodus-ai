@@ -2,32 +2,27 @@ import { LLMProviderService } from '@kodus/kodus-common/llm';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 
-import { PinoLoggerService } from './logger/pino.service';
-import { PromptService } from './prompt.service';
+import { createLogger } from '@kodus/flow';
 
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     IOrganizationParametersRepository,
     ORGANIZATION_PARAMETERS_REPOSITORY_TOKEN,
-} from '@/core/domain/organizationParameters/contracts/organizationParameters.repository.contract';
-import { IOrganizationParametersService } from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
-import { OrganizationParametersEntity } from '@/core/domain/organizationParameters/entities/organizationParameters.entity';
-import { IOrganizationParameters } from '@/core/domain/organizationParameters/interfaces/organizationParameters.interface';
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
-
-
+} from '@libs/organization/domain/organizationParameters/contracts/organizationParameters.repository.contract';
+import { IOrganizationParametersService } from '@libs/organization/domain/organizationParameters/contracts/organizationParameters.service.contract';
+import { OrganizationParametersEntity } from '@libs/organization/domain/organizationParameters/entities/organizationParameters.entity';
+import { IOrganizationParameters } from '@libs/organization/domain/organizationParameters/interfaces/organizationParameters.interface';
+import { OrganizationParametersKey } from '@libs/core/domain/enums/organization-parameters-key.enum';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 
 @Injectable()
-export class OrganizationParametersService implements IOrganizationParametersService {
+export class OrganizationParametersService
+    implements IOrganizationParametersService
+{
+    private readonly logger = createLogger(OrganizationParametersService.name);
+
     constructor(
         @Inject(ORGANIZATION_PARAMETERS_REPOSITORY_TOKEN)
         private readonly organizationParametersRepository: IOrganizationParametersRepository,
-
-        private readonly promptService: PromptService,
-
-        private readonly llmProviderService: LLMProviderService,
-
-        private readonly logger: PinoLoggerService,
     ) {}
 
     find(

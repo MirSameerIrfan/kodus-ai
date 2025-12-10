@@ -1,23 +1,20 @@
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 
 import {
     IRuleLikeService,
     RULE_LIKE_SERVICE_TOKEN,
-} from '@libs/kody-rules/domain/contracts/ruleLike.service.contract';
+} from '@libs/kodyRules/domain/contracts/ruleLike.service.contract';
 
 @Injectable()
 export class RemoveRuleLikeUseCase {
     private readonly logger = createLogger(RemoveRuleLikeUseCase.name);
     constructor(
         @Inject(RULE_LIKE_SERVICE_TOKEN)
-        private readonly ruleLikeService: IRuleLikeService
+        private readonly ruleLikeService: IRuleLikeService,
     ) {}
 
-    async execute(
-        ruleId: string,
-        userId?: string,
-    ): Promise<boolean> {
+    async execute(ruleId: string, userId?: string): Promise<boolean> {
         if (!userId) {
             throw new Error('userId is required to remove rule like');
         }

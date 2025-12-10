@@ -1295,7 +1295,7 @@ export class ChatWithKodyFromGitUseCase {
     ): boolean {
         return (
             this.isKodyComment(comment, platformType) ||
-            !this.mentionsKody(comment, platformType)
+            !this.mentionsKody(comment)
         );
     }
 

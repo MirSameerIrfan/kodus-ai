@@ -108,7 +108,7 @@
         "@golevelup/nestjs-rabbitmq": "^6.1.0",
         "@google/generative-ai": "^0.24.1",
         "@kodus/flow": "file:.yalc/@kodus/flow",
-        "@kodus/kodus-common": "file:.yalc/@kodus/kodus-common",
+        "@kodus/kodus-common": "1.2.17",
         "@langchain/anthropic": "^0.3.30",
         "@langchain/community": "0.3.57",
         "@langchain/core": "^0.3.78",

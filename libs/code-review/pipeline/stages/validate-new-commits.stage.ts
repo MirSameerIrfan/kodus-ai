@@ -8,7 +8,7 @@ import {
     IPullRequestManagerService,
     PULL_REQUEST_MANAGER_SERVICE_TOKEN,
 } from '@libs/code-review/domain/contracts/PullRequestManagerService.contract';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 import {
     AutomationMessage,
     AutomationStatus,
@@ -19,13 +19,13 @@ import { CodeReviewPipelineContext } from '../context/code-review-pipeline.conte
 export class ValidateNewCommitsStage extends BasePipelineStage<CodeReviewPipelineContext> {
     readonly stageName = 'ValidateNewCommitsStage';
 
+    private readonly logger = createLogger(ValidateNewCommitsStage.name);
+
     constructor(
         @Inject(AUTOMATION_EXECUTION_SERVICE_TOKEN)
         private readonly automationExecutionService: IAutomationExecutionService,
         @Inject(PULL_REQUEST_MANAGER_SERVICE_TOKEN)
         private readonly pullRequestHandlerService: IPullRequestManagerService,
-
-        private readonly logger: PinoLoggerService,
     ) {
         super();
     }

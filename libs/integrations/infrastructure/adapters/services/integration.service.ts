@@ -15,7 +15,7 @@ import {
 import { IIntegrationService } from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
 import { IntegrationEntity } from '@libs/integrations/domain/integrations/entities/integration.entity';
 import { IIntegration } from '@libs/integrations/domain/integrations/interfaces/integration.interface';
-import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 
 @Injectable()
 export class IntegrationService implements IIntegrationService {

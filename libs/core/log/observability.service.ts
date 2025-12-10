@@ -5,7 +5,7 @@ import { ConnectionString } from 'connection-string';
 
 import { DatabaseConnection } from '@libs/core/infrastructure/config/types';
 
-import { PinoLoggerService } from './pino.service';
+import { createLogger } from '@kodus/flow';
 
 export type TokenUsage = {
     input_tokens?: number;
@@ -58,8 +58,10 @@ export class ObservabilityService {
         spanTimeoutMs: 10 * 60 * 1000,
     };
 
+    private readonly logger = createLogger(ObservabilityService.name);
+
     // ---------- bootstrap ----------
-    constructor(private readonly logger: PinoLoggerService) {}
+    constructor() {}
 
     createObservabilityConfig(
         config: DatabaseConnection,

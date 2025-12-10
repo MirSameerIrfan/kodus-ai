@@ -5,7 +5,7 @@ import { FindOptionsWhere, Repository } from 'typeorm';
 import { ICodeReviewExecutionRepository } from '@libs/automation/domain/codeReviewExecutions/contracts/codeReviewExecution.repository.contract';
 import { CodeReviewExecutionEntity } from '@libs/automation/domain/codeReviewExecutions/entities/codeReviewExecution.entity';
 import { CodeReviewExecution } from '@libs/automation/domain/codeReviewExecutions/interfaces/codeReviewExecution.interface';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
+import { createLogger } from '@kodus/flow';
 import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
@@ -15,12 +15,14 @@ import { createNestedConditions } from '@libs/core/infrastructure/repositories/m
 import { CodeReviewExecutionModel } from './schemas/codeReviewExecution.model';
 
 @Injectable()
-export class CodeReviewExecutionRepository implements ICodeReviewExecutionRepository {
+export class CodeReviewExecutionRepository
+    implements ICodeReviewExecutionRepository
+{
+    private readonly logger = createLogger(CodeReviewExecutionRepository.name);
+
     constructor(
         @InjectRepository(CodeReviewExecutionModel)
         private readonly codeReviewExecutionRepository: Repository<CodeReviewExecutionModel>,
-
-        private readonly logger: PinoLoggerService,
     ) {}
 
     async create(

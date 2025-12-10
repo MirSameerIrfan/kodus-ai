@@ -5,7 +5,7 @@ import {
     IJobProcessorService,
     JOB_PROCESSOR_SERVICE_TOKEN,
 } from '@libs/core/workflow/domain/contracts/job-processor.service.contract';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 import { ObservabilityService } from '@libs/core/log/observability.service';
 
 export interface ProcessWorkflowJobInput {
@@ -14,10 +14,11 @@ export interface ProcessWorkflowJobInput {
 
 @Injectable()
 export class ProcessWorkflowJobUseCase implements IUseCase {
+    private readonly logger = createLogger(ProcessWorkflowJobUseCase.name);
+
     constructor(
         @Inject(JOB_PROCESSOR_SERVICE_TOKEN)
         private readonly jobProcessor: IJobProcessorService,
-        private readonly logger: PinoLoggerService,
         private readonly observability: ObservabilityService,
     ) {}
 

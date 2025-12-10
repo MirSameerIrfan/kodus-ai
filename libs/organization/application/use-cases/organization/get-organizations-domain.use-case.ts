@@ -1,7 +1,7 @@
 import { OrganizationParametersKey } from '@libs/core/domain/enums';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 import {
     IOrganizationService,
     ORGANIZATION_SERVICE_TOKEN,
@@ -16,14 +16,15 @@ import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class GetOrganizationsByDomainUseCase implements IUseCase {
+    private readonly logger = createLogger(
+        GetOrganizationsByDomainUseCase.name,
+    );
     constructor(
         @Inject(ORGANIZATION_SERVICE_TOKEN)
         private readonly organizationService: IOrganizationService,
 
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
         private readonly organizationParametersService: IOrganizationParametersService,
-
-        private readonly logger: PinoLoggerService,
     ) {}
 
     public async execute(domain: string): Promise<Partial<IOrganization>[]> {

@@ -1,39 +1,39 @@
-import { UserRequest } from '@/config/types/http/user-request.type';
-import {
-    AUTOMATION_EXECUTION_SERVICE_TOKEN,
-    IAutomationExecutionService,
-} from '@/core/domain/automation/contracts/automation-execution.service';
-import {
-    CODE_REVIEW_EXECUTION_SERVICE,
-    ICodeReviewExecutionService,
-} from '@/core/domain/codeReviewExecutions/contracts/codeReviewExecution.service.contract';
+import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
+
 import {
     Action,
     ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
-} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
-import { DeliveryStatus } from '@/core/domain/pullRequests/enums/deliveryStatus.enum';
-import { IPullRequests } from '@/core/domain/pullRequests/interfaces/pullRequests.interface';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
-import { EnrichedPullRequestResponse } from '@/core/infrastructure/http/dtos/enriched-pull-request-response.dto';
-import { EnrichedPullRequestsQueryDto } from '@/core/infrastructure/http/dtos/enriched-pull-requests-query.dto';
-import {
-    PaginatedEnrichedPullRequestsResponse,
-    PaginationMetadata,
-} from '@/core/infrastructure/http/dtos/paginated-enriched-pull-requests.dto';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+} from '@libs/platformData/domain/pullRequests/contracts/pullRequests.service.contracts';
+import { DeliveryStatus } from '@libs/platformData/domain/pullRequests/enums/deliveryStatus.enum';
+import { IPullRequests } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
+
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
+import {
+    AUTOMATION_EXECUTION_SERVICE_TOKEN,
+    IAutomationExecutionService,
+} from '@libs/automation/domain/automationExecution/contracts/automation-execution.service';
+import {
+    CODE_REVIEW_EXECUTION_SERVICE,
+    ICodeReviewExecutionService,
+} from '@libs/automation/domain/codeReviewExecutions/contracts/codeReviewExecution.service.contract';
+import { AuthorizationService } from '@libs/identity/infrastructure/adapters/services/permissions/authorization.service';
+import { EnrichedPullRequestsQueryDto } from 'apps/api/src/dtos/enriched-pull-requests-query.dto';
+import { PaginatedEnrichedPullRequestsResponse } from 'apps/api/src/dtos/paginated-enriched-pull-requests.dto';
+import { EnrichedPullRequestResponse } from 'apps/api/src/dtos/enriched-pull-request-response.dto';
+import { PaginationMetadata } from '@libs/core/domain/dtos/paginated-library-kody-rules.dto';
 
 @Injectable()
 export class GetEnrichedPullRequestsUseCase implements IUseCase {
-    constructor(
-        private readonly logger: PinoLoggerService,
+    private readonly logger = createLogger(GetEnrichedPullRequestsUseCase.name);
 
+    constructor(
         @Inject(AUTOMATION_EXECUTION_SERVICE_TOKEN)
         private readonly automationExecutionService: IAutomationExecutionService,
 
@@ -45,7 +45,6 @@ export class GetEnrichedPullRequestsUseCase implements IUseCase {
 
         @Inject(REQUEST)
         private readonly request: UserRequest,
-
         private readonly authorizationService: AuthorizationService,
     ) {}
 

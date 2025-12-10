@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 import { FileChange } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { createOptimizedBatches } from '@libs/common/utils/batch.helper';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
@@ -10,7 +10,9 @@ import { CodeReviewPipelineContext } from '../context/code-review-pipeline.conte
 export class BatchCreationStage extends BasePipelineStage<CodeReviewPipelineContext> {
     stageName = 'BatchCreationStage';
 
-    constructor(private logger: PinoLoggerService) {
+    private logger = createLogger(BatchCreationStage.name);
+
+    constructor() {
         super();
     }
 

@@ -5,11 +5,11 @@ import { REQUEST } from '@nestjs/core';
 import {
     CONTEXT_REFERENCE_SERVICE_TOKEN,
     IContextReferenceService,
-} from '@libs/core/ai-engine/domain/contracts/context-reference.service.contract';
+} from '@libs/ai-engine/domain/contextReference/contracts/context-reference.service.contract';
 import {
     KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,
-} from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
+} from '@libs/kodyRules/domain/contracts/kodyRules.service.contract';
 
 import { enrichRulesWithContextReferences } from './utils/enrich-rules-with-context-references.util';
 

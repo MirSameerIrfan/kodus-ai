@@ -2,8 +2,8 @@ import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 
 import { OrganizationModel } from './organization.model';
 
-import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import { OrganizationParametersKey } from '@libs/core/domain/enums/organization-parameters-key.enum';
+import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 
 @Entity('organization_parameters')
 @Index('IDX_org_params_key_org', ['configKey', 'organization'], {

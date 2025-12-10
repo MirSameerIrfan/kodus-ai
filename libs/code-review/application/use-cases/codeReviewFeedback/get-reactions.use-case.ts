@@ -4,12 +4,12 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
     PULL_REQUESTS_SERVICE_TOKEN,
     IPullRequestsService,
-} from '@libs/controlData/domain/pullRequests/contracts/pullRequests.service.contracts';
-import { IPullRequestWithDeliveredSuggestions } from '@libs/controlData/domain/pullRequests/interfaces/pullRequests.interface';
+} from '@libs/platformData/domain/pullRequests/contracts/pullRequests.service.contracts';
+import { IPullRequestWithDeliveredSuggestions } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
 import { PullRequestState } from '@libs/core/domain/enums/pullRequestState.enum';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 
 @Injectable()
 export class GetReactionsUseCase implements IUseCase {

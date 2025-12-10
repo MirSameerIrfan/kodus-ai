@@ -3,7 +3,7 @@ import { encrypt } from '@libs/common/utils/crypto';
 import { OrganizationParametersKey } from '@libs/core/domain/enums';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
@@ -13,10 +13,12 @@ import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class CreateOrUpdateOrganizationParametersUseCase implements IUseCase {
+    private readonly logger = createLogger(
+        CreateOrUpdateOrganizationParametersUseCase.name,
+    );
     constructor(
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
         private readonly organizationParametersService: IOrganizationParametersService,
-        private readonly logger: PinoLoggerService,
     ) {}
 
     async execute(

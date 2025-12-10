@@ -1,15 +1,15 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
     IParametersRepository,
     PARAMETERS_REPOSITORY_TOKEN,
-} from '@/core/domain/parameters/contracts/parameters.repository.contracts';
-import { IParametersService } from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
-import { IParameters } from '@/core/domain/parameters/interfaces/parameters.interface';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+} from '@libs/organization/domain/parameters/contracts/parameters.repository.contracts';
+import { IParametersService } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
+import { IParameters } from '@libs/organization/domain/parameters/interfaces/parameters.interface';
+import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 
 @Injectable()
 export class ParametersService implements IParametersService {

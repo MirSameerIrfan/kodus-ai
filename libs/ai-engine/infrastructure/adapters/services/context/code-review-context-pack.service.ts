@@ -24,9 +24,8 @@ import {
 } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 
-
-import { PromptReferenceErrorType } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
-import type { IPromptReferenceSyncError } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
+import { PromptReferenceErrorType } from '@libs/ai-engine/domain/prompt/interfaces/promptExternalReference.interface';
+import type { IPromptReferenceSyncError } from '@libs/ai-engine/domain/prompt/interfaces/promptExternalReference.interface';
 import type {
     CodeReviewConfig,
     Repository,
@@ -36,8 +35,8 @@ import type { OrganizationAndTeamData } from '@libs/core/infrastructure/config/t
 import {
     MCPToolMetadata,
     MCPToolMetadataService,
-} from '@libs/core/mcp-server/infrastructure/services/mcp-tool-metadata.service';
-import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+} from '@libs/mcp-server/services/mcp-tool-metadata.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 
 import {
     CODE_REVIEW_CONTEXT_PATTERNS,

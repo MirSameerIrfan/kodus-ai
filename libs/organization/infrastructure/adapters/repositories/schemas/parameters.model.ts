@@ -2,8 +2,8 @@ import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 
 import { TeamModel } from './team.model';
 
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
+import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 
 @Entity('parameters')
 @Index('IDX_parameters_key_team_active', ['configKey', 'team', 'active'], {

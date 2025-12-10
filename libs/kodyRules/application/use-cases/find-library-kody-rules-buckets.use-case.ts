@@ -1,11 +1,11 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 
-import { BucketInfo } from '@libs/core/infrastructure/config/types/kodyRules.type';
+import { BucketInfo } from '@libs/core/infrastructure/config/types/general/kodyRules.type';
 import {
-    KODY_RULES_SERVICE_TOKEN,
     IKodyRulesService,
-} from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
+    KODY_RULES_SERVICE_TOKEN,
+} from '@libs/kodyRules/domain/contracts/kodyRules.service.contract';
 
 @Injectable()
 export class FindLibraryKodyRulesBucketsUseCase {

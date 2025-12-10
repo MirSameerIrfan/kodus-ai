@@ -3,9 +3,9 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
     IUsersService,
     USER_SERVICE_TOKEN,
-} from '@/core/domain/user/contracts/user.service.contract';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
-import { DuplicateRecordException } from '@/shared/infrastructure/filters/duplicate-record.exception';
+} from '@libs/identity/domain/user/contracts/user.service.contract';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import { DuplicateRecordException } from '@libs/core/infrastructure/filters/duplicate-record.exception';
 
 @Injectable()
 export class CheckUserWithEmailUserUseCase implements IUseCase {

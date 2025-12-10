@@ -1,20 +1,30 @@
 import { BYOKConfig } from '@kodus/kodus-common/llm';
-import {
-    AUTOMATION_SERVICE_TOKEN,
-    IAutomationService,
-} from '@libs/automation/domain/automation/contracts/automation.service';
-import {
-    EXECUTE_AUTOMATION_SERVICE_TOKEN,
-    IExecuteAutomationService,
-} from '@libs/automation/domain/automationExecution/contracts/execute.automation.service.contracts';
+
 import {
     ITeamAutomationService,
     TEAM_AUTOMATION_SERVICE_TOKEN,
 } from '@libs/automation/domain/teamAutomation/contracts/team-automation.service';
+import { AutomationType } from '@libs/automation/domain/automation/enum/automation-type';
 import {
     GitHubReaction,
     GitlabReaction,
 } from '@libs/code-review/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
+import {
+    IIntegrationConfigService,
+    INTEGRATION_CONFIG_SERVICE_TOKEN,
+} from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import {
+    IOrganizationParametersService,
+    ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
+} from '@libs/organization/domain/organizationParameters/contracts/organizationParameters.service.contract';
+import { OrganizationParametersAutoAssignConfig } from '@libs/organization/domain/organizationParameters/types/organizationParameters.types';
+import { stripCurlyBracesFromUUIDs } from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
+import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
+import { AutoAssignLicenseUseCase } from '@libs/ee/license/use-cases/auto-assign-license.use-case';
+import {
+    EXECUTE_AUTOMATION_SERVICE_TOKEN,
+    IExecuteAutomationService,
+} from '@libs/automation/domain/automationExecution/contracts/execute.automation.service.contracts';
 import {
     IntegrationConfigKey,
     OrganizationParametersKey,
@@ -22,26 +32,18 @@ import {
 } from '@libs/core/domain/enums';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 
-import {
-    IIntegrationConfigService,
-    INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { AutoAssignLicenseUseCase } from '../license/use-cases/auto-assign-license.use-case';
-import {
-    IOrganizationParametersService,
-    ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
-} from '@libs/organization/domain/organizationParameters/contracts/organizationParameters.service.contract';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { getMappedPlatform } from '@libs/common/utils/webhooks';
 import {
     PermissionValidationService,
     ValidationErrorType,
 } from '../shared/services/permissionValidation.service';
-import { getMappedPlatform } from '@libs/common/utils/webhooks';
-import { stripCurlyBracesFromUUIDs } from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
-import { AutomationType } from '@libs/automation/domain/automation/enum/automation-type';
+import {
+    AUTOMATION_SERVICE_TOKEN,
+    IAutomationService,
+} from '@libs/automation/domain/automation/contracts/automation.service';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { createLogger } from '@kodus/flow';
 
 const ERROR_TO_MESSAGE_TYPE: Record<
     ValidationErrorType,
@@ -61,6 +63,8 @@ const NO_LICENSE_REACTION_MAP = {
 
 @Injectable()
 export class RunCodeReviewAutomationUseCase implements IUseCase {
+    private logger = createLogger(RunCodeReviewAutomationUseCase.name);
+
     constructor(
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
         private readonly integrationConfigService: IIntegrationConfigService,
@@ -81,8 +85,6 @@ export class RunCodeReviewAutomationUseCase implements IUseCase {
 
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
         private readonly organizationParametersService: IOrganizationParametersService,
-
-        private logger: PinoLoggerService,
     ) {}
 
     async execute(params: {
@@ -499,9 +501,13 @@ export class RunCodeReviewAutomationUseCase implements IUseCase {
                                     },
                                 });
 
-                                if (
-                                    autoAssignResult.reason !== 'IGNORED_USER'
-                                ) {
+                                const shouldAddReaction =
+                                    autoAssignResult.reason !==
+                                        'IGNORED_USER' &&
+                                    autoAssignResult.reason !==
+                                        'NOT_ALLOWED_USER';
+
+                                if (shouldAddReaction) {
                                     await this.addNoLicenseReaction({
                                         organizationAndTeamData,
                                         repository: params.repository,
@@ -709,9 +715,20 @@ export class RunCodeReviewAutomationUseCase implements IUseCase {
             organizationAndTeamData,
         );
 
+        const configValue =
+            config?.configValue as OrganizationParametersAutoAssignConfig;
+
         if (
-            config?.configValue?.ignoredUsers?.length > 0 &&
-            config?.configValue?.ignoredUsers.includes(userGitId)
+            Array.isArray(configValue?.allowedUsers) &&
+            configValue.allowedUsers.length > 0 &&
+            !configValue.allowedUsers.includes(userGitId)
+        ) {
+            return true;
+        }
+
+        if (
+            configValue?.ignoredUsers?.length > 0 &&
+            configValue?.ignoredUsers.includes(userGitId)
         ) {
             return true;
         }

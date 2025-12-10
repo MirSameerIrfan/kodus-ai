@@ -1,7 +1,6 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 
-import { SavePullRequestUseCase } from '@libs/controlData/application/pull-requests/save.use-case';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
@@ -21,6 +20,9 @@ import {
 import { IWebhookBitbucketPullRequestEvent } from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
 import { CodeManagementService } from '../../adapters/services/codeManagement.service';
 import { KodyRulesSyncService } from '@libs/kodyRules/infrastructure/adapters/services/kodyRulesSync.service';
+import { SavePullRequestUseCase } from '@libs/platformData/application/use-cases/pullRequests/save.use-case';
+import { RunCodeReviewAutomationUseCase } from '@libs/ee/automation/runCodeReview.use-case';
+import { getMappedPlatform } from '@libs/common/utils/webhooks';
 
 /**
  * Handler for Bitbucket webhook events.

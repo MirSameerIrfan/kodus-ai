@@ -5,8 +5,6 @@ import { ConversationAgentProvider } from '@libs/agents/infrastructure/services/
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 
-
-
 @Injectable()
 export class ConversationAgentUseCase implements IUseCase {
     constructor(

@@ -4,9 +4,9 @@ import { Inject, Injectable } from '@nestjs/common';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
 import { DuplicateRecordException } from '@libs/core/infrastructure/filters/duplicate-record.exception';
-import { generateRandomOrgName } from '@libs/core/utils/helpers';
-import posthogClient from '@libs/core/utils/posthog';
-import { identify, track } from '@libs/core/utils/segment';
+import { generateRandomOrgName } from '@libs/common/utils/helpers';
+import posthogClient from '@libs/common/utils/posthog';
+import { identify, track } from '@libs/common/utils/segment';
 import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
     USER_SERVICE_TOKEN,
@@ -27,11 +27,11 @@ import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface'
 import {
     ITeamMemberService,
     TEAM_MEMBERS_SERVICE_TOKEN,
-} from '@libs/organization/domain/team-members/contracts/teamMembers.service.contracts';
-import { TeamMemberRole } from '@libs/organization/domain/team-members/enums/teamMemberRole.enum';
+} from '@libs/organization/domain/teamMembers/contracts/teamMembers.service.contracts';
+import { TeamMemberRole } from '@libs/organization/domain/teamMembers/enums/teamMemberRole.enum';
 
 import { CreateProfileUseCase } from '../profile/create.use-case';
-
+import { CreateTeamUseCase } from '@libs/organization/application/use-cases/team/create.use-case';
 
 @Injectable()
 export class SignUpUseCase implements IUseCase {

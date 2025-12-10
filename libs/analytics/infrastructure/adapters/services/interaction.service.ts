@@ -1,26 +1,23 @@
-import { Inject } from '@nestjs/common';
-
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     IInteractionExecutionRepository,
     INTERACTION_EXECUTION_REPOSITORY_TOKEN,
-} from '@/core/domain/interactions/contracts/interaction.repository.contracts';
-import { IInteractionService } from '@/core/domain/interactions/contracts/interaction.service.contracts';
+} from '@libs/analytics/domain/interactions/contracts/interaction.repository.contracts';
+import { IInteractionService } from '@libs/analytics/domain/interactions/contracts/interaction.service.contracts';
+import { InteractionDto } from '@libs/core/domain/dtos/interaction.dtos';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
     ITeamService,
     TEAM_SERVICE_TOKEN,
-} from '@/core/domain/team/contracts/team.service.contract';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { InteractionDto } from '@/shared/domain/dtos/interaction.dtos';
+} from '@libs/organization/domain/team/contracts/team.service.contract';
+import { Inject } from '@nestjs/common';
+import { createLogger } from '@kodus/flow';
 
 export class InteractionService implements IInteractionService {
+    private readonly logger = createLogger(InteractionService.name);
+
     constructor(
         @Inject(INTERACTION_EXECUTION_REPOSITORY_TOKEN)
         private readonly interactionRepository: IInteractionExecutionRepository,
-
-        @Inject(PinoLoggerService)
-        private readonly logger: PinoLoggerService,
-
         @Inject(TEAM_SERVICE_TOKEN)
         private readonly teamService: ITeamService,
     ) {}
@@ -41,8 +38,8 @@ export class InteractionService implements IInteractionService {
         } catch (error) {
             this.logger.error({
                 message: 'Failed to connect to the database',
-                context: InteractionService.name,
                 error: error,
+                context: InteractionService.name,
                 metadata: { attempt: 1 },
             });
         }

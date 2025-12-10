@@ -6,8 +6,8 @@ import { MultiSamlStrategy } from 'passport-saml';
 import {
     ISSOConfigService,
     SSO_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/auth/contracts/ssoConfig.service.contract';
-import { SSOProtocol } from '@/core/domain/auth/interfaces/ssoConfig.interface';
+} from '@libs/identity/domain/sso/contracts/ssoConfig.service.contract';
+import { SSOProtocol } from '@libs/identity/domain/sso/interfaces/ssoConfig.interface';
 
 @Injectable()
 export class SamlStrategy extends PassportStrategy(MultiSamlStrategy, 'saml') {

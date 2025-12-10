@@ -19,12 +19,12 @@ import {
     ICodeBaseConfigService,
 } from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
 import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import type { ContextAugmentationsMap } from '@libs/core/ai-engine/services/context/code-review-context-pack.service';
+import type { ContextAugmentationsMap } from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context-pack.service';
 import {
     getAugmentationsFromPack,
     getOverridesFromPack,
-} from '@libs/core/ai-engine/services/context/code-review-context.utils';
-import { FileContextAugmentationService } from '@libs/core/ai-engine/services/context/file-context-augmentation.service';
+} from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context.utils';
+import { FileContextAugmentationService } from '@libs/ai-engine/infrastructure/adapters/services/context/file-context-augmentation.service';
 import {
     FileChangeContext,
     AnalysisContext,
@@ -53,7 +53,7 @@ import { LabelType } from '@libs/common/utils/codeManagement/labels';
 import {
     KodyRulesClassifierSchema,
     kodyRulesClassifierSchema,
-    kodyRulesGeneratorSchema,
+    kodyRulesSchema,
     prompt_kodyrules_classifier_system,
     prompt_kodyrules_classifier_user,
     prompt_kodyrules_extract_id_system,
@@ -897,7 +897,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
     ) {
         const builder = promptRunner
             .builder()
-            .setParser(ParserType.ZOD, kodyRulesGeneratorSchema, {
+            .setParser(ParserType.ZOD, kodyRulesSchema, {
                 provider: LLMModelProvider.OPENAI_GPT_4O_MINI,
                 fallbackProvider: LLMModelProvider.OPENAI_GPT_4O,
             })

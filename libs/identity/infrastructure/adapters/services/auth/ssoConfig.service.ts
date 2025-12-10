@@ -3,13 +3,13 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
     ISSOConfigRepository,
     SSO_CONFIG_REPOSITORY_TOKEN,
-} from '@/core/domain/auth/contracts/ssoConfig.repository.contract';
-import { ISSOConfigService } from '@/core/domain/auth/contracts/ssoConfig.service.contract';
-import { SSOConfigEntity } from '@/core/domain/auth/entities/ssoConfig.entity';
+} from '@libs/identity/domain/sso/contracts/ssoConfig.repository.contract';
+import { ISSOConfigService } from '@libs/identity/domain/sso/contracts/ssoConfig.service.contract';
+import { SSOConfigEntity } from '@libs/identity/domain/sso/entities/ssoConfig.entity';
 import {
     SSOConfig,
     SSOProtocol,
-} from '@/core/domain/auth/interfaces/ssoConfig.interface';
+} from '@libs/identity/domain/sso/interfaces/ssoConfig.interface';
 
 @Injectable()
 export class SSOConfigService implements ISSOConfigService {

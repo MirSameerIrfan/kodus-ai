@@ -10,7 +10,7 @@ import { ImplementationStatus } from '@libs/platformData/domain/pullRequests/enu
 import { PriorityStatus } from '@libs/platformData/domain/pullRequests/enums/priorityStatus.enum';
 import { ISuggestionByPR } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
 
-import type { ContextAugmentationsMap } from '@libs/core/ai-engine/services/context/code-review-context-pack.service';
+import type { ContextAugmentationsMap } from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context-pack.service';
 import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
 
 import { OrganizationAndTeamData } from './organizationAndTeamData';
@@ -418,6 +418,12 @@ export enum ReviewModeConfig {
     LIGHT_MODE_FULL = 'light_mode_full',
     LIGHT_MODE_PARTIAL = 'light_mode_partial',
     HEAVY_MODE = 'heavy_mode',
+}
+
+export enum ReviewPreset {
+    SPEED = 'speed',
+    SAFETY = 'safety',
+    COACH = 'coach',
 }
 
 export type KodyFineTuningConfig = {

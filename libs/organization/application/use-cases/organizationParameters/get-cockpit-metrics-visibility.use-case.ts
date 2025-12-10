@@ -1,6 +1,6 @@
 import { OrganizationParametersKey } from '@libs/core/domain/enums';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
@@ -17,10 +17,12 @@ export const GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN = Symbol(
 
 @Injectable()
 export class GetCockpitMetricsVisibilityUseCase {
+    private readonly logger = createLogger(
+        GetCockpitMetricsVisibilityUseCase.name,
+    );
     constructor(
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
         private readonly organizationParametersService: IOrganizationParametersService,
-        private readonly logger: PinoLoggerService,
     ) {}
 
     async execute(

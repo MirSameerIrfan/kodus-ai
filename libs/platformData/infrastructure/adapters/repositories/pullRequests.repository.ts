@@ -1,24 +1,25 @@
-import { IPullRequestsRepository } from '@libs/controlData/domain/pullRequests/contracts/pullRequests.repository';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import mongoose from 'mongoose';
 import { PullRequestsModel } from './schemas/pullRequests.model';
-import {
-    IFile,
-    IPullRequests,
-    IPullRequestWithDeliveredSuggestions,
-    ISuggestion,
-} from '@libs/controlData/domain/pullRequests/interfaces/pullRequests.interface';
-import { PullRequestsEntity } from '@libs/controlData/domain/pullRequests/entities/pullRequests.entity';
+
 import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
 } from '@libs/core/infrastructure/repositories/mappers';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { DeliveryStatus } from '@libs/controlData/domain/pullRequests/enums/deliveryStatus.enum';
 import { Repository } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { PullRequestState } from '@libs/core/domain/enums';
+import { IPullRequestsRepository } from '@libs/platformData/domain/pullRequests/contracts/pullRequests.repository';
+import {
+    IFile,
+    IPullRequests,
+    IPullRequestWithDeliveredSuggestions,
+    ISuggestion,
+} from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
+import { PullRequestsEntity } from '@libs/platformData/domain/pullRequests/entities/pullRequests.entity';
+import { DeliveryStatus } from '@libs/platformData/domain/pullRequests/enums/deliveryStatus.enum';
 
 @Injectable()
 export class PullRequestsRepository implements IPullRequestsRepository {
@@ -698,6 +699,27 @@ export class PullRequestsRepository implements IPullRequestsRepository {
                 .exec();
 
             return doc ? mapSimpleModelToEntity(doc, PullRequestsEntity) : null;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async findRecentByRepositoryId(
+        organizationId: string,
+        repositoryId: string,
+        limit: number = 10,
+    ): Promise<PullRequestsEntity[]> {
+        try {
+            const docs = await this.pullRequestsModel
+                .find({
+                    'organizationId': organizationId,
+                    'repository.id': repositoryId,
+                })
+                .sort({ openedAt: -1, createdAt: -1 })
+                .limit(limit)
+                .exec();
+
+            return mapSimpleModelsToEntities(docs, PullRequestsEntity);
         } catch (error) {
             throw error;
         }

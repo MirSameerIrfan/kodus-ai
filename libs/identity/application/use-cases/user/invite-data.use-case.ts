@@ -1,19 +1,19 @@
-import { Inject } from '@nestjs/common';
-
-import { STATUS } from '@/config/types/database/status.type';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
 import {
     IUsersService,
     USER_SERVICE_TOKEN,
-} from '@/core/domain/user/contracts/user.service.contract';
-import { IUser } from '@/core/domain/user/interfaces/user.interface';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
+} from '@libs/identity/domain/user/contracts/user.service.contract';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
+import { Inject, Injectable } from '@nestjs/common';
 
-// @Case()
+@Injectable()
 export class InviteDataUserUseCase implements IUseCase {
     constructor(
         @Inject(USER_SERVICE_TOKEN)
         private readonly usersService: IUsersService,
     ) {}
+
     public async execute(uuid: string): Promise<IUser | {}> {
         const user = await this.usersService.findOne({
             uuid,

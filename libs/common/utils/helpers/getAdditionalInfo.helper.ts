@@ -6,12 +6,15 @@ import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
+} from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
 import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
 } from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
-import { IParametersService, PARAMETERS_SERVICE_TOKEN } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import {
+    IParametersService,
+    PARAMETERS_SERVICE_TOKEN,
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 
 @Injectable()
 export class GetAdditionalInfoHelper implements IGetAdditionalInfoHelper {

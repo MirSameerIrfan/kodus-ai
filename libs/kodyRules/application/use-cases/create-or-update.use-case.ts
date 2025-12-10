@@ -2,10 +2,10 @@ import { createLogger } from '@kodus/flow';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 
-import { PromptSourceType } from '@libs/core/ai-engine/domain/interfaces/promptExternalReference.interface';
-import { ContextReferenceDetectionService } from '@libs/core/ai-engine/services/context/context-reference-detection.service';
-import type { ContextDetectionField } from '@libs/core/ai-engine/services/context/context-reference-detection.service';
-import { CreateKodyRuleDto } from '@libs/common/dtos/create-kody-rule.dto';
+import { PromptSourceType } from '@libs/ai-engine/domain/prompt/interfaces/promptExternalReference.interface';
+import { ContextReferenceDetectionService } from '@libs/ai-engine/infrastructure/adapters/services/context/context-reference-detection.service';
+import type { ContextDetectionField } from '@libs/ai-engine/infrastructure/adapters/services/context/context-reference-detection.service';
+import { CreateKodyRuleDto } from '@libs/ee/kodyRules/dtos/create-kody-rule.dto';
 import {
     IGetAdditionalInfoHelper,
     GET_ADDITIONAL_INFO_HELPER_TOKEN,
@@ -16,8 +16,10 @@ import {
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { AuthorizationService } from '@libs/identity/infrastructure/adapters/services/permissions/authorization.service';
-import { IKodyRulesService } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
-import { KODY_RULES_SERVICE_TOKEN } from '@libs/kody-rules/domain/contracts/kodyRules.service.contract';
+import {
+    IKodyRulesService,
+    KODY_RULES_SERVICE_TOKEN,
+} from '@libs/kodyRules/domain/contracts/kodyRules.service.contract';
 
 @Injectable()
 export class CreateOrUpdateKodyRulesUseCase {

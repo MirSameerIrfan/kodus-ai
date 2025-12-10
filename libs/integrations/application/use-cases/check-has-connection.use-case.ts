@@ -6,11 +6,11 @@ import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import {
     toIntegrationCategory,
     toPlatformType,
-} from '@libs/core/utils/enum-utils';
+} from '@libs/common/utils/enum-utils';
 import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
-} from '@libs/integrations/domain/contracts/integration.service.contracts';
+} from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
 
 export class CheckHasIntegrationByPlatformUseCase implements IUseCase {
     constructor(

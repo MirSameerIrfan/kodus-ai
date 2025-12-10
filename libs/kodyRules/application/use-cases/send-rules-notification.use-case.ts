@@ -2,7 +2,7 @@ import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 
 import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
-import { sendKodyRulesNotification } from '@libs/core/utils/email/sendMail';
+import { sendKodyRulesNotification } from '@libs/common/utils/email/sendMail';
 import {
     IUsersService,
     USER_SERVICE_TOKEN,

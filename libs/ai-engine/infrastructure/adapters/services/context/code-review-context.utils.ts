@@ -2,8 +2,7 @@ import type {
     ContextDependency,
     ContextPack,
 } from '@context-os-core/interfaces';
-
-import { PromptSourceType } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
+import { PromptSourceType } from '@libs/ai-engine/domain/prompt/interfaces/promptExternalReference.interface';
 
 export interface ContextMarkerPattern {
     name: string;
@@ -94,7 +93,7 @@ export function extractDependenciesFromText(
             GLOBAL_REGEX_FLAGS(pattern.regex),
         );
         let match: RegExpExecArray | null;
-         
+
         while ((match = regex.exec(text)) !== null) {
             const dependency = pattern.toDependency(match);
             if (!dependency) {

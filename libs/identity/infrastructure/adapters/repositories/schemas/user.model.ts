@@ -9,14 +9,14 @@ import {
 } from 'typeorm';
 
 import { AuthModel } from './auth.model';
-import { OrganizationModel } from './organization.model';
+import { OrganizationModel } from '@libs/organization/infrastructure/adapters/repositories/schemas/organization.model';
 import { PermissionsModel } from './permissions.model';
 import { ProfileModel } from './profile.model';
-import { TeamMemberModel } from './teamMember.model';
+import { TeamMemberModel } from '@libs/organization/infrastructure/adapters/repositories/schemas/teamMember.model';
 
-import { STATUS } from '@/config/types/database/status.type';
-import { Role } from '@/core/domain/permissions/enums/permissions.enum';
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
+import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 
 @Entity('users')
 @Index('IDX_users_email', ['email'], { concurrent: true })

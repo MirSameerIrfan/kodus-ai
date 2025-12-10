@@ -2,13 +2,13 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 import { OrganizationModel } from './organization.model';
 import { TeamModel } from './team.model';
-import { UserModel } from './user.model';
+import { UserModel } from '@libs/identity/infrastructure/adapters/repositories/schemas/user.model';
 
-import { TeamMemberRole } from '@/core/domain/teamMembers/enums/teamMemberRole.enum';
-import { ICodeManagementMemberConfig } from '@/core/domain/teamMembers/interfaces/codeManagementMemberConfig.interface';
-import { ICommuminicationMemberConfig } from '@/core/domain/teamMembers/interfaces/communicationMemberConfig.interface';
-import { IProjectManagementMemberConfig } from '@/core/domain/teamMembers/interfaces/projectManagementMemberConfig';
-import { CoreModel } from '@/shared/infrastructure/repositories/model/typeOrm';
+import { TeamMemberRole } from '@libs/organization/domain/teamMembers/enums/teamMemberRole.enum';
+import { ICodeManagementMemberConfig } from '@libs/organization/domain/teamMembers/interfaces/codeManagementMemberConfig.interface';
+import { ICommuminicationMemberConfig } from '@libs/organization/domain/teamMembers/interfaces/communicationMemberConfig.interface';
+import { IProjectManagementMemberConfig } from '@libs/organization/domain/teamMembers/interfaces/projectManagementMemberConfig';
+import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 
 @Entity('team_member')
 export class TeamMemberModel extends CoreModel {

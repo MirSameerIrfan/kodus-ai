@@ -1,18 +1,17 @@
-import { createLogger } from "@kodus/flow";
-import { Inject, Injectable } from '@nestjs/common';
-
+import { createLogger } from '@kodus/flow';
 import {
     IRuleLikeService,
     RULE_LIKE_SERVICE_TOKEN,
-} from '@libs/kody-rules/domain/contracts/ruleLike.service.contract';
-import { RuleFeedbackType } from '@libs/kody-rules/domain/entities/ruleLike.entity';
+} from '@libs/kodyRules/domain/contracts/ruleLike.service.contract';
+import { RuleFeedbackType } from '@libs/kodyRules/domain/entities/ruleLike.entity';
+import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class SetRuleLikeUseCase {
     private readonly logger = createLogger(SetRuleLikeUseCase.name);
     constructor(
         @Inject(RULE_LIKE_SERVICE_TOKEN)
-        private readonly ruleLikeService: IRuleLikeService
+        private readonly ruleLikeService: IRuleLikeService,
     ) {}
 
     async execute(

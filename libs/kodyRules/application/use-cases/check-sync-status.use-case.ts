@@ -13,21 +13,18 @@ import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
+} from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
 import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
-} from '@libs/integrations/domain/contracts/integration.service.contracts';
-import {
-    IKodyRule,
-} from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
+} from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
+import { KodyLearningStatus } from '@libs/organization/domain/parameters/types/configValue.type';
+import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from './find-rules-in-organization-by-filter.use-case';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
-import { KodyLearningStatus } from '@libs/organization/domain/parameters/types/configValue.type';
-
-import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from './find-rules-in-organization-by-filter.use-case';
+import { IKodyRule } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 
 @Injectable()
 export class CheckSyncStatusUseCase {

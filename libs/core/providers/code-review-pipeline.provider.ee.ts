@@ -3,13 +3,12 @@
  * Kodus Tech. All rights reserved.
  */
 import { CodeReviewPipelineStrategy } from '@libs/code-review/pipeline/strategy/code-review-pipeline.strategy';
-import { CodeReviewPipelineContext } from '@libs/code-review/infrastructure/context/code-review-pipeline.context';
+import { CodeReviewPipelineContext } from '@libs/code-review/pipeline/context/code-review-pipeline.context';
 import { IPipeline } from '@libs/core/infrastructure/pipeline/interfaces/pipeline.interface';
 import { PipelineExecutor } from '@libs/core/infrastructure/pipeline/services/pipeline-executor.service';
 import { environment } from '@libs/ee/configs/environment';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
 import { Provider } from '@nestjs/common';
-import { CodeReviewPipelineStrategyEE } from '@libs/code-review/pipeline/ee/strategies/code-review-pipeline.strategy.ee';
+import { CodeReviewPipelineStrategyEE } from '@libs/ee/codeReview/strategies/code-review-pipeline.strategy.ee';
 
 export const CODE_REVIEW_PIPELINE_TOKEN = 'CODE_REVIEW_PIPELINE';
 

@@ -5,7 +5,7 @@ import { ContextReferenceModel } from './schemas/contextReference.model';
 import { ContextReferenceEntity } from '@libs/ai-engine/domain/contextReference/entities/context-reference.entity';
 import { IContextReference } from '@libs/ai-engine/domain/contextReference/interfaces/context-reference.interface';
 import { IContextReferenceRepository } from '@libs/ai-engine/domain/contextReference/contracts/context-reference.repository.contract';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 
 function modelToEntity(model: ContextReferenceModel): ContextReferenceEntity {
     return ContextReferenceEntity.create({
@@ -56,10 +56,11 @@ function applyFilter(
 
 @Injectable()
 export class ContextReferenceRepository implements IContextReferenceRepository {
+    private readonly logger = createLogger(ContextReferenceRepository.name);
+
     constructor(
         @InjectRepository(ContextReferenceModel)
         private readonly repository: Repository<ContextReferenceModel>,
-        private readonly logger: PinoLoggerService,
     ) {}
 
     async create(

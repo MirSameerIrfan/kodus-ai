@@ -17,7 +17,7 @@ import { AuthorizationService } from '@libs/identity/infrastructure/adapters/ser
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@libs/integrations/domain/configs/contracts/integration-config.service.contracts';
+} from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
 import {
     IIssuesService,
     ISSUES_SERVICE_TOKEN,

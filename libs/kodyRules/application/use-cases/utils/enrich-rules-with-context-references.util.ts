@@ -1,7 +1,7 @@
 import { SimpleLogger } from '@kodus/flow/dist/observability/logger';
 
-import type { IContextReferenceService } from '@libs/core/ai-engine/domain/contracts/context-reference.service.contract';
-import type { ContextReferenceEntity } from '@libs/core/ai-engine/domain/entities/context-reference.entity';
+import type { IContextReferenceService } from '@libs/ai-engine/domain/contextReference/contracts/context-reference.service.contract';
+import type { ContextReferenceEntity } from '@libs/ai-engine/domain/contextReference/entities/context-reference.entity';
 
 type RuleWithContextId = {
     uuid?: string;

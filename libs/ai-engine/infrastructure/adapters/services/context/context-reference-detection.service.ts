@@ -9,25 +9,24 @@ import type {
 import { MCPServerConfig, createLogger } from '@kodus/flow';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 import { Inject, Injectable } from '@nestjs/common';
-
 import {
-    CONTEXT_REFERENCE_SERVICE_TOKEN,
-    IContextReferenceService,
-} from '@libs/code-review/domain/contextReferences/contracts/context-reference.service.contract';
+    IPromptReferenceSyncError,
+    PromptReferenceErrorType,
+    PromptSourceType,
+} from '@libs/ai-engine/domain/prompt/interfaces/promptExternalReference.interface';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
     IPromptContextEngineService,
     PROMPT_CONTEXT_ENGINE_SERVICE_TOKEN,
-} from '@libs/code-review/domain/prompts/contracts/promptContextEngine.contract';
-import type { IPromptReferenceSyncError } from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
+} from '@libs/ai-engine/domain/prompt/contracts/promptContextEngine.contract';
 import {
-    PromptReferenceErrorType,
-    PromptSourceType,
-} from '@libs/code-review/domain/prompts/interfaces/promptExternalReference.interface';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+    CONTEXT_REFERENCE_SERVICE_TOKEN,
+    IContextReferenceService,
+} from '@libs/ai-engine/domain/contextReference/contracts/context-reference.service.contract';
 import {
     MCPToolMetadata,
     MCPToolMetadataService,
-} from '@libs/core/mcp-server/infrastructure/services/mcp-tool-metadata.service';
+} from '@libs/mcp-server/services/mcp-tool-metadata.service';
 
 export interface ContextDetectionField {
     fieldId?: string;

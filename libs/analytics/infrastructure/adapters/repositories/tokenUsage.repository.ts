@@ -10,10 +10,10 @@ import {
     UsageByPrResultContract,
     UsageSummaryContract,
 } from '@libs/analytics/domain/token-usage/types/tokenUsage.types';
-import { LLMAnalysisService } from '@libs/code-review/infrastructure/llmAnalysis.service';
 
 import { ObservabilityTelemetryModel } from './schemas/observabilityTelemetry.model';
 import { CodeAstAnalysisService } from '@libs/ee/kodyAST/codeASTAnalysis.service';
+import { LLMAnalysisService } from '@libs/code-review/infrastructure/adapters/services/llmAnalysis.service';
 
 @Injectable()
 export class TokenUsageRepository implements ITokenUsageRepository {

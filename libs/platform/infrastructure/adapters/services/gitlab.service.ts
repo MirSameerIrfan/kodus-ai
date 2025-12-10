@@ -34,10 +34,9 @@ import {
 import { Commit } from '@libs/core/infrastructure/config/types/general/commit.type';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { TreeItem } from '@libs/core/infrastructure/config/types/general/tree.type';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
-import { MCPManagerService } from '@libs/core/mcp-server/infrastructure/services/mcp-manager.service';
-import { decrypt, encrypt } from '@libs/core/utils/crypto';
-import { IntegrationServiceDecorator } from '@libs/core/utils/decorators/integration-service.decorator';
+import { MCPManagerService } from '@libs/mcp-server/services/mcp-manager.service';
+import { decrypt, encrypt } from '@libs/common/utils/crypto';
+import { IntegrationServiceDecorator } from '@libs/common/utils/decorators/integration-service.decorator';
 import { ICodeManagementService } from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
 import {
     IIntegrationService,
@@ -67,23 +66,25 @@ import {
 import { GitlabAuthDetail } from '@libs/integrations/domain/authIntegrations/types/gitlab-auth-detail.type';
 import { AuthMode } from '@libs/platform/domain/platformIntegrations/enums/codeManagement/authMode.enum';
 import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
-import { CodeManagementConnectionStatus } from '@libs/core/utils/decorators/validate-code-management-integration.decorator';
+import { CodeManagementConnectionStatus } from '@libs/common/utils/decorators/validate-code-management-integration.decorator';
 import { IntegrationEntity } from '@libs/integrations/domain/integrations/entities/integration.entity';
-import { safelyParseMessageContent } from '@libs/core/utils/safelyParseMessageContent';
-import { getSeverityLevelShield } from '@libs/core/utils/codeManagement/severityLevel';
-import { getCodeReviewBadge } from '@libs/core/utils/codeManagement/codeReviewBadge';
-import { getLabelShield } from '@libs/core/utils/codeManagement/labels';
+import { safelyParseMessageContent } from '@libs/common/utils/safelyParseMessageContent';
+import { getSeverityLevelShield } from '@libs/common/utils/codeManagement/severityLevel';
+import { getCodeReviewBadge } from '@libs/common/utils/codeManagement/codeReviewBadge';
+import { getLabelShield } from '@libs/common/utils/codeManagement/labels';
 import {
     getTranslationsForLanguageByCategory,
     TranslationsCategory,
-} from '@libs/core/utils/translations/translations';
+} from '@libs/common/utils/translations/translations';
 import { IntegrationConfigEntity } from '@libs/integrations/domain/integrationConfigs/entities/integration-config.entity';
-import { hasKodyMarker } from '@libs/core/utils/codeManagement/codeCommentMarkers';
 import { RepositoryFile } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
+import { createLogger } from '@kodus/flow';
+import { hasKodyMarker } from '@libs/common/utils/codeManagement/codeCommentMarkers';
 import {
     isFileMatchingGlob,
     isFileMatchingGlobCaseInsensitive,
-} from '@libs/core/utils/glob-utils';
+} from '@libs/common/utils/glob-utils';
+import { Workflow } from '@libs/platform/domain/platformIntegrations/types/codeManagement/workflow.type';
 
 @Injectable()
 @IntegrationServiceDecorator(PlatformType.GITLAB, 'codeManagement')
@@ -99,8 +100,11 @@ export class GitlabService
             | 'getCommitsByReleaseMode'
             | 'getDataForCalculateDeployFrequency'
             | 'requestChangesPullRequest'
+            | 'getWorkflows'
         >
 {
+    private readonly logger = createLogger(GitlabService.name);
+
     constructor(
         @Inject(INTEGRATION_SERVICE_TOKEN)
         private readonly integrationService: IIntegrationService,
@@ -111,17 +115,14 @@ export class GitlabService
         @Inject(AUTH_INTEGRATION_SERVICE_TOKEN)
         private readonly authIntegrationService: IAuthIntegrationService,
 
-        @Inject(PARAMETERS_SERVICE_TOKEN)
-        private readonly parameterService: IParametersService,
-
-        private readonly llmProviderService: LLMProviderService,
-
-        private readonly promptService: PromptService,
-        private readonly logger: PinoLoggerService,
         private readonly configService: ConfigService,
         private readonly cacheService: CacheService,
         private readonly mcpManagerService?: MCPManagerService,
     ) {}
+
+    getWorkflows(params: any): Promise<Workflow[]> {
+        throw new Error('Method not implemented.');
+    }
 
     async getPullRequestAuthors(params: {
         organizationAndTeamData: OrganizationAndTeamData;
@@ -262,11 +263,18 @@ export class GitlabService
                     ref: mergeRequest.source_branch,
                     repo: {
                         name: params.repository.name,
-                        id: projectId,
+                        // Use source project ID so forked MRs can fetch files from the right project
+                        id:
+                            mergeRequest.source_project_id?.toString() ??
+                            projectId,
                     },
                 },
                 base: {
                     ref: mergeRequest.target_branch,
+                    repo: {
+                        name: params.repository.name,
+                        id: projectId,
+                    },
                 },
                 user: {
                     login: mergeRequest.author.username,
@@ -313,84 +321,6 @@ export class GitlabService
                 authIntegrationId: integration?.authIntegration?.uuid,
                 integrationId: integration?.uuid,
                 authDetails,
-            });
-        }
-    }
-
-    async savePredictedDeploymentType(params: {
-        organizationAndTeamData: OrganizationAndTeamData;
-    }) {
-        const integration = await this.integrationService.findOne({
-            organization: {
-                uuid: params.organizationAndTeamData.organizationId,
-            },
-            team: {
-                uuid: params.organizationAndTeamData.teamId,
-            },
-            platform: PlatformType.GITLAB,
-        });
-
-        if (!integration) {
-            return null;
-        }
-
-        const deploymentType = await this.predictDeploymentType(params);
-
-        if (!deploymentType) {
-            return null;
-        }
-
-        return await this.parameterService.createOrUpdateConfig(
-            ParametersKey.DEPLOYMENT_TYPE,
-            deploymentType,
-            params.organizationAndTeamData,
-        );
-    }
-
-    async predictDeploymentType(params: any) {
-        try {
-            const workflows = await this.getWorkflows(
-                params.organizationAndTeamData,
-            );
-
-            if (workflows && workflows.length > 0) {
-                return this.formatDeploymentTypeFromDeploy(workflows);
-            }
-
-            const releases = await this.getReleases(
-                params.organizationAndTeamData,
-            );
-
-            if (releases && releases.length > 0) {
-                return {
-                    type: 'releases',
-                    madeBy: 'Kody',
-                };
-            }
-
-            const prs = await this.getPullRequests({
-                organizationAndTeamData: params.organizationAndTeamData,
-                filters: {
-                    startDate: moment().subtract(90, 'days').toDate(),
-                    endDate: moment().toDate(),
-                },
-            });
-
-            if (prs && prs.length > 0) {
-                return {
-                    type: 'PRs',
-                    madeBy: 'Kody',
-                };
-            }
-        } catch (error) {
-            this.logger.error({
-                message: 'Error executing predict deployment type service',
-                context: GitlabService.name,
-                serviceName: 'PredictDeploymentType',
-                error: error,
-                metadata: {
-                    teamId: params.organizationAndTeamData.teamId,
-                },
             });
         }
     }
@@ -645,6 +575,11 @@ export class GitlabService
             visibility?: 'all' | 'public' | 'private';
             language?: string;
         };
+        options?: {
+            includePullRequestMetrics?: {
+                lastNDays?: number;
+            };
+        };
     }): Promise<Repositories[]> {
         try {
             const gitlabAuthDetail = await this.getAuthDetails(
@@ -692,7 +627,9 @@ export class GitlabService
                 const batchResults = await Promise.all(
                     batch.map(async (project) => {
                         try {
-                            if (project?.default_branch) {
+                            const buildRepository = async (
+                                defaultBranch?: string,
+                            ): Promise<Repositories> => {
                                 return {
                                     id: project.id.toString(),
                                     name: project.path_with_namespace,
@@ -709,29 +646,21 @@ export class GitlabService
                                                 repository?.name ===
                                                 project?.path_with_namespace,
                                         ),
-                                    default_branch: project?.default_branch,
+                                    default_branch: defaultBranch,
+                                    lastActivityAt: project.last_activity_at,
                                 };
+                            };
+
+                            if (project?.default_branch) {
+                                return buildRepository(project?.default_branch);
                             }
 
                             const projectDetails =
                                 await gitlabAPI.Projects.show(project.id);
 
-                            return {
-                                id: project.id.toString(),
-                                name: project.path_with_namespace,
-                                http_url: project.http_url_to_repo,
-                                avatar_url: project.namespace?.avatar_url,
-                                organizationName: project.namespace?.name,
-                                visibility: (project?.visibility === 'public'
-                                    ? 'public'
-                                    : 'private') as 'public' | 'private',
-                                selected: integrationConfig?.configValue?.some(
-                                    (repository: { name: string }) =>
-                                        repository?.name ===
-                                        project?.path_with_namespace,
-                                ),
-                                default_branch: projectDetails?.default_branch,
-                            };
+                            return buildRepository(
+                                projectDetails?.default_branch,
+                            );
                         } catch (error) {
                             this.logger.warn({
                                 message: `Failed to fetch details for project ${project?.id}`,
@@ -767,7 +696,11 @@ export class GitlabService
                     }),
                 );
 
-                repositories.push(...batchResults);
+                repositories.push(
+                    ...batchResults.filter(
+                        (repository) => repository !== undefined,
+                    ),
+                );
 
                 // Adicionar delay entre lotes para evitar rate limiting
                 if (i + batchSize < projects?.length) {
@@ -1244,74 +1177,6 @@ export class GitlabService
         };
     }
 
-    async getWorkflows(organizationAndTeamData: OrganizationAndTeamData) {
-        const gitlabAuthDetail = await this.getAuthDetails(
-            organizationAndTeamData,
-        );
-
-        const repositories = <Repositories[]>(
-            await this.findOneByOrganizationAndTeamDataAndConfigKey(
-                organizationAndTeamData,
-                IntegrationConfigKey.REPOSITORIES,
-            )
-        );
-
-        if (!gitlabAuthDetail || !repositories) {
-            return null;
-        }
-
-        const gitlabAPI = this.instanceGitlabApi(gitlabAuthDetail);
-
-        const workflows = [];
-
-        for (const repo of repositories) {
-            const workflowsFromRepo = await gitlabAPI.Pipelines.all(repo.id);
-
-            if (workflowsFromRepo.length <= 0) continue;
-
-            workflows.push({
-                repo: repo,
-                workflows: workflowsFromRepo,
-            });
-        }
-
-        if (!workflows || workflows.length <= 0) {
-            return [];
-        }
-
-        const llm = this.llmProviderService.getLLMProvider({
-            model: LLMModelProvider.OPENAI_GPT_4O,
-            temperature: 0,
-            jsonMode: true,
-        });
-
-        const promptWorkflows =
-            await this.promptService.getCompleteContextPromptByName(
-                'prompt_getProductionWorkflows',
-                {
-                    organizationAndTeamData,
-                    payload: JSON.stringify(workflows),
-                    promptIsForChat: false,
-                },
-            );
-
-        const chain = await llm.invoke(
-            await promptWorkflows.format({
-                organizationAndTeamData,
-                payload: JSON.stringify(workflows),
-                promptIsForChat: false,
-            }),
-            {
-                metadata: {
-                    module: 'Setup',
-                    submodule: 'GetProductionDeployment',
-                },
-            },
-        );
-
-        return safelyParseMessageContent(chain.content).repos;
-    }
-
     async findOneByOrganizationAndTeamDataAndConfigKey(
         organizationAndTeamData: OrganizationAndTeamData,
         configKey:
@@ -1356,88 +1221,6 @@ export class GitlabService
         };
     }
 
-    async getReleases(organizationAndTeamData: OrganizationAndTeamData) {
-        const gitlabAuthDetail = await this.getAuthDetails(
-            organizationAndTeamData,
-        );
-
-        const repositories = <Repositories[]>(
-            await this.findOneByOrganizationAndTeamDataAndConfigKey(
-                organizationAndTeamData,
-                IntegrationConfigKey.REPOSITORIES,
-            )
-        );
-
-        if (!gitlabAuthDetail || !repositories) {
-            return null;
-        }
-
-        const gitlabAPI = this.instanceGitlabApi(gitlabAuthDetail);
-
-        const releases = [];
-
-        for (const repo of repositories) {
-            const releasesFromRepo = await gitlabAPI.ProjectReleases.all(
-                repo.id,
-            );
-
-            releases.push({
-                repo: repo,
-                releases: releasesFromRepo.filter((release) => {
-                    return (
-                        moment().diff(moment(release.created_at), 'days') <= 90
-                    );
-                }),
-            });
-        }
-
-        if (!releases || releases.length <= 0) {
-            return [];
-        }
-
-        const llm = this.llmProviderService.getLLMProvider({
-            model: LLMModelProvider.OPENAI_GPT_4O,
-            temperature: 0,
-            jsonMode: true,
-        });
-
-        const promptReleases =
-            await this.promptService.getCompleteContextPromptByName(
-                'prompt_getProductionReleases',
-                {
-                    organizationAndTeamData,
-                    payload: JSON.stringify(releases),
-                    promptIsForChat: false,
-                },
-            );
-
-        const chain = await llm.invoke(
-            await promptReleases.format({
-                organizationAndTeamData,
-                payload: JSON.stringify(releases),
-                promptIsForChat: false,
-            }),
-            {
-                metadata: {
-                    module: 'Setup',
-                    submodule: 'GetProductionReleases',
-                },
-            },
-        );
-
-        const repos = safelyParseMessageContent(chain.content).repos;
-
-        if (
-            repos.filter((repo) => {
-                return repo.productionReleases;
-            }).length <= 0
-        ) {
-            return [];
-        }
-
-        return repos;
-    }
-
     async getMergeRequestFromRepository(
         gitlab: InstanceType<typeof Gitlab>,
         projectId: string,
@@ -1470,6 +1253,13 @@ export class GitlabService
             const filters = params?.filters ?? {};
             const { startDate, endDate } = filters?.period || {};
             const prStatus = filters?.prStatus || 'all';
+            const perRepoLimit = Math.min(Math.max(filters?.limit || 5, 1), 10);
+            const repoFilter = filters?.repositoryId
+                ? new Set([String(filters.repositoryId)])
+                : null;
+            const useFastPath = Boolean(
+                filters?.repositoryId || filters?.limit,
+            );
 
             const gitlabAuthDetail = await this.getAuthDetails(
                 params?.organizationAndTeamData,
@@ -1490,7 +1280,15 @@ export class GitlabService
             const pullRequestsWithFiles: PullRequestWithFiles[] = [];
 
             for (const repo of repositories) {
-                const mergeRequests = await this.getMergeRequestFromRepository(
+                if (
+                    repoFilter &&
+                    !repoFilter.has(String(repo.id)) &&
+                    !repoFilter.has(String(repo.name))
+                ) {
+                    continue;
+                }
+
+                let mergeRequests = await this.getMergeRequestFromRepository(
                     gitlabAPI,
                     repo.id,
                     startDate,
@@ -1498,14 +1296,25 @@ export class GitlabService
                     prStatus,
                 );
 
+                if (useFastPath) {
+                    mergeRequests = mergeRequests
+                        .sort(
+                            (a, b) =>
+                                new Date(b.created_at).getTime() -
+                                new Date(a.created_at).getTime(),
+                        )
+                        .slice(0, perRepoLimit);
+                }
+
                 const pullRequestDetails = await Promise.all(
                     mergeRequests.map(async (pullRequest) => {
-                        const filesWithChanges =
-                            await this.countChangesInMergeRequest(
-                                gitlabAPI,
-                                repo.id,
-                                pullRequest.iid,
-                            );
+                        const filesWithChanges = filters?.skipFiles
+                            ? []
+                            : await this.countChangesInMergeRequest(
+                                  gitlabAPI,
+                                  repo.id,
+                                  pullRequest.iid,
+                              );
 
                         return {
                             id: pullRequest.id,
@@ -1972,18 +1781,172 @@ export class GitlabService
         const gitlabAPI = this.instanceGitlabApi(gitlabAuthDetail);
 
         try {
-            const fileContent = await gitlabAPI.RepositoryFiles.show(
-                params?.repository?.id,
-                params.file?.filename,
-                params?.pullRequest?.head?.ref,
-            );
+            const filePath = params.file?.filename;
+            if (!filePath) {
+                return null;
+            }
 
-            return {
-                data: {
-                    content: fileContent.content,
-                    encoding: 'base64',
+            const headRef = params?.pullRequest?.head?.ref;
+            const baseRef = params?.pullRequest?.base?.ref;
+
+            const headProjectId =
+                params?.pullRequest?.head?.repo?.id ??
+                params?.pullRequest?.head?.projectId ??
+                params?.pullRequest?.head?.repoId ??
+                params?.repository?.id;
+            const baseProjectId =
+                params?.pullRequest?.base?.repo?.id ??
+                params?.pullRequest?.base?.projectId ??
+                params?.pullRequest?.base?.repoId ??
+                params?.repository?.id;
+
+            const attempts: Array<{
+                projectId: string;
+                ref: string;
+                source: string;
+            }> = [];
+
+            if (headRef && headProjectId) {
+                attempts.push({
+                    projectId: headProjectId,
+                    ref: headRef,
+                    source: 'head',
+                });
+            }
+
+            if (baseRef && baseProjectId) {
+                attempts.push({
+                    projectId: baseProjectId,
+                    ref: baseRef,
+                    source: 'base',
+                });
+            }
+
+            const tried = new Set<string>();
+            for (const attempt of attempts) {
+                const key = `${attempt.projectId}:${attempt.ref}`;
+                if (tried.has(key)) continue;
+                tried.add(key);
+
+                try {
+                    const fileContent = await gitlabAPI.RepositoryFiles.show(
+                        attempt.projectId,
+                        filePath,
+                        attempt.ref,
+                    );
+
+                    return {
+                        data: {
+                            content: fileContent.content,
+                            encoding: 'base64',
+                        },
+                    };
+                } catch (attemptError: any) {
+                    const status = attemptError?.response?.status;
+                    const isNotFound = status === 404;
+
+                    const logPayload = {
+                        message: isNotFound
+                            ? 'File not found in GitLab attempt'
+                            : 'Error fetching file content from GitLab attempt',
+                        context: GitlabService.name,
+                        error: attemptError,
+                        metadata: {
+                            repository: params.repository,
+                            file: filePath,
+                            attempt,
+                        },
+                    };
+
+                    if (isNotFound) {
+                        this.logger.warn(logPayload);
+                        continue; // Try next ref/project combo
+                    }
+
+                    this.logger.error(logPayload);
+                }
+            }
+
+            // Final fallback: try default branch only if all prior attempts failed
+            if (params.repository?.id) {
+                try {
+                    const defaultBranch = await this.getDefaultBranch({
+                        organizationAndTeamData: params.organizationAndTeamData,
+                        repository: {
+                            id: params.repository?.id,
+                            name: params.repository?.name,
+                        },
+                    });
+
+                    if (defaultBranch) {
+                        try {
+                            const fileContent =
+                                await gitlabAPI.RepositoryFiles.show(
+                                    params.repository.id,
+                                    filePath,
+                                    defaultBranch,
+                                );
+
+                            return {
+                                data: {
+                                    content: fileContent.content,
+                                    encoding: 'base64',
+                                },
+                            };
+                        } catch (defaultAttemptError: any) {
+                            const status =
+                                defaultAttemptError?.response?.status;
+                            const isNotFound = status === 404;
+
+                            const logPayload = {
+                                message: isNotFound
+                                    ? 'File not found in GitLab default branch attempt'
+                                    : 'Error fetching file content from GitLab default branch attempt',
+                                context: GitlabService.name,
+                                error: defaultAttemptError,
+                                metadata: {
+                                    repository: params.repository,
+                                    file: filePath,
+                                    attempt: {
+                                        projectId: params.repository.id,
+                                        ref: defaultBranch,
+                                        source: 'default',
+                                    },
+                                },
+                            };
+
+                            if (isNotFound) {
+                                this.logger.warn(logPayload);
+                            } else {
+                                this.logger.error(logPayload);
+                            }
+                        }
+                    }
+                } catch (defaultBranchError) {
+                    this.logger.warn({
+                        message:
+                            'Could not resolve default branch while fetching file content',
+                        context: GitlabService.name,
+                        error: defaultBranchError,
+                        metadata: {
+                            repository: params.repository,
+                            file: filePath,
+                        },
+                    });
+                }
+            }
+
+            this.logger.warn({
+                message:
+                    'Exhausted all attempts to fetch file content from GitLab',
+                context: GitlabService.name,
+                metadata: {
+                    repository: params.repository,
+                    file: filePath,
+                    attempts,
                 },
-            };
+            });
+            return null;
         } catch (error) {
             this.logger.error({
                 message: 'Error fetching file content from GitLab',
@@ -3136,6 +3099,34 @@ export class GitlabService
         }
     }
 
+    async getCurrentUser(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+    }): Promise<any | null> {
+        try {
+            const gitlabAuthDetail = await this.getAuthDetails(
+                params.organizationAndTeamData,
+            );
+
+            if (!gitlabAuthDetail) {
+                return null;
+            }
+
+            const gitlabAPI = this.instanceGitlabApi(gitlabAuthDetail);
+            const user = await gitlabAPI.Users.showCurrentUser();
+
+            return user || null;
+        } catch (error) {
+            this.logger.error({
+                message: 'Error retrieving current GitLab user',
+                context: GitlabService.name,
+                serviceName: 'GitlabService getCurrentUser',
+                error: error,
+                metadata: params,
+            });
+            return null;
+        }
+    }
+
     async getPullRequestsByRepository(params: {
         organizationAndTeamData: OrganizationAndTeamData;
         repository: {
@@ -3632,9 +3623,23 @@ export class GitlabService
             }
 
             // Extract base directories from filePatterns
-            const baseDirectories = this.extractBaseDirectoriesFromPatterns(
+            const baseDirectoriesRaw = this.extractBaseDirectoriesFromPatterns(
                 filePatterns || [],
             );
+            const globChars = ['*', '?', '{', '}', '[', ']', '!'];
+            const hasRootOnlyPatterns = (filePatterns || []).some((pattern) => {
+                const normalized = pattern
+                    .replace(/^\/+/, '')
+                    .replace(/\\/g, '/');
+                const hasGlob = globChars.some((ch) => normalized.includes(ch));
+                const hasSlash = normalized.includes('/');
+                // Plain filename (no glob, no directory) -> needs root scan
+                return !hasGlob && !hasSlash;
+            });
+            // Include root as a base directory if patterns target files at repo root
+            const baseDirectories = hasRootOnlyPatterns
+                ? [''].concat(baseDirectoriesRaw.filter((dir) => dir !== ''))
+                : baseDirectoriesRaw;
 
             let allFiles: RepositoryFile[] = [];
 
@@ -3643,14 +3648,22 @@ export class GitlabService
                 // Search files from each specific directory
                 for (const baseDir of baseDirectories) {
                     try {
+                        const options: any = {
+                            ref: branch,
+                            recursive: true, // deep search for subdirs
+                        };
+
+                        // For root scans (''), avoid recursion to keep it fast and match only top-level files
+                        if (!baseDir) {
+                            options.recursive = false;
+                        } else {
+                            options.path = baseDir;
+                        }
+
                         const trees =
                             await gitlabAPI.Repositories.allRepositoryTrees(
                                 repository.id,
-                                {
-                                    ref: branch,
-                                    path: baseDir,
-                                    recursive: true, // Only search within this directory
-                                },
+                                options,
                             );
 
                         const files = trees

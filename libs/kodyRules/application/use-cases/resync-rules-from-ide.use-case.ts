@@ -3,8 +3,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { KodyRulesSyncService } from '@libs/kody-rules/infrastructure/kodyRulesSync.service';
-import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+import { KodyRulesSyncService } from '@libs/kodyRules/infrastructure/adapters/services/kodyRulesSync.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 
 @Injectable()
 export class ResyncRulesFromIdeUseCase {

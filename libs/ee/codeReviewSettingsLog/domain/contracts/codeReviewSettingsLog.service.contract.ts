@@ -1,10 +1,21 @@
+import { CodeReviewConfigLogParams } from '../../infrastructure/adapters/services/codeReviewConfigLog.handler';
+import { IntegrationLogParams } from '../../infrastructure/adapters/services/integrationLog.handler';
+import { KodyRuleLogParams } from '../../infrastructure/adapters/services/kodyRulesLog.handler';
+import { PullRequestMessagesLogParams } from '../../infrastructure/adapters/services/pullRequestMessageLog.handler';
+import {
+    DirectoryConfigRemovalParams,
+    RepositoriesLogParams,
+    RepositoryConfigRemovalParams,
+} from '../../infrastructure/adapters/services/repositoriesLog.handler';
+import { UserStatusLogParams } from '../../infrastructure/adapters/services/userStatusLog.handler';
 import { ICodeReviewSettingsLogRepository } from './codeReviewSettingsLog.repository.contract';
 
 export const CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN = Symbol(
     'CodeReviewSettingsLogService',
 );
 
-export interface ICodeReviewSettingsLogService extends ICodeReviewSettingsLogRepository {
+export interface ICodeReviewSettingsLogService
+    extends ICodeReviewSettingsLogRepository {
     registerCodeReviewConfigLog(
         params: CodeReviewConfigLogParams,
     ): Promise<void>;

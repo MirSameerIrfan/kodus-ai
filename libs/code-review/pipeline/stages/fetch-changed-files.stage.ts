@@ -5,7 +5,7 @@ import {
     IPullRequestManagerService,
     PULL_REQUEST_MANAGER_SERVICE_TOKEN,
 } from '@libs/code-review/domain/contracts/PullRequestManagerService.contract';
-import { PinoLoggerService } from '@libs/core/log/pino.service';
+import { createLogger } from '@kodus/flow';
 import {
     AutomationMessage,
     AutomationStatus,
@@ -21,12 +21,12 @@ import { CodeReviewPipelineContext } from '../context/code-review-pipeline.conte
 export class FetchChangedFilesStage extends BasePipelineStage<CodeReviewPipelineContext> {
     stageName = 'FetchChangedFilesStage';
 
+    private readonly logger = createLogger(FetchChangedFilesStage.name);
     private maxFilesToAnalyze = 500;
 
     constructor(
         @Inject(PULL_REQUEST_MANAGER_SERVICE_TOKEN)
         private pullRequestHandlerService: IPullRequestManagerService,
-        private logger: PinoLoggerService,
     ) {
         super();
     }

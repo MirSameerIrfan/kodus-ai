@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 
 import { KODY_ISSUES_MANAGEMENT_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/KodyIssuesManagement.contract';
-import { GetIssuesByFiltersDto } from '@libs/common/dtos/get-issues-by-filters.dto';
+import { GetIssuesByFiltersDto } from '@libs/core/domain/dtos/get-issues-by-filters.dto';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
 import {
@@ -41,11 +41,11 @@ export class GetTotalIssuesUseCase implements IUseCase {
         }
 
         const assignedRepositoryIds =
-            await this.authorizationService.getRepositoryScope(
-                this.request.user,
-                Action.Read,
-                ResourceType.Issues,
-            );
+            await this.authorizationService.getRepositoryScope({
+                user: this.request.user,
+                action: Action.Read,
+                resource: ResourceType.Issues,
+            });
 
         if (assignedRepositoryIds !== null) {
             newFilters.repositoryIds = assignedRepositoryIds;

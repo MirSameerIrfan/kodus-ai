@@ -9,7 +9,7 @@ import {
     PolicyGuard,
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
 import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
-import { GetOrganizationNameUseCase } from '@libs/organization/application/use-cases/get-organization-name';
+import { GetOrganizationNameUseCase } from '@libs/organization/application/use-cases/get-organization-name.use-case';
 import { GetOrganizationsByDomainUseCase } from '@libs/organization/application/use-cases/get-organizations-domain.use-case';
 import { UpdateInfoOrganizationAndPhoneUseCase } from '@libs/organization/application/use-cases/update-infos.use-case';
 

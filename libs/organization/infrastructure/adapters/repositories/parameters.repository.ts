@@ -7,18 +7,18 @@ import {
     UpdateQueryBuilder,
 } from 'typeorm';
 
-import { ParametersModel } from './schema/parameters.model';
+import { ParametersModel } from './schemas/parameters.model';
 
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { IParametersRepository } from '@/core/domain/parameters/contracts/parameters.repository.contracts';
-import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
-import { IParameters } from '@/core/domain/parameters/interfaces/parameters.interface';
-import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { IParametersRepository } from '@libs/organization/domain/parameters/contracts/parameters.repository.contracts';
+import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
+import { IParameters } from '@libs/organization/domain/parameters/interfaces/parameters.interface';
+import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
+import { createNestedConditions } from '@libs/core/infrastructure/repositories/model/filters';
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
-} from '@/shared/infrastructure/repositories/mappers';
+} from '@libs/core/infrastructure/repositories/mappers';
 
 @Injectable()
 export class ParametersRepository implements IParametersRepository {

@@ -4,10 +4,10 @@ import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 
 import { PULL_REQUEST_MANAGER_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/PullRequestManagerService.contract';
-import { PullRequestHandlerService } from '@libs/code-review/infrastructure/pullRequestManager.service';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
+import { PullRequestHandlerService } from '@libs/code-review/infrastructure/adapters/services/pullRequestManager.service';
 
 @Injectable()
 export class GetCodeManagementMemberListUseCase implements IUseCase {

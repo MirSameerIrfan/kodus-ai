@@ -9,8 +9,8 @@ import {
 import { DeliveryStatus } from '@libs/platformData/domain/pullRequests/enums/deliveryStatus.enum';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { IssueStatus } from '@libs/core/infrastructure/config/types/general/issues.type';
-import { LabelType } from '@libs/core/utils/codeManagement/labels';
-import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
+import { LabelType } from '@libs/common/utils/codeManagement/labels';
+import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
 import {
     IIssuesService,
     ISSUES_SERVICE_TOKEN,

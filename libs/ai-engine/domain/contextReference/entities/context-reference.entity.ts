@@ -3,9 +3,9 @@ import type {
     ContextRevisionActor,
     ContextRevisionScope,
 } from '@context-os-core/interfaces';
-import { IContextReference } from '@libs/core/ai-engine/domain/interfaces/context-reference.interface';
 
 import { Entity } from '@libs/core/domain/interfaces/entity';
+import { IContextReference } from '../interfaces/context-reference.interface';
 
 export class ContextReferenceEntity implements Entity<IContextReference> {
     private _uuid: string;

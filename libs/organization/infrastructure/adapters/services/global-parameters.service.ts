@@ -4,11 +4,11 @@ import { v4 as uuidv4 } from 'uuid';
 import {
     IGlobalParametersRepository,
     GLOBAL_PARAMETERS_REPOSITORY_TOKEN,
-} from '@/core/domain/global-parameters/contracts/global-parameters.repository.contracts';
-import { IGlobalParametersService } from '@/core/domain/global-parameters/contracts/global-parameters.service.contract';
-import { GlobalParametersEntity } from '@/core/domain/global-parameters/entities/global-parameters.entity';
-import { IGlobalParameters } from '@/core/domain/global-parameters/interfaces/global-parameters.interface';
-import { GlobalParametersKey } from '@/shared/domain/enums/global-parameters-key.enum';
+} from '@libs/organization/domain/global-parameters/contracts/global-parameters.repository.contracts';
+import { IGlobalParametersService } from '@libs/organization/domain/global-parameters/contracts/global-parameters.service.contract';
+import { GlobalParametersEntity } from '@libs/organization/domain/global-parameters/entities/global-parameters.entity';
+import { IGlobalParameters } from '@libs/organization/domain/global-parameters/interfaces/global-parameters.interface';
+import { GlobalParametersKey } from '@libs/core/domain/enums/global-parameters-key.enum';
 
 @Injectable()
 export class GlobalParametersService implements IGlobalParametersService {

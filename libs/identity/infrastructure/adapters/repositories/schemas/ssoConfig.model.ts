@@ -1,6 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 
-import { OrganizationModel } from '@libs/core/infrastructure/database/typeorm/schema/organization.model';
+import { OrganizationModel } from '@libs/organization/infrastructure/adapters/repositories/schemas/organization.model';
 import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 import {
     SSOProtocol,

@@ -2,22 +2,20 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 
-import { PermissionsModel } from './schema/permissions.model';
-import { PinoLoggerService } from '../../services/logger/pino.service';
+import { createLogger } from '@kodus/flow';
 
-import { IPermissionsRepository } from '@/core/domain/permissions/contracts/permissions.repository.contract';
-import { IPermissions } from '@/core/domain/permissions/types/permissions.types';
-import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
-
-
+import { IPermissionsRepository } from '@libs/identity/domain/permissions/contracts/permissions.repository.contract';
+import { PermissionsModel } from './schemas/permissions.model';
+import { createNestedConditions } from '@libs/core/infrastructure/repositories/model/filters';
+import { IPermissions } from '@libs/identity/domain/permissions/types/permissions.types';
 
 @Injectable()
 export class PermissionsRepository implements IPermissionsRepository {
+    private readonly logger = createLogger(PermissionsRepository.name);
+
     constructor(
         @InjectRepository(PermissionsModel)
         private readonly permissionsRepository: Repository<PermissionsModel>,
-
-        private readonly logger: PinoLoggerService,
     ) {}
 
     async create(

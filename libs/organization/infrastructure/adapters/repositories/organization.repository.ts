@@ -8,16 +8,16 @@ import {
     UpdateQueryBuilder,
 } from 'typeorm';
 
-import { OrganizationModel } from './schema/organization.model';
+import { OrganizationModel } from './schemas/organization.model';
 
-import { IOrganizationRepository } from '@/core/domain/organization/contracts/organization.repository.contract';
-import { OrganizationEntity } from '@/core/domain/organization/entities/organization.entity';
-import { IOrganization } from '@/core/domain/organization/interfaces/organization.interface';
-import { createNestedConditions } from '@/shared/infrastructure/repositories/filters';
+import { IOrganizationRepository } from '@libs/organization/domain/organization/contracts/organization.repository.contract';
+import { OrganizationEntity } from '@libs/organization/domain/organization/entities/organization.entity';
+import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
+import { createNestedConditions } from '@libs/core/infrastructure/repositories/model/filters';
 import {
     mapSimpleModelToEntity,
     mapSimpleModelsToEntities,
-} from '@/shared/infrastructure/repositories/mappers';
+} from '@libs/core/infrastructure/repositories/mappers';
 
 @Injectable()
 export class OrganizationDatabaseRepository implements IOrganizationRepository {

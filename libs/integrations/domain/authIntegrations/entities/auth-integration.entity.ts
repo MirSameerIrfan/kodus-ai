@@ -1,4 +1,4 @@
-import { IIntegration } from '@libs/integrations/domain/interfaces/integration.interface';
+import { IIntegration } from '@libs/integrations/domain/integrations/interfaces/integration.interface';
 import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 
 import { IAuthIntegration } from '../interfaces/auth-integration.interface';

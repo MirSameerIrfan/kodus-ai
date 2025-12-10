@@ -1,10 +1,7 @@
 import { Transform } from 'class-transformer';
-import { IsString, IsOptional, IsBoolean } from 'class-validator';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class GetRepositoryTreeByDirectoryDto {
-    @IsString()
-    organizationId: string;
-
     @IsString()
     teamId: string;
 

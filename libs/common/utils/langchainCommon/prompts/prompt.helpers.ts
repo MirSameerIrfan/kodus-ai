@@ -1,7 +1,7 @@
 import {
     CODE_REVIEW_CONTEXT_PATTERNS,
     stripMarkersFromText,
-} from '@libs/core/ai-engine/services/context/code-review-context.utils';
+} from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context.utils';
 
 import { convertTiptapJSONToMarkdown } from '../../tiptap-json';
 

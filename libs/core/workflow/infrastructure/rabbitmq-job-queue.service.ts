@@ -2,25 +2,24 @@ import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Injectable, Optional } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 
-import { WorkflowJobRepository } from '@libs/core/infrastructure/database/typeorm/repositories/workflow-job.repository';
-import { ObservabilityService } from '@libs/core/infrastructure/logging/observability.service';
-import { PinoLoggerService } from '@libs/core/infrastructure/logging/pino.service';
 import { IJobQueueService } from '@libs/core/workflow/domain/contracts/job-queue.service.contract';
 import { IWorkflowJob } from '@libs/core/workflow/domain/interfaces/workflow-job.interface';
 
 import { TransactionalOutboxService } from './transactional-outbox.service';
+import { ObservabilityService } from '@libs/core/log/observability.service';
+import { createLogger } from '@kodus/flow';
 
 @Injectable()
 export class RabbitMQJobQueueService implements IJobQueueService {
     private readonly exchange = 'workflow.exchange';
     private readonly routingKey = 'workflow.jobs.created';
+    private readonly logger = createLogger(RabbitMQJobQueueService.name);
 
     constructor(
         @Optional() private readonly amqpConnection: AmqpConnection,
         private readonly jobRepository: WorkflowJobRepository,
         private readonly outboxService: TransactionalOutboxService,
         private readonly dataSource: DataSource,
-        private readonly logger: PinoLoggerService,
         private readonly observability: ObservabilityService,
     ) {
         if (!amqpConnection) {
