@@ -1972,10 +1972,10 @@
     zod "^4.1.12"
     zod-from-json-schema "^0.5.2"
 
-"@kodus/kodus-common@1.2.16":
-  version "1.2.16"
-  resolved "https://us-central1-npm.pkg.dev/kodus-infra-prod/kodus-pkg/@kodus/kodus-common/-/@kodus/kodus-common-1.2.16.tgz#9ed88a2c45ddb69aabae65aea263306f5a817bb2"
-  integrity sha512-DlZJciE+XpU1g0Pxwv97c8TnaVKYv1FLMELiYW5hIhCd5NsCXPQq0LeDC8A5BRU2/yPiOKEX18MfbqyZHIiQWg==
+"@kodus/kodus-common@1.2.17":
+  version "1.2.17"
+  resolved "https://us-central1-npm.pkg.dev/kodus-infra-prod/kodus-pkg/@kodus/kodus-common/-/@kodus/kodus-common-1.2.17.tgz#5a0bce0581ec171a44d1f6175173ade77926e449"
+  integrity sha512-xGLrnKJteLkg8XFbOaBjaiB57+RY7UKiKRLotV5ItE/Z2DX7lWpbDTfThqSCWsm5pPX/clBuRR8rgRmeJdryUQ==
 
 "@kwsites/file-exists@^1.1.1":
   version "1.1.1"
