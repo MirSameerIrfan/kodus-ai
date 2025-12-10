@@ -1,7 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 
-import { ReviewCadenceType, ReviewPreset, LimitationType, SuggestionControlConfig } from '@/config/types/general/codeReview.type';
+import {
+    ReviewCadenceType,
+    ReviewPreset,
+    LimitationType,
+    SuggestionControlConfig,
+} from '@/config/types/general/codeReview.type';
 import { CodeReviewParameter } from '@/config/types/general/codeReviewConfig.type';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { UserRequest } from '@/config/types/http/user-request.type';
@@ -94,7 +99,10 @@ export class ApplyCodeReviewPresetUseCase {
                 message: 'Failed to apply code review preset',
                 context: ApplyCodeReviewPresetUseCase.name,
                 error,
-                metadata: params,
+                metadata: {
+                    params,
+                    organizationAndTeamData,
+                },
             });
             throw error;
         }
@@ -108,7 +116,9 @@ export class ApplyCodeReviewPresetUseCase {
         const suggestionControl: SuggestionControlConfig = {
             ...(baseConfig.configs.suggestionControl || ({} as any)),
         } as SuggestionControlConfig;
-        const v2PromptOverrides = { ...(baseConfig.configs.v2PromptOverrides || {}) };
+        const v2PromptOverrides = {
+            ...(baseConfig.configs.v2PromptOverrides || {}),
+        };
 
         switch (preset) {
             case ReviewPreset.SPEED: {

@@ -1158,7 +1158,10 @@ export class PullRequestsService implements IPullRequestsService {
                                 },
                             }),
                             new Promise<null>((resolve) =>
-                                setTimeout(() => resolve(null), perRepoTimeoutMs),
+                                setTimeout(
+                                    () => resolve(null),
+                                    perRepoTimeoutMs,
+                                ),
                             ),
                         ])) || [];
 
@@ -1167,7 +1170,7 @@ export class PullRequestsService implements IPullRequestsService {
                             message:
                                 'Timed out fetching PRs for onboarding signals',
                             context: PullRequestsService.name,
-                            metadata: { repositoryId },
+                            metadata: { repositoryId, organizationAndTeamData },
                         });
                     } else {
                         const sortedPRs = (integrationPRs as any[]).sort(
@@ -1185,7 +1188,8 @@ export class PullRequestsService implements IPullRequestsService {
                         const recentPRs = sortedPRs.slice(0, perRepoPrLimit);
 
                         prs = recentPRs.map((pr: any) => {
-                            const prNumber = pr.number ?? pr.pull_number ?? pr.id;
+                            const prNumber =
+                                pr.number ?? pr.pull_number ?? pr.id;
                             const totalChanges = (pr as any).totalChanges;
                             const addedDeleted =
                                 ((pr as any).totalAdded ?? 0) +
@@ -1198,7 +1202,9 @@ export class PullRequestsService implements IPullRequestsService {
                                     : addedDeleted;
 
                             const mappedFiles: IFile[] = (
-                                pr.pullRequestFiles || pr.files || []
+                                pr.pullRequestFiles ||
+                                pr.files ||
+                                []
                             ).map((f: any) => {
                                 const added = Number(f.additions ?? 0) || 0;
                                 const deleted = Number(f.deletions ?? 0) || 0;
@@ -1227,7 +1233,8 @@ export class PullRequestsService implements IPullRequestsService {
                                 };
                             });
 
-                            const totals = this.generateTotalFileMetrics(mappedFiles);
+                            const totals =
+                                this.generateTotalFileMetrics(mappedFiles);
                             const totalAdded =
                                 (pr as any).totalAdded ?? totals.totalAdded;
                             const totalDeleted =
@@ -1289,11 +1296,10 @@ export class PullRequestsService implements IPullRequestsService {
                     }
                 } catch (error) {
                     this.logger.warn({
-                        message:
-                            'Failed to fetch PRs for onboarding signals',
+                        message: 'Failed to fetch PRs for onboarding signals',
                         context: PullRequestsService.name,
                         error,
-                        metadata: { repositoryId },
+                        metadata: { repositoryId, organizationAndTeamData },
                     });
                     prs = [];
                 }
@@ -1311,129 +1317,147 @@ export class PullRequestsService implements IPullRequestsService {
                     };
                 }
 
-            const hotfixPct = pct(
-                prs.filter((pr) =>
-                    classifyTitle(pr.title, ['hotfix', 'revert', 'rollback']),
-                ).length,
-                N,
-            );
-            const bugfixPct = pct(
-                prs.filter((pr) =>
-                    classifyTitle(pr.title, ['fix', 'bug', 'regression']),
-                ).length,
-                N,
-            );
-            const securityPct = pct(
-                prs.filter((pr) =>
-                    classifyTitle(pr.title, [
-                        'security',
-                        'vuln',
-                        'auth',
-                        'permission',
-                    ]),
-                ).length,
-                N,
-            );
-            const perfPct = pct(
-                prs.filter((pr) =>
-                    classifyTitle(pr.title, [
-                        'perf',
-                        'optimize',
-                        'slow',
-                        'latency',
-                    ]),
-                ).length,
-                N,
-            );
-
-            const sensitiveTouchPct = pct(
-                prs.filter((pr) => hasSensitivePathTouch(pr)).length,
-                N,
-            );
-
-            const prSizes = prs.map((pr) => getPrSize(pr));
-            const medianLines = calcMedian(prSizes);
-            const p90Lines = calcP90(prSizes);
-
-            const mergedDates = prs
-                .filter((pr) => pr.merged)
-                .map(
-                    (pr) => new Date(pr.closedAt || pr.updatedAt || Date.now()),
+                const hotfixPct = pct(
+                    prs.filter((pr) =>
+                        classifyTitle(pr.title, [
+                            'hotfix',
+                            'revert',
+                            'rollback',
+                        ]),
+                    ).length,
+                    N,
                 );
-            const weeks = getWeeksRange(
-                mergedDates.length
-                    ? mergedDates
-                    : prs.map((pr) => new Date(pr.openedAt || pr.createdAt)),
-            );
-            const mergesPerWeek = mergedDates.length
-                ? mergedDates.length / weeks
-                : prs.length / weeks;
-
-            // Comment-based metrics are not available in the current model; default to 0.
-            const commentsPerPR = 0;
-            const qualityPct = 0;
-            const nitPct = 0;
-
-            const HIGH_RISK =
-                hotfixPct >= 10 ||
-                securityPct >= 10 ||
-                sensitiveTouchPct >= 30 ||
-                (bugfixPct >= 40 && hotfixPct >= 10) ||
-                (perfPct >= 25 && p90Lines >= 800);
-
-            const HIGH_VELOCITY = mergesPerWeek >= 8;
-
-            const LARGE_PRS = p90Lines >= 800 || medianLines >= 400;
-
-            const LOW_NOISE_TOLERANCE =
-                commentsPerPR <= 1.0 || (commentsPerPR <= 1.5 && HIGH_VELOCITY);
-
-            const COACHING_NEED =
-                qualityPct >= 35 && nitPct <= 35 && commentsPerPR >= 1.5;
-
-            let mode: 'Safety' | 'Speed' | 'Coach' | 'Default' = 'Default';
-            let reasons: string[] = [];
-
-            if (
-                HIGH_RISK &&
-                !(HIGH_VELOCITY && LOW_NOISE_TOLERANCE && !(securityPct >= 10))
-            ) {
-                mode = 'Safety';
-                reasons = buildReasons(
-                    [
-                        { key: 'hotfixPct', value: hotfixPct },
-                        { key: 'securityPct', value: securityPct },
-                        { key: 'sensitiveTouchPct', value: sensitiveTouchPct },
-                        { key: 'perfPct', value: perfPct },
-                        { key: 'p90Lines', value: p90Lines },
-                    ],
-                    2,
+                const bugfixPct = pct(
+                    prs.filter((pr) =>
+                        classifyTitle(pr.title, ['fix', 'bug', 'regression']),
+                    ).length,
+                    N,
                 );
-            } else if (
-                !HIGH_RISK &&
-                (HIGH_VELOCITY || LARGE_PRS) &&
-                LOW_NOISE_TOLERANCE
-            ) {
-                mode = 'Speed';
-                reasons = buildReasons(
-                    [
-                        { key: 'HIGH_VELOCITY', value: mergesPerWeek },
-                        { key: 'LOW_NOISE_TOLERANCE', value: commentsPerPR },
-                        { key: 'p90Lines', value: p90Lines },
-                        { key: 'medianLines', value: medianLines },
-                    ],
-                    2,
+                const securityPct = pct(
+                    prs.filter((pr) =>
+                        classifyTitle(pr.title, [
+                            'security',
+                            'vuln',
+                            'auth',
+                            'permission',
+                        ]),
+                    ).length,
+                    N,
                 );
-            } else if (!HIGH_RISK && COACHING_NEED) {
-                mode = 'Coach';
-                reasons = buildReasons(
-                    [
-                        { key: 'qualityPct', value: qualityPct },
-                        { key: 'commentsPerPR', value: commentsPerPR },
-                    ],
-                    2,
+                const perfPct = pct(
+                    prs.filter((pr) =>
+                        classifyTitle(pr.title, [
+                            'perf',
+                            'optimize',
+                            'slow',
+                            'latency',
+                        ]),
+                    ).length,
+                    N,
                 );
-            }
+
+                const sensitiveTouchPct = pct(
+                    prs.filter((pr) => hasSensitivePathTouch(pr)).length,
+                    N,
+                );
+
+                const prSizes = prs.map((pr) => getPrSize(pr));
+                const medianLines = calcMedian(prSizes);
+                const p90Lines = calcP90(prSizes);
+
+                const mergedDates = prs
+                    .filter((pr) => pr.merged)
+                    .map(
+                        (pr) =>
+                            new Date(pr.closedAt || pr.updatedAt || Date.now()),
+                    );
+                const weeks = getWeeksRange(
+                    mergedDates.length
+                        ? mergedDates
+                        : prs.map(
+                              (pr) => new Date(pr.openedAt || pr.createdAt),
+                          ),
+                );
+                const mergesPerWeek = mergedDates.length
+                    ? mergedDates.length / weeks
+                    : prs.length / weeks;
+
+                // Comment-based metrics are not available in the current model; default to 0.
+                const commentsPerPR = 0;
+                const qualityPct = 0;
+                const nitPct = 0;
+
+                const HIGH_RISK =
+                    hotfixPct >= 10 ||
+                    securityPct >= 10 ||
+                    sensitiveTouchPct >= 30 ||
+                    (bugfixPct >= 40 && hotfixPct >= 10) ||
+                    (perfPct >= 25 && p90Lines >= 800);
+
+                const HIGH_VELOCITY = mergesPerWeek >= 8;
+
+                const LARGE_PRS = p90Lines >= 800 || medianLines >= 400;
+
+                const LOW_NOISE_TOLERANCE =
+                    commentsPerPR <= 1.0 ||
+                    (commentsPerPR <= 1.5 && HIGH_VELOCITY);
+
+                const COACHING_NEED =
+                    qualityPct >= 35 && nitPct <= 35 && commentsPerPR >= 1.5;
+
+                let mode: 'Safety' | 'Speed' | 'Coach' | 'Default' = 'Default';
+                let reasons: string[] = [];
+
+                if (
+                    HIGH_RISK &&
+                    !(
+                        HIGH_VELOCITY &&
+                        LOW_NOISE_TOLERANCE &&
+                        !(securityPct >= 10)
+                    )
+                ) {
+                    mode = 'Safety';
+                    reasons = buildReasons(
+                        [
+                            { key: 'hotfixPct', value: hotfixPct },
+                            { key: 'securityPct', value: securityPct },
+                            {
+                                key: 'sensitiveTouchPct',
+                                value: sensitiveTouchPct,
+                            },
+                            { key: 'perfPct', value: perfPct },
+                            { key: 'p90Lines', value: p90Lines },
+                        ],
+                        2,
+                    );
+                } else if (
+                    !HIGH_RISK &&
+                    (HIGH_VELOCITY || LARGE_PRS) &&
+                    LOW_NOISE_TOLERANCE
+                ) {
+                    mode = 'Speed';
+                    reasons = buildReasons(
+                        [
+                            { key: 'HIGH_VELOCITY', value: mergesPerWeek },
+                            {
+                                key: 'LOW_NOISE_TOLERANCE',
+                                value: commentsPerPR,
+                            },
+                            { key: 'p90Lines', value: p90Lines },
+                            { key: 'medianLines', value: medianLines },
+                        ],
+                        2,
+                    );
+                } else if (!HIGH_RISK && COACHING_NEED) {
+                    mode = 'Coach';
+                    reasons = buildReasons(
+                        [
+                            { key: 'qualityPct', value: qualityPct },
+                            { key: 'commentsPerPR', value: commentsPerPR },
+                        ],
+                        2,
+                    );
+                }
 
                 return {
                     repositoryId,
@@ -1461,7 +1485,11 @@ export class PullRequestsService implements IPullRequestsService {
             sampleSize: r.sampleSize,
             metrics: r.metrics || {},
             recommendation: {
-                mode: r.recommendation.mode as 'Safety' | 'Speed' | 'Coach' | 'Default',
+                mode: r.recommendation.mode as
+                    | 'Safety'
+                    | 'Speed'
+                    | 'Coach'
+                    | 'Default',
                 reasons: r.recommendation.reasons || [],
             },
         }));

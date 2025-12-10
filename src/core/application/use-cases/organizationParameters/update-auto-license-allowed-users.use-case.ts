@@ -15,7 +15,7 @@ export class UpdateAutoLicenseAllowedUsersUseCase {
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
         private readonly organizationParametersService: IOrganizationParametersService,
         private readonly codeManagementService: CodeManagementService,
-    private readonly logger: PinoLoggerService,
+        private readonly logger: PinoLoggerService,
     ) {}
 
     async execute(params: {
@@ -24,15 +24,22 @@ export class UpdateAutoLicenseAllowedUsersUseCase {
     }) {
         const { organizationAndTeamData } = params;
 
+        this.logger.log({
+            message: 'Updating auto license allowed users',
+            context: 'UpdateAutoLicenseAllowedUsersUseCase',
+            metadata: {
+                organizationAndTeamData,
+            },
+        });
+
         if (!organizationAndTeamData?.organizationId) {
             throw new BadRequestException('organizationId is required');
         }
 
-        const existing =
-            await this.organizationParametersService.findByKey(
-                OrganizationParametersKey.AUTO_LICENSE_ASSIGNMENT,
-                organizationAndTeamData,
-            );
+        const existing = await this.organizationParametersService.findByKey(
+            OrganizationParametersKey.AUTO_LICENSE_ASSIGNMENT,
+            organizationAndTeamData,
+        );
 
         const config: OrganizationParametersAutoAssignConfig = {
             enabled: existing?.configValue?.enabled ?? false,
@@ -47,13 +54,14 @@ export class UpdateAutoLicenseAllowedUsersUseCase {
         );
 
         const shouldIncludeCurrentUser =
-            params.includeCurrentUser !== false /* default true */;
+            params.includeCurrentUser !== false; /* default true */
 
         if (shouldIncludeCurrentUser) {
-            const currentUser =
-                await this.codeManagementService.getCurrentUser({
+            const currentUser = await this.codeManagementService.getCurrentUser(
+                {
                     organizationAndTeamData,
-                });
+                },
+            );
 
             const currentId =
                 currentUser?.id ||
