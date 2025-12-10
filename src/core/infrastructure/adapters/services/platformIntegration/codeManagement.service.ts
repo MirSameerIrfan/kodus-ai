@@ -101,6 +101,12 @@ export class CodeManagementService implements ICodeManagementService {
                 visibility?: 'all' | 'public' | 'private';
                 language?: string;
             };
+            options?: {
+                includePullRequestMetrics?: {
+                    lastNDays?: number;
+                    limit?: number;
+                };
+            };
         },
         type?: PlatformType,
     ): Promise<Repositories[]> {
@@ -907,6 +913,28 @@ export class CodeManagementService implements ICodeManagementService {
             this.platformIntegrationFactory.getCodeManagementService(type);
 
         return codeManagementService.getUserById(params);
+    }
+
+    async getCurrentUser(
+        params: {
+            organizationAndTeamData: OrganizationAndTeamData;
+        },
+        type?: PlatformType,
+    ): Promise<any | null> {
+        if (!type) {
+            type = await this.getTypeIntegration(
+                extractOrganizationAndTeamData(params),
+            );
+        }
+
+        const codeManagementService =
+            this.platformIntegrationFactory.getCodeManagementService(type);
+
+        if (!codeManagementService.getCurrentUser) {
+            return null;
+        }
+
+        return codeManagementService.getCurrentUser(params);
     }
 
     async markReviewCommentAsResolved(

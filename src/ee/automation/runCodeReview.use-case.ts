@@ -21,6 +21,7 @@ import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
 } from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
+import { OrganizationParametersAutoAssignConfig } from '@/core/domain/organizationParameters/types/organizationParameters.types';
 import { stripCurlyBracesFromUUIDs } from '@/core/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
 import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
 import { AutoAssignLicenseUseCase } from '@/ee/license/use-cases/auto-assign-license.use-case';
@@ -488,9 +489,13 @@ export class RunCodeReviewAutomationUseCase {
                                     },
                                 });
 
-                                if (
-                                    autoAssignResult.reason !== 'IGNORED_USER'
-                                ) {
+                                const shouldAddReaction =
+                                    autoAssignResult.reason !==
+                                        'IGNORED_USER' &&
+                                    autoAssignResult.reason !==
+                                        'NOT_ALLOWED_USER';
+
+                                if (shouldAddReaction) {
                                     await this.addNoLicenseReaction({
                                         organizationAndTeamData,
                                         repository: params.repository,
@@ -698,9 +703,20 @@ export class RunCodeReviewAutomationUseCase {
             organizationAndTeamData,
         );
 
+        const configValue =
+            config?.configValue as OrganizationParametersAutoAssignConfig;
+
         if (
-            config?.configValue?.ignoredUsers?.length > 0 &&
-            config?.configValue?.ignoredUsers.includes(userGitId)
+            Array.isArray(configValue?.allowedUsers) &&
+            configValue.allowedUsers.length > 0 &&
+            !configValue.allowedUsers.includes(userGitId)
+        ) {
+            return true;
+        }
+
+        if (
+            configValue?.ignoredUsers?.length > 0 &&
+            configValue?.ignoredUsers.includes(userGitId)
         ) {
             return true;
         }

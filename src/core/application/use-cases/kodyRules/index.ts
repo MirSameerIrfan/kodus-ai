@@ -12,9 +12,11 @@ import { FindSuggestionsByRuleUseCase } from './find-suggestions-by-rule.use-cas
 import { GenerateKodyRulesUseCase } from './generate-kody-rules.use-case';
 import { GetInheritedRulesKodyRulesUseCase } from './get-inherited-kody-rules.use-case';
 import { GetRulesLimitStatusUseCase } from './get-rules-limit-status.use-case';
+import { FastSyncIdeRulesUseCase } from './fast-sync-ide-rules.use-case';
 import { ResyncRulesFromIdeUseCase } from './resync-rules-from-ide.use-case';
 import { SendRulesNotificationUseCase } from './send-rules-notification.use-case';
 import { SyncSelectedRepositoriesKodyRulesUseCase } from './sync-selected-repositories.use-case';
+import { ImportFastKodyRulesUseCase } from './import-fast-kody-rules.use-case';
 
 export const UseCases = [
     CreateOrUpdateKodyRulesUseCase,
@@ -34,4 +36,6 @@ export const UseCases = [
     GetRulesLimitStatusUseCase,
     FindSuggestionsByRuleUseCase,
     ResyncRulesFromIdeUseCase,
+    FastSyncIdeRulesUseCase,
+    ImportFastKodyRulesUseCase,
 ];

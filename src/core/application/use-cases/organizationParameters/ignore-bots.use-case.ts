@@ -78,6 +78,7 @@ export class IgnoreBotsUseCase {
                 {
                     enabled: false,
                     ignoredUsers: botIds,
+                    allowedUsers: [],
                 },
                 organizationAndTeamData,
             );
@@ -93,6 +94,9 @@ export class IgnoreBotsUseCase {
 
             const autoLicenseConfig =
                 autoLicenseEntity.configValue as OrganizationParametersAutoAssignConfig;
+
+            autoLicenseConfig.allowedUsers =
+                autoLicenseConfig.allowedUsers || [];
 
             const allIgnored = new Set([
                 ...autoLicenseConfig.ignoredUsers,
