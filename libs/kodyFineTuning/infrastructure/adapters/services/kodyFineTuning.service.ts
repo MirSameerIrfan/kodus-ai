@@ -16,25 +16,26 @@ import {
     IPullRequests,
     ISuggestionToEmbed,
 } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
-import { FeedbackType } from '@libs/code-review/ee/fine-tuning/domain/enums/feedbackType.enum';
-import { FineTuningDecision } from '@libs/code-review/ee/fine-tuning/domain/enums/fineTuningDecision.enum';
-import { FineTuningType } from '@libs/code-review/ee/fine-tuning/domain/enums/fineTuningType.enum';
-import { IClusterizedSuggestion } from '@libs/code-review/ee/fine-tuning/domain/interfaces/kodyFineTuning.interface';
-import {
-    ISuggestionEmbeddedService,
-    SUGGESTION_EMBEDDED_SERVICE_TOKEN,
-} from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/contracts/suggestionEmbedded.service.contract';
-import { ISuggestionEmbedded } from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/interfaces/suggestionEmbedded.interface';
+
 import { GlobalParametersKey } from '@libs/core/domain/enums/global-parameters-key.enum';
 import { PullRequestState } from '@libs/core/domain/enums/pullRequestState.enum';
 import {
     CodeSuggestion,
     Repository,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { LabelType } from '@libs/core/utils/codeManagement/labels';
-import { SeverityLevel } from '@libs/core/utils/enums/severityLevel.enum';
 import { GLOBAL_PARAMETERS_SERVICE_TOKEN } from '@libs/organization/domain/global-parameters/contracts/global-parameters.service.contract';
 import { IGlobalParametersService } from '@libs/organization/domain/global-parameters/contracts/global-parameters.service.contract';
+import {
+    ISuggestionEmbeddedService,
+    SUGGESTION_EMBEDDED_SERVICE_TOKEN,
+} from '@libs/kodyFineTuning/domain/suggestionEmbedded/contracts/suggestionEmbedded.service.contract';
+import { IClusterizedSuggestion } from '@libs/kodyFineTuning/domain/interfaces/kodyFineTuning.interface';
+import { LabelType } from '@libs/common/utils/codeManagement/labels';
+import { ISuggestionEmbedded } from '@libs/kodyFineTuning/domain/suggestionEmbedded/interfaces/suggestionEmbedded.interface';
+import { FeedbackType } from '@libs/kodyFineTuning/domain/enums/feedbackType.enum';
+import { FineTuningType } from '@libs/kodyFineTuning/domain/enums/fineTuningType.enum';
+import { FineTuningDecision } from '@libs/kodyFineTuning/domain/enums/fineTuningDecision.enum';
+import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
 
 @Injectable()
 export class KodyFineTuningService {
@@ -471,13 +472,16 @@ export class KodyFineTuningService {
         if (!text) {
             return '';
         }
-        return text
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^\w\s\-\_\.\(\)\{\}\[\]]/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim();
+        return (
+            text
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                // eslint-disable-next-line no-useless-escape
+                .replace(/[^\w\s\-\_\.\(\)\{\}\[\]]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim()
+        );
     }
 
     private identifyFeedbackType(feedback: ICodeReviewFeedback): string {

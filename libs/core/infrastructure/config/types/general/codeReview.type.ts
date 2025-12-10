@@ -19,7 +19,7 @@ import {
     GetImpactAnalysisResponse,
     TaskStatus,
 } from '@libs/ee/kodyAST/codeASTAnalysis.service';
-import { IClusterizedSuggestion } from '@libs/code-review/fine-tuning/domain/interfaces/kodyFineTuning.interface';
+import { IClusterizedSuggestion } from '@libs/kodyFineTuning/domain/interfaces/kodyFineTuning.interface';
 import { IKodyRule } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 
 export interface IFinalAnalysisResult {

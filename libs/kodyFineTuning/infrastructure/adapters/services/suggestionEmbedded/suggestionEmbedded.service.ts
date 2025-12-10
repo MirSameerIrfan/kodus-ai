@@ -3,40 +3,20 @@ import { Injectable } from '@nestjs/common';
 import { FindManyOptions } from 'typeorm';
 
 import { ISuggestionToEmbed } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
-import { FeedbackType } from '@libs/code-review/ee/fine-tuning/domain/enums/feedbackType.enum';
-import { ISuggestionEmbeddedService } from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/contracts/suggestionEmbedded.service.contract';
-import { SuggestionEmbeddedEntity } from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/entities/suggestionEmbedded.entity';
-import { ISuggestionEmbedded } from '@libs/code-review/ee/fine-tuning/domain/suggestionEmbedded/interfaces/suggestionEmbedded.interface';
+
 import { CodeSuggestion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { getOpenAIEmbedding } from '@libs/core/utils/langchainCommon/document';
 
-import { SuggestionEmbeddedDatabaseRepository } from '../../../repositories/typeorm/suggestionEmbedded.repository';
 import { KodyFineTuningService } from '../kodyFineTuning.service';
-
-
-export interface SuggestionEmbeddedFeedbacks {
-    positiveFeedbacks: number;
-    negativeFeedbacks: number;
-    total: number;
-}
-
-export interface SuggestionEmbeddedFeedbacksWithLanguage {
-    positiveFeedbacks: {
-        language: {
-            language: string;
-            count: number;
-        }[];
-        total: number;
-    };
-    negativeFeedbacks: {
-        language: {
-            language: string;
-            count: number;
-        }[];
-        total: number;
-    };
-    total: number;
-}
+import { ISuggestionEmbeddedService } from '@libs/kodyFineTuning/domain/suggestionEmbedded/contracts/suggestionEmbedded.service.contract';
+import {
+    ISuggestionEmbedded,
+    SuggestionEmbeddedFeedbacks,
+    SuggestionEmbeddedFeedbacksWithLanguage,
+} from '@libs/kodyFineTuning/domain/suggestionEmbedded/interfaces/suggestionEmbedded.interface';
+import { SuggestionEmbeddedEntity } from '@libs/kodyFineTuning/domain/suggestionEmbedded/entities/suggestionEmbedded.entity';
+import { getOpenAIEmbedding } from '@libs/common/utils/langchainCommon/document';
+import { FeedbackType } from '@libs/kodyFineTuning/domain/enums/feedbackType.enum';
+import { SuggestionEmbeddedDatabaseRepository } from '../../repositories/suggestionEmbedded.repository';
 
 const UUID_REGEX =
     /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;

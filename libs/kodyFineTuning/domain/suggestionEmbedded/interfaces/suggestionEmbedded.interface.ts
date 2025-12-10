@@ -16,3 +16,27 @@ export interface ISuggestionEmbedded {
     oneSentenceSummary?: string;
     language: string;
 }
+
+export interface SuggestionEmbeddedFeedbacks {
+    positiveFeedbacks: number;
+    negativeFeedbacks: number;
+    total: number;
+}
+
+export interface SuggestionEmbeddedFeedbacksWithLanguage {
+    positiveFeedbacks: {
+        language: {
+            language: string;
+            count: number;
+        }[];
+        total: number;
+    };
+    negativeFeedbacks: {
+        language: {
+            language: string;
+            count: number;
+        }[];
+        total: number;
+    };
+    total: number;
+}

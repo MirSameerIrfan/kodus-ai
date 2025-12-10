@@ -1,6 +1,7 @@
 import { FilterQuery } from 'mongoose';
 
 import { RuleLikeEntity, RuleFeedbackType } from '../entities/ruleLike.entity';
+import { RuleLikeModel } from '@libs/kodyRules/infrastructure/adapters/repositories/schemas/mongoose/rulesLikes.model';
 
 export interface IRuleLike {
     _id?: string;

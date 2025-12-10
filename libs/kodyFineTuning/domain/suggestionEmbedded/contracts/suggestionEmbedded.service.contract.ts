@@ -1,13 +1,13 @@
 import { ISuggestionToEmbed } from '@libs/code-review/domain/pull-requests/interfaces/pullRequests.interface';
-import {
-    SuggestionEmbeddedFeedbacks,
-    SuggestionEmbeddedFeedbacksWithLanguage,
-} from '@libs/code-review/ee/fine-tuning/infrastructure/suggestionEmbedded/suggestionEmbedded.service';
+
 import { CodeSuggestion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 
 import { ISuggestionEmbeddedRepository } from './suggestionEmbedded.repository.contract';
 import { SuggestionEmbeddedEntity } from '../entities/suggestionEmbedded.entity';
-
+import {
+    SuggestionEmbeddedFeedbacks,
+    SuggestionEmbeddedFeedbacksWithLanguage,
+} from '../interfaces/suggestionEmbedded.interface';
 
 export const SUGGESTION_EMBEDDED_SERVICE_TOKEN = Symbol(
     'SuggestionEmbeddedService',
