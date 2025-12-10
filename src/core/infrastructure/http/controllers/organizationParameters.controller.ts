@@ -18,6 +18,7 @@ import {
     GetCockpitMetricsVisibilityUseCase,
 } from '@/core/application/use-cases/organizationParameters/get-cockpit-metrics-visibility.use-case';
 import { IgnoreBotsUseCase } from '@/core/application/use-cases/organizationParameters/ignore-bots.use-case';
+import { UpdateAutoLicenseAllowedUsersUseCase } from '@/core/application/use-cases/organizationParameters/update-auto-license-allowed-users.use-case';
 import { ICockpitMetricsVisibility } from '@/core/domain/organizationParameters/interfaces/cockpit-metrics-visibility.interface';
 import {
     BadRequestException,
@@ -48,6 +49,7 @@ export class OrgnizationParametersController {
         @Inject(GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN)
         private readonly getCockpitMetricsVisibilityUseCase: GetCockpitMetricsVisibilityUseCase,
         private readonly ignoreBotsUseCase: IgnoreBotsUseCase,
+        private readonly updateAutoLicenseAllowedUsersUseCase: UpdateAutoLicenseAllowedUsersUseCase,
 
         @Inject(REQUEST)
         private readonly request: UserRequest,
@@ -214,6 +216,38 @@ export class OrgnizationParametersController {
         return await this.ignoreBotsUseCase.execute({
             organizationId,
             teamId: body.teamId,
+        });
+    }
+
+    @Post('/auto-license/allowed-users')
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Update,
+            resource: ResourceType.OrganizationSettings
+        }),
+    )
+    public async updateAutoLicenseAllowedUsers(
+        @Body()
+        body: {
+            teamId?: string;
+            includeCurrentUser?: boolean;
+            organizationId?: string;
+        },
+    ) {
+        const organizationId =
+            body.organizationId || this.request?.user?.organization?.uuid;
+
+        if (!organizationId) {
+            throw new BadRequestException('Missing organizationId in request');
+        }
+
+        return await this.updateAutoLicenseAllowedUsersUseCase.execute({
+            organizationAndTeamData: {
+                organizationId,
+                teamId: body.teamId,
+            },
+            includeCurrentUser: body.includeCurrentUser,
         });
     }
 }

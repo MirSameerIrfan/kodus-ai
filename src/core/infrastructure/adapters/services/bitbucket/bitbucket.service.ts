@@ -762,6 +762,12 @@ export class BitbucketService
             visibility?: 'all' | 'public' | 'private';
             language?: string;
         };
+        options?: {
+            includePullRequestMetrics?: {
+                lastNDays?: number;
+                limit?: number;
+            };
+        };
     }): Promise<Repositories[]> {
         try {
             const { organizationAndTeamData } = params;
@@ -811,20 +817,11 @@ export class BitbucketService
                 ),
             );
 
-            const repositories = workspacesWithRepos.reduce<Repositories[]>(
-                (acc, { workspace, repos }) => {
-                    repos.forEach((repo) => {
-                        acc.push(
-                            this.transformRepo(
-                                repo,
-                                workspace,
-                                integrationConfig,
-                            ),
-                        );
-                    });
-                    return acc;
-                },
-                [],
+            const repositories: Repositories[] = workspacesWithRepos.flatMap(
+                ({ workspace, repos }) =>
+                    repos.map((repo) =>
+                        this.transformRepo(repo, workspace, integrationConfig),
+                    ),
             );
 
             return repositories;
@@ -839,6 +836,50 @@ export class BitbucketService
                 },
             });
             throw new BadRequestException(error);
+        }
+    }
+
+    private async getRecentPullRequestsCount(params: {
+        bitbucketAPI: InstanceType<typeof Bitbucket>;
+        repoId: string;
+        workspaceId: string;
+        days: number;
+        organizationAndTeamData: OrganizationAndTeamData;
+    }): Promise<number> {
+        try {
+            const sinceDate = moment()
+                .subtract(Math.max(params.days, 1), 'days')
+                .toISOString();
+
+            const response = await params.bitbucketAPI.pullrequests.list({
+                repo_slug: `{${params.repoId}}`,
+                workspace: `{${params.workspaceId}}`,
+                q: `created_on >= "${sinceDate}"`,
+                sort: '-created_on',
+                pagelen: 50,
+            });
+
+            const pullRequests = await this.getPaginatedResults(
+                params.bitbucketAPI,
+                response,
+            );
+
+            return pullRequests.length;
+        } catch (error) {
+            this.logger.warn({
+                message:
+                    'Failed to count recent pull requests from Bitbucket repository',
+                context: BitbucketService.name,
+                error: error,
+                metadata: {
+                    repoId: params.repoId,
+                    workspaceId: params.workspaceId,
+                    organizationId:
+                        params.organizationAndTeamData?.organizationId,
+                    teamId: params.organizationAndTeamData?.teamId,
+                },
+            });
+            return 0;
         }
     }
 
@@ -867,6 +908,7 @@ export class BitbucketService
                 id: this.sanitizeUUID(project?.uuid),
                 name: project?.name ?? '',
             },
+            lastActivityAt: repo?.updated_on || repo?.created_on,
         };
     }
 
@@ -1319,6 +1361,11 @@ export class BitbucketService
 
             const filters = params?.filters ?? {};
             const { prStatus } = filters ?? 'OPEN';
+            const perRepoLimit = Math.min(Math.max(filters?.limit || 5, 1), 10);
+            const repoFilter = filters?.repositoryId
+                ? new Set([String(filters.repositoryId)])
+                : null;
+            const useFastPath = Boolean(filters?.repositoryId || filters?.limit);
 
             const stateMap = {
                 open: PullRequestState.OPENED.toUpperCase(),
@@ -1351,6 +1398,14 @@ export class BitbucketService
 
             const reposWithPrs = await Promise.all(
                 repositories.map(async (repo) => {
+                    if (
+                        repoFilter &&
+                        !repoFilter.has(String(repo.id)) &&
+                        !repoFilter.has(String(repo.name))
+                    ) {
+                        return { repo, prs: [] };
+                    }
+
                     let prs = await bitbucketAPI.pullrequests
                         .list({
                             repo_slug: `{${repo.id}}`,
@@ -1372,6 +1427,16 @@ export class BitbucketService
                         });
                     }
 
+                    if (useFastPath) {
+                        prs = prs
+                            .sort(
+                                (a, b) =>
+                                    new Date(b.created_on).getTime() -
+                                    new Date(a.created_on).getTime(),
+                            )
+                            .slice(0, perRepoLimit);
+                    }
+
                     return { repo, prs };
                 }),
             );
@@ -1381,8 +1446,12 @@ export class BitbucketService
             await Promise.all(
                 reposWithPrs.map(async ({ repo, prs }) => {
                     const prsWithDiffs = await Promise.all(
-                        prs.map((pr) =>
-                            bitbucketAPI.pullrequests
+                        prs.map((pr) => {
+                            if (useFastPath && filters?.skipFiles) {
+                                return Promise.resolve({ pr, diffs: [] });
+                            }
+
+                            return bitbucketAPI.pullrequests
                                 .getDiffStat({
                                     pull_request_id: pr.id,
                                     repo_slug: `{${repo.id}}`,
@@ -1394,8 +1463,8 @@ export class BitbucketService
                                         res,
                                     ),
                                 )
-                                .then((res) => ({ pr, diffs: res })),
-                        ),
+                                .then((res) => ({ pr, diffs: res }));
+                        }),
                     );
 
                     const prsWithFiles: PullRequestWithFiles[] =
@@ -3886,6 +3955,54 @@ export class BitbucketService
                     username,
                     organizationAndTeamData,
                 },
+            });
+            return null;
+        }
+    }
+
+    async getCurrentUser(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+    }): Promise<any | null> {
+        try {
+            const bitbucketAuthDetail = await this.getAuthDetails(
+                params.organizationAndTeamData,
+            );
+
+            if (!bitbucketAuthDetail) {
+                return null;
+            }
+
+            const bitbucketAPI =
+                this.instanceBitbucketApi(bitbucketAuthDetail);
+            const user = await bitbucketAPI.user
+                .get({})
+                .then((res) => res.data);
+
+            if (!user) {
+                return null;
+            }
+
+            const sanitizedUuid =
+                user?.uuid && this.sanitizeUUID(String(user.uuid));
+            const sanitizedId =
+                user?.id && this.sanitizeUUID(String(user.id));
+            const sanitizedAccountId =
+                user?.account_id &&
+                this.sanitizeUUID(String(user.account_id));
+
+            return {
+                ...user,
+                ...(sanitizedUuid && { uuid: sanitizedUuid }),
+                ...(sanitizedId && { id: sanitizedId }),
+                ...(sanitizedAccountId && { account_id: sanitizedAccountId }),
+            };
+        } catch (error) {
+            this.logger.error({
+                message: 'Error retrieving current Bitbucket user',
+                context: BitbucketService.name,
+                serviceName: 'BitbucketService getCurrentUser',
+                error,
+                metadata: params,
             });
             return null;
         }

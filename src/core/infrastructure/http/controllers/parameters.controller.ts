@@ -24,6 +24,7 @@ import { GenerateKodusConfigFileUseCase } from '@/core/application/use-cases/par
 import { GetCodeReviewParameterUseCase } from '@/core/application/use-cases/parameters/get-code-review-parameter.use-case';
 import { GetDefaultConfigUseCase } from '@/core/application/use-cases/parameters/get-default-config.use-case';
 import { PreviewPrSummaryUseCase } from '@/core/application/use-cases/parameters/preview-pr-summary.use-case';
+import { ApplyCodeReviewPresetUseCase } from '@/core/application/use-cases/parameters/apply-code-review-preset.use-case';
 import {
     Action,
     ResourceType,
@@ -37,6 +38,7 @@ import {
     checkPermissions,
     checkRepoPermissions,
 } from '../../adapters/services/permissions/policy.handlers';
+import { ApplyCodeReviewPresetDto } from '../dtos/apply-code-review-preset.dto';
 import { CreateOrUpdateCodeReviewParameterDto } from '../dtos/create-or-update-code-review-parameter.dto';
 import { DeleteRepositoryCodeReviewParameterDto } from '../dtos/delete-repository-code-review-parameter.dto';
 import { PreviewPrSummaryDto } from '../dtos/preview-pr-summary.dto';
@@ -57,6 +59,7 @@ export class ParametersController {
         private readonly listCodeReviewAutomationLabelsWithStatusUseCase: ListCodeReviewAutomationLabelsWithStatusUseCase,
         private readonly getDefaultConfigUseCase: GetDefaultConfigUseCase,
         private readonly getCodeReviewParameterUseCase: GetCodeReviewParameterUseCase,
+        private readonly applyCodeReviewPresetUseCase: ApplyCodeReviewPresetUseCase,
     ) {}
 
     //#region Parameters
@@ -155,6 +158,21 @@ export class ParametersController {
                 organizationId,
             },
         });
+    }
+
+    @Post('/apply-code-review-preset')
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Create,
+            resource: ResourceType.CodeReviewSettings,
+        }),
+    )
+    public async applyCodeReviewPreset(
+        @Body()
+        body: ApplyCodeReviewPresetDto,
+    ) {
+        return await this.applyCodeReviewPresetUseCase.execute(body);
     }
 
     @Post('/update-code-review-parameter-repositories')

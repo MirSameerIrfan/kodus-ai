@@ -217,6 +217,10 @@ export enum LLMModelProvider {
     NOVITA_DEEPSEEK_V3_0324 = 'novita:deepseek-v3-0324',
     NOVITA_QWEN3_235B_A22B_THINKING_2507 = 'novita:qwen3-235b-a22b-thinking-2507',
     NOVITA_MOONSHOTAI_KIMI_K2_INSTRUCT = 'novita:moonshotai/kimi-k2-instruct',
+
+    // Groq Models (OpenAI compatible)
+    GROQ_MOONSHOTAI_KIMI_K2_ = 'groq:moonshotai/kimi-k2-instruct-0905',
+    GROQ_GPT_OSS_120B = 'groq:openai/gpt-oss-120b',
 }
 
 export interface ModelStrategy {
@@ -225,6 +229,7 @@ export interface ModelStrategy {
     readonly modelName: string;
     readonly defaultMaxTokens: number;
     readonly baseURL?: string;
+    readonly apiKey?: string;
     readonly inputMaxTokens?: number;
     readonly maxReasoningTokens?: number;
 }
@@ -344,5 +349,24 @@ export const MODEL_STRATEGIES: Record<LLMModelProvider, ModelStrategy> = {
         factory: getNovitaAI,
         modelName: 'moonshotai/kimi-k2-instruct',
         defaultMaxTokens: 20000,
+    },
+
+    [LLMModelProvider.GROQ_MOONSHOTAI_KIMI_K2_]: {
+        provider: 'groq',
+        factory: getChatGPT,
+        modelName: 'moonshotai/kimi-k2-instruct-0905',
+        defaultMaxTokens: -1,
+        baseURL:
+            process.env.API_GROQ_BASE_URL || 'https://api.groq.com/openai/v1',
+        apiKey: process.env.API_GROQ_API_KEY,
+    },
+    [LLMModelProvider.GROQ_GPT_OSS_120B]: {
+        provider: 'groq',
+        factory: getChatGPT,
+        modelName: 'openai/gpt-oss-120b',
+        defaultMaxTokens: -1,
+        baseURL:
+            process.env.API_GROQ_BASE_URL || 'https://api.groq.com/openai/v1',
+        apiKey: process.env.API_GROQ_API_KEY,
     },
 };
