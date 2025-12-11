@@ -11,14 +11,9 @@ import {
 import { REQUEST } from '@nestjs/core';
 import { Response } from 'express';
 
-import { CodeReviewVersion } from '@/config/types/general/codeReview.type';
-import { UserRequest } from '@/config/types/http/user-request.type';
-import { DeleteRepositoryCodeReviewParameterUseCase } from '@/core/application/use-cases/parameters/delete-repository-code-review-parameter.use-case';
-import { GenerateKodusConfigFileUseCase } from '@/core/application/use-cases/parameters/generate-kodus-config-file.use-case';
-import { GetCodeReviewParameterUseCase } from '@/core/application/use-cases/parameters/get-code-review-parameter.use-case';
-import { GetDefaultConfigUseCase } from '@/core/application/use-cases/parameters/get-default-config.use-case';
-import { PreviewPrSummaryUseCase } from '@/core/application/use-cases/parameters/preview-pr-summary.use-case';
-import { ApplyCodeReviewPresetUseCase } from '@/core/application/use-cases/parameters/apply-code-review-preset.use-case';
+import { CodeReviewVersion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
+import { ApplyCodeReviewPresetUseCase } from '@libs/organization/application/use-cases/parameters/apply-code-review-preset.use-case';
 import {
     Action,
     ResourceType,
@@ -27,22 +22,26 @@ import {
     CheckPolicies,
     PolicyGuard,
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
+
+import { CreateOrUpdateParametersUseCase } from '@libs/organization/application/use-cases/parameters/create-or-update-use-case';
+import { FindByKeyParametersUseCase } from '@libs/organization/application/use-cases/parameters/find-by-key-use-case';
+import { UpdateOrCreateCodeReviewParameterUseCase } from '@libs/organization/application/use-cases/parameters/update-or-create-code-review-parameter-use-case';
+import { UpdateCodeReviewParameterRepositoriesUseCase } from '@libs/organization/application/use-cases/parameters/update-code-review-parameter-repositories-use-case';
+import { GenerateKodusConfigFileUseCase } from '@libs/organization/application/use-cases/parameters/generate-kodus-config-file.use-case';
+import { DeleteRepositoryCodeReviewParameterUseCase } from '@libs/organization/application/use-cases/parameters/delete-repository-code-review-parameter.use-case';
+import { PreviewPrSummaryUseCase } from '@libs/organization/application/use-cases/parameters/preview-pr-summary.use-case';
+import { ListCodeReviewAutomationLabelsWithStatusUseCase } from '@libs/organization/application/use-cases/parameters/list-code-review-automation-labels-with-status.use-case';
+import { GetDefaultConfigUseCase } from '@libs/organization/application/use-cases/parameters/get-default-config.use-case';
+import { GetCodeReviewParameterUseCase } from '@libs/organization/application/use-cases/parameters/get-code-review-parameter.use-case';
+import { ParametersKey } from '@libs/core/domain/enums';
 import {
     checkPermissions,
     checkRepoPermissions,
-} from '../../adapters/services/permissions/policy.handlers';
-import { ApplyCodeReviewPresetDto } from '../dtos/apply-code-review-preset.dto';
-import { CreateOrUpdateCodeReviewParameterDto } from '../dtos/create-or-update-code-review-parameter.dto';
-
-import { GenerateKodusConfigFileUseCase } from '@libs/organization/application/use-cases/generate-kodus-config-file.use-case';
-
-import { DeleteRepositoryCodeReviewParameterDto } from '../dtos/delete-repository-code-review-parameter.dto';
-
-import { PreviewPrSummaryDto } from '../dtos/preview-pr-summary.dto';
-
-import { PreviewPrSummaryUseCase } from '@libs/organization/application/use-cases/preview-pr-summary.use-case';
-import { GetDefaultConfigUseCase } from '@libs/organization/application/use-cases/get-default-config.use-case';
-import { GetCodeReviewParameterUseCase } from '@libs/organization/application/use-cases/get-code-review-parameter.use-case';
+} from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
+import { PreviewPrSummaryDto } from 'src/dtos/preview-pr-summary.dto';
+import { DeleteRepositoryCodeReviewParameterDto } from 'src/dtos/delete-repository-code-review-parameter.dto';
+import { ApplyCodeReviewPresetDto } from 'src/dtos/apply-code-review-preset.dto';
+import { CreateOrUpdateCodeReviewParameterDto } from 'src/dtos/create-or-update-code-review-parameter.dto';
 
 @Controller('parameters')
 export class ParametersController {
@@ -67,7 +66,10 @@ export class ParametersController {
     @Post('/create-or-update')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Create, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Create,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     public async createOrUpdate(
         @Body()
@@ -96,7 +98,10 @@ export class ParametersController {
     @Get('/find-by-key')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Read, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     public async findByKey(
         @Query('key') key: ParametersKey,
@@ -111,7 +116,10 @@ export class ParametersController {
     @Get('/list-code-review-automation-labels')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Read, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     public async listCodeReviewAutomationLabels(
         @Query('codeReviewVersion') codeReviewVersion?: CodeReviewVersion,
@@ -128,7 +136,10 @@ export class ParametersController {
     @Post('/create-or-update-code-review')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Create, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Create,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     public async updateOrCreateCodeReviewParameter(
         @Body()
@@ -167,7 +178,10 @@ export class ParametersController {
     @Post('/update-code-review-parameter-repositories')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Create, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Create,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     public async UpdateCodeReviewParameterRepositories(
         @Body()
@@ -193,7 +207,10 @@ export class ParametersController {
     @Get('/code-review-parameter')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Read, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     public async getCodeReviewParameter(@Query('teamId') teamId: string) {
         return await this.getCodeReviewParameterUseCase.execute(
@@ -205,7 +222,10 @@ export class ParametersController {
     @Get('/default-code-review-parameter')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Read, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     public async getDefaultConfig() {
         return await this.getDefaultConfigUseCase.execute();
@@ -214,7 +234,10 @@ export class ParametersController {
     @Get('/generate-kodus-config-file')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Read, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     public async GenerateKodusConfigFile(
         @Res() response: Response,
@@ -240,9 +263,13 @@ export class ParametersController {
     @Post('/delete-repository-code-review-parameter')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkRepoPermissions(Action.Delete, ResourceType.CodeReviewSettings, {
-            key: {
-                body: 'repositoryId',
+        checkRepoPermissions({
+            action: Action.Delete,
+            resource: ResourceType.CodeReviewSettings,
+            repo: {
+                key: {
+                    body: 'repositoryId',
+                },
             },
         }),
     )
@@ -257,7 +284,10 @@ export class ParametersController {
     @Post('/preview-pr-summary')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Read, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     public async previewPrSummary(
         @Body()

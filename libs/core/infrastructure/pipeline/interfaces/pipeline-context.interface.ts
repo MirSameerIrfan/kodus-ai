@@ -14,6 +14,7 @@ export interface PipelineContext {
         rootPipelineId?: string;
         [key: string]: any;
     };
+    workflowJobId?: string;
 }
 
 export interface PipelineError {

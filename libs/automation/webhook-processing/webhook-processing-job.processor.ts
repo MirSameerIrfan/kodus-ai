@@ -15,6 +15,10 @@ import {
 } from '@libs/platform/domain/platformIntegrations/interfaces/webhook-event-handler.interface';
 import { CodeReviewValidationService } from '@libs/code-review/infrastructure/adapters/services/code-review-validation.service';
 import { ObservabilityService } from '@libs/core/log/observability.service';
+import {
+    IWorkflowJobRepository,
+    WORKFLOW_JOB_REPOSITORY_TOKEN,
+} from '@libs/core/workflow/domain/contracts/workflow-job.repository.contract';
 
 /**
  * Processor for WEBHOOK_PROCESSING jobs
@@ -34,7 +38,8 @@ export class WebhookProcessingJobProcessorService
     >;
 
     constructor(
-        private readonly jobRepository: WorkflowJobRepository,
+        @Inject(WORKFLOW_JOB_REPOSITORY_TOKEN)
+        private readonly jobRepository: IWorkflowJobRepository,
         private readonly validationService: CodeReviewValidationService,
         @Inject('GITHUB_WEBHOOK_HANDLER')
         private readonly githubPullRequestHandler: IWebhookEventHandler,
@@ -163,6 +168,7 @@ export class WebhookProcessingJobProcessorService
                             correlationId: job.correlationId,
                             platformType,
                             event,
+                            result: 'Processed',
                         },
                     });
                 } catch (error) {

@@ -2,20 +2,6 @@ import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 
-import {
-    AUTOMATION_EXECUTION_SERVICE_TOKEN,
-    IAutomationExecutionService,
-} from '@libs/automation/domain/contracts/automation-execution.service';
-import {
-    AUTOMATION_SERVICE_TOKEN,
-    IAutomationService,
-} from '@libs/automation/domain/contracts/automation.service';
-import {
-    ITeamAutomationService,
-    TEAM_AUTOMATION_SERVICE_TOKEN,
-} from '@libs/automation/domain/contracts/team-automation.service';
-import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
-import { AutomationType } from '@libs/automation/domain/enums/automation-type';
 import { IMessageBrokerService } from '@libs/core/domain/contracts/message-broker.service.contracts';
 import { MESSAGE_BROKER_SERVICE_TOKEN } from '@libs/core/domain/contracts/message-broker.service.contracts';
 import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
@@ -28,6 +14,20 @@ import {
     IntegrationStatusFilter,
     ITeamWithIntegrations,
 } from '@libs/organization/domain/team/interfaces/team.interface';
+import { AutomationType } from '@libs/automation/domain/automation/enum/automation-type';
+import { AutomationStatus } from '@libs/automation/domain/automation/enum/automation-status';
+import {
+    AUTOMATION_EXECUTION_SERVICE_TOKEN,
+    IAutomationExecutionService,
+} from '@libs/automation/domain/automationExecution/contracts/automation-execution.service';
+import {
+    AUTOMATION_SERVICE_TOKEN,
+    IAutomationService,
+} from '@libs/automation/domain/automation/contracts/automation.service';
+import {
+    ITeamAutomationService,
+    TEAM_AUTOMATION_SERVICE_TOKEN,
+} from '@libs/automation/domain/teamAutomation/contracts/team-automation.service';
 
 const API_CRON_SYNC_CODE_REVIEW_REACTIONS =
     process.env.API_CRON_SYNC_CODE_REVIEW_REACTIONS;

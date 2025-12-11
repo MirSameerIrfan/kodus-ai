@@ -1,3 +1,4 @@
+import { TeamQueryDto } from 'apps/api/src/dtos/teamId-query.dto';
 import { Type } from 'class-transformer';
 import {
     IsArray,
@@ -7,8 +8,6 @@ import {
     IsUUID,
     ValidateNested,
 } from 'class-validator';
-
-import { TeamQueryDto } from '@libs/organization/infrastructure/http/dtos/teamId-query-dto';
 
 export class AutomationDto {
     @IsUUID()

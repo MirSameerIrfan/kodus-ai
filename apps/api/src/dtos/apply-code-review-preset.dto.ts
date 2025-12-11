@@ -1,7 +1,7 @@
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-import { ReviewPreset } from '@/config/types/general/codeReview.type';
-import { OrganizationAndTeamDataDto } from './organizationAndTeamData.dto';
+import { ReviewPreset } from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { OrganizationAndTeamDataDto } from '@libs/core/domain/dtos/organizationAndTeamData.dto';
 
 export class ApplyCodeReviewPresetDto {
     @IsEnum(ReviewPreset)

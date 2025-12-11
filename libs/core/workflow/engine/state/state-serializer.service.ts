@@ -80,10 +80,10 @@ export class StateSerializerService {
         }
 
         const delta: Record<string, unknown> = {
-            workflowJobId: currentState.workflowJobId,
-            currentStage: currentState.currentStage,
-            correlationId: currentState.correlationId,
-            automationExecutionId: currentState.automationExecutionId,
+            workflowJobId: (currentState as any).workflowJobId,
+            currentStage: (currentState as any).currentStage,
+            correlationId: (currentState as any).correlationId,
+            automationExecutionId: (currentState as any).automationExecutionId,
             updatedAt: Date.now(),
             _strategy: 'delta',
         };
@@ -146,10 +146,10 @@ export class StateSerializerService {
         context: TContext,
     ): Record<string, unknown> {
         const minimal: Record<string, unknown> = {
-            workflowJobId: context.workflowJobId,
-            currentStage: context.currentStage,
-            correlationId: context.correlationId,
-            automationExecutionId: context.automationExecutionId,
+            workflowJobId: (context as any).workflowJobId,
+            currentStage: (context as any).currentStage,
+            correlationId: (context as any).correlationId,
+            automationExecutionId: (context as any).automationExecutionId,
             _strategy: 'minimal',
         };
 

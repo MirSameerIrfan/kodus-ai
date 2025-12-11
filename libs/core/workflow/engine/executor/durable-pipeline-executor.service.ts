@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 
 import { PipelineContext } from '@libs/core/infrastructure/pipeline/interfaces/pipeline-context.interface';
 import { PipelineStage } from '@libs/core/infrastructure/pipeline/interfaces/pipeline.interface';
+import { HeavyStage } from '@libs/core/infrastructure/pipeline/interfaces/heavy-stage.interface';
 import { WorkflowPausedError } from '../../domain/errors/workflow-paused.error';
 import { PipelineStateManager } from '../state/pipeline-state-manager.service';
 import { EventBufferService } from '../event-buffer.service';
@@ -29,7 +30,12 @@ export class DurablePipelineExecutor {
         workflowJobId: string,
     ): Promise<TContext> {
         // 1. Sort stages
-        const sortedStages = topologicalSort(stages);
+
+        //TODO: Remover isso quando o topologicalSort for implementado
+        const sortedStages = stages.sort((a, b) =>
+            a.stageName.localeCompare(b.stageName),
+        );
+        // const sortedStages = topologicalSort(stages);
 
         // 2. Load previous state if any (for resume)
         const savedState =
@@ -205,7 +211,12 @@ export class DurablePipelineExecutor {
         taskId: string, // The ID of the task that completed
         stageName: string, // The stage to resume
     ): Promise<TContext> {
-        const sortedStages = topologicalSort(stages);
+        //TODO: Remover isso quando o topologicalSort for implementado
+        const sortedStages = stages.sort((a, b) =>
+            a.stageName.localeCompare(b.stageName),
+        );
+        // const sortedStages = topologicalSort(stages);
+
         const stageIndex = sortedStages.findIndex(
             (s) => s.stageName === stageName,
         );
@@ -224,7 +235,12 @@ export class DurablePipelineExecutor {
 
         if (this.isHeavyStage(stage)) {
             // Call specific resume method
-            context = await stage.resume(context, taskId);
+            //TODO: Remover isso quando o stage for implementado corretamente
+            // context = await stage.resume(context as TContext, taskId);
+            context = await (stage as HeavyStage<any>).resume(
+                context as any,
+                taskId,
+            );
 
             // Save state after resume
             await this.stateManager.saveState(

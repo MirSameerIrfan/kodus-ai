@@ -10,7 +10,6 @@ import helmet from 'helmet';
 import * as volleyball from 'volleyball';
 
 import { HttpServerConfiguration } from '@libs/core/infrastructure/config/types';
-import { createLogger } from '@kodus/flow';
 
 import { WebhookHandlerModule } from './modules/webhook-handler.module';
 

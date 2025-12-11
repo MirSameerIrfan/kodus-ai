@@ -11,7 +11,6 @@ import { REQUEST } from '@nestjs/core';
 
 import { CreateOrUpdatePullRequestMessagesUseCase } from '@libs/code-review/application/use-cases/pullRequestMessages/create-or-update-pull-request-messages.use-case';
 import { FindByRepositoryOrDirectoryIdPullRequestMessagesUseCase } from '@libs/code-review/application/use-cases/pullRequestMessages/find-by-repo-or-directory.use-case';
-import { IPullRequestMessages } from '@libs/code-review/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
 import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
 import {
     Action,
@@ -25,6 +24,7 @@ import {
     checkPermissions,
     checkRepoPermissions,
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
+import { IPullRequestMessages } from '@libs/code-review/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
 
 @Controller('pull-request-messages')
 export class PullRequestMessagesController {
@@ -39,7 +39,10 @@ export class PullRequestMessagesController {
     @Post('/')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Create, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Create,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     public async createOrUpdatePullRequestMessages(
         @Body() body: IPullRequestMessages,
@@ -53,9 +56,13 @@ export class PullRequestMessagesController {
     @Get('/find-by-repository-or-directory')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkRepoPermissions(Action.Read, ResourceType.CodeReviewSettings, {
-            key: {
-                query: 'repositoryId',
+        checkRepoPermissions({
+            action: Action.Read,
+            resource: ResourceType.CodeReviewSettings,
+            repo: {
+                key: {
+                    query: 'repositoryId',
+                },
             },
         }),
     )

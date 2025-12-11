@@ -1,5 +1,5 @@
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
-import { Injectable, UseFilters } from '@nestjs/common';
+import { Injectable, UseFilters, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 
@@ -17,17 +17,24 @@ interface WorkflowResumedMessage {
     eventData?: Record<string, unknown>;
 }
 
+import {
+    WORKFLOW_JOB_REPOSITORY_TOKEN,
+    IWorkflowJobRepository,
+} from '@libs/core/workflow/domain/contracts/workflow-job.repository.contract';
+
 @UseFilters(RabbitmqConsumeErrorFilter)
 @Injectable()
 export class WorkflowResumedConsumer {
     private readonly logger = createLogger(WorkflowResumedConsumer.name);
+
     private readonly workerEnabled: boolean;
     private readonly consumerId = 'workflow-resumed-consumer';
 
     constructor(
         private readonly processWorkflowJobUseCase: ProcessWorkflowJobUseCase,
         private readonly transactionalInboxService: TransactionalInboxService,
-        private readonly jobRepository: WorkflowJobRepository,
+        @Inject(WORKFLOW_JOB_REPOSITORY_TOKEN)
+        private readonly jobRepository: IWorkflowJobRepository,
         private readonly dataSource: DataSource,
         private readonly configService: ConfigService,
         private readonly observability: ObservabilityService,
@@ -85,7 +92,8 @@ export class WorkflowResumedConsumer {
             );
         }
 
-        this.observability.setContext({ correlationId });
+        //TODO: Melhorar depois
+        //this.observability.setContext({ correlationId });
 
         await this.dataSource.transaction(async (manager) => {
             const alreadyProcessed =

@@ -295,20 +295,22 @@ export class MCPManagerService {
                     headers['Authorization'] =
                         `Bearer ${(integration as MCPIntegrationBearerToken).bearerToken}`;
                     break;
-                case MCPIntegrationAuthType.API_KEY:
+                case MCPIntegrationAuthType.API_KEY: {
                     const apiKeyIntegration =
                         integration as MCPIntegrationApiKey;
                     headers[apiKeyIntegration.apiKeyHeader] =
                         apiKeyIntegration.apiKey;
                     break;
-                case MCPIntegrationAuthType.BASIC:
+                }
+                case MCPIntegrationAuthType.BASIC: {
                     const basicIntegration = integration as MCPIntegrationBasic;
                     const credentials = Buffer.from(
                         `${basicIntegration.basicUser}:${basicIntegration.basicPassword ?? ''}`,
                     ).toString('base64');
                     headers['Authorization'] = `Basic ${credentials}`;
                     break;
-                case MCPIntegrationAuthType.OAUTH2:
+                }
+                case MCPIntegrationAuthType.OAUTH2: {
                     const oauth2Integration =
                         integration as MCPIntegrationOAuth2;
                     if (oauth2Integration.accessToken) {
@@ -316,6 +318,7 @@ export class MCPManagerService {
                             `Bearer ${oauth2Integration.accessToken}`;
                     }
                     break;
+                }
                 case MCPIntegrationAuthType.NONE:
                 default:
                     break;

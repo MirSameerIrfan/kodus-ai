@@ -12,29 +12,22 @@ import { KodyASTAnalyzeContextPreparationService } from '@libs/code-review/infra
 import { CodeAnalysisOrchestrator } from '@libs/ee/codeBase/codeAnalysisOrchestrator.service';
 import { environment } from '@libs/ee/configs/environment';
 import { KodyASTAnalyzeContextPreparationServiceEE } from '@libs/ee/kodyASTAnalyze/kody-ast-analyze-context-preparation.ts';
-import { SimpleLogger } from '@kodus/flow/dist/observability/logger';
 
 export const KODY_AST_ANALYZE_CONTEXT_PREPARATION_PROVIDER: Provider = {
     provide: KODY_AST_ANALYZE_CONTEXT_PREPARATION_TOKEN,
     useFactory: (
         corePreparation: KodyASTAnalyzeContextPreparationService,
         codeAnalysisOrchestrator: CodeAnalysisOrchestrator,
-        loggerService: SimpleLogger,
     ): IKodyASTAnalyzeContextPreparationService => {
         const isCloud = environment.API_CLOUD_MODE;
 
         if (isCloud) {
             return new KodyASTAnalyzeContextPreparationServiceEE(
                 codeAnalysisOrchestrator,
-                loggerService,
             );
         }
 
         return corePreparation;
     },
-    inject: [
-        KodyASTAnalyzeContextPreparationService,
-        CodeAnalysisOrchestrator,
-        LoggerService,
-    ],
+    inject: [KodyASTAnalyzeContextPreparationService, CodeAnalysisOrchestrator],
 };

@@ -10,18 +10,14 @@ import {
     Sse,
     UseGuards,
 } from '@nestjs/common';
-import { REQUEST } from '@nestjs/core';
-
+import { ExecuteDryRunDto } from '../dtos/execute-dry-run.dto';
+import { ExecuteDryRunUseCase } from '@libs/dryRun/application/use-cases/execute-dry-run.use-case';
+import { SseDryRunUseCase } from '@libs/dryRun/application/use-cases/sse-dry-run.use-case';
+import { GetStatusDryRunUseCase } from '@libs/dryRun/application/use-cases/get-status-dry-run.use-case';
+import { GetDryRunUseCase } from '@libs/dryRun/application/use-cases/get-dry-run.use-case';
+import { ListDryRunsUseCase } from '@libs/dryRun/application/use-cases/list-dry-runs.use-case';
 import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
-import { ExecuteDryRunUseCase } from '@libs/dry-run/application/use-cases/execute-dry-run.use-case';
-import { GetDryRunUseCase } from '@libs/dry-run/application/use-cases/get-dry-run.use-case';
-import { GetStatusDryRunUseCase } from '@libs/dry-run/application/use-cases/get-status-dry-run.use-case';
-import { ListDryRunsUseCase } from '@libs/dry-run/application/use-cases/list-dry-runs.use-case';
-import { SseDryRunUseCase } from '@libs/dry-run/application/use-cases/sse-dry-run.use-case';
-import {
-    Action,
-    ResourceType,
-} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { REQUEST } from '@nestjs/core';
 import {
     CheckPolicies,
     PolicyGuard,
@@ -30,8 +26,10 @@ import {
     checkPermissions,
     checkRepoPermissions,
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
-
-import { ExecuteDryRunDto } from '../dtos/execute-dry-run.dto';
+import {
+    Action,
+    ResourceType,
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 
 @Controller('dry-run')
 export class DryRunController {
@@ -49,9 +47,13 @@ export class DryRunController {
     @Post('execute')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkRepoPermissions(Action.Manage, ResourceType.CodeReviewSettings, {
-            key: {
-                body: 'repositoryId',
+        checkRepoPermissions({
+            action: Action.Manage,
+            resource: ResourceType.CodeReviewSettings,
+            repo: {
+                key: {
+                    body: 'repositoryId',
+                },
             },
         }),
     )
@@ -80,7 +82,10 @@ export class DryRunController {
     @Get('status/:correlationId')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Manage, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Manage,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     status(
         @Param('correlationId') correlationId: string,
@@ -104,7 +109,10 @@ export class DryRunController {
     @Sse('events/:correlationId')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Manage, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Manage,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     events(
         @Param('correlationId') correlationId: string,
@@ -129,7 +137,10 @@ export class DryRunController {
     @UseGuards(PolicyGuard)
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Manage, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Manage,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     listDryRuns(
         @Query('teamId') teamId: string,
@@ -165,7 +176,10 @@ export class DryRunController {
     @Get(':correlationId')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Manage, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Manage,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     getDryRun(
         @Param('correlationId') correlationId: string,

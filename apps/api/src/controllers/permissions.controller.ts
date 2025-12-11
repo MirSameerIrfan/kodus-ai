@@ -1,4 +1,3 @@
-import { createLogger } from '@kodus/flow';
 import {
     Body,
     Controller,
@@ -24,15 +23,18 @@ import {
     PolicyGuard,
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
 import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
+import { createLogger } from '@kodus/flow';
 
 @Controller('permissions')
 export class PermissionsController {
     private readonly logger = createLogger(PermissionsController.name);
+
     constructor(
         @Inject(REQUEST)
         private readonly request: Request & {
             user: Partial<IUser>;
         },
+
         private readonly getPermissionsUseCase: GetPermissionsUseCase,
         private readonly canAccessUseCase: CanAccessUseCase,
         private readonly getAssignedReposUseCase: GetAssignedReposUseCase,
@@ -40,8 +42,6 @@ export class PermissionsController {
     ) {}
 
     @Get()
-    // @UseInterceptors(CacheInterceptor)
-    // @CacheTTL(300000)
     async getPermissions(): ReturnType<GetPermissionsUseCase['execute']> {
         const { user } = this.request;
 
@@ -58,8 +58,6 @@ export class PermissionsController {
     }
 
     @Get('can-access')
-    // @UseInterceptors(CacheInterceptor)
-    // @CacheTTL(300000)
     async can(
         @Query('action') action: Action,
         @Query('resource') resource: ResourceType,
@@ -87,7 +85,12 @@ export class PermissionsController {
 
     @Post('assign-repos')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Update, ResourceType.UserSettings))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Update,
+            resource: ResourceType.UserSettings,
+        }),
+    )
     async assignRepos(
         @Body()
         body: {

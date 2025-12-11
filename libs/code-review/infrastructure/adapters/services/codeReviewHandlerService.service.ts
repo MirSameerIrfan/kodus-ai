@@ -77,7 +77,7 @@ export class CodeReviewHandlerService {
             );
 
             initialContext = {
-                workflowJobId, // Pass workflowJobId to context
+                workflowJobId,
                 dryRun: {
                     enabled: false,
                 },

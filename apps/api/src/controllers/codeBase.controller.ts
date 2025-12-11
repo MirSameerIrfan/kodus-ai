@@ -18,7 +18,7 @@ import {
     AST_ANALYSIS_SERVICE_TOKEN,
     IASTAnalysisService,
 } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
-import { BackoffPresets } from '@libs/core/utils/polling';
+import { BackoffPresets } from '@libs/common/utils/polling';
 import {
     Action,
     ResourceType,
@@ -51,7 +51,10 @@ export class CodeBaseController {
     @Post('analyze-dependencies')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Manage, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Manage,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     async analyzeDependencies(
         @Body()
@@ -142,7 +145,10 @@ export class CodeBaseController {
     @Post('content-from-diff')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Manage, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Manage,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     async getRelatedContentFromDiff(
         @Body()

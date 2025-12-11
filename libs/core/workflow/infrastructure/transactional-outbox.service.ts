@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { createLogger } from '@kodus/flow';
-import { OutboxMessageRepository } from '@libs/core/infrastructure/database/typeorm/repositories/outbox-message.repository';
-import { OutboxMessageModel } from '@libs/core/infrastructure/database/typeorm/repositories/schema/outbox-message.model';
+import { OutboxMessageModel, OutboxMessageRepository } from './repositories';
 
 export interface OutboxMessage {
     jobId: string;

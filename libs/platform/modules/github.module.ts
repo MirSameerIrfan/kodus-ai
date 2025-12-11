@@ -6,34 +6,35 @@ import { CodebaseModule } from '@libs/code-review/code-review.module';
 import { CodeReviewFeedbackModule } from '@libs/code-review/modules/codeReviewFeedback.module';
 import { GlobalCacheModule } from '@libs/core/cache/cache.module';
 import { LicenseModule } from '@libs/ee/license/license.module';
-import { UsersModule } from '@libs/identity/modules/user.module';
+import { UserCoreModule } from '@libs/identity/modules/user-core.module';
 import { AuthIntegrationModule } from '@libs/integrations/modules/authIntegration.module';
-import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
-import { ParametersModule } from '@libs/organization/modules/parameters.module';
-import { TeamsModule } from '@libs/organization/modules/team.module';
+import { IntegrationConfigCoreModule } from '@libs/integrations/modules/config-core.module';
+import { ParametersCoreModule } from '@libs/organization/modules/parameters-core.module';
+import { TeamCoreModule } from '@libs/organization/modules/team-core.module';
+import { IntegrationCoreModule } from '@libs/integrations/modules/integrations-core.module';
+import { PlatformModule } from './platform.module';
+import { OrganizationCoreModule } from '@libs/organization/modules/organization-core.module';
+import { AutomationModule } from '@libs/automation/modules/automation.module';
+import { PermissionValidationModule } from '@libs/ee/shared/permission-validation.module';
 
 @Module({
     imports: [
-        forwardRef(() => TeamsModule),
+        forwardRef(() => TeamCoreModule),
         forwardRef(() => AuthIntegrationModule),
-        forwardRef(() => IntegrationModule),
-        forwardRef(() => IntegrationConfigModule),
-        forwardRef(() => PlatformIntegrationModule),
-        forwardRef(() => OrganizationModule),
-        forwardRef(() => UsersModule),
-        forwardRef(() => ParametersModule),
+        forwardRef(() => IntegrationCoreModule),
+        forwardRef(() => IntegrationConfigCoreModule),
+        forwardRef(() => PlatformModule),
+        forwardRef(() => OrganizationCoreModule),
+        forwardRef(() => UserCoreModule),
+        forwardRef(() => ParametersCoreModule),
         forwardRef(() => GlobalCacheModule),
         forwardRef(() => AutomationModule),
         forwardRef(() => TeamAutomationModule),
         forwardRef(() => AutomationStrategyModule),
         forwardRef(() => CodeReviewFeedbackModule),
         forwardRef(() => CodebaseModule),
-        forwardRef(() => OrganizationParametersModule),
-        forwardRef(() => WebhookLogModule),
         forwardRef(() => LicenseModule),
         forwardRef(() => PermissionValidationModule),
     ],
-    providers: [RunCodeReviewAutomationUseCase, PromptService],
-    // Controllers moved to ApiModule and WebhookHandlerModule
 })
 export class GithubModule {}

@@ -135,9 +135,10 @@ export class AuthService implements IAuthService {
             );
 
             return tokens;
-        } catch (e) {
+        } catch (error) {
             throw new UnauthorizedException(
                 'Refresh token is invalid or has expired',
+                error,
             );
         }
     }
@@ -181,9 +182,10 @@ export class AuthService implements IAuthService {
             return this.jwtService.verify(token, {
                 secret: this.jwtConfig.secret,
             });
-        } catch (e) {
+        } catch (error) {
             throw new UnauthorizedException(
                 'Reset password token is invalid or has expired',
+                error,
             );
         }
     }
@@ -271,7 +273,7 @@ export class AuthService implements IAuthService {
                 refreshToken: refresh_token,
             };
         } catch (error) {
-            throw new UnauthorizedException('Login is invalid');
+            throw new UnauthorizedException('Login is invalid', error);
         }
     }
 

@@ -4,7 +4,6 @@ import { JwtModule } from '@nestjs/jwt';
 
 import { PullRequestsModule } from '@libs/code-review/modules/pull-requests.module';
 import { IssuesModule } from '@libs/issues/issues.module';
-import { KodyRulesModule } from '@libs/kody-rules/kody-rules.module';
 
 import { McpController } from './controllers/mcp.controller';
 import { McpEnabledGuard } from './guards/mcp-enabled.guard';
@@ -12,6 +11,7 @@ import { MCPManagerService } from './services/mcp-manager.service';
 import { McpServerService } from './services/mcp-server.service';
 import { CodeManagementTools, KodyIssuesTools, KodyRulesTools } from './tools';
 import { PermissionValidationModule } from '@libs/ee/shared/permission-validation.module';
+import { KodyRulesModule } from '@libs/kodyRules/kody-rules.module';
 
 @Module({})
 export class McpModule {

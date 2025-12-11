@@ -9,15 +9,17 @@ import { PipelineExecutor } from '@libs/core/infrastructure/pipeline/services/pi
 import { environment } from '@libs/ee/configs/environment';
 import { Provider } from '@nestjs/common';
 import { CodeReviewPipelineStrategyEE } from '@libs/ee/codeReview/strategies/code-review-pipeline.strategy.ee';
+import { createLogger } from '@kodus/flow/dist/observability/logger';
 
 export const CODE_REVIEW_PIPELINE_TOKEN = 'CODE_REVIEW_PIPELINE';
+
+const logger = createLogger('codeReviewPipelineProvider');
 
 export const codeReviewPipelineProvider: Provider = {
     provide: CODE_REVIEW_PIPELINE_TOKEN,
     useFactory: (
         ceStrategy: CodeReviewPipelineStrategy,
         eeStrategy: CodeReviewPipelineStrategyEE,
-        logger: PinoLoggerService,
     ): IPipeline<CodeReviewPipelineContext> => {
         const isCloud = environment.API_CLOUD_MODE;
         const strategy = isCloud ? eeStrategy : ceStrategy;
@@ -36,7 +38,7 @@ export const codeReviewPipelineProvider: Provider = {
                 context: CodeReviewPipelineContext,
             ): Promise<CodeReviewPipelineContext> => {
                 const stages = strategy.configureStages();
-                const executor = new PipelineExecutor(logger);
+                const executor = new PipelineExecutor();
                 return (await executor.execute(
                     context,
                     stages,
@@ -45,9 +47,5 @@ export const codeReviewPipelineProvider: Provider = {
             },
         };
     },
-    inject: [
-        CodeReviewPipelineStrategy,
-        CodeReviewPipelineStrategyEE,
-        PinoLoggerService,
-    ],
+    inject: [CodeReviewPipelineStrategy, CodeReviewPipelineStrategyEE],
 };

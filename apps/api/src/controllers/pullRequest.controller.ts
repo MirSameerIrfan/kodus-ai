@@ -1,3 +1,10 @@
+import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
+import { BackfillHistoricalPRsUseCase } from '@libs/platformData/application/use-cases/pullRequests/backfill-historical-prs.use-case';
+import { GetEnrichedPullRequestsUseCase } from '@libs/platformData/application/use-cases/pullRequests/get-enriched-pull-requests.use-case';
+import {
+    Action,
+    ResourceType,
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
     Body,
     Controller,
@@ -8,29 +15,20 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-
-import { BackfillHistoricalPRsUseCase } from '@libs/controlData/application/pull-requests/backfill-historical-prs.use-case';
-import { GetEnrichedPullRequestsUseCase } from '@libs/controlData/application/pull-requests/get-enriched-pull-requests.use-case';
-import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
+import { BackfillPRsDto } from '../dtos/backfill-prs.dto';
+import { EnrichedPullRequestsQueryDto } from '../dtos/enriched-pull-requests-query.dto';
+import { PaginatedEnrichedPullRequestsResponse } from '../dtos/paginated-enriched-pull-requests.dto';
+import { OnboardingReviewModeSignalsQueryDto } from '../dtos/onboarding-review-mode-signals-query.dto';
+import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 import {
-    Action,
-    ResourceType,
-} from '@libs/identity/domain/permissions/enums/permissions.enum';
+    IPullRequestsService,
+    PULL_REQUESTS_SERVICE_TOKEN,
+} from '@libs/platformData/domain/pullRequests/contracts/pullRequests.service.contracts';
 import {
     CheckPolicies,
     PolicyGuard,
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
 import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
-import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
-
-import { BackfillPRsDto } from '../dtos/backfill-prs.dto';
-import { EnrichedPullRequestsQueryDto } from '../dtos/enriched-pull-requests-query.dto';
-import { PaginatedEnrichedPullRequestsResponse } from '../dtos/paginated-enriched-pull-requests.dto';
-import { OnboardingReviewModeSignalsQueryDto } from '../dtos/onboarding-review-mode-signals-query.dto';
-import {
-    IPullRequestsService,
-    PULL_REQUESTS_SERVICE_TOKEN,
-} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
 
 @Controller('pull-requests')
 export class PullRequestController {

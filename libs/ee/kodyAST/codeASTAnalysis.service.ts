@@ -138,7 +138,7 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
         private readonly promptRunnerService: PromptRunnerService,
         private readonly observabilityService: ObservabilityService,
     ) {
-        this.llmResponseProcessor = new LLMResponseProcessor(this.logger);
+        this.llmResponseProcessor = new LLMResponseProcessor();
         this.astAxios = new AxiosASTService();
     }
 

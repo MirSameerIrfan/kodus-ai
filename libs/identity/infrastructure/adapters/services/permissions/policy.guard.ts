@@ -6,14 +6,12 @@ import {
     Type,
 } from '@nestjs/common';
 import { ModuleRef, Reflector } from '@nestjs/core';
-
+import { PermissionsAbilityFactory } from './permissionsAbility.factory';
 import {
     IPolicyHandler,
     PolicyHandler,
     PolicyHandlerCallback,
 } from '@libs/identity/domain/permissions/types/policy.types';
-
-import { PermissionsAbilityFactory } from './permissionsAbility.factory';
 
 const CHECK_POLICIES_KEY = 'check_policy';
 

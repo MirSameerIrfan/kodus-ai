@@ -4,6 +4,8 @@ import { DataSource } from 'typeorm';
 import { IJobStatusService } from '@libs/core/workflow/domain/contracts/job-status.service.contract';
 import { JobStatus } from '@libs/core/workflow/domain/enums/job-status.enum';
 
+import { WorkflowJobRepository } from './repositories/workflow-job.repository';
+
 @Injectable()
 export class JobStatusService implements IJobStatusService {
     constructor(

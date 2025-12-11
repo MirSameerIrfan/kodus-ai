@@ -1,7 +1,4 @@
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
-
-import { FindCodeReviewSettingsLogsUseCase } from '@libs/analytics/application/use-cases/find-code-review-settings-logs.use-case';
-import { RegisterUserStatusLogUseCase } from '@libs/identity/application/use-cases/user/register-user-status-log.use-case';
 import {
     Action,
     ResourceType,
@@ -11,7 +8,8 @@ import {
     PolicyGuard,
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
 import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
-
+import { FindCodeReviewSettingsLogsUseCase } from '@libs/ee/codeReviewSettingsLog/application/use-cases/find-code-review-settings-logs.use-case';
+import { RegisterUserStatusLogUseCase } from '@libs/ee/codeReviewSettingsLog/application/use-cases/register-use-status-log.use-case';
 import { CodeReviewSettingsLogFiltersDto } from '../dtos/code-review-settings-log-filters.dto';
 import { UserStatusDto } from '../dtos/user-status-change.dto';
 
@@ -31,7 +29,12 @@ export class CodeReviewSettingLogController {
 
     @Get('/code-review-settings')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Read, ResourceType.Logs))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.Logs,
+        }),
+    )
     public async findCodeReviewSettingsLogs(
         @Query() filters: CodeReviewSettingsLogFiltersDto,
     ) {

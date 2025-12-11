@@ -1,23 +1,18 @@
 import { subject as caslSubject } from '@casl/ability';
 import { ForbiddenException, Injectable } from '@nestjs/common';
-
-import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
-import { GetAssignedReposUseCase } from '@libs/identity/application/use-cases/permissions/get-assigned-repos.use-case';
+import { PermissionsAbilityFactory } from './permissionsAbility.factory';
+import { extractReposFromAbility } from './policy.handlers';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import {
     Action,
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
-
-import { PermissionsAbilityFactory } from './permissionsAbility.factory';
-import { extractReposFromAbility } from './policy.handlers';
-
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
 
 @Injectable()
 export class AuthorizationService {
     constructor(
         private readonly permissionsAbilityFactory: PermissionsAbilityFactory,
-        private readonly getAssignedReposUseCase: GetAssignedReposUseCase,
     ) {}
 
     async check(params: {

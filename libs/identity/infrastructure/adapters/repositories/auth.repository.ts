@@ -16,32 +16,30 @@ export class AuthRepository implements IAuthRepository {
     ) {}
 
     async saveRefreshToken(auth: IAuth): Promise<AuthEntity> {
-        try {
-            const queryBuilder = this.authRepository.createQueryBuilder('auth');
+        const queryBuilder = this.authRepository.createQueryBuilder('auth');
 
-            const authModel = this.authRepository.create(auth);
-            const authSelected = await queryBuilder
-                .insert()
-                .values(authModel)
-                .execute();
+        const authModel = this.authRepository.create(auth);
+        const authSelected = await queryBuilder
+            .insert()
+            .values(authModel)
+            .execute();
 
-            if (authSelected?.identifiers[0]?.uuid) {
-                const findOneOptions: FindOneOptions<AuthModel> = {
-                    where: {
-                        uuid: authSelected.identifiers[0].uuid,
-                    },
-                };
+        if (authSelected?.identifiers[0]?.uuid) {
+            const findOneOptions: FindOneOptions<AuthModel> = {
+                where: {
+                    uuid: authSelected.identifiers[0].uuid,
+                },
+            };
 
-                const insertedAuth =
-                    await this.authRepository.findOne(findOneOptions);
+            const insertedAuth =
+                await this.authRepository.findOne(findOneOptions);
 
-                if (insertedAuth) {
-                    return mapSimpleModelToEntity(insertedAuth, AuthEntity);
-                }
+            if (insertedAuth) {
+                return mapSimpleModelToEntity(insertedAuth, AuthEntity);
             }
+        }
 
-            return undefined;
-        } catch (error) {}
+        return undefined;
     }
 
     async updateRefreshToken(auth: Partial<IAuth>): Promise<AuthEntity> {
@@ -79,53 +77,45 @@ export class AuthRepository implements IAuthRepository {
     }
 
     async findRefreshToken(auth: Partial<IAuth>): Promise<AuthModel> {
-        try {
-            // if (!auth?.uuid) return undefined;
+        const findOneOptions: FindOneOptions<AuthModel> = {
+            where: {
+                ...auth,
+                user: { uuid: auth.uuid },
+            },
+        };
 
-            const findOneOptions: FindOneOptions<AuthModel> = {
-                where: {
-                    ...auth,
-                    user: { uuid: auth.uuid },
-                },
-            };
+        const authSelected = await this.authRepository.findOne(findOneOptions);
 
-            const authSelected =
-                await this.authRepository.findOne(findOneOptions);
+        if (authSelected) {
+            return authSelected;
+        }
 
-            if (authSelected) {
-                return authSelected;
-            }
-
-            return undefined;
-        } catch (error) {}
+        return undefined;
     }
 
     async deactivateRefreshToken(auth: Partial<IAuth>): Promise<void> {
-        try {
-            if (!auth?.uuid) return undefined;
+        if (!auth?.uuid) return undefined;
 
-            const findOneOptions: FindOneOptions<AuthModel> = {
-                where: {
-                    ...auth,
-                    user: { uuid: auth.uuid },
+        const findOneOptions: FindOneOptions<AuthModel> = {
+            where: {
+                ...auth,
+                user: { uuid: auth.uuid },
+            },
+        };
+
+        const authSelected = await this.authRepository.findOne(findOneOptions);
+
+        if (authSelected) {
+            await this.authRepository.update(
+                {
+                    user: {
+                        uuid: authSelected.user.uuid,
+                    },
                 },
-            };
-
-            const authSelected =
-                await this.authRepository.findOne(findOneOptions);
-
-            if (authSelected) {
-                await this.authRepository.update(
-                    {
-                        user: {
-                            uuid: authSelected.user.uuid,
-                        },
-                    },
-                    {
-                        refreshToken: authSelected.refreshToken,
-                    },
-                );
-            }
-        } catch (error) {}
+                {
+                    refreshToken: authSelected.refreshToken,
+                },
+            );
+        }
     }
 }

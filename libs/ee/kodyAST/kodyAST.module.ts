@@ -1,4 +1,4 @@
-import { Global, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 
 import { environment } from '../configs/environment';
 import { AST_ANALYSIS_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
@@ -19,7 +19,6 @@ if (environment.API_CLOUD_MODE && process.env.API_ENABLE_CODE_REVIEW_AST) {
     providers.push({ provide: AST_ANALYSIS_SERVICE_TOKEN, useValue: null });
 }
 
-@Global()
 @Module({
     imports: staticImports,
     providers,

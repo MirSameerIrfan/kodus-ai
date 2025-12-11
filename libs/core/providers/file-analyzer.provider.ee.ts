@@ -16,13 +16,11 @@ import {
 } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
 import { IAIAnalysisService } from '@libs/code-review/domain/contracts/AIAnalysisService.contract';
 import { environment } from '@libs/ee/configs/environment';
-import { SimpleLogger } from '@kodus/flow/dist/observability/logger';
 
 export const FILE_REVIEW_CONTEXT_PREPARATION_PROVIDER: Provider = {
     provide: FILE_REVIEW_CONTEXT_PREPARATION_TOKEN,
     useFactory: (
         corePreparation: CoreFileReviewContextPreparation,
-        simpleLogger: SimpleLogger,
         aiAnalysisService: IAIAnalysisService,
         astAnalysisService: IASTAnalysisService,
     ): IFileReviewContextPreparation => {
@@ -32,7 +30,6 @@ export const FILE_REVIEW_CONTEXT_PREPARATION_PROVIDER: Provider = {
             return new ProFileReviewContextPreparation(
                 astAnalysisService,
                 aiAnalysisService,
-                PinoLoggerService,
             );
         }
 
@@ -40,7 +37,6 @@ export const FILE_REVIEW_CONTEXT_PREPARATION_PROVIDER: Provider = {
     },
     inject: [
         CoreFileReviewContextPreparation,
-        PinoLoggerService,
         LLM_ANALYSIS_SERVICE_TOKEN,
         AST_ANALYSIS_SERVICE_TOKEN,
     ],

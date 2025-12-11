@@ -6,7 +6,7 @@ import {
     IJobStatusService,
     JOB_STATUS_SERVICE_TOKEN,
 } from '@libs/core/workflow/domain/contracts/job-status.service.contract';
-import { ICodeReviewJob } from '@libs/core/workflow/domain/interfaces/code-review-job.interface';
+import { ICodeReviewJob } from '../../domain/interfaces/code-review-job.interface';
 
 export interface GetJobStatusInput {
     jobId: string;
@@ -49,7 +49,9 @@ export class GetJobStatusUseCase implements IUseCase {
             }
 
             return {
-                job: detail.job,
+                //TODO: Remover isso quando o job for implementado
+                //job: detail.job,
+                job: null,
                 executionHistory: detail.executionHistory.map((h) => ({
                     id: h.id,
                     attemptNumber: h.attemptNumber,

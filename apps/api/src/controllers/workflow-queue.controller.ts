@@ -28,7 +28,10 @@ export class WorkflowQueueController {
 
     @Get('/jobs/:jobId')
     @CheckPolicies(
-        checkPermissions(Action.Read, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     @HttpCode(HttpStatus.OK)
     async getJobStatus(@Param('jobId') jobId: string) {
@@ -49,7 +52,10 @@ export class WorkflowQueueController {
 
     @Get('/jobs/:jobId/detail')
     @CheckPolicies(
-        checkPermissions(Action.Read, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     @HttpCode(HttpStatus.OK)
     async getJobDetail(@Param('jobId') jobId: string) {
@@ -70,7 +76,10 @@ export class WorkflowQueueController {
 
     @Get('/metrics')
     @CheckPolicies(
-        checkPermissions(Action.Read, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     @HttpCode(HttpStatus.OK)
     async getMetrics() {

@@ -1,6 +1,5 @@
-import { RabbitSubscribe, AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { createLogger } from '@kodus/flow';
-import { Injectable, Inject, Optional } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 
 import { DurablePipelineExecutor } from '@libs/core/workflow/engine/executor/durable-pipeline-executor.service';
@@ -11,9 +10,11 @@ import {
 } from '@libs/core/workflow/domain/contracts/workflow-job.repository.contract';
 import { CodeReviewPipelineContext } from '../pipeline/context/code-review-pipeline.context';
 import { CodeReviewPipelineStrategyEE } from '@libs/ee/codeReview/strategies/code-review-pipeline.strategy.ee';
+import { IJobProcessorService } from '@libs/core/workflow/domain/contracts/job-processor.service.contract';
+import { ErrorClassification } from '@libs/core/workflow/domain/enums/error-classification.enum';
 
 @Injectable()
-export class CodeReviewJobProcessorService {
+export class CodeReviewJobProcessorService implements IJobProcessorService {
     private readonly logger = createLogger(CodeReviewJobProcessorService.name);
 
     constructor(
@@ -21,24 +22,15 @@ export class CodeReviewJobProcessorService {
         @Inject(WORKFLOW_JOB_REPOSITORY_TOKEN)
         private readonly jobRepository: IWorkflowJobRepository,
         private readonly pipelineStrategy: CodeReviewPipelineStrategyEE,
-        @Optional()
-        private readonly amqpConnection?: AmqpConnection,
     ) {}
 
-    @RabbitSubscribe({
-        exchange: 'workflow.exchange',
-        routingKey: 'workflow.jobs.code_review',
-        queue: 'workflow.jobs.code_review',
-        queueOptions: {
-            durable: true,
-            arguments: {
-                'x-queue-type': 'quorum',
-            },
-        },
-    })
-    async process(msg: any, amqpMsg: any): Promise<void> {
-        const jobId = msg.jobId;
-        const correlationId = msg.correlationId || uuidv4();
+    async process(jobId: string): Promise<void> {
+        const job = await this.jobRepository.findOne(jobId);
+        if (!job) {
+            throw new Error(`Job ${jobId} not found`);
+        }
+
+        const correlationId = job.correlationId || uuidv4();
 
         this.logger.log({
             message: `Processing Code Review Job ${jobId}`,
@@ -52,43 +44,34 @@ export class CodeReviewJobProcessorService {
                 startedAt: new Date(),
             });
 
-            // Build initial context (this logic depends on what is in the msg)
-            // Assuming msg.payload contains the necessary data to build context
-            // Or we load it from DB if the job payload has it.
-            const job = await this.jobRepository.findOne(jobId);
-            const payload = job.payload;
+            // Build context from job payload
+            // This assumes job.payload matches what CodeReviewPipelineContext expects
+            // or we need a mapper here.
+            const payload = job.payload || {};
 
-            // Map payload to Context
-            // This mapping logic needs to be accurate to your system.
-            // I'll assume a helper or direct mapping.
             const context: CodeReviewPipelineContext = {
-                ...payload, // simplified
+                ...payload,
                 workflowJobId: jobId,
                 correlationId,
-                // Initialize other required fields
-                tasks: {},
+                // Ensure required fields
+                tasks: payload.tasks || {},
             };
 
             const stages = this.pipelineStrategy.configureStages();
 
             await this.pipelineExecutor.execute(context, stages, jobId);
 
-            await this.jobRepository.update(jobId, {
-                status: JobStatus.COMPLETED,
-                completedAt: new Date(),
-            });
+            await this.markCompleted(jobId);
 
             this.logger.log({
                 message: `Job ${jobId} completed successfully`,
                 context: CodeReviewJobProcessorService.name,
             });
         } catch (error) {
-            // Error handling logic (Retry, Fail, etc.)
-            // Note: DurablePipelineExecutor handles "WorkflowPausedError" by saving state and throwing.
-            // We should catch it here to update job status to WAITING_FOR_EVENT if not already handled?
-            // The Executor re-throws WorkflowPausedError.
-
             if (error.name === 'WorkflowPausedError') {
+                // Pipeline paused (async stage), status is already updated by Executor usually,
+                // or we update it here if executor throws.
+                // Assuming Executor throws WorkflowPausedError to signal pause.
                 await this.jobRepository.update(jobId, {
                     status: JobStatus.WAITING_FOR_EVENT,
                     waitingForEvent: {
@@ -96,9 +79,7 @@ export class CodeReviewJobProcessorService {
                         eventKey: error.eventKey,
                     },
                 });
-                return; // Stop processing, don't Ack/Nack in a way that requeues immediately?
-                // RabbitSubscribe usually Acks on success. If we return, it Acks.
-                // Since we saved state and set status to WAITING, we are "done" with this execution attempt.
+                return;
             }
 
             this.logger.error({
@@ -107,11 +88,25 @@ export class CodeReviewJobProcessorService {
                 context: CodeReviewJobProcessorService.name,
             });
 
+            await this.handleFailure(jobId, error);
+            throw error; // Re-throw to ensure caller knows it failed
+        }
+    }
+
+    async handleFailure(jobId: string, error: Error): Promise<void> {
             await this.jobRepository.update(jobId, {
                 status: JobStatus.FAILED,
-                error: error.message,
+            errorClassification: ErrorClassification.PERMANENT, // Or determine based on error
+            lastError: error.message,
                 failedAt: new Date(),
             });
         }
+
+    async markCompleted(jobId: string, result?: unknown): Promise<void> {
+        await this.jobRepository.update(jobId, {
+            status: JobStatus.COMPLETED,
+            completedAt: new Date(),
+            result: result,
+        });
     }
 }

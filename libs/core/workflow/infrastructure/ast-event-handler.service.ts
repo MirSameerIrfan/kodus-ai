@@ -7,6 +7,8 @@ import { createLogger } from '@kodus/flow';
 import { JobStatus } from '@libs/core/workflow/domain/enums/job-status.enum';
 import { ObservabilityService } from '@libs/core/log/observability.service';
 
+import { WorkflowJobRepository } from './repositories/workflow-job.repository';
+
 interface ASTCompletedMessage {
     taskId: string;
     result: Record<string, unknown>;
@@ -63,11 +65,11 @@ export class ASTEventHandler {
                 });
 
                 // Find workflows waiting for this AST task
-                const waitingJobs = await this.jobRepository.findMany({
+                const waitingJobsResult = await this.jobRepository.findMany({
                     status: JobStatus.WAITING_FOR_EVENT,
                 });
 
-                const matchingJobs = waitingJobs.filter((job) => {
+                const matchingJobs = waitingJobsResult.data.filter((job) => {
                     const waitingFor = job.waitingForEvent;
                     return (
                         waitingFor?.eventType === 'ast.task.completed' &&

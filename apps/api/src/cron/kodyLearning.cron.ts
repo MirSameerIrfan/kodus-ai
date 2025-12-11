@@ -5,6 +5,7 @@ import { Cron } from '@nestjs/schedule';
 import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
+import { GenerateKodyRulesUseCase } from '@libs/kodyRules/application/use-cases/generate-kody-rules.use-case';
 import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,

@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 
-import { ListTeamsWithIntegrationsUseCase } from '@libs/organization/application/use-cases/list-with-integrations.use-case';
-import { ListTeamsUseCase } from '@libs/organization/application/use-cases/list.use-case';
+import { ListTeamsWithIntegrationsUseCase } from '@libs/organization/application/use-cases/team/list-with-integrations.use-case';
+import { ListTeamsUseCase } from '@libs/organization/application/use-cases/team/list.use-case';
 
 @Controller('team')
 export class TeamController {

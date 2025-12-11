@@ -5,20 +5,6 @@ import { Cron } from '@nestjs/schedule';
 import { PullRequestState } from '@libs/core/domain/enums/pullRequestState.enum';
 import { AzureRepoCommentTypeString } from '@libs/platform/domain/azure/entities/azureRepoExtras.type';
 import {
-    AUTOMATION_EXECUTION_SERVICE_TOKEN,
-    IAutomationExecutionService,
-} from '@libs/automation/domain/contracts/automation-execution.service';
-import { AutomationType } from '@libs/automation/domain/enums/automation-type';
-import { AutomationStatus } from '@libs/automation/domain/enums/automation-status';
-import {
-    AUTOMATION_SERVICE_TOKEN,
-    IAutomationService,
-} from '@libs/automation/domain/contracts/automation.service';
-import {
-    TEAM_AUTOMATION_SERVICE_TOKEN,
-    ITeamAutomationService,
-} from '@libs/automation/domain/contracts/team-automation.service';
-import {
     CODE_BASE_CONFIG_SERVICE_TOKEN,
     ICodeBaseConfigService,
 } from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
@@ -48,7 +34,21 @@ import {
     ITeamService,
 } from '@libs/organization/domain/team/contracts/team.service.contract';
 import { IntegrationStatusFilter } from '@libs/organization/domain/team/interfaces/team.interface';
-import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
+import {
+    AUTOMATION_EXECUTION_SERVICE_TOKEN,
+    IAutomationExecutionService,
+} from '@libs/automation/domain/automationExecution/contracts/automation-execution.service';
+import {
+    AUTOMATION_SERVICE_TOKEN,
+    IAutomationService,
+} from '@libs/automation/domain/automation/contracts/automation.service';
+import {
+    ITeamAutomationService,
+    TEAM_AUTOMATION_SERVICE_TOKEN,
+} from '@libs/automation/domain/teamAutomation/contracts/team-automation.service';
+import { AutomationType } from '@libs/automation/domain/automation/enum/automation-type';
+import { AutomationStatus } from '@libs/automation/domain/automation/enum/automation-status';
 
 const API_CRON_CHECK_IF_PR_SHOULD_BE_APPROVED =
     process.env.API_CRON_CHECK_IF_PR_SHOULD_BE_APPROVED;

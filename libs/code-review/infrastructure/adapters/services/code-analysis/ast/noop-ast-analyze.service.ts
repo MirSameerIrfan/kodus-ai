@@ -5,7 +5,6 @@
 
 import { Injectable } from '@nestjs/common';
 import { BaseKodyASTAnalyzeContextPreparation } from './base-ast-analyze.abstract';
-import { createLogger } from '@kodus/flow';
 import {
     AIAnalysisResult,
     AnalysisContext,

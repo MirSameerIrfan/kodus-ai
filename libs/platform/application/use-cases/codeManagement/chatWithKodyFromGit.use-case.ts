@@ -1321,7 +1321,7 @@ export class ChatWithKodyFromGitUseCase {
                 );
             case PlatformType.GITLAB:
                 return comment?.originalCommit;
-            case PlatformType.BITBUCKET:
+            case PlatformType.BITBUCKET: {
                 if (!comment?.parent?.id) {
                     return undefined;
                 }
@@ -1331,11 +1331,13 @@ export class ChatWithKodyFromGitUseCase {
                 );
 
                 return originalComment;
+            }
             case PlatformType.AZURE_REPOS:
                 if (comment.threadId && comment.id !== comment.threadId) {
                     const originalComment = comment.thread;
                     return originalComment;
                 }
+                return undefined;
             default:
                 this.logger.warn({
                     message: `Unsupported platform type: ${platformType}`,
@@ -1412,6 +1414,7 @@ export class ChatWithKodyFromGitUseCase {
                         return validReplies;
                     }
                 }
+                return [];
             case PlatformType.AZURE_REPOS:
                 if (comment.threadId) {
                     const thread = allComments.find(

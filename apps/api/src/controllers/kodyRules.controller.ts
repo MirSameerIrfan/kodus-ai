@@ -1,30 +1,25 @@
-import { UserRequest } from '@/config/types/http/user-request.type';
-import { AddLibraryKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/add-library-kody-rules.use-case';
-import { ChangeStatusKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/change-status-kody-rules.use-case';
-import { CheckSyncStatusUseCase } from '@/core/application/use-cases/kodyRules/check-sync-status.use-case';
-import { CreateOrUpdateKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/create-or-update.use-case';
-import { DeleteRuleInOrganizationByIdKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/delete-rule-in-organization-by-id.use-case';
-import { FindByOrganizationIdKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-by-organization-id.use-case';
-import { FindLibraryKodyRulesBucketsUseCase } from '@/core/application/use-cases/kodyRules/find-library-kody-rules-buckets.use-case';
-import { FindLibraryKodyRulesWithFeedbackUseCase } from '@/core/application/use-cases/kodyRules/find-library-kody-rules-with-feedback.use-case';
-import { FindLibraryKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-library-kody-rules.use-case';
-import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-rules-in-organization-by-filter.use-case';
-import { FindSuggestionsByRuleUseCase } from '@/core/application/use-cases/kodyRules/find-suggestions-by-rule.use-case';
-import { GenerateKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/generate-kody-rules.use-case';
-import { GetInheritedRulesKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/get-inherited-kody-rules.use-case';
-import { GetRulesLimitStatusUseCase } from '@/core/application/use-cases/kodyRules/get-rules-limit-status.use-case';
-import { ResyncRulesFromIdeUseCase } from '@/core/application/use-cases/kodyRules/resync-rules-from-ide.use-case';
-import { SyncSelectedRepositoriesKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/sync-selected-repositories.use-case';
-import { FastSyncIdeRulesUseCase } from '@/core/application/use-cases/kodyRules/fast-sync-ide-rules.use-case';
-import { ImportFastKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/import-fast-kody-rules.use-case';
+import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
+import { AddLibraryKodyRulesUseCase } from '@libs/kodyRules/application/use-cases/add-library-kody-rules.use-case';
+import { ChangeStatusKodyRulesUseCase } from '@libs/kodyRules/application/use-cases/change-status-kody-rules.use-case';
+import { CheckSyncStatusUseCase } from '@libs/kodyRules/application/use-cases/check-sync-status.use-case';
+import { CreateOrUpdateKodyRulesUseCase } from '@libs/kodyRules/application/use-cases/create-or-update.use-case';
+import { DeleteRuleInOrganizationByIdKodyRulesUseCase } from '@libs/kodyRules/application/use-cases/delete-rule-in-organization-by-id.use-case';
+import { FindByOrganizationIdKodyRulesUseCase } from '@libs/kodyRules/application/use-cases/find-by-organization-id.use-case';
+import { FindLibraryKodyRulesBucketsUseCase } from '@libs/kodyRules/application/use-cases/find-library-kody-rules-buckets.use-case';
+import { FindLibraryKodyRulesWithFeedbackUseCase } from '@libs/kodyRules/application/use-cases/find-library-kody-rules-with-feedback.use-case';
+import { FindLibraryKodyRulesUseCase } from '@libs/kodyRules/application/use-cases/find-library-kody-rules.use-case';
+import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from '@libs/kodyRules/application/use-cases/find-rules-in-organization-by-filter.use-case';
+import { FindSuggestionsByRuleUseCase } from '@libs/kodyRules/application/use-cases/find-suggestions-by-rule.use-case';
+import { GenerateKodyRulesUseCase } from '@libs/kodyRules/application/use-cases/generate-kody-rules.use-case';
+import { GetInheritedRulesKodyRulesUseCase } from '@libs/kodyRules/application/use-cases/get-inherited-kody-rules.use-case';
+import { GetRulesLimitStatusUseCase } from '@libs/kodyRules/application/use-cases/get-rules-limit-status.use-case';
+import { ResyncRulesFromIdeUseCase } from '@libs/kodyRules/application/use-cases/resync-rules-from-ide.use-case';
+import { SyncSelectedRepositoriesKodyRulesUseCase } from '@libs/kodyRules/application/use-cases/sync-selected-repositories.use-case';
+import { FastSyncIdeRulesUseCase } from '@libs/kodyRules/application/use-cases/fast-sync-ide-rules.use-case';
+import { ImportFastKodyRulesUseCase } from '@libs/kodyRules/application/use-cases/import-fast-kody-rules.use-case';
 import { ImportFastKodyRulesDto } from '../dtos/import-fast-kody-rules.dto';
 import { ReviewFastKodyRulesDto } from '../dtos/review-fast-kody-rules.dto';
-import {
-    Action,
-    ResourceType,
-} from '@/core/domain/permissions/enums/permissions.enum';
-import { KodyRulesStatus } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
-import { CacheService } from '@/shared/utils/cache/cache.service';
+
 import {
     Body,
     Controller,
@@ -36,13 +31,12 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-
+import { AddLibraryKodyRulesDto } from '../dtos/add-library-kody-rules.dto';
+import { ChangeStatusKodyRulesDTO } from '../dtos/change-status-kody-rules.dto';
+import { FindLibraryKodyRulesDto } from '../dtos/find-library-kody-rules.dto';
+import { FindSuggestionsByRuleDto } from '../dtos/find-suggestions-by-rule.dto';
+import { GenerateKodyRulesDTO } from '../dtos/generate-kody-rules.dto';
 import { CacheService } from '@libs/core/cache/cache.service';
-import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
-import {
-    Action,
-    ResourceType,
-} from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
     CheckPolicies,
     PolicyGuard,
@@ -51,29 +45,12 @@ import {
     checkPermissions,
     checkRepoPermissions,
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
-import { AddLibraryKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/add-library-kody-rules.use-case';
-import { ChangeStatusKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/change-status-kody-rules.use-case';
-import { CheckSyncStatusUseCase } from '@libs/kody-rules/application/use-cases/check-sync-status.use-case';
-import { CreateOrUpdateKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/create-or-update.use-case';
-import { DeleteRuleInOrganizationByIdKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/delete-rule-in-organization-by-id.use-case';
-import { FindByOrganizationIdKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/find-by-organization-id.use-case';
-import { FindLibraryKodyRulesBucketsUseCase } from '@libs/kody-rules/application/use-cases/find-library-kody-rules-buckets.use-case';
-import { FindLibraryKodyRulesWithFeedbackUseCase } from '@libs/kody-rules/application/use-cases/find-library-kody-rules-with-feedback.use-case';
-import { FindLibraryKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/find-library-kody-rules.use-case';
-import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/find-rules-in-organization-by-filter.use-case';
-import { FindSuggestionsByRuleUseCase } from '@libs/kody-rules/application/use-cases/find-suggestions-by-rule.use-case';
-import { GenerateKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/generate-kody-rules.use-case';
-import { GetInheritedRulesKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/get-inherited-kody-rules.use-case';
-import { GetRulesLimitStatusUseCase } from '@libs/kody-rules/application/use-cases/get-rules-limit-status.use-case';
-import { ResyncRulesFromIdeUseCase } from '@libs/kody-rules/application/use-cases/resync-rules-from-ide.use-case';
-import { SyncSelectedRepositoriesKodyRulesUseCase } from '@libs/kody-rules/application/use-cases/sync-selected-repositories.use-case';
-
-import { AddLibraryKodyRulesDto } from '../dtos/add-library-kody-rules.dto';
-import { ChangeStatusKodyRulesDTO } from '../dtos/change-status-kody-rules.dto';
+import {
+    Action,
+    ResourceType,
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { CreateKodyRuleDto } from '@libs/ee/kodyRules/dtos/create-kody-rule.dto';
-import { FindLibraryKodyRulesDto } from '../dtos/find-library-kody-rules.dto';
-import { FindSuggestionsByRuleDto } from '../dtos/find-suggestions-by-rule.dto';
-import { GenerateKodyRulesDTO } from '../dtos/generate-kody-rules.dto';
+import { KodyRulesStatus } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 
 @Controller('kody-rules')
 export class KodyRulesController {
@@ -103,7 +80,12 @@ export class KodyRulesController {
 
     @Post('/create-or-update')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Create, ResourceType.KodyRules))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Create,
+            resource: ResourceType.KodyRules,
+        }),
+    )
     public async create(
         @Body()
         body: CreateKodyRuleDto,
@@ -119,21 +101,36 @@ export class KodyRulesController {
 
     @Get('/find-by-organization-id')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Read, ResourceType.KodyRules))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.KodyRules,
+        }),
+    )
     public async findByOrganizationId() {
         return this.findByOrganizationIdKodyRulesUseCase.execute();
     }
 
     @Get('/limits')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Read, ResourceType.KodyRules))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.KodyRules,
+        }),
+    )
     public async getRulesLimitStatus() {
         return this.getRulesLimitStatusUseCase.execute();
     }
 
     @Get('/suggestions')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Read, ResourceType.KodyRules))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.KodyRules,
+        }),
+    )
     public async findSuggestionsByRule(
         @Query() query: FindSuggestionsByRuleDto,
     ) {
@@ -142,7 +139,12 @@ export class KodyRulesController {
 
     @Get('/find-rules-in-organization-by-filter')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Read, ResourceType.KodyRules))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.KodyRules,
+        }),
+    )
     public async findRulesInOrganizationByFilter(
         @Query('key')
         key: string,
@@ -167,7 +169,12 @@ export class KodyRulesController {
 
     @Delete('/delete-rule-in-organization-by-id')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Delete, ResourceType.KodyRules))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Delete,
+            resource: ResourceType.KodyRules,
+        }),
+    )
     public async deleteRuleInOrganizationById(
         @Query('ruleId')
         ruleId: string,
@@ -196,14 +203,24 @@ export class KodyRulesController {
 
     @Post('/add-library-kody-rules')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Create, ResourceType.KodyRules))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Create,
+            resource: ResourceType.KodyRules,
+        }),
+    )
     public async addLibraryKodyRules(@Body() body: AddLibraryKodyRulesDto) {
         return this.addLibraryKodyRulesUseCase.execute(body);
     }
 
     @Post('/generate-kody-rules')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Create, ResourceType.KodyRules))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Create,
+            resource: ResourceType.KodyRules,
+        }),
+    )
     public async generateKodyRules(@Body() body: GenerateKodyRulesDTO) {
         if (!this.request.user.organization.uuid) {
             throw new Error('Organization ID not found');
@@ -217,14 +234,24 @@ export class KodyRulesController {
 
     @Post('/change-status-kody-rules')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Update, ResourceType.KodyRules))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Update,
+            resource: ResourceType.KodyRules,
+        }),
+    )
     public async changeStatusKodyRules(@Body() body: ChangeStatusKodyRulesDTO) {
         return this.changeStatusKodyRulesUseCase.execute(body);
     }
 
     @Get('/check-sync-status')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Read, ResourceType.KodyRules))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.KodyRules,
+        }),
+    )
     public async checkSyncStatus(
         @Query('teamId')
         teamId: string,
@@ -253,7 +280,12 @@ export class KodyRulesController {
 
     @Post('/sync-ide-rules')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Create, ResourceType.KodyRules))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Create,
+            resource: ResourceType.KodyRules,
+        }),
+    )
     public async syncIdeRules(
         @Body() body: { teamId: string; repositoryId: string },
     ) {
@@ -351,9 +383,13 @@ export class KodyRulesController {
     @Get('/inherited-rules')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkRepoPermissions(Action.Read, ResourceType.KodyRules, {
-            key: {
-                query: 'repositoryId',
+        checkRepoPermissions({
+            action: Action.Read,
+            resource: ResourceType.KodyRules,
+            repo: {
+                key: {
+                    query: 'repositoryId',
+                },
             },
         }),
     )
@@ -387,7 +423,12 @@ export class KodyRulesController {
     // NOT USED IN WEB - INTERNAL USE ONLY
     @Post('/resync-ide-rules')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Create, ResourceType.KodyRules))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Create,
+            resource: ResourceType.KodyRules,
+        }),
+    )
     public async resyncIdeRules(
         @Body() body: { teamId: string; repositoryId: string },
     ) {

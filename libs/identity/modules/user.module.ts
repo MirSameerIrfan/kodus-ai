@@ -1,51 +1,18 @@
-import { Module, forwardRef } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { Module } from '@nestjs/common';
 import { UsersController } from 'apps/api/src/controllers/user.controller';
-
-import { CodeReviewSettingsLogModule } from '@libs/analytics/modules/settings-log.module';
-import { UserDatabaseRepository } from '@libs/core/infrastructure/database/typeorm/repositories/user.repository';
-import { UserModel } from '@libs/core/infrastructure/database/typeorm/schema/user.model';
-import { BcryptService } from '@libs/identity/infrastructure/services/bcrypt.service';
-import { UsersService } from '@libs/identity/infrastructure/services/users.service';
-import { AuthModule } from '@libs/identity/modules/auth.module';
-import { ProfilesModule } from '@libs/identity/modules/profileConfig.module';
-import { TeamsModule } from '@libs/organization/modules/team.module';
-import { TeamMembersModule } from '@libs/organization/modules/teamMembers.module';
-import { OrganizationModule } from '@libs/organization/organization.module';
-
-import { PASSWORD_SERVICE_TOKEN } from '../domain/user/contracts/password.service.contract';
-import { USER_REPOSITORY_TOKEN } from '../domain/user/contracts/user.repository.contract';
-import { USER_SERVICE_TOKEN } from '../domain/user/contracts/user.service.contract';
-
-
+import { UserCoreModule } from './user-core.module';
+import { AuthCoreModule } from './auth-core.module'; // Might be needed for guards/decorators used in Controller
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([UserModel]),
-        forwardRef(() => AuthModule),
-        forwardRef(() => ProfilesModule),
-        forwardRef(() => TeamsModule),
-        forwardRef(() => TeamMembersModule),
-        forwardRef(() => OrganizationModule),
-        forwardRef(() => ProfilesModule),
-        forwardRef(() => CodeReviewSettingsLogModule),
+        UserCoreModule,
+        // Often controllers need Auth guards which might depend on AuthModule/JwtModule
+        // But if guards are global or provided by AuthModule, we might need it here.
+        // Assuming UsersController needs AuthModule (e.g. for @UseGuards(JwtAuthGuard))
+        AuthCoreModule,
     ],
-    providers: [
-        ...UseCases,
-        {
-            provide: USER_REPOSITORY_TOKEN,
-            useClass: UserDatabaseRepository,
-        },
-        {
-            provide: USER_SERVICE_TOKEN,
-            useClass: UsersService,
-        },
-        {
-            provide: PASSWORD_SERVICE_TOKEN,
-            useClass: BcryptService,
-        },
-    ],
-    exports: [USER_REPOSITORY_TOKEN, USER_SERVICE_TOKEN],
     controllers: [UsersController],
+    providers: [], // No providers here, they are in Core
+    exports: [], // No exports needed usually, unless other Http modules need to import this (rare)
 })
 export class UsersModule {}

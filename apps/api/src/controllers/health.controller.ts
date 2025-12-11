@@ -1,8 +1,7 @@
 import { Controller, Get, HttpStatus, Res } from '@nestjs/common';
 import { Response } from 'express';
-
-import { ApplicationHealthIndicator } from '@libs/core/health/application.health';
 import { DatabaseHealthIndicator } from '@libs/core/health/database.health';
+import { ApplicationHealthIndicator } from '@libs/core/health/application.health';
 
 @Controller('health')
 export class HealthController {
@@ -42,10 +41,10 @@ export class HealthController {
                 : HttpStatus.SERVICE_UNAVAILABLE;
 
             return res.status(statusCode).json(response);
-        } catch {
+        } catch (error) {
             const response = {
                 status: 'error',
-                error: 'Health check failed',
+                error: 'Health check failed:' + error,
                 timestamp: new Date().toISOString(),
             };
 

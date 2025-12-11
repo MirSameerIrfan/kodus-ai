@@ -1,43 +1,11 @@
-import { forwardRef, Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-
-import { PromptService } from '@libs/agents/infrastructure/services/prompt.service';
-import { ProfileConfigModule } from '@libs/identity/modules/profileConfig.module';
-import { UsersModule } from '@libs/identity/modules/user.module';
-import { IntegrationModule } from '@libs/integrations/integrations.module';
-import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
-
-import { OrganizationParametersModule } from './org-parameters.module';
-import { ParametersModule } from './parameters.module';
-import { CreateOrUpdateOrganizationParametersUseCase } from '../application/use-cases/create-or-update.use-case';
-import { ListTeamsWithIntegrationsUseCase } from '../application/use-cases/team/list-with-integrations.use-case';
-import { ListTeamsUseCase } from '../application/use-cases/team/list.use-case';
-import { TEAM_REPOSITORY_TOKEN } from '../domain/team/contracts/team.repository.contract';
-import { TEAM_SERVICE_TOKEN } from '../domain/team/contracts/team.service.contract';
-import { TeamEntity } from '../domain/team/entities/team.entity';
-import { TeamController } from '../infrastructure/http/controllers/team.controller';
-
-
-
-
+import { Module } from '@nestjs/common';
+import { TeamController } from 'apps/api/src/controllers/team.controller';
+import { TeamCoreModule } from './team-core.module';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([TeamEntity]),
-        forwardRef(() => ProfileConfigModule),
-        forwardRef(() => UsersModule),
-        forwardRef(() => OrganizationParametersModule),
-        forwardRef(() => IntegrationModule),
-        forwardRef(() => IntegrationConfigModule),
-        forwardRef(() => ParametersModule),
-    ],
-    providers: [
-        CreateOrUpdateOrganizationParametersUseCase,
-        ListTeamsUseCase,
-        ListTeamsWithIntegrationsUseCase,
-        PromptService,
-    ],
-    exports: [TEAM_SERVICE_TOKEN, TEAM_REPOSITORY_TOKEN],
+    imports: [TeamCoreModule],
     controllers: [TeamController],
+    providers: [],
+    exports: [],
 })
 export class TeamsModule {}

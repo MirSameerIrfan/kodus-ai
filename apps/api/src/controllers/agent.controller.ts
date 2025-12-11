@@ -1,9 +1,9 @@
-import { UserRequest } from '@/config/types/http/user-request.type';
-import { ConversationAgentUseCase } from '@/core/application/use-cases/agent/conversation-agent.use-case';
 import { createThreadId } from '@kodus/flow';
+import { ConversationAgentUseCase } from '@libs/agents/application/use-cases/conversation-agent.use-case';
+import { OrganizationAndTeamDataDto } from '@libs/core/domain/dtos/organizationAndTeamData.dto';
+import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
 import { Body, Controller, Inject, Post } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import { OrganizationAndTeamDataDto } from '../dtos/organizationAndTeamData.dto';
 
 @Controller('agent')
 export class AgentController {

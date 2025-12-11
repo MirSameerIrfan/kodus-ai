@@ -7,8 +7,8 @@ import {
     ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { KodyRuleSeverity } from './create-kody-rule.dto';
-import { KodyRulesScope } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+import { KodyRulesScope } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
+import { KodyRuleSeverity } from '@libs/ee/kodyRules/dtos/create-kody-rule.dto';
 
 class ImportFastKodyRuleItemDto {
     @IsString()

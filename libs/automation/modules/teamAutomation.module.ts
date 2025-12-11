@@ -10,12 +10,12 @@ import { TeamAutomationModel } from '@libs/automation/infrastructure/adapters/re
 import { TeamAutomationRepository } from '@libs/automation/infrastructure/adapters/repositories/teamAutomation.repository';
 import { TeamAutomationService } from '@libs/automation/infrastructure/adapters/services/team-automation.service';
 import { ProfileConfigModule } from '@libs/identity/modules/profileConfig.module';
-import { IntegrationModule } from '@libs/integrations/integrations.module';
-import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
-import { TeamsModule } from '@libs/organization/modules/team.module';
-import { TeamMembersModule } from '@libs/organization/modules/teamMembers.module';
-import { OrganizationModule } from '@libs/organization/organization.module';
-import { PlatformModule } from '@libs/platform/platform.module';
+import { IntegrationCoreModule } from '@libs/integrations/modules/integrations-core.module';
+import { IntegrationConfigCoreModule } from '@libs/integrations/modules/config-core.module';
+import { TeamCoreModule } from '@libs/organization/modules/team-core.module';
+import { TeamMembersCoreModule } from '@libs/organization/modules/teamMembers-core.module';
+import { OrganizationCoreModule } from '@libs/organization/modules/organization-core.module';
+import { PlatformModule } from '@libs/platform/modules/platform.module';
 
 import { AutomationStrategyModule } from './automationStrategy.module';
 import { AutomationModule } from '../automation.module';
@@ -23,14 +23,14 @@ import { AutomationModule } from '../automation.module';
 @Module({
     imports: [
         TypeOrmModule.forFeature([TeamAutomationModel]),
-        forwardRef(() => TeamsModule),
+        forwardRef(() => TeamCoreModule),
         forwardRef(() => AutomationStrategyModule),
         forwardRef(() => AutomationModule),
         forwardRef(() => PlatformModule),
-        forwardRef(() => IntegrationModule),
-        forwardRef(() => IntegrationConfigModule),
-        forwardRef(() => TeamMembersModule),
-        forwardRef(() => OrganizationModule),
+        forwardRef(() => IntegrationCoreModule),
+        forwardRef(() => IntegrationConfigCoreModule),
+        forwardRef(() => TeamMembersCoreModule),
+        forwardRef(() => OrganizationCoreModule),
         forwardRef(() => ProfileConfigModule),
     ],
     providers: [
@@ -43,21 +43,11 @@ import { AutomationModule } from '../automation.module';
             provide: TEAM_AUTOMATION_SERVICE_TOKEN,
             useClass: TeamAutomationService,
         },
-        // {
-        //     provide: INTEGRATION_SERVICE_TOKEN,
-        //     useClass: IntegrationService,
-        // },
-        // {
-        //     provide: INTEGRATION_CONFIG_SERVICE_TOKEN,
-        //     useClass: IntegrationConfigService,
-        // },
     ],
     controllers: [],
     exports: [
         TEAM_AUTOMATION_REPOSITORY_TOKEN,
         TEAM_AUTOMATION_SERVICE_TOKEN,
-        // INTEGRATION_SERVICE_TOKEN,
-        // INTEGRATION_CONFIG_SERVICE_TOKEN,
         ActiveCodeManagementTeamAutomationsUseCase,
         ActiveCodeReviewAutomationUseCase,
     ],

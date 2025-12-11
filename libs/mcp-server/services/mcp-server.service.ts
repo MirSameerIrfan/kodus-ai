@@ -43,8 +43,6 @@ export class McpServerService {
             },
         );
 
-        server.tool;
-
         // Register all tools
         this.registerTools(server);
 

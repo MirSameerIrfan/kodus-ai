@@ -315,7 +315,7 @@ export class TeamMemberDatabaseRepository implements ITeamMemberRepository {
             const updatedTeamMembers = existingTeamMembers.map(
                 (existingMember) => {
                     const memberUpdate = members.find(
-                        (m) => m.uuid === existingMember.user?.uuid,
+                        (m) => m.uuid === existingMember.user.uuid,
                     );
                     if (memberUpdate) {
                         return {

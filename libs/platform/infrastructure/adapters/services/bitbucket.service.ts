@@ -1,9 +1,6 @@
 import { createLogger } from '@kodus/flow';
-import {
-    LLMModelProvider,
-    LLMProviderService,
-    MODEL_STRATEGIES,
-} from '@kodus/kodus-common/llm';
+
+
 import {
     GitHubReaction,
     GitlabReaction,
@@ -16,13 +13,11 @@ import {
     isFileMatchingGlobCaseInsensitive,
     isFileMatchingGlob,
 } from '@libs/common/utils/glob-utils';
-import { safelyParseMessageContent } from '@libs/common/utils/safelyParseMessageContent';
 import { CacheService } from '@libs/core/cache/cache.service';
 import {
     CreateAuthIntegrationStatus,
     IntegrationCategory,
     IntegrationConfigKey,
-    ParametersKey,
     PlatformType,
     PullRequestState,
 } from '@libs/core/domain/enums';
@@ -50,10 +45,8 @@ import {
 } from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
 import { IntegrationEntity } from '@libs/integrations/domain/integrations/entities/integration.entity';
 import { MCPManagerService } from '@libs/mcp-server/services/mcp-manager.service';
-import {
-    PARAMETERS_SERVICE_TOKEN,
-    IParametersService,
-} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+
+
 import { AuthMode } from '@libs/platform/domain/platformIntegrations/enums/codeManagement/authMode.enum';
 import { ICodeManagementService } from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
 import { GitCloneParams } from '@libs/platform/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';

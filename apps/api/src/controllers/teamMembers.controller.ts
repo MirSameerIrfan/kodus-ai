@@ -10,24 +10,20 @@ import {
     Query,
     UseGuards,
 } from '@nestjs/common';
-
-import {
-    Action,
-    ResourceType,
-} from '@libs/identity/domain/permissions/enums/permissions.enum';
+import { TeamQueryDto } from '../dtos/teamId-query-dto';
 import {
     CheckPolicies,
     PolicyGuard,
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
+import {
+    Action,
+    ResourceType,
+} from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
-import { CreateOrUpdateTeamMembersUseCase } from '@libs/organization/application/use-cases/create.use-case';
-import { DeleteTeamMembersUseCase } from '@libs/organization/application/use-cases/delete.use-case';
-import { GetTeamMembersUseCase } from '@libs/organization/application/use-cases/get-team-members.use-case';
-import { IMembers } from '@libs/organization/domain/team-members/interfaces/team-members.interface';
-
-
-
-import { TeamQueryDto } from '../dtos/teamId-query-dto';
+import { IMembers } from '@libs/organization/domain/teamMembers/interfaces/teamMembers.interface';
+import { CreateOrUpdateTeamMembersUseCase } from '@libs/organization/application/use-cases/teamMembers/create.use-case';
+import { GetTeamMembersUseCase } from '@libs/organization/application/use-cases/teamMembers/get-team-members.use-case';
+import { DeleteTeamMembersUseCase } from '@libs/organization/application/use-cases/teamMembers/delete.use-case';
 
 @Controller('team-members')
 export class TeamMembersController {
@@ -39,14 +35,24 @@ export class TeamMembersController {
 
     @Get('/')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Read, ResourceType.UserSettings))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.UserSettings,
+        }),
+    )
     public async getTeamMembers(@Query() query: TeamQueryDto) {
         return this.getTeamMembersUseCase.execute(query.teamId);
     }
 
     @Post('/')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Create, ResourceType.UserSettings))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Create,
+            resource: ResourceType.UserSettings,
+        }),
+    )
     public async createOrUpdateTeamMembers(
         @Body() body: { members: IMembers[]; teamId: string },
     ) {
@@ -58,7 +64,12 @@ export class TeamMembersController {
 
     @Delete('/:uuid')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Delete, ResourceType.UserSettings))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Delete,
+            resource: ResourceType.UserSettings,
+        }),
+    )
     public async deleteTeamMember(
         @Param('uuid') uuid: string,
         @Query('removeAll', new DefaultValuePipe(false), ParseBoolPipe)

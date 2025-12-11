@@ -93,7 +93,6 @@ import {
 import { GitCloneParams } from '@libs/platform/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
 import { IRepository } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
 import { createLogger } from '@kodus/flow';
-import { Workflow } from '@libs/platform/domain/platformIntegrations/types/codeManagement/workflow.type';
 
 interface GitHubAuthResponse {
     token: string;

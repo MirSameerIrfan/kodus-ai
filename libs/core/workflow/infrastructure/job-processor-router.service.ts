@@ -1,18 +1,26 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 
+import { IJobProcessorRouter } from '@libs/core/workflow/domain/contracts/job-processor-router.contract';
 import { IJobProcessorService } from '@libs/core/workflow/domain/contracts/job-processor.service.contract';
+import {
+    IWorkflowJobRepository,
+    WORKFLOW_JOB_REPOSITORY_TOKEN,
+} from '@libs/core/workflow/domain/contracts/workflow-job.repository.contract';
 import { WorkflowType } from '@libs/core/workflow/domain/enums/workflow-type.enum';
 
-import { WebhookProcessingJobProcessorService } from './webhook-processing-job-processor.service';
+import { WebhookProcessingJobProcessorService } from '@libs/automation/webhook-processing/webhook-processing-job.processor';
 import { CodeReviewJobProcessorService } from '@libs/code-review/workflow/code-review-job-processor.service';
 
 /**
  * Router that selects the correct job processor based on workflow type
  */
 @Injectable()
-export class JobProcessorRouterService implements IJobProcessorService {
+export class JobProcessorRouterService
+    implements IJobProcessorService, IJobProcessorRouter
+{
     constructor(
-        private readonly jobRepository: WorkflowJobRepository,
+        @Inject(WORKFLOW_JOB_REPOSITORY_TOKEN)
+        private readonly jobRepository: IWorkflowJobRepository,
         private readonly codeReviewProcessor: CodeReviewJobProcessorService,
         private readonly webhookProcessor: WebhookProcessingJobProcessorService,
     ) {}

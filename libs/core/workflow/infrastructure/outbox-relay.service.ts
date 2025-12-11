@@ -4,6 +4,9 @@ import { ObservabilityService } from '@libs/core/log/observability.service';
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
+import { OutboxMessageRepository } from './repositories/outbox-message.repository';
+import { OutboxMessageModel } from './repositories/schemas/outbox-message.model';
+
 @Injectable()
 export class OutboxRelayService implements OnModuleInit, OnModuleDestroy {
     private isProcessing = false;
@@ -85,9 +88,7 @@ export class OutboxRelayService implements OnModuleInit, OnModuleDestroy {
         }
     }
 
-    private async processMessage(
-        message: any, // OutboxMessageModel
-    ): Promise<void> {
+    private async processMessage(message: OutboxMessageModel): Promise<void> {
         return await this.observability.runInSpan(
             'workflow.outbox.publish',
             async (span) => {

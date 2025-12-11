@@ -13,9 +13,7 @@ import { CheckHasIntegrationByPlatformUseCase } from '@libs/integrations/applica
 import { CloneIntegrationUseCase } from '@libs/integrations/application/use-cases/clone-integration.use-case';
 import { GetConnectionsUseCase } from '@libs/integrations/application/use-cases/get-connections.use-case';
 import { GetOrganizationIdUseCase } from '@libs/integrations/application/use-cases/get-organization-id.use-case';
-
-
-import { TeamQueryDto } from '../../dtos/teamId-query.dto';
+import { TeamQueryDto } from 'src/dtos/teamId-query-dto';
 
 @Controller('integration')
 export class IntegrationController {
@@ -28,7 +26,12 @@ export class IntegrationController {
 
     @Post('/clone-integration')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Create, ResourceType.GitSettings))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Create,
+            resource: ResourceType.GitSettings,
+        }),
+    )
     public async cloneIntegration(
         @Body()
         body: {
@@ -42,14 +45,24 @@ export class IntegrationController {
 
     @Get('/check-connection-platform')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Read, ResourceType.GitSettings))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.GitSettings,
+        }),
+    )
     public async checkHasConnectionByPlatform(@Query() query: any) {
         return this.checkHasIntegrationByPlatformUseCase.execute(query);
     }
 
     @Get('/organization-id')
     @UseGuards(PolicyGuard)
-    @CheckPolicies(checkPermissions(Action.Read, ResourceType.GitSettings))
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.GitSettings,
+        }),
+    )
     public async getOrganizationId() {
         return this.getOrganizationIdUseCase.execute();
     }
@@ -57,7 +70,10 @@ export class IntegrationController {
     @Get('/connections')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Read, ResourceType.CodeReviewSettings),
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.CodeReviewSettings,
+        }),
     )
     public async getConnections(@Query() query: TeamQueryDto) {
         return this.getConnectionsUseCase.execute(query.teamId);

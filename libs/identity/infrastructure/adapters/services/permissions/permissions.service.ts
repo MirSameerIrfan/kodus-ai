@@ -1,11 +1,10 @@
-import { Inject, Injectable } from '@nestjs/common';
-
 import {
     IPermissionsRepository,
     PERMISSIONS_REPOSITORY_TOKEN,
 } from '@libs/identity/domain/permissions/contracts/permissions.repository.contract';
 import { IPermissionsService } from '@libs/identity/domain/permissions/contracts/permissions.service.contract';
 import { IPermissions } from '@libs/identity/domain/permissions/types/permissions.types';
+import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class PermissionsService implements IPermissionsService {

@@ -27,7 +27,6 @@ import {
     IPromptExternalReferenceManagerService,
     PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN,
 } from '@libs/ai-engine/domain/prompt/contracts/promptExternalReferenceManager.contract';
-import { CreateOrUpdateCodeReviewParameterDto } from '@libs/organization/infrastructure/http/dtos/create-or-update-code-review-parameter.dto';
 import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
 import { IntegrationConfigKey, ParametersKey } from '@libs/core/domain/enums';
 import {
@@ -56,6 +55,7 @@ import {
     resolveSourceTypeFromPath,
 } from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context.utils';
 import { CodeReviewVersion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { CreateOrUpdateCodeReviewParameterDto } from 'apps/api/src/dtos/create-or-update-code-review-parameter.dto';
 
 @Injectable()
 export class UpdateOrCreateCodeReviewParameterUseCase {

@@ -6,15 +6,14 @@ import { ProfileConfigModel } from '@libs/core/infrastructure/database/typeorm/s
 import { ProfileConfigService } from '@libs/identity/infrastructure/services/profileConfig.service';
 import { ProfilesModule } from '@libs/identity/modules/profileConfig.module';
 
-import { UsersModule } from './user.module';
+import { UserCoreModule } from '@libs/identity/modules/user-core.module';
 import { PROFILE_CONFIG_REPOSITORY_TOKEN } from '../domain/profile-configs/contracts/profileConfig.repository.contract';
 import { PROFILE_CONFIG_SERVICE_TOKEN } from '../domain/profile-configs/contracts/profileConfig.service.contract';
-
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([ProfileConfigModel]),
-        forwardRef(() => UsersModule),
+        forwardRef(() => UserCoreModule),
         forwardRef(() => ProfilesModule),
     ],
     providers: [

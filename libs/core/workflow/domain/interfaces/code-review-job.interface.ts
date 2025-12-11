@@ -2,6 +2,7 @@ import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 
 import { ErrorClassification } from '../enums/error-classification.enum';
 import { JobStatus } from '../enums/job-status.enum';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 
 export interface ICodeReviewJob {
     id: string;
@@ -11,8 +12,7 @@ export interface ICodeReviewJob {
     repositoryName: string;
     pullRequestNumber: number;
     pullRequestData: Record<string, unknown>;
-    organizationId: string;
-    teamId: string;
+    organizationAndTeam?: OrganizationAndTeamData;
     status: JobStatus;
     priority: number;
     retryCount: number;

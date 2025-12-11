@@ -9,6 +9,8 @@ import { TransactionalOutboxService } from './transactional-outbox.service';
 import { ObservabilityService } from '@libs/core/log/observability.service';
 import { createLogger } from '@kodus/flow';
 
+import { WorkflowJobRepository } from './repositories/workflow-job.repository';
+
 @Injectable()
 export class RabbitMQJobQueueService implements IJobQueueService {
     private readonly exchange = 'workflow.exchange';
@@ -50,11 +52,11 @@ export class RabbitMQJobQueueService implements IJobQueueService {
 
                         // 2. Salva mensagem no outbox (mesma transação)
                         await this.outboxService.saveInTransaction(manager, {
-                            jobId: jobToSave.id,
+                            jobId: jobToSave.uuid,
                             exchange: this.exchange,
                             routingKey: `${this.routingKey}.${job.workflowType.toLowerCase()}`,
                             payload: {
-                                jobId: jobToSave.id,
+                                jobId: jobToSave.uuid,
                                 correlationId: job.correlationId,
                                 workflowType: job.workflowType,
                                 handlerType: job.handlerType,
@@ -69,21 +71,21 @@ export class RabbitMQJobQueueService implements IJobQueueService {
                 );
 
                 span.setAttributes({
-                    'workflow.job.id': savedJob.id,
+                    'workflow.job.id': savedJob.uuid,
                 });
 
                 this.logger.log({
                     message: 'Workflow job enqueued via transactional outbox',
                     context: RabbitMQJobQueueService.name,
                     metadata: {
-                        jobId: savedJob.id,
+                        jobId: savedJob.uuid,
                         correlationId: job.correlationId,
                         workflowType: job.workflowType,
                         handlerType: job.handlerType,
                     },
                 });
 
-                return savedJob.id;
+                return savedJob.uuid;
             },
             {
                 'workflow.component': 'queue',

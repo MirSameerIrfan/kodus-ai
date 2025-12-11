@@ -9,11 +9,10 @@ import {
     PolicyGuard,
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
 import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
-import { GetOrganizationNameUseCase } from '@libs/organization/application/use-cases/get-organization-name.use-case';
-import { GetOrganizationsByDomainUseCase } from '@libs/organization/application/use-cases/get-organizations-domain.use-case';
-import { UpdateInfoOrganizationAndPhoneUseCase } from '@libs/organization/application/use-cases/update-infos.use-case';
-
-import { UpdateInfoOrganizationAndPhoneDto } from '../dtos/updateInfoOrgAndPhone.dto';
+import { UpdateInfoOrganizationAndPhoneDto } from 'src/dtos/updateInfoOrgAndPhone.dto';
+import { GetOrganizationNameUseCase } from '@libs/organization/application/use-cases/organization/get-organization-name';
+import { UpdateInfoOrganizationAndPhoneUseCase } from '@libs/organization/application/use-cases/organization/update-infos.use-case';
+import { GetOrganizationsByDomainUseCase } from '@libs/organization/application/use-cases/organization/get-organizations-domain.use-case';
 
 @Controller('organization')
 export class OrganizationController {
@@ -31,7 +30,10 @@ export class OrganizationController {
     @Patch('/update-infos')
     @UseGuards(PolicyGuard)
     @CheckPolicies(
-        checkPermissions(Action.Update, ResourceType.OrganizationSettings),
+        checkPermissions({
+            action: Action.Update,
+            resource: ResourceType.OrganizationSettings,
+        }),
     )
     public async updateInfoOrganizationAndPhone(
         @Body() body: UpdateInfoOrganizationAndPhoneDto,

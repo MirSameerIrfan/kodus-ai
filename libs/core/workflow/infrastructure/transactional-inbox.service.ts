@@ -2,6 +2,9 @@ import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 
+import { InboxMessageRepository } from './repositories/inbox-message.repository';
+import { InboxMessageModel } from './repositories/schemas/inbox-message.model';
+
 @Injectable()
 export class TransactionalInboxService {
     private readonly logger = createLogger(TransactionalInboxService.name);
@@ -68,5 +71,54 @@ export class TransactionalInboxService {
     async isProcessed(messageId: string): Promise<boolean> {
         const existing = await this.inboxRepository.findByMessageId(messageId);
         return existing !== null;
+    }
+
+    /**
+     * Check if message was already processed within a transaction
+     */
+    async isProcessedInTransaction(
+        manager: EntityManager,
+        messageId: string,
+        consumerId: string,
+    ): Promise<boolean> {
+        const existing = await manager.findOne(InboxMessageModel, {
+            where: { messageId, consumerId },
+        });
+        return existing !== null;
+    }
+
+    /**
+     * Mark message as processed within a transaction
+     */
+    async markAsProcessedInTransaction(
+        manager: EntityManager,
+        messageId: string,
+        consumerId: string,
+    ): Promise<void> {
+        const existing = await manager.findOne(InboxMessageModel, {
+            where: { messageId, consumerId },
+        });
+
+        if (existing) {
+            await manager.update(
+                InboxMessageModel,
+                { uuid: existing.uuid },
+                { processed: true, processedAt: new Date() },
+            );
+        } else {
+            const model = manager.create(InboxMessageModel, {
+                messageId,
+                consumerId,
+                processed: true,
+                processedAt: new Date(),
+            });
+            await manager.save(InboxMessageModel, model);
+        }
+
+        this.logger.debug({
+            message: 'Inbox message marked as processed in transaction',
+            context: TransactionalInboxService.name,
+            metadata: { messageId, consumerId },
+        });
     }
 }

@@ -5,20 +5,20 @@ import { PromptService } from '@libs/agents/infrastructure/services/prompt.servi
 import { AutomationStrategyModule } from '@libs/automation/modules/automationStrategy.module';
 import { TeamAutomationModule } from '@libs/automation/modules/teamAutomation.module';
 import { SaveCodeReviewFeedbackUseCase } from '@libs/code-review/application/use-cases/codeReviewFeedback/save-feedback.use-case';
-import { CodebaseModule } from '@libs/code-review/code-review.module';
+import { CodebaseCoreModule } from '@libs/code-review/modules/codebase-core.module';
 import { CodeReviewExecutionModule } from '@libs/code-review/modules/codeReviewExecution.module';
 import { CodeReviewFeedbackModule } from '@libs/code-review/modules/codeReviewFeedback.module';
-import { PullRequestsModule } from '@libs/code-review/modules/pull-requests.module';
+import { PullRequestsCoreModule } from '@libs/code-review/modules/pull-requests-core.module';
 import { AutomationModel } from '@libs/core/infrastructure/database/typeorm/schema/automation.model';
-import { IntegrationModule } from '@libs/integrations/integrations.module';
+import { IntegrationCoreModule } from '@libs/integrations/modules/integrations-core.module';
 import { AuthIntegrationModule } from '@libs/integrations/modules/authIntegration.module';
-import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
-import { OrganizationModule } from '@libs/organization/organization.module';
+import { IntegrationConfigCoreModule } from '@libs/integrations/modules/config-core.module';
+import { OrganizationCoreModule } from '@libs/organization/modules/organization-core.module';
 import { GithubModule } from '@libs/platform/modules/github.module';
-import { OrganizationParametersModule } from '@libs/organization/modules/org-parameters.module';
-import { ParametersModule } from '@libs/organization/modules/parameters.module';
-import { PlatformModule } from '@libs/platform/platform.module';
-import { TeamsModule } from '@libs/organization/modules/team.module';
+// import { OrganizationParametersModule } from '@libs/organization/modules/org-parameters.module';
+import { ParametersCoreModule } from '@libs/organization/modules/parameters-core.module';
+import { PlatformModule } from '@libs/platform/modules/platform.module';
+import { TeamCoreModule } from '@libs/organization/modules/team-core.module';
 import { AutomationExecutionModel } from '@libs/core/infrastructure/database/typeorm/schema/automationExecution.model';
 import { LicenseModule } from '@libs/ee/license/license.module';
 import { PermissionValidationModule } from '@libs/ee/shared/permission-validation.module';
@@ -39,20 +39,20 @@ import { AutomationExecutionRepository } from '@libs/core/infrastructure/databas
 @Module({
     imports: [
         TypeOrmModule.forFeature([AutomationModel, AutomationExecutionModel]),
-        forwardRef(() => TeamsModule),
+        forwardRef(() => TeamCoreModule),
         forwardRef(() => GithubModule),
         forwardRef(() => TeamAutomationModule),
         forwardRef(() => AutomationStrategyModule),
         forwardRef(() => PlatformModule),
-        forwardRef(() => IntegrationModule),
-        forwardRef(() => IntegrationConfigModule),
-        forwardRef(() => OrganizationModule),
+        forwardRef(() => IntegrationCoreModule),
+        forwardRef(() => IntegrationConfigCoreModule),
+        forwardRef(() => OrganizationCoreModule),
         forwardRef(() => AuthIntegrationModule),
-        forwardRef(() => ParametersModule),
+        forwardRef(() => ParametersCoreModule),
         forwardRef(() => CodeReviewFeedbackModule),
-        forwardRef(() => CodebaseModule),
-        forwardRef(() => PullRequestsModule),
-        forwardRef(() => OrganizationParametersModule),
+        forwardRef(() => CodebaseCoreModule),
+        forwardRef(() => PullRequestsCoreModule),
+        // forwardRef(() => OrganizationParametersModule),
         forwardRef(() => AuthIntegrationModule),
         forwardRef(() => LicenseModule),
         forwardRef(() => CodeReviewExecutionModule),

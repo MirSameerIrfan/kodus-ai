@@ -5,11 +5,9 @@ import {
     MergeRequestSchemaWithBasicLabels,
     RepositoryTreeSchema,
 } from '@gitbeaker/rest';
-import { LLMModelProvider, LLMProviderService } from '@kodus/kodus-common/llm';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import * as moment from 'moment-timezone';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
@@ -23,7 +21,6 @@ import {
     IntegrationCategory,
     IntegrationConfigKey,
     LanguageValue,
-    ParametersKey,
     PlatformType,
     PullRequestState,
 } from '@libs/core/domain/enums';
@@ -50,10 +47,8 @@ import {
     AUTH_INTEGRATION_SERVICE_TOKEN,
     IAuthIntegrationService,
 } from '@libs/integrations/domain/authIntegrations/contracts/auth-integration.service.contracts';
-import {
-    IParametersService,
-    PARAMETERS_SERVICE_TOKEN,
-} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+
+
 import { GitCloneParams } from '@libs/platform/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
 import {
     PullRequest,
@@ -68,7 +63,6 @@ import { AuthMode } from '@libs/platform/domain/platformIntegrations/enums/codeM
 import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
 import { CodeManagementConnectionStatus } from '@libs/common/utils/decorators/validate-code-management-integration.decorator';
 import { IntegrationEntity } from '@libs/integrations/domain/integrations/entities/integration.entity';
-import { safelyParseMessageContent } from '@libs/common/utils/safelyParseMessageContent';
 import { getSeverityLevelShield } from '@libs/common/utils/codeManagement/severityLevel';
 import { getCodeReviewBadge } from '@libs/common/utils/codeManagement/codeReviewBadge';
 import { getLabelShield } from '@libs/common/utils/codeManagement/labels';

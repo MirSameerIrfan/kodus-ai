@@ -1,3 +1,11 @@
+import {
+    KodyRuleSeverity,
+    KodyRulesExampleDto,
+} from '@libs/ee/kodyRules/dtos/create-kody-rule.dto';
+import {
+    KodyRulesOrigin,
+    KodyRulesStatus,
+} from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 import { Type } from 'class-transformer';
 import {
     IsOptional,
@@ -7,20 +15,6 @@ import {
     IsArray,
     ValidateNested,
 } from 'class-validator';
-
-import {
-    KodyRulesOrigin,
-    KodyRulesStatus,
-} from '@libs/kody-rules/domain/interfaces/kodyRules.interface';
-
-import { KodyRulesExampleDto } from './create-kody-rule.dto';
-
-export enum KodyRuleSeverity {
-    LOW = 'low',
-    MEDIUM = 'medium',
-    HIGH = 'high',
-    CRITICAL = 'critical',
-}
 
 export class DirectoryInfoDto {
     @IsNotEmpty()

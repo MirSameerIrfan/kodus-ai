@@ -7,12 +7,12 @@ import { CodeReviewExecutionService } from '@libs/code-review/infrastructure/exe
 import { CodeReviewExecutionRepository } from '@libs/code-review/infrastructure/repositories/codeReviewExecution.repository';
 import { CodeReviewExecutionModel } from '@libs/code-review/infrastructure/repositories/schemas/codeReviewExecution.model';
 
-import { PullRequestsModule } from './pullRequests.module';
+import { PullRequestsCoreModule } from './pull-requests-core.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([CodeReviewExecutionModel]),
-        forwardRef(() => PullRequestsModule),
+        forwardRef(() => PullRequestsCoreModule),
     ],
     providers: [
         {

@@ -12,7 +12,6 @@ import * as volleyball from 'volleyball';
 
 import { setupSentryAndOpenTelemetry } from '@libs/core/infrastructure/config/log/otel';
 import { HttpServerConfiguration } from '@libs/core/infrastructure/config/types/http/http-server.type';
-import { createLogger } from '@kodus/flow';
 
 import { ApiModule } from './api.module';
 

@@ -1,14 +1,10 @@
 import { createLogger } from '@kodus/flow';
-import { Controller, HttpStatus, Inject, Post, Req, Res } from '@nestjs/common';
+import { Controller, HttpStatus, Post, Req, Res } from '@nestjs/common';
 import { Response, Request } from 'express';
 
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
-import { validateWebhookToken } from '@libs/core/utils/webhooks/webhookTokenCrypto';
 import { EnqueueWebhookUseCase } from '@libs/platform/application/use-cases/webhook/enqueue-webhook.use-case';
-import {
-    WEBHOOK_LOG_SERVICE,
-    IWebhookLogService,
-} from '@libs/webhookLog/domain/webhook-log/contracts/webhook-log.service.contract';
+import { validateWebhookToken } from '@libs/common/utils/webhooks/webhookTokenCrypto';
 
 @Controller('azure-repos')
 export class AzureReposController {
@@ -16,8 +12,9 @@ export class AzureReposController {
 
     constructor(
         private readonly enqueueWebhookUseCase: EnqueueWebhookUseCase,
-        @Inject(WEBHOOK_LOG_SERVICE)
-        private readonly webhookLogService: IWebhookLogService,
+        // TODO
+        // @Inject(WEBHOOK_LOG_SERVICE)
+        // private readonly webhookLogService: IWebhookLogService,
     ) {}
 
     @Post('/webhook')
@@ -68,11 +65,11 @@ export class AzureReposController {
                         },
                     });
 
-                    this.webhookLogService.log(
-                        PlatformType.AZURE_REPOS,
-                        eventType,
-                        payload,
-                    );
+                    // this.webhookLogService.log(
+                    //     PlatformType.AZURE_REPOS,
+                    //     eventType,
+                    //     payload,
+                    // );
 
                     await this.enqueueWebhookUseCase.execute({
                         platformType: PlatformType.AZURE_REPOS,

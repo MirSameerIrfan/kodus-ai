@@ -11,12 +11,6 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 
-import { UserRequest } from '@/config/types/http/user-request.type';
-import { AcceptUserInvitationUseCase } from '@/core/application/use-cases/user/accept-user-invitation.use-case';
-import { CheckUserWithEmailUserUseCase } from '@/core/application/use-cases/user/check-user-email.use-case';
-import { GetUserUseCase } from '@/core/application/use-cases/user/get-user.use-case';
-import { JoinOrganizationUseCase } from '@/core/application/use-cases/user/join-organization.use-case';
-import { UpdateAnotherUserUseCase } from '@/core/application/use-cases/user/update-another.use-case';
 import {
     Action,
     ResourceType,
@@ -31,11 +25,16 @@ import { checkPermissions } from '@libs/identity/infrastructure/adapters/service
 import { AcceptUserInvitationDto } from '../dtos/accept-user-invitation.dto';
 import { JoinOrganizationDto } from '../dtos/join-organization.dto';
 import { UpdateAnotherUserDto } from '../dtos/update-another-user.dto';
+import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
+import { InviteDataUserUseCase } from '@libs/identity/application/use-cases/user/invite-data.use-case';
+import { AcceptUserInvitationUseCase } from '@libs/identity/application/use-cases/user/accept-user-invitation.use-case';
+import { CheckUserWithEmailUserUseCase } from '@libs/identity/application/use-cases/user/check-user-email.use-case';
+import { JoinOrganizationUseCase } from '@libs/identity/application/use-cases/user/join-organization.use-case';
+import { UpdateAnotherUserUseCase } from '@libs/identity/application/use-cases/user/update-another.use-case';
 
 @Controller('user')
 export class UsersController {
     constructor(
-        private readonly getUserUseCase: GetUserUseCase,
         private readonly inviteDataUserUseCase: InviteDataUserUseCase,
         private readonly acceptUserInvitationUseCase: AcceptUserInvitationUseCase,
         private readonly checkUserWithEmailUserUseCase: CheckUserWithEmailUserUseCase,
@@ -52,11 +51,6 @@ export class UsersController {
         email: string,
     ) {
         return await this.checkUserWithEmailUserUseCase.execute(email);
-    }
-
-    @Get('/info')
-    public async show() {
-        return await this.getUserUseCase.execute();
     }
 
     @Get('/invite')
