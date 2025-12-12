@@ -17,6 +17,7 @@ import {
 } from './infrastructure/adapters/repositories/schemas/dryRun.model';
 import { DryRunService } from './infrastructure/adapters/services/dryRun.service';
 import { InternalCodeManagementService } from './infrastructure/adapters/services/internalCodeManagement.service';
+import { DryRunCodeReviewPipelineStrategy } from './infrastructure/adapters/services/dry-run-cr-pipeline.strategy';
 
 @Module({
     imports: [
@@ -28,7 +29,7 @@ import { InternalCodeManagementService } from './infrastructure/adapters/service
         { provide: DRY_RUN_REPOSITORY_TOKEN, useClass: DryRunRepository },
         { provide: DRY_RUN_SERVICE_TOKEN, useClass: DryRunService },
         InternalCodeManagementService,
-        DryRunPipelineStrategy,
+        DryRunCodeReviewPipelineStrategy,
         ExecuteDryRunUseCase,
         GetDryRunUseCase,
         GetStatusDryRunUseCase,

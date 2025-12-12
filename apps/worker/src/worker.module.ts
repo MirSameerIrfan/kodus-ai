@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { AutomationModule } from '@libs/automation/modules/automation.module';
-import { CodebaseCoreModule } from '@libs/code-review/modules/codebase-core.module';
+import { CodebaseModule } from '@libs/code-review/modules/codebase.module';
 import { WorkflowModule } from '@libs/core/workflow/workflow.module';
 import { PlatformModule } from '@libs/platform/modules/platform.module';
 
@@ -31,7 +31,7 @@ import { SharedObservabilityModule } from '@libs/shared/infrastructure/shared-ob
         SharedMongoModule.forRoot(),
 
         WorkflowModule.register({ type: 'worker' }),
-        CodebaseCoreModule,
+        CodebaseModule,
         AutomationModule,
         PlatformModule,
     ],

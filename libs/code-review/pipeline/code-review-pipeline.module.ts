@@ -1,8 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 
-import { CodebaseModule } from '../code-review.module';
-
 // Stages
 import { ValidateNewCommitsStage } from './stages/validate-new-commits.stage';
 import { ResolveConfigStage } from './stages/resolve-config.stage';
@@ -30,6 +28,7 @@ import { KodyFineTuningStage } from '@libs/ee/codeReview/stages/kody-fine-tuning
 import { CodeAnalysisASTStage } from '@libs/ee/codeReview/stages/code-analysis-ast.stage';
 import { CodeAnalysisASTCleanupStage } from '@libs/ee/codeReview/stages/code-analysis-ast-cleanup.stage';
 import { CodeReviewPipelineStrategyEE } from '@libs/ee/codeReview/strategies/code-review-pipeline.strategy.ee';
+import { CodebaseModule } from '../modules/codebase.module';
 
 @Module({
     imports: [

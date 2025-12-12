@@ -2,30 +2,31 @@ import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { DeleteUserUseCase } from '@libs/identity/application/use-cases/user/delete.use-case';
-import { UserCoreModule } from '@libs/identity/modules/user-core.module';
 import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
 import { TeamMemberModel } from '../infrastructure/adapters/repositories/schemas/teamMember.model';
 import { TeamMemberService } from '../infrastructure/adapters/services/teamMembers.service';
 import { TeamMemberDatabaseRepository } from '../infrastructure/adapters/repositories/teamMember.repository';
 
-import { ParametersCoreModule } from './parameters-core.module';
-import { TeamCoreModule } from './team-core.module';
+import { PlatformModule } from '@libs/platform/modules/platform.module';
+import { ParametersModule } from './parameters.module';
 import { IntegrationModule } from '@libs/integrations/modules/integrations.module';
 import { CreateOrUpdateTeamMembersUseCase } from '../application/use-cases/teamMembers/create.use-case';
 import { GetTeamMembersUseCase } from '../application/use-cases/teamMembers/get-team-members.use-case';
 import { DeleteTeamMembersUseCase } from '../application/use-cases/teamMembers/delete.use-case';
 import { TEAM_MEMBERS_SERVICE_TOKEN } from '../domain/teamMembers/contracts/teamMembers.service.contracts';
 import { TEAM_MEMBERS_REPOSITORY_TOKEN } from '../domain/teamMembers/contracts/teamMembers.repository.contracts';
+import { UserModule } from '@libs/identity/modules/user.module';
+import { TeamModule } from './team.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([TeamMemberModel]),
-        forwardRef(() => PlatformIntegrationModule),
-        forwardRef(() => TeamCoreModule),
+        forwardRef(() => PlatformModule),
+        forwardRef(() => TeamModule),
         forwardRef(() => IntegrationModule),
         forwardRef(() => IntegrationConfigModule),
-        forwardRef(() => UserCoreModule),
-        forwardRef(() => ParametersCoreModule),
+        forwardRef(() => UserModule),
+        forwardRef(() => ParametersModule),
     ],
     providers: [
         CreateOrUpdateTeamMembersUseCase,

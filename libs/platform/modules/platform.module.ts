@@ -7,7 +7,7 @@ import { IntegrationCoreModule } from '@libs/integrations/modules/integrations-c
 import { GithubModule } from './github.module';
 import { GitlabModule } from './gitlab.module';
 import { BitbucketModule } from './bitbucket.module';
-// MISSING
+import { AzureReposModule } from './azure-repos.module';
 
 import { PlatformIntegrationFactory } from '../infrastructure/adapters/services/platformIntegration.factory';
 import { CodeManagementService } from '../infrastructure/adapters/services/codeManagement.service';
@@ -20,7 +20,7 @@ import { CodeManagementService } from '../infrastructure/adapters/services/codeM
         GithubModule,
         GitlabModule,
         BitbucketModule,
-        // AzureReposModule,
+        AzureReposModule,
     ],
     providers: [PlatformIntegrationFactory, CodeManagementService],
     exports: [PlatformIntegrationFactory, CodeManagementService],

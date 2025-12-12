@@ -6,6 +6,7 @@ import { IntegrationModel } from '../infrastructure/adapters/repositories/schema
 import { ProfileConfigModule } from '@libs/identity/modules/profileConfig.module';
 import { AuthIntegrationModule } from '@libs/integrations/modules/authIntegration.module';
 import { IntegrationConfigCoreModule } from './config-core.module';
+import { PlatformModule } from '@libs/platform/modules/platform.module';
 
 import { INTEGRATION_REPOSITORY_TOKEN } from '../domain/integrations/contracts/integration.repository.contracts';
 import { INTEGRATION_SERVICE_TOKEN } from '../domain/integrations/contracts/integration.service.contracts';
@@ -30,7 +31,7 @@ const UseCases = [
     imports: [
         TypeOrmModule.forFeature([IntegrationModel]),
         forwardRef(() => IntegrationConfigCoreModule),
-        forwardRef(() => PlatformIntegrationModule),
+        forwardRef(() => PlatformModule),
         forwardRef(() => ProfileConfigModule),
         AuthIntegrationModule,
     ],

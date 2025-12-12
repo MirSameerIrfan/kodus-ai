@@ -1,6 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 
-import { CodebaseModule } from '@libs/code-review/code-review.module';
+import { CodebaseModule } from '@libs/code-review/modules/codebase.module';
 import { FILE_REVIEW_CONTEXT_PREPARATION_PROVIDER } from '@libs/core/providers/file-analyzer.provider.ee';
 import { FILE_REVIEW_CONTEXT_PREPARATION_TOKEN } from '@libs/core/domain/interfaces/file-review-context-preparation.interface';
 import { FileReviewContextPreparation } from './file-review-context-preparation.service';

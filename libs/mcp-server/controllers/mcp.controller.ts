@@ -1,5 +1,3 @@
-import { createLogger } from '@kodus/flow';
-import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import {
     Controller,
     Post,
@@ -12,14 +10,15 @@ import {
     UseGuards,
     Inject,
 } from '@nestjs/common';
-import { REQUEST } from '@nestjs/core';
 import { Response, Request } from 'express';
-
-import { McpEnabledGuard } from '../guards/mcp-enabled.guard';
-import { MCPManagerService } from '../services/mcp-manager.service';
 import { McpServerService } from '../services/mcp-server.service';
-import { JsonRpcCode } from '../utils/errors';
+import { McpEnabledGuard } from '../guards/mcp-enabled.guard';
+import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
+import { MCPManagerService } from '../services/mcp-manager.service';
+import { REQUEST } from '@nestjs/core';
 import { toJsonRpcError } from '../utils/serialize';
+import { JsonRpcCode } from '../utils/errors';
+import { createLogger } from '@kodus/flow';
 
 function getJsonRpcId(body: any): string | number | null {
     return body && (typeof body.id === 'string' || typeof body.id === 'number')
@@ -36,6 +35,7 @@ function accepts(req: Request, mime: string) {
 @UseGuards(McpEnabledGuard)
 export class McpController {
     private readonly logger = createLogger(McpController.name);
+
     constructor(
         private readonly mcpServerService: McpServerService,
         private readonly mcpManagerService: MCPManagerService,

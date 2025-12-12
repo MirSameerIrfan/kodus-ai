@@ -357,9 +357,9 @@ export class IntegrationConfigRepository implements IIntegrationConfigRepository
                         integration: {
                             organization: {
                                 uuid: organizationAndTeamData.organizationId,
-                            },
-                        },
-                        team: { uuid: organizationAndTeamData.teamId },
+                            } as any,
+                        } as any,
+                        team: { uuid: organizationAndTeamData.teamId } as any,
                     },
                     relations: [
                         'integration',

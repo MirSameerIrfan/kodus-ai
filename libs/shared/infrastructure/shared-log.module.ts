@@ -1,8 +1,9 @@
 import { Global, Module } from '@nestjs/common';
-
-// Currently, logging is handled by ObservabilityService and @kodus/flow.
-// This module is a placeholder for future logging-specific configuration if needed.
+import { KodusLoggerService } from '@libs/core/log/kodus-logger.service';
 
 @Global()
-@Module({})
+@Module({
+    providers: [KodusLoggerService],
+    exports: [KodusLoggerService],
+})
 export class SharedLogModule {}

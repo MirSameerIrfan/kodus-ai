@@ -12,6 +12,7 @@ import * as volleyball from 'volleyball';
 
 import { setupSentryAndOpenTelemetry } from '@libs/core/infrastructure/config/log/otel';
 import { HttpServerConfiguration } from '@libs/core/infrastructure/config/types/http/http-server.type';
+import { KodusLoggerService } from '@libs/core/log/kodus-logger.service';
 
 import { ApiModule } from './api.module';
 
@@ -26,8 +27,8 @@ async function bootstrap() {
         snapshot: true,
     });
 
-    const pinoLogger = app.get(PinoLoggerService);
-    app.useLogger(pinoLogger);
+    const logger = app.get(KodusLoggerService);
+    app.useLogger(logger);
 
     const configService: ConfigService = app.get(ConfigService);
     const config = configService.get<HttpServerConfiguration>('server');
@@ -62,7 +63,7 @@ async function bootstrap() {
     );
 
     process.on('uncaughtException', (error) => {
-        pinoLogger.error({
+        logger.error({
             message: `Uncaught Exception: ${error.message}`,
             context: 'GlobalExceptionHandler',
             error,
@@ -70,7 +71,7 @@ async function bootstrap() {
     });
 
     process.on('unhandledRejection', (reason: any) => {
-        pinoLogger.error({
+        logger.error({
             message: `Unhandled Rejection: ${reason?.message || reason}`,
             context: 'GlobalExceptionHandler',
             error: reason instanceof Error ? reason : new Error(String(reason)),
@@ -87,7 +88,7 @@ async function bootstrap() {
         : port;
 
     console.log(
-        `[BOOT] - API REST running in ${environment.API_CLOUD_MODE ? 'CLOUD' : 'SELF-HOSTED'} mode`,
+        `[BOOT] - API REST running in ${process.env.API_CLOUD_MODE ? 'CLOUD' : 'SELF-HOSTED'} mode`,
     );
     await app.listen(apiPort, host, () => {
         console.log(

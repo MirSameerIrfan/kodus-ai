@@ -13,7 +13,6 @@ import {
     IUsersService,
 } from '@libs/identity/domain/user/contracts/user.service.contract';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
-import { SignUpDTO } from '@libs/identity/infrastructure/http/dtos/create-user-organization.dto';
 import {
     ORGANIZATION_SERVICE_TOKEN,
     IOrganizationService,
@@ -32,6 +31,7 @@ import { TeamMemberRole } from '@libs/organization/domain/teamMembers/enums/team
 
 import { CreateProfileUseCase } from '../profile/create.use-case';
 import { CreateTeamUseCase } from '@libs/organization/application/use-cases/team/create.use-case';
+import { SignUpDTO } from 'apps/api/src/dtos/create-user-organization.dto';
 
 @Injectable()
 export class SignUpUseCase implements IUseCase {

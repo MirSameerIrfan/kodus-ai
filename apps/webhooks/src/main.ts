@@ -10,8 +10,10 @@ import helmet from 'helmet';
 import * as volleyball from 'volleyball';
 
 import { HttpServerConfiguration } from '@libs/core/infrastructure/config/types';
+import { KodusLoggerService } from '@libs/core/log/kodus-logger.service';
 
 import { WebhookHandlerModule } from './modules/webhook-handler.module';
+import { environment } from '@libs/ee/configs/environment';
 
 async function bootstrap() {
     process.env.COMPONENT_TYPE = 'webhook';
@@ -26,8 +28,8 @@ async function bootstrap() {
         },
     );
 
-    const pinoLogger = app.get(PinoLoggerService);
-    app.useLogger(pinoLogger);
+    const logger = app.get(KodusLoggerService);
+    app.useLogger(logger);
 
     const configService: ConfigService = app.get(ConfigService);
     const config = configService.get<HttpServerConfiguration>('server');
@@ -69,7 +71,7 @@ async function bootstrap() {
     );
 
     process.on('uncaughtException', (error) => {
-        pinoLogger.error({
+        logger.error({
             message: `Uncaught Exception: ${error.message}`,
             context: 'WebhookHandlerGlobalExceptionHandler',
             error,
@@ -77,7 +79,7 @@ async function bootstrap() {
     });
 
     process.on('unhandledRejection', (reason: any) => {
-        pinoLogger.error({
+        logger.error({
             message: `Unhandled Rejection: ${reason?.message || reason}`,
             context: 'WebhookHandlerGlobalExceptionHandler',
             error: reason instanceof Error ? reason : new Error(String(reason)),
@@ -89,20 +91,20 @@ async function bootstrap() {
 
     // Graceful shutdown
     const shutdown = async (signal: string) => {
-        pinoLogger.log({
+        logger.log({
             message: `Received ${signal}, shutting down gracefully...`,
             context: 'WebhookHandlerShutdown',
         });
 
         try {
             await app.close();
-            pinoLogger.log({
+            logger.log({
                 message: 'Webhook handler shutdown complete',
                 context: 'WebhookHandlerShutdown',
             });
             process.exit(0);
         } catch (error) {
-            pinoLogger.error({
+            logger.error({
                 message: 'Error during webhook handler shutdown',
                 context: 'WebhookHandlerShutdown',
                 error,

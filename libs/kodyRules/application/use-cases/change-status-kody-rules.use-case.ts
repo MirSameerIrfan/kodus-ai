@@ -42,6 +42,7 @@ export class ChangeStatusKodyRulesUseCase {
 
             for (const ruleId of ruleIds) {
                 const rule = rules.find((r) => r.uuid === ruleId);
+
                 if (!rule) {
                     throw new Error(`Rule not found: ${ruleId}`);
                 }

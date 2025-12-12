@@ -9,7 +9,7 @@ import { RabbitmqConsumeErrorFilter } from '@libs/core/infrastructure/filters/ra
 import { CodeReviewFeedbackConsumer } from '@libs/core/infrastructure/queue/messageBroker/consumers/codeReviewFeedback.consumer';
 import { MessageBrokerService } from '@libs/core/infrastructure/queue/messageBroker/messageBroker.service';
 
-import { AutomationStrategyModule } from '@libs/automation/modules/automationStrategy.module';
+import { AutomationModule } from '@libs/automation/modules/automation.module';
 import { CodeReviewFeedbackModule } from '@libs/code-review/modules/codeReviewFeedback.module';
 
 @Global()
@@ -20,7 +20,7 @@ export class RabbitMQWrapperModule {
             ConfigModule.forRoot(),
             ConfigModule.forFeature(RabbitMQLoader),
             CodeReviewFeedbackModule,
-            AutomationStrategyModule,
+            AutomationModule,
         ];
 
         const providers: Provider[] = [

@@ -1,20 +1,17 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { ProfileConfigRepository } from '@libs/core/infrastructure/database/typeorm/repositories/profileConfig.repository';
-import { ProfileConfigModel } from '@libs/core/infrastructure/database/typeorm/schema/profileConfig.model';
-import { ProfileConfigService } from '@libs/identity/infrastructure/services/profileConfig.service';
-import { ProfilesModule } from '@libs/identity/modules/profileConfig.module';
-
-import { UserCoreModule } from '@libs/identity/modules/user-core.module';
 import { PROFILE_CONFIG_REPOSITORY_TOKEN } from '../domain/profile-configs/contracts/profileConfig.repository.contract';
 import { PROFILE_CONFIG_SERVICE_TOKEN } from '../domain/profile-configs/contracts/profileConfig.service.contract';
+import { ProfileConfigModel } from '../infrastructure/adapters/repositories/schemas/profileConfig.model';
+import { UserModule } from './user.module';
+import { ProfileConfigService } from '../infrastructure/adapters/services/profileConfig.service';
+import { ProfileConfigRepository } from '../infrastructure/adapters/repositories/profileConfig.repository';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([ProfileConfigModel]),
-        forwardRef(() => UserCoreModule),
-        forwardRef(() => ProfilesModule),
+        forwardRef(() => UserModule),
     ],
     providers: [
         {

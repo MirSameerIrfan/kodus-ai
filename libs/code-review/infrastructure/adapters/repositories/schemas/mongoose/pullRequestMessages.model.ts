@@ -91,3 +91,8 @@ PullRequestMessagesSchema.index(
     { organizationId: 1, repositoryId: 1, directoryId: 1, configLevel: 1 },
     { name: 'idx_org_repo_dir_config_level', background: true },
 );
+
+export const PullRequestMessagesModelInstance = {
+    name: PullRequestMessagesModel.name,
+    schema: PullRequestMessagesSchema,
+};

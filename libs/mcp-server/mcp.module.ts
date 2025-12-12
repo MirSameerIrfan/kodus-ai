@@ -1,17 +1,17 @@
 import { DynamicModule, Module, Provider, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
-
-import { PullRequestsModule } from '@libs/code-review/modules/pull-requests.module';
-import { IssuesModule } from '@libs/issues/issues.module';
-
 import { McpController } from './controllers/mcp.controller';
 import { McpEnabledGuard } from './guards/mcp-enabled.guard';
 import { MCPManagerService } from './services/mcp-manager.service';
 import { McpServerService } from './services/mcp-server.service';
-import { CodeManagementTools, KodyIssuesTools, KodyRulesTools } from './tools';
+import { CodeManagementTools, KodyRulesTools } from './tools';
+import { KodyIssuesTools } from './tools/kodyIssues.tools';
 import { PermissionValidationModule } from '@libs/ee/shared/permission-validation.module';
-import { KodyRulesModule } from '@libs/kodyRules/kody-rules.module';
+import { KodyRulesModule } from '@libs/kodyRules/modules/kodyRules.module';
+import { PlatformModule } from '@libs/platform/modules/platform.module';
+import { IssuesModule } from '@libs/issues/issues.module';
+import { PullRequestsModule } from '@libs/code-review/modules/pull-requests.module';
 
 @Module({})
 export class McpModule {
@@ -38,7 +38,7 @@ export class McpModule {
 
         if (isEnabled) {
             imports.push(
-                forwardRef(() => PlatformIntegrationModule),
+                forwardRef(() => PlatformModule),
                 forwardRef(() => KodyRulesModule),
                 forwardRef(() => IssuesModule),
                 forwardRef(() => PullRequestsModule),

@@ -29,7 +29,7 @@ import { REQUEST } from '@nestjs/core';
 import {
     TokenPricingQueryDto,
     TokenUsageQueryDto,
-} from 'src/dtos/token-usage.dto';
+} from '../dtos/token-usage.dto';
 
 @Controller({ path: 'usage', scope: Scope.REQUEST })
 export class TokenUsageController {

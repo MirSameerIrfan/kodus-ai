@@ -13,6 +13,9 @@ import { PlatformModule } from './platform.module';
 import { OrganizationModule } from '@libs/organization/modules/organization.module';
 import { PermissionValidationModule } from '@libs/ee/shared/permission-validation.module';
 import { AutomationModule } from '@libs/automation/modules/automation.module';
+import { AzureReposService } from '../infrastructure/adapters/services/azureRepos/azureRepos.service';
+import { AzureReposPullRequestHandler } from '../infrastructure/webhooks/azure/azureReposPullRequest.handler';
+import { IssuesModule } from '@libs/issues/issues.module';
 import { UserModule } from '@libs/identity/modules/user.module';
 
 @Module({
@@ -31,6 +34,9 @@ import { UserModule } from '@libs/identity/modules/user.module';
         forwardRef(() => CodebaseModule),
         forwardRef(() => LicenseModule),
         forwardRef(() => PermissionValidationModule),
+        forwardRef(() => IssuesModule),
     ],
+    providers: [AzureReposService, AzureReposPullRequestHandler],
+    exports: [AzureReposService, AzureReposPullRequestHandler],
 })
-export class GithubModule {}
+export class AzureReposModule {}

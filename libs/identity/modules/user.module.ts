@@ -1,18 +1,48 @@
-import { Module } from '@nestjs/common';
-import { UsersController } from 'apps/api/src/controllers/user.controller';
-import { UserCoreModule } from './user-core.module';
-import { AuthCoreModule } from './auth-core.module'; // Might be needed for guards/decorators used in Controller
+import { Module, forwardRef } from '@nestjs/common';
+
+import { CodeReviewSettingsLogModule } from '@libs/ee/codeReviewSettingsLog/codeReviewSettingsLog.module';
+import { AuthModule } from './auth.module'; // Import Core module
+import { TeamMembersModule } from '@libs/organization/modules/teamMembers.module';
+
+import { PASSWORD_SERVICE_TOKEN } from '../domain/user/contracts/password.service.contract';
+import { USER_REPOSITORY_TOKEN } from '../domain/user/contracts/user.repository.contract';
+import { USER_SERVICE_TOKEN } from '../domain/user/contracts/user.service.contract';
+import { UseCases } from '../application/use-cases/user'; // Fixed import
+import { OrganizationModule } from '@libs/organization/modules/organization.module';
+import { UsersService } from '../infrastructure/adapters/services/users.service';
+import { BcryptService } from '../infrastructure/adapters/services/bcrypt.service';
+import { ProfileConfigModule } from './profileConfig.module';
+import { TeamModule } from '@libs/organization/modules/team.module';
+import { UserDatabaseRepository } from '../infrastructure/adapters/repositories/user.repository';
 
 @Module({
     imports: [
-        UserCoreModule,
-        // Often controllers need Auth guards which might depend on AuthModule/JwtModule
-        // But if guards are global or provided by AuthModule, we might need it here.
-        // Assuming UsersController needs AuthModule (e.g. for @UseGuards(JwtAuthGuard))
-        AuthCoreModule,
+        AuthModule,
+        forwardRef(() => ProfileConfigModule),
+        forwardRef(() => TeamModule),
+        forwardRef(() => TeamMembersModule),
+        forwardRef(() => OrganizationModule),
+        forwardRef(() => CodeReviewSettingsLogModule),
     ],
-    controllers: [UsersController],
-    providers: [], // No providers here, they are in Core
-    exports: [], // No exports needed usually, unless other Http modules need to import this (rare)
+    providers: [
+        ...UseCases,
+        {
+            provide: USER_REPOSITORY_TOKEN,
+            useClass: UserDatabaseRepository,
+        },
+        {
+            provide: USER_SERVICE_TOKEN,
+            useClass: UsersService,
+        },
+        {
+            provide: PASSWORD_SERVICE_TOKEN,
+            useClass: BcryptService,
+        },
+    ],
+    exports: [
+        USER_REPOSITORY_TOKEN,
+        USER_SERVICE_TOKEN,
+        PASSWORD_SERVICE_TOKEN,
+    ],
 })
-export class UsersModule {}
+export class UserModule {}

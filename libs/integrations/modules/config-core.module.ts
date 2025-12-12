@@ -1,13 +1,13 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { UseCasesIntegrationConfig } from '@libs/core/application/use-cases/integrations';
-import { INTEGRATION_CONFIG_REPOSITORY_TOKEN } from '@libs/core/domain/integrationConfigs/contracts/integration-config.repository.contracts';
-import { INTEGRATION_CONFIG_SERVICE_TOKEN } from '@libs/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { IntegrationConfigRepository } from '@libs/core/infrastructure/adapters/repositories/typeorm/integrationConfig.repository';
-import { IntegrationConfigModel } from '@libs/core/infrastructure/adapters/repositories/typeorm/schema/integrationConfig.model';
-import { IntegrationConfigService } from '@libs/core/infrastructure/adapters/services/integrations/integrationConfig.service';
+import { GetIntegrationConfigsByIntegrationCategoryUseCase } from '../application/use-cases/integrationConfig/getIntegrationConfigsByIntegrationCategory.use-case';
 import { IntegrationCoreModule } from './integrations-core.module';
+import { IntegrationConfigModel } from '../infrastructure/adapters/repositories/schemas/integrationConfig.model';
+import { INTEGRATION_CONFIG_SERVICE_TOKEN } from '../domain/integrationConfigs/contracts/integration-config.service.contracts';
+import { IntegrationConfigService } from '../infrastructure/adapters/services/integrationConfig.service';
+import { INTEGRATION_CONFIG_REPOSITORY_TOKEN } from '../domain/integrationConfigs/contracts/integration-config.repository.contracts';
+import { IntegrationConfigRepository } from '../infrastructure/adapters/repositories/integrationConfig.repository';
 
 @Module({
     imports: [
@@ -15,7 +15,7 @@ import { IntegrationCoreModule } from './integrations-core.module';
         forwardRef(() => IntegrationCoreModule),
     ],
     providers: [
-        ...UseCasesIntegrationConfig,
+        GetIntegrationConfigsByIntegrationCategoryUseCase,
         {
             provide: INTEGRATION_CONFIG_SERVICE_TOKEN,
             useClass: IntegrationConfigService,

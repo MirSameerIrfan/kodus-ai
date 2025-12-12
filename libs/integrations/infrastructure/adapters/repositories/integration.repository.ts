@@ -270,10 +270,10 @@ export class IntegrationRepository implements IIntegrationRepository {
                 where: {
                     organization: {
                         uuid: organizationAndTeamData?.organizationId,
-                    },
+                    } as any,
                     team: {
                         uuid: organizationAndTeamData?.teamId,
-                    },
+                    } as any,
                     platform: platform,
                 },
                 relations: ['authIntegration', 'integrationConfigs'],

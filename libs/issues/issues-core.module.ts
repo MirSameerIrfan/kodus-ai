@@ -17,15 +17,15 @@ import {
 } from './infrastructure/adapters/repositories/schemas/issues.model';
 import { PullRequestsModule } from '@libs/code-review/modules/pull-requests.module';
 import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
-import { ParametersCoreModule } from '@libs/organization/modules/parameters-core.module';
+import { ParametersModule } from '@libs/organization/modules/parameters.module';
 import { CodeReviewFeedbackModule } from '@libs/code-review/modules/codeReviewFeedback.module';
-import { CodebaseModule } from '@libs/code-review/code-review.module';
-import { UserCoreModule } from '@libs/identity/modules/user-core.module';
-import { OrganizationCoreModule } from '@libs/organization/modules/organization-core.module';
+import { CodebaseModule } from '@libs/code-review/modules/codebase.module';
+import { OrganizationModule } from '@libs/organization/modules/organization.module';
 import { GlobalCacheModule } from '@libs/core/cache/cache.module';
 import { LicenseModule } from '@libs/ee/license/license.module';
 import { PermissionValidationModule } from '@libs/ee/shared/permission-validation.module';
 import { IssuesService } from './infrastructure/adapters/service/issues.service';
+import { UserModule } from '@libs/identity/modules/user.module';
 
 @Module({
     imports: [
@@ -37,11 +37,11 @@ import { IssuesService } from './infrastructure/adapters/service/issues.service'
         ]),
         forwardRef(() => PullRequestsModule),
         forwardRef(() => IntegrationConfigModule),
-        forwardRef(() => ParametersCoreModule),
+        forwardRef(() => ParametersModule),
         forwardRef(() => CodeReviewFeedbackModule),
         forwardRef(() => CodebaseModule),
-        forwardRef(() => UserCoreModule),
-        forwardRef(() => OrganizationCoreModule),
+        forwardRef(() => UserModule),
+        forwardRef(() => OrganizationModule),
         GlobalCacheModule,
         forwardRef(() => LicenseModule),
         forwardRef(() => PermissionValidationModule),

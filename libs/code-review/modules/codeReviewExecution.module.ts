@@ -1,18 +1,17 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { CODE_REVIEW_EXECUTION_REPOSITORY } from '@libs/code-review/domain/executions/contracts/codeReviewExecution.repository.contract';
-import { CODE_REVIEW_EXECUTION_SERVICE } from '@libs/code-review/domain/executions/contracts/codeReviewExecution.service.contract';
-import { CodeReviewExecutionService } from '@libs/code-review/infrastructure/execution/codeReviewExecution.service';
-import { CodeReviewExecutionRepository } from '@libs/code-review/infrastructure/repositories/codeReviewExecution.repository';
-import { CodeReviewExecutionModel } from '@libs/code-review/infrastructure/repositories/schemas/codeReviewExecution.model';
-
-import { PullRequestsCoreModule } from './pull-requests-core.module';
+import { CodeReviewExecutionModel } from '@libs/automation/infrastructure/adapters/repositories/schemas/codeReviewExecution.model';
+import { CODE_REVIEW_EXECUTION_SERVICE } from '@libs/automation/domain/codeReviewExecutions/contracts/codeReviewExecution.service.contract';
+import { CodeReviewExecutionService } from '@libs/automation/infrastructure/adapters/services/codeReviewExecution.service';
+import { CODE_REVIEW_EXECUTION_REPOSITORY } from '@libs/automation/domain/codeReviewExecutions/contracts/codeReviewExecution.repository.contract';
+import { CodeReviewExecutionRepository } from '@libs/automation/infrastructure/adapters/repositories/codeReviewExecution.repository';
+import { PullRequestsModule } from './pull-requests.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([CodeReviewExecutionModel]),
-        forwardRef(() => PullRequestsCoreModule),
+        forwardRef(() => PullRequestsModule),
     ],
     providers: [
         {

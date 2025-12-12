@@ -131,7 +131,7 @@ export class WorkflowModule {
                     OutboxMessageModel,
                     InboxMessageModel,
                 ]),
-                RabbitMQModule.forRoot(RabbitMQModule, {
+                RabbitMQModule.forRoot({
                     exchanges: [
                         {
                             name: 'workflow.events',
