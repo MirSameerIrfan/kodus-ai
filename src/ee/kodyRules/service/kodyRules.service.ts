@@ -53,7 +53,11 @@ import {
 import { PromptRunnerService } from '@kodus/kodus-common/llm';
 import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
 import { BYOKPromptRunnerService } from '@/shared/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { LLMModelProvider, ParserType, PromptRole } from '@kodus/kodus-common/llm';
+import {
+    LLMModelProvider,
+    ParserType,
+    PromptRole,
+} from '@kodus/kodus-common/llm';
 import { kodyRulesRecommendationSchema } from '@/shared/utils/langchainCommon/prompts/kodyRulesRecommendation';
 import { PermissionValidationService } from '@/ee/shared/services/permissionValidation.service';
 
@@ -956,17 +960,19 @@ export class KodyRulesService implements IKodyRulesService {
 
             const installedMCPs = mcpConnections.map((conn) => conn.appName);
 
-            const eligibleRules = (libraryKodyRules as LibraryKodyRule[]).filter(
-                (rule) => {
-                    if (!rule.required_mcps || rule.required_mcps.length === 0) {
-                        return false;
-                    }
+            const eligibleRules = (
+                libraryKodyRules as LibraryKodyRule[]
+            ).filter((rule) => {
+                if (!rule.required_mcps || rule.required_mcps.length === 0) {
+                    return false;
+                }
 
-                    return rule.required_mcps.some((mcp) =>
-                        installedMCPs.includes(mcp),
-                    );
-                },
-            );
+                return rule.required_mcps.some((mcp) =>
+                    installedMCPs.some((installedMCP) =>
+                        installedMCP.toLowerCase().includes(mcp.toLowerCase()),
+                    ),
+                );
+            });
 
             return eligibleRules;
         } catch (error) {
@@ -988,11 +994,12 @@ export class KodyRulesService implements IKodyRulesService {
         repoLanguage?: string,
     ): Promise<LibraryKodyRule[]> {
         try {
-            const recentPRs = await this.pullRequestsRepository.findRecentByRepositoryId(
-                organizationAndTeamData.organizationId,
-                repositoryId,
-                10,
-            );
+            const recentPRs =
+                await this.pullRequestsRepository.findRecentByRepositoryId(
+                    organizationAndTeamData.organizationId,
+                    repositoryId,
+                    10,
+                );
 
             if (!recentPRs || recentPRs.length === 0) {
                 this.logger.log({
@@ -1009,14 +1016,19 @@ export class KodyRulesService implements IKodyRulesService {
             const allSuggestions = recentPRs
                 .flatMap((pr) => {
                     const prObj = pr.toObject();
-                    return prObj.files?.flatMap((file) => 
-                        file.suggestions?.map((suggestion) => ({
-                            label: suggestion.label,
-                            severity: suggestion.severity,
-                            suggestionContent: suggestion.suggestionContent,
-                            oneSentenceSummary: suggestion.oneSentenceSummary,
-                        })) || []
-                    ) || [];
+                    return (
+                        prObj.files?.flatMap(
+                            (file) =>
+                                file.suggestions?.map((suggestion) => ({
+                                    label: suggestion.label,
+                                    severity: suggestion.severity,
+                                    suggestionContent:
+                                        suggestion.suggestionContent,
+                                    oneSentenceSummary:
+                                        suggestion.oneSentenceSummary,
+                                })) || [],
+                        ) || []
+                    );
                 })
                 .filter(Boolean)
                 .slice(0, 50);
@@ -1035,8 +1047,13 @@ export class KodyRulesService implements IKodyRulesService {
 
             const filteredLibrary = (libraryKodyRules as LibraryKodyRule[])
                 .filter((rule) => {
-                    if (!repoLanguage) return !rule.language || rule.language === '';
-                    return !rule.language || rule.language === '' || rule.language === repoLanguage;
+                    if (!repoLanguage)
+                        return !rule.language || rule.language === '';
+                    return (
+                        !rule.language ||
+                        rule.language === '' ||
+                        rule.language === repoLanguage
+                    );
                 })
                 .map((rule) => ({
                     uuid: rule.uuid,
@@ -1046,9 +1063,10 @@ export class KodyRulesService implements IKodyRulesService {
                     severity: rule.severity,
                 }));
 
-            const byokConfigValue = await this.permissionValidationService.getBYOKConfig(
-                organizationAndTeamData,
-            );
+            const byokConfigValue =
+                await this.permissionValidationService.getBYOKConfig(
+                    organizationAndTeamData,
+                );
 
             const mainProvider = LLMModelProvider.GROQ_MOONSHOTAI_KIMI_K2_;
             const mainFallback = LLMModelProvider.GROQ_GPT_OSS_120B;
@@ -1120,13 +1138,15 @@ Analyze the suggestions and recommend the most relevant rules.`;
                             kodyRulesRecommendationSchema,
                             {
                                 provider: LLMModelProvider.GEMINI_2_5_FLASH,
-                                fallbackProvider: LLMModelProvider.OPENAI_GPT_4O,
+                                fallbackProvider:
+                                    LLMModelProvider.OPENAI_GPT_4O,
                             },
                         )
                         .setLLMJsonMode(true)
                         .setPayload({
                             repositoryId,
-                            organizationId: organizationAndTeamData.organizationId,
+                            organizationId:
+                                organizationAndTeamData.organizationId,
                         })
                         .addPrompt({
                             role: PromptRole.SYSTEM,
@@ -1143,14 +1163,17 @@ Analyze the suggestions and recommend the most relevant rules.`;
                 },
             });
 
-            if (!result?.recommendations || result.recommendations.length === 0) {
+            if (
+                !result?.recommendations ||
+                result.recommendations.length === 0
+            ) {
                 return [];
             }
 
             const recommendedUUIDs = result.recommendations.map((r) => r.uuid);
-            const recommendedRules = (libraryKodyRules as LibraryKodyRule[]).filter(
-                (rule) => recommendedUUIDs.includes(rule.uuid),
-            );
+            const recommendedRules = (
+                libraryKodyRules as LibraryKodyRule[]
+            ).filter((rule) => recommendedUUIDs.includes(rule.uuid));
 
             return recommendedRules;
         } catch (error) {

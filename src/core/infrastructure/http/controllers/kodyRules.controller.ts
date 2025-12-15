@@ -219,12 +219,12 @@ export class KodyRulesController {
         }
 
         const limit = query.limit || 10;
-        const cacheKey = `recommended-kody-rules:${this.request.user.organization.uuid}:${limit}`;
+        //const cacheKey = `recommended-kody-rules:${this.request.user.organization.uuid}:${limit}`;
 
-        const cachedResult = await this.cacheService.getFromCache(cacheKey);
-        if (cachedResult) {
-            return cachedResult;
-        }
+        // const cachedResult = await this.cacheService.getFromCache(cacheKey);
+       // if (cachedResult) {
+          //  return cachedResult;
+        //}
 
         const result = await this.findRecommendedKodyRulesUseCase.execute(
             {
@@ -234,7 +234,7 @@ export class KodyRulesController {
             limit,
         );
 
-        await this.cacheService.addToCache(cacheKey, result, 259200000);
+       // await this.cacheService.addToCache(cacheKey, result, 259200000);
 
         return result;
     }
