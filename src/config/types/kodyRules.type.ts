@@ -3,7 +3,7 @@ import { ProgrammingLanguage } from '@/shared/domain/enums/programming-language.
 export type KodyRulesExamples = {
     snippet: string;
     isCorrect: boolean;
-}
+};
 
 export type LibraryKodyRule = {
     uuid: string;
@@ -28,14 +28,14 @@ export type LibraryKodyRule = {
     negativeCount?: number;
     userFeedback?: 'positive' | 'negative' | null;
     plug_and_play?: boolean;
-}
+};
 
 export type BucketInfo = {
     slug: string;
     title: string;
     description: string;
     rulesCount: number;
-}
+};
 
 export type KodyRuleFilters = {
     title?: string;
@@ -44,4 +44,5 @@ export type KodyRuleFilters = {
     language?: ProgrammingLanguage;
     buckets?: string[];
     plug_and_play?: boolean;
+    needMCPS?: boolean;
 };

@@ -777,10 +777,15 @@ export class KodyRulesService implements IKodyRulesService {
 
                     // Filtro por linguagem
                     if (filters.language) {
-                        if (
-                            !rule.language ||
-                            rule.language !== filters.language
-                        ) {
+                        const filterLanguage = String(
+                            filters.language,
+                        ).toLowerCase();
+                        const ruleLanguage = String(
+                            rule.language || '',
+                        ).toLowerCase();
+
+                        // Rules sem linguagem são consideradas "agnósticas" e passam no filtro
+                        if (ruleLanguage && ruleLanguage !== filterLanguage) {
                             return false;
                         }
                     }
@@ -802,7 +807,20 @@ export class KodyRulesService implements IKodyRulesService {
                         filters.plug_and_play !== undefined &&
                         filters.plug_and_play !== null
                     ) {
-                        return rule.plug_and_play === filters.plug_and_play;
+                        if (rule.plug_and_play !== filters.plug_and_play) {
+                            return false;
+                        }
+                    }
+
+                    // Filtro por needMCPS (required_mcps)
+                    if (filters.needMCPS === true) {
+                        const hasRequiredMcps =
+                            Array.isArray(rule.required_mcps) &&
+                            rule.required_mcps.length > 0;
+
+                        if (!hasRequiredMcps) {
+                            return false;
+                        }
                     }
 
                     return true;
