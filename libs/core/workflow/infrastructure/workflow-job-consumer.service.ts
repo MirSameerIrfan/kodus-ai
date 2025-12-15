@@ -1,13 +1,11 @@
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { Injectable, Inject } from '@nestjs/common';
 import { UseFilters } from '@nestjs/common';
-import { DataSource } from 'typeorm';
 
 import { RabbitmqConsumeErrorFilter } from '@libs/core/infrastructure/filters/rabbitmq-consume-error.exception';
 import { IJobProcessorService } from '@libs/core/workflow/domain/contracts/job-processor.service.contract';
 import { JOB_PROCESSOR_SERVICE_TOKEN } from '@libs/core/workflow/domain/contracts/job-processor.service.contract';
 
-import { TransactionalInboxService } from './transactional-inbox.service';
 import { ObservabilityService } from '@libs/core/log/observability.service';
 import { createLogger } from '@kodus/flow';
 
@@ -25,8 +23,6 @@ export class WorkflowJobConsumer {
     constructor(
         @Inject(JOB_PROCESSOR_SERVICE_TOKEN)
         private readonly jobProcessor: IJobProcessorService,
-        private readonly inboxService: TransactionalInboxService,
-        private readonly dataSource: DataSource,
         private readonly observability: ObservabilityService,
     ) {}
 
@@ -85,41 +81,6 @@ export class WorkflowJobConsumer {
                     'workflow.job.id': message.jobId,
                     'workflow.correlation.id': correlationId,
                     'workflow.message.id': messageId,
-                });
-
-                // Transactional Inbox: verifica se mensagem já foi processada
-                const isNew = await this.dataSource.transaction(
-                    async (manager) => {
-                        return await this.inboxService.saveInTransaction(
-                            manager,
-                            messageId,
-                            message.jobId,
-                        );
-                    },
-                );
-
-                if (!isNew) {
-                    // Mensagem duplicada - já foi processada
-                    this.logger.warn({
-                        message:
-                            'Duplicate workflow job message detected, skipping',
-                        context: WorkflowJobConsumer.name,
-                        metadata: {
-                            messageId,
-                            jobId: message.jobId,
-                            correlationId,
-                        },
-                    });
-
-                    span.setAttributes({
-                        'workflow.job.duplicate': true,
-                    });
-
-                    return; // Skip processing
-                }
-
-                span.setAttributes({
-                    'workflow.job.duplicate': false,
                 });
 
                 try {

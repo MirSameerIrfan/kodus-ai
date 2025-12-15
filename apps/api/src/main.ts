@@ -13,12 +13,18 @@ import expressRateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import * as volleyball from 'volleyball';
 
+import { setupSentryAndOpenTelemetry } from '@libs/core/infrastructure/config/log/otel';
 import { HttpServerConfiguration } from '@libs/core/infrastructure/config/types/http/http-server.type';
 import { KodusLoggerService } from '@libs/core/log/kodus-logger.service';
 
 import { ApiModule } from './api.module';
 
 async function bootstrap() {
+    // Inicializa Sentry e OpenTelemetry antes de tudo
+    setupSentryAndOpenTelemetry();
+
+    console.log('Starting API bootstrap...');
+
     // Define tipo de componente para configuração de pool de DB
     process.env.COMPONENT_TYPE = 'api';
 

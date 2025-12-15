@@ -16,11 +16,13 @@ export class InboxMessageModel extends CoreModel {
     @Column({ type: 'varchar', length: 255, nullable: true })
     consumerId?: string;
 
+    /*
     @ManyToOne(() => WorkflowJobModel, (job) => job.inboxMessages, {
         nullable: true,
     })
     @JoinColumn({ name: 'job_id', referencedColumnName: 'uuid' })
     job?: WorkflowJobModel;
+    */
 
     @Column({ type: 'boolean', default: false })
     processed: boolean;

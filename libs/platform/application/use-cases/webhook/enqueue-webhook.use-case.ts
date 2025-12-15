@@ -49,7 +49,7 @@ export class EnqueueWebhookUseCase implements IUseCase {
                 workflowType: WorkflowType.WEBHOOK_PROCESSING,
                 handlerType: HandlerType.WEBHOOK_RAW,
                 payload: input.payload,
-                organizationAndTeam: undefined, // Será identificado pelo worker
+                organizationAndTeam: undefined,
                 metadata: {
                     platformType: input.platformType,
                     event: input.event,
@@ -57,7 +57,7 @@ export class EnqueueWebhookUseCase implements IUseCase {
                 status: JobStatus.PENDING,
                 priority: 0,
                 retryCount: 0,
-                maxRetries: 3,
+                maxRetries: 1,
             });
 
             this.logger.log({

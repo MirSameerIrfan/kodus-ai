@@ -24,10 +24,12 @@ import {
     ICodeReviewExecutionService,
 } from '@libs/automation/domain/codeReviewExecutions/contracts/codeReviewExecution.service.contract';
 import { AuthorizationService } from '@libs/identity/infrastructure/adapters/services/permissions/authorization.service';
+import {
+    PaginatedEnrichedPullRequestsResponse,
+    PaginationMetadata,
+} from '@libs/platformData/dtos/paginated-enriched-pull-requests.dto';
 import { EnrichedPullRequestsQueryDto } from '@libs/platformData/dtos/enriched-pull-requests-query.dto';
-import { PaginatedEnrichedPullRequestsResponse } from '@libs/platformData/dtos/paginated-enriched-pull-requests.dto';
 import { EnrichedPullRequestResponse } from '@libs/platformData/dtos/enriched-pull-request-response.dto';
-import { PaginationMetadata } from '@libs/core/domain/dtos/paginated-library-kody-rules.dto';
 
 @Injectable()
 export class GetEnrichedPullRequestsUseCase implements IUseCase {

@@ -8,16 +8,9 @@ import { EventBufferService } from './engine/event-buffer.service';
 
 // Infrastructure - Repositories & Models
 import { WorkflowJobModel } from './infrastructure/repositories/schemas/workflow-job.model';
-import { OutboxMessageModel } from './infrastructure/repositories/schemas/outbox-message.model';
-import { InboxMessageModel } from './infrastructure/repositories/schemas/inbox-message.model';
 import { WorkflowJobRepository } from './infrastructure/repositories/workflow-job.repository';
-import { OutboxMessageRepository } from './infrastructure/repositories/outbox-message.repository';
-import { InboxMessageRepository } from './infrastructure/repositories/inbox-message.repository';
-
-// Infrastructure - Services
 import { JobStatusService } from './infrastructure/job-status.service';
 import { RetryPolicyService } from './infrastructure/retry-policy.service';
-import { TransactionalOutboxService } from './infrastructure/transactional-outbox.service';
 
 // Domain contracts
 import { JOB_STATUS_SERVICE_TOKEN } from './domain/contracts/job-status.service.contract';
@@ -26,8 +19,6 @@ import { WORKFLOW_JOB_REPOSITORY_TOKEN } from './domain/contracts/workflow-job.r
 const coreProviders = [
     // Repositories
     WorkflowJobRepository,
-    OutboxMessageRepository,
-    InboxMessageRepository,
     {
         provide: WORKFLOW_JOB_REPOSITORY_TOKEN,
         useClass: WorkflowJobRepository,
@@ -39,7 +30,6 @@ const coreProviders = [
         useClass: JobStatusService,
     },
     RetryPolicyService,
-    TransactionalOutboxService,
 
     // Engine
     DurablePipelineExecutor,
@@ -49,13 +39,7 @@ const coreProviders = [
 
 @Global()
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([
-            WorkflowJobModel,
-            OutboxMessageModel,
-            InboxMessageModel,
-        ]),
-    ],
+    imports: [TypeOrmModule.forFeature([WorkflowJobModel])],
     providers: [...coreProviders],
     exports: [...coreProviders, TypeOrmModule],
 })

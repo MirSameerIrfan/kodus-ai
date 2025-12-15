@@ -7,6 +7,6 @@
             "@libs/*": ["../../libs/*"]
         }
     },
-    "include": ["src/**/*", "../../libs/ee/configs/environment/**/*.ts"],
+    "include": ["src/**/*"],
     "exclude": ["node_modules", "dist"]
 }

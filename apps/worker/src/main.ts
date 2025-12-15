@@ -13,9 +13,11 @@ import { WorkerModule } from './worker.module';
 async function bootstrap() {
     process.env.COMPONENT_TYPE = 'worker';
 
+    console.log('Starting Worker bootstrap...');
     const app = await NestFactory.createApplicationContext(WorkerModule, {
         logger: false,
     });
+    console.log('Worker app created');
 
     const logger = createLogger('WorkerBootstrap');
 

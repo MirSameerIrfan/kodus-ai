@@ -7,6 +7,7 @@ x-app-service-template: &app-service-defaults
     - ${ENV_FILE:-.env}
   environment:
     - CHOKIDAR_USEPOLLING=true
+    - CHOKIDAR_INTERVAL=1000
     - API_DEVELOPMENT_MODE=${API_DEVELOPMENT_MODE:-true}
   restart: unless-stopped
   volumes:
@@ -20,8 +21,6 @@ x-app-service-template: &app-service-defaults
   networks:
     - kodus-backend-services
     - shared-network
-
-version: '3.8'
 
 services:
   #----------------------------------------------------------------
@@ -41,6 +40,7 @@ services:
     command: yarn start:dev:api
     environment:
       - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=1000
       - API_DEVELOPMENT_MODE=${API_DEVELOPMENT_MODE:-true}
       - WORKFLOW_QUEUE_WORKER_ENABLED=${WORKFLOW_QUEUE_WORKER_ENABLED:-true}
 

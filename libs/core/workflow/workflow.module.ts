@@ -4,7 +4,7 @@ dotenv.config();
 import { Module, forwardRef, DynamicModule } from '@nestjs/common';
 import { CodeReviewPipelineModule } from '@libs/code-review/pipeline/code-review-pipeline.module';
 import { CodebaseModule } from '@libs/code-review/modules/codebase.module';
-import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import { RabbitMQWrapperModule } from '@libs/core/infrastructure/queue/rabbitmq.module'; // Changed import
 import { WorkflowCoreModule } from './workflow-core.module';
 
 // Engine
@@ -109,37 +109,10 @@ export class WorkflowModule {
             SharedMongoModule, // Ensure MongoDB is available for worker
         ];
 
-        console.log(
-            `[WorkflowModule] Initializing. API_RABBITMQ_ENABLED=${process.env.API_RABBITMQ_ENABLED}, type=${options.type}`,
+        // Use standard wrapper module instead of manual configuration
+        imports.push(
+            RabbitMQWrapperModule.register({ enableConsumers: isWorker }),
         );
-
-        if (process.env.API_RABBITMQ_ENABLED !== 'false') {
-            console.log(
-                '[WorkflowModule] RabbitMQ is ENABLED. Importing RabbitMQModule.',
-            );
-            imports.push(
-                RabbitMQModule.forRoot({
-                    exchanges: [
-                        {
-                            name: 'workflow.events',
-                            type: 'topic',
-                        },
-                        {
-                            name: 'workflow.exchange',
-                            type: 'topic',
-                        },
-                    ],
-                    uri:
-                        process.env.RABBITMQ_URI ||
-                        'amqp://guest:guest@localhost:5672',
-                    connectionInitOptions: { wait: false },
-                }),
-            );
-        } else {
-            console.log(
-                '[WorkflowModule] RabbitMQ is DISABLED. Skipping RabbitMQModule import.',
-            );
-        }
 
         return {
             module: WorkflowModule,
@@ -151,9 +124,7 @@ export class WorkflowModule {
             exports: [
                 WorkflowCoreModule,
                 ...sharedExports,
-                ...(process.env.API_RABBITMQ_ENABLED !== 'false'
-                    ? [RabbitMQModule]
-                    : []),
+                RabbitMQWrapperModule, // Re-export the wrapper
                 ...(isWorker ? workerProviders : []),
             ],
         };

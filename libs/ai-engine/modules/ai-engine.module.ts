@@ -8,8 +8,6 @@ import { ContextReferenceModel } from '../infrastructure/adapters/repositories/s
 import { MCPToolArgResolverAgentService } from '../infrastructure/adapters/services/context/mcp-tool-arg-resolver-agent.service';
 import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
 import { PlatformModule } from '@libs/platform/modules/platform.module';
-import { SharedLogModule } from '@libs/shared/infrastructure/shared-log.module';
-import { CodebaseModule } from '@libs/code-review/modules/codebase.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PROMPT_CONTEXT_ENGINE_SERVICE_TOKEN } from '../domain/prompt/contracts/promptContextEngine.contract';
 import { PROMPT_EXTERNAL_REFERENCE_MANAGER_SERVICE_TOKEN } from '../domain/prompt/contracts/promptExternalReferenceManager.contract';
@@ -24,6 +22,7 @@ import { McpModule } from '@libs/mcp-server/mcp.module';
 import { AgentsModule } from '@libs/agents/modules/agents.module';
 
 import { PermissionValidationModule } from '@libs/ee/shared/permission-validation.module';
+import { CodebaseModule } from '@libs/code-review/modules/codebase.module';
 
 @Module({
     imports: [
@@ -32,7 +31,6 @@ import { PermissionValidationModule } from '@libs/ee/shared/permission-validatio
         forwardRef(() => PlatformModule),
         forwardRef(() => CodebaseModule), // For CodeManagementService dependency
         McpModule.forRoot(), // For MCPToolMetadataService
-        SharedLogModule,
         forwardRef(() => AgentsModule), // For ContextEvidenceAgentProvider
         forwardRef(() => PermissionValidationModule),
     ],

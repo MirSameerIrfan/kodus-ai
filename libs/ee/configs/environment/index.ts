@@ -19,8 +19,9 @@ const prodPath = join(__dirname, 'environment.js'); // esse é gerado no build
 
 if (existsSync(prodPath)) {
     // 🟢 Docker QA/Prod: injetado no build
+    const envFile = './environment';
 
-    environment = require('./environment').environment;
+    environment = require(envFile).environment;
 } else {
     // 🛠️ Dev: valor dinâmico via process.env
 
