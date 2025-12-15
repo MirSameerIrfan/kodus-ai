@@ -16,7 +16,10 @@ import {
     IKodyRulesService,
     KODY_RULES_SERVICE_TOKEN,
 } from '@libs/kodyRules/domain/contracts/kodyRules.service.contract';
-import { IKodyRule } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
+import {
+    IKodyRule,
+    KodyRulesStatus,
+} from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 
 import { enrichRulesWithContextReferences } from './utils/enrich-rules-with-context-references.util';
 
@@ -92,8 +95,18 @@ export class FindRulesInOrganizationByRuleFilterKodyRulesUseCase {
                 );
             }
 
-            // Aplica o filtro personalizado passado como parâmetro
-            const rules = filteredRules.filter((rule) => {
+            const includeDeleted = Object.prototype.hasOwnProperty.call(
+                filter,
+                'status',
+            );
+
+            const filteredByStatus = includeDeleted
+                ? filteredRules
+                : filteredRules.filter(
+                      (rule) => rule.status !== KodyRulesStatus.DELETED,
+                  );
+
+            const rules = filteredByStatus.filter((rule) => {
                 for (const key in filter) {
                     if (rule[key] !== filter[key]) {
                         return false;
