@@ -1810,7 +1810,12 @@ ${copyPrompt}
         return copyPrompt;
     }
 
-    formatBodyForGitLab(lineComment: any, repository: any, translations: any) {
+    formatBodyForGitLab(
+        lineComment: any,
+        repository: any,
+        translations: any,
+        enabledLLMPrompt: boolean,
+    ) {
         const severityShield = lineComment?.suggestion
             ? getSeverityLevelShield(lineComment.suggestion.severity)
             : '';
@@ -1834,7 +1839,9 @@ ${copyPrompt}
                 severityShield,
             ].join(' ') + '\n\n';
 
-        const copyPrompt = this.formatPromptForLLM(lineComment);
+        const copyPrompt = enabledLLMPrompt
+            ? this.formatPromptForLLM(lineComment)
+            : '';
 
         return [
             badges,
@@ -1857,6 +1864,7 @@ ${copyPrompt}
             lineComment,
             commit,
             language,
+            enabledLLMPrompt = true,
         } = params;
 
         const gitlabAuthDetail = await this.getAuthDetails(
@@ -1886,6 +1894,7 @@ ${copyPrompt}
                 lineComment,
                 repository,
                 translations,
+                enabledLLMPrompt,
             );
 
             const discussion = await gitlabAPI.MergeRequestDiscussions.create(
@@ -3708,6 +3717,7 @@ ${copyPrompt}
         includeFooter?: boolean;
         language?: string;
         organizationAndTeamData: OrganizationAndTeamData;
+        enabledLLMPrompt?: boolean;
     }): Promise<string> {
         const {
             suggestion,
@@ -3715,6 +3725,7 @@ ${copyPrompt}
             includeHeader = true,
             includeFooter = true,
             language,
+            enabledLLMPrompt = true,
         } = params;
 
         let commentBody = '';
@@ -3748,6 +3759,10 @@ ${copyPrompt}
         if (suggestion?.improvedCode) {
             const lang = repository?.language?.toLowerCase() || 'javascript';
             commentBody += `\`\`\`${lang}\n${suggestion.improvedCode}\n\`\`\`\n\n`;
+        }
+
+        if (enabledLLMPrompt) {
+            commentBody += this.formatPromptForLLM(suggestion);
         }
 
         // FOOTER - Interação/Feedback

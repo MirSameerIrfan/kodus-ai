@@ -3273,7 +3273,12 @@ ${copyPrompt}
         return copyPrompt;
     }
 
-    formatBodyForGitHub(lineComment: any, repository: any, translations: any) {
+    formatBodyForGitHub(
+        lineComment: any,
+        repository: any,
+        translations: any,
+        enabledLLMPrompt: boolean,
+    ) {
         const severityShield = lineComment?.suggestion
             ? getSeverityLevelShield(lineComment.suggestion.severity)
             : '';
@@ -3297,7 +3302,9 @@ ${copyPrompt}
                 severityShield,
             ].join(' ') + '\n\n';
 
-        const copyPrompt = this.formatPromptForLLM(lineComment);
+        const copyPrompt = enabledLLMPrompt
+            ? this.formatPromptForLLM(lineComment)
+            : '';
 
         return [
             badges,
@@ -3321,6 +3328,7 @@ ${copyPrompt}
             lineComment,
             commit,
             language,
+            enabledLLMPrompt = true,
         } = params;
 
         const githubAuthDetail = await this.getGithubAuthDetails(
@@ -3338,6 +3346,7 @@ ${copyPrompt}
             lineComment,
             repository,
             translations,
+            enabledLLMPrompt,
         );
 
         try {
@@ -6059,6 +6068,7 @@ ${copyPrompt}
         includeFooter?: boolean;
         language?: string;
         organizationAndTeamData: OrganizationAndTeamData;
+        enabledLLMPrompt?: boolean;
     }): Promise<string> {
         const {
             suggestion,
@@ -6066,6 +6076,7 @@ ${copyPrompt}
             includeHeader = true,
             includeFooter = true,
             language,
+            enabledLLMPrompt = true,
         } = params;
 
         let commentBody = '';
@@ -6101,7 +6112,9 @@ ${copyPrompt}
             commentBody += `\`\`\`${lang}\n${suggestion.improvedCode}\n\`\`\`\n\n`;
         }
 
-        commentBody += this.formatPromptForLLM(suggestion);
+        if (enabledLLMPrompt) {
+            commentBody += this.formatPromptForLLM(suggestion);
+        }
 
         // FOOTER - Interação/Feedback
         if (includeFooter) {

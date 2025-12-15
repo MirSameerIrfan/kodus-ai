@@ -168,6 +168,7 @@ ${JSON.stringify(kodyRules, null, 2)}
 ${externalReferencesSection}
 ${mcpResultsSection}
 Your output must always be a valid JSON. Under no circumstances should you output anything other than a JSON. Follow the exact format below without any additional text or explanation:
+IMPORTANT, should the array be empty the output must still follow the specified json format e.g. { "rules": [] }
 
 <OUTPUT_FORMAT>
 DISCUSSION HERE

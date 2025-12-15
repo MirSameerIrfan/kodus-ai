@@ -1045,6 +1045,7 @@ export class AzureReposService
         prNumber: number;
         lineComment: Comment;
         language: LanguageValue;
+        enabledLLMPrompt?: boolean;
     }): Promise<AzureRepoPRThread | null> {
         try {
             const {
@@ -1053,6 +1054,7 @@ export class AzureReposService
                 prNumber,
                 lineComment,
                 language,
+                enabledLLMPrompt = true,
             } = params;
             const { orgName, token } = await this.getAuthDetails(
                 organizationAndTeamData,
@@ -1072,6 +1074,7 @@ export class AzureReposService
                 lineComment,
                 repository,
                 translations,
+                enabledLLMPrompt,
             );
 
             const thread =
@@ -3641,6 +3644,7 @@ ${copyPrompt}
         lineComment: any,
         repository: any,
         translations: any,
+        enabledLLMPrompt?: boolean,
     ) {
         const severityShield = lineComment?.suggestion
             ? getSeverityLevelShield(lineComment.suggestion.severity)
@@ -3668,7 +3672,9 @@ ${copyPrompt}
         const thumbsUpBlock = `\`\`\`\n👍\n\`\`\`\n`;
         const thumbsDownBlock = `\`\`\`\n👎\n\`\`\`\n`;
 
-        const copyPrompt = this.formatPromptForLLM(lineComment);
+        const copyPrompt = enabledLLMPrompt
+            ? this.formatPromptForLLM(lineComment)
+            : '';
 
         return [
             badges,
@@ -3901,6 +3907,7 @@ ${copyPrompt}
         includeFooter?: boolean;
         language?: string;
         organizationAndTeamData: OrganizationAndTeamData;
+        enabledLLMPrompt?: boolean;
     }): Promise<string> {
         const {
             suggestion,
@@ -3908,6 +3915,7 @@ ${copyPrompt}
             includeHeader = true,
             includeFooter = true,
             language,
+            enabledLLMPrompt = true,
         } = params;
 
         let commentBody = '';
@@ -3943,7 +3951,9 @@ ${copyPrompt}
             commentBody += `\`\`\`${lang}\n${suggestion.improvedCode}\n\`\`\`\n\n`;
         }
 
-        commentBody += this.formatPromptForLLM(suggestion);
+        if (enabledLLMPrompt) {
+            commentBody += this.formatPromptForLLM(suggestion);
+        }
 
         // FOOTER - Interação/Feedback
         if (includeFooter) {
