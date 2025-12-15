@@ -1,7 +1,4 @@
-import {
-    ContextDependency,
-    ContextRequirement,
-} from '@context-os-core/interfaces';
+import { ContextDependency, ContextRequirement } from '@kodus/flow';
 import { createLogger } from '@kodus/flow';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 import { Inject, Injectable } from '@nestjs/common';

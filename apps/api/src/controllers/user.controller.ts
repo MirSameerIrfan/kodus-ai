@@ -22,9 +22,9 @@ import {
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
 import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
 
-import { AcceptUserInvitationDto } from '../dtos/accept-user-invitation.dto';
-import { JoinOrganizationDto } from '../dtos/join-organization.dto';
-import { UpdateAnotherUserDto } from '../dtos/update-another-user.dto';
+import { AcceptUserInvitationDto } from '@libs/identity/dtos/accept-user-invitation.dto';
+import { JoinOrganizationDto } from '@libs/identity/dtos/join-organization.dto';
+import { UpdateAnotherUserDto } from '@libs/identity/dtos/update-another-user.dto';
 import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
 import { InviteDataUserUseCase } from '@libs/identity/application/use-cases/user/invite-data.use-case';
 import { AcceptUserInvitationUseCase } from '@libs/identity/application/use-cases/user/accept-user-invitation.use-case';

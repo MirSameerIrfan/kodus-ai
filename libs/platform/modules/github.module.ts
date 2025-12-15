@@ -14,6 +14,12 @@ import { OrganizationModule } from '@libs/organization/modules/organization.modu
 import { PermissionValidationModule } from '@libs/ee/shared/permission-validation.module';
 import { AutomationModule } from '@libs/automation/modules/automation.module';
 import { UserModule } from '@libs/identity/modules/user.module';
+import { GitHubPullRequestHandler } from '../infrastructure/webhooks/github/githubPullRequest.handler';
+import { GithubService as GitHubService } from '../infrastructure/adapters/services/github/github.service';
+import { IssuesModule } from '@libs/issues/issues.module';
+import { PlatformDataModule } from '@libs/platformData/platformData.module';
+import { WorkflowModule } from '@libs/core/workflow/workflow.module';
+import { KodyRulesModule } from '@libs/kodyRules/modules/kodyRules.module';
 
 @Module({
     imports: [
@@ -31,6 +37,23 @@ import { UserModule } from '@libs/identity/modules/user.module';
         forwardRef(() => CodebaseModule),
         forwardRef(() => LicenseModule),
         forwardRef(() => PermissionValidationModule),
+        forwardRef(() => IssuesModule),
+        forwardRef(() => PlatformDataModule),
+        forwardRef(() => WorkflowModule),
+        forwardRef(() => KodyRulesModule),
+    ],
+    providers: [
+        GitHubService,
+        GitHubPullRequestHandler,
+        {
+            provide: 'GITHUB_WEBHOOK_HANDLER',
+            useClass: GitHubPullRequestHandler,
+        },
+    ],
+    exports: [
+        GitHubService,
+        GitHubPullRequestHandler,
+        'GITHUB_WEBHOOK_HANDLER',
     ],
 })
 export class GithubModule {}

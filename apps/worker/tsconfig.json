@@ -1,12 +1,12 @@
 {
     "extends": "../../tsconfig.json",
     "compilerOptions": {
-        "outDir": "./dist",
+        "outDir": "../../dist/apps/worker",
         "baseUrl": ".",
         "paths": {
             "@libs/*": ["../../libs/*"]
         }
     },
-    "include": ["src/**/*"],
+    "include": ["src/**/*", "../../libs/ee/configs/environment/**/*.ts"],
     "exclude": ["node_modules", "dist"]
 }

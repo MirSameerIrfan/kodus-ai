@@ -1,8 +1,6 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { GetIntegrationConfigsByIntegrationCategoryUseCase } from '../application/use-cases/integrationConfig/getIntegrationConfigsByIntegrationCategory.use-case';
-import { IntegrationCoreModule } from './integrations-core.module';
 import { IntegrationConfigModel } from '../infrastructure/adapters/repositories/schemas/integrationConfig.model';
 import { INTEGRATION_CONFIG_SERVICE_TOKEN } from '../domain/integrationConfigs/contracts/integration-config.service.contracts';
 import { IntegrationConfigService } from '../infrastructure/adapters/services/integrationConfig.service';
@@ -10,12 +8,8 @@ import { INTEGRATION_CONFIG_REPOSITORY_TOKEN } from '../domain/integrationConfig
 import { IntegrationConfigRepository } from '../infrastructure/adapters/repositories/integrationConfig.repository';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([IntegrationConfigModel]),
-        forwardRef(() => IntegrationCoreModule),
-    ],
+    imports: [TypeOrmModule.forFeature([IntegrationConfigModel])],
     providers: [
-        GetIntegrationConfigsByIntegrationCategoryUseCase,
         {
             provide: INTEGRATION_CONFIG_SERVICE_TOKEN,
             useClass: IntegrationConfigService,

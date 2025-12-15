@@ -12,6 +12,8 @@ import { KodyRulesModule } from '@libs/kodyRules/modules/kodyRules.module';
 import { PlatformModule } from '@libs/platform/modules/platform.module';
 import { IssuesModule } from '@libs/issues/issues.module';
 import { PullRequestsModule } from '@libs/code-review/modules/pull-requests.module';
+import { MCPToolMetadataService } from './services/mcp-tool-metadata.service';
+import { IntegrationModule } from '@libs/integrations/modules/integrations.module';
 
 @Module({})
 export class McpModule {
@@ -19,22 +21,22 @@ export class McpModule {
         const imports = [];
         const providers: Provider[] = [];
         const controllers = [];
-        const exports = [];
+        const exports: Provider[] = [];
 
-        // Always provide MCPManagerService, controllers and full functionality are conditional
-        const isEnabled =
-            process.env.API_MCP_SERVER_ENABLED === 'true' ||
-            configService?.get<boolean>('API_MCP_SERVER_ENABLED', false);
-
-        // Always provide MCPManagerService for dependency injection
-        providers.push(MCPManagerService);
-        exports.push(MCPManagerService);
+        // Always provide MCPManagerService and MCPToolMetadataService for dependency injection
+        providers.push(MCPManagerService, MCPToolMetadataService);
+        exports.push(MCPManagerService, MCPToolMetadataService);
 
         // Always import required modules for MCPManagerService dependencies
         imports.push(
             JwtModule,
             forwardRef(() => PermissionValidationModule),
+            forwardRef(() => IntegrationModule),
         );
+
+        const isEnabled =
+            process.env.API_MCP_SERVER_ENABLED === 'true' ||
+            configService?.get<boolean>('API_MCP_SERVER_ENABLED', false);
 
         if (isEnabled) {
             imports.push(

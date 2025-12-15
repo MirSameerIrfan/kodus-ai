@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 
 import { IJobProcessorRouter } from '@libs/core/workflow/domain/contracts/job-processor-router.contract';
 import { IJobProcessorService } from '@libs/core/workflow/domain/contracts/job-processor.service.contract';
@@ -21,6 +21,7 @@ export class JobProcessorRouterService
     constructor(
         @Inject(WORKFLOW_JOB_REPOSITORY_TOKEN)
         private readonly jobRepository: IWorkflowJobRepository,
+        @Inject(forwardRef(() => CodeReviewJobProcessorService))
         private readonly codeReviewProcessor: CodeReviewJobProcessorService,
         private readonly webhookProcessor: WebhookProcessingJobProcessorService,
     ) {}

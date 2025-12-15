@@ -2,7 +2,7 @@ import type {
     ContextRequirement,
     ContextRevisionActor,
     ContextRevisionScope,
-} from '@context-os-core/interfaces';
+} from '@kodus/flow';
 
 import { IContextReferenceRepository } from './context-reference.repository.contract';
 import { ContextReferenceEntity } from '../entities/context-reference.entity';

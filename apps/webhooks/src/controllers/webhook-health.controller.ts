@@ -1,5 +1,5 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { Controller, Get, HttpStatus, Res } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Optional, Res } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/typeorm';
 import { Response } from 'express';
 import { Connection } from 'typeorm';
@@ -17,6 +17,7 @@ export class WebhookHealthController {
     constructor(
         @InjectConnection()
         private readonly dataSource: Connection,
+        @Optional()
         private readonly amqpConnection: AmqpConnection,
     ) {}
 
@@ -47,7 +48,7 @@ export class WebhookHealthController {
         } catch (error) {
             const response = {
                 status: 'error',
-                error: 'Health check failed',
+                error: `Health check failed: ${error instanceof Error ? error.message : String(error)}`,
                 timestamp: new Date().toISOString(),
             };
 
@@ -78,6 +79,13 @@ export class WebhookHealthController {
 
     private async checkRabbitMQ(): Promise<{ status: string; error?: string }> {
         try {
+            if (!this.amqpConnection) {
+                return {
+                    status: 'error',
+                    error: 'RabbitMQ connection not available (disabled?)',
+                };
+            }
+
             // Verificar se conexão RabbitMQ está ativa
             const channel = this.amqpConnection.channel;
             if (!channel) {

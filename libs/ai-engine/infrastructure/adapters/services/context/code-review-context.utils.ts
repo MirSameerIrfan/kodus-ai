@@ -1,7 +1,4 @@
-import type {
-    ContextDependency,
-    ContextPack,
-} from '@context-os-core/interfaces';
+import type { ContextDependency, ContextPack } from '@kodus/flow';
 import { PromptSourceType } from '@libs/ai-engine/domain/prompt/interfaces/promptExternalReference.interface';
 
 export interface ContextMarkerPattern {

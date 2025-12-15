@@ -1,4 +1,4 @@
-import type { ContextDependency } from '@context-os-core/interfaces';
+import type { ContextDependency } from '@kodus/flow';
 import { createLogger } from '@kodus/flow';
 import {
     LLMModelProvider,
@@ -98,9 +98,7 @@ export const KODY_RULES_PR_LEVEL_ANALYSIS_SERVICE_TOKEN = Symbol(
 );
 
 @Injectable()
-export class KodyRulesPrLevelAnalysisService
-    implements IKodyRulesAnalysisService
-{
+export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisService {
     private readonly logger = createLogger(
         KodyRulesPrLevelAnalysisService.name,
     );

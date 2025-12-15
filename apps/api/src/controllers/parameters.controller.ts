@@ -38,10 +38,10 @@ import {
     checkPermissions,
     checkRepoPermissions,
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
-import { PreviewPrSummaryDto } from '../dtos/preview-pr-summary.dto';
-import { DeleteRepositoryCodeReviewParameterDto } from '../dtos/delete-repository-code-review-parameter.dto';
+import { PreviewPrSummaryDto } from '@libs/organization/dtos/preview-pr-summary.dto';
+import { DeleteRepositoryCodeReviewParameterDto } from '@libs/organization/dtos/delete-repository-code-review-parameter.dto';
 import { ApplyCodeReviewPresetDto } from '../dtos/apply-code-review-preset.dto';
-import { CreateOrUpdateCodeReviewParameterDto } from '../dtos/create-or-update-code-review-parameter.dto';
+import { CreateOrUpdateCodeReviewParameterDto } from '@libs/organization/dtos/create-or-update-code-review-parameter.dto';
 
 @Controller('parameters')
 export class ParametersController {

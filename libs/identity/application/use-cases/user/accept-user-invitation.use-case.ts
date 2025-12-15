@@ -12,7 +12,7 @@ import {
     USER_SERVICE_TOKEN,
 } from '@libs/identity/domain/user/contracts/user.service.contract';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
-import { AcceptUserInvitationDto } from 'apps/api/src/dtos/accept-user-invitation.dto';
+import { AcceptUserInvitationDto } from '@libs/identity/dtos/accept-user-invitation.dto';
 
 @Injectable()
 export class AcceptUserInvitationUseCase implements IUseCase {

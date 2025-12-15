@@ -9,5 +9,5 @@
         "dist",
         "**/*.spec.ts"
     ],
-    "exec": "nest start --watch --debug 0.0.0.0:9229"
+    "exec": "nest start api --watch --debug 0.0.0.0:9229"
 }

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { ContextDependency } from '@context-os-core/interfaces';
+import type { ContextDependency } from '@kodus/flow';
 import { ContextReferenceService } from '@libs/ai-engine/infrastructure/adapters/services/context/context-reference.service';
 import { IKodyRule } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 

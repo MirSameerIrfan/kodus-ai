@@ -13,7 +13,7 @@ import { CheckHasIntegrationByPlatformUseCase } from '@libs/integrations/applica
 import { CloneIntegrationUseCase } from '@libs/integrations/application/use-cases/clone-integration.use-case';
 import { GetConnectionsUseCase } from '@libs/integrations/application/use-cases/get-connections.use-case';
 import { GetOrganizationIdUseCase } from '@libs/integrations/application/use-cases/get-organization-id.use-case';
-import { TeamQueryDto } from '../dtos/teamId-query-dto';
+import { TeamQueryDto } from '@libs/organization/dtos/teamId-query.dto';
 
 @Controller('integration')
 export class IntegrationController {

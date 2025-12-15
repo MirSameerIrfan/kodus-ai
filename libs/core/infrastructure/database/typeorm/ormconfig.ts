@@ -5,6 +5,7 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 import { SeederOptions } from 'typeorm-extension';
 
 import MainSeeder from './seed/main.seeder';
+import { ENTITIES } from './entities';
 
 const env = process.env.API_DATABASE_ENV ?? process.env.API_NODE_ENV;
 const isProduction = !['development', 'test'].includes(env);
@@ -24,12 +25,7 @@ const optionsDataBase: DataSourceOptions = {
     // Allow individual migrations to override transaction mode
     // Required for CREATE INDEX CONCURRENTLY (must run outside transactions)
     migrationsTransactionMode: 'each',
-    entities: [
-        join(
-            __dirname,
-            '../../../core/infrastructure/adapters/repositories/typeorm/schema/*.model{.ts,.js}',
-        ),
-    ],
+    entities: ENTITIES,
     migrations: [join(__dirname, './migrations/*{.ts,.js}')],
     ssl: isProduction,
     extra: {

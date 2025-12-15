@@ -22,7 +22,7 @@ import { ResetPasswordUseCase } from '@libs/identity/application/use-cases/auth/
 import { SignUpUseCase } from '@libs/identity/application/use-cases/auth/signup.use-case';
 
 import { CreateUserOrganizationOAuthDto } from '../dtos/create-user-organization-oauth.dto';
-import { SignUpDTO } from '../dtos/create-user-organization.dto';
+import { SignUpDTO } from '@libs/identity/dtos/create-user-organization.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { SSOLoginUseCase } from '@libs/identity/application/use-cases/auth/sso-login.use-case';
 import { SSOCheckUseCase } from '@libs/identity/application/use-cases/auth/sso-check.use-case';

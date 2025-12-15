@@ -38,8 +38,8 @@ import { GetPRsByRepoUseCase } from '@libs/platform/application/use-cases/codeMa
 import { GetWebhookStatusUseCase } from '@libs/platform/application/use-cases/codeManagement/get-webhook-status.use-case';
 import { SearchCodeManagementUsersUseCase } from '@libs/platform/application/use-cases/codeManagement/search-code-management-users.use-case';
 import { GetCurrentCodeManagementUserUseCase } from '@libs/platform/application/use-cases/codeManagement/get-current-code-management-user.use-case';
-import { FinishOnboardingDTO } from '../dtos/finish-onboarding.dto';
-import { GetRepositoryTreeByDirectoryDto } from '../dtos/get-repository-tree-by-directory.dto';
+import { FinishOnboardingDTO } from '@libs/platform/dtos/finish-onboarding.dto';
+import { GetRepositoryTreeByDirectoryDto } from '@libs/platform/dtos/get-repository-tree-by-directory.dto';
 import { WebhookStatusQueryDto } from '../dtos/webhook-status-query.dto';
 
 @Controller('code-management')

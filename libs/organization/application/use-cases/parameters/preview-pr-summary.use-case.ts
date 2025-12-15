@@ -8,7 +8,7 @@ import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
-import { PreviewPrSummaryDto } from 'apps/api/src/dtos/preview-pr-summary.dto';
+import { PreviewPrSummaryDto } from '@libs/organization/dtos/preview-pr-summary.dto';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 

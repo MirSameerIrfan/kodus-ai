@@ -7,7 +7,7 @@ import {
     IKodyRulesService,
     KODY_RULES_SERVICE_TOKEN,
 } from '@libs/kodyRules/domain/contracts/kodyRules.service.contract';
-import { ChangeStatusKodyRulesDTO } from 'apps/api/src/dtos/change-status-kody-rules.dto';
+import { ChangeStatusKodyRulesDTO } from '@libs/kodyRules/dtos/change-status-kody-rules.dto';
 
 export class ChangeStatusKodyRulesUseCase {
     private readonly logger = createLogger(ChangeStatusKodyRulesUseCase.name);

@@ -1,4 +1,7 @@
 import 'source-map-support/register';
+import * as dotenv from 'dotenv';
+dotenv.config();
+import { environment } from '@libs/ee/configs/environment';
 
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -10,7 +13,6 @@ import expressRateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import * as volleyball from 'volleyball';
 
-import { setupSentryAndOpenTelemetry } from '@libs/core/infrastructure/config/log/otel';
 import { HttpServerConfiguration } from '@libs/core/infrastructure/config/types/http/http-server.type';
 import { KodusLoggerService } from '@libs/core/log/kodus-logger.service';
 
@@ -19,9 +21,6 @@ import { ApiModule } from './api.module';
 async function bootstrap() {
     // Define tipo de componente para configuração de pool de DB
     process.env.COMPONENT_TYPE = 'api';
-
-    // Inicializa Sentry e OpenTelemetry antes de tudo
-    setupSentryAndOpenTelemetry();
 
     const app = await NestFactory.create<NestExpressApplication>(ApiModule, {
         snapshot: true,
@@ -88,7 +87,7 @@ async function bootstrap() {
         : port;
 
     console.log(
-        `[BOOT] - API REST running in ${process.env.API_CLOUD_MODE ? 'CLOUD' : 'SELF-HOSTED'} mode`,
+        `[BOOT] - Running in ${environment.API_CLOUD_MODE ? 'CLOUD' : 'SELF-HOSTED'} mode`,
     );
     await app.listen(apiPort, host, () => {
         console.log(

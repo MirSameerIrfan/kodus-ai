@@ -1,4 +1,4 @@
-import type { ContextPack } from '@context-os-core/interfaces';
+import type { ContextPack } from '@kodus/flow';
 import { createLogger } from '@kodus/flow';
 import {
     BYOKConfig,

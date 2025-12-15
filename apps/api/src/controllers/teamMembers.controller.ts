@@ -10,7 +10,7 @@ import {
     Query,
     UseGuards,
 } from '@nestjs/common';
-import { TeamQueryDto } from '../dtos/teamId-query-dto';
+import { TeamQueryDto } from '@libs/organization/dtos/teamId-query.dto';
 import {
     CheckPolicies,
     PolicyGuard,

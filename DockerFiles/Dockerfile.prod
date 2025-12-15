@@ -1,64 +1,84 @@
-ARG API_CLOUD_MODE=false
-
-FROM node:22.14.0-slim AS deps
-
-ARG API_CLOUD_MODE
-ENV API_CLOUD_MODE=${API_CLOUD_MODE}
-ENV API_DEVELOPMENT_MODE=false
-
-ARG RELEASE_VERSION
-ENV SENTRY_RELEASE=$RELEASE_VERSION
-ENV NODE_OPTIONS="--max-old-space-size=8192"
-
+# ==================================
+# Base Stage
+# Defines the specific Node.js slim environment.
+# ==================================
+FROM node:22.14.0-slim AS base
 WORKDIR /usr/src/app
 
-RUN apt-get update && apt-get install -y ca-certificates git python3 make g++ && rm -rf /var/lib/apt/lists/*
+# Install git and other essentials
+RUN apt-get update && apt-get install -y --no-install-recommends git libc6 && rm -rf /var/lib/apt/lists/*
+
+# ==================================
+# Dependencies Stage
+# Installs all dependencies to leverage Docker cache.
+# ==================================
+FROM base AS dependencies
+WORKDIR /usr/src/app
+
+# Copy dependency definition files
 COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
 
-# -------------------------------------------------------------
-FROM deps AS build
+# Install all dependencies
+RUN yarn install --frozen-lockfile --production=false
 
-ARG API_CLOUD_MODE
-ENV API_CLOUD_MODE=${API_CLOUD_MODE}
-ENV API_DEVELOPMENT_MODE=false
-
+# ==================================
+# Builder Stage
+# Builds the specific application using an ARG.
+# ==================================
+FROM dependencies AS builder
 WORKDIR /usr/src/app
+
+# Declare build arguments
+ARG APP_NAME
+ARG API_CLOUD_MODE=false
+ARG RELEASE_VERSION=local
+
+# Copy the rest of the source code
 COPY . .
 
-RUN mkdir -p ee/configs/environment
+# Check if APP_NAME is provided
+RUN if [ -z "$APP_NAME" ]; then \
+      echo "Error: Build argument APP_NAME is required."; \
+      exit 1; \
+    fi
 
-# Gera o environment.ts substituindo o placeholder
-RUN sed -e "s/__CLOUD_MODE__/${API_CLOUD_MODE}/g" -e "s/__DEVELOPMENT_MODE__/false/g" src/ee/configs/environment/environment.template.ts >src/ee/configs/environment/environment.ts
+# Build the specified application
+RUN yarn build $APP_NAME
 
-RUN yarn build:production
+# Prune dev dependencies for a smaller production image
+RUN yarn install --frozen-lockfile --production=true
 
-# -------------------------------------------------------------
-FROM deps AS production
-
-ARG API_CLOUD_MODE
-ENV API_CLOUD_MODE=${API_CLOUD_MODE}
-
+# ==================================
+# Production Stage
+# Creates the final, lean production image.
+# ==================================
+FROM base AS production
 WORKDIR /usr/src/app
-EXPOSE 3001
 
-RUN apt-get update && apt-get install -y ca-certificates git python3 make g++ && rm -rf /var/lib/apt/lists/*
+# Declare build arguments again for use in this stage
+ARG API_CLOUD_MODE=false
 
-COPY --from=deps /usr/src/app/node_modules ./node_modules
-COPY package.json yarn.lock ./
-COPY --from=build /usr/src/app/dist ./dist
-COPY ecosystem.config.js ./
-COPY default-kodus-config.yml ./default-kodus-config.yml
-COPY tsconfig.json ./
-RUN sed -i 's|"src/\*"|"dist/src/*"|g' tsconfig.json
+# Copy built application from builder stage
+COPY --from=builder /usr/src/app/dist ./dist
 
-COPY --chmod=0755 docker/prod-entrypoint.sh /usr/local/bin/prod-entrypoint
-ENTRYPOINT ["/usr/local/bin/prod-entrypoint"]
+# Copy production node_modules from builder stage
+COPY --from=builder /usr/src/app/node_modules ./node_modules
 
-RUN mkdir -p /usr/src/app/certs
-RUN yarn global add pm2
-RUN pm2 install pm2-logrotate
-RUN pm2 set pm2-logrotate:max_size 30M
-RUN pm2 set pm2-logrotate:retain 10
+# Copy necessary config files
+COPY --from=builder /usr/src/app/package.json .
+COPY --from=builder /usr/src/app/ecosystem.config.js .
 
+# Set environment at runtime
+# 1. API Flow (Standard TSC): Arquivo existe em libs/ee/...
+RUN if [ -f dist/ee/configs/environment/environment.template.ts ]; then \
+    sed -e "s/__CLOUD_MODE__/${API_CLOUD_MODE}/g" -e "s/__DEVELOPMENT_MODE__/false/g" dist/ee/configs/environment/environment.template.ts > dist/ee/configs/environment/environment.ts; \
+    fi
+
+# 2. Worker Flow (Webpack): O arquivo não existe pois virou bundle.
+# Precisamos gerar um environment.js manualmente para o require('./environment') funcionar.
+RUN echo "Object.defineProperty(exports, \"__esModule\", { value: true }); exports.environment = { API_CLOUD_MODE: ${API_CLOUD_MODE}, API_DEVELOPMENT_MODE: false };" > dist/environment.js
+# Copia para as subpastas de apps (onde o main.js pode estar)
+RUN for d in dist/apps/*; do if [ -d "$d" ]; then cp dist/environment.js "$d/"; fi; done
+
+# Set the command to run the application using pm2
 CMD ["pm2-runtime", "start", "ecosystem.config.js", "--env", "production"]

@@ -16,8 +16,8 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { BackfillPRsDto } from '../dtos/backfill-prs.dto';
-import { EnrichedPullRequestsQueryDto } from '../dtos/enriched-pull-requests-query.dto';
-import { PaginatedEnrichedPullRequestsResponse } from '../dtos/paginated-enriched-pull-requests.dto';
+import { EnrichedPullRequestsQueryDto } from '@libs/platformData/dtos/enriched-pull-requests-query.dto';
+import { PaginatedEnrichedPullRequestsResponse } from '@libs/platformData/dtos/paginated-enriched-pull-requests.dto';
 import { OnboardingReviewModeSignalsQueryDto } from '../dtos/onboarding-review-mode-signals-query.dto';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 import {

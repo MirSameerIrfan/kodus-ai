@@ -13,10 +13,10 @@ import type {
     MCPInvocationResult,
     MCPRegistration,
     PackAssemblyStep,
-} from '@context-os-core/interfaces';
-import { MCPOrchestrator } from '@context-os-core/mcp/orchestrator';
-import { InMemoryMCPRegistry } from '@context-os-core/mcp/registry';
-import { SequentialPackAssemblyPipeline } from '@context-os-core/pipeline/sequential-pack-pipeline';
+} from '@kodus/flow';
+import { MCPOrchestrator } from '@kodus/flow';
+import { InMemoryMCPRegistry } from '@kodus/flow';
+import { SequentialPackAssemblyPipeline } from '@kodus/flow';
 import {
     createMCPAdapter,
     type MCPServerConfig,

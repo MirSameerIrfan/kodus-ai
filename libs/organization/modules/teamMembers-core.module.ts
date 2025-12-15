@@ -42,6 +42,12 @@ import { TeamModule } from './team.module';
             useClass: TeamMemberDatabaseRepository,
         },
     ],
-    exports: [TEAM_MEMBERS_SERVICE_TOKEN, TEAM_MEMBERS_REPOSITORY_TOKEN],
+    exports: [
+        TEAM_MEMBERS_SERVICE_TOKEN,
+        TEAM_MEMBERS_REPOSITORY_TOKEN,
+        CreateOrUpdateTeamMembersUseCase,
+        GetTeamMembersUseCase,
+        DeleteTeamMembersUseCase,
+    ],
 })
 export class TeamMembersCoreModule {}

@@ -1,7 +1,4 @@
-import type {
-    ContextDependency,
-    ContextEvidence,
-} from '@context-os-core/interfaces';
+import type { ContextDependency, ContextEvidence } from '@kodus/flow';
 import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 import pLimit from 'p-limit';

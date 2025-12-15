@@ -17,7 +17,7 @@ import { ResyncRulesFromIdeUseCase } from '@libs/kodyRules/application/use-cases
 import { SyncSelectedRepositoriesKodyRulesUseCase } from '@libs/kodyRules/application/use-cases/sync-selected-repositories.use-case';
 import { FastSyncIdeRulesUseCase } from '@libs/kodyRules/application/use-cases/fast-sync-ide-rules.use-case';
 import { ImportFastKodyRulesUseCase } from '@libs/kodyRules/application/use-cases/import-fast-kody-rules.use-case';
-import { ImportFastKodyRulesDto } from '../dtos/import-fast-kody-rules.dto';
+import { ImportFastKodyRulesDto } from '@libs/kodyRules/dtos/import-fast-kody-rules.dto';
 import { ReviewFastKodyRulesDto } from '../dtos/review-fast-kody-rules.dto';
 
 import {
@@ -31,8 +31,8 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import { AddLibraryKodyRulesDto } from '../dtos/add-library-kody-rules.dto';
-import { ChangeStatusKodyRulesDTO } from '../dtos/change-status-kody-rules.dto';
+import { AddLibraryKodyRulesDto } from '@libs/kodyRules/dtos/add-library-kody-rules.dto';
+import { ChangeStatusKodyRulesDTO } from '@libs/kodyRules/dtos/change-status-kody-rules.dto';
 import { FindLibraryKodyRulesDto } from '../dtos/find-library-kody-rules.dto';
 import { FindSuggestionsByRuleDto } from '../dtos/find-suggestions-by-rule.dto';
 import { GenerateKodyRulesDTO } from '../dtos/generate-kody-rules.dto';

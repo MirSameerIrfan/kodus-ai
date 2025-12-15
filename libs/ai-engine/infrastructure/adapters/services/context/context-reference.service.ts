@@ -2,11 +2,8 @@ import {
     ContextRevisionScope,
     ContextRequirement,
     ContextRevisionActor,
-} from '@context-os-core/interfaces';
-import {
-    createRevisionEntry,
-    computeRequirementsHash,
-} from '@context-os-core/utils/context-requirements';
+} from '@kodus/flow';
+import { createRevisionEntry, computeRequirementsHash } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 

@@ -22,7 +22,7 @@ import { WebhookHealthController } from '../controllers/webhook-health.controlle
         SharedPostgresModule.forRoot({ poolSize: 8 }),
 
         EventEmitterModule.forRoot(),
-        RabbitMQWrapperModule.register(),
+        RabbitMQWrapperModule.register({ enableConsumers: false }),
         WebhookEnqueueModule,
     ],
     controllers: [

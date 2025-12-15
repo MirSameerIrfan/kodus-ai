@@ -1,4 +1,4 @@
-import type { ContextLayer } from '@context-os-core/interfaces';
+import type { ContextLayer } from '@kodus/flow';
 
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { IExternalPromptContext } from '../interfaces/promptExternalReference.interface';

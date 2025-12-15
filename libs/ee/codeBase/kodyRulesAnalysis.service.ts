@@ -1,7 +1,4 @@
-import type {
-    ContextDependency,
-    ContextPack,
-} from '@context-os-core/interfaces';
+import type { ContextDependency, ContextPack } from '@kodus/flow';
 import { createLogger } from '@kodus/flow';
 import {
     LLMModelProvider,

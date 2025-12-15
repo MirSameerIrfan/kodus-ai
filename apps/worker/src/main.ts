@@ -1,20 +1,17 @@
 import 'source-map-support/register';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { createLogger } from '@kodus/flow';
 
 import { WorkflowQueueLoader } from '@libs/core/infrastructure/config/loaders/workflow-queue.loader';
-import { setupSentryAndOpenTelemetry } from '@libs/core/infrastructure/config/log/otel';
 
 import { WorkerModule } from './worker.module';
 
 async function bootstrap() {
-    // Define tipo de componente para configuração de pool de DB
     process.env.COMPONENT_TYPE = 'worker';
-
-    // Inicializa Sentry e OpenTelemetry antes de tudo
-    setupSentryAndOpenTelemetry();
 
     const app = await NestFactory.createApplicationContext(WorkerModule, {
         logger: false,
@@ -37,7 +34,7 @@ async function bootstrap() {
     }
 
     logger.log({
-        message: 'Workflow queue worker started',
+        message: '🔄 Starting Workflow queue worker initialization...',
         context: 'WorkerBootstrap',
         metadata: {
             environment: configService.get('API_CLOUD_MODE')
@@ -46,6 +43,8 @@ async function bootstrap() {
             workerEnabled: workflowConfig.WORKFLOW_QUEUE_WORKER_ENABLED,
             prefetch: workflowConfig.WORKFLOW_QUEUE_WORKER_PREFETCH,
             maxRetries: workflowConfig.WORKFLOW_QUEUE_WORKER_MAX_RETRIES,
+            nodeVersion: process.version,
+            pid: process.pid,
         },
     });
 
@@ -61,10 +60,7 @@ async function bootstrap() {
         logger.error({
             message: `Unhandled Rejection: ${reason?.message || reason}`,
             context: 'WorkerGlobalExceptionHandler',
-            error:
-                reason instanceof Error
-                    ? new Error(String(reason))
-                    : new Error(String(reason)),
+            error: reason instanceof Error ? reason : new Error(String(reason)),
         });
     });
 
@@ -72,6 +68,9 @@ async function bootstrap() {
         logger.log({
             message: `Received ${signal}, shutting down gracefully...`,
             context: 'WorkerShutdown',
+            metadata: {
+                uptime: `${Math.round(process.uptime())}s`,
+            },
         });
 
         try {
@@ -95,8 +94,12 @@ async function bootstrap() {
     process.on('SIGINT', () => shutdown('SIGINT'));
 
     logger.log({
-        message: 'Workflow queue worker is ready and listening for jobs',
+        message: '🚀 Workflow queue worker is fully initialized and running',
         context: 'WorkerBootstrap',
+        metadata: {
+            pid: process.pid,
+            timestamp: new Date().toISOString(),
+        },
     });
 }
 

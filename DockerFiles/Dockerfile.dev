@@ -7,7 +7,9 @@ ENV API_CLOUD_MODE=${API_CLOUD_MODE}
 
 WORKDIR /usr/src/app
 
-RUN apt-get update && apt-get install -y ca-certificates git make g++ python3 && rm -rf /var/lib/apt/lists/*
+# Install dev tools and yalc dependencies globally
+RUN apt-get update && apt-get install -y ca-certificates git make g++ python3 procps && rm -rf /var/lib/apt/lists/*
+RUN npm i -g yalc chokidar-cli
 
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
@@ -15,7 +17,11 @@ COPY package.json yarn.lock ./
 COPY packages/kodus-flow ./packages/kodus-flow
 COPY packages/kodus-common/package.json ./packages/kodus-common/
 
-RUN yarn install --check-files --frozen-lockfile --production=false
+# Patch package.json to use the local package path instead of yalc's for the Docker build
+RUN sed -i 's|"file:.yalc/@kodus/flow"|"file:packages/kodus-flow"|g' package.json
+RUN sed -i 's|"file:.yalc/@kodus/kodus-common"|"file:packages/kodus-common"|g' package.json
+
+RUN yarn install --check-files --production=false
 
 # -------------------------------------------------------------
 FROM deps AS build-code
@@ -55,8 +61,11 @@ WORKDIR /usr/src/app
 EXPOSE 3001
 
 RUN apt-get update && \
-    apt-get install -y ca-certificates git python3 make g++ && \
+    apt-get install -y ca-certificates git python3 make g++ procps && \
     rm -rf /var/lib/apt/lists/*
+
+# Also install yalc tools in the final stage for exec commands
+RUN npm i -g yalc chokidar-cli
 
 COPY --from=deps /usr/src/app/node_modules ./node_modules
 COPY --from=deps /usr/src/app/packages ./packages
@@ -68,4 +77,4 @@ COPY nest-cli.json ./
 COPY --from=build-code /usr/src/app/dist ./dist
 RUN mkdir -p /usr/src/app/certs
 
-CMD ["yarn", "start:dev"]
+CMD ["tail", "-f", "/dev/null"] # Keep container alive for exec commands and dev startup

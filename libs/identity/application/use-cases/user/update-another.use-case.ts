@@ -18,7 +18,7 @@ import {
     ITeamMemberService,
     TEAM_MEMBERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/teamMembers/contracts/teamMembers.service.contracts';
-import { UpdateAnotherUserDto } from 'apps/api/src/dtos/update-another-user.dto';
+import { UpdateAnotherUserDto } from '@libs/identity/dtos/update-another-user.dto';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 
 @Injectable()

@@ -1,8 +1,12 @@
 import { Module, forwardRef } from '@nestjs/common';
 
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { CodeReviewSettingsLogModule } from '@libs/ee/codeReviewSettingsLog/codeReviewSettingsLog.module';
+import { ProfilesModule } from './profiles.module';
 import { AuthModule } from './auth.module'; // Import Core module
 import { TeamMembersModule } from '@libs/organization/modules/teamMembers.module';
+
+import { UserModel } from '../infrastructure/adapters/repositories/schemas/user.model';
 
 import { PASSWORD_SERVICE_TOKEN } from '../domain/user/contracts/password.service.contract';
 import { USER_REPOSITORY_TOKEN } from '../domain/user/contracts/user.repository.contract';
@@ -17,7 +21,9 @@ import { UserDatabaseRepository } from '../infrastructure/adapters/repositories/
 
 @Module({
     imports: [
-        AuthModule,
+        TypeOrmModule.forFeature([UserModel]),
+        forwardRef(() => AuthModule),
+        forwardRef(() => ProfilesModule),
         forwardRef(() => ProfileConfigModule),
         forwardRef(() => TeamModule),
         forwardRef(() => TeamMembersModule),

@@ -17,6 +17,11 @@ import { AzureReposService } from '../infrastructure/adapters/services/azureRepo
 import { AzureReposPullRequestHandler } from '../infrastructure/webhooks/azure/azureReposPullRequest.handler';
 import { IssuesModule } from '@libs/issues/issues.module';
 import { UserModule } from '@libs/identity/modules/user.module';
+import { PlatformDataModule } from '@libs/platformData/platformData.module';
+import { WorkflowModule } from '@libs/core/workflow/workflow.module';
+import { KodyRulesModule } from '@libs/kodyRules/modules/kodyRules.module';
+import { McpModule } from '@libs/mcp-server/mcp.module';
+import { AzureReposRequestHelper } from '../infrastructure/adapters/services/azureRepos/azure-repos-request-helper';
 
 @Module({
     imports: [
@@ -35,8 +40,25 @@ import { UserModule } from '@libs/identity/modules/user.module';
         forwardRef(() => LicenseModule),
         forwardRef(() => PermissionValidationModule),
         forwardRef(() => IssuesModule),
+        forwardRef(() => PlatformDataModule),
+        forwardRef(() => WorkflowModule),
+        forwardRef(() => KodyRulesModule),
+        forwardRef(() => McpModule),
     ],
-    providers: [AzureReposService, AzureReposPullRequestHandler],
-    exports: [AzureReposService, AzureReposPullRequestHandler],
+    providers: [
+        AzureReposService,
+        AzureReposPullRequestHandler,
+        AzureReposRequestHelper,
+        {
+            provide: 'AZURE_REPOS_WEBHOOK_HANDLER',
+            useClass: AzureReposPullRequestHandler,
+        },
+    ],
+    exports: [
+        AzureReposService,
+        AzureReposPullRequestHandler,
+        'AZURE_REPOS_WEBHOOK_HANDLER',
+        AzureReposRequestHelper,
+    ],
 })
 export class AzureReposModule {}

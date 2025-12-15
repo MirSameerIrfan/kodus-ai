@@ -13,7 +13,7 @@ import {
 } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 
 import { CreateOrUpdateKodyRulesUseCase } from './create-or-update.use-case';
-import { AddLibraryKodyRulesDto } from 'apps/api/src/dtos/add-library-kody-rules.dto';
+import { AddLibraryKodyRulesDto } from '@libs/kodyRules/dtos/add-library-kody-rules.dto';
 import { CreateKodyRuleDto } from '@libs/ee/kodyRules/dtos/create-kody-rule.dto';
 
 @Injectable()

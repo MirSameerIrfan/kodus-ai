@@ -5,7 +5,6 @@ import { DataSource } from 'typeorm';
 import { IJobQueueService } from '@libs/core/workflow/domain/contracts/job-queue.service.contract';
 import { IWorkflowJob } from '@libs/core/workflow/domain/interfaces/workflow-job.interface';
 
-import { TransactionalOutboxService } from './transactional-outbox.service';
 import { ObservabilityService } from '@libs/core/log/observability.service';
 import { createLogger } from '@kodus/flow';
 
@@ -20,7 +19,6 @@ export class RabbitMQJobQueueService implements IJobQueueService {
     constructor(
         @Optional() private readonly amqpConnection: AmqpConnection,
         private readonly jobRepository: WorkflowJobRepository,
-        private readonly outboxService: TransactionalOutboxService,
         private readonly dataSource: DataSource,
         private readonly observability: ObservabilityService,
     ) {
@@ -44,48 +42,49 @@ export class RabbitMQJobQueueService implements IJobQueueService {
                     'workflow.correlation.id': job.correlationId,
                 });
 
-                // Usa Transactional Outbox pattern
-                const savedJob = await this.dataSource.transaction(
-                    async (manager) => {
-                        // 1. Salva job no banco
-                        const jobToSave = await this.jobRepository.create(job);
+                // 1. Salva job no banco
+                const jobToSave = await this.jobRepository.create(job);
 
-                        // 2. Salva mensagem no outbox (mesma transação)
-                        await this.outboxService.saveInTransaction(manager, {
+                // 2. Publica mensagem diretamente no RabbitMQ (se disponível)
+                if (this.amqpConnection) {
+                    await this.amqpConnection.publish(
+                        this.exchange,
+                        `${this.routingKey}.${job.workflowType.toLowerCase()}`,
+                        {
                             jobId: jobToSave.uuid,
-                            exchange: this.exchange,
-                            routingKey: `${this.routingKey}.${job.workflowType.toLowerCase()}`,
-                            payload: {
-                                jobId: jobToSave.uuid,
-                                correlationId: job.correlationId,
-                                workflowType: job.workflowType,
-                                handlerType: job.handlerType,
-                                organizationId:
-                                    job.organizationAndTeam?.organizationId,
-                                teamId: job.organizationAndTeam?.teamId,
-                            },
-                        });
-
-                        return jobToSave;
-                    },
-                );
+                            correlationId: job.correlationId,
+                            workflowType: job.workflowType,
+                            handlerType: job.handlerType,
+                            organizationId:
+                                job.organizationAndTeam?.organizationId,
+                            teamId: job.organizationAndTeam?.teamId,
+                        },
+                    );
+                } else {
+                    this.logger.warn({
+                        message:
+                            'RabbitMQ not available, job saved but not enqueued',
+                        context: RabbitMQJobQueueService.name,
+                        metadata: { jobId: jobToSave.uuid },
+                    });
+                }
 
                 span.setAttributes({
-                    'workflow.job.id': savedJob.uuid,
+                    'workflow.job.id': jobToSave.uuid,
                 });
 
                 this.logger.log({
-                    message: 'Workflow job enqueued via transactional outbox',
+                    message: 'Workflow job enqueued directly to RabbitMQ',
                     context: RabbitMQJobQueueService.name,
                     metadata: {
-                        jobId: savedJob.uuid,
+                        jobId: jobToSave.uuid,
                         correlationId: job.correlationId,
                         workflowType: job.workflowType,
                         handlerType: job.handlerType,
                     },
                 });
 
-                return savedJob.uuid;
+                return jobToSave.uuid;
             },
             {
                 'workflow.component': 'queue',

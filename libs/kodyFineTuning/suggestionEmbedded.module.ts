@@ -14,6 +14,7 @@ import { SuggestionEmbeddedDatabaseRepository } from './infrastructure/adapters/
             provide: SUGGESTION_EMBEDDED_REPOSITORY_TOKEN,
             useClass: SuggestionEmbeddedDatabaseRepository,
         },
+        SuggestionEmbeddedDatabaseRepository, // Explicitly provide the class
         {
             provide: SUGGESTION_EMBEDDED_SERVICE_TOKEN,
             useClass: SuggestionEmbeddedService,

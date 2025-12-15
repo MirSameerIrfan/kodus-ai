@@ -1,10 +1,7 @@
 import { randomUUID } from 'crypto';
 
-import type {
-    ContextRequirement,
-    ContextDependency,
-} from '@context-os-core/interfaces';
-import { computeRequirementsHash } from '@context-os-core/utils/context-requirements';
+import type { ContextRequirement, ContextDependency } from '@kodus/flow';
+import { computeRequirementsHash } from '@kodus/flow';
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 
@@ -48,9 +45,7 @@ type NormalizedSyncError = {
 };
 
 @Injectable()
-export class PromptExternalReferenceManagerService
-    implements IPromptExternalReferenceManagerService
-{
+export class PromptExternalReferenceManagerService implements IPromptExternalReferenceManagerService {
     private readonly logger = createLogger(
         PromptExternalReferenceManagerService.name,
     );

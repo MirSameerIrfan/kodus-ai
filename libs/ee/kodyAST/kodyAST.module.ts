@@ -1,12 +1,17 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 
 import { environment } from '../configs/environment';
 import { AST_ANALYSIS_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
 import { CodeAstAnalysisService } from './codeASTAnalysis.service';
-import { ContextReferenceModule } from '@libs/code-review/modules/contextReference.module';
+import { AIEngineModule } from '@libs/ai-engine/modules/ai-engine.module';
 import { PlatformModule } from '@libs/platform/modules/platform.module';
+import { SharedObservabilityModule } from '@libs/shared/infrastructure/shared-observability.module';
 
-const staticImports = [PlatformModule, ContextReferenceModule];
+const staticImports = [
+    forwardRef(() => PlatformModule),
+    forwardRef(() => AIEngineModule),
+    SharedObservabilityModule,
+];
 
 const providers = [];
 const moduleExports = [AST_ANALYSIS_SERVICE_TOKEN];

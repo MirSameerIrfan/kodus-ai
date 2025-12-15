@@ -50,6 +50,7 @@ export class ProcessFilesReview extends BasePipelineStage<CodeReviewPipelineCont
     readonly stageName = 'FileAnalysisStage';
 
     private readonly concurrencyLimit = 20;
+    private readonly logger = createLogger(ProcessFilesReview.name);
 
     constructor(
         @Inject(SUGGESTION_SERVICE_TOKEN)
@@ -68,10 +69,8 @@ export class ProcessFilesReview extends BasePipelineStage<CodeReviewPipelineCont
         private readonly kodyAstAnalyzeContextPreparation: IKodyASTAnalyzeContextPreparationService,
 
         private readonly codeAnalysisOrchestrator: CodeAnalysisOrchestrator,
-        private logger: ReturnType<typeof createLogger>,
     ) {
         super();
-        this.logger = createLogger(ProcessFilesReview.name);
     }
 
     protected async executeStage(

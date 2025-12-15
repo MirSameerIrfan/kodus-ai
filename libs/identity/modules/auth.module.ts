@@ -24,12 +24,13 @@ import { AuthRepository } from '../infrastructure/adapters/repositories/auth.rep
 import { SSOConfigRepository } from '../infrastructure/adapters/repositories/ssoConfig.repository';
 import { OrganizationModule } from '@libs/organization/modules/organization.module';
 import { TeamModule } from '@libs/organization/modules/team.module';
+import { ParametersModule } from '@libs/organization/modules/parameters.module';
 import { ProfilesModule } from './profiles.module';
 import { UserModule } from './user.module';
 
 @Module({
     imports: [
-        UserModule,
+        forwardRef(() => UserModule),
         TypeOrmModule.forFeature([AuthModel, SSOConfigModel]),
         ConfigModule.forFeature(jwtConfigLoader),
         PassportModule,
@@ -47,6 +48,7 @@ import { UserModule } from './user.module';
         TeamMembersModule,
         forwardRef(() => ProfilesModule),
         forwardRef(() => TeamModule),
+        forwardRef(() => ParametersModule),
     ],
     providers: [
         ...AuthUseCases,
@@ -61,6 +63,7 @@ import { UserModule } from './user.module';
             provide: AUTH_SERVICE_TOKEN,
             useClass: AuthService,
         },
+        // AuthService removed here because it is already provided via token above
         {
             provide: SSO_CONFIG_REPOSITORY_TOKEN,
             useClass: SSOConfigRepository,
@@ -69,14 +72,17 @@ import { UserModule } from './user.module';
             provide: SSO_CONFIG_SERVICE_TOKEN,
             useClass: SSOConfigService,
         },
+        // SSOConfigService removed here because it is already provided via token above
     ],
     exports: [
         AUTH_SERVICE_TOKEN,
         JwtModule,
-        AuthService,
-        SSOConfigService,
+        // AuthService removed from exports
+        // SSOConfigService removed from exports
         AUTH_REPOSITORY_TOKEN,
         SSO_CONFIG_REPOSITORY_TOKEN,
+        ...AuthUseCases,
+        ...SSOConfigUseCases,
     ],
 })
 export class AuthModule {}

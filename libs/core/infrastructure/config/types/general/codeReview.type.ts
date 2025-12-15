@@ -2,7 +2,7 @@ import { CodeReviewPipelineContext } from '@libs/code-review/pipeline/context/co
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 import { DeepPartial } from 'typeorm';
 import { IPullRequestMessages } from '@libs/code-review/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
-import type { ContextLayer, ContextPack } from '@context-os-core/interfaces';
+import type { ContextLayer, ContextPack } from '@kodus/flow';
 import { LLMModelProvider } from '@kodus/kodus-common/llm';
 import z from 'zod';
 import { DeliveryStatus } from '@libs/platformData/domain/pullRequests/enums/deliveryStatus.enum';

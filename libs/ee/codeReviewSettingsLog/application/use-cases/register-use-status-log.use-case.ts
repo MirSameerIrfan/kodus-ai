@@ -8,7 +8,7 @@ import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
     ICodeReviewSettingsLogService,
 } from '@libs/ee/codeReviewSettingsLog/domain/contracts/codeReviewSettingsLog.service.contract';
-import { UserStatusDto } from 'apps/api/src/dtos/user-status-change.dto';
+import { UserStatusDto } from '@libs/ee/codeReviewSettingsLog/dtos/user-status-change.dto';
 
 @Injectable()
 export class RegisterUserStatusLogUseCase implements IUseCase {

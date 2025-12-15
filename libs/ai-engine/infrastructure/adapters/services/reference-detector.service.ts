@@ -1,4 +1,4 @@
-import { ContextDependency } from '@context-os-core/interfaces';
+import { ContextDependency } from '@kodus/flow';
 import { createLogger } from '@kodus/flow';
 import {
     BYOKConfig,

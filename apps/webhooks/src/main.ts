@@ -1,4 +1,6 @@
 import 'source-map-support/register';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -18,9 +20,6 @@ import { environment } from '@libs/ee/configs/environment';
 async function bootstrap() {
     process.env.COMPONENT_TYPE = 'webhook';
 
-    // Inicializa Sentry e OpenTelemetry antes de tudo
-    // setupSentryAndOpenTelemetry();
-
     const app = await NestFactory.create<NestExpressApplication>(
         WebhookHandlerModule,
         {
@@ -35,7 +34,6 @@ async function bootstrap() {
     const config = configService.get<HttpServerConfiguration>('server');
     const { host } = config;
 
-    // Webhook handler runs on port 3332 (different from API REST)
     const webhookPort = process.env.WEBHOOK_HANDLER_PORT
         ? parseInt(process.env.WEBHOOK_HANDLER_PORT, 10)
         : 3332;
@@ -65,7 +63,7 @@ async function bootstrap() {
     app.use(
         expressRateLimit({
             windowMs: 60 * 1000, // 1 minute
-            max: 1000, // 1000 requests per minute (webhooks can be bursty)
+            max: 3000,
             legacyHeaders: false,
         }),
     );

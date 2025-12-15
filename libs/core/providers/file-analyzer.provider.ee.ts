@@ -8,7 +8,7 @@ import {
     IFileReviewContextPreparation,
 } from '@libs/core/domain/interfaces/file-review-context-preparation.interface';
 import { FileReviewContextPreparation as CoreFileReviewContextPreparation } from '@libs/code-review/infrastructure/adapters/services/code-analysis/file/noop-file-review.service';
-import { FileReviewContextPreparation as ProFileReviewContextPreparation } from '@libs/ee/codeReview/fileReviewContextPreparation/file-review-context-preparation.service';
+import { FileReviewContextPreparation } from '@libs/ee/codeReview/fileReviewContextPreparation/file-review-context-preparation.service';
 import { LLM_ANALYSIS_SERVICE_TOKEN } from '@libs/code-review/infrastructure/adapters/services/llmAnalysis.service';
 import {
     AST_ANALYSIS_SERVICE_TOKEN,
@@ -27,7 +27,7 @@ export const FILE_REVIEW_CONTEXT_PREPARATION_PROVIDER: Provider = {
         const isCloud = environment.API_CLOUD_MODE;
 
         if (isCloud) {
-            return new ProFileReviewContextPreparation(
+            return new FileReviewContextPreparation(
                 astAnalysisService,
                 aiAnalysisService,
             );

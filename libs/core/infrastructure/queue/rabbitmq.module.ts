@@ -1,6 +1,17 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 // rabbitMQWrapper.module.ts
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
-import { Module, DynamicModule, Provider, Global } from '@nestjs/common';
+import {
+    Module,
+    DynamicModule,
+    Provider,
+    Global,
+    ModuleMetadata,
+    Type,
+    ForwardReference,
+} from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { MESSAGE_BROKER_SERVICE_TOKEN } from '@libs/core/domain/contracts/message-broker.service.contracts';
@@ -12,16 +23,27 @@ import { MessageBrokerService } from '@libs/core/infrastructure/queue/messageBro
 import { AutomationModule } from '@libs/automation/modules/automation.module';
 import { CodeReviewFeedbackModule } from '@libs/code-review/modules/codeReviewFeedback.module';
 
+export interface RabbitMQWrapperOptions {
+    enableConsumers: boolean;
+}
+
 @Global()
 @Module({})
 export class RabbitMQWrapperModule {
-    static register(): DynamicModule {
-        const imports = [
-            ConfigModule.forRoot(),
-            ConfigModule.forFeature(RabbitMQLoader),
-            CodeReviewFeedbackModule,
-            AutomationModule,
-        ];
+    static register(
+        options: RabbitMQWrapperOptions = { enableConsumers: true },
+    ): DynamicModule {
+        const imports: (
+            | Type<any>
+            | DynamicModule
+            | Promise<DynamicModule>
+            | ForwardReference
+        )[] = [ConfigModule.forRoot(), ConfigModule.forFeature(RabbitMQLoader)];
+
+        // Only import heavy business modules if consumers are enabled
+        if (options.enableConsumers) {
+            imports.push(CodeReviewFeedbackModule, AutomationModule);
+        }
 
         const providers: Provider[] = [
             {
@@ -30,16 +52,25 @@ export class RabbitMQWrapperModule {
             },
         ];
 
-        const exports = [MESSAGE_BROKER_SERVICE_TOKEN];
+        const exports: ModuleMetadata['exports'] = [
+            MESSAGE_BROKER_SERVICE_TOKEN,
+        ];
 
         // Using a factory function to obtain the ConfigService
         const rabbitMQModule = RabbitMQModule.forRootAsync({
             imports: [ConfigModule],
             useFactory: async (configService: ConfigService) => {
                 const rabbitMQEnabled =
-                    process.env.API_RABBITMQ_ENABLED === 'true';
+                    process.env.API_RABBITMQ_ENABLED !== 'false';
+
+                console.log(
+                    `[RabbitMQWrapperModule] Factory running. ENABLED=${rabbitMQEnabled}, ENV_VAR=${process.env.API_RABBITMQ_ENABLED}`,
+                );
 
                 if (!rabbitMQEnabled) {
+                    console.log(
+                        `[RabbitMQWrapperModule] Returning empty config because it is disabled.`,
+                    );
                     return null;
                 }
 
@@ -156,14 +187,30 @@ export class RabbitMQWrapperModule {
             inject: [ConfigService],
         });
 
-        const rabbitMQEnabled = process.env.API_RABBITMQ_ENABLED === 'true';
+        const rabbitMQEnabled = process.env.API_RABBITMQ_ENABLED !== 'false';
+
+        // Add logging to debug
+        console.log(
+            `[RabbitMQWrapperModule] Registering module. ENABLED=${rabbitMQEnabled}, ENV_VAR=${process.env.API_RABBITMQ_ENABLED}`,
+        );
 
         if (rabbitMQEnabled) {
+            console.log(
+                '[RabbitMQWrapperModule] RabbitMQ is ENABLED. Adding RabbitMQModule to imports.',
+            );
             imports.push(rabbitMQModule);
+            exports.push(rabbitMQModule);
 
-            providers.push(
-                CodeReviewFeedbackConsumer,
-                RabbitmqConsumeErrorFilter,
+            // Only register consumers if enabled
+            if (options.enableConsumers) {
+                providers.push(
+                    CodeReviewFeedbackConsumer,
+                    RabbitmqConsumeErrorFilter,
+                );
+            }
+        } else {
+            console.log(
+                '[RabbitMQWrapperModule] RabbitMQ is DISABLED. Skipping RabbitMQModule import.',
             );
         }
 

@@ -9,7 +9,7 @@ import {
     Action,
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { CodeReviewSettingsLogFiltersDto } from 'apps/api/src/dtos/code-review-settings-log-filters.dto';
+import { CodeReviewSettingsLogFiltersDto } from '@libs/ee/codeReviewSettingsLog/dtos/code-review-settings-log-filters.dto';
 
 export interface FindCodeReviewSettingsLogsResponse {
     logs: CodeReviewSettingsLogEntity[];

@@ -30,7 +30,7 @@ const UseCases = [
 @Module({
     imports: [
         TypeOrmModule.forFeature([IntegrationModel]),
-        forwardRef(() => IntegrationConfigCoreModule),
+        IntegrationConfigCoreModule,
         forwardRef(() => PlatformModule),
         forwardRef(() => ProfileConfigModule),
         AuthIntegrationModule,

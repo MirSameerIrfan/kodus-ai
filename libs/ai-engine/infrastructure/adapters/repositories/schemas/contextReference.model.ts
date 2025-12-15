@@ -1,11 +1,11 @@
 import { Column, Entity } from 'typeorm';
 
-import type {
+import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
+import {
     ContextRequirement,
     ContextRevisionActor,
     ContextRevisionScope,
-} from '@context-os-core/interfaces';
-import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
+} from '@kodus/flow';
 
 @Entity('context_references')
 export class ContextReferenceModel extends CoreModel {

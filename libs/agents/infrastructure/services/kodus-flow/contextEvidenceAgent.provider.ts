@@ -1,4 +1,3 @@
-import type { ContextEvidence } from '@context-os-core/interfaces';
 import {
     createMCPAdapter,
     createOrchestration,
@@ -7,6 +6,7 @@ import {
     StorageEnum,
     EnhancedJSONParser,
     createLogger,
+    ContextEvidence,
 } from '@kodus/flow';
 import { SDKOrchestrator } from '@kodus/flow/dist/orchestration';
 import { LLMModelProvider, PromptRunnerService } from '@kodus/kodus-common/llm';

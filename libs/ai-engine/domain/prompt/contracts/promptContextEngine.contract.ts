@@ -1,4 +1,4 @@
-import type { ContextRequirement } from '@context-os-core/interfaces';
+import type { ContextRequirement } from '@kodus/flow';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';

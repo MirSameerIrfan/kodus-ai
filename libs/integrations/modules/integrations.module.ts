@@ -1,8 +1,8 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { IntegrationCoreModule } from './integrations-core.module';
 
 @Module({
-    imports: [IntegrationCoreModule],
-    exports: [IntegrationCoreModule],
+    imports: [forwardRef(() => IntegrationCoreModule)],
+    exports: [forwardRef(() => IntegrationCoreModule)],
 })
 export class IntegrationModule {}

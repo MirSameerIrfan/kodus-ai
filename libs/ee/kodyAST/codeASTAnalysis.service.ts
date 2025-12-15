@@ -7,7 +7,7 @@ import {
     ParserType,
 } from '@kodus/kodus-common/llm';
 
-import type { ContextPack } from '@context-os-core/interfaces';
+import type { ContextPack } from '@kodus/flow';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { calculateBackoffInterval } from '@libs/common/utils/polling';
 import {

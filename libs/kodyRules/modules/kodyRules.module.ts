@@ -26,8 +26,8 @@ import {
 import { UserModule } from '@libs/identity/modules/user.module';
 import { KODY_RULES_REPOSITORY_TOKEN } from '../domain/contracts/kodyRules.repository.contract';
 import { KODY_RULES_SERVICE_TOKEN } from '../domain/contracts/kodyRules.service.contract';
-import { GET_ADDITIONAL_INFO_HELPER_TOKEN } from '@libs/core/domain/contracts';
-import { GetAdditionalInfoHelper } from '@libs/common/utils/helpers/getAdditionalInfo.helper';
+import { SharedHelpersModule } from '@libs/common/modules/shared-helpers.module';
+import { RuleLikeModule } from './ruleLike.module';
 import { SyncSelectedRepositoriesKodyRulesUseCase } from '../application/use-cases/sync-selected-repositories.use-case';
 import { ExternalReferenceLoaderService } from '../infrastructure/adapters/services/externalReferenceLoader.service';
 import { KodyRuleDependencyService } from '../infrastructure/adapters/services/kodyRulesDependency.service';
@@ -35,9 +35,25 @@ import { KodyRulesSyncService } from '../infrastructure/adapters/services/kodyRu
 import { SendRulesNotificationUseCase } from '../application/use-cases/send-rules-notification.use-case';
 import { ChangeStatusKodyRulesUseCase } from '../application/use-cases/change-status-kody-rules.use-case';
 import { CreateOrUpdateKodyRulesUseCase } from '../application/use-cases/create-or-update.use-case';
+import { FindByOrganizationIdKodyRulesUseCase } from '../application/use-cases/find-by-organization-id.use-case';
 import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from '../application/use-cases/find-rules-in-organization-by-filter.use-case';
 import { GenerateKodyRulesUseCase } from '../application/use-cases/generate-kody-rules.use-case';
-import { RuleLikeModule } from './ruleLike.module';
+import { AddLibraryKodyRulesUseCase } from '../application/use-cases/add-library-kody-rules.use-case';
+import { CheckSyncStatusUseCase } from '../application/use-cases/check-sync-status.use-case';
+import { DeleteRuleInOrganizationByIdKodyRulesUseCase } from '../application/use-cases/delete-rule-in-organization-by-id.use-case';
+import { FastSyncIdeRulesUseCase } from '../application/use-cases/fast-sync-ide-rules.use-case';
+import { FindLibraryKodyRulesBucketsUseCase } from '../application/use-cases/find-library-kody-rules-buckets.use-case';
+import { FindLibraryKodyRulesWithFeedbackUseCase } from '../application/use-cases/find-library-kody-rules-with-feedback.use-case';
+import { FindLibraryKodyRulesUseCase } from '../application/use-cases/find-library-kody-rules.use-case';
+import { FindSuggestionsByRuleUseCase } from '../application/use-cases/find-suggestions-by-rule.use-case';
+import { GetInheritedRulesKodyRulesUseCase } from '../application/use-cases/get-inherited-kody-rules.use-case';
+import { GetRulesLimitStatusUseCase } from '../application/use-cases/get-rules-limit-status.use-case';
+import { ImportFastKodyRulesUseCase } from '../application/use-cases/import-fast-kody-rules.use-case';
+import { ResyncRulesFromIdeUseCase } from '../application/use-cases/resync-rules-from-ide.use-case';
+import { RemoveRuleLikeUseCase } from '../application/use-cases/rule-like/remove-rule-like.use-case';
+import { SetRuleLikeUseCase } from '../application/use-cases/rule-like/set-rule-like.use-case';
+
+import { PermissionsModule } from '@libs/identity/modules/permissions.module';
 
 @Module({
     imports: [
@@ -62,6 +78,8 @@ import { RuleLikeModule } from './ruleLike.module';
         forwardRef(() => ContextReferenceModule),
         GlobalCacheModule,
         forwardRef(() => PermissionValidationModule),
+        forwardRef(() => SharedHelpersModule),
+        PermissionsModule,
     ],
     providers: [
         {
@@ -72,20 +90,40 @@ import { RuleLikeModule } from './ruleLike.module';
             provide: KODY_RULES_SERVICE_TOKEN,
             useClass: KodyRulesService,
         },
+        // KodyRulesService removed here because it is already provided via token above
+        // GenerateKodyRulesUseCase is a use case, no token needed
+        GenerateKodyRulesUseCase,
+        FindByOrganizationIdKodyRulesUseCase,
+        FindRulesInOrganizationByRuleFilterKodyRulesUseCase,
+        ChangeStatusKodyRulesUseCase,
+        CreateOrUpdateKodyRulesUseCase,
+        SendRulesNotificationUseCase,
+        SyncSelectedRepositoriesKodyRulesUseCase,
         KodyRulesValidationService,
         KodyRulesSyncService,
         KodyRuleDependencyService,
         ExternalReferenceLoaderService,
-        {
-            provide: GET_ADDITIONAL_INFO_HELPER_TOKEN,
-            useClass: GetAdditionalInfoHelper,
-        },
         LicenseService,
+        AddLibraryKodyRulesUseCase,
+        CheckSyncStatusUseCase,
+        DeleteRuleInOrganizationByIdKodyRulesUseCase,
+        FastSyncIdeRulesUseCase,
+        FindLibraryKodyRulesBucketsUseCase,
+        FindLibraryKodyRulesWithFeedbackUseCase,
+        FindLibraryKodyRulesUseCase,
+        FindSuggestionsByRuleUseCase,
+        GetInheritedRulesKodyRulesUseCase,
+        GetRulesLimitStatusUseCase,
+        ImportFastKodyRulesUseCase,
+        ResyncRulesFromIdeUseCase,
+        RemoveRuleLikeUseCase,
+        SetRuleLikeUseCase,
     ],
     exports: [
         KODY_RULES_REPOSITORY_TOKEN,
         KODY_RULES_SERVICE_TOKEN,
         GenerateKodyRulesUseCase,
+        FindByOrganizationIdKodyRulesUseCase,
         FindRulesInOrganizationByRuleFilterKodyRulesUseCase,
         ChangeStatusKodyRulesUseCase,
         CreateOrUpdateKodyRulesUseCase,
@@ -96,6 +134,20 @@ import { RuleLikeModule } from './ruleLike.module';
         ExternalReferenceLoaderService,
         SyncSelectedRepositoriesKodyRulesUseCase,
         LicenseService,
+        AddLibraryKodyRulesUseCase,
+        CheckSyncStatusUseCase,
+        DeleteRuleInOrganizationByIdKodyRulesUseCase,
+        FastSyncIdeRulesUseCase,
+        FindLibraryKodyRulesBucketsUseCase,
+        FindLibraryKodyRulesWithFeedbackUseCase,
+        FindLibraryKodyRulesUseCase,
+        FindSuggestionsByRuleUseCase,
+        GetInheritedRulesKodyRulesUseCase,
+        GetRulesLimitStatusUseCase,
+        ImportFastKodyRulesUseCase,
+        ResyncRulesFromIdeUseCase,
+        RemoveRuleLikeUseCase,
+        SetRuleLikeUseCase,
     ],
 })
 export class KodyRulesModule {}

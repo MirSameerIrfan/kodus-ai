@@ -31,7 +31,7 @@ import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import { createLogger } from '@kodus/flow';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { sendConfirmationEmail } from '@libs/common/utils/email/sendMail';
-import { JoinOrganizationDto } from 'apps/api/src/dtos/join-organization.dto';
+import { JoinOrganizationDto } from '@libs/identity/dtos/join-organization.dto';
 
 @Injectable()
 export class JoinOrganizationUseCase implements IUseCase {

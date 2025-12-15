@@ -42,6 +42,8 @@ import { ExecuteAutomationService } from '../infrastructure/adapters/services/pr
 import { AutomationRegistry } from '../infrastructure/adapters/services/processAutomation/config/register.automation';
 import { TeamMembersCoreModule } from '@libs/organization/modules/teamMembers-core.module';
 
+import { OrganizationParametersModule } from '@libs/organization/modules/organizationParameters.module';
+
 @Module({
     imports: [
         TypeOrmModule.forFeature([
@@ -65,6 +67,7 @@ import { TeamMembersCoreModule } from '@libs/organization/modules/teamMembers-co
         forwardRef(() => ProfileConfigModule),
         forwardRef(() => LicenseModule),
         forwardRef(() => PermissionValidationModule),
+        forwardRef(() => OrganizationParametersModule),
     ],
     providers: [
         SaveCodeReviewFeedbackUseCase,
@@ -115,7 +118,6 @@ import { TeamMembersCoreModule } from '@libs/organization/modules/teamMembers-co
         },
         AutomationRegistry,
     ],
-    controllers: [],
     exports: [
         // --- Automation Exports ---
         AUTOMATION_REPOSITORY_TOKEN,

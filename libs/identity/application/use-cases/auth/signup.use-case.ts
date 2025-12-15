@@ -31,7 +31,7 @@ import { TeamMemberRole } from '@libs/organization/domain/teamMembers/enums/team
 
 import { CreateProfileUseCase } from '../profile/create.use-case';
 import { CreateTeamUseCase } from '@libs/organization/application/use-cases/team/create.use-case';
-import { SignUpDTO } from 'apps/api/src/dtos/create-user-organization.dto';
+import { SignUpDTO } from '@libs/identity/dtos/create-user-organization.dto';
 
 @Injectable()
 export class SignUpUseCase implements IUseCase {

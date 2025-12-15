@@ -55,7 +55,7 @@ import {
     resolveSourceTypeFromPath,
 } from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context.utils';
 import { CodeReviewVersion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { CreateOrUpdateCodeReviewParameterDto } from 'apps/api/src/dtos/create-or-update-code-review-parameter.dto';
+import { CreateOrUpdateCodeReviewParameterDto } from '@libs/organization/dtos/create-or-update-code-review-parameter.dto';
 
 @Injectable()
 export class UpdateOrCreateCodeReviewParameterUseCase {

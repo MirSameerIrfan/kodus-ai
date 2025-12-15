@@ -17,7 +17,7 @@ import {
     KODY_RULES_SERVICE_TOKEN,
 } from '@libs/kodyRules/domain/contracts/kodyRules.service.contract';
 import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
-import { DeleteRepositoryCodeReviewParameterDto } from 'apps/api/src/dtos/delete-repository-code-review-parameter.dto';
+import { DeleteRepositoryCodeReviewParameterDto } from '@libs/organization/dtos/delete-repository-code-review-parameter.dto';
 import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
 import { ParametersKey } from '@libs/core/domain/enums';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';

@@ -48,9 +48,8 @@ module.exports = tseslint.config(
     },
     {
         ignores: [
-            'node_modules/**',
-            'dist/**',
-            'src/**',
+            '**/node_modules/**',
+            '**/dist/**',
             '.eslintrc.js',
             'eslint.config.js',
             '**/tsconfig-paths-bootstrap.js',

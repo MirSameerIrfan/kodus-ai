@@ -1,7 +1,7 @@
 import { Controller, Get, HttpStatus, Res } from '@nestjs/common';
 import { Response } from 'express';
-import { DatabaseHealthIndicator } from '@libs/core/health/database.health';
-import { ApplicationHealthIndicator } from '@libs/core/health/application.health';
+import { DatabaseHealthIndicator } from './database.health';
+import { ApplicationHealthIndicator } from './application.health';
 
 @Controller('health')
 export class HealthController {

@@ -2,10 +2,10 @@
     "name": "@kodus/worker",
     "version": "0.0.1",
     "description": "Worker Microservice - Processes jobs from queue",
-    "main": "dist/main.js",
+    "main": "dist/apps/worker/src/main.js",
     "scripts": {
         "build": "nest build",
-        "start": "node dist/main.js",
+        "start": "node dist/apps/worker/src/main.js",
         "start:dev": "nest start --watch",
         "start:debug": "nest start --debug --watch"
     },

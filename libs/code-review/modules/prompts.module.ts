@@ -18,7 +18,7 @@ import { AIEngineModule } from '@libs/ai-engine/modules/ai-engine.module';
         forwardRef(() => PlatformModule),
         forwardRef(() => ContextReferenceModule),
         forwardRef(() => IntegrationConfigModule),
-        AIEngineModule,
+        forwardRef(() => AIEngineModule),
     ],
     providers: [
         {

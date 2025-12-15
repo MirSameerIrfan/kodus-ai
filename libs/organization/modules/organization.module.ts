@@ -1,6 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { ProfilesModule } from '@libs/identity/modules/profiles.module';
 import { UserModule } from '@libs/identity/modules/user.module';
 import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
 import { PlatformModule } from '@libs/platform/modules/platform.module';
@@ -15,17 +16,20 @@ import { GetOrganizationsByDomainUseCase } from '../application/use-cases/organi
 import { UpdateInfoOrganizationAndPhoneUseCase } from '../application/use-cases/organization/update-infos.use-case';
 import { GetOrganizationNameUseCase } from '../application/use-cases/organization/get-organization-name';
 import { TeamModule } from './team.module';
+import { OrganizationParametersModule } from './organizationParameters.module';
 import { ParametersModule } from './parameters.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([OrganizationModel]),
         forwardRef(() => UserModule),
+        forwardRef(() => ProfilesModule),
         forwardRef(() => TeamModule),
         forwardRef(() => PlatformModule),
         forwardRef(() => IntegrationModule),
         forwardRef(() => IntegrationConfigModule),
         forwardRef(() => ParametersModule),
+        forwardRef(() => OrganizationParametersModule),
     ],
     providers: [
         GetOrganizationNameUseCase,
@@ -40,6 +44,12 @@ import { ParametersModule } from './parameters.module';
             useClass: OrganizationDatabaseRepository,
         },
     ],
-    exports: [ORGANIZATION_SERVICE_TOKEN, ORGANIZATION_REPOSITORY_TOKEN],
+    exports: [
+        ORGANIZATION_SERVICE_TOKEN,
+        ORGANIZATION_REPOSITORY_TOKEN,
+        GetOrganizationNameUseCase,
+        UpdateInfoOrganizationAndPhoneUseCase,
+        GetOrganizationsByDomainUseCase,
+    ],
 })
 export class OrganizationModule {}

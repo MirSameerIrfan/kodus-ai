@@ -2,7 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { createLogger } from '@kodus/flow';
 import { CreateOrUpdateKodyRulesUseCase } from './create-or-update.use-case';
-import { ImportFastKodyRulesDto } from 'apps/api/src/dtos/import-fast-kody-rules.dto';
+import { ImportFastKodyRulesDto } from '@libs/kodyRules/dtos/import-fast-kody-rules.dto';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { KodyRuleSeverity } from '@libs/ee/kodyRules/dtos/create-kody-rule.dto';
 import {

@@ -1,5 +1,4 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 
 // Stages
 import { ValidateNewCommitsStage } from './stages/validate-new-commits.stage';
@@ -21,25 +20,48 @@ import { RequestChangesOrApproveStage } from './stages/finish-process-review.sta
 
 // Interfaces
 import { LOAD_EXTERNAL_CONTEXT_STAGE_TOKEN } from './stages/contracts/loadExternalContextStage.contract';
-import { WorkflowModule } from '@libs/core/workflow/workflow.module';
+import { WorkflowCoreModule } from '@libs/core/workflow/workflow-core.module';
 import { CodeReviewJobProcessorService } from '../workflow/code-review-job-processor.service';
 import { FileReviewModule } from '@libs/ee/codeReview/fileReviewContextPreparation/fileReview.module';
 import { KodyFineTuningStage } from '@libs/ee/codeReview/stages/kody-fine-tuning.stage';
 import { CodeAnalysisASTStage } from '@libs/ee/codeReview/stages/code-analysis-ast.stage';
 import { CodeAnalysisASTCleanupStage } from '@libs/ee/codeReview/stages/code-analysis-ast-cleanup.stage';
 import { CodeReviewPipelineStrategyEE } from '@libs/ee/codeReview/strategies/code-review-pipeline.strategy.ee';
+import { CodeReviewPipelineStrategy } from './strategy/code-review-pipeline.strategy';
 import { CodebaseModule } from '../modules/codebase.module';
+import { AutomationModule } from '@libs/automation/modules/automation.module';
+import { PullRequestMessagesModule } from '../modules/pullRequestMessages.module';
+import { PullRequestsModule } from '../modules/pull-requests.module';
+import { ParametersModule } from '@libs/organization/modules/parameters.module';
+import { DryRunModule } from '@libs/dryRun/dry-run.module';
+import { OrganizationParametersModule } from '@libs/organization/modules/organizationParameters.module';
+import { KodyFineTuningContextModule } from '@libs/kodyFineTuning/kodyFineTuningContext.module';
+import { AIEngineModule } from '@libs/ai-engine/modules/ai-engine.module';
+import { PlatformModule } from '@libs/platform/modules/platform.module';
+import { KodyASTAnalyzeContextModule } from '@libs/ee/kodyASTAnalyze/kodyAstAnalyzeContext.module';
+import { KodyASTModule } from '@libs/ee/kodyAST/kodyAST.module';
 
 @Module({
     imports: [
         forwardRef(() => CodebaseModule),
         forwardRef(() => FileReviewModule),
-        WorkflowModule,
-        RabbitMQModule,
+        forwardRef(() => AutomationModule),
+        forwardRef(() => PullRequestMessagesModule),
+        forwardRef(() => PullRequestsModule),
+        forwardRef(() => ParametersModule),
+        forwardRef(() => DryRunModule),
+        forwardRef(() => OrganizationParametersModule),
+        forwardRef(() => AIEngineModule),
+        forwardRef(() => PlatformModule),
+        forwardRef(() => KodyFineTuningContextModule),
+        forwardRef(() => KodyASTAnalyzeContextModule),
+        forwardRef(() => KodyASTModule),
+        WorkflowCoreModule,
     ],
     providers: [
         // Strategy
         CodeReviewPipelineStrategyEE,
+        CodeReviewPipelineStrategy,
 
         // Job Processor
         CodeReviewJobProcessorService,
@@ -71,6 +93,7 @@ import { CodebaseModule } from '../modules/codebase.module';
     ],
     exports: [
         CodeReviewPipelineStrategyEE,
+        CodeReviewPipelineStrategy,
         CodeReviewJobProcessorService,
         // Export stages if needed by tests or other modules
         CreateFileCommentsStage,
@@ -85,6 +108,7 @@ import { CodebaseModule } from '../modules/codebase.module';
         InitialCommentStage,
         AggregateResultsStage,
         LoadExternalContextStage,
+        LOAD_EXTERNAL_CONTEXT_STAGE_TOKEN,
     ],
 })
 export class CodeReviewPipelineModule {}

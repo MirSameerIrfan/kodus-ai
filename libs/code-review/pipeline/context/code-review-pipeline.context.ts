@@ -1,8 +1,4 @@
-import type {
-    ContextLayer,
-    ContextPack,
-    ContextEvidence,
-} from '@context-os-core/interfaces';
+import type { ContextLayer, ContextPack, ContextEvidence } from '@kodus/flow';
 import { AutomationExecutionEntity } from '@libs/automation/domain/automationExecution/entities/automation-execution.entity';
 import { IPullRequestMessages } from '@libs/code-review/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
 import { ISuggestionByPR } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';

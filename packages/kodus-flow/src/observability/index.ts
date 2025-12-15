@@ -4,7 +4,7 @@ import { ObservabilitySystem } from './observability.js';
 export { ObservabilitySystem } from './observability.js';
 import { ObservabilityConfig } from './types.js';
 export { TelemetrySystem } from './telemetry.js';
-export { createLogger } from './logger.js';
+export { createLogger, SimpleLogger } from './logger.js';
 
 export {
     ExecutionTracker,

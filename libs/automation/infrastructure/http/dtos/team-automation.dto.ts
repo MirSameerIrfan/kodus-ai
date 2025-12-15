@@ -1,4 +1,4 @@
-import { TeamQueryDto } from 'apps/api/src/dtos/teamId-query.dto';
+import { TeamQueryDto } from '@libs/organization/dtos/teamId-query.dto';
 import { Type } from 'class-transformer';
 import {
     IsArray,

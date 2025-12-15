@@ -5,6 +5,7 @@ import { PROFILE_CONFIG_REPOSITORY_TOKEN } from '../domain/profile-configs/contr
 import { PROFILE_CONFIG_SERVICE_TOKEN } from '../domain/profile-configs/contracts/profileConfig.service.contract';
 import { ProfileConfigModel } from '../infrastructure/adapters/repositories/schemas/profileConfig.model';
 import { UserModule } from './user.module';
+import { ProfilesModule } from './profiles.module';
 import { ProfileConfigService } from '../infrastructure/adapters/services/profileConfig.service';
 import { ProfileConfigRepository } from '../infrastructure/adapters/repositories/profileConfig.repository';
 
@@ -12,6 +13,7 @@ import { ProfileConfigRepository } from '../infrastructure/adapters/repositories
     imports: [
         TypeOrmModule.forFeature([ProfileConfigModel]),
         forwardRef(() => UserModule),
+        forwardRef(() => ProfilesModule),
     ],
     providers: [
         {

@@ -19,7 +19,6 @@ import { OrganizationModule } from '@libs/organization/modules/organization.modu
 import { GithubModule } from '@libs/platform/modules/github.module';
 import { GitlabModule } from '@libs/platform/modules/gitlab.module';
 import { PlatformModule } from '@libs/platform/modules/platform.module';
-
 import { PullRequestsModule } from './pull-requests.module';
 import { GetReactionsUseCase } from '../application/use-cases/codeReviewFeedback/get-reactions.use-case';
 import { SaveCodeReviewFeedbackUseCase } from '../application/use-cases/codeReviewFeedback/save-feedback.use-case';

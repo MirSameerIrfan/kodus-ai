@@ -3,7 +3,7 @@ import type {
     ContextPack,
     LayerInputContext,
     RuntimeContextSnapshot,
-} from '@context-os-core/interfaces';
+} from '@kodus/flow';
 import {
     createLogger,
     createOrchestration,

@@ -1,10 +1,9 @@
-import type { ContextPack } from '@context-os-core/interfaces';
+import type { ContextPack } from '@kodus/flow';
 
 import { getDefaultKodusConfigFile } from '@libs/common/utils/validateCodeReviewConfigFile';
 import { LimitationType } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 
 import { getTextOrDefault, sanitizePromptText } from '../prompt.helpers';
-
 
 export interface CodeReviewPayload {
     limitationType?: LimitationType;

@@ -11,6 +11,18 @@ import { AzureReposModule } from './azure-repos.module';
 
 import { PlatformIntegrationFactory } from '../infrastructure/adapters/services/platformIntegration.factory';
 import { CodeManagementService } from '../infrastructure/adapters/services/codeManagement.service';
+import CodeManagementUseCases from '../application/use-cases/codeManagement';
+import { AgentsModule } from '@libs/agents/modules/agents.module';
+import { CodebaseModule } from '@libs/code-review/modules/codebase.module';
+import { CodeReviewSettingsLogModule } from '@libs/ee/codeReviewSettingsLog/codeReviewSettingsLog.module';
+import { OrganizationParametersModule } from '@libs/organization/modules/organizationParameters.module';
+import { TeamModule } from '@libs/organization/modules/team.module';
+import { ParametersModule } from '@libs/organization/modules/parameters.module';
+import { AutomationModule } from '@libs/automation/modules/automation.module';
+import { PlatformDataModule } from '@libs/platformData/platformData.module';
+import { PermissionsModule } from '@libs/identity/modules/permissions.module';
+import { KodyRulesModule } from '@libs/kodyRules/modules/kodyRules.module';
+import { PullRequestMessagesModule } from '@libs/code-review/modules/pullRequestMessages.module';
 
 @Module({
     imports: [
@@ -21,9 +33,28 @@ import { CodeManagementService } from '../infrastructure/adapters/services/codeM
         GitlabModule,
         BitbucketModule,
         AzureReposModule,
+        forwardRef(() => AgentsModule),
+        forwardRef(() => CodebaseModule),
+        forwardRef(() => CodeReviewSettingsLogModule),
+        forwardRef(() => OrganizationParametersModule),
+        forwardRef(() => TeamModule),
+        forwardRef(() => ParametersModule),
+        forwardRef(() => AutomationModule),
+        forwardRef(() => PlatformDataModule),
+        PermissionsModule,
+        forwardRef(() => KodyRulesModule),
+        forwardRef(() => PullRequestMessagesModule),
     ],
-    providers: [PlatformIntegrationFactory, CodeManagementService],
-    exports: [PlatformIntegrationFactory, CodeManagementService],
+    providers: [
+        PlatformIntegrationFactory,
+        CodeManagementService,
+        ...CodeManagementUseCases,
+    ],
+    exports: [
+        PlatformIntegrationFactory,
+        CodeManagementService,
+        ...CodeManagementUseCases,
+    ],
 })
 export class PlatformModule implements OnModuleInit {
     constructor(

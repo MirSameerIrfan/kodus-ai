@@ -1,3 +1,4 @@
+import { DryRunModule } from '@libs/dryRun/dry-run.module';
 import { forwardRef, Module } from '@nestjs/common';
 import { AIEngineModule } from '@libs/ai-engine/modules/ai-engine.module';
 import { CodeAnalysisOrchestrator } from '@libs/ee/codeBase/codeAnalysisOrchestrator.service';
@@ -50,6 +51,17 @@ import { KodyFineTuningContextModule } from '@libs/kodyFineTuning/kodyFineTuning
 import { GlobalParametersModule } from '@libs/organization/modules/global-parameters.module';
 import { TokenChunkingModule } from '@libs/core/infrastructure/services/tokenChunking/tokenChunking.module';
 import { KodyRulesModule } from '@libs/kodyRules/modules/kodyRules.module';
+import { CodeReviewValidationService } from '../infrastructure/adapters/services/code-review-validation.service';
+
+import { OrganizationParametersModule } from '@libs/organization/modules/organizationParameters.module';
+
+import { KodyASTModule } from '@libs/ee/kodyAST/kodyAST.module';
+
+import { pipelineProvider } from '@libs/core/providers/pipeline.provider.ee';
+import { codeReviewPipelineProvider } from '@libs/core/providers/code-review-pipeline.provider.ee';
+
+import { AST_ANALYSIS_SERVICE_TOKEN } from '../domain/contracts/ASTAnalysisService.contract';
+import { CodeAstAnalysisService } from '@libs/ee/kodyAST/codeASTAnalysis.service';
 
 @Module({
     imports: [
@@ -72,7 +84,10 @@ import { KodyRulesModule } from '@libs/kodyRules/modules/kodyRules.module';
         forwardRef(() => LicenseModule),
         forwardRef(() => ContextReferenceModule),
         forwardRef(() => PermissionValidationModule),
-        AIEngineModule,
+        forwardRef(() => AIEngineModule),
+        forwardRef(() => OrganizationParametersModule),
+        forwardRef(() => KodyASTModule),
+        forwardRef(() => DryRunModule),
     ],
     providers: [
         {
@@ -113,6 +128,13 @@ import { KodyRulesModule } from '@libs/kodyRules/modules/kodyRules.module';
         CommentAnalysisService,
         MessageTemplateProcessor,
         LicenseService,
+        CodeReviewValidationService,
+        pipelineProvider,
+        codeReviewPipelineProvider,
+        {
+            provide: AST_ANALYSIS_SERVICE_TOKEN,
+            useClass: CodeAstAnalysisService,
+        },
     ],
     exports: [
         PULL_REQUEST_MANAGER_SERVICE_TOKEN,
@@ -128,6 +150,9 @@ import { KodyRulesModule } from '@libs/kodyRules/modules/kodyRules.module';
         CodeReviewHandlerService,
         CommentAnalysisService,
         MessageTemplateProcessor,
+        CodeReviewValidationService,
+        pipelineProvider,
+        AST_ANALYSIS_SERVICE_TOKEN,
     ],
 })
 export class CodebaseModule {}

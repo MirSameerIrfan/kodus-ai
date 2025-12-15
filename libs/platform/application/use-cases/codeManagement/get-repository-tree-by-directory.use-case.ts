@@ -8,7 +8,7 @@ import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { TreeItem } from '@libs/core/infrastructure/config/types/general/tree.type';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 import { Inject, Injectable } from '@nestjs/common';
-import { GetRepositoryTreeByDirectoryDto } from 'apps/api/src/dtos/get-repository-tree-by-directory.dto';
+import { GetRepositoryTreeByDirectoryDto } from '@libs/platform/dtos/get-repository-tree-by-directory.dto';
 
 export interface DirectoryItem {
     name: string;

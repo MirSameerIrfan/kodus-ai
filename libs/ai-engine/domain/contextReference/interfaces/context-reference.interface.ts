@@ -2,7 +2,7 @@ import type {
     ContextRequirement,
     ContextRevisionActor,
     ContextRevisionScope,
-} from '@context-os-core/interfaces';
+} from '@kodus/flow';
 
 export interface IContextReference {
     uuid: string;

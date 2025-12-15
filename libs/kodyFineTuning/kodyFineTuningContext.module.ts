@@ -6,6 +6,8 @@ import { PlatformDataModule } from '@libs/platformData/platformData.module';
 import { CodeReviewFeedbackModule } from '@libs/code-review/modules/codeReviewFeedback.module';
 
 import { KodyFineTuningService } from './infrastructure/adapters/services/kodyFineTuning.service';
+import { KodyFineTuningContextPreparationService } from './infrastructure/adapters/services/fineTuningContext/fine-tuning.service';
+import { KODY_FINE_TUNING_CONTEXT_PREPARATION_TOKEN } from '@libs/core/domain/interfaces/kody-fine-tuning-context-preparation.interface';
 
 @Module({
     imports: [
@@ -14,7 +16,16 @@ import { KodyFineTuningService } from './infrastructure/adapters/services/kodyFi
         forwardRef(() => PlatformDataModule),
         forwardRef(() => CodeReviewFeedbackModule),
     ],
-    providers: [KodyFineTuningService],
-    exports: [KodyFineTuningService],
+    providers: [
+        KodyFineTuningService,
+        {
+            provide: KODY_FINE_TUNING_CONTEXT_PREPARATION_TOKEN,
+            useClass: KodyFineTuningContextPreparationService,
+        },
+    ],
+    exports: [
+        KodyFineTuningService,
+        KODY_FINE_TUNING_CONTEXT_PREPARATION_TOKEN,
+    ],
 })
 export class KodyFineTuningContextModule {}

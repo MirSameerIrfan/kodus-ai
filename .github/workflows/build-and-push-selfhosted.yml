@@ -6,11 +6,16 @@ on:
 
 jobs:
     build-and-push:
-        name: Build and Push Docker Images for Self-Hosted
+        name: Build and Push - ${{ matrix.app }}
         runs-on: ubuntu-latest
         permissions:
             contents: read
             packages: write
+
+        strategy:
+            matrix:
+                app: [api, worker, webhooks]
+
         steps:
             - name: Checkout Repository
               uses: actions/checkout@v4.2.2
@@ -28,16 +33,16 @@ jobs:
                   username: ${{ github.actor }}
                   password: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Extract Docker Metadata
+            - name: Extract Docker Metadata for ${{ matrix.app }}
               id: meta
               uses: docker/metadata-action@v5.7.0
               with:
-                  images: ghcr.io/${{ github.repository_owner }}/kodus-ai
+                  images: ghcr.io/${{ github.repository_owner }}/kodus-${{ matrix.app }}
                   tags: |
                       type=semver,pattern={{version}}
                       type=raw,value=latest
 
-            - name: Build and Push Docker Images
+            - name: Build and Push Docker Image for ${{ matrix.app }}
               uses: docker/build-push-action@v6.15.0
               with:
                   context: .
@@ -47,25 +52,26 @@ jobs:
                   labels: ${{ steps.meta.outputs.labels }}
                   platforms: linux/amd64,linux/arm64
                   build-args: |
+                      APP_NAME=${{ matrix.app }}
                       API_CLOUD_MODE=false
                       RELEASE_VERSION=${{ env.RELEASE_VERSION }}
 
-            - name: Notificar Discord sobre Sucesso
+            - name: Notify Discord on Success for ${{ matrix.app }}
               if: success()
               uses: sarisia/actions-status-discord@v1.15.3
               with:
                   webhook: ${{ secrets.DISCORD_WEBHOOK }}
-                  content: ":tada: A imagem Docker versão `${{ env.RELEASE_VERSION }}` foi construída e enviada com sucesso para o GitHub Container Registry."
-                  title: "Build e Push: kodus-orchestrator"
+                  content: ":tada: A imagem Docker `kodus-${{ matrix.app }}` versão `${{ env.RELEASE_VERSION }}` foi construída e enviada com sucesso."
+                  title: "Build e Push: kodus-${{ matrix.app }}"
                   username: "GitHub Actions"
                   color: 0x00FF00
 
-            - name: Notificar Discord sobre Falha
+            - name: Notify Discord on Failure for ${{ matrix.app }}
               if: failure()
               uses: sarisia/actions-status-discord@v1.15.3
               with:
                   webhook: ${{ secrets.DISCORD_WEBHOOK }}
-                  content: ":x: Falha ao construir ou enviar a imagem Docker versão `${{ env.RELEASE_VERSION }}` para o GitHub Container Registry, Verifique os logs para mais detalhes."
-                  title: "Build e Push: kodus-orchestrator"
+                  content: ":x: Falha ao construir ou enviar a imagem Docker `kodus-${{ matrix.app }}` versão `${{ env.RELEASE_VERSION }}`. Verifique os logs."
+                  title: "Build e Push: kodus-${{ matrix.app }}"
                   username: "GitHub Actions"
                   color: 0xFF0000

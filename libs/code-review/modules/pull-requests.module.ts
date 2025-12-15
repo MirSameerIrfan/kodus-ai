@@ -39,6 +39,7 @@ import { SavePullRequestUseCase } from '@libs/platformData/application/use-cases
             provide: PULL_REQUESTS_SERVICE_TOKEN,
             useClass: PullRequestsService,
         },
+        SavePullRequestUseCase,
     ],
     exports: [
         PULL_REQUESTS_REPOSITORY_TOKEN,

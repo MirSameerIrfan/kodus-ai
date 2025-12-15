@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { ContextLayer } from '@context-os-core/interfaces';
+import type { ContextLayer } from '@kodus/flow';
 
 import { ILoadExternalContextStage } from './contracts/loadExternalContextStage.contract';
 import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';

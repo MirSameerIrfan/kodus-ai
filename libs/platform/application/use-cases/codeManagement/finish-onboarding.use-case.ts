@@ -1,7 +1,7 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import { FinishOnboardingDTO } from 'apps/api/src/dtos/finish-onboarding.dto';
+import { FinishOnboardingDTO } from '@libs/platform/dtos/finish-onboarding.dto';
 
 import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import {

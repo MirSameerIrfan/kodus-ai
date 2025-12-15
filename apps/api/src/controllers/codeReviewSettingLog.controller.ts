@@ -10,8 +10,8 @@ import {
 import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
 import { FindCodeReviewSettingsLogsUseCase } from '@libs/ee/codeReviewSettingsLog/application/use-cases/find-code-review-settings-logs.use-case';
 import { RegisterUserStatusLogUseCase } from '@libs/ee/codeReviewSettingsLog/application/use-cases/register-use-status-log.use-case';
-import { CodeReviewSettingsLogFiltersDto } from '../dtos/code-review-settings-log-filters.dto';
-import { UserStatusDto } from '../dtos/user-status-change.dto';
+import { CodeReviewSettingsLogFiltersDto } from '@libs/ee/codeReviewSettingsLog/dtos/code-review-settings-log-filters.dto';
+import { UserStatusDto } from '@libs/ee/codeReviewSettingsLog/dtos/user-status-change.dto';
 
 @Controller('user-log')
 export class CodeReviewSettingLogController {

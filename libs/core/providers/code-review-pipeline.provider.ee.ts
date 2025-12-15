@@ -9,7 +9,7 @@ import { PipelineExecutor } from '@libs/core/infrastructure/pipeline/services/pi
 import { environment } from '@libs/ee/configs/environment';
 import { Provider } from '@nestjs/common';
 import { CodeReviewPipelineStrategyEE } from '@libs/ee/codeReview/strategies/code-review-pipeline.strategy.ee';
-import { createLogger } from '@kodus/flow/dist/observability/logger';
+import { createLogger } from '@kodus/flow';
 
 export const CODE_REVIEW_PIPELINE_TOKEN = 'CODE_REVIEW_PIPELINE';
 

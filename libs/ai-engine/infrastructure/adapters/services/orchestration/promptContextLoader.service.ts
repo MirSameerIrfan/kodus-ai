@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 
-import type { ContextLayer } from '@context-os-core/interfaces';
+import type { ContextLayer } from '@kodus/flow';
 import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
 
