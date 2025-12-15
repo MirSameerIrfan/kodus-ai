@@ -1814,7 +1814,7 @@ ${copyPrompt}
         lineComment: any,
         repository: any,
         translations: any,
-        enabledLLMPrompt: boolean,
+        suggestionCopyPrompt: boolean,
     ) {
         const severityShield = lineComment?.suggestion
             ? getSeverityLevelShield(lineComment.suggestion.severity)
@@ -1839,7 +1839,7 @@ ${copyPrompt}
                 severityShield,
             ].join(' ') + '\n\n';
 
-        const copyPrompt = enabledLLMPrompt
+        const copyPrompt = suggestionCopyPrompt
             ? this.formatPromptForLLM(lineComment)
             : '';
 
@@ -1864,7 +1864,7 @@ ${copyPrompt}
             lineComment,
             commit,
             language,
-            enabledLLMPrompt = true,
+            suggestionCopyPrompt = true,
         } = params;
 
         const gitlabAuthDetail = await this.getAuthDetails(
@@ -1894,7 +1894,7 @@ ${copyPrompt}
                 lineComment,
                 repository,
                 translations,
-                enabledLLMPrompt,
+                suggestionCopyPrompt,
             );
 
             const discussion = await gitlabAPI.MergeRequestDiscussions.create(
@@ -3717,7 +3717,7 @@ ${copyPrompt}
         includeFooter?: boolean;
         language?: string;
         organizationAndTeamData: OrganizationAndTeamData;
-        enabledLLMPrompt?: boolean;
+        suggestionCopyPrompt?: boolean;
     }): Promise<string> {
         const {
             suggestion,
@@ -3725,7 +3725,7 @@ ${copyPrompt}
             includeHeader = true,
             includeFooter = true,
             language,
-            enabledLLMPrompt = true,
+            suggestionCopyPrompt = true,
         } = params;
 
         let commentBody = '';
@@ -3761,7 +3761,7 @@ ${copyPrompt}
             commentBody += `\`\`\`${lang}\n${suggestion.improvedCode}\n\`\`\`\n\n`;
         }
 
-        if (enabledLLMPrompt) {
+        if (suggestionCopyPrompt) {
             commentBody += this.formatPromptForLLM(suggestion);
         }
 

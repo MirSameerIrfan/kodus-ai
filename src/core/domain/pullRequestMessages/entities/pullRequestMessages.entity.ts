@@ -15,7 +15,7 @@ export class PullRequestMessagesEntity implements Entity<IPullRequestMessages> {
     private readonly _directoryId?: string;
     private readonly _globalSettings?: {
         hideComments?: boolean;
-        enabledLLMPrompt?: boolean;
+        suggestionCopyPrompt?: boolean;
     };
     private readonly _directoryPath?: string;
 
@@ -75,7 +75,9 @@ export class PullRequestMessagesEntity implements Entity<IPullRequestMessages> {
         return this._directoryId;
     }
 
-    get globalSettings(): { hideComments?: boolean; enabledLLMPrompt?: boolean } | undefined {
+    get globalSettings():
+        | { hideComments?: boolean; suggestionCopyPrompt?: boolean }
+        | undefined {
         return this._globalSettings;
     }
 

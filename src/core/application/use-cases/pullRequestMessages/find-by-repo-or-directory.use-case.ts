@@ -140,7 +140,8 @@ export class FindByRepositoryOrDirectoryIdPullRequestMessagesUseCase {
         return {
             globalSettings: {
                 hideComments: json?.globalSettings?.hideComments,
-                enabledLLMPrompt: json?.globalSettings?.enabledLLMPrompt,
+                suggestionCopyPrompt:
+                    json?.globalSettings?.suggestionCopyPrompt,
             },
             endReviewMessage: {
                 content: json?.endReviewMessage?.content,

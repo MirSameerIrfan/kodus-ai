@@ -257,7 +257,7 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
                 platformType,
                 dryRun,
                 context.pullRequestMessagesConfig?.globalSettings
-                    ?.enabledLLMPrompt,
+                    ?.suggestionCopyPrompt,
             );
 
         // Save pull request suggestions
@@ -312,7 +312,7 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
         codeReviewConfig: CodeReviewConfig,
         platformType: string,
         dryRun: CodeReviewPipelineContext['dryRun'],
-        enabledLLMPrompt?: boolean,
+        suggestionCopyPrompt?: boolean,
     ) {
         try {
             const lineComments = sortedPrioritizedSuggestions
@@ -349,7 +349,7 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
                     lineComments,
                     codeReviewConfig?.languageResultPrompt,
                     dryRun,
-                    enabledLLMPrompt,
+                    suggestionCopyPrompt,
                 );
 
             return { lastAnalyzedCommit, commentResults };

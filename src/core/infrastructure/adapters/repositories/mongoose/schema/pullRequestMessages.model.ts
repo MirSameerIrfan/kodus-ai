@@ -65,7 +65,7 @@ export class PullRequestMessagesModel extends CoreDocument {
                 default: false,
                 required: false,
             },
-            enabledLLMPrompt: {
+            suggestionCopyPrompt: {
                 type: Boolean,
                 default: true,
                 required: false,
@@ -73,11 +73,11 @@ export class PullRequestMessagesModel extends CoreDocument {
         },
         _id: false,
         required: false,
-        default: { hideComments: false, enabledLLMPrompt: true },
+        default: { hideComments: false, suggestionCopyPrompt: true },
     })
     globalSettings: {
         hideComments: boolean;
-        enabledLLMPrompt: boolean;
+        suggestionCopyPrompt: boolean;
     };
 }
 
