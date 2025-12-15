@@ -684,7 +684,7 @@ export class GitlabService
                     integration: { uuid: integration?.uuid },
                     configKey: IntegrationConfigKey.REPOSITORIES,
                     team: { uuid: params.organizationAndTeamData.teamId },
-            });
+                });
 
             const gitlabAPI = this.instanceGitlabApi(gitlabAuthDetail);
 
@@ -765,12 +765,12 @@ export class GitlabService
                                     selected:
                                         integrationConfig?.configValue?.some(
                                             (repository: { name: string }) =>
-                                        repository?.name ===
-                                        project?.path_with_namespace,
-                                ),
-                                default_branch: project?.default_branch,
-                            };
-                        }
+                                                repository?.name ===
+                                                project?.path_with_namespace,
+                                        ),
+                                    default_branch: project?.default_branch,
+                                };
+                            }
                         }
                     }),
                 );
@@ -1486,7 +1486,9 @@ export class GitlabService
             const repoFilter = filters?.repositoryId
                 ? new Set([String(filters.repositoryId)])
                 : null;
-            const useFastPath = Boolean(filters?.repositoryId || filters?.limit);
+            const useFastPath = Boolean(
+                filters?.repositoryId || filters?.limit,
+            );
 
             const gitlabAuthDetail = await this.getAuthDetails(
                 params?.organizationAndTeamData,
@@ -1772,32 +1774,81 @@ export class GitlabService
         return `<sub>${text}</sub>\n\n`;
     }
 
-    formatBodyForGitLab(lineComment: any, repository: any, translations: any) {
+    private formatPromptForLLM(lineComment: any) {
+        let copyPrompt = '';
+        if (lineComment?.suggestion?.llmPrompt) {
+            if (lineComment.path) {
+                copyPrompt += `File ${lineComment.path}:\n\n`;
+            }
+
+            if (lineComment.start_line && lineComment.line) {
+                copyPrompt += `Line ${lineComment.start_line} to ${lineComment.line}:\n\n`;
+            } else if (lineComment.line) {
+                copyPrompt += `Line ${lineComment.line}:\n\n`;
+            }
+
+            copyPrompt += lineComment?.suggestion?.llmPrompt;
+
+            if (lineComment?.body?.improvedCode) {
+                copyPrompt +=
+                    '\n\nSuggested Code:\n\n' + lineComment?.body?.improvedCode;
+            }
+
+            copyPrompt = `\n\n<details>
+
+<summary>Prompt for LLM</summary>
+
+\`\`\`
+
+${copyPrompt}
+
+\`\`\`
+
+</details>\n\n`;
+        }
+
+        return copyPrompt;
+    }
+
+    formatBodyForGitLab(
+        lineComment: any,
+        repository: any,
+        translations: any,
+        enabledLLMPrompt: boolean,
+    ) {
         const severityShield = lineComment?.suggestion
             ? getSeverityLevelShield(lineComment.suggestion.severity)
             : '';
-        const codeBlock = this.formatCodeBlock(
-            repository?.language?.toLowerCase(),
-            lineComment?.body?.improvedCode,
-        );
+        const codeBlock = lineComment?.body?.improvedCode
+            ? this.formatCodeBlock(
+                  repository?.language?.toLowerCase(),
+                  lineComment?.body?.improvedCode,
+              )
+            : '';
         const suggestionContent = lineComment?.body?.suggestionContent || '';
         const actionStatement = lineComment?.body?.actionStatement
             ? `${lineComment.body.actionStatement}\n\n`
             : '';
 
-        const badges = [
-            getCodeReviewBadge(),
-            lineComment?.suggestion
-                ? getLabelShield(lineComment.suggestion.label)
-                : '',
-            severityShield,
-        ].join(' ');
+        const badges =
+            [
+                getCodeReviewBadge(),
+                lineComment?.suggestion
+                    ? getLabelShield(lineComment.suggestion.label)
+                    : '',
+                severityShield,
+            ].join(' ') + '\n\n';
+
+        const copyPrompt = enabledLLMPrompt
+            ? this.formatPromptForLLM(lineComment)
+            : '';
 
         return [
             badges,
-            codeBlock,
             suggestionContent,
             actionStatement,
+            codeBlock,
+            copyPrompt,
             this.formatSub(translations.talkToKody),
             this.formatSub(translations.feedback) +
                 '<!-- kody-codereview -->&#8203;\n&#8203;',
@@ -1813,6 +1864,7 @@ export class GitlabService
             lineComment,
             commit,
             language,
+            enabledLLMPrompt = true,
         } = params;
 
         const gitlabAuthDetail = await this.getAuthDetails(
@@ -1842,6 +1894,7 @@ export class GitlabService
                 lineComment,
                 repository,
                 translations,
+                enabledLLMPrompt,
             );
 
             const discussion = await gitlabAPI.MergeRequestDiscussions.create(
@@ -2107,11 +2160,12 @@ export class GitlabService
 
                     if (defaultBranch) {
                         try {
-                            const fileContent = await gitlabAPI.RepositoryFiles.show(
-                                params.repository.id,
-                                filePath,
-                                defaultBranch,
-                            );
+                            const fileContent =
+                                await gitlabAPI.RepositoryFiles.show(
+                                    params.repository.id,
+                                    filePath,
+                                    defaultBranch,
+                                );
 
                             return {
                                 data: {
@@ -2120,8 +2174,8 @@ export class GitlabService
                                 },
                             };
                         } catch (defaultAttemptError: any) {
-                            const status = defaultAttemptError?.response
-                                ?.status;
+                            const status =
+                                defaultAttemptError?.response?.status;
                             const isNotFound = status === 404;
 
                             const logPayload = {
@@ -3663,6 +3717,7 @@ export class GitlabService
         includeFooter?: boolean;
         language?: string;
         organizationAndTeamData: OrganizationAndTeamData;
+        enabledLLMPrompt?: boolean;
     }): Promise<string> {
         const {
             suggestion,
@@ -3670,6 +3725,7 @@ export class GitlabService
             includeHeader = true,
             includeFooter = true,
             language,
+            enabledLLMPrompt = true,
         } = params;
 
         let commentBody = '';
@@ -3692,17 +3748,21 @@ export class GitlabService
         }
 
         // BODY - Conteúdo principal
-        if (suggestion?.improvedCode) {
-            const lang = repository?.language?.toLowerCase() || 'javascript';
-            commentBody += `\`\`\`${lang}\n${suggestion.improvedCode}\n\`\`\`\n\n`;
-        }
-
         if (suggestion?.suggestionContent) {
             commentBody += `${suggestion.suggestionContent}\n\n`;
         }
 
         if (suggestion?.clusteringInformation?.actionStatement) {
             commentBody += `${suggestion.clusteringInformation.actionStatement}\n\n`;
+        }
+
+        if (suggestion?.improvedCode) {
+            const lang = repository?.language?.toLowerCase() || 'javascript';
+            commentBody += `\`\`\`${lang}\n${suggestion.improvedCode}\n\`\`\`\n\n`;
+        }
+
+        if (enabledLLMPrompt) {
+            commentBody += this.formatPromptForLLM(suggestion);
         }
 
         // FOOTER - Interação/Feedback
@@ -3853,26 +3913,18 @@ export class GitlabService
                 filePatterns || [],
             );
             const globChars = ['*', '?', '{', '}', '[', ']', '!'];
-            const hasRootOnlyPatterns = (filePatterns || []).some(
-                (pattern) => {
-                    const normalized = pattern
-                        .replace(/^\/+/, '')
-                        .replace(/\\/g, '/');
-                    const hasGlob = globChars.some((ch) =>
-                        normalized.includes(ch),
-                    );
-                    const hasSlash = normalized.includes('/');
-                    // Plain filename (no glob, no directory) -> needs root scan
-                    return !hasGlob && !hasSlash;
-                },
-            );
+            const hasRootOnlyPatterns = (filePatterns || []).some((pattern) => {
+                const normalized = pattern
+                    .replace(/^\/+/, '')
+                    .replace(/\\/g, '/');
+                const hasGlob = globChars.some((ch) => normalized.includes(ch));
+                const hasSlash = normalized.includes('/');
+                // Plain filename (no glob, no directory) -> needs root scan
+                return !hasGlob && !hasSlash;
+            });
             // Include root as a base directory if patterns target files at repo root
             const baseDirectories = hasRootOnlyPatterns
-                ? [''].concat(
-                      baseDirectoriesRaw.filter(
-                          (dir) => dir !== '',
-                      ),
-                  )
+                ? [''].concat(baseDirectoriesRaw.filter((dir) => dir !== ''))
                 : baseDirectoriesRaw;
 
             let allFiles: RepositoryFile[] = [];

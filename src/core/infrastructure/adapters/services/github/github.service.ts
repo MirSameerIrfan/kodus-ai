@@ -3237,32 +3237,81 @@ export class GithubService
         return `<sub>${text}</sub>\n\n`;
     }
 
-    formatBodyForGitHub(lineComment: any, repository: any, translations: any) {
+    private formatPromptForLLM(lineComment: any) {
+        let copyPrompt = '';
+        if (lineComment?.suggestion?.llmPrompt) {
+            if (lineComment.path) {
+                copyPrompt += `File ${lineComment.path}:\n\n`;
+            }
+
+            if (lineComment.start_line && lineComment.line) {
+                copyPrompt += `Line ${lineComment.start_line} to ${lineComment.line}:\n\n`;
+            } else if (lineComment.line) {
+                copyPrompt += `Line ${lineComment.line}:\n\n`;
+            }
+
+            copyPrompt += lineComment?.suggestion?.llmPrompt;
+
+            if (lineComment?.body?.improvedCode) {
+                copyPrompt +=
+                    '\n\nSuggested Code:\n\n' + lineComment?.body?.improvedCode;
+            }
+
+            copyPrompt = `\n\n<details>
+
+<summary>Prompt for LLM</summary>
+
+\`\`\`
+
+${copyPrompt}
+
+\`\`\`
+
+</details>\n\n`;
+        }
+
+        return copyPrompt;
+    }
+
+    formatBodyForGitHub(
+        lineComment: any,
+        repository: any,
+        translations: any,
+        enabledLLMPrompt: boolean,
+    ) {
         const severityShield = lineComment?.suggestion
             ? getSeverityLevelShield(lineComment.suggestion.severity)
             : '';
-        const codeBlock = this.formatCodeBlock(
-            repository?.language?.toLowerCase(),
-            lineComment?.body?.improvedCode,
-        );
+        const codeBlock = lineComment?.body?.improvedCode
+            ? this.formatCodeBlock(
+                  repository?.language?.toLowerCase(),
+                  lineComment?.body?.improvedCode,
+              )
+            : '';
         const suggestionContent = lineComment?.body?.suggestionContent || '';
         const actionStatement = lineComment?.body?.actionStatement
             ? `${lineComment.body.actionStatement}\n\n`
             : '';
 
-        const badges = [
-            getCodeReviewBadge(),
-            lineComment?.suggestion
-                ? getLabelShield(lineComment.suggestion.label)
-                : '',
-            severityShield,
-        ].join(' ');
+        const badges =
+            [
+                getCodeReviewBadge(),
+                lineComment?.suggestion
+                    ? getLabelShield(lineComment.suggestion.label)
+                    : '',
+                severityShield,
+            ].join(' ') + '\n\n';
+
+        const copyPrompt = enabledLLMPrompt
+            ? this.formatPromptForLLM(lineComment)
+            : '';
 
         return [
             badges,
-            codeBlock,
             suggestionContent,
             actionStatement,
+            codeBlock,
+            copyPrompt,
             this.formatSub(translations.talkToKody),
             this.formatSub(translations.feedback) +
                 '<!-- kody-codereview -->&#8203;\n&#8203;',
@@ -3279,6 +3328,7 @@ export class GithubService
             lineComment,
             commit,
             language,
+            enabledLLMPrompt = true,
         } = params;
 
         const githubAuthDetail = await this.getGithubAuthDetails(
@@ -3296,6 +3346,7 @@ export class GithubService
             lineComment,
             repository,
             translations,
+            enabledLLMPrompt,
         );
 
         try {
@@ -6017,6 +6068,7 @@ export class GithubService
         includeFooter?: boolean;
         language?: string;
         organizationAndTeamData: OrganizationAndTeamData;
+        enabledLLMPrompt?: boolean;
     }): Promise<string> {
         const {
             suggestion,
@@ -6024,6 +6076,7 @@ export class GithubService
             includeHeader = true,
             includeFooter = true,
             language,
+            enabledLLMPrompt = true,
         } = params;
 
         let commentBody = '';
@@ -6046,17 +6099,21 @@ export class GithubService
         }
 
         // BODY - Conteúdo principal
-        if (suggestion?.improvedCode) {
-            const lang = repository?.language?.toLowerCase() || 'javascript';
-            commentBody += `\`\`\`${lang}\n${suggestion.improvedCode}\n\`\`\`\n\n`;
-        }
-
         if (suggestion?.suggestionContent) {
             commentBody += `${suggestion.suggestionContent}\n\n`;
         }
 
         if (suggestion?.clusteringInformation?.actionStatement) {
             commentBody += `${suggestion.clusteringInformation.actionStatement}\n\n`;
+        }
+
+        if (suggestion?.improvedCode) {
+            const lang = repository?.language?.toLowerCase() || 'javascript';
+            commentBody += `\`\`\`${lang}\n${suggestion.improvedCode}\n\`\`\`\n\n`;
+        }
+
+        if (enabledLLMPrompt) {
+            commentBody += this.formatPromptForLLM(suggestion);
         }
 
         // FOOTER - Interação/Feedback

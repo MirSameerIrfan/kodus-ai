@@ -67,6 +67,7 @@ kodyRulesGeneratorEnabled: false
 customMessages:
     globalSettings:
         hideComments: false # github only
+        enabledLLMPrompt: true # not available for bitbucket
 
     startReviewMessage:
         status: 'every_push' # every_push | only_when_opened | off

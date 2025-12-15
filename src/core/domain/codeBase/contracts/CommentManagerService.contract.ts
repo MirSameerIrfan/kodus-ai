@@ -83,6 +83,7 @@ export interface ICommentManagerService {
         lineComments: Comment[],
         language: string,
         dryRun: CodeReviewPipelineContext['dryRun'],
+        enabledLLMPrompt?: boolean,
     ): Promise<{
         lastAnalyzedCommit: any;
         commits: any[];
@@ -112,6 +113,7 @@ export interface ICommentManagerService {
         repository: { name: string; id: string; language: string },
         prLevelSuggestions: ISuggestionByPR[],
         language: string,
+        enabledLLMPrompt?: boolean,
         dryRun?: CodeReviewPipelineContext['dryRun'],
     ): Promise<{ commentResults: Array<CommentResult> }>;
 
