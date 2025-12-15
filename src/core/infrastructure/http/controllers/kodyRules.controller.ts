@@ -8,6 +8,7 @@ import { FindByOrganizationIdKodyRulesUseCase } from '@/core/application/use-cas
 import { FindLibraryKodyRulesBucketsUseCase } from '@/core/application/use-cases/kodyRules/find-library-kody-rules-buckets.use-case';
 import { FindLibraryKodyRulesWithFeedbackUseCase } from '@/core/application/use-cases/kodyRules/find-library-kody-rules-with-feedback.use-case';
 import { FindLibraryKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-library-kody-rules.use-case';
+import { FindRecommendedKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-recommended-kody-rules.use-case';
 import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-rules-in-organization-by-filter.use-case';
 import { FindSuggestionsByRuleUseCase } from '@/core/application/use-cases/kodyRules/find-suggestions-by-rule.use-case';
 import { GenerateKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/generate-kody-rules.use-case';
@@ -48,6 +49,7 @@ import { AddLibraryKodyRulesDto } from '../dtos/add-library-kody-rules.dto';
 import { ChangeStatusKodyRulesDTO } from '../dtos/change-status-kody-rules.dto';
 import { CreateKodyRuleDto } from '../dtos/create-kody-rule.dto';
 import { FindLibraryKodyRulesDto } from '../dtos/find-library-kody-rules.dto';
+import { FindRecommendedKodyRulesDto } from '../dtos/find-recommended-kody-rules.dto';
 import { FindSuggestionsByRuleDto } from '../dtos/find-suggestions-by-rule.dto';
 import { GenerateKodyRulesDTO } from '../dtos/generate-kody-rules.dto';
 
@@ -61,6 +63,7 @@ export class KodyRulesController {
         private readonly findLibraryKodyRulesUseCase: FindLibraryKodyRulesUseCase,
         private readonly findLibraryKodyRulesWithFeedbackUseCase: FindLibraryKodyRulesWithFeedbackUseCase,
         private readonly findLibraryKodyRulesBucketsUseCase: FindLibraryKodyRulesBucketsUseCase,
+        private readonly findRecommendedKodyRulesUseCase: FindRecommendedKodyRulesUseCase,
         private readonly addLibraryKodyRulesUseCase: AddLibraryKodyRulesUseCase,
         private readonly generateKodyRulesUseCase: GenerateKodyRulesUseCase,
         private readonly changeStatusKodyRulesUseCase: ChangeStatusKodyRulesUseCase,
@@ -198,6 +201,42 @@ export class KodyRulesController {
     @Get('/find-library-kody-rules-buckets')
     public async findLibraryKodyRulesBuckets() {
         return this.findLibraryKodyRulesBucketsUseCase.execute();
+    }
+
+    @Get('/find-recommended-kody-rules')
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.KodyRules,
+        }),
+    )
+    public async findRecommendedKodyRules(
+        @Query() query: FindRecommendedKodyRulesDto,
+    ) {
+        if (!this.request.user.organization.uuid) {
+            throw new Error('Organization ID not found');
+        }
+
+        const limit = query.limit || 10;
+        const cacheKey = `recommended-kody-rules:${this.request.user.organization.uuid}:${limit}`;
+
+        const cachedResult = await this.cacheService.getFromCache(cacheKey);
+        if (cachedResult) {
+            return cachedResult;
+        }
+
+        const result = await this.findRecommendedKodyRulesUseCase.execute(
+            {
+                organizationId: this.request.user.organization.uuid,
+                teamId: (this.request.user as any).team?.uuid,
+            },
+            limit,
+        );
+
+        await this.cacheService.addToCache(cacheKey, result, 259200000);
+
+        return result;
     }
 
     @Post('/add-library-kody-rules')
