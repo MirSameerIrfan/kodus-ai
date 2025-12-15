@@ -282,9 +282,9 @@ export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
                     overrideConfig.globalSettings?.hideComments ??
                     baseConfig.globalSettings?.hideComments ??
                     false,
-                enabledLLMPrompt:
-                    overrideConfig.globalSettings?.enabledLLMPrompt ??
-                    baseConfig.globalSettings?.enabledLLMPrompt ??
+                suggestionCopyPrompt:
+                    overrideConfig.globalSettings?.suggestionCopyPrompt ??
+                    baseConfig.globalSettings?.suggestionCopyPrompt ??
                     true,
             },
         } as IPullRequestMessages;
@@ -296,7 +296,7 @@ export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
             endReviewMessage: config.endReviewMessage,
             globalSettings: config.globalSettings || {
                 hideComments: false,
-                enabledLLMPrompt: true,
+                suggestionCopyPrompt: true,
             },
         } as IPullRequestMessages;
     }
@@ -369,7 +369,7 @@ export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
 
         return (
             settings1.hideComments === settings2.hideComments &&
-            settings1.enabledLLMPrompt === settings2.enabledLLMPrompt
+            settings1.suggestionCopyPrompt === settings2.suggestionCopyPrompt
         );
     }
 }

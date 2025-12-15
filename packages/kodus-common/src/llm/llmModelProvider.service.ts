@@ -108,13 +108,12 @@ export class LLMProviderService {
                     : llm;
             }
 
-            const { factory, modelName, baseURL, apiKey } = strategy;
+            const { factory, modelName, baseURL } = strategy;
 
             let llm = factory({
                 ...options,
                 model: modelName,
                 baseURL,
-                apiKey: options.apiKey ?? apiKey,
                 json: options.jsonMode,
                 maxReasoningTokens:
                     options.maxReasoningTokens ?? strategy.maxReasoningTokens,

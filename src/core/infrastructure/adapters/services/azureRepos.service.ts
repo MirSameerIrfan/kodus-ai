@@ -1045,7 +1045,7 @@ export class AzureReposService
         prNumber: number;
         lineComment: Comment;
         language: LanguageValue;
-        enabledLLMPrompt?: boolean;
+        suggestionCopyPrompt?: boolean;
     }): Promise<AzureRepoPRThread | null> {
         try {
             const {
@@ -1054,7 +1054,7 @@ export class AzureReposService
                 prNumber,
                 lineComment,
                 language,
-                enabledLLMPrompt = true,
+                suggestionCopyPrompt = true,
             } = params;
             const { orgName, token } = await this.getAuthDetails(
                 organizationAndTeamData,
@@ -1074,7 +1074,7 @@ export class AzureReposService
                 lineComment,
                 repository,
                 translations,
-                enabledLLMPrompt,
+                suggestionCopyPrompt,
             );
 
             const thread =
@@ -3644,7 +3644,7 @@ ${copyPrompt}
         lineComment: any,
         repository: any,
         translations: any,
-        enabledLLMPrompt?: boolean,
+        suggestionCopyPrompt?: boolean,
     ) {
         const severityShield = lineComment?.suggestion
             ? getSeverityLevelShield(lineComment.suggestion.severity)
@@ -3672,7 +3672,7 @@ ${copyPrompt}
         const thumbsUpBlock = `\`\`\`\n👍\n\`\`\`\n`;
         const thumbsDownBlock = `\`\`\`\n👎\n\`\`\`\n`;
 
-        const copyPrompt = enabledLLMPrompt
+        const copyPrompt = suggestionCopyPrompt
             ? this.formatPromptForLLM(lineComment)
             : '';
 
@@ -3907,7 +3907,7 @@ ${copyPrompt}
         includeFooter?: boolean;
         language?: string;
         organizationAndTeamData: OrganizationAndTeamData;
-        enabledLLMPrompt?: boolean;
+        suggestionCopyPrompt?: boolean;
     }): Promise<string> {
         const {
             suggestion,
@@ -3915,7 +3915,7 @@ ${copyPrompt}
             includeHeader = true,
             includeFooter = true,
             language,
-            enabledLLMPrompt = true,
+            suggestionCopyPrompt = true,
         } = params;
 
         let commentBody = '';
@@ -3951,7 +3951,7 @@ ${copyPrompt}
             commentBody += `\`\`\`${lang}\n${suggestion.improvedCode}\n\`\`\`\n\n`;
         }
 
-        if (enabledLLMPrompt) {
+        if (suggestionCopyPrompt) {
             commentBody += this.formatPromptForLLM(suggestion);
         }
 

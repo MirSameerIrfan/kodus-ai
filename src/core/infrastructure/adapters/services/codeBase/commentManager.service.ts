@@ -713,7 +713,7 @@ export class CommentManagerService implements ICommentManagerService {
         lineComments: Comment[],
         language: string,
         dryRun: CodeReviewPipelineContext['dryRun'],
-        enabledLLMPrompt?: boolean,
+        suggestionCopyPrompt?: boolean,
     ): Promise<{
         lastAnalyzedCommit: any;
         commits: any[];
@@ -781,7 +781,7 @@ export class CommentManagerService implements ICommentManagerService {
                                 lineComment: comment,
                                 language,
                                 dryRun,
-                                enabledLLMPrompt,
+                                suggestionCopyPrompt,
                             },
                             dryRun?.enabled ? PlatformType.INTERNAL : undefined,
                         );
@@ -1335,7 +1335,7 @@ ${reviewOptions}
         repository: { name: string; id: string; language: string },
         prLevelSuggestions: ISuggestionByPR[],
         language: string,
-        enabledLLMPrompt?: boolean,
+        suggestionCopyPrompt?: boolean,
         dryRun?: CodeReviewPipelineContext['dryRun'],
     ): Promise<{ commentResults: Array<CommentResult> }> {
         try {
@@ -1377,7 +1377,7 @@ ${reviewOptions}
                                 includeFooter: false, // PR-level NÃO inclui footer de interação
                                 language,
                                 organizationAndTeamData,
-                                enabledLLMPrompt,
+                                suggestionCopyPrompt,
                             },
                             dryRun?.enabled ? PlatformType.INTERNAL : undefined,
                         );

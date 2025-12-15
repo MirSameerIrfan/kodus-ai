@@ -123,7 +123,7 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
                             prLevelSuggestions,
                             context.codeReviewConfig?.languageResultPrompt,
                             context.pullRequestMessagesConfig?.globalSettings
-                                ?.enabledLLMPrompt,
+                                ?.suggestionCopyPrompt,
                             context.dryRun,
                         );
 
