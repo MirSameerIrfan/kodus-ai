@@ -684,68 +684,6 @@ export class KodyRulesService implements IKodyRulesService {
         }
     }
 
-    private normalizeTags(tags: string | string[] | undefined): string[] {
-        if (!tags) {
-            return [];
-        }
-
-        // If it's a string, split by commas
-        const tagsArray = Array.isArray(tags) ? tags : tags.split(',');
-
-        // Normalize each tag: trim spaces and convert to lowercase
-        return tagsArray.map((tag) => tag.trim().toLowerCase());
-    }
-
-    private ruleMatchesFilters(
-        rule: LibraryKodyRule,
-        filters?: KodyRuleFilters,
-    ): boolean {
-        if (!rule?.title) {
-            return false;
-        }
-
-        // If there are no filters, do not return anything
-        if (!filters) {
-            return false;
-        }
-
-        // If there is a title in the filter, it must match all words exactly
-        if (filters.title) {
-            const ruleTitle = rule.title.toLowerCase();
-            const searchWords = filters.title.toLowerCase().split(/\s+/);
-            if (!searchWords.every((word) => ruleTitle.includes(word))) {
-                return false;
-            }
-        }
-
-        // If there is a severity in the filter, it must match exactly
-        if (filters.severity) {
-            if (
-                rule.severity?.toLowerCase() !== filters.severity.toLowerCase()
-            ) {
-                return false;
-            }
-        }
-
-        // If there are tags in the filter (even if empty), they must match exactly
-        if (Array.isArray(filters.tags)) {
-            const ruleTags = this.normalizeTags(rule.tags);
-
-            // If an empty array is passed, only return rules without tags
-            if (filters.tags.length === 0) {
-                if (ruleTags.length > 0) {
-                    return false;
-                }
-            } else {
-                // If tags are passed, all must be present in the rule
-                if (!filters.tags.every((tag) => ruleTags.includes(tag))) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
     private addLanguageToRule(
         kodyRule: LibraryKodyRule,
         language: ProgrammingLanguage,
@@ -792,11 +730,12 @@ export class KodyRulesService implements IKodyRulesService {
                 .filter(
                     (rule) => rule && typeof rule === 'object' && rule.title,
                 )
-                .map((rule: any) => ({
-                    ...rule,
-                    tags: this.normalizeTags((rule as any).tags || []),
-                    buckets: rule.buckets || [],
-                }));
+                .map((rule: any) => {
+                    return {
+                        ...rule,
+                        buckets: rule.buckets || [],
+                    };
+                });
 
             // Aplica filtros se houver
             let filteredRules = validRules;
@@ -856,6 +795,14 @@ export class KodyRulesService implements IKodyRulesService {
                         if (!hasMatchingBucket) {
                             return false;
                         }
+                    }
+
+                    // Filtro por plug_and_play
+                    if (
+                        filters.plug_and_play !== undefined &&
+                        filters.plug_and_play !== null
+                    ) {
+                        return rule.plug_and_play === filters.plug_and_play;
                     }
 
                     return true;

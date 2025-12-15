@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsArray } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsBoolean } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { KodyRuleFilters } from '@/config/types/kodyRules.type';
 import { ProgrammingLanguage } from '@/shared/domain/enums/programming-language.enum';
@@ -25,6 +25,10 @@ export class FindLibraryKodyRulesDto extends PaginationDto implements KodyRuleFi
     @IsArray()
     @IsString({ each: true })
     tags?: string[];
+
+    @IsOptional()
+    @IsBoolean()
+    plug_and_play?: boolean;
 
     @IsOptional()
     language?: ProgrammingLanguage;
