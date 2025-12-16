@@ -55,21 +55,46 @@ export class CreateIntegrationUseCase implements IUseCase {
             params.integrationType,
         );
 
-        this.ignoreBotsUseCase
-            .execute({
-                organizationId: organizationAndTeamData.organizationId,
-                teamId: organizationAndTeamData.teamId,
-            })
-            .catch((error) => {
-                this.logger.error({
-                    message: 'Error ignoring bots',
-                    error: error,
-                    context: CreateIntegrationUseCase.name,
-                    metadata: {
-                        organizationAndTeamData: organizationAndTeamData,
-                    },
-                });
+        try {
+            const orgMembers = await this.codeManagementService.getListMembers({
+                organizationAndTeamData,
+                determineBots: true,
             });
+
+            const botIds: string[] = Array.from(
+                new Set(
+                    orgMembers
+                        .filter((user) => user.type === 'bot')
+                        .map((b) => b.id),
+                ),
+            );
+
+            this.ignoreBotsUseCase
+                .execute({
+                    organizationId: organizationAndTeamData.organizationId,
+                    teamId: organizationAndTeamData.teamId,
+                    botIds,
+                })
+                .catch((error) => {
+                    this.logger.error({
+                        message: 'Error ignoring bots',
+                        error: error,
+                        context: CreateIntegrationUseCase.name,
+                        metadata: {
+                            organizationAndTeamData: organizationAndTeamData,
+                        },
+                    });
+                });
+        } catch (error) {
+            this.logger.warn({
+                message: 'Error fetching members to find bots',
+                error: error,
+                context: CreateIntegrationUseCase.name,
+                metadata: {
+                    organizationAndTeamData,
+                },
+            });
+        }
 
         try {
             // Buscar a auth integration criada com os dados corretos de organização/team

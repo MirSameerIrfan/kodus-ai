@@ -13,7 +13,7 @@ import { Response } from 'express';
 
 import { CodeReviewVersion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
-import { ApplyCodeReviewPresetUseCase } from '@libs/organization/application/use-cases/parameters/apply-code-review-preset.use-case';
+import { ApplyCodeReviewPresetUseCase } from '@libs/code-review/application/use-cases/configuration/apply-code-review-preset.use-case';
 import {
     Action,
     ResourceType,
@@ -25,14 +25,14 @@ import {
 
 import { CreateOrUpdateParametersUseCase } from '@libs/organization/application/use-cases/parameters/create-or-update-use-case';
 import { FindByKeyParametersUseCase } from '@libs/organization/application/use-cases/parameters/find-by-key-use-case';
-import { UpdateOrCreateCodeReviewParameterUseCase } from '@libs/organization/application/use-cases/parameters/update-or-create-code-review-parameter-use-case';
-import { UpdateCodeReviewParameterRepositoriesUseCase } from '@libs/organization/application/use-cases/parameters/update-code-review-parameter-repositories-use-case';
-import { GenerateKodusConfigFileUseCase } from '@libs/organization/application/use-cases/parameters/generate-kodus-config-file.use-case';
-import { DeleteRepositoryCodeReviewParameterUseCase } from '@libs/organization/application/use-cases/parameters/delete-repository-code-review-parameter.use-case';
-import { PreviewPrSummaryUseCase } from '@libs/organization/application/use-cases/parameters/preview-pr-summary.use-case';
-import { ListCodeReviewAutomationLabelsWithStatusUseCase } from '@libs/organization/application/use-cases/parameters/list-code-review-automation-labels-with-status.use-case';
+import { UpdateOrCreateCodeReviewParameterUseCase } from '@libs/code-review/application/use-cases/configuration/update-or-create-code-review-parameter-use-case';
+import { UpdateCodeReviewParameterRepositoriesUseCase } from '@libs/code-review/application/use-cases/configuration/update-code-review-parameter-repositories-use-case';
+import { GenerateKodusConfigFileUseCase } from '@libs/code-review/application/use-cases/configuration/generate-kodus-config-file.use-case';
+import { DeleteRepositoryCodeReviewParameterUseCase } from '@libs/code-review/application/use-cases/configuration/delete-repository-code-review-parameter.use-case';
+import { PreviewPrSummaryUseCase } from '@libs/code-review/application/use-cases/summary/preview-pr-summary.use-case';
+import { ListCodeReviewAutomationLabelsWithStatusUseCase } from '@libs/code-review/application/use-cases/configuration/list-code-review-automation-labels-with-status.use-case';
 import { GetDefaultConfigUseCase } from '@libs/organization/application/use-cases/parameters/get-default-config.use-case';
-import { GetCodeReviewParameterUseCase } from '@libs/organization/application/use-cases/parameters/get-code-review-parameter.use-case';
+import { GetCodeReviewParameterUseCase } from '@libs/code-review/application/use-cases/configuration/get-code-review-parameter.use-case';
 import { ParametersKey } from '@libs/core/domain/enums';
 import {
     checkPermissions,

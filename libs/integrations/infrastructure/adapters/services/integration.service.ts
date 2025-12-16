@@ -15,7 +15,6 @@ import {
 import { IIntegrationService } from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
 import { IntegrationEntity } from '@libs/integrations/domain/integrations/entities/integration.entity';
 import { IIntegration } from '@libs/integrations/domain/integrations/interfaces/integration.interface';
-import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 
 @Injectable()
 export class IntegrationService implements IIntegrationService {
@@ -24,8 +23,6 @@ export class IntegrationService implements IIntegrationService {
         private readonly integrationRepository: IIntegrationRepository,
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
         private readonly integrationConfigService: IIntegrationConfigService,
-
-        private readonly codeManagementService: CodeManagementService,
     ) {}
 
     async checkConfigIntegration(
@@ -46,26 +43,6 @@ export class IntegrationService implements IIntegrationService {
             return !!integrationConfig?.configValue || false;
         } catch (err) {
             throw new BadRequestException(err);
-        }
-    }
-
-    async getConnections(params: any): Promise<
-        {
-            platformName: string;
-            isSetupComplete: boolean;
-            category?: IntegrationCategory;
-        }[]
-    > {
-        try {
-            const [codeManagementConnection] = await Promise.all([
-                this.codeManagementService.verifyConnection(params),
-            ]);
-
-            return [codeManagementConnection]?.filter(
-                (connection) => connection,
-            );
-        } catch (error) {
-            throw new BadRequestException(error);
         }
     }
 

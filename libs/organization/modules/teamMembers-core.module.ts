@@ -7,7 +7,6 @@ import { TeamMemberModel } from '../infrastructure/adapters/repositories/schemas
 import { TeamMemberService } from '../infrastructure/adapters/services/teamMembers.service';
 import { TeamMemberDatabaseRepository } from '../infrastructure/adapters/repositories/teamMember.repository';
 
-import { PlatformModule } from '@libs/platform/modules/platform.module';
 import { ParametersModule } from './parameters.module';
 import { IntegrationModule } from '@libs/integrations/modules/integrations.module';
 import { CreateOrUpdateTeamMembersUseCase } from '../application/use-cases/teamMembers/create.use-case';
@@ -21,7 +20,6 @@ import { TeamModule } from './team.module';
 @Module({
     imports: [
         TypeOrmModule.forFeature([TeamMemberModel]),
-        forwardRef(() => PlatformModule),
         forwardRef(() => TeamModule),
         forwardRef(() => IntegrationModule),
         forwardRef(() => IntegrationConfigModule),

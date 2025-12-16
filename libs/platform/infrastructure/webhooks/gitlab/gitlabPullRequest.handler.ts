@@ -1,5 +1,6 @@
 import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { GenerateIssuesFromPrClosedUseCase } from '@libs/issues/application/use-cases/generate-issues-from-pr-closed.use-case';
@@ -8,11 +9,11 @@ import {
     IWebhookEventHandler,
     IWebhookEventParams,
 } from '@libs/platform/domain/platformIntegrations/interfaces/webhook-event-handler.interface';
-import { KodyRulesSyncService } from '@libs/kodyRules/infrastructure/adapters/services/kodyRulesSync.service';
 import { CodeManagementService } from '../../adapters/services/codeManagement.service';
 import { getMappedPlatform } from '@libs/common/utils/webhooks';
 import { RunCodeReviewAutomationUseCase } from '@libs/ee/automation/runCodeReview.use-case';
 import { SavePullRequestUseCase } from '@libs/platformData/application/use-cases/pullRequests/save.use-case';
+import { PullRequestClosedEvent } from '@libs/core/domain/events/pull-request-closed.event';
 
 /**
  * Handler for GitLab webhook events.
@@ -26,7 +27,7 @@ export class GitLabMergeRequestHandler implements IWebhookEventHandler {
         private readonly runCodeReviewAutomationUseCase: RunCodeReviewAutomationUseCase,
         private readonly chatWithKodyFromGitUseCase: ChatWithKodyFromGitUseCase,
         private readonly generateIssuesFromPrClosedUseCase: GenerateIssuesFromPrClosedUseCase,
-        private readonly kodyRulesSyncService: KodyRulesSyncService,
+        private readonly eventEmitter: EventEmitter2,
         private readonly codeManagement: CodeManagementService,
     ) {}
 
@@ -140,15 +141,14 @@ export class GitLabMergeRequestHandler implements IWebhookEventHandler {
                                             payload?.object_attributes?.iid,
                                     },
                                 );
-                            await this.kodyRulesSyncService.syncFromChangedFiles(
-                                {
-                                    organizationAndTeamData:
-                                        orgData.organizationAndTeamData,
+                            this.eventEmitter.emit(
+                                'pull-request.closed',
+                                new PullRequestClosedEvent(
+                                    orgData.organizationAndTeamData,
                                     repository,
-                                    pullRequestNumber:
-                                        payload?.object_attributes?.iid,
-                                    files: changedFiles || [],
-                                },
+                                    payload?.object_attributes?.iid,
+                                    changedFiles || [],
+                                ),
                             );
                         }
                     } catch (e) {

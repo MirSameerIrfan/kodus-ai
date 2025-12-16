@@ -7,9 +7,9 @@ import { ContextReferenceDetectionService } from '@libs/ai-engine/infrastructure
 import type { ContextDetectionField } from '@libs/ai-engine/infrastructure/adapters/services/context/context-reference-detection.service';
 import { CreateKodyRuleDto } from '@libs/ee/kodyRules/dtos/create-kody-rule.dto';
 import {
-    IGetAdditionalInfoHelper,
-    GET_ADDITIONAL_INFO_HELPER_TOKEN,
-} from '@libs/core/domain/contracts/getAdditionalInfo.helper.contract';
+    CONTEXT_RESOLUTION_SERVICE_TOKEN,
+    IContextResolutionService,
+} from '@libs/core/context-resolution/domain/contracts/context-resolution.service.contract';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
     Action,
@@ -37,8 +37,8 @@ export class CreateOrUpdateKodyRulesUseCase {
         },
         private readonly authorizationService: AuthorizationService,
         private readonly contextReferenceDetectionService: ContextReferenceDetectionService,
-        @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
-        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
+        @Inject(CONTEXT_RESOLUTION_SERVICE_TOKEN)
+        private readonly contextResolutionService: IContextResolutionService,
     ) {}
 
     async execute(
@@ -164,7 +164,7 @@ export class CreateOrUpdateKodyRulesUseCase {
                     ) {
                         try {
                             resolvedTeamId =
-                                await this.getAdditionalInfoHelper.getTeamIdByOrganizationAndRepository(
+                                await this.contextResolutionService.getTeamIdByOrganizationAndRepository(
                                     organizationAndTeamData.organizationId,
                                     repositoryId,
                                 );
@@ -188,7 +188,7 @@ export class CreateOrUpdateKodyRulesUseCase {
                             repositoryName = 'global';
                         } else {
                             repositoryName =
-                                await this.getAdditionalInfoHelper.getRepositoryNameByOrganizationAndRepository(
+                                await this.contextResolutionService.getRepositoryNameByOrganizationAndRepository(
                                     organizationAndTeamData.organizationId,
                                     repositoryId,
                                 );

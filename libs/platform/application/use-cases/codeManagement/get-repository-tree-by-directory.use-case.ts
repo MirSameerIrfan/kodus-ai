@@ -1,9 +1,9 @@
 import { createLogger } from '@kodus/flow';
 import { CacheService } from '@libs/core/cache/cache.service';
 import {
-    GET_ADDITIONAL_INFO_HELPER_TOKEN,
-    IGetAdditionalInfoHelper,
-} from '@libs/core/domain/contracts';
+    CONTEXT_RESOLUTION_SERVICE_TOKEN,
+    IContextResolutionService,
+} from '@libs/core/context-resolution/domain/contracts/context-resolution.service.contract';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { TreeItem } from '@libs/core/infrastructure/config/types/general/tree.type';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
@@ -30,8 +30,8 @@ export class GetRepositoryTreeByDirectoryUseCase implements IUseCase {
         GetRepositoryTreeByDirectoryUseCase.name,
     );
     constructor(
-        @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
-        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
+        @Inject(CONTEXT_RESOLUTION_SERVICE_TOKEN)
+        private readonly contextResolutionService: IContextResolutionService,
         private readonly cacheService: CacheService,
         private readonly codeManagementService: CodeManagementService,
     ) {}
@@ -95,7 +95,7 @@ export class GetRepositoryTreeByDirectoryUseCase implements IUseCase {
             const parentPath = this.getParentPath(params.directoryPath);
 
             const repositoryName =
-                await this.getAdditionalInfoHelper.getRepositoryNameByOrganizationAndRepository(
+                await this.contextResolutionService.getRepositoryNameByOrganizationAndRepository(
                     params.organizationId,
                     params.repositoryId,
                 );

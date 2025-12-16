@@ -27,9 +27,9 @@ import { AuthorizationService } from '@libs/identity/infrastructure/adapters/ser
 import {
     PaginatedEnrichedPullRequestsResponse,
     PaginationMetadata,
-} from '@libs/platformData/dtos/paginated-enriched-pull-requests.dto';
-import { EnrichedPullRequestsQueryDto } from '@libs/platformData/dtos/enriched-pull-requests-query.dto';
-import { EnrichedPullRequestResponse } from '@libs/platformData/dtos/enriched-pull-request-response.dto';
+} from '@libs/code-review/dtos/dashboard/paginated-enriched-pull-requests.dto';
+import { EnrichedPullRequestsQueryDto } from '@libs/code-review/dtos/dashboard/enriched-pull-requests-query.dto';
+import { EnrichedPullRequestResponse } from '@libs/code-review/dtos/dashboard/enriched-pull-request-response.dto';
 
 @Injectable()
 export class GetEnrichedPullRequestsUseCase implements IUseCase {

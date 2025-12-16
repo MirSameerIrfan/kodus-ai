@@ -1,5 +1,12 @@
 import { Transform } from 'class-transformer';
-import { IsArray, IsNotEmpty, IsOptional, IsString, Min, Max } from 'class-validator';
+import {
+    IsArray,
+    IsNotEmpty,
+    IsOptional,
+    IsString,
+    Min,
+    Max,
+} from 'class-validator';
 
 export class OnboardingReviewModeSignalsQueryDto {
     @IsNotEmpty()

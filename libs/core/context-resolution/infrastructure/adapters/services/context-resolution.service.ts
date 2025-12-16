@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { IGetAdditionalInfoHelper } from '@libs/core/domain/contracts/getAdditionalInfo.helper.contract';
+import { IContextResolutionService } from '@libs/core/context-resolution/domain/contracts/context-resolution.service.contract';
 import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
 import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import {
@@ -17,7 +17,7 @@ import {
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 
 @Injectable()
-export class GetAdditionalInfoHelper implements IGetAdditionalInfoHelper {
+export class ContextResolutionService implements IContextResolutionService {
     constructor(
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,

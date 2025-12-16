@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 
 import { createLogger } from '@kodus/flow';
-import { OutboxMessage } from '../transactional-outbox.service';
+import { OutboxMessage } from '../../domain/interfaces/outbox-message.interface';
 
 import { OutboxMessageModel } from './schemas/outbox-message.model';
 

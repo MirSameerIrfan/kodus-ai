@@ -31,6 +31,9 @@ import { DryRunModule } from '@libs/dryRun/dry-run.module';
 import { AnalyticsModule } from '@libs/analytics/modules/analytics.module';
 import { AutomationModule } from '@libs/automation/modules/automation.module';
 import { WorkflowModule } from '@libs/core/workflow/workflow.module';
+import { CodeReviewConfigurationModule } from '@libs/code-review/modules/code-review-configuration.module';
+import { OrganizationOnboardingModule } from '@libs/organization/modules/organization-onboarding.module';
+import { CodeReviewDashboardModule } from '@libs/code-review/modules/code-review-dashboard.module';
 
 /**
  * API REST Module
@@ -76,6 +79,9 @@ import { WorkflowModule } from '@libs/core/workflow/workflow.module';
         AnalyticsModule,
         CodeReviewSettingsLogModule,
         AutomationModule,
+        CodeReviewConfigurationModule,
+        OrganizationOnboardingModule,
+        CodeReviewDashboardModule,
         McpModule.forRoot(),
         HealthModule,
     ],

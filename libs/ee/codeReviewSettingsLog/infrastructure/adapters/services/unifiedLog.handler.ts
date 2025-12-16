@@ -1,7 +1,7 @@
 import {
-    GET_ADDITIONAL_INFO_HELPER_TOKEN,
-    IGetAdditionalInfoHelper,
-} from '@libs/core/domain/contracts';
+    CONTEXT_RESOLUTION_SERVICE_TOKEN,
+    IContextResolutionService,
+} from '@libs/core/context-resolution/domain/contracts/context-resolution.service.contract';
 import {
     ActionType,
     ConfigLevel,
@@ -46,8 +46,8 @@ export class UnifiedLogHandler {
     constructor(
         @Inject(CODE_REVIEW_SETTINGS_LOG_REPOSITORY_TOKEN)
         private readonly codeReviewSettingsLogRepository: ICodeReviewSettingsLogRepository,
-        @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
-        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
+        @Inject(CONTEXT_RESOLUTION_SERVICE_TOKEN)
+        private readonly contextResolutionService: IContextResolutionService,
     ) {}
 
     public async logAction(params: UnifiedLogParams): Promise<void> {
@@ -405,7 +405,7 @@ export class UnifiedLogHandler {
         organizationId: string,
     ): Promise<string> {
         const directoryPath =
-            await this.getAdditionalInfoHelper.getDirectoryPathByOrganizationAndRepository(
+            await this.contextResolutionService.getDirectoryPathByOrganizationAndRepository(
                 organizationId,
                 repositoryId,
                 directoryId,
@@ -418,7 +418,7 @@ export class UnifiedLogHandler {
         organizationId: string,
     ): Promise<string> {
         const repositoryName =
-            await this.getAdditionalInfoHelper.getRepositoryNameByOrganizationAndRepository(
+            await this.contextResolutionService.getRepositoryNameByOrganizationAndRepository(
                 organizationId,
                 repositoryId,
             );

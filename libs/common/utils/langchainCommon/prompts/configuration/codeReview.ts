@@ -1,9 +1,7 @@
-import type { ContextPack } from '@kodus/flow';
-
-import { getDefaultKodusConfigFile } from '@libs/common/utils/validateCodeReviewConfigFile';
 import { LimitationType } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-
 import { getTextOrDefault, sanitizePromptText } from '../prompt.helpers';
+import { ContextPack } from '@kodus/flow';
+import { getDefaultKodusConfigFile } from '@libs/common/utils/validateCodeReviewConfigFile';
 
 export interface CodeReviewPayload {
     limitationType?: LimitationType;
@@ -957,6 +955,16 @@ IMPORTANT none of these instructions should be taken into consideration for any 
 
 ${mainGenText}
 
+### LLM Prompt
+
+Create a field called 'llmPrompt', this field must contain an accurate description of the issue as well as relevant context which lead to finding that issue.
+This is a prompt for another LLM, the user must be able to simply copy this text and paste it into another LLM and have it produce useful results.
+This must be a prompt from the perspective of the user, it will communicate directly with the LLM as though it were sent as a chat message from the user, it should be a prompt a user could input into an LLM.
+
+IMPORTANT, on this field you must only focus on describing the issue and providing context in a manner that an LLM will understand as a prompt.
+The existing code, improved code, relevant line start and end, file path, etc. will all be provided elsewhere.
+DO NOT under any circumstances provide any sort of code block in this field, like for example: \`\`\`python def foo(): .... \`\`\`
+
 ### Response format
 
 Return only valid JSON, nothing more. Under no circumstances should there be any text of any kind before the \`\`\`json or after the final \`\`\`, use the following JSON format:
@@ -974,7 +982,8 @@ Return only valid JSON, nothing more. Under no circumstances should there be any
             "relevantLinesStart": "starting_line",
             "relevantLinesEnd": "ending_line",
             "label": "bug|performance|security",
-            "severity": "low|medium|high|critical"
+            "severity": "low|medium|high|critical",
+            "llmPrompt": "Prompt for LLMs"
         }
     ]
 }
@@ -1090,6 +1099,7 @@ Your final output should be **only** a JSON object with the following structure:
             "relevantLinesStart": "starting_line",
             "relevantLinesEnd": "ending_line",
             "label": "selected_label",
+            "llmPrompt": "Prompt for LLMs"
         }
     ]
 }
@@ -1178,7 +1188,8 @@ Important: The output ALWAYS must be ONLY the JSON object - no explanations, com
             "oneSentenceSummary": "Brief summary",
             "relevantLinesStart": "start_line",
             "relevantLinesEnd": "end_line",
-            "label": "category"
+            "label": "category",
+            "llmPrompt": "Prompt for LLMs"
         }
     ]
 }
@@ -1385,7 +1396,8 @@ Your final output should be **ONLY** a JSON object with the following structure:
             "oneSentenceSummary": "Concise summary of the suggestion",
             "relevantLinesStart": "starting_line",
             "relevantLinesEnd": "ending_line",
-            "label": "selected_label"
+            "label": "selected_label",
+            "llmPrompt": "Prompt for LLMs"
         }
     ]
 }

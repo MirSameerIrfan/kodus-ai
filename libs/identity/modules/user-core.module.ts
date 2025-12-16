@@ -10,9 +10,10 @@ import { UseCases } from '../application/use-cases/user'; // Fixed import
 import { UsersService } from '../infrastructure/adapters/services/users.service';
 import { BcryptService } from '../infrastructure/adapters/services/bcrypt.service';
 import { UserDatabaseRepository } from '../infrastructure/adapters/repositories/user.repository';
+import { CryptoModule } from '@libs/core/crypto/crypto.module';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([UserModel])],
+    imports: [TypeOrmModule.forFeature([UserModel]), CryptoModule],
     providers: [
         ...UseCases,
         {
@@ -35,4 +36,3 @@ import { UserDatabaseRepository } from '../infrastructure/adapters/repositories/
     ],
 })
 export class UserCoreModule {}
-

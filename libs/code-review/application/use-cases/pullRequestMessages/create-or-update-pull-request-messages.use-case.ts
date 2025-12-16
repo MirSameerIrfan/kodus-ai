@@ -12,9 +12,9 @@ import {
 } from '@libs/code-review/domain/pullRequestMessages/contracts/pullRequestMessages.service.contract';
 import { IPullRequestMessages } from '@libs/code-review/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
 import {
-    IGetAdditionalInfoHelper,
-    GET_ADDITIONAL_INFO_HELPER_TOKEN,
-} from '@libs/core/domain/contracts/getAdditionalInfo.helper.contract';
+    CONTEXT_RESOLUTION_SERVICE_TOKEN,
+    IContextResolutionService,
+} from '@libs/core/context-resolution/domain/contracts/context-resolution.service.contract';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { ActionType } from '@libs/core/infrastructure/config/types/general/codeReviewSettingsLog.type';
 import { ConfigLevel } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
@@ -36,8 +36,8 @@ export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
         private readonly pullRequestMessagesService: IPullRequestMessagesService,
         @Inject(CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN)
         private readonly codeReviewSettingsLogService: ICodeReviewSettingsLogService,
-        @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
-        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
+        @Inject(CONTEXT_RESOLUTION_SERVICE_TOKEN)
+        private readonly contextResolutionService: IContextResolutionService,
         private readonly authorizationService: AuthorizationService,
     ) {}
 
@@ -143,7 +143,7 @@ export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
                 existingEndMessage:
                     existingPullRequestMessage?.endReviewMessage,
                 directoryPath:
-                    (await this.getAdditionalInfoHelper.getDirectoryPathByOrganizationAndRepository(
+                    (await this.contextResolutionService.getDirectoryPathByOrganizationAndRepository(
                         pullRequestMessages.organizationId,
                         pullRequestMessages.repositoryId,
                         pullRequestMessages.directoryId,

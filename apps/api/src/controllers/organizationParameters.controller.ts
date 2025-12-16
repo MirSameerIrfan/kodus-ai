@@ -21,7 +21,7 @@ import {
     GetCockpitMetricsVisibilityUseCase,
     GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN,
 } from '@libs/organization/application/use-cases/organizationParameters/get-cockpit-metrics-visibility.use-case';
-import { UpdateAutoLicenseAllowedUsersUseCase } from '@libs/organization/application/use-cases/organizationParameters/update-auto-license-allowed-users.use-case';
+import { UpdateAutoLicenseAllowedUsersUseCase } from '@libs/platform/application/use-cases/codeManagement/update-auto-license-allowed-users.use-case';
 import { ICockpitMetricsVisibility } from '@libs/organization/domain/organizationParameters/interfaces/cockpit-metrics-visibility.interface';
 
 import {

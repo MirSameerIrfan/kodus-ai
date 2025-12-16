@@ -1,6 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import { createLogger } from '@kodus/flow';
 import { CreateOrUpdateKodyRulesUseCase } from './create-or-update.use-case';
 import { ImportFastKodyRulesDto } from '@libs/kodyRules/dtos/import-fast-kody-rules.dto';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
@@ -10,6 +9,7 @@ import {
     KodyRulesScope,
     KodyRulesStatus,
 } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
+import { createLogger } from '@kodus/flow';
 
 @Injectable()
 export class ImportFastKodyRulesUseCase {

@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsArray } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsBoolean } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ProgrammingLanguage } from '@libs/core/domain/enums/programming-language.enum';
 import { PaginationDto } from '@libs/core/domain/dtos/pagination.dto';
@@ -18,6 +18,12 @@ export class FindLibraryKodyRulesDto
     extends PaginationDto
     implements KodyRuleFilters
 {
+    private static transformToBoolean = ({ value }: { value: unknown }) => {
+        if (value === 'true') return true;
+        if (value === 'false') return false;
+        return value;
+    };
+
     @IsOptional()
     @IsString()
     title?: string;
@@ -31,6 +37,16 @@ export class FindLibraryKodyRulesDto
     @IsArray()
     @IsString({ each: true })
     tags?: string[];
+
+    @IsOptional()
+    @IsBoolean()
+    @Transform(FindLibraryKodyRulesDto.transformToBoolean)
+    plug_and_play?: boolean;
+
+    @IsOptional()
+    @IsBoolean()
+    @Transform(FindLibraryKodyRulesDto.transformToBoolean)
+    needMCPS?: boolean;
 
     @IsOptional()
     language?: ProgrammingLanguage;

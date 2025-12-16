@@ -3,13 +3,7 @@ import { DataSource, EntityManager } from 'typeorm';
 import { createLogger } from '@kodus/flow';
 import { OutboxMessageRepository } from './repositories/outbox-message.repository';
 import { OutboxMessageModel } from './repositories/schemas';
-
-export interface OutboxMessage {
-    jobId: string;
-    exchange: string;
-    routingKey: string;
-    payload: Record<string, unknown>;
-}
+import { OutboxMessage } from '../domain/interfaces/outbox-message.interface';
 
 @Injectable()
 export class TransactionalOutboxService {

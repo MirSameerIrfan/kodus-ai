@@ -2,9 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { ProfilesModule } from '@libs/identity/modules/profiles.module';
-import { UserModule } from '@libs/identity/modules/user.module';
 import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
-import { PlatformModule } from '@libs/platform/modules/platform.module';
 
 import { OrganizationService } from '../infrastructure/adapters/services/organization.service';
 import { OrganizationModel } from '../infrastructure/adapters/repositories/schemas/organization.model';
@@ -22,10 +20,8 @@ import { ParametersModule } from './parameters.module';
 @Module({
     imports: [
         TypeOrmModule.forFeature([OrganizationModel]),
-        forwardRef(() => UserModule),
         forwardRef(() => ProfilesModule),
         forwardRef(() => TeamModule),
-        forwardRef(() => PlatformModule),
         forwardRef(() => IntegrationModule),
         forwardRef(() => IntegrationConfigModule),
         forwardRef(() => ParametersModule),

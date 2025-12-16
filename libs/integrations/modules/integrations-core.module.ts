@@ -6,7 +6,6 @@ import { IntegrationModel } from '../infrastructure/adapters/repositories/schema
 import { ProfileConfigModule } from '@libs/identity/modules/profileConfig.module';
 import { AuthIntegrationModule } from '@libs/integrations/modules/authIntegration.module';
 import { IntegrationConfigCoreModule } from './config-core.module';
-import { PlatformModule } from '@libs/platform/modules/platform.module';
 
 import { INTEGRATION_REPOSITORY_TOKEN } from '../domain/integrations/contracts/integration.repository.contracts';
 import { INTEGRATION_SERVICE_TOKEN } from '../domain/integrations/contracts/integration.service.contracts';
@@ -14,14 +13,12 @@ import { IntegrationService } from '../infrastructure/adapters/services/integrat
 
 // Use Cases
 import { CloneIntegrationUseCase } from '../application/use-cases/clone-integration.use-case';
-import { GetConnectionsUseCase } from '../application/use-cases/get-connections.use-case';
 import { GetOrganizationIdUseCase } from '../application/use-cases/get-organization-id.use-case';
 import { GetIntegrationConfigsByIntegrationCategoryUseCase } from '../application/use-cases/integrationConfig/getIntegrationConfigsByIntegrationCategory.use-case';
 import { CheckHasIntegrationByPlatformUseCase } from '../application/use-cases/check-has-connection.use-case';
 
 const UseCases = [
     CloneIntegrationUseCase,
-    GetConnectionsUseCase,
     GetOrganizationIdUseCase,
     GetIntegrationConfigsByIntegrationCategoryUseCase,
     CheckHasIntegrationByPlatformUseCase,
@@ -31,7 +28,6 @@ const UseCases = [
     imports: [
         TypeOrmModule.forFeature([IntegrationModel]),
         IntegrationConfigCoreModule,
-        forwardRef(() => PlatformModule),
         forwardRef(() => ProfileConfigModule),
         AuthIntegrationModule,
     ],

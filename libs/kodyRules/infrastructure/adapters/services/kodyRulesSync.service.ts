@@ -15,9 +15,9 @@ import {
 } from '@libs/kodyRules/domain/contracts/kodyRules.service.contract';
 
 import {
-    GET_ADDITIONAL_INFO_HELPER_TOKEN,
-    IGetAdditionalInfoHelper,
-} from '@libs/core/domain/contracts';
+    CONTEXT_RESOLUTION_SERVICE_TOKEN,
+    IContextResolutionService,
+} from '@libs/core/context-resolution/domain/contracts/context-resolution.service.contract';
 import { ParametersKey } from '@libs/core/domain/enums';
 import { RULE_FILE_PATTERNS } from '@libs/common/utils/kody-rules/file-patterns';
 import { isFileMatchingGlob } from '@libs/common/utils/glob-utils';
@@ -120,8 +120,8 @@ export class KodyRulesSyncService {
         private readonly kodyRulesService: IKodyRulesService,
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
-        @Inject(GET_ADDITIONAL_INFO_HELPER_TOKEN)
-        private readonly getAdditionalInfoHelper: IGetAdditionalInfoHelper,
+        @Inject(CONTEXT_RESOLUTION_SERVICE_TOKEN)
+        private readonly contextResolutionService: IContextResolutionService,
         private readonly codeManagementService: CodeManagementService,
         private readonly updateOrCreateCodeReviewParameterUseCase: UpdateOrCreateCodeReviewParameterUseCase,
         private readonly promptRunnerService: PromptRunnerService,
@@ -1886,7 +1886,7 @@ export class KodyRulesSyncService {
         if (!resolvedTeamId && repositoryId !== 'global') {
             try {
                 resolvedTeamId =
-                    await this.getAdditionalInfoHelper.getTeamIdByOrganizationAndRepository(
+                    await this.contextResolutionService.getTeamIdByOrganizationAndRepository(
                         organizationAndTeamData.organizationId,
                         repositoryId,
                     );
@@ -1994,7 +1994,7 @@ export class KodyRulesSyncService {
             return 'global';
         }
 
-        return await this.getAdditionalInfoHelper.getRepositoryNameByOrganizationAndRepository(
+        return await this.contextResolutionService.getRepositoryNameByOrganizationAndRepository(
             organizationId,
             repositoryId,
         );

@@ -19,7 +19,6 @@ import { TeamModule } from '@libs/organization/modules/team.module';
 import { ParametersModule } from '@libs/organization/modules/parameters.module';
 import { PlatformDataModule } from '@libs/platformData/platformData.module';
 import { PermissionsModule } from '@libs/identity/modules/permissions.module';
-import { KodyRulesModule } from '@libs/kodyRules/modules/kodyRules.module';
 import { PullRequestMessagesModule } from '@libs/code-review/modules/pullRequestMessages.module';
 import { AzureReposPullRequestHandler } from '../infrastructure/webhooks/azure/azureReposPullRequest.handler';
 import { GitHubPullRequestHandler } from '../infrastructure/webhooks/github/githubPullRequest.handler';
@@ -27,6 +26,8 @@ import { GitLabMergeRequestHandler } from '../infrastructure/webhooks/gitlab/git
 import { BitbucketPullRequestHandler } from '../infrastructure/webhooks/bitbucket/bitbucketPullRequest.handler';
 
 import { PlatformCoreModule } from './platform-core.module';
+import { GetConnectionsUseCase } from '../application/use-cases/integrations/get-connections.use-case';
+import { GetOrganizationLanguageUseCase } from '../application/use-cases/organization/get-organization-language.use-case';
 
 @Module({
     imports: [
@@ -45,11 +46,12 @@ import { PlatformCoreModule } from './platform-core.module';
         forwardRef(() => ParametersModule),
         forwardRef(() => PlatformDataModule),
         PermissionsModule,
-        forwardRef(() => KodyRulesModule),
         forwardRef(() => PullRequestMessagesModule),
     ],
     providers: [
         ...CodeManagementUseCases,
+        GetConnectionsUseCase,
+        GetOrganizationLanguageUseCase,
         AzureReposPullRequestHandler,
         GitHubPullRequestHandler,
         GitLabMergeRequestHandler,
@@ -76,6 +78,8 @@ import { PlatformCoreModule } from './platform-core.module';
         PlatformIntegrationFactory,
         CodeManagementService,
         ...CodeManagementUseCases,
+        GetConnectionsUseCase,
+        GetOrganizationLanguageUseCase,
     ],
 })
 export class PlatformModule implements OnModuleInit {

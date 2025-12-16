@@ -1,5 +1,8 @@
-import type { ContextDependency, ContextPack } from '@kodus/flow';
-import { createLogger } from '@kodus/flow';
+import {
+    createLogger,
+    type ContextDependency,
+    type ContextPack,
+} from '@kodus/flow';
 import {
     LLMModelProvider,
     PromptRunnerService,
@@ -39,10 +42,7 @@ import {
     KodyRulesScope,
 } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 import { KodyRulesValidationService } from '../kodyRules/service/kody-rules-validation.service';
-import {
-    IKodyRulesService,
-    KODY_RULES_SERVICE_TOKEN,
-} from '@libs/kodyRules/domain/contracts/kodyRules.service.contract';
+import { KODY_RULES_SERVICE_TOKEN } from '@libs/kodyRules/domain/contracts/kodyRules.service.contract';
 import { KodyRuleDependencyService } from '@libs/kodyRules/infrastructure/adapters/services/kodyRulesDependency.service';
 import { ObservabilityService } from '@libs/core/log/observability.service';
 import { ExternalReferenceLoaderService } from '@libs/kodyRules/infrastructure/adapters/services/externalReferenceLoader.service';
@@ -50,7 +50,7 @@ import { LabelType } from '@libs/common/utils/codeManagement/labels';
 import {
     KodyRulesClassifierSchema,
     kodyRulesClassifierSchema,
-    kodyRulesSchema,
+    kodyRulesGeneratorSchema,
     prompt_kodyrules_classifier_system,
     prompt_kodyrules_classifier_user,
     prompt_kodyrules_extract_id_system,
@@ -63,6 +63,7 @@ import {
     prompt_kodyrules_updatestdsuggestions_user,
 } from '@libs/common/utils/langchainCommon/prompts/kodyRules';
 import { tryParseJSONObject } from '@libs/common/utils/transforms/json';
+import { KodyRulesService } from '../kodyRules/service/kodyRules.service';
 
 interface KodyRulesExtendedContext {
     pullRequest: any;
@@ -95,9 +96,10 @@ export const KODY_RULES_ANALYSIS_SERVICE_TOKEN = Symbol(
 @Injectable()
 export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
     private readonly logger = createLogger(KodyRulesAnalysisService.name);
+
     constructor(
         @Inject(KODY_RULES_SERVICE_TOKEN)
-        private readonly kodyRulesService: IKodyRulesService,
+        private readonly kodyRulesService: KodyRulesService,
         @Inject(CODE_BASE_CONFIG_SERVICE_TOKEN)
         private readonly codeBaseConfigService: ICodeBaseConfigService,
         private readonly promptRunnerService: PromptRunnerService,
@@ -132,7 +134,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
                 }
 
                 const escapeMarkdownSyntax = (text: string): string =>
-                    text.replace(/([[]\\]\\`*_{}()#+-.!])/g, '\\$1');
+                    text.replace(/([\[\]\\`*_{}()#+\-.!])/g, '\\$1');
                 const markdownLink = `[${escapeMarkdownSyntax(rule.title)}](${ruleLink})`;
 
                 // Verificar se o ID está entre crases simples `id`
@@ -894,7 +896,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
     ) {
         const builder = promptRunner
             .builder()
-            .setParser(ParserType.ZOD, kodyRulesSchema, {
+            .setParser(ParserType.ZOD, kodyRulesGeneratorSchema, {
                 provider: LLMModelProvider.OPENAI_GPT_4O_MINI,
                 fallbackProvider: LLMModelProvider.OPENAI_GPT_4O,
             })
@@ -1223,6 +1225,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
                 severity?: string;
                 violatedKodyRulesIds?: string[];
                 brokenKodyRulesIds?: string[];
+                llmPrompt?: string;
             }>;
         }
 
@@ -1278,6 +1281,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
                             Number(suggestion.relevantLinesEnd) || undefined,
                         label: suggestion.label,
                         severity: suggestion.severity,
+                        llmPrompt: suggestion.llmPrompt,
                     };
 
                     // "Has violated" means a standard suggestion violates a kody rule, so we silently fix it.

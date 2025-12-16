@@ -10,12 +10,9 @@ import { PullRequestsService } from './infrastructure/adapters/services/pullRequ
 import { PULL_REQUESTS_REPOSITORY_TOKEN } from './domain/pullRequests/contracts/pullRequests.repository';
 import { PULL_REQUESTS_SERVICE_TOKEN } from './domain/pullRequests/contracts/pullRequests.service.contracts';
 import { SavePullRequestUseCase } from './application/use-cases/pullRequests/save.use-case';
-import { GetEnrichedPullRequestsUseCase } from './application/use-cases/pullRequests/get-enriched-pull-requests.use-case';
 import { BackfillHistoricalPRsUseCase } from './application/use-cases/pullRequests/backfill-historical-prs.use-case';
 import { PlatformModule } from '@libs/platform/modules/platform.module';
 import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
-import { AutomationModule } from '@libs/automation/modules/automation.module';
-import { CodeReviewExecutionModule } from '@libs/code-review/modules/codeReviewExecution.module';
 import { PermissionsModule } from '@libs/identity/modules/permissions.module';
 import { PermissionValidationModule } from '@libs/ee/shared/permission-validation.module';
 
@@ -29,8 +26,6 @@ import { PermissionValidationModule } from '@libs/ee/shared/permission-validatio
         ]),
         forwardRef(() => PlatformModule),
         forwardRef(() => IntegrationConfigModule),
-        forwardRef(() => AutomationModule),
-        forwardRef(() => CodeReviewExecutionModule),
         forwardRef(() => PermissionsModule),
         forwardRef(() => PermissionValidationModule),
     ],
@@ -44,14 +39,12 @@ import { PermissionValidationModule } from '@libs/ee/shared/permission-validatio
             useClass: PullRequestsService,
         },
         SavePullRequestUseCase,
-        GetEnrichedPullRequestsUseCase,
         BackfillHistoricalPRsUseCase,
     ],
     exports: [
         PULL_REQUESTS_REPOSITORY_TOKEN,
         PULL_REQUESTS_SERVICE_TOKEN,
         SavePullRequestUseCase,
-        GetEnrichedPullRequestsUseCase,
         BackfillHistoricalPRsUseCase,
     ],
 })

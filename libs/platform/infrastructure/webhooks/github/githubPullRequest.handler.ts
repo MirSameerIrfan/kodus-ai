@@ -1,6 +1,7 @@
 import { createLogger } from '@kodus/flow';
 import { Injectable, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { GenerateIssuesFromPrClosedUseCase } from '@libs/issues/application/use-cases/generate-issues-from-pr-closed.use-case';
@@ -10,11 +11,11 @@ import {
     IWebhookEventParams,
 } from '@libs/platform/domain/platformIntegrations/interfaces/webhook-event-handler.interface';
 import { EnqueueCodeReviewJobUseCase } from '@libs/core/workflow/application/use-cases/enqueue-code-review-job.use-case';
-import { KodyRulesSyncService } from '@libs/kodyRules/infrastructure/adapters/services/kodyRulesSync.service';
 import { CodeManagementService } from '../../adapters/services/codeManagement.service';
 import { getMappedPlatform } from '@libs/common/utils/webhooks';
 import { SavePullRequestUseCase } from '@libs/platformData/application/use-cases/pullRequests/save.use-case';
 import { RunCodeReviewAutomationUseCase } from '@libs/ee/automation/runCodeReview.use-case';
+import { PullRequestClosedEvent } from '@libs/core/domain/events/pull-request-closed.event';
 
 /**
  * Handler for GitHub webhook events.
@@ -29,7 +30,7 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
         private readonly chatWithKodyFromGitUseCase: ChatWithKodyFromGitUseCase,
         private readonly codeManagement: CodeManagementService,
         private readonly generateIssuesFromPrClosedUseCase: GenerateIssuesFromPrClosedUseCase,
-        private readonly kodyRulesSyncService: KodyRulesSyncService,
+        private readonly eventEmitter: EventEmitter2,
         @Optional()
         private readonly enqueueCodeReviewJobUseCase?: EnqueueCodeReviewJobUseCase,
         private readonly configService?: ConfigService,
@@ -211,15 +212,14 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
                                         prNumber: payload?.pull_request?.number,
                                     },
                                 );
-                            await this.kodyRulesSyncService.syncFromChangedFiles(
-                                {
-                                    organizationAndTeamData:
-                                        organizationAndTeamData.organizationAndTeamData,
+                            this.eventEmitter.emit(
+                                'pull-request.closed',
+                                new PullRequestClosedEvent(
+                                    organizationAndTeamData.organizationAndTeamData,
                                     repository,
-                                    pullRequestNumber:
-                                        payload?.pull_request?.number,
-                                    files: changedFiles || [],
-                                },
+                                    payload?.pull_request?.number,
+                                    changedFiles || [],
+                                ),
                             );
                         }
                     } catch (e) {

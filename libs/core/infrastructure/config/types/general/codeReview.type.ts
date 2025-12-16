@@ -191,6 +191,7 @@ export type CodeSuggestion = {
     createdAt?: string;
     updatedAt?: string;
     action?: string;
+    llmPrompt?: string;
 };
 
 export type FileChange = {

@@ -2,10 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 
 import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
-import {
-    AUTH_SERVICE_TOKEN,
-    IAuthService,
-} from '@libs/identity/domain/auth/contracts/auth.service.contracts';
+import { CryptoService } from '@libs/core/crypto/crypto.service';
 import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
     IUserRepository,
@@ -18,8 +15,7 @@ import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 @Injectable()
 export class UsersService implements IUsersService {
     constructor(
-        @Inject(AUTH_SERVICE_TOKEN)
-        private readonly authService: IAuthService,
+        private readonly cryptoService: CryptoService,
         @Inject(USER_REPOSITORY_TOKEN)
         private readonly userRepository: IUserRepository,
     ) {}
@@ -62,7 +58,7 @@ export class UsersService implements IUsersService {
         const cryptedPassword =
             await this.userRepository.getCryptedPassword(email);
         if (cryptedPassword) {
-            const passwordMatches = await this.authService.match(
+            const passwordMatches = await this.cryptoService.match(
                 password,
                 cryptedPassword,
             );
@@ -75,7 +71,7 @@ export class UsersService implements IUsersService {
 
     public async register(payload: Omit<IUser, 'uuid'>): Promise<UserEntity> {
         const uuid = uuidv4();
-        const password = await this.authService.hashPassword(
+        const password = await this.cryptoService.hashPassword(
             payload.password,
             10,
         );

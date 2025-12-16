@@ -10,13 +10,11 @@ import { TeamModule } from '@libs/organization/modules/team.module';
 import { LICENSE_SERVICE_TOKEN } from './interfaces/license.interface';
 import { LicenseService } from './license.service';
 import { AutoAssignLicenseUseCase } from './use-cases/auto-assign-license.use-case';
-import { PullRequestsModule } from '@libs/code-review/modules/pull-requests.module';
 import { OrganizationParametersModule } from '@libs/organization/modules/organizationParameters.module';
 
 @Module({
     imports: [
         forwardRef(() => TeamModule),
-        forwardRef(() => PullRequestsModule),
         forwardRef(() => OrganizationParametersModule),
     ],
     providers: [

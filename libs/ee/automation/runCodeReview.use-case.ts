@@ -17,6 +17,10 @@ import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/organizationParameters/contracts/organizationParameters.service.contract';
+import {
+    IPullRequestsService,
+    PULL_REQUESTS_SERVICE_TOKEN,
+} from '@libs/platformData/domain/pullRequests/contracts/pullRequests.service.contracts';
 import { OrganizationParametersAutoAssignConfig } from '@libs/organization/domain/organizationParameters/types/organizationParameters.types';
 import { stripCurlyBracesFromUUIDs } from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
@@ -85,6 +89,9 @@ export class RunCodeReviewAutomationUseCase implements IUseCase {
 
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
         private readonly organizationParametersService: IOrganizationParametersService,
+
+        @Inject(PULL_REQUESTS_SERVICE_TOKEN)
+        private readonly pullRequestsService: IPullRequestsService,
     ) {}
 
     async execute(params: {
@@ -464,12 +471,22 @@ export class RunCodeReviewAutomationUseCase implements IUseCase {
                             validationResult.errorType ===
                             ValidationErrorType.USER_NOT_LICENSED
                         ) {
+                            // Fetch user PR count for auto-assign check
+                            const userPrs = await this.pullRequestsService.find(
+                                {
+                                    organizationId:
+                                        organizationAndTeamData.organizationId,
+                                    'user.id': params?.userGitId,
+                                } as any,
+                            );
+
                             // Check if we can auto-assign or if it's a freebie
                             const autoAssignResult =
                                 await this.autoAssignLicenseUseCase.execute({
                                     organizationAndTeamData,
                                     userGitId: params?.userGitId,
                                     prNumber: params?.prNumber,
+                                    prCount: userPrs?.length ?? 0,
                                     repositoryName: params?.repository?.name,
                                     provider: params?.platformType,
                                 });

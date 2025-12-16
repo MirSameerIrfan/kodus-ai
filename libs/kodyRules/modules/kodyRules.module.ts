@@ -54,6 +54,7 @@ import { RemoveRuleLikeUseCase } from '../application/use-cases/rule-like/remove
 import { SetRuleLikeUseCase } from '../application/use-cases/rule-like/set-rule-like.use-case';
 
 import { PermissionsModule } from '@libs/identity/modules/permissions.module';
+import { KodyRulesSyncListener } from '../infrastructure/adapters/listeners/kody-rules-sync.listener';
 
 @Module({
     imports: [
@@ -118,6 +119,7 @@ import { PermissionsModule } from '@libs/identity/modules/permissions.module';
         ResyncRulesFromIdeUseCase,
         RemoveRuleLikeUseCase,
         SetRuleLikeUseCase,
+        KodyRulesSyncListener,
     ],
     exports: [
         KODY_RULES_REPOSITORY_TOKEN,

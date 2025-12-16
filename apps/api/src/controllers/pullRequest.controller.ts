@@ -1,6 +1,6 @@
 import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
 import { BackfillHistoricalPRsUseCase } from '@libs/platformData/application/use-cases/pullRequests/backfill-historical-prs.use-case';
-import { GetEnrichedPullRequestsUseCase } from '@libs/platformData/application/use-cases/pullRequests/get-enriched-pull-requests.use-case';
+import { GetEnrichedPullRequestsUseCase } from '@libs/code-review/application/use-cases/dashboard/get-enriched-pull-requests.use-case';
 import {
     Action,
     ResourceType,
@@ -16,8 +16,8 @@ import {
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { BackfillPRsDto } from '../dtos/backfill-prs.dto';
-import { EnrichedPullRequestsQueryDto } from '@libs/platformData/dtos/enriched-pull-requests-query.dto';
-import { PaginatedEnrichedPullRequestsResponse } from '@libs/platformData/dtos/paginated-enriched-pull-requests.dto';
+import { EnrichedPullRequestsQueryDto } from '@libs/code-review/dtos/dashboard/enriched-pull-requests-query.dto';
+import { PaginatedEnrichedPullRequestsResponse } from '@libs/code-review/dtos/dashboard/paginated-enriched-pull-requests.dto';
 import { OnboardingReviewModeSignalsQueryDto } from '../dtos/onboarding-review-mode-signals-query.dto';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 import {

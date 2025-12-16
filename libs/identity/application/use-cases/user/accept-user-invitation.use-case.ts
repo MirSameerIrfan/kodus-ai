@@ -3,10 +3,7 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateProfileUseCase } from '../profile/create.use-case';
 
 import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
-import {
-    AUTH_SERVICE_TOKEN,
-    IAuthService,
-} from '@libs/identity/domain/auth/contracts/auth.service.contracts';
+import { CryptoService } from '@libs/core/crypto/crypto.service';
 import {
     IUsersService,
     USER_SERVICE_TOKEN,
@@ -20,8 +17,7 @@ export class AcceptUserInvitationUseCase implements IUseCase {
         @Inject(USER_SERVICE_TOKEN)
         private readonly usersService: IUsersService,
 
-        @Inject(AUTH_SERVICE_TOKEN)
-        private readonly authService: IAuthService,
+        private readonly cryptoService: CryptoService,
 
         private readonly createProfileUseCase: CreateProfileUseCase,
     ) {}
@@ -32,7 +28,7 @@ export class AcceptUserInvitationUseCase implements IUseCase {
             },
             {
                 status: STATUS.ACTIVE,
-                password: await this.authService.hashPassword(
+                password: await this.cryptoService.hashPassword(
                     user.password,
                     10,
                 ),

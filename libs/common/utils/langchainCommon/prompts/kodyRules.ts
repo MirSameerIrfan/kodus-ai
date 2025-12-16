@@ -1,7 +1,6 @@
 import z from 'zod';
-
-import { getTextOrDefault } from './prompt.helpers';
 import { getDefaultKodusConfigFile } from '../../validateCodeReviewConfigFile';
+import { getTextOrDefault } from './prompt.helpers';
 
 //#region classifier
 export const kodyRulesClassifierSchema = z.object({
@@ -14,7 +13,7 @@ export const kodyRulesClassifierSchema = z.object({
 });
 
 //#region classifier
-export const kodyRulesSchema = z.object({
+export const kodyRulesGeneratorSchema = z.object({
     codeSuggestions: z.array(
         z.object({
             id: z.string(),
@@ -27,6 +26,7 @@ export const kodyRulesSchema = z.object({
             relevantLinesStart: z.number(),
             relevantLinesEnd: z.number(),
             label: z.string(),
+            llmPrompt: z.string().optional(),
             severity: z.string(),
             violatedKodyRulesIds: z.array(z.string()).optional(),
             brokenKodyRulesIds: z.array(z.string()).optional(),
@@ -168,6 +168,7 @@ ${JSON.stringify(kodyRules, null, 2)}
 ${externalReferencesSection}
 ${mcpResultsSection}
 Your output must always be a valid JSON. Under no circumstances should you output anything other than a JSON. Follow the exact format below without any additional text or explanation:
+IMPORTANT, should the array be empty the output must still follow the specified json format e.g. { "rules": [] }
 
 <OUTPUT_FORMAT>
 DISCUSSION HERE
@@ -228,16 +229,29 @@ Data you have access to
 
 2. **Decision branch**
    2a. **If the suggestion *violates* one or more Kody Rules**
-       • Refactor \`improvedCode\` so it complies.
-       • List all violated rule UUIDs in \`violatedKodyRulesIds\`.
-2b. **Else if the suggestion is directly fixing a Kody Rule violation present in the existing code**
-    • The existing code must explicitly violate the rule's requirements
-    • Adjust wording/label/code as needed
-    • List those rule UUIDs in \`brokenKodyRulesIds\`
-   2c. **Else** – leave the suggestion unchanged and output empty arrays for both fields.
+        • Refactor \`improvedCode\` so it complies.
+        • List all violated rule UUIDs in \`violatedKodyRulesIds\`.
+    2b. **Else if the suggestion is directly fixing a Kody Rule violation present in the existing code**
+        • The existing code must explicitly violate the rule's requirements
+        • Adjust wording/label/code as needed
+        • List those rule UUIDs in \`brokenKodyRulesIds\`
+    2c. **Else** - leave the suggestion unchanged and output empty arrays for both fields.
 
 3. **Never invent rule IDs.** Copy the exact UUIDs provided in **Kody Rules**.
 4. **Keep key order consistent** to ease downstream parsing.
+
+Whenever you modify a suggestion you must also look at it's 'llmPrompt' field.
+
+There is a field called 'llmPrompt', this field must contain an accurate description of the issue as well as relevant context which lead to finding that issue.
+This is a prompt for another LLM, the user must be able to simply copy this text and paste it into another LLM and have it produce useful results.
+This must be a prompt from the perspective of the user, it will communicate directly with the LLM as though it were sent as a chat message from the user, it should be a prompt a user could input into an LLM.
+
+IMPORTANT, be sure to describe the rules that contributed to this issue as part of the context.
+Do not refer to them as "Kody Rules", they are simply rules. Do not reference ids. Explain these rules as if they were normal rules the user has for their codebase.
+
+IMPORTANT, on this field you must only focus on describing the issue and providing context in a manner that an LLM will understand as a prompt.
+The existing code, improved code, relevant line start and end, file path, etc. will all be provided elsewhere.
+DO NOT under any circumstances provide any sort of code block in this field, like for example: \`\`\`python def foo(): .... \`\`\`
 
 ## Output schema (strict)
 
@@ -256,6 +270,7 @@ Data you have access to
       "relevantLinesEnd": "number",
       "label": "string",
       "severity": "string",
+      "llmPrompt": "Prompt for LLMs",
       "violatedKodyRulesIds": ["uuid", "..."],   // empty array if none
       "brokenKodyRulesIds":   ["uuid", "..."]    // empty array if none
     }
@@ -501,6 +516,19 @@ IMPORTANT none of these instructions should be taken into consideration for any 
 
 ${mainGenText}
 
+### LLM Prompt
+
+Create a field called 'llmPrompt', this field must contain an accurate description of the issue as well as relevant context which lead to finding that issue.
+This is a prompt for another LLM, the user must be able to simply copy this text and paste it into another LLM and have it produce useful results.
+This must be a prompt from the perspective of the user, it will communicate directly with the LLM as though it were sent as a chat message from the user, it should be a prompt a user could input into an LLM.
+
+IMPORTANT, be sure to describe the rules that contributed to this issue as part of the context.
+Do not refer to them as "Kody Rules", they are simply rules. Do not reference ids. Explain these rules as if they were normal rules the user has for their codebase.
+
+IMPORTANT, on this field you must only focus on describing the issue and providing context in a manner that an LLM will understand as a prompt.
+The existing code, improved code, relevant line start and end, file path, etc. will all be provided elsewhere.
+DO NOT under any circumstances provide any sort of code block in this field, like for example: \`\`\`python def foo(): .... \`\`\`
+
 <OUTPUT_FORMAT>
 DISCUSSION HERE
 
@@ -518,6 +546,7 @@ DISCUSSION HERE
             "relevantLinesStart": "starting_line",
             "relevantLinesEnd": "ending_line",
             "label": "kody_rules",
+            "llmPrompt": "Prompt for LLMs",
             "brokenKodyRulesIds": [
                 "uuid"
             ]

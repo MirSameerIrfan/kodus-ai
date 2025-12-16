@@ -11,7 +11,7 @@ import {
 import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
 import { CheckHasIntegrationByPlatformUseCase } from '@libs/integrations/application/use-cases/check-has-connection.use-case';
 import { CloneIntegrationUseCase } from '@libs/integrations/application/use-cases/clone-integration.use-case';
-import { GetConnectionsUseCase } from '@libs/integrations/application/use-cases/get-connections.use-case';
+import { GetConnectionsUseCase } from '@libs/platform/application/use-cases/integrations/get-connections.use-case';
 import { GetOrganizationIdUseCase } from '@libs/integrations/application/use-cases/get-organization-id.use-case';
 import { TeamQueryDto } from '@libs/organization/dtos/teamId-query.dto';
 

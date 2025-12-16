@@ -14,6 +14,7 @@ import { GetWebhookStatusUseCase } from './get-webhook-status.use-case';
 import { GetCurrentCodeManagementUserUseCase } from './get-current-code-management-user.use-case';
 import { SearchCodeManagementUsersUseCase } from './search-code-management-users.use-case';
 import { ReceiveWebhookUseCase } from './receiveWebhook.use-case';
+import { UpdateAutoLicenseAllowedUsersUseCase } from './update-auto-license-allowed-users.use-case';
 
 export default [
     GetCodeManagementMemberListUseCase,
@@ -32,4 +33,5 @@ export default [
     GetWebhookStatusUseCase,
     SearchCodeManagementUsersUseCase,
     GetCurrentCodeManagementUserUseCase,
+    UpdateAutoLicenseAllowedUsersUseCase,
 ];

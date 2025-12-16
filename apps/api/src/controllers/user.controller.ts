@@ -29,7 +29,7 @@ import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-re
 import { InviteDataUserUseCase } from '@libs/identity/application/use-cases/user/invite-data.use-case';
 import { AcceptUserInvitationUseCase } from '@libs/identity/application/use-cases/user/accept-user-invitation.use-case';
 import { CheckUserWithEmailUserUseCase } from '@libs/identity/application/use-cases/user/check-user-email.use-case';
-import { JoinOrganizationUseCase } from '@libs/identity/application/use-cases/user/join-organization.use-case';
+import { JoinOrganizationUseCase } from '@libs/organization/application/use-cases/onboarding/join-organization.use-case';
 import { UpdateAnotherUserUseCase } from '@libs/identity/application/use-cases/user/update-another.use-case';
 
 @Controller('user')

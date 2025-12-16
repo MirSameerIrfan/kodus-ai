@@ -1,6 +1,7 @@
-export const GET_ADDITIONAL_INFO_HELPER_TOKEN = 'GET_ADDITIONAL_INFO_HELPER_TOKEN';
+export const CONTEXT_RESOLUTION_SERVICE_TOKEN =
+    'CONTEXT_RESOLUTION_SERVICE_TOKEN';
 
-export interface IGetAdditionalInfoHelper {
+export interface IContextResolutionService {
     getTeamIdByOrganizationAndRepository(
         organizationId: string,
         repositoryId: string,
@@ -17,4 +18,3 @@ export interface IGetAdditionalInfoHelper {
         repositoryId: string,
     ): Promise<string>;
 }
-

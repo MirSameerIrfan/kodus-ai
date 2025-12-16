@@ -1,9 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 
 import { createLogger } from '@kodus/flow';
-import { PULL_REQUEST_MANAGER_SERVICE_TOKEN } from '@libs/code-review/domain/contracts/PullRequestManagerService.contract';
-import { PullRequestHandlerService } from '@libs/code-review/infrastructure/adapters/services/pullRequestManager.service';
-import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
@@ -16,36 +13,25 @@ export class IgnoreBotsUseCase {
     private readonly logger = createLogger(IgnoreBotsUseCase.name);
 
     constructor(
-        @Inject(PULL_REQUEST_MANAGER_SERVICE_TOKEN)
-        private readonly pullRequestHandlerService: PullRequestHandlerService,
-
-        private readonly codeManagementService: CodeManagementService,
-
         @Inject(ORGANIZATION_PARAMETERS_SERVICE_TOKEN)
         private readonly organizationParametersService: IOrganizationParametersService,
     ) {}
 
-    public async execute(params: { organizationId: string; teamId: string }) {
+    public async execute(params: {
+        organizationId: string;
+        teamId: string;
+        botIds: string[];
+    }) {
         const organizationAndTeamData = {
             organizationId: params.organizationId,
             teamId: params.teamId,
         };
 
-        const orgMembers = await this.codeManagementService.getListMembers({
-            organizationAndTeamData,
-            determineBots: true,
-        });
-        const prMembers =
-            await this.pullRequestHandlerService.getPullRequestAuthorsWithCache(
-                organizationAndTeamData,
-                true,
-            );
+        const botIds = params.botIds || [];
 
-        const users = [...orgMembers, ...prMembers];
-
-        if (users.length === 0) {
+        if (botIds.length === 0) {
             this.logger.warn({
-                message: 'No users found',
+                message: 'No bots provided to ignore',
                 context: IgnoreBotsUseCase.name,
                 metadata: {
                     organizationId: organizationAndTeamData.organizationId,
@@ -53,12 +39,6 @@ export class IgnoreBotsUseCase {
                 },
             });
         }
-
-        const botIds: string[] = Array.from(
-            new Set(
-                users.filter((user) => user.type === 'bot').map((b) => b.id),
-            ),
-        );
 
         const autoLicenseEntity =
             await this.organizationParametersService.findByKey(

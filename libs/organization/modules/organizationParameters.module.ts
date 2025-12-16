@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { OrganizationParametersService } from '../infrastructure/adapters/services/organizationParameters.service';
@@ -10,15 +10,9 @@ import { CreateOrUpdateOrganizationParametersUseCase } from '../application/use-
 import { FindByKeyOrganizationParametersUseCase } from '../application/use-cases/organizationParameters/find-by-key.use-case';
 import { DeleteByokConfigUseCase } from '../application/use-cases/organizationParameters/delete-byok-config.use-case';
 import { IgnoreBotsUseCase } from '../application/use-cases/organizationParameters/ignore-bots.use-case';
-import { CodebaseModule } from '@libs/code-review/modules/codebase.module';
-import { PlatformModule } from '@libs/platform/modules/platform.module';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([OrganizationParametersModel]),
-        forwardRef(() => CodebaseModule),
-        forwardRef(() => PlatformModule),
-    ],
+    imports: [TypeOrmModule.forFeature([OrganizationParametersModel])],
     providers: [
         {
             provide: ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
