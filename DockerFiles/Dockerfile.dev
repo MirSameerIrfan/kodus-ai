@@ -1,6 +1,6 @@
 ARG API_CLOUD_MODE=false
 
-FROM node:22.14.0-slim AS deps
+FROM node:20-slim AS deps
 
 ARG API_CLOUD_MODE
 ENV API_CLOUD_MODE=${API_CLOUD_MODE}
@@ -24,7 +24,7 @@ RUN sed -i 's|"file:.yalc/@kodus/kodus-common"|"file:packages/kodus-common"|g' p
 RUN yarn install --check-files --production=false
 
 # -------------------------------------------------------------
-FROM deps AS build-code
+FROM node:20-slim AS build-code
 
 ARG API_CLOUD_MODE
 ENV API_CLOUD_MODE=${API_CLOUD_MODE}
@@ -52,7 +52,7 @@ RUN apt-get update && apt-get install -y git build-essential postgresql-client p
     rm -rf /var/lib/apt/lists/*
 
 # -------------------------------------------------------------
-FROM node:22.14.0-slim AS development
+FROM node:20-slim AS development
 
 ARG API_CLOUD_MODE
 ENV API_CLOUD_MODE=${API_CLOUD_MODE}

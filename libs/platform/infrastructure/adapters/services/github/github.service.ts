@@ -67,7 +67,7 @@ import {
     PullRequestWithFiles,
 } from '@libs/platform/domain/platformIntegrations/types/codeManagement/pullRequests.type';
 import { IntegrationEntity } from '@libs/integrations/domain/integrations/entities/integration.entity';
-import { CodeManagementConnectionStatus } from '@libs/common/utils/decorators/validate-code-management-integration.decorator';
+import { CodeManagementConnectionStatus } from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
 import { extractRepoData, extractRepoNames } from '@libs/common/utils/helpers';
 import {
     RepositoryFile,

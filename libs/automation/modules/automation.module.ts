@@ -3,9 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SaveCodeReviewFeedbackUseCase } from '@libs/code-review/application/use-cases/codeReviewFeedback/save-feedback.use-case';
 import { UseCases as SaveCodeReviewFeedbackUseCases } from '@libs/code-review/application/use-cases/codeReviewFeedback';
 import { CodebaseModule } from '@libs/code-review/modules/codebase.module';
-import { CodeReviewExecutionModule } from '@libs/code-review/modules/codeReviewExecution.module';
 import { CodeReviewFeedbackModule } from '@libs/code-review/modules/codeReviewFeedback.module';
-import { PullRequestsModule } from '@libs/code-review/modules/pull-requests.module';
 import { LicenseModule } from '@libs/ee/license/license.module';
 import { PermissionValidationModule } from '@libs/ee/shared/permission-validation.module';
 import { AuthIntegrationModule } from '@libs/integrations/modules/authIntegration.module';
@@ -43,6 +41,9 @@ import { AutomationRegistry } from '../infrastructure/adapters/services/processA
 import { TeamMembersCoreModule } from '@libs/organization/modules/teamMembers-core.module';
 
 import { OrganizationParametersModule } from '@libs/organization/modules/organizationParameters.module';
+import { CodeReviewCoreModule } from '@libs/code-review/modules/code-review-core.module';
+
+import { CodeReviewValidationService } from '../infrastructure/adapters/services/code-review-validation.service';
 
 @Module({
     imports: [
@@ -62,8 +63,7 @@ import { OrganizationParametersModule } from '@libs/organization/modules/organiz
         forwardRef(() => AuthIntegrationModule),
         forwardRef(() => CodeReviewFeedbackModule),
         forwardRef(() => CodebaseModule),
-        forwardRef(() => PullRequestsModule),
-        forwardRef(() => CodeReviewExecutionModule),
+        forwardRef(() => CodeReviewCoreModule),
         forwardRef(() => ProfileConfigModule),
         forwardRef(() => LicenseModule),
         forwardRef(() => PermissionValidationModule),
@@ -72,6 +72,7 @@ import { OrganizationParametersModule } from '@libs/organization/modules/organiz
     providers: [
         SaveCodeReviewFeedbackUseCase,
         RunCodeReviewAutomationUseCase,
+        CodeReviewValidationService,
         {
             provide: AUTOMATION_REPOSITORY_TOKEN,
             useClass: AutomationRepository,
@@ -125,6 +126,7 @@ import { OrganizationParametersModule } from '@libs/organization/modules/organiz
         AUTOMATION_EXECUTION_SERVICE_TOKEN,
         AUTOMATION_EXECUTION_REPOSITORY_TOKEN,
         RunCodeReviewAutomationUseCase,
+        CodeReviewValidationService,
 
         // --- Team Automation Exports ---
         TEAM_AUTOMATION_REPOSITORY_TOKEN,

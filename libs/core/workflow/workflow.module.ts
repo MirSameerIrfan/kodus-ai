@@ -17,7 +17,6 @@ import { WorkflowResumedConsumer } from './infrastructure/workflow-resumed-consu
 import { DistributedLockService } from './infrastructure/distributed-lock.service';
 import { ErrorClassifierService } from './infrastructure/error-classifier.service';
 import { JobProcessorRouterService } from './infrastructure/job-processor-router.service';
-import { ASTEventHandler } from './infrastructure/ast-event-handler.service';
 import { WebhookProcessingJobProcessorService } from '@libs/automation/webhook-processing/webhook-processing-job.processor';
 
 // Domain contracts
@@ -33,8 +32,9 @@ import { GithubModule } from '@libs/platform/modules/github.module';
 import { GitlabModule } from '@libs/platform/modules/gitlab.module';
 import { BitbucketModule } from '@libs/platform/modules/bitbucket.module';
 import { AzureReposModule } from '@libs/platform/modules/azure-repos.module';
-import { CodeReviewValidationService } from '@libs/code-review/infrastructure/adapters/services/code-review-validation.service';
+import { CodeReviewValidationService } from '@libs/automation/infrastructure/adapters/services/code-review-validation.service';
 import { AutomationModule } from '@libs/automation/modules/automation.module';
+import { ASTEventHandler } from './infrastructure/ast-event-handler.service';
 
 const sharedProviders = [
     // Infrastructure Services

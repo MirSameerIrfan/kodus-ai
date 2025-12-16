@@ -15,19 +15,11 @@ import {
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { PipelineContext } from '@libs/core/infrastructure/pipeline/interfaces/pipeline-context.interface';
-import { TaskStatus } from '@libs/ee/kodyAST/codeASTAnalysis.service';
 import { IExternalPromptContext } from '@libs/ai-engine/domain/prompt/interfaces/promptExternalReference.interface';
-import { ContextAugmentationsMap } from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context-pack.service';
+import { TaskStatus } from '@libs/ee/kodyAST/interfaces/code-ast-analysis.interface';
+import { ContextAugmentationsMap } from '@libs/ai-engine/infrastructure/adapters/services/context/interfaces/code-review-context-pack.interface';
 
-export interface CodeReviewPipelineContext extends PipelineContext {
-    dryRun: {
-        enabled: boolean;
-        id?: string;
-    };
-    organizationAndTeamData: OrganizationAndTeamData;
-    repository: Repository;
-    branch: string;
-    pullRequest: {
+export type PullRequestType = {
         number: number;
         title: string;
         base: {
@@ -47,6 +39,16 @@ export interface CodeReviewPipelineContext extends PipelineContext {
         };
         [key: string]: any;
     };
+
+export interface CodeReviewPipelineContext extends PipelineContext {
+    dryRun: {
+        enabled: boolean;
+        id?: string;
+    };
+    organizationAndTeamData: OrganizationAndTeamData;
+    repository: Repository;
+    branch: string;
+    pullRequest: PullRequestType;
     teamAutomationId: string;
     origin: string;
     action: string;
@@ -79,7 +81,7 @@ export interface CodeReviewPipelineContext extends PipelineContext {
 
     clusterizedSuggestions?: IClusterizedSuggestion[];
 
-    preparedFileContexts: AnalysisContext[];
+    preparedFileContexts: AnalysisContext<PullRequestType>[];
 
     fileAnalysisResults?: Array<{
         validSuggestionsToAnalyze: Partial<CodeSuggestion>[];

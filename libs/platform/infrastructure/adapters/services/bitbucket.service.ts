@@ -1,6 +1,5 @@
 import { createLogger } from '@kodus/flow';
 
-
 import {
     GitHubReaction,
     GitlabReaction,
@@ -8,7 +7,7 @@ import {
 import { hasKodyMarker } from '@libs/common/utils/codeManagement/codeCommentMarkers';
 import { decrypt, encrypt } from '@libs/common/utils/crypto';
 import { IntegrationServiceDecorator } from '@libs/common/utils/decorators/integration-service.decorator';
-import { CodeManagementConnectionStatus } from '@libs/common/utils/decorators/validate-code-management-integration.decorator';
+import { CodeManagementConnectionStatus } from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
 import {
     isFileMatchingGlobCaseInsensitive,
     isFileMatchingGlob,
@@ -46,7 +45,6 @@ import {
 import { IntegrationEntity } from '@libs/integrations/domain/integrations/entities/integration.entity';
 import { MCPManagerService } from '@libs/mcp-server/services/mcp-manager.service';
 
-
 import { AuthMode } from '@libs/platform/domain/platformIntegrations/enums/codeManagement/authMode.enum';
 import { ICodeManagementService } from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
 import { GitCloneParams } from '@libs/platform/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
@@ -76,20 +74,17 @@ import { v4 } from 'uuid';
 
 @Injectable()
 @IntegrationServiceDecorator(PlatformType.BITBUCKET, 'codeManagement')
-export class BitbucketService
-    implements
-        Omit<
-            ICodeManagementService,
-            | 'getOrganizations'
-            | 'getListOfValidReviews'
-            | 'getUserByEmailOrName'
-            | 'getPullRequestReviewThreads'
-            | 'getUserById'
-            | 'getDataForCalculateDeployFrequency'
-            | 'getCommitsByReleaseMode'
-            | 'getAuthenticationOAuthToken'
-        >
-{
+export class BitbucketService implements Omit<
+    ICodeManagementService,
+    | 'getOrganizations'
+    | 'getListOfValidReviews'
+    | 'getUserByEmailOrName'
+    | 'getPullRequestReviewThreads'
+    | 'getUserById'
+    | 'getDataForCalculateDeployFrequency'
+    | 'getCommitsByReleaseMode'
+    | 'getAuthenticationOAuthToken'
+> {
     private readonly logger = createLogger(BitbucketService.name);
 
     constructor(

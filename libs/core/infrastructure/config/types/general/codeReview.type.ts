@@ -1,4 +1,3 @@
-import { CodeReviewPipelineContext } from '@libs/code-review/pipeline/context/code-review-pipeline.context';
 import { BYOKConfig } from '@kodus/kodus-common/llm';
 import { DeepPartial } from 'typeorm';
 import { IPullRequestMessages } from '@libs/code-review/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
@@ -10,7 +9,7 @@ import { ImplementationStatus } from '@libs/platformData/domain/pullRequests/enu
 import { PriorityStatus } from '@libs/platformData/domain/pullRequests/enums/priorityStatus.enum';
 import { ISuggestionByPR } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
 
-import type { ContextAugmentationsMap } from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context-pack.service';
+import type { ContextAugmentationsMap } from '@libs/ai-engine/infrastructure/adapters/services/context/interfaces/code-review-context-pack.interface';
 import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
 
 import { OrganizationAndTeamData } from './organizationAndTeamData';
@@ -18,9 +17,38 @@ import { ConfigLevel } from './pullRequestMessages.type';
 import {
     GetImpactAnalysisResponse,
     TaskStatus,
-} from '@libs/ee/kodyAST/codeASTAnalysis.service';
+} from '@libs/ee/kodyAST/interfaces/code-ast-analysis.interface';
 import { IClusterizedSuggestion } from '@libs/kodyFineTuning/domain/interfaces/kodyFineTuning.interface';
 import { IKodyRule } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
+import {
+    BehaviourForExistingDescription,
+    BehaviourForNewCommits,
+    ClusteringType,
+    CodeReviewVersion,
+    GroupingModeSuggestions,
+    LimitationType,
+    ReviewCadenceState,
+    ReviewCadenceType,
+    ReviewModeConfig,
+    ReviewModeResponse,
+    ReviewPreset,
+    SuggestionType,
+} from '@libs/core/domain/enums/code-review.enum';
+
+export {
+    BehaviourForExistingDescription,
+    BehaviourForNewCommits,
+    ClusteringType,
+    CodeReviewVersion,
+    GroupingModeSuggestions,
+    LimitationType,
+    ReviewCadenceState,
+    ReviewCadenceType,
+    ReviewModeConfig,
+    ReviewModeResponse,
+    ReviewPreset,
+    SuggestionType,
+};
 
 export interface IFinalAnalysisResult {
     validSuggestionsToAnalyze: Partial<CodeSuggestion>[];
@@ -66,9 +94,9 @@ export type Repository = {
     defaultBranch: string;
 };
 
-export type AnalysisContext = {
+export type AnalysisContext<TPullRequest = any> = {
     workflowJobId?: string; // ID of the workflow job (for pausing/resuming)
-    pullRequest: CodeReviewPipelineContext['pullRequest'];
+    pullRequest: TPullRequest;
     repository?: Partial<Repository>;
     organizationAndTeamData: OrganizationAndTeamData;
     codeReviewConfig?: CodeReviewConfig;
@@ -262,29 +290,6 @@ export interface ReviewOptions {
     cross_file?: boolean;
 }
 
-export enum BehaviourForExistingDescription {
-    REPLACE = 'replace',
-    CONCATENATE = 'concatenate',
-    COMPLEMENT = 'complement',
-}
-
-export enum LimitationType {
-    FILE = 'file',
-    PR = 'pr',
-    SEVERITY = 'severity',
-}
-
-export enum GroupingModeSuggestions {
-    MINIMAL = 'minimal',
-    SMART = 'smart',
-    FULL = 'full',
-}
-
-export enum ClusteringType {
-    PARENT = 'parent',
-    RELATED = 'related',
-}
-
 export interface SummaryConfig {
     generatePRSummary?: boolean;
     customInstructions?: string;
@@ -379,11 +384,6 @@ export type CodeReviewConfig = {
     baseBranchDefault?: string;
 };
 
-export enum CodeReviewVersion {
-    LEGACY = 'legacy',
-    v2 = 'v2',
-}
-
 export type CodeReviewConfigWithoutLLMProvider = Omit<
     CodeReviewConfig,
     'llmProvider' | 'languageResultPrompt'
@@ -409,30 +409,9 @@ export type KodusConfigFile = DeepPartial<
     >;
 };
 
-export enum ReviewModeResponse {
-    LIGHT_MODE = 'light_mode',
-    HEAVY_MODE = 'heavy_mode',
-}
-
-export enum ReviewModeConfig {
-    LIGHT_MODE_FULL = 'light_mode_full',
-    LIGHT_MODE_PARTIAL = 'light_mode_partial',
-    HEAVY_MODE = 'heavy_mode',
-}
-
-export enum ReviewPreset {
-    SPEED = 'speed',
-    SAFETY = 'safety',
-    COACH = 'coach',
-}
-
 export type KodyFineTuningConfig = {
     enabled: boolean;
 };
-
-export enum SuggestionType {
-    CROSS_FILE = 'cross_file',
-}
 
 export type ReviewCadence = {
     type: ReviewCadenceType;
@@ -445,22 +424,4 @@ export interface AutomaticReviewStatus {
     currentStatus: ReviewCadenceState;
     reasonForChange?: string;
     pauseCommentId?: string;
-}
-
-export enum ReviewCadenceType {
-    AUTOMATIC = 'automatic',
-    MANUAL = 'manual',
-    AUTO_PAUSE = 'auto_pause',
-}
-
-export enum ReviewCadenceState {
-    AUTOMATIC = 'automatic',
-    COMMAND = 'command',
-    PAUSED = 'paused',
-}
-
-export enum BehaviourForNewCommits {
-    NONE = 'none',
-    REPLACE = 'replace',
-    CONCATENATE = 'concatenate',
 }

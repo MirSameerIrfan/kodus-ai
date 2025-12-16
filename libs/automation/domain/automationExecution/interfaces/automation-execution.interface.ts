@@ -13,6 +13,8 @@ export interface IAutomationExecution {
     pullRequestNumber?: number;
     repositoryId?: string;
     teamAutomation?: Partial<ITeamAutomation>;
-    codeReviewExecutions?: Array<Partial<CodeReviewExecution>>;
+    codeReviewExecutions?: Array<
+        Partial<CodeReviewExecution<IAutomationExecution>>
+    >;
     origin: string;
 }

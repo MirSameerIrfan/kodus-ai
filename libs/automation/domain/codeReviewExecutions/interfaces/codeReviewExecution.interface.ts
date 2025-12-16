@@ -1,12 +1,11 @@
 import { AutomationStatus } from '../../automation/enum/automation-status';
-import { IAutomationExecution } from '../../automationExecution/interfaces/automation-execution.interface';
 
-export type CodeReviewExecution = {
+export type CodeReviewExecution<TAutomationExecution> = {
     uuid: string;
     createdAt: Date;
     updatedAt: Date;
 
-    automationExecution: Partial<IAutomationExecution>;
+    automationExecution: Partial<TAutomationExecution>;
     status: AutomationStatus;
     message?: string | undefined;
 };

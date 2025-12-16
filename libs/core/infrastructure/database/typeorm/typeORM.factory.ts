@@ -4,9 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
 
-import {
-    DatabaseConnection,
-} from '@libs/core/infrastructure/config/types';
+import { DatabaseConnection } from '@libs/core/infrastructure/config/types';
 
 @Injectable()
 export class TypeORMFactory implements TypeOrmOptionsFactory {
@@ -55,8 +53,8 @@ export class TypeORMFactory implements TypeOrmOptionsFactory {
             migrations: [join(__dirname, './migrations/*{.ts,.js}')],
             migrationsTableName: 'migrations',
             synchronize: false,
-            logging: false,
-            logger: 'file',
+            logging: true,
+            logger: 'advanced-console',
             ssl: isProduction,
             extra: {
                 max: poolConfig.max,

@@ -17,11 +17,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MESSAGE_BROKER_SERVICE_TOKEN } from '@libs/core/domain/contracts/message-broker.service.contracts';
 import { RabbitMQLoader } from '@libs/core/infrastructure/config/loaders/rabbitmq.loader';
 import { RabbitmqConsumeErrorFilter } from '@libs/core/infrastructure/filters/rabbitmq-consume-error.exception';
-import { CodeReviewFeedbackConsumer } from '@libs/core/infrastructure/queue/messageBroker/consumers/codeReviewFeedback.consumer';
 import { MessageBrokerService } from '@libs/core/infrastructure/queue/messageBroker/messageBroker.service';
-
-import { AutomationModule } from '@libs/automation/modules/automation.module';
-import { CodeReviewFeedbackModule } from '@libs/code-review/modules/codeReviewFeedback.module';
 
 export interface RabbitMQWrapperOptions {
     enableConsumers: boolean;
@@ -41,9 +37,9 @@ export class RabbitMQWrapperModule {
         )[] = [ConfigModule.forRoot(), ConfigModule.forFeature(RabbitMQLoader)];
 
         // Only import heavy business modules if consumers are enabled
-        if (options.enableConsumers) {
+        /*if (options.enableConsumers) {
             imports.push(CodeReviewFeedbackModule, AutomationModule);
-        }
+        }*/
 
         const providers: Provider[] = [
             {
@@ -203,10 +199,7 @@ export class RabbitMQWrapperModule {
 
             // Only register consumers if enabled
             if (options.enableConsumers) {
-                providers.push(
-                    CodeReviewFeedbackConsumer,
-                    RabbitmqConsumeErrorFilter,
-                );
+                providers.push(RabbitmqConsumeErrorFilter);
             }
         } else {
             console.log(

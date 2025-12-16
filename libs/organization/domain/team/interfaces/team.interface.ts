@@ -1,11 +1,10 @@
 import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
-import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
 
-export interface ITeam {
+export interface ITeam<TOrganization = any> {
     uuid: string;
     name: string;
-    organization?: Partial<IOrganization> | null;
+    organization?: Partial<TOrganization> | null;
     status: STATUS;
 }
 

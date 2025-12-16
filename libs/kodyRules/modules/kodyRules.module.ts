@@ -18,7 +18,7 @@ import { IntegrationModule } from '@libs/integrations/modules/integrations.modul
 import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
 import { OrganizationModule } from '@libs/organization/modules/organization.module';
 import { ParametersModule } from '@libs/organization/modules/parameters.module';
-import { PlatformModule } from '@libs/platform/modules/platform.module';
+import { PlatformCoreModule } from '@libs/platform/modules/platform-core.module';
 import {
     KodyRulesModel,
     KodyRulesSchema,
@@ -63,7 +63,7 @@ import { PermissionsModule } from '@libs/identity/modules/permissions.module';
                 schema: KodyRulesSchema,
             },
         ]),
-        forwardRef(() => PlatformModule),
+        forwardRef(() => PlatformCoreModule),
         forwardRef(() => CodebaseModule),
         forwardRef(() => IntegrationConfigModule),
         forwardRef(() => IntegrationModule),

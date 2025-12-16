@@ -1,6 +1,6 @@
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { Injectable, UseFilters } from '@nestjs/common';
+import { Injectable, UseFilters, Optional } from '@nestjs/common';
 
 import { RabbitmqConsumeErrorFilter } from '@libs/core/infrastructure/filters/rabbitmq-consume-error.exception';
 import { createLogger } from '@kodus/flow';
@@ -20,7 +20,7 @@ export class ASTEventHandler {
     private readonly logger = createLogger(ASTEventHandler.name);
     constructor(
         private readonly jobRepository: WorkflowJobRepository,
-        private readonly amqpConnection: AmqpConnection,
+        @Optional() private readonly amqpConnection: AmqpConnection,
         private readonly observability: ObservabilityService,
     ) {}
 
@@ -144,25 +144,34 @@ export class ASTEventHandler {
         });
 
         // Enqueue job for continued processing
-        await this.amqpConnection.publish(
-            'workflow.exchange',
-            'workflow.jobs.resumed',
-            {
-                jobId,
-                eventData: eventData.astResult,
-            },
-            {
-                messageId: `resume-${jobId}`,
-                correlationId: job.correlationId,
-                persistent: true,
-                headers: {
-                    'x-correlation-id': job.correlationId,
-                    'x-workflow-type': job.workflowType,
-                    'x-job-id': jobId,
-                    'x-resume-reason': 'ast.completed',
+        if (this.amqpConnection) {
+            await this.amqpConnection.publish(
+                'workflow.exchange',
+                'workflow.jobs.resumed',
+                {
+                    jobId,
+                    eventData: eventData.astResult,
                 },
-            },
-        );
+                {
+                    messageId: `resume-${jobId}`,
+                    correlationId: job.correlationId,
+                    persistent: true,
+                    headers: {
+                        'x-correlation-id': job.correlationId,
+                        'x-workflow-type': job.workflowType,
+                        'x-job-id': jobId,
+                        'x-resume-reason': 'ast.completed',
+                    },
+                },
+            );
+        } else {
+            this.logger.warn({
+                message:
+                    'AmqpConnection not available, cannot publish resume event',
+                context: ASTEventHandler.name,
+                metadata: { jobId },
+            });
+        }
 
         this.logger.log({
             message: `Workflow ${jobId} resumed after AST completion`,

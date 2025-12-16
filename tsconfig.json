@@ -10,6 +10,7 @@
         "target": "ES2022",
         "sourceMap": true,
         "outDir": "./dist",
+        "rootDir": ".",
         "baseUrl": ".",
         "incremental": true,
         "skipLibCheck": true,
@@ -29,8 +30,8 @@
         "disableSourceOfProjectReferenceRedirect": true,
 
         "paths": {
-            "@libs/*": ["libs/*"],
-            "@apps/*": ["apps/*/src"]
+            "@libs/*": ["./libs/*"],
+            "@apps/*": ["./apps/*/src"]
         }
     },
     "watchOptions": {

@@ -5,28 +5,28 @@ export const CODE_REVIEW_EXECUTION_REPOSITORY = Symbol(
     'CODE_REVIEW_EXECUTION_REPOSITORY',
 );
 
-export interface ICodeReviewExecutionRepository {
+export interface ICodeReviewExecutionRepository<T> {
     create(
         codeReviewExecution: Omit<
-            CodeReviewExecution,
+            CodeReviewExecution<T>,
             'uuid' | 'createdAt' | 'updatedAt'
         >,
-    ): Promise<CodeReviewExecutionEntity | null>;
+    ): Promise<CodeReviewExecutionEntity<T> | null>;
 
     update(
-        filter: Partial<CodeReviewExecution>,
+        filter: Partial<CodeReviewExecution<T>>,
         codeReviewExecution: Partial<
-            Omit<CodeReviewExecution, 'uuid' | 'createdAt' | 'updatedAt'>
+            Omit<CodeReviewExecution<T>, 'uuid' | 'createdAt' | 'updatedAt'>
         >,
-    ): Promise<CodeReviewExecutionEntity | null>;
+    ): Promise<CodeReviewExecutionEntity<T> | null>;
 
     find(
-        filter?: Partial<CodeReviewExecution>,
-    ): Promise<CodeReviewExecutionEntity[]>;
+        filter?: Partial<CodeReviewExecution<T>>,
+    ): Promise<CodeReviewExecutionEntity<T>[]>;
 
     findOne(
-        filter?: Partial<CodeReviewExecution>,
-    ): Promise<CodeReviewExecutionEntity | null>;
+        filter?: Partial<CodeReviewExecution<T>>,
+    ): Promise<CodeReviewExecutionEntity<T> | null>;
 
     delete(uuid: string): Promise<boolean>;
 }

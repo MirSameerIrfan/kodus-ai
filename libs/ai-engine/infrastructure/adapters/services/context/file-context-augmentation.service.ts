@@ -11,7 +11,7 @@ import {
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { IKodyRule } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 
-import { ContextAugmentationsMap } from './code-review-context-pack.service';
+import { ContextAugmentationsMap } from './interfaces/code-review-context-pack.interface';
 import {
     CodeReviewPipelineContext,
     FileContextAgentResult,

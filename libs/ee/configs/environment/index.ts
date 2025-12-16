@@ -10,22 +10,19 @@
 import { existsSync } from 'fs';
 import { join } from 'path';
 
+import { environment as devEnvironment } from './environment.dev';
 import { Environment } from './types';
 
 let environment: Environment;
 
-// Caminhos absolutos relativos ao arquivo atual
-const prodPath = join(__dirname, 'environment.js'); // esse é gerado no build
+const prodPath = join(__dirname, 'environment.js');
 
 if (existsSync(prodPath)) {
-    // 🟢 Docker QA/Prod: injetado no build
     const envFile = './environment';
 
     environment = require(envFile).environment;
 } else {
-    // 🛠️ Dev: valor dinâmico via process.env
-
-    environment = require('./environment.dev').environment;
+    environment = devEnvironment;
 }
 
 export { environment };

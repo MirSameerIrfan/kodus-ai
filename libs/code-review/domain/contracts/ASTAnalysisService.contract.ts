@@ -9,7 +9,7 @@ import {
     GetTaskInfoResponse,
     InitializeImpactAnalysisResponse,
     InitializeRepositoryResponse,
-} from '@libs/ee/kodyAST/codeASTAnalysis.service';
+} from '@libs/ee/kodyAST/interfaces/code-ast-analysis.interface';
 
 export const AST_ANALYSIS_SERVICE_TOKEN = Symbol('ASTAnalysisService');
 

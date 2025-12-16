@@ -1,11 +1,8 @@
-import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
-import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';
-
-export interface IOrganization {
+export interface IOrganization<TUser = any, TTeam = any> {
     uuid: string;
     name: string;
     tenantName: string;
     status: boolean;
-    users?: Partial<IUser>[] | null;
-    teams?: Partial<ITeam>[] | null;
+    users?: Partial<TUser>[] | null;
+    teams?: Partial<TTeam>[] | null;
 }

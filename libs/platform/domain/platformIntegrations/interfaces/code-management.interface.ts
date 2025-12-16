@@ -24,10 +24,17 @@ import {
 import { Repositories } from '../types/codeManagement/repositories.type';
 import { RepositoryFile } from '../types/codeManagement/repositoryFile.type';
 import { Workflow } from '../types/codeManagement/workflow.type';
-import { CodeManagementConnectionStatus } from '@libs/common/utils/decorators/validate-code-management-integration.decorator';
+import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 
-export interface ICodeManagementService
-    extends ICommonPlatformIntegrationService {
+export type CodeManagementConnectionStatus = {
+    hasConnection: boolean; // Whether there is a connection with the tool (e.g., GitHub)
+    isSetupComplete: boolean; // Whether the tool is configured (e.g., repositories)
+    config?: object;
+    platformName: string;
+    category?: IntegrationCategory;
+};
+
+export interface ICodeManagementService extends ICommonPlatformIntegrationService {
     getPullRequests(params: {
         organizationAndTeamData: OrganizationAndTeamData;
         repository?: {

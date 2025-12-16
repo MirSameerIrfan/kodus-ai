@@ -16,7 +16,7 @@ import {
     ICodeBaseConfigService,
 } from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
 import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import type { ContextAugmentationsMap } from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context-pack.service';
+import type { ContextAugmentationsMap } from '@libs/ai-engine/infrastructure/adapters/services/context/interfaces/code-review-context-pack.interface';
 import {
     getAugmentationsFromPack,
     getOverridesFromPack,

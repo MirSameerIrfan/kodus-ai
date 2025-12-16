@@ -29,7 +29,6 @@ import { CodeAnalysisASTCleanupStage } from '@libs/ee/codeReview/stages/code-ana
 import { CodeReviewPipelineStrategyEE } from '@libs/ee/codeReview/strategies/code-review-pipeline.strategy.ee';
 import { CodeReviewPipelineStrategy } from './strategy/code-review-pipeline.strategy';
 import { CodebaseModule } from '../modules/codebase.module';
-import { AutomationModule } from '@libs/automation/modules/automation.module';
 import { PullRequestMessagesModule } from '../modules/pullRequestMessages.module';
 import { PullRequestsModule } from '../modules/pull-requests.module';
 import { ParametersModule } from '@libs/organization/modules/parameters.module';
@@ -45,7 +44,6 @@ import { KodyASTModule } from '@libs/ee/kodyAST/kodyAST.module';
     imports: [
         forwardRef(() => CodebaseModule),
         forwardRef(() => FileReviewModule),
-        forwardRef(() => AutomationModule),
         forwardRef(() => PullRequestMessagesModule),
         forwardRef(() => PullRequestsModule),
         forwardRef(() => ParametersModule),

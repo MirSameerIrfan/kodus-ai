@@ -20,7 +20,7 @@ import {
     convertToHunksWithLinesNumbers,
     handlePatchDeletions,
 } from '@libs/common/utils/patch';
-import { TaskStatus } from '@libs/ee/kodyAST/codeASTAnalysis.service';
+import { TaskStatus } from '@libs/ee/kodyAST/interfaces/code-ast-analysis.interface';
 
 /**
  * Abstract base class for file review context preparation
@@ -28,9 +28,7 @@ import { TaskStatus } from '@libs/ee/kodyAST/codeASTAnalysis.service';
  * and allow subclasses to customize specific behaviors
  */
 @Injectable()
-export abstract class BaseFileReviewContextPreparation
-    implements IFileReviewContextPreparation
-{
+export abstract class BaseFileReviewContextPreparation implements IFileReviewContextPreparation {
     protected readonly logger = createLogger(
         BaseFileReviewContextPreparation.name,
     );

@@ -2,6 +2,7 @@
     "extends": "../../tsconfig.json",
     "compilerOptions": {
         "outDir": "../../dist/apps/webhooks",
+        "tsBuildInfoFile": "../../dist/apps/webhooks/.tsbuildinfo",
         "baseUrl": ".",
         "paths": {
             "@libs/*": ["../../libs/*"]

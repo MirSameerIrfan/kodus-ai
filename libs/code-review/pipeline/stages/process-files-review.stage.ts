@@ -37,7 +37,7 @@ import { createOptimizedBatches } from '@libs/common/utils/batch.helper';
 import { DeliveryStatus } from '@libs/platformData/domain/pullRequests/enums/deliveryStatus.enum';
 import { ImplementationStatus } from '@libs/platformData/domain/pullRequests/enums/implementationStatus.enum';
 import { PriorityStatus } from '@libs/platformData/domain/pullRequests/enums/priorityStatus.enum';
-import { TaskStatus } from '@libs/ee/kodyAST/codeASTAnalysis.service';
+import { TaskStatus } from '@libs/ee/kodyAST/interfaces/code-ast-analysis.interface';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { CodeAnalysisOrchestrator } from '@libs/ee/codeBase/codeAnalysisOrchestrator.service';
 import {

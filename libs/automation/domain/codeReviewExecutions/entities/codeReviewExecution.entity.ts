@@ -2,16 +2,18 @@ import { Entity } from '@libs/core/domain/interfaces/entity';
 
 import { CodeReviewExecution } from '../interfaces/codeReviewExecution.interface';
 
-export class CodeReviewExecutionEntity implements Entity<CodeReviewExecution> {
-    private readonly _uuid: CodeReviewExecution['uuid'];
-    private readonly _createdAt: CodeReviewExecution['createdAt'];
-    private readonly _updatedAt: CodeReviewExecution['updatedAt'];
+export class CodeReviewExecutionEntity<T> implements Entity<
+    CodeReviewExecution<T>
+> {
+    private readonly _uuid: CodeReviewExecution<T>['uuid'];
+    private readonly _createdAt: CodeReviewExecution<T>['createdAt'];
+    private readonly _updatedAt: CodeReviewExecution<T>['updatedAt'];
 
-    private readonly _automationExecution: CodeReviewExecution['automationExecution'];
-    private readonly _status: CodeReviewExecution['status'];
-    private readonly _message?: CodeReviewExecution['message'];
+    private readonly _automationExecution: CodeReviewExecution<T>['automationExecution'];
+    private readonly _status: CodeReviewExecution<T>['status'];
+    private readonly _message?: CodeReviewExecution<T>['message'];
 
-    constructor(codeReviewExecution: CodeReviewExecution) {
+    constructor(codeReviewExecution: CodeReviewExecution<T>) {
         this._uuid = codeReviewExecution.uuid;
         this._createdAt = codeReviewExecution.createdAt;
         this._updatedAt = codeReviewExecution.updatedAt;
@@ -20,7 +22,7 @@ export class CodeReviewExecutionEntity implements Entity<CodeReviewExecution> {
         this._message = codeReviewExecution.message;
     }
 
-    toObject(): CodeReviewExecution {
+    toObject(): CodeReviewExecution<T> {
         return {
             uuid: this.uuid,
             createdAt: this.createdAt,
@@ -31,37 +33,37 @@ export class CodeReviewExecutionEntity implements Entity<CodeReviewExecution> {
         };
     }
 
-    toJson(): CodeReviewExecution {
+    toJson(): CodeReviewExecution<T> {
         return this.toObject();
     }
 
-    public static create(
-        execution: CodeReviewExecution,
-    ): CodeReviewExecutionEntity {
+    public static create<T>(
+        execution: CodeReviewExecution<T>,
+    ): CodeReviewExecutionEntity<T> {
         return new CodeReviewExecutionEntity(execution);
     }
 
-    get uuid(): CodeReviewExecution['uuid'] {
+    get uuid(): CodeReviewExecution<T>['uuid'] {
         return this._uuid;
     }
 
-    get createdAt(): CodeReviewExecution['createdAt'] {
+    get createdAt(): CodeReviewExecution<T>['createdAt'] {
         return this._createdAt;
     }
 
-    get updatedAt(): CodeReviewExecution['updatedAt'] {
+    get updatedAt(): CodeReviewExecution<T>['updatedAt'] {
         return this._updatedAt;
     }
 
-    get automationExecution(): CodeReviewExecution['automationExecution'] {
+    get automationExecution(): CodeReviewExecution<T>['automationExecution'] {
         return this._automationExecution;
     }
 
-    get status(): CodeReviewExecution['status'] {
+    get status(): CodeReviewExecution<T>['status'] {
         return this._status;
     }
 
-    get message(): CodeReviewExecution['message'] {
+    get message(): CodeReviewExecution<T>['message'] {
         return this._message;
     }
 }

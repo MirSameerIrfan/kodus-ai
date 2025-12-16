@@ -11,9 +11,7 @@ import {
 import { PullRequestMessagesModel } from './schemas/mongoose/pullRequestMessages.model';
 
 @Injectable()
-export class PullRequestMessagesRepository
-    implements IPullRequestMessagesRepository
-{
+export class PullRequestMessagesRepository implements IPullRequestMessagesRepository {
     constructor(
         @InjectModel(PullRequestMessagesModel.name)
         private readonly pullRequestMessagesModel: Model<PullRequestMessagesModel>,
@@ -68,41 +66,23 @@ export class PullRequestMessagesRepository
     async find(
         filter?: Partial<IPullRequestMessages>,
     ): Promise<PullRequestMessagesEntity[]> {
-        try {
-            const docs = await this.pullRequestMessagesModel
-                .find(filter)
-                .exec();
-            return mapSimpleModelsToEntities(docs, PullRequestMessagesEntity);
-        } catch (error) {
-            throw error;
-        }
+        const docs = await this.pullRequestMessagesModel.find(filter).exec();
+        return mapSimpleModelsToEntities(docs, PullRequestMessagesEntity);
     }
 
     async findOne(
         filter?: Partial<IPullRequestMessages>,
     ): Promise<PullRequestMessagesEntity | null> {
-        try {
-            const doc = await this.pullRequestMessagesModel
-                .findOne(filter)
-                .exec();
-            return doc
-                ? mapSimpleModelToEntity(doc, PullRequestMessagesEntity)
-                : null;
-        } catch (error) {
-            throw error;
-        }
+        const doc = await this.pullRequestMessagesModel.findOne(filter).exec();
+        return doc
+            ? mapSimpleModelToEntity(doc, PullRequestMessagesEntity)
+            : null;
     }
 
     async findById(uuid: string): Promise<PullRequestMessagesEntity | null> {
-        try {
-            const doc = await this.pullRequestMessagesModel
-                .findById(uuid)
-                .exec();
-            return doc
-                ? mapSimpleModelToEntity(doc, PullRequestMessagesEntity)
-                : null;
-        } catch (error) {
-            throw error;
-        }
+        const doc = await this.pullRequestMessagesModel.findById(uuid).exec();
+        return doc
+            ? mapSimpleModelToEntity(doc, PullRequestMessagesEntity)
+            : null;
     }
 }

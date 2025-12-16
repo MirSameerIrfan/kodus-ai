@@ -19,7 +19,7 @@ import { PipelineFactory } from '@libs/core/infrastructure/pipeline/services/pip
 import { ObservabilityService } from '@libs/core/log/observability.service';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 import { AutomationStatus } from '@libs/automation/domain/automation/enum/automation-status';
-import { TaskStatus } from '@libs/ee/kodyAST/codeASTAnalysis.service';
+import { TaskStatus } from '@libs/ee/kodyAST/interfaces/code-ast-analysis.interface';
 
 @Injectable()
 export class CodeReviewHandlerService {
@@ -64,6 +64,7 @@ export class CodeReviewHandlerService {
         executionId: string,
         triggerCommentId?: number | string,
         workflowJobId?: string, // Optional: ID of workflow job (for pausing/resuming)
+        lastExecutionData?: any, // Data from the last successful execution
     ) {
         let initialContext: CodeReviewPipelineContext;
 
@@ -97,7 +98,7 @@ export class CodeReviewHandlerService {
                 platformType: platformType as PlatformType,
                 triggerCommentId,
                 pipelineMetadata: {
-                    lastExecution: null,
+                    lastExecution: lastExecutionData || null,
                 },
                 batches: [],
                 preparedFileContexts: [],

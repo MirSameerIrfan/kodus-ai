@@ -1,4 +1,4 @@
-import { Column, Entity, Index, OneToMany } from 'typeorm';
+import { Column, Entity, Index } from 'typeorm';
 
 import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 import { JobStatus } from '@libs/core/workflow/domain/enums/job-status.enum';

@@ -30,10 +30,8 @@ import { UserModule } from './user.module';
 
 @Module({
     imports: [
-        forwardRef(() => UserModule),
         TypeOrmModule.forFeature([AuthModel, SSOConfigModel]),
         ConfigModule.forFeature(jwtConfigLoader),
-        PassportModule,
         JwtModule.registerAsync({
             imports: [ConfigModule],
             inject: [ConfigService],
@@ -44,26 +42,27 @@ import { UserModule } from './user.module';
                 },
             }),
         }),
+        forwardRef(() => UserModule),
         forwardRef(() => OrganizationModule),
-        TeamMembersModule,
         forwardRef(() => ProfilesModule),
         forwardRef(() => TeamModule),
         forwardRef(() => ParametersModule),
+        PassportModule,
+        TeamMembersModule,
     ],
     providers: [
         ...AuthUseCases,
         ...SSOConfigUseCases,
+        JwtStrategy,
+        SamlStrategy,
         {
             provide: AUTH_REPOSITORY_TOKEN,
             useClass: AuthRepository,
         },
-        JwtStrategy,
-        SamlStrategy,
         {
             provide: AUTH_SERVICE_TOKEN,
             useClass: AuthService,
         },
-        // AuthService removed here because it is already provided via token above
         {
             provide: SSO_CONFIG_REPOSITORY_TOKEN,
             useClass: SSOConfigRepository,
@@ -72,13 +71,10 @@ import { UserModule } from './user.module';
             provide: SSO_CONFIG_SERVICE_TOKEN,
             useClass: SSOConfigService,
         },
-        // SSOConfigService removed here because it is already provided via token above
     ],
     exports: [
         AUTH_SERVICE_TOKEN,
         JwtModule,
-        // AuthService removed from exports
-        // SSOConfigService removed from exports
         AUTH_REPOSITORY_TOKEN,
         SSO_CONFIG_REPOSITORY_TOKEN,
         ...AuthUseCases,

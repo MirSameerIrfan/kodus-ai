@@ -12,7 +12,7 @@ import {
     FileChange,
     ReviewModeResponse,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { TaskStatus } from '@libs/ee/kodyAST/codeASTAnalysis.service';
+import { TaskStatus } from '@libs/ee/kodyAST/interfaces/code-ast-analysis.interface';
 
 @Injectable()
 export class FileReviewContextPreparation extends BaseFileReviewContextPreparation {

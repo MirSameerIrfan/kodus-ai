@@ -31,7 +31,7 @@ import { UserStatusLogHandler } from './infrastructure/adapters/services/userSta
             },
         ]),
         forwardRef(() => PermissionValidationModule),
-        SharedHelpersModule,
+        forwardRef(() => SharedHelpersModule),
         forwardRef(() => PermissionsModule),
     ],
     providers: [

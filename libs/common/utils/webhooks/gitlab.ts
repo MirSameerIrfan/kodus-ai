@@ -11,7 +11,7 @@ import {
     IWebhookGitlabCommentEvent,
 } from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-gitlab.type';
 
-import { extractRepoFullName } from '.';
+import { extractRepoFullName } from './webhooks.utils';
 
 export class GitlabMappedPlatform implements IMappedPlatform {
     mapUsers(params: {

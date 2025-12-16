@@ -11,8 +11,7 @@ import { DatabaseConnection } from '@libs/core/infrastructure/config/types';
 
 import { MongooseConnectionFactory } from './mongoose-connection.factory';
 
-
-mongoose.set('debug', false);
+mongoose.set('debug', true);
 
 @Injectable()
 export class MongooseFactory implements MongooseOptionsFactory {

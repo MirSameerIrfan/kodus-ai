@@ -32,8 +32,7 @@
             "sourceRoot": "apps/api/src",
             "compilerOptions": {
                 "tsConfigPath": "apps/api/tsconfig.json",
-                "deleteOutDir": true,
-                "webpack": true
+                "deleteOutDir": true
             }
         },
         "worker": {
@@ -43,8 +42,7 @@
             "sourceRoot": "apps/worker/src",
             "compilerOptions": {
                 "tsConfigPath": "apps/worker/tsconfig.json",
-                "deleteOutDir": true,
-                "webpack": true
+                "deleteOutDir": true
             }
         }
     }

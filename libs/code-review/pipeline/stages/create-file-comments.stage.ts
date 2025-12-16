@@ -2,14 +2,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
 import { createLogger } from '@kodus/flow';
 import {
-    AUTOMATION_EXECUTION_SERVICE_TOKEN,
-    IAutomationExecutionService,
-} from '@libs/automation/domain/automationExecution/contracts/automation-execution.service';
-import {
-    ITeamAutomationService,
-    TEAM_AUTOMATION_SERVICE_TOKEN,
-} from '@libs/automation/domain/teamAutomation/contracts/team-automation.service';
-import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
 } from '@libs/code-review/domain/contracts/CommentManagerService.contract';
@@ -36,9 +28,6 @@ import {
     Repository,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { AutomationExecutionEntity } from '@libs/automation/domain/automationExecution/entities/automation-execution.entity';
-import { AutomationStatus } from '@libs/automation/domain/automation/enum/automation-status';
-import { AutomationType } from '@libs/automation/domain/automation/enum/automation-type';
 import { PullRequestReviewComment } from '@libs/platform/domain/platformIntegrations/types/codeManagement/pullRequests.type';
 import { PullRequestsEntity } from '@libs/platformData/domain/pullRequests/entities/pullRequests.entity';
 import { ImplementationStatus } from '@libs/platformData/domain/pullRequests/enums/implementationStatus.enum';
@@ -52,12 +41,6 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
     private readonly logger = createLogger(CreateFileCommentsStage.name);
 
     constructor(
-        @Inject(AUTOMATION_EXECUTION_SERVICE_TOKEN)
-        private readonly automationExecutionService: IAutomationExecutionService,
-
-        @Inject(TEAM_AUTOMATION_SERVICE_TOKEN)
-        private readonly teamAutomationService: ITeamAutomationService,
-
         @Inject(COMMENT_MANAGER_SERVICE_TOKEN)
         private readonly commentManagerService: ICommentManagerService,
 
@@ -256,6 +239,8 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
                 codeReviewConfig,
                 platformType,
                 dryRun,
+                context.pipelineMetadata?.lastExecution?.dataExecution
+                    ?.lastAnalyzedCommit || null,
             );
 
         // Save pull request suggestions
@@ -310,6 +295,7 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
         codeReviewConfig: CodeReviewConfig,
         platformType: string,
         dryRun: CodeReviewPipelineContext['dryRun'],
+        lastAnalyzedCommitFromContext: any,
     ) {
         try {
             const lineComments = sortedPrioritizedSuggestions
@@ -361,55 +347,11 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
                 },
             });
 
-            const lastExecution =
-                await this.findLastTeamAutomationCodeReviewExecution(
-                    organizationAndTeamData.teamId,
-                    pullRequest.number,
-                    repository.id,
-                );
-
             return {
-                lastAnalyzedCommit:
-                    lastExecution?.dataExecution?.lastAnalyzedCommit,
+                lastAnalyzedCommit: lastAnalyzedCommitFromContext,
                 commentResults: [],
             };
         }
-    }
-
-    private async findLastTeamAutomationCodeReviewExecution(
-        teamId: string,
-        pullRequestNumber: number,
-        repositoryId: string,
-    ) {
-        const teamAutomations = await this.teamAutomationService.find({
-            team: {
-                uuid: teamId,
-            },
-        });
-
-        if (!teamAutomations || teamAutomations?.length === 0) {
-            return null;
-        }
-
-        const codeReviewAutomation = teamAutomations.find(
-            (ta) =>
-                ta.automation?.automationType ===
-                AutomationType.AUTOMATION_CODE_REVIEW,
-        );
-
-        if (!codeReviewAutomation) {
-            return null;
-        }
-
-        const lastTeamAutomationCodeReviewExecution: AutomationExecutionEntity =
-            await this.automationExecutionService.findLatestExecutionByFilters({
-                status: AutomationStatus.SUCCESS,
-                teamAutomation: { uuid: codeReviewAutomation.uuid },
-                pullRequestNumber: pullRequestNumber,
-                repositoryId: repositoryId,
-            });
-
-        return lastTeamAutomationCodeReviewExecution;
     }
 
     private async savePullRequestSuggestions(

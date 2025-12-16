@@ -8,7 +8,7 @@ import {
     MappedAction,
 } from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-common.type';
 
-import { extractRepoFullName } from '.';
+import { extractRepoFullName } from './webhooks.utils';
 
 /**
  * Adapter for Azure Repos webhook payloads (pull request & comment events)

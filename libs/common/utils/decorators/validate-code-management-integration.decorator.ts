@@ -1,18 +1,12 @@
 import { SimpleLogger } from '@kodus/flow/dist/observability/logger';
 
-import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 import { ConfigurationMissingException } from '@libs/core/infrastructure/filters/configuration-missing.exception';
-import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
+import {
+    CodeManagementConnectionStatus,
+    ICodeManagementService,
+} from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
 
 import { extractOrganizationAndTeamData } from './extractOrganizationAndTeamData.helper';
-
-export type CodeManagementConnectionStatus = {
-    hasConnection: boolean; // Whether there is a connection with the tool (e.g., GitHub)
-    isSetupComplete: boolean; // Whether the tool is configured (e.g., repositories)
-    config?: object;
-    platformName: string;
-    category?: IntegrationCategory;
-};
 
 interface ValidateToolsManagementIntegrationOptions {
     allowPartialTeamConnection?: boolean;
@@ -51,7 +45,7 @@ export function ValidateCodeManagementIntegration(
             }
 
             // Access services via `this`
-            const codeManagementService: CodeManagementService =
+            const codeManagementService: ICodeManagementService =
                 this.codeManagementService;
             const logger: SimpleLogger = this.logger;
 

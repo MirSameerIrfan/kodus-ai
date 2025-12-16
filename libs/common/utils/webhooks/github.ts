@@ -11,7 +11,7 @@ import {
     IWebhookGithubPullRequestCommentEvent,
 } from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-github.type';
 
-import { extractRepoFullName } from '.';
+import { extractRepoFullName } from './webhooks.utils';
 
 export class GithubMappedPlatform implements IMappedPlatform {
     mapUsers(params: {

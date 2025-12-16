@@ -1,8 +1,7 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, Index } from 'typeorm';
 
 import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 
-import { WorkflowJobModel } from './workflow-job.model';
 
 @Entity({ name: 'inbox_messages', schema: 'workflow' })
 @Index('IDX_inbox_messages_message_id', ['messageId'], { unique: true })

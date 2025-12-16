@@ -1,26 +1,11 @@
 import { Module, forwardRef } from '@nestjs/common';
 
-import { CodebaseModule } from '@libs/code-review/modules/codebase.module';
-import { CodeReviewFeedbackModule } from '@libs/code-review/modules/codeReviewFeedback.module';
-import { GlobalCacheModule } from '@libs/core/cache/cache.module';
-import { LicenseModule } from '@libs/ee/license/license.module';
 import { AuthIntegrationModule } from '@libs/integrations/modules/authIntegration.module';
 import { IntegrationConfigCoreModule } from '@libs/integrations/modules/config-core.module';
-import { ParametersModule } from '@libs/organization/modules/parameters.module';
 import { TeamModule } from '@libs/organization/modules/team.module';
 import { IntegrationCoreModule } from '@libs/integrations/modules/integrations-core.module';
-import { PlatformModule } from './platform.module';
-import { OrganizationModule } from '@libs/organization/modules/organization.module';
-import { PermissionValidationModule } from '@libs/ee/shared/permission-validation.module';
-import { AutomationModule } from '@libs/automation/modules/automation.module';
 import { AzureReposService } from '../infrastructure/adapters/services/azureRepos/azureRepos.service';
-import { AzureReposPullRequestHandler } from '../infrastructure/webhooks/azure/azureReposPullRequest.handler';
-import { IssuesModule } from '@libs/issues/issues.module';
-import { UserModule } from '@libs/identity/modules/user.module';
-import { PlatformDataModule } from '@libs/platformData/platformData.module';
-import { WorkflowModule } from '@libs/core/workflow/workflow.module';
-import { KodyRulesModule } from '@libs/kodyRules/modules/kodyRules.module';
-import { McpModule } from '@libs/mcp-server/mcp.module';
+import { McpCoreModule } from '@libs/mcp-server/mcp-core.module';
 import { AzureReposRequestHelper } from '../infrastructure/adapters/services/azureRepos/azure-repos-request-helper';
 
 @Module({
@@ -29,36 +14,9 @@ import { AzureReposRequestHelper } from '../infrastructure/adapters/services/azu
         forwardRef(() => AuthIntegrationModule),
         forwardRef(() => IntegrationCoreModule),
         forwardRef(() => IntegrationConfigCoreModule),
-        forwardRef(() => PlatformModule),
-        forwardRef(() => OrganizationModule),
-        forwardRef(() => UserModule),
-        forwardRef(() => ParametersModule),
-        forwardRef(() => GlobalCacheModule),
-        forwardRef(() => AutomationModule),
-        forwardRef(() => CodeReviewFeedbackModule),
-        forwardRef(() => CodebaseModule),
-        forwardRef(() => LicenseModule),
-        forwardRef(() => PermissionValidationModule),
-        forwardRef(() => IssuesModule),
-        forwardRef(() => PlatformDataModule),
-        forwardRef(() => WorkflowModule),
-        forwardRef(() => KodyRulesModule),
-        forwardRef(() => McpModule),
+        forwardRef(() => McpCoreModule),
     ],
-    providers: [
-        AzureReposService,
-        AzureReposPullRequestHandler,
-        AzureReposRequestHelper,
-        {
-            provide: 'AZURE_REPOS_WEBHOOK_HANDLER',
-            useClass: AzureReposPullRequestHandler,
-        },
-    ],
-    exports: [
-        AzureReposService,
-        AzureReposPullRequestHandler,
-        'AZURE_REPOS_WEBHOOK_HANDLER',
-        AzureReposRequestHelper,
-    ],
+    providers: [AzureReposService, AzureReposRequestHelper],
+    exports: [AzureReposService, AzureReposRequestHelper],
 })
 export class AzureReposModule {}

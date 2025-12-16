@@ -2,7 +2,7 @@ import { IdGenerator, createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { TaskStatus } from '@libs/ee/kodyAST/codeASTAnalysis.service';
+import { TaskStatus } from '@libs/ee/kodyAST/interfaces/code-ast-analysis.interface';
 import { CodeReviewPipelineContext } from '@libs/code-review/pipeline/context/code-review-pipeline.context';
 import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
 import { OrganizationParametersKey } from '@libs/core/domain/enums/organization-parameters-key.enum';

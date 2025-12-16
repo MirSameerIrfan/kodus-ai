@@ -8,7 +8,6 @@ import { IntegrationCoreModule } from '@libs/integrations/modules/integrations-c
 import { IntegrationConfigCoreModule } from '@libs/integrations/modules/config-core.module';
 import { ParametersModule } from '@libs/organization/modules/parameters.module';
 import { PlatformModule } from '@libs/platform/modules/platform.module';
-import { AutomationModule } from '@libs/automation/modules/automation.module';
 import { TeamModule } from '@libs/organization/modules/team.module';
 import { PullRequestsModule } from '@libs/code-review/modules/pull-requests.module';
 import { CodeReviewFeedbackModule } from '@libs/code-review/modules/codeReviewFeedback.module';
@@ -51,7 +50,6 @@ import { KodyFineTuningContextModule } from '@libs/kodyFineTuning/kodyFineTuning
 import { GlobalParametersModule } from '@libs/organization/modules/global-parameters.module';
 import { TokenChunkingModule } from '@libs/core/infrastructure/services/tokenChunking/tokenChunking.module';
 import { KodyRulesModule } from '@libs/kodyRules/modules/kodyRules.module';
-import { CodeReviewValidationService } from '../infrastructure/adapters/services/code-review-validation.service';
 
 import { OrganizationParametersModule } from '@libs/organization/modules/organizationParameters.module';
 
@@ -69,7 +67,6 @@ import { CodeAstAnalysisService } from '@libs/ee/kodyAST/codeASTAnalysis.service
         forwardRef(() => IntegrationConfigCoreModule),
         forwardRef(() => ParametersModule),
         forwardRef(() => PlatformModule),
-        forwardRef(() => AutomationModule),
         forwardRef(() => TeamModule),
         forwardRef(() => KodyRulesModule),
         forwardRef(() => PullRequestsModule),
@@ -128,7 +125,6 @@ import { CodeAstAnalysisService } from '@libs/ee/kodyAST/codeASTAnalysis.service
         CommentAnalysisService,
         MessageTemplateProcessor,
         LicenseService,
-        CodeReviewValidationService,
         pipelineProvider,
         codeReviewPipelineProvider,
         {
@@ -150,7 +146,6 @@ import { CodeAstAnalysisService } from '@libs/ee/kodyAST/codeASTAnalysis.service
         CodeReviewHandlerService,
         CommentAnalysisService,
         MessageTemplateProcessor,
-        CodeReviewValidationService,
         pipelineProvider,
         AST_ANALYSIS_SERVICE_TOKEN,
     ],

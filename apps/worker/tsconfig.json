@@ -2,6 +2,7 @@
     "extends": "../../tsconfig.json",
     "compilerOptions": {
         "outDir": "../../dist/apps/worker",
+        "tsBuildInfoFile": "../../dist/apps/worker/.tsbuildinfo",
         "baseUrl": ".",
         "paths": {
             "@libs/*": ["../../libs/*"]

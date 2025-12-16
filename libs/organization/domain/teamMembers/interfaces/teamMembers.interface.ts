@@ -1,7 +1,3 @@
-import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
-import { IOrganization } from '@libs/organization/domain/organization/interfaces/organization.interface';
-import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';
-
 import { ICodeManagementMemberConfig } from './codeManagementMemberConfig.interface';
 import { ICommuminicationMemberConfig } from './communicationMemberConfig.interface';
 import { IProjectManagementMemberConfig } from './projectManagementMemberConfig';
@@ -23,11 +19,11 @@ export interface IMembers {
     userId?: string;
 }
 
-export interface ITeamMember {
+export interface ITeamMember<TOrg = any, TTeam = any, TUser = any> {
     uuid?: string;
-    organization?: Partial<IOrganization>;
-    team?: Partial<ITeam>;
-    user?: Partial<IUser>;
+    organization?: Partial<TOrg>;
+    team?: Partial<TTeam>;
+    user?: Partial<TUser>;
     status: boolean;
     communicationId?: string;
     avatar?: string;

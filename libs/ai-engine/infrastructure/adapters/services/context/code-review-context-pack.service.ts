@@ -52,22 +52,10 @@ import { ContextReferenceService } from './context-reference.service';
 import { formatMCPOutput } from './mcp-output-formatter';
 import { MCPToolArgResolverAgentService } from './mcp-tool-arg-resolver-agent.service';
 
-export interface ContextAugmentationOutput {
-    provider?: string;
-    toolName: string;
-    success: boolean;
-    output?: string;
-    error?: string;
-}
-
-export type ContextAugmentationsMap = Record<
-    string,
-    {
-        path: string[];
-        requirementId?: string;
-        outputs: ContextAugmentationOutput[];
-    }
->;
+import {
+    ContextAugmentationOutput,
+    ContextAugmentationsMap,
+} from './interfaces/code-review-context-pack.interface';
 
 export interface SkippedMCPTool {
     provider?: string;

@@ -36,7 +36,7 @@ import {
     getAugmentationsFromPack,
     getOverridesFromPack,
 } from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context.utils';
-import { ContextAugmentationsMap } from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context-pack.service';
+import { ContextAugmentationsMap } from '@libs/ai-engine/infrastructure/adapters/services/context/interfaces/code-review-context-pack.interface';
 import { prompt_severity_analysis_user } from '@libs/common/utils/langchainCommon/prompts/severityAnalysis';
 import {
     prompt_codeReviewSafeguard_system,

@@ -4,4 +4,4 @@ export const CODE_REVIEW_EXECUTION_SERVICE = Symbol(
     'CODE_REVIEW_EXECUTION_SERVICE',
 );
 
-export interface ICodeReviewExecutionService extends ICodeReviewExecutionRepository {}
+export type ICodeReviewExecutionService<T> = ICodeReviewExecutionRepository<T>;

@@ -6,13 +6,17 @@ import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface'
 import { IAuthIntegration } from '../../authIntegrations/interfaces/auth-integration.interface';
 import { IIntegrationConfig } from '../../integrationConfigs/interfaces/integration-config.interface';
 
-export interface IIntegration {
+export interface IIntegration<TOrganization = IOrganization, TTeam = ITeam> {
     uuid: string;
     platform: PlatformType;
     integrationCategory: IntegrationCategory;
     status: boolean;
-    organization?: Partial<IOrganization>;
-    team?: Partial<ITeam>;
-    authIntegration?: Partial<IAuthIntegration>;
-    integrationConfigs?: Partial<IIntegrationConfig>[];
+    organization?: Partial<TOrganization>;
+    team?: Partial<TTeam>;
+    authIntegration?: Partial<
+        IAuthIntegration<IIntegration<TOrganization, TTeam>>
+    >;
+    integrationConfigs?: Partial<
+        IIntegrationConfig<IIntegration<TOrganization, TTeam>>
+    >[];
 }

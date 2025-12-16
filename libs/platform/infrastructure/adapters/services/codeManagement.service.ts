@@ -5,7 +5,6 @@ import {
     GitlabReaction,
 } from '@libs/code-review/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
 import { ISuggestionByPR } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
-import { CodeReviewPipelineContext } from '@libs/code-review/pipeline/context/code-review-pipeline.context';
 import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { PullRequestState } from '@libs/core/domain/enums/pullRequestState.enum';
@@ -20,8 +19,13 @@ import {
     IIntegrationService,
     INTEGRATION_SERVICE_TOKEN,
 } from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
-import { ICodeManagementService } from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
-import { GitCloneParams } from '@libs/platform/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
+import { extractOrganizationAndTeamData } from '@libs/common/utils/helpers';
+import {
+    CodeManagementConnectionStatus,
+    ICodeManagementService,
+} from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
+import { PlatformIntegrationFactory } from './platformIntegration.factory';
+import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
 import {
     PullRequest,
     PullRequestAuthor,
@@ -29,12 +33,9 @@ import {
     PullRequestReviewState,
     PullRequestsWithChangesRequested,
 } from '@libs/platform/domain/platformIntegrations/types/codeManagement/pullRequests.type';
-import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
+import { CodeReviewPipelineContext } from '@libs/code-review/pipeline/context/code-review-pipeline.context';
+import { GitCloneParams } from '@libs/platform/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
 import { RepositoryFile } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
-
-import { PlatformIntegrationFactory } from './platformIntegration.factory';
-import { extractOrganizationAndTeamData } from '@libs/common/utils/helpers';
-import { CodeManagementConnectionStatus } from '@libs/common/utils/decorators/validate-code-management-integration.decorator';
 
 @Injectable()
 export class CodeManagementService implements ICodeManagementService {

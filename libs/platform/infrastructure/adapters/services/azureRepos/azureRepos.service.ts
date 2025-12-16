@@ -73,7 +73,7 @@ import {
     AzureRepoPullRequest,
 } from '@libs/platform/domain/azure/entities/azureRepoPullRequest.type';
 import { generateWebhookToken } from '@libs/common/utils/webhooks/webhookTokenCrypto';
-import { CodeManagementConnectionStatus } from '@libs/common/utils/decorators/validate-code-management-integration.decorator';
+import { CodeManagementConnectionStatus } from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
 import { getSeverityLevelShield } from '@libs/common/utils/codeManagement/severityLevel';
 import { getCodeReviewBadge } from '@libs/common/utils/codeManagement/codeReviewBadge';
 import { getLabelShield } from '@libs/common/utils/codeManagement/labels';

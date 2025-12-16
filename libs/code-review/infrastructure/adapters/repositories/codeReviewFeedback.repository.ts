@@ -11,9 +11,7 @@ import {
 import { CodeReviewFeedbackModel } from './schemas/mongoose/codeReviewFeedback.model';
 
 @Injectable()
-export class CodeReviewFeedbackRepository
-    implements ICodeReviewFeedbackRepository
-{
+export class CodeReviewFeedbackRepository implements ICodeReviewFeedbackRepository {
     constructor(
         @InjectModel(CodeReviewFeedbackModel.name)
         private readonly codeReviewFeedbackModel: Model<CodeReviewFeedbackModel>,

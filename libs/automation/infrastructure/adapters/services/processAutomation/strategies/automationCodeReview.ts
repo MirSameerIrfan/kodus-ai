@@ -27,9 +27,10 @@ import {
 } from '@libs/organization/domain/organization/contracts/organization.service.contract';
 
 @Injectable()
-export class AutomationCodeReviewService
-    implements Omit<IAutomationFactory, 'stop'>
-{
+export class AutomationCodeReviewService implements Omit<
+    IAutomationFactory,
+    'stop'
+> {
     private readonly logger = createLogger(AutomationCodeReviewService.name);
     automationType = AutomationType.AUTOMATION_CODE_REVIEW;
 
@@ -157,6 +158,17 @@ export class AutomationCodeReviewService
                 return 'Could not create code review execution';
             }
 
+            // Fetch the last successful execution to pass to the handler
+            const lastExecution =
+                await this.automationExecutionService.findLatestExecutionByFilters(
+                    {
+                        status: AutomationStatus.SUCCESS,
+                        teamAutomation: { uuid: teamAutomationId },
+                        pullRequestNumber: pullRequest?.number,
+                        repositoryId: repository?.id,
+                    },
+                );
+
             const result =
                 await this.codeReviewHandlerService.handlePullRequest(
                     {
@@ -172,6 +184,8 @@ export class AutomationCodeReviewService
                     action,
                     execution.uuid,
                     triggerCommentId,
+                    undefined, // workflowJobId
+                    lastExecution?.dataExecution, // Pass last execution data
                 );
 
             await this._handleExecutionCompletion(execution, result, payload);

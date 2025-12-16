@@ -13,7 +13,7 @@ import {
     IWebhookEventHandler,
     IWebhookEventParams,
 } from '@libs/platform/domain/platformIntegrations/interfaces/webhook-event-handler.interface';
-import { CodeReviewValidationService } from '@libs/code-review/infrastructure/adapters/services/code-review-validation.service';
+import { CodeReviewValidationService } from '@libs/automation/infrastructure/adapters/services/code-review-validation.service';
 import { ObservabilityService } from '@libs/core/log/observability.service';
 import {
     IWorkflowJobRepository,

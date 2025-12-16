@@ -2,7 +2,7 @@ import {
     ClusteringType,
     ReviewModeResponse,
     SuggestionType,
-} from '@libs/core/infrastructure/config/types/general/codeReview.type';
+} from '@libs/core/domain/enums/code-review.enum';
 
 import { DeliveryStatus } from '../enums/deliveryStatus.enum';
 import { ImplementationStatus } from '../enums/implementationStatus.enum';
