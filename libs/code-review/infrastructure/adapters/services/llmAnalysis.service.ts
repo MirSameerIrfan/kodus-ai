@@ -1,5 +1,4 @@
-import type { ContextPack } from '@kodus/flow';
-import { createLogger } from '@kodus/flow';
+import { createLogger, type ContextPack } from '@kodus/flow';
 import {
     BYOKConfig,
     LLMModelProvider,
@@ -290,6 +289,7 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
                                     label: z.string(),
                                     severity: z.string().optional(),
                                     rankScore: z.number().optional(),
+                                    llmPrompt: z.string().optional(),
                                 }),
                             ),
                         });

@@ -3,24 +3,23 @@ import { REQUEST } from '@nestjs/core';
 
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
-import { createLogger } from '@kodus/flow';
 import {
     Action,
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { AuthorizationService } from '@libs/identity/infrastructure/adapters/services/permissions/authorization.service';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
+import { createLogger } from '@kodus/flow';
 
 export class GetRepositoriesUseCase implements IUseCase {
     private readonly logger = createLogger(GetRepositoriesUseCase.name);
 
     constructor(
         private readonly codeManagementService: CodeManagementService,
+        private readonly authorizationService: AuthorizationService,
 
         @Inject(REQUEST)
         private readonly request: UserRequest,
-
-        private readonly authorizationService: AuthorizationService,
     ) {}
 
     public async execute(params: {

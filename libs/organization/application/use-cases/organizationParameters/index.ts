@@ -4,4 +4,3 @@ export * from './find-by-key.use-case';
 export * from './get-cockpit-metrics-visibility.use-case';
 export * from './get-models-by-provider.use-case';
 export * from './ignore-bots.use-case';
-export * from './update-auto-license-allowed-users.use-case';

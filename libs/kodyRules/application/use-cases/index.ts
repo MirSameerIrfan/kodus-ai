@@ -17,6 +17,7 @@ import { ResyncRulesFromIdeUseCase } from './resync-rules-from-ide.use-case';
 import { SendRulesNotificationUseCase } from './send-rules-notification.use-case';
 import { SyncSelectedRepositoriesKodyRulesUseCase } from './sync-selected-repositories.use-case';
 import { ImportFastKodyRulesUseCase } from './import-fast-kody-rules.use-case';
+import { FindRecommendedKodyRulesUseCase } from './find-recommended-kody-rules.use-case';
 
 export const UseCases = [
     CreateOrUpdateKodyRulesUseCase,
@@ -26,6 +27,7 @@ export const UseCases = [
     FindLibraryKodyRulesUseCase,
     FindLibraryKodyRulesWithFeedbackUseCase,
     FindLibraryKodyRulesBucketsUseCase,
+    FindRecommendedKodyRulesUseCase,
     AddLibraryKodyRulesUseCase,
     GenerateKodyRulesUseCase,
     ChangeStatusKodyRulesUseCase,

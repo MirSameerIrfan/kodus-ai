@@ -1,14 +1,14 @@
 import { IKodyRulesRepository } from './kodyRules.repository.contract';
 import { IKodyRule, KodyRulesStatus } from '../interfaces/kodyRules.interface';
+import { KodyRulesEntity } from '../entities/kodyRules.entity';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { CreateKodyRuleDto } from '@libs/ee/kodyRules/dtos/create-kody-rule.dto';
-import { UserInfo } from '@libs/core/infrastructure/config/types/general/codeReviewSettingsLog.type';
 import {
     BucketInfo,
     KodyRuleFilters,
     LibraryKodyRule,
 } from '@libs/core/infrastructure/config/types/general/kodyRules.type';
-import { KodyRulesEntity } from '../entities/kodyRules.entity';
+import { UserInfo } from '@libs/core/infrastructure/config/types/general/codeReviewSettingsLog.type';
 
 export const KODY_RULES_SERVICE_TOKEN = 'KODY_RULES_SERVICE_TOKEN';
 
@@ -68,4 +68,14 @@ export interface IKodyRulesService extends IKodyRulesRepository {
     ): Promise<{
         total: number;
     }>;
+
+    getRecommendedRulesByMCP(
+        organizationAndTeamData: OrganizationAndTeamData,
+    ): Promise<LibraryKodyRule[]>;
+
+    getRecommendedRulesBySuggestions(
+        organizationAndTeamData: OrganizationAndTeamData,
+        repositoryId: string,
+        repoLanguage?: string,
+    ): Promise<LibraryKodyRule[]>;
 }

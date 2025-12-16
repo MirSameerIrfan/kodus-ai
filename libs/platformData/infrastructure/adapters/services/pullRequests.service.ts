@@ -16,12 +16,12 @@ import {
 import { PlatformType, PullRequestState } from '@libs/core/domain/enums';
 import { Repository } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { createLogger } from '@kodus/flow';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 import { Inject, Injectable } from '@nestjs/common';
 
 import { v4 as uuidv4 } from 'uuid';
 import { DeliveryStatus } from '@libs/platformData/domain/pullRequests/enums/deliveryStatus.enum';
+import { createLogger } from '@kodus/flow';
 
 @Injectable()
 export class PullRequestsService implements IPullRequestsService {

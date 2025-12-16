@@ -561,7 +561,7 @@ export class BitbucketService implements Omit<
 
         // see https://github.com/MunifTanjim/node-bitbucket/issues/74
         bitbucketAPI.pullrequests.list =
-            // @ts-ignore
+            // @ts-expect-error: defaults property is missing in the library type definition
             bitbucketAPI.pullrequests.list.defaults({
                 request: {
                     validate: {
@@ -585,7 +585,7 @@ export class BitbucketService implements Omit<
         const response = await bitbucketAPI.pullrequests.list({
             repo_slug: `{${repo.id}}`,
             workspace: `{${repo.workspaceId}}`,
-            // @ts-ignore - see above
+            // @ts-expect-error: state property type mismatch in library definition
             state: state
                 ? this._prStateMapReversed.get(state)
                 : this._prStateMapReversed.get(PullRequestState.ALL), // get all states if not specified
@@ -649,7 +649,7 @@ export class BitbucketService implements Omit<
 
         // see https://github.com/MunifTanjim/node-bitbucket/issues/74
         bitbucketAPI.pullrequests.list =
-            // @ts-ignore
+            // @ts-expect-error: defaults property is missing in the library type definition
             bitbucketAPI.pullrequests.list.defaults({
                 request: {
                     validate: {
@@ -673,7 +673,7 @@ export class BitbucketService implements Omit<
         const response = await bitbucketAPI.pullrequests.list({
             repo_slug: `{${repo.id}}`,
             workspace: `{${repo.workspaceId}}`,
-            // @ts-ignore - see above
+            // @ts-expect-error: state property type mismatch in library definition
             state: state
                 ? this._prStateMapReversed.get(state)
                 : this._prStateMapReversed.get(PullRequestState.ALL), // get all states if not specified
@@ -1783,6 +1783,49 @@ export class BitbucketService implements Omit<
         }
     }
 
+    formatCodeBlock(language: string, code: string) {
+        return `\`\`\`${language}\n${code}\n\`\`\``;
+    }
+
+    private formatBodyForBitbucket(lineComment: any, repository: any) {
+        const codeBlock = lineComment?.body?.improvedCode
+            ? this.formatCodeBlock(
+                  repository?.language?.toLowerCase(),
+                  lineComment?.body?.improvedCode,
+              )
+            : '';
+        const suggestionContent = lineComment?.body?.suggestionContent || '';
+        const actionStatement = lineComment?.body?.actionStatement
+            ? `${lineComment.body.actionStatement}\n\n`
+            : '';
+
+        const severityText = lineComment?.suggestion
+            ? lineComment.suggestion.severity
+            : '';
+        const labelText = lineComment?.suggestion
+            ? lineComment.suggestion.label
+            : '';
+
+        const header = `\`kody|code-review\` \`${labelText}\` \`severity-level|${severityText}\`\n\n`;
+
+        const thumbsUpBlock = `\`\`\`\n👍\n\`\`\`\n`;
+        const thumbsDownBlock = `\`\`\`\n👎\n\`\`\`\n`;
+
+        const footer = `Was this suggestion helpful? reply with 👍 or 👎 to help Kody learn from this interaction.\n`;
+
+        return [
+            header,
+            suggestionContent,
+            actionStatement,
+            codeBlock,
+            footer,
+            thumbsUpBlock,
+            thumbsDownBlock,
+        ]
+            .join('\n')
+            .trim();
+    }
+
     async createReviewComment(params: {
         organizationAndTeamData: OrganizationAndTeamData;
         repository: any;
@@ -1816,27 +1859,10 @@ export class BitbucketService implements Omit<
             const bitbucketAPI =
                 this.instanceBitbucketApi(bitbucketAuthDetails);
 
-            const severityText = lineComment?.suggestion
-                ? lineComment.suggestion.severity
-                : '';
-            const labelText = lineComment?.suggestion
-                ? lineComment.suggestion.label
-                : '';
-
-            const bodyFormatted =
-                `\`kody|code-review\` \`${labelText}\` \`severity-level|${severityText}\`\n\n` +
-                `\`\`\`${repository?.language?.toLowerCase()}\n` +
-                `${lineComment?.body?.improvedCode}\n` +
-                `\`\`\`\n` +
-                `${lineComment?.body?.suggestionContent}\n\n\n\n` +
-                `${lineComment?.body?.actionStatement ? `${lineComment?.body?.actionStatement}\n\n\n\n` : ''}` +
-                `Was this suggestion helpful? reply with 👍 or 👎 to help Kody learn from this interaction.\n`;
-
-            const thumbsUpBlock = `\`\`\`\n👍\n\`\`\`\n`;
-            const thumbsDownBlock = `\`\`\`\n👎\n\`\`\`\n`;
-
-            const updatedBodyFormatted =
-                bodyFormatted + thumbsUpBlock + thumbsDownBlock;
+            const bodyFormatted = this.formatBodyForBitbucket(
+                lineComment,
+                repository,
+            );
 
             // added ts-ignore because _body expects a type property but Bitbucket rejects it
             const comment = await bitbucketAPI.pullrequests
@@ -1844,10 +1870,10 @@ export class BitbucketService implements Omit<
                     pull_request_id: prNumber,
                     repo_slug: `{${repository.id}}`,
                     workspace: `{${workspace}}`,
-                    // @ts-ignore
+                    // @ts-expect-error: _body is required but not typed in the library
                     _body: {
                         content: {
-                            raw: updatedBodyFormatted,
+                            raw: bodyFormatted,
                         },
                         inline: {
                             path: lineComment?.path,
@@ -1924,7 +1950,7 @@ export class BitbucketService implements Omit<
                     pull_request_id: prNumber,
                     repo_slug: `{${repository.id}}`,
                     workspace: `{${workspace}}`,
-                    // @ts-ignore
+                    // @ts-expect-error: _body is required but not typed in the library
                     _body: {
                         content: {
                             raw: overallComment,
@@ -2160,7 +2186,7 @@ export class BitbucketService implements Omit<
                     pull_request_id: prNumber,
                     repo_slug: `{${repository.id}}`,
                     workspace: `{${workspace}}`,
-                    // @ts-ignore
+                    // @ts-expect-error: _body is required but not typed in the library
                     _body: {
                         content: {
                             raw: body,
@@ -2218,7 +2244,7 @@ export class BitbucketService implements Omit<
                 pull_request_id: prNumber,
                 repo_slug: `{${repo.id}}`,
                 workspace: `{${repo.workspaceId}}`,
-                // @ts-ignore
+                // @ts-expect-error: _body is required but not typed in the library
                 _body: {
                     content: {
                         raw: body,
@@ -2295,7 +2321,7 @@ export class BitbucketService implements Omit<
                     pull_request_id: prNumber,
                     repo_slug: `{${repository.id}}`,
                     workspace: `{${workspace}}`,
-                    // @ts-ignore
+                    // @ts-expect-error: _body is required but not typed in the library
                     _body: {
                         content: {
                             raw: body,
@@ -2568,7 +2594,7 @@ export class BitbucketService implements Omit<
                     content: {
                         raw: body,
                     },
-                    // @ts-ignore
+                    // @ts-expect-error: parent property type mismatch in library definition
                     parent: {
                         id: inReplyToId,
                     },
@@ -2617,7 +2643,7 @@ export class BitbucketService implements Omit<
                 pull_request_id: prNumber,
                 repo_slug: `{${repository.id}}`,
                 workspace: `{${workspace}}`,
-                // @ts-ignore
+                // @ts-expect-error: _body is required but not typed in the library
                 _body: {
                     summary: {
                         raw: summary,
@@ -4301,6 +4327,11 @@ export class BitbucketService implements Omit<
             commentBody += `${suggestion.clusteringInformation.actionStatement}\n\n`;
         }
 
+        if (suggestion?.improvedCode) {
+            const lang = repository?.language?.toLowerCase() || 'javascript';
+            commentBody += `\`\`\`${lang}\n${suggestion.improvedCode}\n\`\`\`\n\n`;
+        }
+
         // FOOTER - Interação/Feedback (formato Bitbucket)
         if (includeFooter) {
             commentBody +=
@@ -4330,26 +4361,22 @@ export class BitbucketService implements Omit<
 
                 let response: any;
 
-                try {
-                    if (directoryPath) {
-                        // Para um path específico - usar source.read
-                        response = await bitbucketAPI.source.read({
-                            workspace: `{${workspace}}`,
-                            repo_slug: `{${repositoryId}}`,
-                            path: directoryPath,
-                            pagelen: 50,
-                            commit: 'HEAD',
-                        });
-                    } else {
-                        // Para raiz - usar source.readRoot
-                        response = await bitbucketAPI.source.readRoot({
-                            workspace: `{${workspace}}`,
-                            repo_slug: `{${repositoryId}}`,
-                            pagelen: 50,
-                        });
-                    }
-                } catch (apiError) {
-                    throw apiError;
+                if (directoryPath) {
+                    // Para um path específico - usar source.read
+                    response = await bitbucketAPI.source.read({
+                        workspace: `{${workspace}}`,
+                        repo_slug: `{${repositoryId}}`,
+                        path: directoryPath,
+                        pagelen: 50,
+                        commit: 'HEAD',
+                    });
+                } else {
+                    // Para raiz - usar source.readRoot
+                    response = await bitbucketAPI.source.readRoot({
+                        workspace: `{${workspace}}`,
+                        repo_slug: `{${repositoryId}}`,
+                        pagelen: 50,
+                    });
                 }
 
                 const items = response.data?.values || [];
@@ -5010,7 +5037,7 @@ export class BitbucketService implements Omit<
                 workspace: `{${workspace}}`,
                 pull_request_id: prNumber,
                 comment_id: Number(commentId),
-                // @ts-ignore
+                // @ts-expect-error: _body is required but not typed in the library
                 _body: {
                     content: {
                         raw: body,

@@ -1,4 +1,3 @@
-import { createLogger } from '@kodus/flow';
 import {
     BYOKConfig,
     LLMModelProvider,
@@ -44,6 +43,7 @@ import {
     TranslationsCategory,
 } from '@libs/common/utils/translations/translations';
 import { prompt_repeated_suggestion_clustering_system } from '@libs/common/utils/langchainCommon/prompts/repeatedCodeReviewSuggestionClustering';
+import { createLogger } from '@kodus/flow';
 
 interface ClusteredSuggestion {
     id: string;
@@ -54,8 +54,8 @@ interface ClusteredSuggestion {
 
 @Injectable()
 export class CommentManagerService implements ICommentManagerService {
-    private readonly logger = createLogger(CommentManagerService.name);
     private readonly llmResponseProcessor: LLMResponseProcessor;
+    private readonly logger = createLogger(CommentManagerService.name);
 
     constructor(
         @Inject(PARAMETERS_SERVICE_TOKEN)
@@ -448,13 +448,6 @@ export class CommentManagerService implements ICommentManagerService {
         }
     }
 
-    generateSummaryMarkdown(
-        changedFiles: FileChange[],
-        description: string,
-    ): string {
-        throw new Error('Method not implemented.');
-    }
-
     async createInitialComment(
         organizationAndTeamData: OrganizationAndTeamData,
         prNumber: number,
@@ -713,6 +706,7 @@ export class CommentManagerService implements ICommentManagerService {
         lineComments: Comment[],
         language: string,
         dryRun: CodeReviewPipelineContext['dryRun'],
+        suggestionCopyPrompt?: boolean,
     ): Promise<{
         lastAnalyzedCommit: any;
         commits: any[];
@@ -780,6 +774,7 @@ export class CommentManagerService implements ICommentManagerService {
                                 lineComment: comment,
                                 language,
                                 dryRun,
+                                suggestionCopyPrompt,
                             },
                             dryRun?.enabled ? PlatformType.INTERNAL : undefined,
                         );
@@ -1333,6 +1328,7 @@ ${reviewOptions}
         repository: { name: string; id: string; language: string },
         prLevelSuggestions: ISuggestionByPR[],
         language: string,
+        suggestionCopyPrompt?: boolean,
         dryRun?: CodeReviewPipelineContext['dryRun'],
     ): Promise<{ commentResults: Array<CommentResult> }> {
         try {
@@ -1374,6 +1370,7 @@ ${reviewOptions}
                                 includeFooter: false, // PR-level NÃO inclui footer de interação
                                 language,
                                 organizationAndTeamData,
+                                suggestionCopyPrompt,
                             },
                             dryRun?.enabled ? PlatformType.INTERNAL : undefined,
                         );

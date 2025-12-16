@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
-import { createLogger } from '@kodus/flow';
 import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
@@ -18,11 +17,11 @@ import {
     IDryRunService,
 } from '@libs/dryRun/domain/contracts/dryRun.service.contract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
+import { createLogger } from '@kodus/flow';
 
 @Injectable()
 export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipelineContext> {
     readonly stageName = 'CreatePrLevelCommentsStage';
-
     private readonly logger = createLogger(CreatePrLevelCommentsStage.name);
 
     constructor(
@@ -92,7 +91,7 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
                         prNumber: context.pullRequest.number,
                     },
                 });
-                return this.updateContext(context, (_draft) => {});
+                return this.updateContext(context, (draft) => {});
             }
 
             try {
@@ -122,6 +121,8 @@ export class CreatePrLevelCommentsStage extends BasePipelineStage<CodeReviewPipe
                             },
                             prLevelSuggestions,
                             context.codeReviewConfig?.languageResultPrompt,
+                            context.pullRequestMessagesConfig?.globalSettings
+                                ?.suggestionCopyPrompt,
                             context.dryRun,
                         );
 

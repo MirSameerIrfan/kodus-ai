@@ -10,10 +10,19 @@ import { CreateOrUpdateOrganizationParametersUseCase } from '../application/use-
 import { FindByKeyOrganizationParametersUseCase } from '../application/use-cases/organizationParameters/find-by-key.use-case';
 import { DeleteByokConfigUseCase } from '../application/use-cases/organizationParameters/delete-byok-config.use-case';
 import { IgnoreBotsUseCase } from '../application/use-cases/organizationParameters/ignore-bots.use-case';
+import {
+    GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN,
+    GetCockpitMetricsVisibilityUseCase,
+    GetModelsByProviderUseCase,
+} from '../application/use-cases/organizationParameters';
 
 @Module({
     imports: [TypeOrmModule.forFeature([OrganizationParametersModel])],
     providers: [
+        {
+            provide: GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN,
+            useClass: GetCockpitMetricsVisibilityUseCase,
+        },
         {
             provide: ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
             useClass: OrganizationParametersService,
@@ -26,6 +35,7 @@ import { IgnoreBotsUseCase } from '../application/use-cases/organizationParamete
         FindByKeyOrganizationParametersUseCase,
         DeleteByokConfigUseCase,
         IgnoreBotsUseCase,
+        GetModelsByProviderUseCase,
     ],
     exports: [
         ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
@@ -34,6 +44,8 @@ import { IgnoreBotsUseCase } from '../application/use-cases/organizationParamete
         FindByKeyOrganizationParametersUseCase,
         DeleteByokConfigUseCase,
         IgnoreBotsUseCase,
+        GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN,
+        GetModelsByProviderUseCase,
     ],
 })
 export class OrganizationParametersModule {}

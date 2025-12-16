@@ -23,7 +23,6 @@ import {
 } from '../types/codeManagement/pullRequests.type';
 import { Repositories } from '../types/codeManagement/repositories.type';
 import { RepositoryFile } from '../types/codeManagement/repositoryFile.type';
-import { Workflow } from '../types/codeManagement/workflow.type';
 import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 
 export type CodeManagementConnectionStatus = {
@@ -69,7 +68,6 @@ export interface ICodeManagementService extends ICommonPlatformIntegrationServic
             };
         };
     }): Promise<Repositories[]>;
-    getWorkflows(params: any): Promise<Workflow[]>;
     getListMembers(
         params: any,
     ): Promise<{ name: string; id: string | number }[]>;
@@ -219,6 +217,7 @@ export interface ICodeManagementService extends ICommonPlatformIntegrationServic
         includeFooter?: boolean;
         language?: string;
         organizationAndTeamData: OrganizationAndTeamData;
+        suggestionCopyPrompt?: boolean;
     }): Promise<string>;
 
     getRepositoryTree(params: {

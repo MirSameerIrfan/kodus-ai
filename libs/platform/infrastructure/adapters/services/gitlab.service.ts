@@ -48,7 +48,6 @@ import {
     IAuthIntegrationService,
 } from '@libs/integrations/domain/authIntegrations/contracts/auth-integration.service.contracts';
 
-
 import { GitCloneParams } from '@libs/platform/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
 import {
     PullRequest,
@@ -78,25 +77,20 @@ import {
     isFileMatchingGlob,
     isFileMatchingGlobCaseInsensitive,
 } from '@libs/common/utils/glob-utils';
-import { Workflow } from '@libs/platform/domain/platformIntegrations/types/codeManagement/workflow.type';
 
 @Injectable()
 @IntegrationServiceDecorator(PlatformType.GITLAB, 'codeManagement')
-export class GitlabService
-    implements
-        Omit<
-            ICodeManagementService,
-            | 'getOrganizations'
-            | 'getPullRequestsWithChangesRequested'
-            | 'getListOfValidReviews'
-            | 'getPullRequestReviewThreads'
-            | 'getAuthenticationOAuthToken'
-            | 'getCommitsByReleaseMode'
-            | 'getDataForCalculateDeployFrequency'
-            | 'requestChangesPullRequest'
-            | 'getWorkflows'
-        >
-{
+export class GitlabService implements Omit<
+    ICodeManagementService,
+    | 'getOrganizations'
+    | 'getPullRequestsWithChangesRequested'
+    | 'getListOfValidReviews'
+    | 'getPullRequestReviewThreads'
+    | 'getAuthenticationOAuthToken'
+    | 'getCommitsByReleaseMode'
+    | 'getDataForCalculateDeployFrequency'
+    | 'requestChangesPullRequest'
+> {
     private readonly logger = createLogger(GitlabService.name);
 
     constructor(
@@ -113,10 +107,6 @@ export class GitlabService
         private readonly cacheService: CacheService,
         private readonly mcpManagerService?: MCPManagerService,
     ) {}
-
-    getWorkflows(params: any): Promise<Workflow[]> {
-        throw new Error('Method not implemented.');
-    }
 
     async getPullRequestAuthors(params: {
         organizationAndTeamData: OrganizationAndTeamData;
@@ -846,7 +836,7 @@ export class GitlabService
 
         const mergeRequests = await gitlabAPI.MergeRequests.all({
             projectId: repo.id,
-            // @ts-ignore - value 'all' is valid according to GitLab API docs
+            // @ts-expect-error - value 'all' is valid according to GitLab API docs
             state: state
                 ? this._prStateMapReverse.get(state)
                 : this._prStateMapReverse.get(PullRequestState.ALL),
@@ -1539,32 +1529,45 @@ export class GitlabService
         return `<sub>${text}</sub>\n\n`;
     }
 
-    formatBodyForGitLab(lineComment: any, repository: any, translations: any) {
+    formatBodyForGitLab(
+        lineComment: any,
+        repository: any,
+        translations: any,
+        suggestionCopyPrompt: boolean,
+    ) {
         const severityShield = lineComment?.suggestion
             ? getSeverityLevelShield(lineComment.suggestion.severity)
             : '';
-        const codeBlock = this.formatCodeBlock(
-            repository?.language?.toLowerCase(),
-            lineComment?.body?.improvedCode,
-        );
+        const codeBlock = lineComment?.body?.improvedCode
+            ? this.formatCodeBlock(
+                  repository?.language?.toLowerCase(),
+                  lineComment?.body?.improvedCode,
+              )
+            : '';
         const suggestionContent = lineComment?.body?.suggestionContent || '';
         const actionStatement = lineComment?.body?.actionStatement
             ? `${lineComment.body.actionStatement}\n\n`
             : '';
 
-        const badges = [
-            getCodeReviewBadge(),
-            lineComment?.suggestion
-                ? getLabelShield(lineComment.suggestion.label)
-                : '',
-            severityShield,
-        ].join(' ');
+        const badges =
+            [
+                getCodeReviewBadge(),
+                lineComment?.suggestion
+                    ? getLabelShield(lineComment.suggestion.label)
+                    : '',
+                severityShield,
+            ].join(' ') + '\n\n';
+
+        const copyPrompt = suggestionCopyPrompt
+            ? this.formatPromptForLLM(lineComment)
+            : '';
 
         return [
             badges,
-            codeBlock,
             suggestionContent,
             actionStatement,
+            codeBlock,
+            copyPrompt,
             this.formatSub(translations.talkToKody),
             this.formatSub(translations.feedback) +
                 '<!-- kody-codereview -->&#8203;\n&#8203;',
@@ -1572,6 +1575,7 @@ export class GitlabService
             .join('\n')
             .trim();
     }
+
     async createReviewComment(params: any): Promise<ReviewComment | null> {
         const {
             organizationAndTeamData,
@@ -1580,6 +1584,7 @@ export class GitlabService
             lineComment,
             commit,
             language,
+            suggestionCopyPrompt = true,
         } = params;
 
         const gitlabAuthDetail = await this.getAuthDetails(
@@ -1609,6 +1614,7 @@ export class GitlabService
                 lineComment,
                 repository,
                 translations,
+                suggestionCopyPrompt,
             );
 
             const discussion = await gitlabAPI.MergeRequestDiscussions.create(
@@ -3431,6 +3437,7 @@ export class GitlabService
         includeFooter?: boolean;
         language?: string;
         organizationAndTeamData: OrganizationAndTeamData;
+        suggestionCopyPrompt?: boolean;
     }): Promise<string> {
         const {
             suggestion,
@@ -3438,6 +3445,7 @@ export class GitlabService
             includeHeader = true,
             includeFooter = true,
             language,
+            suggestionCopyPrompt = true,
         } = params;
 
         let commentBody = '';
@@ -3473,6 +3481,10 @@ export class GitlabService
             commentBody += `${suggestion.clusteringInformation.actionStatement}\n\n`;
         }
 
+        if (suggestionCopyPrompt) {
+            commentBody += this.formatPromptForLLM(suggestion);
+        }
+
         // FOOTER - Interação/Feedback
         if (includeFooter) {
             const translations = getTranslationsForLanguageByCategory(
@@ -3487,7 +3499,7 @@ export class GitlabService
         return Promise.resolve(commentBody.trim());
     }
 
-    minimizeComment(params: {
+    minimizeComment(_params: {
         organizationAndTeamData: OrganizationAndTeamData;
         commentId: string;
         reason?:
@@ -4099,5 +4111,41 @@ export class GitlabService
             });
             return [];
         }
+    }
+
+    private formatPromptForLLM(lineComment: any) {
+        let copyPrompt = '';
+        if (lineComment?.suggestion?.llmPrompt) {
+            if (lineComment.path) {
+                copyPrompt += `File ${lineComment.path}:\n\n`;
+            }
+
+            if (lineComment.start_line && lineComment.line) {
+                copyPrompt += `Line ${lineComment.start_line} to ${lineComment.line}:\n\n`;
+            } else if (lineComment.line) {
+                copyPrompt += `Line ${lineComment.line}:\n\n`;
+            }
+
+            copyPrompt += lineComment?.suggestion?.llmPrompt;
+
+            if (lineComment?.body?.improvedCode) {
+                copyPrompt +=
+                    '\n\nSuggested Code:\n\n' + lineComment?.body?.improvedCode;
+            }
+
+            copyPrompt = `\n\n<details>
+
+<summary>Prompt for LLM</summary>
+
+\`\`\`
+
+${copyPrompt}
+
+\`\`\`
+
+</details>\n\n`;
+        }
+
+        return copyPrompt;
     }
 }

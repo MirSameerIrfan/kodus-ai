@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
-import { createLogger } from '@kodus/flow';
 import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
@@ -33,11 +32,11 @@ import { PullRequestsEntity } from '@libs/platformData/domain/pullRequests/entit
 import { ImplementationStatus } from '@libs/platformData/domain/pullRequests/enums/implementationStatus.enum';
 import { DeliveryStatus } from '@libs/platformData/domain/pullRequests/enums/deliveryStatus.enum';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
+import { createLogger } from '@kodus/flow';
 
 @Injectable()
 export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelineContext> {
     readonly stageName = 'CreateFileCommentsStage';
-
     private readonly logger = createLogger(CreateFileCommentsStage.name);
 
     constructor(
@@ -237,10 +236,11 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
                 sortedPrioritizedSuggestions,
                 repository,
                 codeReviewConfig,
-                platformType,
                 dryRun,
                 context.pipelineMetadata?.lastExecution?.dataExecution
                     ?.lastAnalyzedCommit || null,
+                context.pullRequestMessagesConfig?.globalSettings
+                    ?.suggestionCopyPrompt,
             );
 
         // Save pull request suggestions
@@ -293,9 +293,9 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
         sortedPrioritizedSuggestions: any[],
         repository: Partial<Repository>,
         codeReviewConfig: CodeReviewConfig,
-        platformType: string,
         dryRun: CodeReviewPipelineContext['dryRun'],
         lastAnalyzedCommitFromContext: any,
+        suggestionCopyPrompt?: boolean,
     ) {
         try {
             const lineComments = sortedPrioritizedSuggestions
@@ -332,6 +332,7 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
                     lineComments,
                     codeReviewConfig?.languageResultPrompt,
                     dryRun,
+                    suggestionCopyPrompt,
                 );
 
             return { lastAnalyzedCommit, commentResults };
@@ -346,7 +347,6 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
                     repositoryName: repository?.name,
                 },
             });
-
             return {
                 lastAnalyzedCommit: lastAnalyzedCommitFromContext,
                 commentResults: [],

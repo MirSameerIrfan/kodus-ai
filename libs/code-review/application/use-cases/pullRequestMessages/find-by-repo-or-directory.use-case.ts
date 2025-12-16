@@ -28,6 +28,7 @@ export class FindByRepositoryOrDirectoryIdPullRequestMessagesUseCase {
     private readonly logger = createLogger(
         FindByRepositoryOrDirectoryIdPullRequestMessagesUseCase.name,
     );
+
     constructor(
         @Inject(PULL_REQUEST_MESSAGES_SERVICE_TOKEN)
         private readonly pullRequestMessagesService: IPullRequestMessagesService,
@@ -141,6 +142,8 @@ export class FindByRepositoryOrDirectoryIdPullRequestMessagesUseCase {
         return {
             globalSettings: {
                 hideComments: json?.globalSettings?.hideComments,
+                suggestionCopyPrompt:
+                    json?.globalSettings?.suggestionCopyPrompt,
             },
             endReviewMessage: {
                 content: json?.endReviewMessage?.content,

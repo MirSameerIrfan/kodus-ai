@@ -14,10 +14,6 @@ import {
     KODY_RULES_SERVICE_TOKEN,
 } from '@libs/kodyRules/domain/contracts/kodyRules.service.contract';
 
-import {
-    CONTEXT_RESOLUTION_SERVICE_TOKEN,
-    IContextResolutionService,
-} from '@libs/core/context-resolution/domain/contracts/context-resolution.service.contract';
 import { ParametersKey } from '@libs/core/domain/enums';
 import { RULE_FILE_PATTERNS } from '@libs/common/utils/kody-rules/file-patterns';
 import { isFileMatchingGlob } from '@libs/common/utils/glob-utils';
@@ -35,14 +31,12 @@ import {
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
-import { UpdateOrCreateCodeReviewParameterUseCase } from '@libs/organization/application/use-cases/parameters/update-or-create-code-review-parameter-use-case';
 import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
 import { ObservabilityService } from '@libs/core/log/observability.service';
 import {
     ContextDetectionField,
     ContextReferenceDetectionService,
 } from '@libs/ai-engine/infrastructure/adapters/services/context/context-reference-detection.service';
-import { createLogger } from '@kodus/flow';
 import {
     kodyRulesIDEGeneratorSchema,
     kodyRulesIDEGeneratorSchemaOnboarding,
@@ -50,6 +44,12 @@ import {
 } from '@libs/common/utils/langchainCommon/prompts/kodyRules';
 import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
 import { PromptSourceType } from '@libs/ai-engine/domain/prompt/interfaces/promptExternalReference.interface';
+import { createLogger } from '@kodus/flow';
+import { UpdateOrCreateCodeReviewParameterUseCase } from '@libs/code-review/application/use-cases/configuration/update-or-create-code-review-parameter-use-case';
+import {
+    CONTEXT_RESOLUTION_SERVICE_TOKEN,
+    IContextResolutionService,
+} from '@libs/core/context-resolution/domain/contracts/context-resolution.service.contract';
 
 const MANIFEST_FILE_PATTERNS = [
     // JavaScript/TypeScript
@@ -114,7 +114,6 @@ export class KodyRulesSyncService {
     };
 
     private readonly logger = createLogger(KodyRulesSyncService.name);
-
     constructor(
         @Inject(KODY_RULES_SERVICE_TOKEN)
         private readonly kodyRulesService: IKodyRulesService,
@@ -1393,8 +1392,9 @@ export class KodyRulesSyncService {
             });
 
             return result.rules.map(normalizeRule);
-        } catch (error) {
+        } catch {
             const fbRun = `${mainRun}Raw`;
+
             try {
                 const fbProvider =
                     options?.mainProvider ?? LLMModelProvider.GEMINI_2_5_FLASH;
@@ -1578,7 +1578,7 @@ export class KodyRulesSyncService {
                         (rule as any)?.repositoryId || params.repositoryId,
                     status: KodyRulesStatus.PENDING,
                 }));
-        } catch (error) {
+        } catch {
             const fbRun = `${mainRun}Raw`;
             try {
                 const promptRunner = new BYOKPromptRunnerService(
@@ -1740,7 +1740,7 @@ export class KodyRulesSyncService {
                         (rule as any)?.repositoryId || params.repositoryId,
                     status: KodyRulesStatus.PENDING,
                 }));
-        } catch (error) {
+        } catch {
             const fbRun = `${mainRun}Raw`;
             try {
                 const promptRunner = new BYOKPromptRunnerService(
@@ -1823,7 +1823,7 @@ export class KodyRulesSyncService {
             try {
                 s = JSON.parse(s);
             } catch {
-                // Ignore parsing error
+                // Ignore error
             }
         }
         const start = s.indexOf('[');

@@ -1,4 +1,3 @@
-import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 
 import {
@@ -11,10 +10,7 @@ import {
     PULL_REQUEST_MESSAGES_SERVICE_TOKEN,
 } from '@libs/code-review/domain/pullRequestMessages/contracts/pullRequestMessages.service.contract';
 import { IPullRequestMessages } from '@libs/code-review/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
-import {
-    CONTEXT_RESOLUTION_SERVICE_TOKEN,
-    IContextResolutionService,
-} from '@libs/core/context-resolution/domain/contracts/context-resolution.service.contract';
+
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { ActionType } from '@libs/core/infrastructure/config/types/general/codeReviewSettingsLog.type';
 import { ConfigLevel } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
@@ -25,19 +21,28 @@ import {
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import { AuthorizationService } from '@libs/identity/infrastructure/adapters/services/permissions/authorization.service';
+import {
+    CONTEXT_RESOLUTION_SERVICE_TOKEN,
+    IContextResolutionService,
+} from '@libs/core/context-resolution/domain/contracts/context-resolution.service.contract';
+import { createLogger } from '@kodus/flow';
 
 @Injectable()
 export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
     private readonly logger = createLogger(
         CreateOrUpdatePullRequestMessagesUseCase.name,
     );
+
     constructor(
         @Inject(PULL_REQUEST_MESSAGES_SERVICE_TOKEN)
         private readonly pullRequestMessagesService: IPullRequestMessagesService,
+
         @Inject(CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN)
         private readonly codeReviewSettingsLogService: ICodeReviewSettingsLogService,
+
         @Inject(CONTEXT_RESOLUTION_SERVICE_TOKEN)
         private readonly contextResolutionService: IContextResolutionService,
+
         private readonly authorizationService: AuthorizationService,
     ) {}
 
@@ -280,6 +285,10 @@ export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
                     overrideConfig.globalSettings?.hideComments ??
                     baseConfig.globalSettings?.hideComments ??
                     false,
+                suggestionCopyPrompt:
+                    overrideConfig.globalSettings?.suggestionCopyPrompt ??
+                    baseConfig.globalSettings?.suggestionCopyPrompt ??
+                    true,
             },
         } as IPullRequestMessages;
     }
@@ -288,7 +297,10 @@ export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
         return {
             startReviewMessage: config.startReviewMessage,
             endReviewMessage: config.endReviewMessage,
-            globalSettings: config.globalSettings || { hideComments: false },
+            globalSettings: config.globalSettings || {
+                hideComments: false,
+                suggestionCopyPrompt: true,
+            },
         } as IPullRequestMessages;
     }
 
@@ -358,6 +370,9 @@ export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
         if (!settings1 && !settings2) return true;
         if (!settings1 || !settings2) return false;
 
-        return settings1.hideComments === settings2.hideComments;
+        return (
+            settings1.hideComments === settings2.hideComments &&
+            settings1.suggestionCopyPrompt === settings2.suggestionCopyPrompt
+        );
     }
 }

@@ -5,6 +5,7 @@ import {
     OrganizationParametersKey,
     ParametersKey,
 } from '@libs/core/domain/enums';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import {
     LimitationType,
     ReviewCadenceType,
@@ -26,7 +27,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 
 @Injectable()
-export class ApplyCodeReviewPresetUseCase {
+export class ApplyCodeReviewPresetUseCase implements IUseCase {
     private readonly logger = createLogger(ApplyCodeReviewPresetUseCase.name);
 
     constructor(

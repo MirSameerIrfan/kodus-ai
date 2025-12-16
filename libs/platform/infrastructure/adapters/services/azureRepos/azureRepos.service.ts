@@ -84,22 +84,19 @@ import {
 } from '@libs/common/utils/glob-utils';
 
 @IntegrationServiceDecorator(PlatformType.AZURE_REPOS, 'codeManagement')
-export class AzureReposService
-    implements
-        Omit<
-            ICodeManagementService,
-            | 'getOrganizations'
-            | 'getWorkflows'
-            | 'getCommitsByReleaseMode'
-            | 'getPullRequestsForRTTM'
-            | 'getPullRequestReviewThreads'
-            | 'getListOfValidReviews'
-            | 'getPullRequestsWithChangesRequested'
-            | 'getAuthenticationOAuthToken'
-            | 'mergePullRequest'
-            | 'getUserById'
-        >
-{
+export class AzureReposService implements Omit<
+    ICodeManagementService,
+    | 'getOrganizations'
+    | 'getWorkflows'
+    | 'getCommitsByReleaseMode'
+    | 'getPullRequestsForRTTM'
+    | 'getPullRequestReviewThreads'
+    | 'getListOfValidReviews'
+    | 'getPullRequestsWithChangesRequested'
+    | 'getAuthenticationOAuthToken'
+    | 'mergePullRequest'
+    | 'getUserById'
+> {
     private readonly logger = createLogger(AzureReposService.name);
 
     constructor(
@@ -1050,6 +1047,7 @@ export class AzureReposService
         prNumber: number;
         lineComment: Comment;
         language: LanguageValue;
+        suggestionCopyPrompt?: boolean;
     }): Promise<AzureRepoPRThread | null> {
         try {
             const {
@@ -1058,6 +1056,7 @@ export class AzureReposService
                 prNumber,
                 lineComment,
                 language,
+                suggestionCopyPrompt = true,
             } = params;
             const { orgName, token } = await this.getAuthDetails(
                 organizationAndTeamData,
@@ -1077,6 +1076,7 @@ export class AzureReposService
                 lineComment,
                 repository,
                 translations,
+                suggestionCopyPrompt,
             );
 
             const thread =
@@ -1173,7 +1173,9 @@ export class AzureReposService
                                 name: repository.name,
                             },
                         });
-                    } catch {}
+                    } catch {
+                        // Ignore error
+                    }
                 }
 
                 if (branch) {
@@ -1195,7 +1197,7 @@ export class AzureReposService
                                     filePath: file.filename,
                                 },
                             );
-                    } catch (e: any) {
+                    } catch {
                         // Fallback: if branch lookup fails (e.g. deleted or PR merged), try latest PR commit again
                         const prNumberFallback: number | undefined = (
                             pullRequest as any
@@ -1233,7 +1235,9 @@ export class AzureReposService
                                             },
                                         );
                                 }
-                            } catch {}
+                            } catch {
+                                // Ignore error
+                            }
                         }
                     }
                 }
@@ -3606,10 +3610,47 @@ export class AzureReposService
         return `<sub>${text}</sub>\n\n`;
     }
 
+    private formatPromptForLLM(lineComment: any) {
+        let copyPrompt = '';
+        if (lineComment?.suggestion?.llmPrompt) {
+            if (lineComment.path) {
+                copyPrompt += `File ${lineComment.path}:\n\n`;
+            }
+
+            if (lineComment.start_line && lineComment.line) {
+                copyPrompt += `Line ${lineComment.start_line} to ${lineComment.line}:\n\n`;
+            } else if (lineComment.line) {
+                copyPrompt += `Line ${lineComment.line}:\n\n`;
+            }
+
+            copyPrompt += lineComment?.suggestion?.llmPrompt;
+
+            if (lineComment?.body?.improvedCode) {
+                copyPrompt +=
+                    '\n\nSuggested Code:\n\n' + lineComment?.body?.improvedCode;
+            }
+
+            copyPrompt = `\n\n<details>
+
+<summary>Prompt for LLM</summary>
+
+\`\`\`
+
+${copyPrompt}
+
+\`\`\`
+
+</details>\n\n`;
+        }
+
+        return copyPrompt;
+    }
+
     private formatBodyForAzure(
         lineComment: any,
         repository: any,
         translations: any,
+        suggestionCopyPrompt?: boolean,
     ) {
         const severityShield = lineComment?.suggestion
             ? getSeverityLevelShield(lineComment.suggestion.severity)
@@ -3634,11 +3675,16 @@ export class AzureReposService
         const thumbsUpBlock = `\`\`\`\n👍\n\`\`\`\n`;
         const thumbsDownBlock = `\`\`\`\n👎\n\`\`\`\n`;
 
+        const copyPrompt = suggestionCopyPrompt
+            ? this.formatPromptForLLM(lineComment)
+            : '';
+
         return [
             badges,
-            codeBlock,
             suggestionContent,
             actionStatement,
+            codeBlock,
+            copyPrompt,
             this.formatSub(translations.talkToKody),
             this.formatSub(translations.feedback) +
                 '<!-- kody-codereview -->&#8203;\n&#8203;',
@@ -3647,34 +3693,6 @@ export class AzureReposService
         ]
             .join('\n')
             .trim();
-    }
-
-    private filterIterationsAfterCommit(params: {
-        iterations: any[];
-        commits: { commitId: string }[];
-        lastReviewedCommitId: string;
-    }): any[] {
-        const { iterations, commits, lastReviewedCommitId } = params;
-
-        const reviewedIndex = commits.findIndex(
-            (commit) => commit.commitId === lastReviewedCommitId,
-        );
-
-        if (reviewedIndex === -1) {
-            throw new Error(
-                `Commit ${lastReviewedCommitId} not found in PR commit history`,
-            );
-        }
-
-        return iterations.filter((iteration) => {
-            const commitId = iteration.sourceRefCommit?.commitId;
-            if (!commitId) return false;
-
-            const iterationIndex = commits.findIndex(
-                (commit) => commit.commitId === commitId,
-            );
-            return iterationIndex > reviewedIndex;
-        });
     }
 
     private getListOfCriticalIssues(criticalComments: CommentResult[]): string {
@@ -3864,6 +3882,7 @@ export class AzureReposService
         includeFooter?: boolean;
         language?: string;
         organizationAndTeamData: OrganizationAndTeamData;
+        suggestionCopyPrompt?: boolean;
     }): Promise<string> {
         const {
             suggestion,
@@ -3871,6 +3890,7 @@ export class AzureReposService
             includeHeader = true,
             includeFooter = true,
             language,
+            suggestionCopyPrompt = true,
         } = params;
 
         let commentBody = '';
@@ -3906,6 +3926,10 @@ export class AzureReposService
             commentBody += `${suggestion.clusteringInformation.actionStatement}\n\n`;
         }
 
+        if (suggestionCopyPrompt) {
+            commentBody += this.formatPromptForLLM(suggestion);
+        }
+
         // FOOTER - Interação/Feedback
         if (includeFooter) {
             const translations = getTranslationsForLanguageByCategory(
@@ -3924,7 +3948,7 @@ export class AzureReposService
         return Promise.resolve(commentBody.trim());
     }
 
-    minimizeComment(params: {
+    minimizeComment(_params: {
         organizationAndTeamData: OrganizationAndTeamData;
         commentId: string;
         reason?:

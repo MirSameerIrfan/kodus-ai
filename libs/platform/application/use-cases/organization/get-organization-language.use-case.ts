@@ -11,6 +11,7 @@ import { REQUEST } from '@nestjs/core';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { IntegrationConfigKey, PlatformType } from '@libs/core/domain/enums';
 import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
+
 @Injectable()
 export class GetOrganizationLanguageUseCase implements IUseCase {
     private readonly logger = createLogger(GetOrganizationLanguageUseCase.name);

@@ -191,6 +191,51 @@ const getNovitaAI = (options?: Partial<FactoryArgs>) => {
     });
 };
 
+const getGroq = (options?: Partial<FactoryArgs>) => {
+    const defaultOptions = {
+        model: MODEL_STRATEGIES[LLMModelProvider.GROQ_MOONSHOTAI_KIMI_K2_]
+            .modelName,
+        temperature: 0,
+        cache: true,
+        maxRetries: 10,
+        maxConcurrency: 10,
+        maxTokens:
+            MODEL_STRATEGIES[LLMModelProvider.GROQ_MOONSHOTAI_KIMI_K2_]
+                .defaultMaxTokens,
+        verbose: false,
+        streaming: false,
+        callbacks: [],
+        baseURL: options?.baseURL
+            ? options.baseURL
+            : process.env.API_GROQ_BASE_URL,
+        apiKey: options?.apiKey ? options.apiKey : process.env.API_GROQ_API_KEY,
+    };
+
+    const cleanOptions = Object.fromEntries(
+        Object.entries(options ?? {}).filter(
+            ([, value]) => value !== undefined,
+        ),
+    );
+
+    const finalOptions = cleanOptions
+        ? { ...defaultOptions, ...cleanOptions }
+        : defaultOptions;
+
+    return new ChatOpenAI({
+        modelName: finalOptions.model,
+        openAIApiKey: finalOptions.apiKey,
+        temperature: finalOptions.temperature,
+        maxTokens: finalOptions.maxTokens,
+        streaming: finalOptions.streaming,
+        verbose: finalOptions.verbose,
+        callbacks: finalOptions.callbacks,
+        configuration: {
+            baseURL: finalOptions.baseURL,
+            apiKey: finalOptions.apiKey,
+        },
+    });
+};
+
 export enum LLMModelProvider {
     // OpenAI Models
     OPENAI_GPT_4O = 'openai:gpt-4o',
@@ -229,7 +274,6 @@ export interface ModelStrategy {
     readonly modelName: string;
     readonly defaultMaxTokens: number;
     readonly baseURL?: string;
-    readonly apiKey?: string;
     readonly inputMaxTokens?: number;
     readonly maxReasoningTokens?: number;
 }
@@ -353,20 +397,14 @@ export const MODEL_STRATEGIES: Record<LLMModelProvider, ModelStrategy> = {
 
     [LLMModelProvider.GROQ_MOONSHOTAI_KIMI_K2_]: {
         provider: 'groq',
-        factory: getChatGPT,
+        factory: getGroq,
         modelName: 'moonshotai/kimi-k2-instruct-0905',
         defaultMaxTokens: -1,
-        baseURL:
-            process.env.API_GROQ_BASE_URL || 'https://api.groq.com/openai/v1',
-        apiKey: process.env.API_GROQ_API_KEY,
     },
     [LLMModelProvider.GROQ_GPT_OSS_120B]: {
         provider: 'groq',
-        factory: getChatGPT,
+        factory: getGroq,
         modelName: 'openai/gpt-oss-120b',
         defaultMaxTokens: -1,
-        baseURL:
-            process.env.API_GROQ_BASE_URL || 'https://api.groq.com/openai/v1',
-        apiKey: process.env.API_GROQ_API_KEY,
     },
 };

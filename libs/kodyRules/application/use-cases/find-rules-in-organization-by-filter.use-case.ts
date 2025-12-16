@@ -1,4 +1,3 @@
-import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 
@@ -22,20 +21,26 @@ import {
 } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 
 import { enrichRulesWithContextReferences } from './utils/enrich-rules-with-context-references.util';
+import { createLogger } from '@kodus/flow';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 
 @Injectable()
-export class FindRulesInOrganizationByRuleFilterKodyRulesUseCase {
+export class FindRulesInOrganizationByRuleFilterKodyRulesUseCase implements IUseCase {
     private readonly logger = createLogger(
         FindRulesInOrganizationByRuleFilterKodyRulesUseCase.name,
     );
+
     constructor(
         @Inject(KODY_RULES_SERVICE_TOKEN)
         private readonly kodyRulesService: IKodyRulesService,
+
         @Inject(REQUEST)
         private readonly request: UserRequest,
-        private readonly authorizationService: AuthorizationService,
+
         @Inject(CONTEXT_REFERENCE_SERVICE_TOKEN)
         private readonly contextReferenceService: IContextReferenceService,
+
+        private readonly authorizationService: AuthorizationService,
     ) {}
 
     async execute(
