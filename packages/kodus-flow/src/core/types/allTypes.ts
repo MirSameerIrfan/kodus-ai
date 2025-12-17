@@ -9,7 +9,6 @@ import { IdGenerator } from '../../utils/index.js';
 import { createLogger, TelemetrySystem } from '../../observability/index.js';
 import type { ObservabilitySystem } from '../../observability/index.js';
 import { zodToJSONSchema } from '../utils/zod-to-json-schema.js';
-// ContextStateService removed - using contextNew architecture
 import { EventStore } from '../../runtime/index.js';
 import { EventChainTracker } from '../../runtime/core/event-processor-optimized.js';
 import { EventQueue } from '../../runtime/core/index.js';
@@ -45,7 +44,7 @@ export type AgentIdentity = {
 };
 
 export const agentIdentitySchema = z.object({
-    role: z.enum(AgentInputEnum).optional(),
+    role: z.nativeEnum(AgentInputEnum).optional(),
     goal: z.string().optional(),
     description: z.string().optional(),
     expertise: z.array(z.string()).optional(),
@@ -1883,6 +1882,8 @@ export interface ToolContext extends BaseContext {
 
     signal: AbortSignal;
 
+    traceContext?: Record<string, string>; // W3C Trace Context
+
     logger?: {
         debug: (message: string, meta?: Record<string, unknown>) => void;
         info: (message: string, meta?: Record<string, unknown>) => void;
@@ -2003,6 +2004,7 @@ export function createToolContext(
         parentId?: string;
         metadata?: Metadata;
         signal?: AbortSignal;
+        traceContext?: Record<string, string>;
     } = {},
 ): ToolContext {
     return {
@@ -2014,6 +2016,7 @@ export function createToolContext(
         callId,
         parameters,
         signal: options.signal || new AbortController().signal,
+        traceContext: options.traceContext,
 
         cleanup: async () => {},
     };
@@ -5034,8 +5037,6 @@ export interface ObservabilityStorageConfig {
     collections?: {
         logs?: string;
         telemetry?: string;
-        metrics?: string;
-        errors?: string;
     };
     batchSize?: number;
     flushIntervalMs?: number;
@@ -5049,7 +5050,6 @@ export interface MongoDBExporterConfig {
     collections: {
         logs: string;
         telemetry: string;
-        errors: string;
     };
     batchSize: number;
     flushIntervalMs: number;
@@ -5061,7 +5061,7 @@ export interface MongoDBExporterConfig {
 export interface MongoDBLogItem {
     _id?: string;
     timestamp: Date;
-    level: 'debug' | 'info' | 'warn' | 'error';
+    level: 'debug' | 'info' | 'warn' | 'error' | 'verbose';
     message: string;
     component: string;
     correlationId?: string;

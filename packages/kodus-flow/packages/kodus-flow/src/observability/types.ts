@@ -129,7 +129,9 @@ export interface TelemetryConfig {
         traceKernel?: boolean;
         traceSnapshots?: boolean;
         tracePersistence?: boolean;
+        metricsEnabled?: boolean;
     };
+    processorTimeout?: number; // Timeout for trace processors in ms (default: 5000)
     globalAttributes?: Record<string, string | number | boolean>;
 }
 

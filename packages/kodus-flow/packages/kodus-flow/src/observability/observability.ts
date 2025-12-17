@@ -35,7 +35,6 @@ import { IdGenerator } from '../utils/id-generator.js';
 import { createMongoDBExporter } from './exporters/mongodb-exporter.js';
 import { OtlpTraceExporter } from './exporters/otlp-exporter.js';
 import { OtelAdapter } from './core/otel-adapter.js';
-import { SanitizationProcessor } from './processors/sanitization-processor.js';
 
 /**
  * Main observability system that coordinates all components
@@ -68,6 +67,7 @@ export class ObservabilitySystem {
                 features: config.telemetry?.features || {
                     traceSpans: true,
                     traceEvents: true,
+                    metricsEnabled: false,
                 },
                 globalAttributes: config.telemetry?.globalAttributes,
             },
@@ -196,20 +196,16 @@ export class ObservabilitySystem {
         if (this.otelAdapter.isAvailable()) {
             const currentSpan = this.getCurrentSpan();
             const sc = currentSpan?.getSpanContext();
-
+            
             let ctx = this.otelAdapter.getCurrentContext();
-
+            
             if (sc && sc.traceId && sc.spanId) {
-                ctx = this.otelAdapter.contextFromIds(
-                    sc.traceId,
-                    sc.spanId,
-                    sc.traceFlags,
-                );
+                ctx = this.otelAdapter.contextFromIds(sc.traceId, sc.spanId, sc.traceFlags);
             }
-
+            
             this.otelAdapter.inject(ctx, carrier);
         }
-
+        
         // Also inject internal correlationId for backward compatibility
         const ctx = this.getContext();
         if (ctx?.correlationId) {
@@ -223,10 +219,7 @@ export class ObservabilitySystem {
      */
     extractContext(carrier: Record<string, string>): any {
         if (this.otelAdapter.isAvailable()) {
-            return this.otelAdapter.extract(
-                this.otelAdapter.getCurrentContext(),
-                carrier,
-            );
+            return this.otelAdapter.extract(this.otelAdapter.getCurrentContext(), carrier);
         }
         return undefined;
     }
@@ -619,10 +612,6 @@ export class ObservabilitySystem {
      * Setup exporters based on configuration
      */
     private setupExportersSync(): void {
-        // Setup Sanitization Processor first to clean data before any export
-        const sanitizationProcessor = new SanitizationProcessor();
-        this.telemetry.addTraceProcessor(sanitizationProcessor);
-
         // Console logging is handled directly in telemetry processors
 
         // Setup telemetry processor for console
@@ -713,7 +702,7 @@ export class ObservabilitySystem {
                     process: async (item: TraceItem) => {
                         try {
                             await otlpExporter.exportTrace(item);
-                        } catch {
+                        } catch (error) {
                             // Silent fail or debug log
                         }
                     },
@@ -822,7 +811,7 @@ export class ObservabilitySystem {
 
         // Use exporters
         this.exporters.forEach((exporter) => {
-            void exporter.exportLog(
+            exporter.exportLog(
                 'error',
                 error.message,
                 {
