@@ -262,6 +262,13 @@ export class ToolEngine {
             signal?: AbortSignal;
         },
     ): Promise<ToolContext> {
+        // Extract trace context for propagation
+        const obs = getObservability();
+        const traceContext: Record<string, string> = {};
+        try {
+            obs.injectContext(traceContext);
+        } catch {}
+
         // Start with basic tool context
         const basicContext = createToolContext(
             toolName,
@@ -276,6 +283,7 @@ export class ToolEngine {
                 ...(options?.parentId && { parentId: options.parentId }),
                 metadata: options?.metadata,
                 signal: options?.signal,
+                traceContext,
             },
         );
 

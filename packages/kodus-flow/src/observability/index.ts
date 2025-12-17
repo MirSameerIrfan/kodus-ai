@@ -53,3 +53,8 @@ export {
 } from './traceability.js';
 
 export type { TraceabilityResponse } from './traceability.js';
+
+// New Exports for OTLP
+export { OtelAdapter } from './core/otel-adapter.js';
+export { OtlpTraceExporter } from './exporters/otlp-exporter.js';
+export { MongoDBExporter } from './exporters/mongodb-exporter.js';

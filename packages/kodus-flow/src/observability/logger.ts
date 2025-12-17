@@ -182,6 +182,20 @@ export class SimpleLogger {
         }
 
         childLogger[level](logObject, message);
+
+        // Forward to global log processors (e.g. MongoDB exporter)
+        globalLogProcessors.forEach((processor) => {
+            try {
+                processor.process(
+                    level,
+                    message,
+                    { ...metadata, component: effectiveServiceName },
+                    error,
+                );
+            } catch {
+                // Fail silently to avoid recursion or crashing the app
+            }
+        });
     }
 
     private extractContextInfo(
@@ -286,12 +300,6 @@ export class SimpleLogger {
 
             Sentry.captureException(error, {
                 fingerprint: [error.name, error.message],
-            });
-
-            console.log('Sentry event captured:', {
-                error: error.message,
-                traceId: logObject?.traceId,
-                spanId: logObject?.spanId,
             });
         });
     }

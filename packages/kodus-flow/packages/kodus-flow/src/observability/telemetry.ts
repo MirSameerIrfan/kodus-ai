@@ -32,6 +32,7 @@ export class TelemetrySystem {
             features: {
                 traceSpans: true,
                 traceEvents: true,
+                metricsEnabled: false, // Not implemented yet
                 ...config.features,
             },
             globalAttributes: config.globalAttributes || {},
@@ -153,11 +154,9 @@ export class TelemetrySystem {
                 span.end();
                 this.currentSpan = previousSpan;
 
-                // Process the completed span (skip no-op spans)
-                if (span.getSpanContext().traceId !== 'noop') {
-                    const traceItem = span.toTraceItem();
-                    void this.processTraceItem(traceItem);
-                }
+                // Process the completed span
+                const traceItem = span.toTraceItem();
+                void this.processTraceItem(traceItem);
             }
         });
     }
@@ -187,21 +186,33 @@ export class TelemetrySystem {
     }
 
     /**
-     * Process a trace item through all processors
+     * Process a trace item through all processors with timeout protection
      */
     private async processTraceItem(item: TraceItem): Promise<void> {
+        const timeout = this.config.processorTimeout || 5000;
+
         for (const processor of this.processors) {
             try {
-                await processor.process(item);
+                // Race processing against timeout
+                const processPromise = processor.process(item);
+                const timeoutPromise = new Promise<void>((_, reject) => {
+                    setTimeout(() => {
+                        reject(new Error(`Trace processor timeout after ${timeout}ms`));
+                    }, timeout);
+                });
+
+                await Promise.race([processPromise, timeoutPromise]);
             } catch (error) {
                 this.logger.error({
-                    message: 'Trace processor failed',
+                    message: 'Trace processor failed or timed out',
                     context: this.constructor.name,
                     error: error as Error,
+
                     metadata: {
                         processor: processor.constructor.name,
                         traceId: item.context.traceId,
                         spanId: item.context.spanId,
+                        timeout,
                     },
                 });
             }
