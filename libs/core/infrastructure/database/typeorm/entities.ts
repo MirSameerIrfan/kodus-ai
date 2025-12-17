@@ -48,6 +48,7 @@ export const ENTITIES = [
     CodeReviewSettingsLogModel,
     AutomationModel,
     OrganizationParametersModel,
+    WorkflowJobModel,
     InboxMessageModel,
     GlobalParametersModel,
     TeamAutomationModel,
@@ -61,5 +62,4 @@ export const ENTITIES = [
     ProfileModel,
     CodeReviewExecutionModel,
     InteractionModel,
-    WorkflowJobModel,
 ];

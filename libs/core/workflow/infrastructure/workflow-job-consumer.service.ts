@@ -36,11 +36,10 @@ export class WorkflowJobConsumer {
         routingKey: 'workflow.jobs.*',
         queue: 'workflow.jobs.queue',
         queueOptions: {
-            durable: true,
             arguments: {
                 'x-queue-type': 'quorum',
                 'x-dead-letter-exchange': 'workflow.exchange.dlx',
-                'x-dead-letter-routing-key': 'workflow.jobs.dlq',
+                'x-dead-letter-routing-key': 'workflow.job.failed',
             },
         },
     })

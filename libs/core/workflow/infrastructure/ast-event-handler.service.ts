@@ -35,7 +35,6 @@ export class ASTEventHandler {
         queue: 'workflow.events.ast',
         allowNonJsonMessages: false,
         queueOptions: {
-            durable: true,
             arguments: {
                 'x-queue-type': 'quorum',
             },

@@ -36,6 +36,7 @@ export class IgnoreBotsUseCase implements IUseCase {
             organizationAndTeamData,
             determineBots: true,
         });
+
         const prMembers =
             await this.pullRequestHandlerService.getPullRequestAuthorsWithCache(
                 organizationAndTeamData,

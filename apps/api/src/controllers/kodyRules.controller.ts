@@ -52,7 +52,7 @@ import {
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import { CreateKodyRuleDto } from '@libs/ee/kodyRules/dtos/create-kody-rule.dto';
 import { KodyRulesStatus } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
-import { FindRecommendedKodyRulesDto } from 'src/dtos/find-recommended-kody-rules.dto';
+import { FindRecommendedKodyRulesDto } from '../dtos/find-recommended-kody-rules.dto';
 
 @Controller('kody-rules')
 export class KodyRulesController {

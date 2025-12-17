@@ -13,7 +13,6 @@ import {
     IMessageBrokerService,
     MESSAGE_BROKER_SERVICE_TOKEN,
 } from '@libs/core/domain/contracts/message-broker.service.contracts';
-import { WORKFLOW_QUEUE_CONFIG } from './config/rabbitmq.config';
 
 @Injectable()
 export class WorkflowJobQueueService implements IJobQueueService {
@@ -71,10 +70,9 @@ export class WorkflowJobQueueService implements IJobQueueService {
                         // Override messageId to match job UUID for consistency/tracing
                         messagePayload.messageId = savedJob.uuid;
 
-                        // Use configurations from WORKFLOW_QUEUE_CONFIG
-                        const exchange =
-                            WORKFLOW_QUEUE_CONFIG.exchanges[0].name;
-                        const routingKey = `${WORKFLOW_QUEUE_CONFIG.queues[0].routingKey}.${job.workflowType.toLowerCase()}`;
+                        // Define exchange and routing key explicitly
+                        const exchange = 'workflow.exchange';
+                        const routingKey = `workflow.job.created`;
 
                         // 3. Create Outbox Message in transaction
                         await this.outboxRepository.create(

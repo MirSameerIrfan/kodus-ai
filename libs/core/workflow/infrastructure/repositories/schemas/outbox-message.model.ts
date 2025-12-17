@@ -3,7 +3,7 @@ import { Column, Entity, Index, ManyToOne, JoinColumn } from 'typeorm';
 import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 import { WorkflowJobModel } from './workflow-job.model';
 
-@Entity({ name: 'outbox_messages', schema: 'workflow' })
+@Entity({ name: 'outbox_messages', schema: 'kodus_workflow' })
 @Index('IDX_outbox_messages_processed', ['processed'])
 @Index('IDX_outbox_messages_created_at', ['createdAt'])
 export class OutboxMessageModel extends CoreModel {

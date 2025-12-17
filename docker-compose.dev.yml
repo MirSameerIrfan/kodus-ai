@@ -25,33 +25,37 @@ services:
   #----------------------------------------------------------------
   api:
     <<: *app-service-defaults
-    container_name: kodus_api_dev
+    container_name: kodus_api
     ports:
       - "${API_PORT:-3331}:${API_PORT:-3331}"
       - "9229:9229"
     # Entrypoint manages deps and migrations. Passing the start command.
-    command: yarn start:dev:api
+    command: >
+      sh -c "nodemon --config nodemon.json --exec 'node --inspect=0.0.0.0:9229 -r ts-node/register -r tsconfig-paths/register apps/api/src/main.ts'"
     environment:
       - CHOKIDAR_USEPOLLING=true
       - CHOKIDAR_INTERVAL=3000
       - API_DEVELOPMENT_MODE=${API_DEVELOPMENT_MODE:-true}
       - WORKFLOW_QUEUE_WORKER_ENABLED=${WORKFLOW_QUEUE_WORKER_ENABLED:-true}
+      - RUN_MIGRATIONS=true
 
   worker:
     <<: *app-service-defaults
-    container_name: kodus_worker_dev
-    command: yarn start:dev:worker
+    container_name: kodus_worker
     ports:
       - "9231:9231"
     # Worker will also run migration on startup, which is OK as DB supports concurrency
+    command: >
+      sh -c "nodemon --config nodemon.json --exec 'node --inspect=0.0.0.0:9231 -r ts-node/register -r tsconfig-paths/register apps/worker/src/main.ts'"
 
   webhooks:
     <<: *app-service-defaults
-    container_name: kodus_webhooks_dev
-    command: yarn start:dev:webhooks
+    container_name: kodus_webhooks
     ports:
       - "${WEBHOOKS_PORT:-3333}:${WEBHOOKS_PORT:-3333}"
       - "9230:9230"
+    command: >
+      sh -c "nodemon --config nodemon.json --exec 'node --inspect=0.0.0.0:9230 -r ts-node/register -r tsconfig-paths/register apps/webhooks/src/main.ts'"
 
   #----------------------------------------------------------------
   # Databases & Infrastructure

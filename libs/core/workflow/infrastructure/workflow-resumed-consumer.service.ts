@@ -50,7 +50,6 @@ export class WorkflowResumedConsumer {
         queue: 'workflow.jobs.resumed.queue',
         allowNonJsonMessages: false,
         queueOptions: {
-            durable: true,
             arguments: {
                 'x-queue-type': 'quorum',
                 'x-dead-letter-exchange': 'workflow.exchange.dlx',

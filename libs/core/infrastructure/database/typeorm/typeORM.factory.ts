@@ -8,6 +8,8 @@ import { DatabaseConnection } from '@libs/core/infrastructure/config/types';
 
 import { TypeOrmCustomLogger } from './logger';
 
+import { ENTITIES } from './entities';
+
 @Injectable()
 export class TypeORMFactory implements TypeOrmOptionsFactory {
     protected config: DatabaseConnection;
@@ -43,13 +45,8 @@ export class TypeORMFactory implements TypeOrmOptionsFactory {
             username: this.config.username,
             password: this.config.password,
             database: this.config.database,
-            entities: [
-                join(
-                    __dirname,
-                    '../../../core/infrastructure/adapters/repositories/typeorm/schema/*.model{.ts,.js}',
-                ),
-            ],
-            autoLoadEntities: true,
+            entities: ENTITIES,
+            autoLoadEntities: false,
             cache: false,
             migrationsRun: false,
             migrations: [join(__dirname, './migrations/*{.ts,.js}')],

@@ -34,9 +34,6 @@ import { CodeReviewValidationService } from '@libs/automation/infrastructure/ada
 import { AutomationModule } from '@libs/automation/modules/automation.module';
 import { ASTEventHandler } from './infrastructure/ast-event-handler.service';
 
-// Config
-import { WORKFLOW_QUEUE_CONFIG } from './infrastructure/config/rabbitmq.config';
-
 const sharedProviders = [
     {
         provide: JOB_QUEUE_SERVICE_TOKEN,
@@ -110,8 +107,6 @@ export class WorkflowModule {
         imports.push(
             RabbitMQWrapperModule.register({
                 enableConsumers: isWorker,
-                queues: WORKFLOW_QUEUE_CONFIG.queues,
-                exchanges: WORKFLOW_QUEUE_CONFIG.exchanges,
             }),
         );
 

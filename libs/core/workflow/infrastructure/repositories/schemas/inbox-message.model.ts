@@ -3,7 +3,7 @@ import { Column, Entity, Index, ManyToOne, JoinColumn } from 'typeorm';
 import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 import { WorkflowJobModel } from './workflow-job.model';
 
-@Entity({ name: 'inbox_messages', schema: 'workflow' })
+@Entity({ name: 'inbox_messages', schema: 'kodus_workflow' })
 @Index('IDX_inbox_messages_message_id', ['messageId'], { unique: true })
 @Index('IDX_inbox_messages_consumer_message', ['consumerId', 'messageId'], {
     unique: true,

@@ -61,25 +61,49 @@ export class OutboxMessageRepository {
      * This prevents multiple workers from picking up the same message.
      */
     async findUnprocessed(limit: number = 100): Promise<OutboxMessageModel[]> {
-        try {
-            // Using QueryBuilder with lock skipLocked for concurrency control
-            return await this.repository
-                .createQueryBuilder('outbox')
-                .setLock('pessimistic_write') // Locks the rows
-                .setOnLocked('skip_locked') // Skips already locked rows
-                .where('outbox.processed = :processed', { processed: false })
-                .orderBy('outbox.createdAt', 'ASC')
-                .take(limit)
-                .leftJoinAndSelect('outbox.job', 'job')
-                .getMany();
-        } catch (error) {
-            this.logger.error({
-                message: 'Failed to find unprocessed outbox messages',
-                context: OutboxMessageRepository.name,
-                error,
-            });
-            throw error;
-        }
+        return this.repository.manager.transaction(
+            async (transactionalEntityManager) => {
+                try {
+                    // Using QueryBuilder with lock skipLocked for concurrency control
+                    const messageIds = await transactionalEntityManager
+                        .createQueryBuilder(OutboxMessageModel, 'outbox')
+                        .select('outbox.uuid')
+                        .setLock('pessimistic_write')
+                        .setOnLocked('skip_locked')
+                        .where('outbox.processed = :processed', {
+                            processed: false,
+                        })
+                        .orderBy('outbox.createdAt', 'ASC')
+                        .take(limit)
+                        .getMany()
+                        .then((messages) => messages.map((m) => m.uuid));
+
+                    if (messageIds.length === 0) {
+                        return [];
+                    }
+
+                    return await transactionalEntityManager
+                        .createQueryBuilder(OutboxMessageModel, 'outbox')
+                        .whereInIds(messageIds)
+                        .leftJoinAndSelect('outbox.job', 'job')
+                        .orderBy('outbox.createdAt', 'ASC')
+                        .getMany();
+                } catch (error) {
+                    if (
+                        error.name !== 'QueryFailedError' &&
+                        error.name !== 'TransactionNotStartedError'
+                    ) {
+                        this.logger.error({
+                            message:
+                                'Failed to find unprocessed outbox messages',
+                            context: OutboxMessageRepository.name,
+                            error,
+                        });
+                    }
+                    throw error;
+                }
+            },
+        );
     }
 
     async markAsProcessed(messageId: string): Promise<void> {

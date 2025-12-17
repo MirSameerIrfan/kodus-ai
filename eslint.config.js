@@ -53,6 +53,7 @@ module.exports = tseslint.config(
             '**/dist/**',
             '.eslintrc.js',
             'eslint.config.js',
+            'webpack.config.js',
             '**/tsconfig-paths-bootstrap.js',
             'ee/configs/environment/environment.ts',
             'ee/configs/environment/environment.dev.ts',

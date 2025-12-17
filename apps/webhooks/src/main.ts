@@ -17,6 +17,8 @@ import { KodusLoggerService } from '@libs/core/log/kodus-logger.service';
 import { WebhookHandlerModule } from './modules/webhook-handler.module';
 import { environment } from '@libs/ee/configs/environment';
 
+declare const module: any;
+
 async function bootstrap() {
     process.env.COMPONENT_TYPE = 'webhook';
 
@@ -123,6 +125,11 @@ async function bootstrap() {
             'Application',
         );
     });
+
+    if (module.hot) {
+        module.hot.accept();
+        module.hot.dispose(() => app.close());
+    }
 }
 
 bootstrap().catch((error) => {

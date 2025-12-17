@@ -33,7 +33,11 @@ export class TeamMemberModel extends CoreModel {
     @Column({ nullable: true })
     communicationId: string;
 
-    @Column({ default: TeamMemberRole.MEMBER })
+    @Column({
+        type: 'enum',
+        enum: TeamMemberRole,
+        default: TeamMemberRole.MEMBER,
+    })
     teamRole: TeamMemberRole;
 
     @ManyToOne(() => UserModel, (user) => user.teamMember)

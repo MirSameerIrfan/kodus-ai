@@ -1,12 +1,11 @@
 import { ExecutionContext } from '@nestjs/common';
 import { trace } from '@opentelemetry/api';
-import * as Sentry from '@sentry/node';
 import pino from 'pino';
 import { LogArguments, LogLevel, LogProcessor } from './types.js';
 
-/**
- * Simple and robust logger implementation
- */
+/* -------------------------------------------------------------------------- */
+/*                                 Globals                                    */
+/* -------------------------------------------------------------------------- */
 
 let pinoLogger: pino.Logger | null = null;
 let globalLogProcessors: LogProcessor[] = [];
@@ -23,30 +22,29 @@ let observabilityContextProvider:
           | undefined)
     | null = null;
 
-/**
- * Get or create Pino logger instance
- */
+/* -------------------------------------------------------------------------- */
+/*                         Create / Get Pino Logger                           */
+/* -------------------------------------------------------------------------- */
+
 function getPinoLogger(): pino.Logger {
     if (!pinoLogger) {
-        // Determine if we should use pretty printing
         const shouldPrettyPrint =
             (process.env.API_LOG_PRETTY || 'false') === 'true';
         const isProduction =
             (process.env.API_NODE_ENV || 'production') === 'production';
 
-        const loggerConfig: pino.LoggerOptions = {
+        const baseConfig: pino.LoggerOptions = {
             level: process.env.API_LOG_LEVEL || 'info',
             formatters: {
                 level: (label) => ({ level: label }),
                 log(object) {
                     if (isProduction && !shouldPrettyPrint) {
-                        // Cleaner log for production
                         return {
                             message: object.message,
                             serviceName: object.serviceName,
                             environment: object.environment,
                             error: object.error
-                                ? { message: (object?.error as any)?.message }
+                                ? { message: (object.error as any)?.message }
                                 : undefined,
                         };
                     }
@@ -74,58 +72,77 @@ function getPinoLogger(): pino.Logger {
                     'req.headers.authorization',
                     'req.headers["x-api-key"]',
                     'user.sensitiveInfo',
-                    'metadata.headers.authorization',
                 ],
                 censor: '[REDACTED]',
             },
             timestamp: pino.stdTimeFunctions.isoTime,
+            base: {
+                pid: process.pid,
+                hostname: undefined,
+            },
         };
 
-        // Use pretty printing in development
-        if (shouldPrettyPrint && !isProduction) {
-            pinoLogger = pino(
-                {
-                    ...loggerConfig,
-                    transport: {
-                        target: 'pino-pretty',
+        let logger: pino.Logger;
+
+        if (!shouldPrettyPrint && isProduction) {
+            /**
+             * Use a worker-thread based transport for performance
+             */
+            const transport = pino.transport({
+                targets: [
+                    {
+                        target: 'pino/file',
                         options: {
-                            colorize: true,
-                            translateTime: 'SYS:standard',
-                            ignore: 'pid,hostname',
-                            levelFirst: true,
-                            errorProps: 'message,stack',
-                            messageFormat:
-                                '{level} - {serviceName} - {context} - {msg}',
+                            destination: 1, // stdout
+                            mkdir: false,
                         },
+                        level: process.env.API_LOG_LEVEL || 'info',
                     },
-                },
-                isProduction && !shouldPrettyPrint
-                    ? pino.destination({ sync: false, minLength: 4096 })
-                    : undefined,
-            );
+                ],
+            });
+
+            // Add an error handler to the transport to catch logging pipeline failures
+            transport.on('error', (err) => {
+                // Use console.error as a safe fallback
+                console.error('Pino transport failure:', err);
+            });
+
+            logger = pino(baseConfig, transport);
         } else {
-            // Production: JSON format with performance optimizations
-            pinoLogger = pino(
+            /**
+             * Development / pretty mode
+             */
+            logger = pino(
                 {
-                    ...loggerConfig,
-                    // Performance optimizations for production
-                    base: {
-                        pid: process.pid,
-                        hostname: undefined, // Remove hostname for smaller logs
-                    },
+                    ...baseConfig,
+                    transport: shouldPrettyPrint
+                        ? {
+                              target: 'pino-pretty',
+                              options: {
+                                  colorize: true,
+                                  translateTime: 'SYS:standard',
+                                  ignore: 'pid,hostname',
+                                  levelFirst: true,
+                                  errorProps: 'message,stack',
+                                  messageFormat:
+                                      '{level} | {serviceName} | {context} | {msg}',
+                              },
+                          }
+                        : undefined,
                 },
-                isProduction && !shouldPrettyPrint
-                    ? pino.destination({ sync: false, minLength: 4096 })
-                    : undefined,
+                undefined,
             );
         }
+
+        pinoLogger = logger;
     }
     return pinoLogger;
 }
 
-/**
- * Simple logger class with Pino integration
- */
+/* -------------------------------------------------------------------------- */
+/*                                   Logger Class                              */
+/* -------------------------------------------------------------------------- */
+
 export class SimpleLogger {
     private defaultServiceName: string;
 
@@ -149,10 +166,6 @@ export class SimpleLogger {
         this.handleLog('debug', args);
     }
 
-    public verbose(args: LogArguments) {
-        this.handleLog('verbose', args);
-    }
-
     private handleLog(
         level: LogLevel,
         { message, context, serviceName, error, metadata = {} }: LogArguments,
@@ -163,7 +176,6 @@ export class SimpleLogger {
 
         const effectiveServiceName = serviceName || this.defaultServiceName;
         const contextStr = this.extractContextInfo(context);
-
         const baseLogger = getPinoLogger();
 
         const childLogger = baseLogger.child({
@@ -177,14 +189,10 @@ export class SimpleLogger {
             error,
         );
 
-        if (error && level === 'error') {
-            this.captureExceptionToSentry(error, message, metadata, logObject);
-        }
-
         childLogger[level](logObject, message);
 
-        // Forward to global log processors (e.g. MongoDB exporter)
-        globalLogProcessors.forEach((processor) => {
+        // Forward to global log processors (e.g., MongoDB exporter)
+        for (const processor of globalLogProcessors) {
             try {
                 processor.process(
                     level,
@@ -193,18 +201,16 @@ export class SimpleLogger {
                     error,
                 );
             } catch {
-                // Fail silently to avoid recursion or crashing the app
+                // Fail silently to avoid recursion/crash
             }
-        });
+        }
     }
 
     private extractContextInfo(
         context: ExecutionContext | string | undefined,
     ): string {
         if (!context) return 'unknown';
-        if (typeof context === 'string') {
-            return context;
-        }
+        if (typeof context === 'string') return context;
         try {
             const request = context.switchToHttp().getRequest();
             return request.url || 'unknown';
@@ -226,16 +232,13 @@ export class SimpleLogger {
         metadata: Record<string, any>,
         error?: Error,
     ) {
-        const traceContext = this.getTraceContext();
-        const observabilityContext = this.getObservabilityContext();
-
         return {
             environment: process.env.API_NODE_ENV || 'unknown',
             serviceName,
             ...metadata,
             metadata,
-            ...traceContext,
-            ...observabilityContext,
+            ...this.getTraceContext(),
+            ...this.getObservabilityContext(),
             error: error
                 ? { message: error.message, stack: error.stack }
                 : undefined,
@@ -250,16 +253,13 @@ export class SimpleLogger {
 
         const currentSpan = trace.getActiveSpan();
         if (!currentSpan) {
-            return {
-                traceId: null,
-                spanId: null,
-            };
+            return { traceId: null, spanId: null };
         }
 
-        const context = currentSpan.spanContext();
+        const ctx = currentSpan.spanContext();
         return {
-            traceId: context.traceId,
-            spanId: context.spanId,
+            traceId: ctx.traceId,
+            spanId: ctx.spanId,
         };
     }
 
@@ -269,67 +269,20 @@ export class SimpleLogger {
         }
         return {};
     }
-
-    private captureExceptionToSentry(
-        error: Error,
-        message: string,
-        metadata: Record<string, any>,
-        logObject: any,
-    ) {
-        const safeMetadata = this.safeSerialize({ ...metadata, ...logObject });
-
-        Sentry.withScope((scope) => {
-            scope.setTag('environment', process.env.API_NODE_ENV || 'unknown');
-            scope.setTag('level', 'error');
-            scope.setTag('type', error.name);
-
-            if (logObject?.traceId) {
-                scope.setTag('traceId', logObject.traceId);
-            }
-
-            if (logObject?.spanId) {
-                scope.setTag('spanId', logObject.spanId);
-            }
-
-            scope.setExtras({
-                ...safeMetadata,
-                message,
-                stack: error.stack,
-                name: error.name,
-            });
-
-            Sentry.captureException(error, {
-                fingerprint: [error.name, error.message],
-            });
-        });
-    }
-
-    private safeSerialize(obj: Record<string, any>): Record<string, any> {
-        try {
-            return JSON.parse(JSON.stringify(obj));
-        } catch {
-            return { error: 'Failed to serialize metadata for Sentry' };
-        }
-    }
 }
 
-/**
- * Create a logger instance
- */
+/* -------------------------------------------------------------------------- */
+/*                                   Public API                                */
+/* -------------------------------------------------------------------------- */
+
 export function createLogger(component: string): SimpleLogger {
     return new SimpleLogger(component);
 }
 
-/**
- * Add a log processor
- */
 export function addLogProcessor(processor: LogProcessor): void {
     globalLogProcessors.push(processor);
 }
 
-/**
- * Remove a log processor
- */
 export function removeLogProcessor(processor: LogProcessor): void {
     const index = globalLogProcessors.indexOf(processor);
     if (index > -1) {
@@ -337,34 +290,20 @@ export function removeLogProcessor(processor: LogProcessor): void {
     }
 }
 
-/**
- * Clear all log processors
- */
 export function clearLogProcessors(): void {
     globalLogProcessors = [];
 }
 
-/**
- * Allow ObservabilitySystem to control runtime log level
- */
 export function setGlobalLogLevel(level: LogLevel | string): void {
-    const logger = getPinoLogger();
-    // Pino accepts broader levels; keep flexible
-    logger.level = level as any;
+    getPinoLogger().level = level as any;
 }
 
-/**
- * Allow ObservabilitySystem to provide current span context for log correlation
- */
 export function setSpanContextProvider(
     provider: (() => { traceId: string; spanId: string } | undefined) | null,
 ): void {
     spanContextProvider = provider;
 }
 
-/**
- * Allow ObservabilitySystem to provide current observability context
- */
 export function setObservabilityContextProvider(
     provider:
         | (() =>

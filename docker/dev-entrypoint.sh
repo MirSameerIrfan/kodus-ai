@@ -9,13 +9,16 @@ if [ ! -x node_modules/.bin/nest ]; then
   yarn install --frozen-lockfile
 fi
 
-# 2. Run Migrations and Seeds (ALWAYS)
-# Since our seeds are idempotent, it is safe to run them on every restart.
+# 2. Run Migrations and Seeds (if configured)
+if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
 echo "▶ Running Migrations..."
 npm run migration:run:internal
 
 echo "▶ Running Seeds..."
 npm run seed:internal
+else
+  echo "▶ Skipping Migrations and Seeds."
+fi
 
 # 3. Yalc Check
 [ -d ".yalc/@kodus/flow" ] && echo "▶ yalc detected: using .yalc/@kodus/flow"

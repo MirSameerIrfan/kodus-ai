@@ -30,10 +30,14 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
     // Buffers para batch processing
     private logBuffer: MongoDBLogItem[] = [];
     private telemetryBuffer: MongoDBTelemetryItem[] = [];
+    private readonly maxBufferSize = 5000; // Cap buffer size to prevent memory leaks
 
     // Flush timers
     private logFlushTimer: NodeJS.Timeout | null = null;
     private telemetryFlushTimer: NodeJS.Timeout | null = null;
+
+    private isFlushingLogs = false;
+    private isFlushingTelemetry = false;
 
     private isInitialized = false;
 
@@ -291,6 +295,14 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
         context?: LogContext,
         error?: Error,
     ) {
+        // Prevent buffer overflow
+        if (this.logBuffer.length >= this.maxBufferSize) {
+            // Drop oldest logs to make space for new ones
+            const droppedCount = this.logBuffer.length - this.maxBufferSize + 1;
+            this.logBuffer.splice(0, droppedCount);
+            // Optionally log internally that we dropped logs, but be careful not to loop
+        }
+
         const logItem: MongoDBLogItem = {
             timestamp: new Date(),
             level,
@@ -367,6 +379,13 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
 
         this.telemetryBuffer.push(telemetryItem);
 
+        // Prevent buffer overflow
+        if (this.telemetryBuffer.length >= this.maxBufferSize) {
+            const droppedCount =
+                this.telemetryBuffer.length - this.maxBufferSize + 1;
+            this.telemetryBuffer.splice(0, droppedCount);
+        }
+
         if (this.telemetryBuffer.length >= this.config.batchSize) {
             void this.flushTelemetry();
         }
@@ -384,8 +403,14 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
      * Flush logs para MongoDB
      */
     private async flushLogs(): Promise<void> {
-        if (!this.collections || this.logBuffer.length === 0) return;
+        if (
+            !this.collections ||
+            this.logBuffer.length === 0 ||
+            this.isFlushingLogs
+        )
+            return;
 
+        this.isFlushingLogs = true;
         const logsToFlush = [...this.logBuffer];
         this.logBuffer = [];
 
@@ -409,7 +434,22 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
                 context: this.constructor.name,
                 error: error as Error,
             });
-            this.logBuffer.unshift(...logsToFlush);
+
+            // Put logs back (LIFO to preserve order roughly, or just push back)
+            // But respect max buffer size
+            const availableSpace = this.maxBufferSize - this.logBuffer.length;
+            if (availableSpace > 0) {
+                // Keep the most recent ones if we have to drop
+                const toKeep = logsToFlush.slice(
+                    Math.max(0, logsToFlush.length - availableSpace),
+                );
+                this.logBuffer.unshift(...toKeep);
+            }
+
+            // Exponential Backoff logic could be applied by pausing the timer, but here we just rely on interval.
+            // A more sophisticated approach would be to dynamically adjust flushIntervalMs, but simplest is just logging and retrying next tick.
+        } finally {
+            this.isFlushingLogs = false;
         }
     }
 
@@ -417,8 +457,14 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
      * Flush telemetry para MongoDB
      */
     private async flushTelemetry(): Promise<void> {
-        if (!this.collections || this.telemetryBuffer.length === 0) return;
+        if (
+            !this.collections ||
+            this.telemetryBuffer.length === 0 ||
+            this.isFlushingTelemetry
+        )
+            return;
 
+        this.isFlushingTelemetry = true;
         const telemetryToFlush = [...this.telemetryBuffer];
         this.telemetryBuffer = [];
 
@@ -442,7 +488,17 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
                 context: this.constructor.name,
                 error: error as Error,
             });
-            this.telemetryBuffer.unshift(...telemetryToFlush);
+
+            const availableSpace =
+                this.maxBufferSize - this.telemetryBuffer.length;
+            if (availableSpace > 0) {
+                const toKeep = telemetryToFlush.slice(
+                    Math.max(0, telemetryToFlush.length - availableSpace),
+                );
+                this.telemetryBuffer.unshift(...toKeep);
+            }
+        } finally {
+            this.isFlushingTelemetry = false;
         }
     }
 

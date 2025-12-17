@@ -20,9 +20,12 @@ export class CodeReviewFeedbackConsumer {
         queue: 'codeReviewFeedback.syncCodeReviewReactions.queue',
         allowNonJsonMessages: true,
         queueOptions: {
-            deadLetterExchange: 'orchestrator.exchange.dlx',
-            deadLetterRoutingKey: 'codeReviewFeedback.syncCodeReviewReactions',
-            durable: true,
+            arguments: {
+                'x-queue-type': 'quorum',
+                'x-dead-letter-exchange': 'orchestrator.exchange.dlx',
+                'x-dead-letter-routing-key':
+                    'codeReviewFeedback.syncCodeReviewReactions',
+            },
         },
     })
     async handleSyncCodeReviewReactions(message: any) {

@@ -18,12 +18,10 @@ import { MESSAGE_BROKER_SERVICE_TOKEN } from '@libs/core/domain/contracts/messag
 import { RabbitMQLoader } from '@libs/core/infrastructure/config/loaders/rabbitmq.loader';
 import { RabbitmqConsumeErrorFilter } from '@libs/core/infrastructure/filters/rabbitmq-consume-error.exception';
 import { MessageBrokerService } from '@libs/core/infrastructure/queue/messageBroker/messageBroker.service';
-import { CORE_QUEUE_CONFIG } from './config/core-queues.config';
+import { RABBITMQ_TOPOLOGY_CONFIG } from './config/rabbitmq-topology.config';
 
 export interface RabbitMQWrapperOptions {
     enableConsumers: boolean;
-    queues?: any[]; // Dynamic queues support
-    exchanges?: any[]; // Dynamic exchanges support
 }
 
 @Global()
@@ -68,19 +66,8 @@ export class RabbitMQWrapperModule {
                     return null;
                 }
 
-                // Merge defaults with dynamic configurations
-                const exchanges = [
-                    ...CORE_QUEUE_CONFIG.exchanges,
-                    ...(options.exchanges || []),
-                ];
-                const queues = [
-                    ...CORE_QUEUE_CONFIG.queues,
-                    ...(options.queues || []),
-                ];
-
                 return {
-                    exchanges,
-                    queues,
+                    exchanges: RABBITMQ_TOPOLOGY_CONFIG.exchanges,
                     uri: configService.get<string>(
                         'rabbitMQConfig.API_RABBITMQ_URI',
                     ),
@@ -90,7 +77,7 @@ export class RabbitMQWrapperModule {
                         heartbeat: 60,
                     },
                     reconnectTimeInSeconds: 10,
-                    enableControllerDiscovery: false,
+                    enableControllerDiscovery: true, // IMPORTANT: Must be true to find consumers
                     prefetchCount: 1,
                 };
             },

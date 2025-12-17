@@ -19,6 +19,8 @@ import { KodusLoggerService } from '@libs/core/log/kodus-logger.service';
 
 import { ApiModule } from './api.module';
 
+declare const module: any;
+
 async function bootstrap() {
     // Inicializa Sentry e OpenTelemetry antes de tudo
     setupSentryAndOpenTelemetry();
@@ -101,6 +103,11 @@ async function bootstrap() {
             'Application',
         );
     });
+
+    if (module.hot) {
+        module.hot.accept();
+        module.hot.dispose(() => app.close());
+    }
 }
 
 bootstrap().catch((error) => {

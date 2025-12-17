@@ -45,7 +45,6 @@ export class HeavyStageEventHandler {
         queue: 'workflow.events.stage.completed',
         allowNonJsonMessages: false,
         queueOptions: {
-            durable: true,
             arguments: {
                 'x-queue-type': 'quorum',
             },

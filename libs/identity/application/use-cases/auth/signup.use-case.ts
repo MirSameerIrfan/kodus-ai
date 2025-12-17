@@ -52,6 +52,12 @@ export class SignUpUseCase implements IUseCase {
     public async execute(payload: SignUpDTO): Promise<Partial<IUser>> {
         const { email, password, name, organizationId } = payload;
 
+        this.logger.error({
+            message: 'TEST LOG: Starting signup process',
+            context: SignUpUseCase.name,
+            metadata: { email, organizationId, name },
+        });
+
         try {
             const userExists = await this.checkIfUserAlreadyExists(email);
             if (userExists) {
