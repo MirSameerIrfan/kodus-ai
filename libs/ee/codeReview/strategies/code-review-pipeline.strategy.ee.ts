@@ -31,9 +31,7 @@ import { ResolveConfigStage } from '@libs/code-review/pipeline/stages/resolve-co
 import { FileContextGateStage } from '@libs/code-review/pipeline/stages/file-context-gate.stage';
 
 @Injectable()
-export class CodeReviewPipelineStrategyEE
-    implements IPipelineStrategy<CodeReviewPipelineContext>
-{
+export class CodeReviewPipelineStrategyEE implements IPipelineStrategy<CodeReviewPipelineContext> {
     constructor(
         private readonly validateNewCommitsStage: ValidateNewCommitsStage,
         private readonly resolveConfigStage: ResolveConfigStage,

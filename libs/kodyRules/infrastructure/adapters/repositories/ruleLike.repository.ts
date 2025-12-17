@@ -1,8 +1,7 @@
-// rule-likes.repository.ts
 import { IRuleLikeRepository } from '@libs/kodyRules/domain/contracts/ruleLike.repository.contract';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, FilterQuery } from 'mongoose';
+import { QueryFilter, Model } from 'mongoose';
 import { RuleLikeModel } from './schemas/mongoose/rulesLikes.model';
 import {
     RuleFeedbackType,
@@ -78,13 +77,13 @@ export class RuleLikesRepository implements IRuleLikeRepository {
     }
 
     async findOne(
-        filter: FilterQuery<RuleLikeModel>,
+        filter: QueryFilter<RuleLikeModel>,
     ): Promise<RuleLikeEntity | null> {
         const doc = await this.likeModel.findOne(filter).exec();
         return doc ? mapSimpleModelToEntity(doc, RuleLikeEntity) : null;
     }
 
-    async find(filter?: FilterQuery<RuleLikeModel>): Promise<RuleLikeEntity[]> {
+    async find(filter?: QueryFilter<RuleLikeModel>): Promise<RuleLikeEntity[]> {
         const docs = await this.likeModel.find(filter).exec();
         return mapSimpleModelsToEntities(docs, RuleLikeEntity);
     }

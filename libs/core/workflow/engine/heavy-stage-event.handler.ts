@@ -1,6 +1,7 @@
-import { RabbitSubscribe, AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { createLogger } from '@kodus/flow';
-import { Injectable, Optional, Inject } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
+import { ConsumeMessage } from 'amqplib';
 
 import { ObservabilityService } from '@libs/core/log/observability.service';
 import {
@@ -11,6 +12,10 @@ import { PipelineStateManager } from './state/pipeline-state-manager.service';
 import { EventBufferService } from './event-buffer.service';
 import { StageCompletedEvent } from '../domain/interfaces/stage-completed-event.interface';
 import { JobStatus } from '../domain/enums/job-status.enum';
+import {
+    IMessageBrokerService,
+    MESSAGE_BROKER_SERVICE_TOKEN,
+} from '@libs/core/domain/contracts/message-broker.service.contracts';
 
 /**
  * Generic handler for heavy stage completion events
@@ -26,8 +31,8 @@ export class HeavyStageEventHandler {
         private readonly stateManager: PipelineStateManager,
         private readonly eventBuffer: EventBufferService,
         private readonly observability: ObservabilityService,
-        @Optional()
-        private readonly amqpConnection?: AmqpConnection,
+        @Inject(MESSAGE_BROKER_SERVICE_TOKEN)
+        private readonly messageBroker: IMessageBrokerService,
     ) {}
 
     /**
@@ -48,12 +53,13 @@ export class HeavyStageEventHandler {
     })
     async onStageCompleted(
         event: StageCompletedEvent,
-        amqpMsg: any,
+        amqpMsg: ConsumeMessage,
     ): Promise<void> {
-        const messageId = amqpMsg?.properties?.messageId;
+        const messageId = amqpMsg.properties.messageId;
         const correlationId =
-            amqpMsg?.properties?.headers?.['x-correlation-id'] ||
-            amqpMsg?.properties?.correlationId;
+            (amqpMsg.properties.headers &&
+                amqpMsg.properties.headers['x-correlation-id']) ||
+            amqpMsg.properties.correlationId;
 
         return await this.observability.runInSpan(
             'workflow.event.stage.completed',
@@ -191,30 +197,31 @@ export class HeavyStageEventHandler {
             },
         });
 
-        // Enqueue job for continued processing via WorkflowResumedConsumer
-        if (!this.amqpConnection) {
-            this.logger.error({
-                message: `Cannot enqueue resumed workflow ${workflowJobId}: RabbitMQ not available`,
-                context: HeavyStageEventHandler.name,
-                metadata: { workflowJobId },
-            });
-            throw new Error('RabbitMQ connection not available');
-        }
+        const payload = {
+            jobId: workflowJobId,
+            eventData: {
+                stageName: event.stageName,
+                eventType: event.eventType,
+                taskId: event.taskId,
+                result: event.result,
+            },
+        };
+        const messageId = `resume-${workflowJobId}-${event.eventType}-${event.taskId}`;
 
-        await this.amqpConnection.publish(
-            'workflow.exchange',
-            'workflow.jobs.resumed',
+        await this.messageBroker.publishMessage(
             {
-                jobId: workflowJobId,
-                eventData: {
-                    stageName: event.stageName,
-                    eventType: event.eventType,
-                    taskId: event.taskId,
-                    result: event.result,
-                },
+                exchange: 'workflow.exchange',
+                routingKey: 'workflow.jobs.resumed',
             },
             {
-                messageId: `resume-${workflowJobId}-${event.eventType}-${event.taskId}`,
+                event_name: 'workflow.jobs.resumed',
+                event_version: 1,
+                occurred_on: new Date(),
+                payload: payload,
+                messageId: messageId,
+            },
+            {
+                messageId: messageId,
                 correlationId: job.correlationId,
                 persistent: true,
                 headers: {

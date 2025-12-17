@@ -18,9 +18,12 @@ import { MESSAGE_BROKER_SERVICE_TOKEN } from '@libs/core/domain/contracts/messag
 import { RabbitMQLoader } from '@libs/core/infrastructure/config/loaders/rabbitmq.loader';
 import { RabbitmqConsumeErrorFilter } from '@libs/core/infrastructure/filters/rabbitmq-consume-error.exception';
 import { MessageBrokerService } from '@libs/core/infrastructure/queue/messageBroker/messageBroker.service';
+import { CORE_QUEUE_CONFIG } from './config/core-queues.config';
 
 export interface RabbitMQWrapperOptions {
     enableConsumers: boolean;
+    queues?: any[]; // Dynamic queues support
+    exchanges?: any[]; // Dynamic exchanges support
 }
 
 @Global()
@@ -35,11 +38,6 @@ export class RabbitMQWrapperModule {
             | Promise<DynamicModule>
             | ForwardReference
         )[] = [ConfigModule.forRoot(), ConfigModule.forFeature(RabbitMQLoader)];
-
-        // Only import heavy business modules if consumers are enabled
-        /*if (options.enableConsumers) {
-            imports.push(CodeReviewFeedbackModule, AutomationModule);
-        }*/
 
         const providers: Provider[] = [
             {
@@ -70,103 +68,19 @@ export class RabbitMQWrapperModule {
                     return null;
                 }
 
+                // Merge defaults with dynamic configurations
+                const exchanges = [
+                    ...CORE_QUEUE_CONFIG.exchanges,
+                    ...(options.exchanges || []),
+                ];
+                const queues = [
+                    ...CORE_QUEUE_CONFIG.queues,
+                    ...(options.queues || []),
+                ];
+
                 return {
-                    exchanges: [
-                        {
-                            name: 'orchestrator.exchange.delayed',
-                            type: 'x-delayed-message',
-                            durable: true,
-                            options: {
-                                arguments: {
-                                    'x-delayed-type': 'direct',
-                                },
-                            },
-                        },
-                        {
-                            name: 'orchestrator.exchange.dlx',
-                            type: 'topic',
-                            durable: true,
-                        },
-                        {
-                            name: 'workflow.exchange',
-                            type: 'topic',
-                            durable: true,
-                        },
-                        {
-                            name: 'workflow.exchange.dlx',
-                            type: 'topic',
-                            durable: true,
-                        },
-                        {
-                            name: 'workflow.events',
-                            type: 'topic',
-                            durable: true,
-                        },
-                    ],
-                    queues: [
-                        {
-                            name: 'dlx.queue',
-                            exchange: 'orchestrator.exchange.dlx',
-                            routingKey: '#',
-                            createQueueIfNotExists: true,
-                            queueOptions: {
-                                durable: true,
-                            },
-                        },
-                        {
-                            name: 'workflow.jobs.queue',
-                            exchange: 'workflow.exchange',
-                            routingKey: 'workflow.job.created',
-                            createQueueIfNotExists: true,
-                            queueOptions: {
-                                durable: true,
-                                arguments: {
-                                    'x-queue-type': 'quorum',
-                                    'x-dead-letter-exchange':
-                                        'workflow.exchange.dlx',
-                                    'x-dead-letter-routing-key':
-                                        'workflow.job.failed',
-                                },
-                            },
-                        },
-                        {
-                            name: 'workflow.dlx.queue',
-                            exchange: 'workflow.exchange.dlx',
-                            routingKey: '#',
-                            createQueueIfNotExists: true,
-                            queueOptions: {
-                                durable: true,
-                            },
-                        },
-                        {
-                            name: 'workflow.events.ast',
-                            exchange: 'workflow.events',
-                            routingKey: 'ast.task.completed',
-                            createQueueIfNotExists: true,
-                            queueOptions: {
-                                durable: true,
-                                arguments: {
-                                    'x-queue-type': 'quorum',
-                                },
-                            },
-                        },
-                        {
-                            name: 'workflow.jobs.resumed.queue',
-                            exchange: 'workflow.exchange',
-                            routingKey: 'workflow.jobs.resumed',
-                            createQueueIfNotExists: true,
-                            queueOptions: {
-                                durable: true,
-                                arguments: {
-                                    'x-queue-type': 'quorum',
-                                    'x-dead-letter-exchange':
-                                        'workflow.exchange.dlx',
-                                    'x-dead-letter-routing-key':
-                                        'workflow.jobs.dlq',
-                                },
-                            },
-                        },
-                    ],
+                    exchanges,
+                    queues,
                     uri: configService.get<string>(
                         'rabbitMQConfig.API_RABBITMQ_URI',
                     ),
@@ -185,7 +99,6 @@ export class RabbitMQWrapperModule {
 
         const rabbitMQEnabled = process.env.API_RABBITMQ_ENABLED !== 'false';
 
-        // Add logging to debug
         console.log(
             `[RabbitMQWrapperModule] Registering module. ENABLED=${rabbitMQEnabled}, ENV_VAR=${process.env.API_RABBITMQ_ENABLED}`,
         );

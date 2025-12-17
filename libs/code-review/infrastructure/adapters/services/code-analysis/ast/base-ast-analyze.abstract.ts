@@ -17,9 +17,7 @@ import { Injectable } from '@nestjs/common';
  * and allow subclasses to customize specific behaviors
  */
 @Injectable()
-export abstract class BaseKodyASTAnalyzeContextPreparation
-    implements IKodyASTAnalyzeContextPreparationService
-{
+export abstract class BaseKodyASTAnalyzeContextPreparation implements IKodyASTAnalyzeContextPreparationService {
     protected readonly logger = createLogger(
         BaseKodyASTAnalyzeContextPreparation.name,
     );

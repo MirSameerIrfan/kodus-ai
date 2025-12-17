@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { PermissionValidationModule } from '@libs/ee/shared/permission-validation.module';
 import { OrganizationModule } from '@libs/organization/modules/organization.module';
 import { ParametersModule } from '@libs/organization/modules/parameters.module';
+import { McpCoreModule } from '@libs/mcp-server/mcp-core.module';
 
 import { BusinessRulesValidationAgentUseCase } from '../application/use-cases/business-rules-validation-agent.use-case';
 import { ConversationAgentUseCase } from '../application/use-cases/conversation-agent.use-case';
@@ -16,6 +17,7 @@ import { LLMModule } from '@kodus/kodus-common/llm';
         forwardRef(() => OrganizationModule),
         forwardRef(() => ParametersModule),
         LLMModule,
+        McpCoreModule,
     ],
     providers: [
         BusinessRulesValidationAgentUseCase,

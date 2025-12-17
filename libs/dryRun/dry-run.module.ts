@@ -1,8 +1,4 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-
-import { DRY_RUN_REPOSITORY_TOKEN } from './domain/contracts/dryRun.repository.contract';
-import { DRY_RUN_SERVICE_TOKEN } from './domain/contracts/dryRun.service.contract';
 
 import { ExecuteDryRunUseCase } from './application/use-cases/execute-dry-run.use-case';
 import { GetDryRunUseCase } from './application/use-cases/get-dry-run.use-case';
@@ -10,13 +6,6 @@ import { GetStatusDryRunUseCase } from './application/use-cases/get-status-dry-r
 import { ListDryRunsUseCase } from './application/use-cases/list-dry-runs.use-case';
 import { SseDryRunUseCase } from './application/use-cases/sse-dry-run.use-case';
 
-import { DryRunRepository } from './infrastructure/adapters/repositories/dryRun.repository';
-import {
-    DryRunModel,
-    DryRunSchema,
-} from './infrastructure/adapters/repositories/schemas/dryRun.model';
-import { DryRunService } from './infrastructure/adapters/services/dryRun.service';
-import { InternalCodeManagementService } from './infrastructure/adapters/services/internalCodeManagement.service';
 import { DryRunCodeReviewPipelineStrategy } from './infrastructure/adapters/services/dry-run-cr-pipeline.strategy';
 import { ParametersModule } from '@libs/organization/modules/parameters.module';
 import { PullRequestMessagesModule } from '@libs/code-review/modules/pullRequestMessages.module';
@@ -29,12 +18,11 @@ import { DryRunCodeReviewPipeline } from './infrastructure/adapters/services/dry
 import { IntegrationConfigCoreModule } from '@libs/integrations/modules/config-core.module';
 import { OrganizationParametersModule } from '@libs/organization/modules/organizationParameters.module';
 import { PlatformModule } from '@libs/platform/modules/platform.module';
+import { DryRunCoreModule } from './dry-run-core.module';
 
 @Module({
     imports: [
-        MongooseModule.forFeature([
-            { name: DryRunModel.name, schema: DryRunSchema },
-        ]),
+        DryRunCoreModule,
         forwardRef(() => ParametersModule),
         forwardRef(() => PullRequestMessagesModule),
         forwardRef(() => CodebaseModule),
@@ -45,9 +33,6 @@ import { PlatformModule } from '@libs/platform/modules/platform.module';
         EventEmitterModule.forRoot(),
     ],
     providers: [
-        { provide: DRY_RUN_REPOSITORY_TOKEN, useClass: DryRunRepository },
-        { provide: DRY_RUN_SERVICE_TOKEN, useClass: DryRunService },
-        InternalCodeManagementService,
         DryRunCodeReviewPipelineStrategy,
         DryRunCodeReviewPipeline,
         ExecuteDryRunUseCase,
@@ -57,7 +42,6 @@ import { PlatformModule } from '@libs/platform/modules/platform.module';
         SseDryRunUseCase,
     ],
     exports: [
-        DRY_RUN_SERVICE_TOKEN,
         ExecuteDryRunUseCase,
         GetDryRunUseCase,
         GetStatusDryRunUseCase,

@@ -1,4 +1,3 @@
-import { DryRunModule } from '@libs/dryRun/dry-run.module';
 import { forwardRef, Module } from '@nestjs/common';
 import { AIEngineModule } from '@libs/ai-engine/modules/ai-engine.module';
 import { CodeAnalysisOrchestrator } from '@libs/ee/codeBase/codeAnalysisOrchestrator.service';
@@ -60,6 +59,7 @@ import { codeReviewPipelineProvider } from '@libs/core/providers/code-review-pip
 
 import { AST_ANALYSIS_SERVICE_TOKEN } from '../domain/contracts/ASTAnalysisService.contract';
 import { CodeAstAnalysisService } from '@libs/ee/kodyAST/codeASTAnalysis.service';
+import { DryRunModule } from '@libs/dryRun/dry-run.module';
 
 @Module({
     imports: [

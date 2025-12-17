@@ -21,9 +21,7 @@ import { createNestedConditions } from '@libs/core/infrastructure/repositories/m
 import { AutomationExecutionModel } from './schemas/automationExecution.model';
 
 @Injectable()
-export class AutomationExecutionRepository
-    implements IAutomationExecutionRepository
-{
+export class AutomationExecutionRepository implements IAutomationExecutionRepository {
     private readonly logger = createLogger(AutomationExecutionRepository.name);
 
     constructor(

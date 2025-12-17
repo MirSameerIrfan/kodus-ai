@@ -2,10 +2,12 @@
     "$schema": "https://json.schemastore.org/nest-cli",
     "collection": "@nestjs/schematics",
     "monorepo": true,
-    "root": "apps/api",
     "compilerOptions": {
+        "builder": "webpack",
+        "webpackConfigPath": "webpack.config.js",
+        "typeCheck": true,
         "deleteOutDir": true,
-        "webpack": false,
+        "webpack": true,
         "assets": [
             {
                 "include": "shared/utils/translations/dictionaries/**",

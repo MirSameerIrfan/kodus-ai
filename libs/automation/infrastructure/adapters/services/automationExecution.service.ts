@@ -22,7 +22,7 @@ export class AutomationExecutionService implements IAutomationExecutionService {
         @Inject(AUTOMATION_EXECUTION_REPOSITORY_TOKEN)
         private readonly automationExecutionRepository: IAutomationExecutionRepository,
         @Inject(CODE_REVIEW_EXECUTION_SERVICE)
-        private readonly codeReviewExecutionService: ICodeReviewExecutionService,
+        private readonly codeReviewExecutionService: ICodeReviewExecutionService<IAutomationExecution>,
         private readonly cacheService: CacheService,
     ) {}
 

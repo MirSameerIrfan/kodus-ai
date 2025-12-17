@@ -474,7 +474,7 @@ export class RunCodeReviewAutomationUseCase implements IUseCase {
                             // Fetch user PR count for auto-assign check
                             const userPrs = await this.pullRequestsService.find(
                                 {
-                                    organizationId:
+                                    'organizationId':
                                         organizationAndTeamData.organizationId,
                                     'user.id': params?.userGitId,
                                 } as any,

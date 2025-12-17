@@ -5,6 +5,7 @@ import { AuthIntegrationModule } from '@libs/integrations/modules/authIntegratio
 import { IntegrationConfigCoreModule } from '@libs/integrations/modules/config-core.module';
 import { IntegrationCoreModule } from '@libs/integrations/modules/integrations-core.module';
 import { GithubService as GitHubService } from '../infrastructure/adapters/services/github/github.service';
+import { McpCoreModule } from '@libs/mcp-server/mcp-core.module';
 
 @Module({
     imports: [
@@ -12,6 +13,7 @@ import { GithubService as GitHubService } from '../infrastructure/adapters/servi
         forwardRef(() => IntegrationCoreModule),
         forwardRef(() => IntegrationConfigCoreModule),
         forwardRef(() => GlobalCacheModule),
+        McpCoreModule,
     ],
     providers: [GitHubService],
     exports: [GitHubService],

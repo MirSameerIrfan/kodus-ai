@@ -22,21 +22,28 @@ export class SyncIgnoredBotsUseCase {
             teamId: params.teamId,
         };
 
-        const orgMembers = await this.codeManagementService.getListMembers({
-            organizationAndTeamData,
-            determineBots: true,
-        }).catch(err => {
-            this.logger.warn({ message: 'Error fetching org members', error: err });
-            return [];
-        });
+        const orgMembers = await this.codeManagementService
+            .getListMembers({
+                organizationAndTeamData,
+                determineBots: true,
+            })
+            .catch((err) => {
+                this.logger.warn({
+                    message: 'Error fetching org members',
+                    error: err,
+                });
+                return [];
+            });
 
-        const prMembers = await this.pullRequestHandlerService.getPullRequestAuthorsWithCache(
-            organizationAndTeamData,
-            true,
-        ).catch(err => {
-            this.logger.warn({ message: 'Error fetching PR members', error: err });
-            return [];
-        });
+        const prMembers = await this.pullRequestHandlerService
+            .getPullRequestAuthorsWithCache(organizationAndTeamData, true)
+            .catch((err) => {
+                this.logger.warn({
+                    message: 'Error fetching PR members',
+                    error: err,
+                });
+                return [];
+            });
 
         const users = [...orgMembers, ...prMembers];
         const botIds: string[] = Array.from(
@@ -52,4 +59,3 @@ export class SyncIgnoredBotsUseCase {
         });
     }
 }
-

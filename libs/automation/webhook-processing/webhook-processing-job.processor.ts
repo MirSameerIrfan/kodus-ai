@@ -25,9 +25,7 @@ import {
  * Processes raw webhook payloads, saves PRs, validates, and enqueues CODE_REVIEW jobs
  */
 @Injectable()
-export class WebhookProcessingJobProcessorService
-    implements IJobProcessorService
-{
+export class WebhookProcessingJobProcessorService implements IJobProcessorService {
     private readonly logger = createLogger(
         WebhookProcessingJobProcessorService.name,
     );

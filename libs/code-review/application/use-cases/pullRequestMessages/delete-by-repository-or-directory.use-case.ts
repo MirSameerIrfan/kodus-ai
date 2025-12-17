@@ -15,9 +15,7 @@ export interface DeletePullRequestMessagesParams {
 }
 
 @Injectable()
-export class DeleteByRepositoryOrDirectoryPullRequestMessagesUseCase
-    implements IUseCase
-{
+export class DeleteByRepositoryOrDirectoryPullRequestMessagesUseCase implements IUseCase {
     private readonly logger = createLogger(
         DeleteByRepositoryOrDirectoryPullRequestMessagesUseCase.name,
     );

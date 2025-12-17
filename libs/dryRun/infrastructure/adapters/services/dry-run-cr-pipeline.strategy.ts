@@ -18,9 +18,7 @@ import { PipelineStage } from '@libs/core/infrastructure/pipeline/interfaces/pip
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
-export class DryRunCodeReviewPipelineStrategy
-    implements IPipelineStrategy<CodeReviewPipelineContext>
-{
+export class DryRunCodeReviewPipelineStrategy implements IPipelineStrategy<CodeReviewPipelineContext> {
     constructor(
         private readonly resolveConfigStage: ResolveConfigStage,
         private readonly validateConfigStage: ValidateConfigStage,

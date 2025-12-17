@@ -6,9 +6,7 @@ import {
     Action,
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
-import {
-    AppAbility,
-} from '@libs/identity/domain/permissions/types/permissions.types';
+import { AppAbility } from '@libs/identity/domain/permissions/types/permissions.types';
 import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import { PermissionsAbilityFactory } from '@libs/identity/infrastructure/adapters/services/permissions/permissionsAbility.factory';
 

@@ -13,7 +13,6 @@ import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
 import { LabelType } from '@/shared/utils/codeManagement/labels';
 import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
 
-
 describe('IssuesService', () => {
     let service: IssuesService;
     let mockRepository: jest.Mocked<IIssuesRepository>;

@@ -1,6 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { PermissionsModule } from '@libs/identity/modules/permissions.module';
 import { ParametersModule } from '@libs/organization/modules/parameters.module';
+import { OrganizationParametersModule } from '@libs/organization/modules/organizationParameters.module';
 import { CodebaseModule } from '@libs/code-review/modules/codebase.module';
 import { PlatformModule } from '@libs/platform/modules/platform.module';
 import { CodeReviewSettingsLogModule } from '@libs/ee/codeReviewSettingsLog/codeReviewSettingsLog.module';
@@ -18,11 +19,13 @@ import { ListCodeReviewAutomationLabelsUseCase } from '../application/use-cases/
 import { ListCodeReviewAutomationLabelsWithStatusUseCase } from '../application/use-cases/configuration/list-code-review-automation-labels-with-status.use-case';
 import { UpdateCodeReviewParameterRepositoriesUseCase } from '../application/use-cases/configuration/update-code-review-parameter-repositories-use-case';
 import { UpdateOrCreateCodeReviewParameterUseCase } from '../application/use-cases/configuration/update-or-create-code-review-parameter-use-case';
+import { PreviewPrSummaryUseCase } from '../application/use-cases/summary/preview-pr-summary.use-case'; // Added
 
 @Module({
     imports: [
         PermissionsModule,
         forwardRef(() => ParametersModule),
+        OrganizationParametersModule,
         forwardRef(() => CodebaseModule),
         forwardRef(() => PlatformModule),
         forwardRef(() => CodeReviewSettingsLogModule),
@@ -41,6 +44,7 @@ import { UpdateOrCreateCodeReviewParameterUseCase } from '../application/use-cas
         ListCodeReviewAutomationLabelsWithStatusUseCase,
         UpdateCodeReviewParameterRepositoriesUseCase,
         UpdateOrCreateCodeReviewParameterUseCase,
+        PreviewPrSummaryUseCase, // Added
     ],
     exports: [
         ApplyCodeReviewPresetUseCase,
@@ -51,7 +55,7 @@ import { UpdateOrCreateCodeReviewParameterUseCase } from '../application/use-cas
         ListCodeReviewAutomationLabelsWithStatusUseCase,
         UpdateCodeReviewParameterRepositoriesUseCase,
         UpdateOrCreateCodeReviewParameterUseCase,
+        PreviewPrSummaryUseCase, // Added
     ],
 })
 export class CodeReviewConfigurationModule {}
-

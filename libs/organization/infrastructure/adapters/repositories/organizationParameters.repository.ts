@@ -21,9 +21,7 @@ import {
 } from '@libs/core/infrastructure/repositories/mappers';
 
 @Injectable()
-export class OrganizationParametersRepository
-    implements IOrganizationParametersRepository
-{
+export class OrganizationParametersRepository implements IOrganizationParametersRepository {
     constructor(
         @InjectRepository(OrganizationParametersModel)
         private readonly organizationParametersRepository: Repository<OrganizationParametersModel>,

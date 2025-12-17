@@ -1,13 +1,16 @@
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { Injectable, Inject } from '@nestjs/common';
 import { UseFilters } from '@nestjs/common';
+import { ConsumeMessage } from 'amqplib';
 
 import { RabbitmqConsumeErrorFilter } from '@libs/core/infrastructure/filters/rabbitmq-consume-error.exception';
 import { IJobProcessorService } from '@libs/core/workflow/domain/contracts/job-processor.service.contract';
 import { JOB_PROCESSOR_SERVICE_TOKEN } from '@libs/core/workflow/domain/contracts/job-processor.service.contract';
+import { MessagePayload } from '@libs/core/domain/contracts/message-broker.service.contracts';
 
 import { ObservabilityService } from '@libs/core/log/observability.service';
 import { createLogger } from '@kodus/flow';
+import { InboxMessageRepository } from './repositories/inbox-message.repository';
 
 interface WorkflowJobMessage {
     jobId: string;
@@ -19,11 +22,13 @@ interface WorkflowJobMessage {
 @Injectable()
 export class WorkflowJobConsumer {
     private readonly logger = createLogger(WorkflowJobConsumer.name);
+    private readonly consumerId = 'workflow-job-consumer';
 
     constructor(
         @Inject(JOB_PROCESSOR_SERVICE_TOKEN)
         private readonly jobProcessor: IJobProcessorService,
         private readonly observability: ObservabilityService,
+        private readonly inboxRepository: InboxMessageRepository,
     ) {}
 
     @RabbitSubscribe({
@@ -40,23 +45,32 @@ export class WorkflowJobConsumer {
         },
     })
     async handleWorkflowJob(
-        message: WorkflowJobMessage,
-        amqpMsg: any,
+        message: WorkflowJobMessage | MessagePayload<WorkflowJobMessage>,
+        amqpMsg: ConsumeMessage,
     ): Promise<void> {
-        const messageId = amqpMsg?.properties?.messageId || amqpMsg?.messageId;
+        // Unwrap message if it's in MessagePayload envelope
+        const unwrappedMessage: WorkflowJobMessage = this.isMessagePayload(
+            message,
+        )
+            ? message.payload
+            : message;
+
+        const messageId = amqpMsg.properties.messageId;
         // Extrai correlation ID dos headers primeiro, depois do payload, depois das properties
         const correlationId =
-            amqpMsg?.properties?.headers?.['x-correlation-id'] ||
-            message.correlationId ||
-            amqpMsg?.properties?.correlationId;
+            (amqpMsg.properties.headers &&
+                amqpMsg.properties.headers['x-correlation-id']) ||
+            unwrappedMessage.correlationId ||
+            amqpMsg.properties.correlationId;
 
-        if (!messageId || !message.jobId) {
+        if (!messageId || !unwrappedMessage.jobId) {
             this.logger.error({
                 message:
                     'Invalid workflow job message: missing messageId or jobId',
                 context: WorkflowJobConsumer.name,
                 metadata: {
                     message,
+                    unwrappedMessage,
                     amqpMsg: {
                         messageId,
                         correlationId,
@@ -64,6 +78,26 @@ export class WorkflowJobConsumer {
                 },
             });
             throw new Error('Invalid message: missing messageId or jobId');
+        }
+
+        // Check if message was already processed (Inbox Pattern)
+        const existingInbox =
+            await this.inboxRepository.findByConsumerAndMessageId(
+                this.consumerId,
+                messageId,
+            );
+
+        if (existingInbox && existingInbox.processed) {
+            this.logger.warn({
+                message: 'Duplicate message detected, skipping processing',
+                context: WorkflowJobConsumer.name,
+                metadata: {
+                    messageId,
+                    jobId: unwrappedMessage.jobId,
+                    consumerId: this.consumerId,
+                },
+            });
+            return;
         }
 
         // Define correlation ID no contexto de observabilidade para propagação
@@ -78,21 +112,36 @@ export class WorkflowJobConsumer {
             'workflow.job.consume',
             async (span) => {
                 span.setAttributes({
-                    'workflow.job.id': message.jobId,
+                    'workflow.job.id': unwrappedMessage.jobId,
                     'workflow.correlation.id': correlationId,
                     'workflow.message.id': messageId,
                 });
 
                 try {
+                    // Create inbox record if it doesn't exist
+                    if (!existingInbox) {
+                        await this.inboxRepository.create(
+                            messageId,
+                            unwrappedMessage.jobId,
+                            this.consumerId,
+                        );
+                    }
+
                     // Processa o job
-                    await this.jobProcessor.process(message.jobId);
+                    await this.jobProcessor.process(unwrappedMessage.jobId);
+
+                    // Mark as processed
+                    await this.inboxRepository.markAsProcessed(
+                        messageId,
+                        this.consumerId,
+                    );
 
                     this.logger.log({
                         message: 'Workflow job processed successfully',
                         context: WorkflowJobConsumer.name,
                         metadata: {
                             messageId,
-                            jobId: message.jobId,
+                            jobId: unwrappedMessage.jobId,
                             correlationId,
                         },
                     });
@@ -113,7 +162,7 @@ export class WorkflowJobConsumer {
                         error,
                         metadata: {
                             messageId,
-                            jobId: message.jobId,
+                            jobId: unwrappedMessage.jobId,
                             correlationId,
                         },
                     });
@@ -126,6 +175,17 @@ export class WorkflowJobConsumer {
                 'workflow.component': 'consumer',
                 'workflow.operation': 'process_job',
             },
+        );
+    }
+
+    private isMessagePayload(
+        message: any,
+    ): message is MessagePayload<WorkflowJobMessage> {
+        return (
+            message &&
+            typeof message === 'object' &&
+            'event_name' in message &&
+            'payload' in message
         );
     }
 }

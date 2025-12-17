@@ -69,15 +69,15 @@ COPY --from=builder /usr/src/app/package.json .
 COPY --from=builder /usr/src/app/ecosystem.config.js .
 
 # Set environment at runtime
-# 1. API Flow (Standard TSC): Arquivo existe em libs/ee/...
+# 1. API Flow (Standard TSC): File exists in libs/ee/...
 RUN if [ -f dist/ee/configs/environment/environment.template.ts ]; then \
     sed -e "s/__CLOUD_MODE__/${API_CLOUD_MODE}/g" -e "s/__DEVELOPMENT_MODE__/false/g" dist/ee/configs/environment/environment.template.ts > dist/ee/configs/environment/environment.ts; \
     fi
 
-# 2. Worker Flow (Webpack): O arquivo não existe pois virou bundle.
-# Precisamos gerar um environment.js manualmente para o require('./environment') funcionar.
+# 2. Worker Flow (Webpack): The file does not exist because it became a bundle.
+# We need to generate an environment.js manually for require('./environment') to work.
 RUN echo "Object.defineProperty(exports, \"__esModule\", { value: true }); exports.environment = { API_CLOUD_MODE: ${API_CLOUD_MODE}, API_DEVELOPMENT_MODE: false };" > dist/environment.js
-# Copia para as subpastas de apps (onde o main.js pode estar)
+# Copy to apps subfolders (where main.js might be)
 RUN for d in dist/apps/*; do if [ -d "$d" ]; then cp dist/environment.js "$d/"; fi; done
 
 # Set the command to run the application using pm2

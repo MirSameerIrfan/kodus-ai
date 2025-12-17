@@ -1,5 +1,4 @@
-import { Module, OnModuleInit, forwardRef } from '@nestjs/common';
-import { ModulesContainer } from '@nestjs/core';
+import { Module, forwardRef } from '@nestjs/common';
 
 import { AuthIntegrationModule } from '@libs/integrations/modules/authIntegration.module';
 import { IntegrationConfigCoreModule } from '@libs/integrations/modules/config-core.module';
@@ -9,8 +8,6 @@ import { GitlabModule } from './gitlab.module';
 import { BitbucketModule } from './bitbucket.module';
 import { AzureReposModule } from './azure-repos.module';
 
-import { PlatformIntegrationFactory } from '../infrastructure/adapters/services/platformIntegration.factory';
-import { CodeManagementService } from '../infrastructure/adapters/services/codeManagement.service';
 import CodeManagementUseCases from '../application/use-cases/codeManagement';
 import { AgentsModule } from '@libs/agents/modules/agents.module';
 import { CodeReviewSettingsLogModule } from '@libs/ee/codeReviewSettingsLog/codeReviewSettingsLog.module';
@@ -20,6 +17,7 @@ import { ParametersModule } from '@libs/organization/modules/parameters.module';
 import { PlatformDataModule } from '@libs/platformData/platformData.module';
 import { PermissionsModule } from '@libs/identity/modules/permissions.module';
 import { PullRequestMessagesModule } from '@libs/code-review/modules/pullRequestMessages.module';
+import { CodebaseModule } from '@libs/code-review/modules/codebase.module';
 import { AzureReposPullRequestHandler } from '../infrastructure/webhooks/azure/azureReposPullRequest.handler';
 import { GitHubPullRequestHandler } from '../infrastructure/webhooks/github/githubPullRequest.handler';
 import { GitLabMergeRequestHandler } from '../infrastructure/webhooks/gitlab/gitlabPullRequest.handler';
@@ -28,6 +26,11 @@ import { BitbucketPullRequestHandler } from '../infrastructure/webhooks/bitbucke
 import { PlatformCoreModule } from './platform-core.module';
 import { GetConnectionsUseCase } from '../application/use-cases/integrations/get-connections.use-case';
 import { GetOrganizationLanguageUseCase } from '../application/use-cases/organization/get-organization-language.use-case';
+
+import { AutomationModule } from '@libs/automation/modules/automation.module';
+import { WorkflowModule } from '@libs/core/workflow/workflow.module';
+import { KodyRulesModule } from '@libs/kodyRules/modules/kodyRules.module';
+import { IssuesModule } from '@libs/issues/issues.module';
 
 @Module({
     imports: [
@@ -47,6 +50,11 @@ import { GetOrganizationLanguageUseCase } from '../application/use-cases/organiz
         forwardRef(() => PlatformDataModule),
         PermissionsModule,
         forwardRef(() => PullRequestMessagesModule),
+        forwardRef(() => CodebaseModule),
+        forwardRef(() => AutomationModule),
+        forwardRef(() => WorkflowModule),
+        forwardRef(() => KodyRulesModule),
+        forwardRef(() => IssuesModule),
     ],
     providers: [
         ...CodeManagementUseCases,
@@ -75,20 +83,13 @@ import { GetOrganizationLanguageUseCase } from '../application/use-cases/organiz
     ],
     exports: [
         PlatformCoreModule,
-        PlatformIntegrationFactory,
-        CodeManagementService,
         ...CodeManagementUseCases,
         GetConnectionsUseCase,
         GetOrganizationLanguageUseCase,
+        'AZURE_REPOS_WEBHOOK_HANDLER',
+        'GITHUB_WEBHOOK_HANDLER',
+        'GITLAB_WEBHOOK_HANDLER',
+        'BITBUCKET_WEBHOOK_HANDLER',
     ],
 })
-export class PlatformModule implements OnModuleInit {
-    constructor(
-        private modulesContainer: ModulesContainer,
-        private platformFactory: PlatformIntegrationFactory,
-    ) {}
-
-    onModuleInit() {
-        // Lógica de registro dos services no factory
-    }
-}
+export class PlatformModule {}

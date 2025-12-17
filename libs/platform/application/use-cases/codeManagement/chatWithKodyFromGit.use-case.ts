@@ -1720,18 +1720,17 @@ export class ChatWithKodyFromGitUseCase {
                 gitUser.username = params.payload?.comment?.user?.login;
                 break;
             case PlatformType.GITLAB:
-                ((gitUser.id = params.payload?.user?.id),
-                    (gitUser.username = params.payload?.user?.username));
+                gitUser.id = params.payload?.user?.id;
+                gitUser.username = params.payload?.user?.username;
                 break;
             case PlatformType.BITBUCKET:
-                ((gitUser.id = params.payload?.comment?.user?.uuid),
-                    (gitUser.username =
-                        params.payload?.comment?.user?.nickname));
+                gitUser.id = params.payload?.comment?.user?.uuid;
+                gitUser.username = params.payload?.comment?.user?.nickname;
                 break;
             case PlatformType.AZURE_REPOS:
-                ((gitUser.id = params.payload?.resource?.comment?.author?.id),
-                    (gitUser.username =
-                        params.payload?.resource?.comment?.author?.uniqueName));
+                gitUser.id = params.payload?.resource?.comment?.author?.id;
+                gitUser.username =
+                    params.payload?.resource?.comment?.author?.uniqueName;
                 break;
             default:
                 break;

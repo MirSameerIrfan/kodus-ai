@@ -1,4 +1,4 @@
-import { FilterQuery } from 'mongoose';
+import { QueryFilter } from 'mongoose';
 
 import { RuleLikeEntity, RuleFeedbackType } from '../entities/ruleLike.entity';
 import { RuleLikeModel } from '@libs/kodyRules/infrastructure/adapters/repositories/schemas/mongoose/rulesLikes.model';
@@ -24,7 +24,7 @@ export interface IRuleLikeRepository {
 
     findOne(filter?: Partial<IRuleLike>): Promise<RuleLikeEntity | null>;
 
-    find(filter?: FilterQuery<RuleLikeModel>): Promise<RuleLikeEntity[]>;
+    find(filter?: QueryFilter<RuleLikeModel>): Promise<RuleLikeEntity[]>;
 
     countByRule(ruleId: string): Promise<number>;
 

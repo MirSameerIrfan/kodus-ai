@@ -8,7 +8,6 @@ import { postgresConfigLoader } from '@libs/core/infrastructure/config/loaders/p
 import { MongooseFactory } from '@libs/core/infrastructure/database/mongodb/mongoose.factory';
 import { TypeORMFactory } from '@libs/core/infrastructure/database/typeorm/typeORM.factory';
 
-
 @Module({
     imports: [
         TypeOrmModule.forRootAsync({

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { OrganizationParametersService } from '../infrastructure/adapters/services/organizationParameters.service';
@@ -15,9 +15,17 @@ import {
     GetCockpitMetricsVisibilityUseCase,
     GetModelsByProviderUseCase,
 } from '../application/use-cases/organizationParameters';
+import { PlatformModule } from '@libs/platform/modules/platform.module';
+import { CodebaseModule } from '@libs/code-review/modules/codebase.module';
+import { ProviderModule } from '@libs/core/infrastructure/services/providers/provider.module';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([OrganizationParametersModel])],
+    imports: [
+        TypeOrmModule.forFeature([OrganizationParametersModel]),
+        forwardRef(() => PlatformModule),
+        forwardRef(() => CodebaseModule),
+        ProviderModule,
+    ],
     providers: [
         {
             provide: GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN,
@@ -46,6 +54,7 @@ import {
         IgnoreBotsUseCase,
         GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN,
         GetModelsByProviderUseCase,
+        ProviderModule, // Added
     ],
 })
 export class OrganizationParametersModule {}

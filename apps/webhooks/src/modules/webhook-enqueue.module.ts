@@ -7,21 +7,24 @@ import { WorkflowQueueLoader } from '@libs/core/infrastructure/config/loaders/wo
 import { RabbitMQWrapperModule } from '@libs/core/infrastructure/queue/rabbitmq.module';
 import { EnqueueWebhookUseCase } from '@libs/platform/application/use-cases/webhook/enqueue-webhook.use-case';
 import { JOB_QUEUE_SERVICE_TOKEN } from '@libs/core/workflow/domain/contracts/job-queue.service.contract';
-import { RabbitMQJobQueueService } from '@libs/core/workflow/infrastructure/rabbitmq-job-queue.service';
+import { WorkflowJobQueueService } from '@libs/core/workflow/infrastructure/workflow-job-queue.service';
 import { WorkflowJobRepository } from '@libs/core/workflow/infrastructure/repositories/workflow-job.repository';
 import { WorkflowJobModel } from '@libs/core/workflow/infrastructure/repositories/schemas/workflow-job.model';
+import { OutboxMessageRepository } from '@libs/core/workflow/infrastructure/repositories/outbox-message.repository';
+import { OutboxMessageModel } from '@libs/core/workflow/infrastructure/repositories/schemas/outbox-message.model';
 
 @Module({
     imports: [
         ConfigModule.forFeature(WorkflowQueueLoader),
-        TypeOrmModule.forFeature([WorkflowJobModel]),
+        TypeOrmModule.forFeature([WorkflowJobModel, OutboxMessageModel]),
         RabbitMQWrapperModule.register({ enableConsumers: false }),
     ],
     providers: [
         WorkflowJobRepository,
+        OutboxMessageRepository,
         {
             provide: JOB_QUEUE_SERVICE_TOKEN,
-            useClass: RabbitMQJobQueueService,
+            useClass: WorkflowJobQueueService,
         },
         EnqueueWebhookUseCase,
     ],

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
@@ -16,6 +16,10 @@ import { PullRequestsRepository } from '@libs/platformData/infrastructure/adapte
 import { PULL_REQUESTS_SERVICE_TOKEN } from '@libs/platformData/domain/pullRequests/contracts/pullRequests.service.contracts';
 import { PullRequestsService } from '@libs/platformData/infrastructure/adapters/services/pullRequests.service';
 import { SavePullRequestUseCase } from '@libs/platformData/application/use-cases/pullRequests/save.use-case';
+import { BackfillHistoricalPRsUseCase } from '@libs/platformData/application/use-cases/pullRequests/backfill-historical-prs.use-case'; // Added
+import { PlatformModule } from '@libs/platform/modules/platform.module';
+import { IntegrationConfigCoreModule } from '@libs/integrations/modules/config-core.module';
+import { PlatformCoreModule } from '@libs/platform/modules/platform-core.module'; // Added
 
 @Module({
     imports: [
@@ -26,6 +30,9 @@ import { SavePullRequestUseCase } from '@libs/platformData/application/use-cases
             },
         ]),
         TypeOrmModule.forFeature([CodeReviewExecutionModel]),
+        forwardRef(() => PlatformModule),
+        forwardRef(() => IntegrationConfigCoreModule),
+        forwardRef(() => PlatformCoreModule), // Added
     ],
     providers: [
         {
@@ -45,6 +52,7 @@ import { SavePullRequestUseCase } from '@libs/platformData/application/use-cases
             useClass: PullRequestsService,
         },
         SavePullRequestUseCase,
+        BackfillHistoricalPRsUseCase, // Added
     ],
     exports: [
         CODE_REVIEW_EXECUTION_SERVICE,
@@ -52,7 +60,7 @@ import { SavePullRequestUseCase } from '@libs/platformData/application/use-cases
         PULL_REQUESTS_REPOSITORY_TOKEN,
         PULL_REQUESTS_SERVICE_TOKEN,
         SavePullRequestUseCase,
+        BackfillHistoricalPRsUseCase, // Added
     ],
 })
 export class CodeReviewCoreModule {}
-

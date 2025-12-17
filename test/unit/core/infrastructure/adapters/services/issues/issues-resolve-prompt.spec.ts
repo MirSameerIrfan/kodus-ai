@@ -7,9 +7,7 @@ import {
 } from '@/core/domain/codeBase/contracts/PullRequestManagerService.contract';
 import { ISSUES_SERVICE_TOKEN } from '@/core/domain/issues/contracts/issues.service.contract';
 import { IssuesEntity } from '@/core/domain/issues/entities/issues.entity';
-import {
-    PULL_REQUESTS_SERVICE_TOKEN,
-} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
+import { PULL_REQUESTS_SERVICE_TOKEN } from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
 import { IssuesService } from '@/core/infrastructure/adapters/services/issues/issues.service';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import {

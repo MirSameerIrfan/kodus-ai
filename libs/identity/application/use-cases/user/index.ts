@@ -4,10 +4,10 @@ import { DeleteUserUseCase } from './delete.use-case';
 import { InviteDataUserUseCase } from './invite-data.use-case';
 import { UpdateAnotherUserUseCase } from './update-another.use-case';
 
-export const UseCases = [
+export {
     DeleteUserUseCase,
     InviteDataUserUseCase,
     AcceptUserInvitationUseCase,
     CheckUserWithEmailUserUseCase,
     UpdateAnotherUserUseCase,
-];
+};

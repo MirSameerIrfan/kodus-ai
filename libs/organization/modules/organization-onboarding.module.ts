@@ -16,12 +16,7 @@ import { JoinOrganizationUseCase } from '../application/use-cases/onboarding/joi
         forwardRef(() => ProfilesModule),
         forwardRef(() => AuthModule),
     ],
-    providers: [
-        JoinOrganizationUseCase,
-    ],
-    exports: [
-        JoinOrganizationUseCase,
-    ],
+    providers: [JoinOrganizationUseCase],
+    exports: [JoinOrganizationUseCase],
 })
 export class OrganizationOnboardingModule {}
-

@@ -6,6 +6,8 @@ import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
 
 import { DatabaseConnection } from '@libs/core/infrastructure/config/types';
 
+import { TypeOrmCustomLogger } from './logger';
+
 @Injectable()
 export class TypeORMFactory implements TypeOrmOptionsFactory {
     protected config: DatabaseConnection;
@@ -53,14 +55,15 @@ export class TypeORMFactory implements TypeOrmOptionsFactory {
             migrations: [join(__dirname, './migrations/*{.ts,.js}')],
             migrationsTableName: 'migrations',
             synchronize: false,
-            logging: true,
-            logger: 'advanced-console',
+            logging: !isProduction, // Can be overridden by logger
+            logger: new TypeOrmCustomLogger(),
+            maxQueryExecutionTime: 3000, // Logs slow queries > 3000ms
             ssl: isProduction,
             extra: {
                 max: poolConfig.max,
                 min: poolConfig.min,
                 idleTimeoutMillis: 10000,
-                connectionTimeoutMillis: 2000,
+                connectionTimeoutMillis: 20000,
                 keepAlive: true,
                 ...(isProduction
                     ? {

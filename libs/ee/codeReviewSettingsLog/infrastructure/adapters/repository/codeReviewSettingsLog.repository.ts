@@ -30,7 +30,7 @@ export class CodeReviewSettingsLogRepository implements ICodeReviewSettingsLogRe
     async find(
         filter?: Partial<ICodeReviewSettingsLog>,
     ): Promise<CodeReviewSettingsLogEntity[]> {
-        const query = this.codeReviewSettingsLogModel.find(filter);
+        const query = this.codeReviewSettingsLogModel.find(filter as any);
 
         query.sort({ createdAt: -1 });
 

@@ -1,8 +1,6 @@
 import { Test } from '@nestjs/testing';
 
-import {
-    LimitationType,
-} from '@/config/types/general/codeReview.type';
+import { LimitationType } from '@/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { UpdateOrCreateCodeReviewParameterUseCase } from '@/core/application/use-cases/parameters/update-or-create-code-review-parameter-use-case';
 import { INTEGRATION_CONFIG_SERVICE_TOKEN } from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';

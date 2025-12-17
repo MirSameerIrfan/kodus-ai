@@ -32,13 +32,14 @@ import { CodebaseModule } from '../modules/codebase.module';
 import { PullRequestMessagesModule } from '../modules/pullRequestMessages.module';
 import { PullRequestsModule } from '../modules/pull-requests.module';
 import { ParametersModule } from '@libs/organization/modules/parameters.module';
-import { DryRunModule } from '@libs/dryRun/dry-run.module';
+import { DryRunCoreModule } from '@libs/dryRun/dry-run-core.module';
 import { OrganizationParametersModule } from '@libs/organization/modules/organizationParameters.module';
 import { KodyFineTuningContextModule } from '@libs/kodyFineTuning/kodyFineTuningContext.module';
 import { AIEngineModule } from '@libs/ai-engine/modules/ai-engine.module';
 import { PlatformModule } from '@libs/platform/modules/platform.module';
 import { KodyASTAnalyzeContextModule } from '@libs/ee/kodyASTAnalyze/kodyAstAnalyzeContext.module';
 import { KodyASTModule } from '@libs/ee/kodyAST/kodyAST.module';
+import { AutomationModule } from '@libs/automation/modules/automation.module';
 
 @Module({
     imports: [
@@ -47,14 +48,15 @@ import { KodyASTModule } from '@libs/ee/kodyAST/kodyAST.module';
         forwardRef(() => PullRequestMessagesModule),
         forwardRef(() => PullRequestsModule),
         forwardRef(() => ParametersModule),
-        forwardRef(() => DryRunModule),
         forwardRef(() => OrganizationParametersModule),
         forwardRef(() => AIEngineModule),
         forwardRef(() => PlatformModule),
         forwardRef(() => KodyFineTuningContextModule),
         forwardRef(() => KodyASTAnalyzeContextModule),
         forwardRef(() => KodyASTModule),
+        forwardRef(() => AutomationModule),
         WorkflowCoreModule,
+        DryRunCoreModule,
     ],
     providers: [
         // Strategy

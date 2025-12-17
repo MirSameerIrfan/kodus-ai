@@ -39,7 +39,7 @@ import { REQUEST } from '@nestjs/core';
 import { ProviderService } from '@libs/core/infrastructure/services/providers/provider.service';
 
 @Controller('organization-parameters')
-export class OrgnizationParametersController {
+export class OrganizationParametersController {
     constructor(
         private readonly createOrUpdateOrganizationParametersUseCase: CreateOrUpdateOrganizationParametersUseCase,
         private readonly findByKeyOrganizationParametersUseCase: FindByKeyOrganizationParametersUseCase,

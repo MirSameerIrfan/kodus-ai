@@ -33,7 +33,8 @@ export class CodeReviewFeedbackEntity implements Entity<ICodeReviewFeedback> {
         this._comment = feedback.comment;
         this._suggestionId = feedback.suggestionId;
         this._pullRequest = feedback.pullRequest;
-        this._syncedEmbeddedSuggestions = feedback.syncedEmbeddedSuggestions ?? false;
+        this._syncedEmbeddedSuggestions =
+            feedback.syncedEmbeddedSuggestions ?? false;
     }
 
     toJson(): ICodeReviewFeedback {

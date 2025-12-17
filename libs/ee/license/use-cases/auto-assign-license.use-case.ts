@@ -11,10 +11,6 @@ import {
     IOrganizationParametersService,
     ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/organizationParameters/contracts/organizationParameters.service.contract';
-import {
-    IPullRequestsService,
-    PULL_REQUESTS_SERVICE_TOKEN,
-} from '@libs/platformData/domain/pullRequests/contracts/pullRequests.service.contracts';
 import { createLogger } from '@kodus/flow';
 
 @Injectable()
@@ -26,14 +22,13 @@ export class AutoAssignLicenseUseCase {
         private readonly organizationParametersService: IOrganizationParametersService,
         @Inject(LICENSE_SERVICE_TOKEN)
         private readonly licenseService: ILicenseService,
-        @Inject(PULL_REQUESTS_SERVICE_TOKEN)
-        private readonly pullRequestsService: IPullRequestsService,
     ) {}
 
     async execute(params: {
         organizationAndTeamData: OrganizationAndTeamData;
         userGitId: string;
         prNumber: number;
+        prCount: number;
         repositoryName: string;
         provider: string;
     }): Promise<{
@@ -90,14 +85,11 @@ export class AutoAssignLicenseUseCase {
                 }
             }
 
-            // 5. Count user's PRs
-            const prs = await this.pullRequestsService.find({
-                'organizationId': organizationAndTeamData.organizationId,
-                'user.id': userGitId,
-            } as any);
+            // 5. Use the provided PR count
+            const { prCount } = params;
 
-            // If it's the first PR, it's a freebie
-            if ((prs?.length ?? 0) <= 1) {
+            // If it's the first PR (or less), it's a freebie
+            if (prCount <= 1) {
                 return { shouldProceed: true, reason: 'FREEBIE' };
             }
 
@@ -108,7 +100,7 @@ export class AutoAssignLicenseUseCase {
                 metadata: {
                     ...organizationAndTeamData,
                     userGitId,
-                    prCount: prs?.length ?? 0,
+                    prCount,
                 },
             });
             const assigned = await this.licenseService.assignLicense(

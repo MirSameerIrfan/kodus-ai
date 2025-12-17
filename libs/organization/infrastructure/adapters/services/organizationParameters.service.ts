@@ -14,9 +14,7 @@ import { OrganizationParametersKey } from '@libs/core/domain/enums/organization-
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 
 @Injectable()
-export class OrganizationParametersService
-    implements IOrganizationParametersService
-{
+export class OrganizationParametersService implements IOrganizationParametersService {
     private readonly logger = createLogger(OrganizationParametersService.name);
 
     constructor(

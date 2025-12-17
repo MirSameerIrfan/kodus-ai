@@ -8,7 +8,6 @@ import { BitbucketModule } from './bitbucket.module';
 import { AzureReposModule } from './azure-repos.module';
 import { PlatformIntegrationFactory } from '../infrastructure/adapters/services/platformIntegration.factory';
 import { CodeManagementService } from '../infrastructure/adapters/services/codeManagement.service';
-import { PlatformDataModule } from '@libs/platformData/platformData.module';
 
 @Module({
     imports: [
@@ -19,7 +18,6 @@ import { PlatformDataModule } from '@libs/platformData/platformData.module';
         GitlabModule,
         BitbucketModule,
         AzureReposModule,
-        forwardRef(() => PlatformDataModule),
     ],
     providers: [PlatformIntegrationFactory, CodeManagementService],
     exports: [PlatformIntegrationFactory, CodeManagementService],

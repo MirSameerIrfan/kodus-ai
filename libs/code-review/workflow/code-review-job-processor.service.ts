@@ -94,13 +94,13 @@ export class CodeReviewJobProcessorService implements IJobProcessorService {
     }
 
     async handleFailure(jobId: string, error: Error): Promise<void> {
-            await this.jobRepository.update(jobId, {
-                status: JobStatus.FAILED,
+        await this.jobRepository.update(jobId, {
+            status: JobStatus.FAILED,
             errorClassification: ErrorClassification.PERMANENT, // Or determine based on error
             lastError: error.message,
-                failedAt: new Date(),
-            });
-        }
+            failedAt: new Date(),
+        });
+    }
 
     async markCompleted(jobId: string, result?: unknown): Promise<void> {
         await this.jobRepository.update(jobId, {

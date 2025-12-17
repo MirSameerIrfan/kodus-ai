@@ -12,8 +12,6 @@ import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 
 import { SignUpUseCase } from './signup.use-case';
 
-
-
 @Injectable()
 export class OAuthLoginUseCase implements IUseCase {
     constructor(

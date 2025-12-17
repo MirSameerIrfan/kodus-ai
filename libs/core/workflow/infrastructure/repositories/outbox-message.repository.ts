@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan } from 'typeorm';
+import { Repository, LessThan, EntityManager } from 'typeorm';
 
 import { createLogger } from '@kodus/flow';
 import { OutboxMessage } from '../../domain/interfaces/outbox-message.interface';
@@ -16,9 +16,16 @@ export class OutboxMessageRepository {
         private readonly repository: Repository<OutboxMessageModel>,
     ) {}
 
-    async create(message: OutboxMessage): Promise<OutboxMessageModel> {
+    async create(
+        message: OutboxMessage,
+        transactionManager?: EntityManager,
+    ): Promise<OutboxMessageModel> {
         try {
-            const model = this.repository.create({
+            const repo = transactionManager
+                ? transactionManager.getRepository(OutboxMessageModel)
+                : this.repository;
+
+            const model = repo.create({
                 job: message.jobId ? { uuid: message.jobId } : undefined,
                 exchange: message.exchange,
                 routingKey: message.routingKey,
@@ -26,7 +33,7 @@ export class OutboxMessageRepository {
                 processed: false,
             });
 
-            const saved = await this.repository.save(model);
+            const saved = await repo.save(model);
 
             this.logger.debug({
                 message: 'Outbox message created',
@@ -49,14 +56,22 @@ export class OutboxMessageRepository {
         }
     }
 
+    /**
+     * Finds unprocessed messages using SKIP LOCKED to allow concurrent processing by multiple workers.
+     * This prevents multiple workers from picking up the same message.
+     */
     async findUnprocessed(limit: number = 100): Promise<OutboxMessageModel[]> {
         try {
-            return await this.repository.find({
-                where: { processed: false },
-                order: { createdAt: 'ASC' },
-                take: limit,
-                relations: ['job'],
-            });
+            // Using QueryBuilder with lock skipLocked for concurrency control
+            return await this.repository
+                .createQueryBuilder('outbox')
+                .setLock('pessimistic_write') // Locks the rows
+                .setOnLocked('skip_locked') // Skips already locked rows
+                .where('outbox.processed = :processed', { processed: false })
+                .orderBy('outbox.createdAt', 'ASC')
+                .take(limit)
+                .leftJoinAndSelect('outbox.job', 'job')
+                .getMany();
         } catch (error) {
             this.logger.error({
                 message: 'Failed to find unprocessed outbox messages',

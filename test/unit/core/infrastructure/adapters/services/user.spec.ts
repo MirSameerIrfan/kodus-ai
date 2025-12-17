@@ -20,7 +20,6 @@ import { ProfilesService } from '@/core/infrastructure/adapters/services/profile
 import { TeamService } from '@/core/infrastructure/adapters/services/team.service';
 import { UsersService } from '@/core/infrastructure/adapters/services/users.service';
 
-
 describe('User SignUp', () => {
     let usersService: UsersService;
     let usersRepository: IUserRepository;

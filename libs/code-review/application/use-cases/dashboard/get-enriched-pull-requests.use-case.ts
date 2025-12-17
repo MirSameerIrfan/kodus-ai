@@ -19,6 +19,7 @@ import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
     IAutomationExecutionService,
 } from '@libs/automation/domain/automationExecution/contracts/automation-execution.service';
+import { IAutomationExecution } from '@libs/automation/domain/automationExecution/interfaces/automation-execution.interface';
 import {
     CODE_REVIEW_EXECUTION_SERVICE,
     ICodeReviewExecutionService,
@@ -43,7 +44,7 @@ export class GetEnrichedPullRequestsUseCase implements IUseCase {
         private readonly pullRequestsService: IPullRequestsService,
 
         @Inject(CODE_REVIEW_EXECUTION_SERVICE)
-        private readonly codeReviewExecutionService: ICodeReviewExecutionService,
+        private readonly codeReviewExecutionService: ICodeReviewExecutionService<IAutomationExecution>,
 
         @Inject(REQUEST)
         private readonly request: UserRequest,

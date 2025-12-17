@@ -1,4 +1,4 @@
-import { Column, Entity, Index } from 'typeorm';
+import { Column, Entity, Index, OneToMany } from 'typeorm';
 
 import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 import { JobStatus } from '@libs/core/workflow/domain/enums/job-status.enum';
@@ -6,10 +6,8 @@ import { WorkflowType } from '@libs/core/workflow/domain/enums/workflow-type.enu
 import { HandlerType } from '@libs/core/workflow/domain/enums/handler-type.enum';
 import { ErrorClassification } from '@libs/core/workflow/domain/enums/error-classification.enum';
 
-/*
 import { OutboxMessageModel } from './outbox-message.model';
 import { InboxMessageModel } from './inbox-message.model';
-*/
 
 @Entity({ name: 'workflow_jobs', schema: 'workflow' })
 @Index('IDX_workflow_jobs_status', ['status'])
@@ -93,11 +91,9 @@ export class WorkflowJobModel extends CoreModel {
     @Column({ type: 'jsonb', nullable: true })
     pipelineState?: Record<string, unknown>;
 
-    /*
     @OneToMany(() => OutboxMessageModel, (outbox) => outbox.job)
     outboxMessages?: OutboxMessageModel[];
 
     @OneToMany(() => InboxMessageModel, (inbox) => inbox.job)
     inboxMessages?: InboxMessageModel[];
-    */
 }

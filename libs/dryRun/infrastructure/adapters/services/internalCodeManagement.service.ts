@@ -28,9 +28,7 @@ type PartialICodeManagementService = Pick<
 
 @Injectable()
 @IntegrationServiceDecorator(PlatformType.INTERNAL, 'codeManagement')
-export class InternalCodeManagementService
-    implements PartialICodeManagementService
-{
+export class InternalCodeManagementService implements PartialICodeManagementService {
     private readonly logger = createLogger(InternalCodeManagementService.name);
 
     constructor(

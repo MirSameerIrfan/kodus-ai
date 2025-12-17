@@ -20,25 +20,25 @@ import { TaskStatus } from '@libs/ee/kodyAST/interfaces/code-ast-analysis.interf
 import { ContextAugmentationsMap } from '@libs/ai-engine/infrastructure/adapters/services/context/interfaces/code-review-context-pack.interface';
 
 export type PullRequestType = {
-        number: number;
-        title: string;
-        base: {
-            repo: {
-                fullName: string;
-            };
-            ref: string;
+    number: number;
+    title: string;
+    base: {
+        repo: {
+            fullName: string;
         };
-        repository: Repository;
-        isDraft: boolean;
-        tags?: string[];
-        stats: {
-            total_additions: number;
-            total_deletions: number;
-            total_files: number;
-            total_lines_changed: number;
-        };
-        [key: string]: any;
+        ref: string;
     };
+    repository: Repository;
+    isDraft: boolean;
+    tags?: string[];
+    stats: {
+        total_additions: number;
+        total_deletions: number;
+        total_files: number;
+        total_lines_changed: number;
+    };
+    [key: string]: any;
+};
 
 export interface CodeReviewPipelineContext extends PipelineContext {
     dryRun: {

@@ -1,6 +1,6 @@
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { Injectable, UseFilters, Optional } from '@nestjs/common';
+import { Injectable, UseFilters, Inject } from '@nestjs/common';
+import { ConsumeMessage } from 'amqplib';
 
 import { RabbitmqConsumeErrorFilter } from '@libs/core/infrastructure/filters/rabbitmq-consume-error.exception';
 import { createLogger } from '@kodus/flow';
@@ -8,6 +8,10 @@ import { JobStatus } from '@libs/core/workflow/domain/enums/job-status.enum';
 import { ObservabilityService } from '@libs/core/log/observability.service';
 
 import { WorkflowJobRepository } from './repositories/workflow-job.repository';
+import {
+    IMessageBrokerService,
+    MESSAGE_BROKER_SERVICE_TOKEN,
+} from '@libs/core/domain/contracts/message-broker.service.contracts';
 
 interface ASTCompletedMessage {
     taskId: string;
@@ -20,7 +24,8 @@ export class ASTEventHandler {
     private readonly logger = createLogger(ASTEventHandler.name);
     constructor(
         private readonly jobRepository: WorkflowJobRepository,
-        @Optional() private readonly amqpConnection: AmqpConnection,
+        @Inject(MESSAGE_BROKER_SERVICE_TOKEN)
+        private readonly messageBroker: IMessageBrokerService,
         private readonly observability: ObservabilityService,
     ) {}
 
@@ -38,12 +43,13 @@ export class ASTEventHandler {
     })
     async handleASTCompleted(
         message: ASTCompletedMessage,
-        amqpMsg: any,
+        amqpMsg: ConsumeMessage,
     ): Promise<void> {
-        const messageId = amqpMsg?.properties?.messageId;
+        const messageId = amqpMsg.properties.messageId;
         const correlationId =
-            amqpMsg?.properties?.headers?.['x-correlation-id'] ||
-            amqpMsg?.properties?.correlationId;
+            (amqpMsg.properties.headers &&
+                amqpMsg.properties.headers['x-correlation-id']) ||
+            amqpMsg.properties.correlationId;
 
         return await this.observability.runInSpan(
             'workflow.event.ast.completed',
@@ -143,35 +149,36 @@ export class ASTEventHandler {
             },
         });
 
+        const payload = {
+            jobId,
+            eventData: eventData.astResult,
+        };
+
         // Enqueue job for continued processing
-        if (this.amqpConnection) {
-            await this.amqpConnection.publish(
-                'workflow.exchange',
-                'workflow.jobs.resumed',
-                {
-                    jobId,
-                    eventData: eventData.astResult,
+        await this.messageBroker.publishMessage(
+            {
+                exchange: 'workflow.exchange',
+                routingKey: 'workflow.jobs.resumed',
+            },
+            {
+                event_name: 'workflow.jobs.resumed',
+                event_version: 1,
+                occurred_on: new Date(),
+                payload: payload,
+                messageId: `resume-${jobId}`,
+            },
+            {
+                messageId: `resume-${jobId}`,
+                correlationId: job.correlationId,
+                persistent: true,
+                headers: {
+                    'x-correlation-id': job.correlationId,
+                    'x-workflow-type': job.workflowType,
+                    'x-job-id': jobId,
+                    'x-resume-reason': 'ast.completed',
                 },
-                {
-                    messageId: `resume-${jobId}`,
-                    correlationId: job.correlationId,
-                    persistent: true,
-                    headers: {
-                        'x-correlation-id': job.correlationId,
-                        'x-workflow-type': job.workflowType,
-                        'x-job-id': jobId,
-                        'x-resume-reason': 'ast.completed',
-                    },
-                },
-            );
-        } else {
-            this.logger.warn({
-                message:
-                    'AmqpConnection not available, cannot publish resume event',
-                context: ASTEventHandler.name,
-                metadata: { jobId },
-            });
-        }
+            },
+        );
 
         this.logger.log({
             message: `Workflow ${jobId} resumed after AST completion`,

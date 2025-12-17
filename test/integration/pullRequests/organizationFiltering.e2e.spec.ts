@@ -8,7 +8,6 @@ import { GetPullRequestAuthorsUseCase } from '@/core/application/use-cases/pullR
 import { UpdatePullRequestToNewFormatUseCase } from '@/core/application/use-cases/pullRequests/update-pull-request-to-new-format.use-case';
 import { PullRequestController } from '@/core/infrastructure/http/controllers/pullRequest.controller';
 
-
 describe('Pull Request Organization Filtering (e2e)', () => {
     let app: INestApplication;
     let mockGetEnrichedPullRequestsUseCase: jest.Mocked<GetEnrichedPullRequestsUseCase>;

@@ -1,4 +1,3 @@
-import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 
@@ -15,14 +14,18 @@ import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
     ICodeReviewSettingsLogService,
 } from '@libs/ee/codeReviewSettingsLog/domain/contracts/codeReviewSettingsLog.service.contract';
+import { createLogger } from '@kodus/flow';
 
 @Injectable()
 export class CreateIntegrationUseCase implements IUseCase {
     private readonly logger = createLogger(CreateIntegrationUseCase.name);
+
     constructor(
         private readonly codeManagementService: CodeManagementService,
+
         @Inject(CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN)
         private readonly codeReviewSettingsLogService: ICodeReviewSettingsLogService,
+
         @Inject(REQUEST)
         private readonly request: Request & {
             user: {
@@ -31,8 +34,10 @@ export class CreateIntegrationUseCase implements IUseCase {
                 email: string;
             };
         },
+
         @Inject(AUTH_INTEGRATION_SERVICE_TOKEN)
         private readonly authIntegrationService: IAuthIntegrationService,
+
         private readonly ignoreBotsUseCase: IgnoreBotsUseCase,
     ) {}
 
@@ -55,46 +60,21 @@ export class CreateIntegrationUseCase implements IUseCase {
             params.integrationType,
         );
 
-        try {
-            const orgMembers = await this.codeManagementService.getListMembers({
-                organizationAndTeamData,
-                determineBots: true,
-            });
-
-            const botIds: string[] = Array.from(
-                new Set(
-                    orgMembers
-                        .filter((user) => user.type === 'bot')
-                        .map((b) => b.id),
-                ),
-            );
-
-            this.ignoreBotsUseCase
-                .execute({
-                    organizationId: organizationAndTeamData.organizationId,
-                    teamId: organizationAndTeamData.teamId,
-                    botIds,
-                })
-                .catch((error) => {
-                    this.logger.error({
-                        message: 'Error ignoring bots',
-                        error: error,
-                        context: CreateIntegrationUseCase.name,
-                        metadata: {
-                            organizationAndTeamData: organizationAndTeamData,
-                        },
-                    });
+        this.ignoreBotsUseCase
+            .execute({
+                organizationId: organizationAndTeamData.organizationId,
+                teamId: organizationAndTeamData.teamId,
+            })
+            .catch((error) => {
+                this.logger.error({
+                    message: 'Error ignoring bots',
+                    error: error,
+                    context: CreateIntegrationUseCase.name,
+                    metadata: {
+                        organizationAndTeamData: organizationAndTeamData,
+                    },
                 });
-        } catch (error) {
-            this.logger.warn({
-                message: 'Error fetching members to find bots',
-                error: error,
-                context: CreateIntegrationUseCase.name,
-                metadata: {
-                    organizationAndTeamData,
-                },
             });
-        }
 
         try {
             // Buscar a auth integration criada com os dados corretos de organização/team

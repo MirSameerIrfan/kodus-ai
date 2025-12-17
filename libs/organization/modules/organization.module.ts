@@ -6,6 +6,7 @@ import { IntegrationConfigModule } from '@libs/integrations/modules/config.modul
 
 import { OrganizationService } from '../infrastructure/adapters/services/organization.service';
 import { OrganizationModel } from '../infrastructure/adapters/repositories/schemas/organization.model';
+import { SSOConfigModel } from '@libs/identity/infrastructure/adapters/repositories/schemas/ssoConfig.model'; // Added
 import { IntegrationModule } from '@libs/integrations/modules/integrations.module';
 import { ORGANIZATION_SERVICE_TOKEN } from '../domain/organization/contracts/organization.service.contract';
 import { ORGANIZATION_REPOSITORY_TOKEN } from '../domain/organization/contracts/organization.repository.contract';
@@ -19,7 +20,7 @@ import { ParametersModule } from './parameters.module';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([OrganizationModel]),
+        TypeOrmModule.forFeature([OrganizationModel, SSOConfigModel]), // Added SSOConfigModel
         forwardRef(() => ProfilesModule),
         forwardRef(() => TeamModule),
         forwardRef(() => IntegrationModule),

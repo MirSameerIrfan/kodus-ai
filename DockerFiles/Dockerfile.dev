@@ -1,80 +1,35 @@
 ARG API_CLOUD_MODE=false
 
-FROM node:20-slim AS deps
+FROM node:22.14.0-slim
 
 ARG API_CLOUD_MODE
 ENV API_CLOUD_MODE=${API_CLOUD_MODE}
 
 WORKDIR /usr/src/app
-
-# Install dev tools and yalc dependencies globally
-RUN apt-get update && apt-get install -y ca-certificates git make g++ python3 procps && rm -rf /var/lib/apt/lists/*
-RUN npm i -g yalc chokidar-cli
-
+ENV NODE_ENV=development
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
+# Disable corepack to ensure we use the explicit yarn version if needed,
+# though checking previous file shows we just need yarn global.
+RUN corepack disable \
+ && npm i -g yarn@1.22.22
+
+# Install dependencies required for native modules and development tools
+# python3, make, g++ are often needed for rebuilding bindings
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ca-certificates python3 make g++ procps git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install global development tools
+RUN npm i -g yalc chokidar-cli nodemon
+
+# Copy ONLY configuration files needed for the environment setup
 COPY package.json yarn.lock ./
-COPY packages/kodus-flow ./packages/kodus-flow
-COPY packages/kodus-common/package.json ./packages/kodus-common/
+COPY nest-cli.json tsconfig*.json ./
 
-# Patch package.json to use the local package path instead of yalc's for the Docker build
-RUN sed -i 's|"file:.yalc/@kodus/flow"|"file:packages/kodus-flow"|g' package.json
-RUN sed -i 's|"file:.yalc/@kodus/kodus-common"|"file:packages/kodus-common"|g' package.json
+# Setup Entrypoint
+COPY --chmod=0755 docker/dev-entrypoint.sh /usr/local/bin/dev-entrypoint
 
-RUN yarn install --check-files --production=false
-
-# -------------------------------------------------------------
-FROM node:20-slim AS build-code
-
-ARG API_CLOUD_MODE
-ENV API_CLOUD_MODE=${API_CLOUD_MODE}
-
-COPY tsconfig*.json ./
-COPY nest-cli.json ./
-COPY packages/kodus-flow ./packages/kodus-flow
-COPY packages/kodus-common ./packages/kodus-common
-COPY src ./src
-
-ENV NODE_OPTIONS="--max-old-space-size=4096"
-
-RUN yarn build
-
-RUN apt-get update && apt-get install -y git build-essential postgresql-client postgresql-server-dev-all && \
-    cd /tmp && \
-    git clone --branch v0.5.1 --depth 1 https://github.com/pgvector/pgvector.git && \
-    cd pgvector && \
-    make && \
-    make install && \
-    cd / && \
-    rm -rf /tmp/pgvector && \
-    apt-get remove -y git build-essential && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/*
-
-# -------------------------------------------------------------
-FROM node:20-slim AS development
-
-ARG API_CLOUD_MODE
-ENV API_CLOUD_MODE=${API_CLOUD_MODE}
-
-WORKDIR /usr/src/app
-EXPOSE 3001
-
-RUN apt-get update && \
-    apt-get install -y ca-certificates git python3 make g++ procps && \
-    rm -rf /var/lib/apt/lists/*
-
-# Also install yalc tools in the final stage for exec commands
-RUN npm i -g yalc chokidar-cli
-
-COPY --from=deps /usr/src/app/node_modules ./node_modules
-COPY --from=deps /usr/src/app/packages ./packages
-
-COPY package.json yarn.lock ./
-COPY tsconfig*.json ./
-COPY nest-cli.json ./
-
-COPY --from=build-code /usr/src/app/dist ./dist
-RUN mkdir -p /usr/src/app/certs
-
-CMD ["tail", "-f", "/dev/null"] # Keep container alive for exec commands and dev startup
+ENTRYPOINT ["/usr/local/bin/dev-entrypoint"]
+# Default command fallback
+CMD ["yarn", "start:dev"]

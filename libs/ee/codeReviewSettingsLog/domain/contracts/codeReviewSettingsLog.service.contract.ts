@@ -14,8 +14,7 @@ export const CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN = Symbol(
     'CodeReviewSettingsLogService',
 );
 
-export interface ICodeReviewSettingsLogService
-    extends ICodeReviewSettingsLogRepository {
+export interface ICodeReviewSettingsLogService extends ICodeReviewSettingsLogRepository {
     registerCodeReviewConfigLog(
         params: CodeReviewConfigLogParams,
     ): Promise<void>;

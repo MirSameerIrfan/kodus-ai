@@ -6,7 +6,6 @@ import * as yaml from 'js-yaml';
 import * as codereviewConfigSchema from '@libs/common/schemas/codereview.json';
 import { KodusConfigFile } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 
-
 interface IValidateKodusConfigFileReturn {
     isValidConfigFile: boolean;
     validationErrors?: ErrorObject<string, Record<string, any>, unknown>[];

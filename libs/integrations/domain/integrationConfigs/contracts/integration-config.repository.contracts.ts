@@ -5,7 +5,6 @@ import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/
 import { IntegrationConfigEntity } from '../entities/integration-config.entity';
 import { IIntegrationConfig } from '../interfaces/integration-config.interface';
 
-
 export const INTEGRATION_CONFIG_REPOSITORY_TOKEN = Symbol(
     'IntegrationConfigRepository',
 );

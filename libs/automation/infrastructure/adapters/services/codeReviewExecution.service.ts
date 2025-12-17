@@ -10,28 +10,30 @@ import { CodeReviewExecutionEntity } from '@libs/automation/domain/codeReviewExe
 import { CodeReviewExecution } from '@libs/automation/domain/codeReviewExecutions/interfaces/codeReviewExecution.interface';
 
 @Injectable()
-export class CodeReviewExecutionService implements ICodeReviewExecutionService {
+export class CodeReviewExecutionService<
+    T,
+> implements ICodeReviewExecutionService<T> {
     private readonly logger = createLogger(CodeReviewExecutionService.name);
     constructor(
         @Inject(CODE_REVIEW_EXECUTION_REPOSITORY)
-        private readonly codeReviewExecutionRepository: ICodeReviewExecutionRepository,
+        private readonly codeReviewExecutionRepository: ICodeReviewExecutionRepository<T>,
     ) {}
 
     create(
         codeReviewExecution: Omit<
-            CodeReviewExecution,
+            CodeReviewExecution<T>,
             'uuid' | 'createdAt' | 'updatedAt'
         >,
-    ): Promise<CodeReviewExecutionEntity | null> {
+    ): Promise<CodeReviewExecutionEntity<T> | null> {
         return this.codeReviewExecutionRepository.create(codeReviewExecution);
     }
 
     update(
-        filter: Partial<CodeReviewExecution>,
+        filter: Partial<CodeReviewExecution<T>>,
         codeReviewExecution: Partial<
-            Omit<CodeReviewExecution, 'uuid' | 'createdAt' | 'updatedAt'>
+            Omit<CodeReviewExecution<T>, 'uuid' | 'createdAt' | 'updatedAt'>
         >,
-    ): Promise<CodeReviewExecutionEntity | null> {
+    ): Promise<CodeReviewExecutionEntity<T> | null> {
         return this.codeReviewExecutionRepository.update(
             filter,
             codeReviewExecution,
@@ -39,14 +41,14 @@ export class CodeReviewExecutionService implements ICodeReviewExecutionService {
     }
 
     find(
-        filter?: Partial<CodeReviewExecution>,
-    ): Promise<CodeReviewExecutionEntity[]> {
+        filter?: Partial<CodeReviewExecution<T>>,
+    ): Promise<CodeReviewExecutionEntity<T>[]> {
         return this.codeReviewExecutionRepository.find(filter);
     }
 
     findOne(
-        filter?: Partial<CodeReviewExecution>,
-    ): Promise<CodeReviewExecutionEntity | null> {
+        filter?: Partial<CodeReviewExecution<T>>,
+    ): Promise<CodeReviewExecutionEntity<T> | null> {
         return this.codeReviewExecutionRepository.findOne(filter);
     }
 

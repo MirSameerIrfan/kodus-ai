@@ -108,13 +108,12 @@ export class LLMProviderService {
                     : llm;
             }
 
-            const { factory, modelName, baseURL, apiKey } = strategy;
+            const { factory, modelName, baseURL } = strategy;
 
             let llm = factory({
                 ...options,
                 model: modelName,
                 baseURL,
-                apiKey: options.apiKey ?? apiKey,
                 json: options.jsonMode,
                 maxReasoningTokens:
                     options.maxReasoningTokens ?? strategy.maxReasoningTokens,
@@ -128,7 +127,6 @@ export class LLMProviderService {
 
             return llm;
         } catch (error) {
-            // Se o erro veio de BYOK, deve propagar (não fazer fallback)
             if (options.byokConfig?.main?.apiKey) {
                 this.logger.error({
                     message: 'BYOK provider failed - propagating error',

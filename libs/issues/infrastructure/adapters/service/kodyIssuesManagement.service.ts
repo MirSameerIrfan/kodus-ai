@@ -46,9 +46,7 @@ import { LabelType } from '@libs/common/utils/codeManagement/labels';
 import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
 
 @Injectable()
-export class KodyIssuesManagementService
-    implements IKodyIssuesManagementService
-{
+export class KodyIssuesManagementService implements IKodyIssuesManagementService {
     private readonly logger = createLogger(KodyIssuesManagementService.name);
 
     constructor(

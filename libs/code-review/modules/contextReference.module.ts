@@ -13,6 +13,7 @@ import { MCPToolMetadataService } from '@libs/mcp-server/services/mcp-tool-metad
 import { CONTEXT_REFERENCE_SERVICE_TOKEN } from '@libs/ai-engine/domain/contextReference/contracts/context-reference.service.contract';
 import { ContextReferenceRepository } from '@libs/ai-engine/infrastructure/adapters/repositories/contextReference.repository';
 import { CONTEXT_REFERENCE_REPOSITORY_TOKEN } from '@libs/ai-engine/domain/contextReference/contracts/context-reference.repository.contract';
+import { McpCoreModule } from '@libs/mcp-server/mcp-core.module';
 
 @Module({
     imports: [
@@ -20,6 +21,7 @@ import { CONTEXT_REFERENCE_REPOSITORY_TOKEN } from '@libs/ai-engine/domain/conte
         forwardRef(() => PermissionValidationModule),
         forwardRef(() => PromptsModule),
         forwardRef(() => PlatformModule),
+        McpCoreModule,
     ],
     providers: [
         ContextReferenceService,

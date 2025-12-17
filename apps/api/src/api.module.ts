@@ -35,6 +35,29 @@ import { CodeReviewConfigurationModule } from '@libs/code-review/modules/code-re
 import { OrganizationOnboardingModule } from '@libs/organization/modules/organization-onboarding.module';
 import { CodeReviewDashboardModule } from '@libs/code-review/modules/code-review-dashboard.module';
 
+import { OrganizationParametersController } from './controllers/organizationParameters.controller';
+import { AgentController } from './controllers/agent.controller';
+import { AuthController } from './controllers/auth.controller';
+import { CodeBaseController } from './controllers/codeBase.controller';
+import { CodeManagementController } from './controllers/codeManagement.controller';
+import { CodeReviewSettingLogController } from './controllers/codeReviewSettingLog.controller';
+import { DryRunController } from './controllers/dryRun.controller';
+import { IntegrationController } from './controllers/integration.controller';
+import { IntegrationConfigController } from './controllers/integrationConfig.controller';
+import { IssuesController } from './controllers/issues.controller';
+import { KodyRulesController } from './controllers/kodyRules.controller';
+import { OrganizationController } from './controllers/organization.controller';
+import { ParametersController } from './controllers/parameters.controller';
+import { PermissionsController } from './controllers/permissions.controller';
+import { PullRequestController } from './controllers/pullRequest.controller';
+import { PullRequestMessagesController } from './controllers/pullRequestMessages.controller';
+import { RuleLikeController } from './controllers/ruleLike.controller';
+import { SegmentController } from './controllers/segment.controller';
+import { TeamController } from './controllers/team.controller';
+import { TeamMembersController } from './controllers/teamMembers.controller';
+import { TokenUsageController } from './controllers/tokenUsage.controller';
+import { UsersController } from './controllers/user.controller';
+
 /**
  * API REST Module
  *
@@ -87,23 +110,28 @@ import { CodeReviewDashboardModule } from '@libs/code-review/modules/code-review
     ],
     controllers: [
         // WorkflowQueueController,
-        // CodeManagementController,
-        // DryRunController,
-        // CodeReviewSettingLogController,
-        // PullRequestMessagesController,
-        // CodeBaseController,
-        // IssuesController,
-        // KodyRulesController,
-        // RuleLikeController,
-        // OrganizationController,
-        // ParametersController,
-        // TeamController,
-        // TeamMembersController,
-        // AgentController,
-        // AuthController,
-        // SegmentController,
-        // TokenUsageController,
-        // PermissionsController,
+        CodeManagementController,
+        DryRunController,
+        CodeReviewSettingLogController,
+        PullRequestMessagesController,
+        CodeBaseController,
+        IssuesController,
+        KodyRulesController,
+        RuleLikeController,
+        OrganizationController,
+        ParametersController,
+        OrganizationParametersController,
+        TeamController,
+        TeamMembersController,
+        AgentController,
+        AuthController,
+        SegmentController,
+        TokenUsageController,
+        PermissionsController,
+        IntegrationController,
+        IntegrationConfigController,
+        PullRequestController,
+        UsersController,
     ],
 })
 export class ApiModule {}

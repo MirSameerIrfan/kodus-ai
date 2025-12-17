@@ -1,4 +1,3 @@
-
 export const JOB_PROCESSOR_SERVICE_TOKEN = Symbol('JobProcessorService');
 
 export interface IJobProcessorService {

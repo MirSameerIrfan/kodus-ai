@@ -1,9 +1,10 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { createLogger } from "@kodus/flow";
+import { createLogger } from '@kodus/flow';
 import { Injectable, Optional } from '@nestjs/common';
 
 import {
     BrokerConfig,
+    BrokerPublishOptions,
     IMessageBrokerService,
     MessagePayload,
 } from '@libs/core/domain/contracts/message-broker.service.contracts';
@@ -23,6 +24,7 @@ export class MessageBrokerService implements IMessageBrokerService {
     async publishMessage(
         config: BrokerConfig,
         message: MessagePayload,
+        options?: BrokerPublishOptions,
     ): Promise<void> {
         if (!this.amqpConnection) {
             this.logger.warn({
@@ -44,11 +46,13 @@ export class MessageBrokerService implements IMessageBrokerService {
                     routingKey,
                     messageId: message.messageId || 'N/A',
                     payload: message.payload,
+                    options,
                 },
             });
 
             await this.amqpConnection.publish(exchange, routingKey, message, {
                 persistent: true,
+                ...options,
             });
 
             this.logger.log({

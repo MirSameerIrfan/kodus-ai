@@ -16,9 +16,7 @@ import {
     INTEGRATION_SERVICE_TOKEN,
 } from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
 
-export class GetIntegrationConfigsByIntegrationCategoryUseCase
-    implements IUseCase
-{
+export class GetIntegrationConfigsByIntegrationCategoryUseCase implements IUseCase {
     private readonly logger = createLogger(
         GetIntegrationConfigsByIntegrationCategoryUseCase.name,
     );

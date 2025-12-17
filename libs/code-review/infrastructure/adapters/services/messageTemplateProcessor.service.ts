@@ -237,7 +237,7 @@ ${reviewOptionsMarkdown}
                     'Kody will automatically review every push to this PR.';
                 break;
 
-            case ReviewCadenceType.AUTO_PAUSE:
+            case ReviewCadenceType.AUTO_PAUSE: {
                 statusText = translation.autoPauseTitle || 'Auto-Pause Mode';
                 const timeWindow =
                     context.codeReviewConfig.reviewCadence.timeWindow || 15;
@@ -249,6 +249,7 @@ ${reviewOptionsMarkdown}
                         ?.replace('{pushes}', String(pushes)) ||
                     `Kody reviews the first push automatically, then pauses if you make ${pushes}+ pushes in ${timeWindow} minutes. Use @kody resume to continue.`;
                 break;
+            }
 
             case ReviewCadenceType.MANUAL:
                 statusText = translation.manualTitle || 'Manual Review';

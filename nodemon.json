@@ -1,13 +1,14 @@
 {
     "watch": [
-        "src",
+        "libs",
+        "apps",
         ".yalc/@kodus/flow",
-        "node_modules/@kodus/flow/dist"
+        ".yalc/@kodus/kodus-common"
     ],
     "ext": "ts,js,json",
     "ignore": [
         "dist",
+        "node_modules",
         "**/*.spec.ts"
-    ],
-    "exec": "nest start api --watch --debug 0.0.0.0:9229"
+    ]
 }

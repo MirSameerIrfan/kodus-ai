@@ -13,6 +13,10 @@ import { IntegrationModule } from '@libs/integrations/modules/integrations.modul
 import { ParametersRepository } from '../infrastructure/adapters/repositories/parameters.repository';
 import { PARAMETERS_SERVICE_TOKEN } from '../domain/parameters/contracts/parameters.service.contract';
 import { ParametersService } from '../infrastructure/adapters/services/parameters.service';
+import { UpdateOrCreateCodeReviewParameterUseCase } from '@libs/code-review/application/use-cases/configuration/update-or-create-code-review-parameter-use-case';
+import { CodeReviewSettingsLogModule } from '@libs/ee/codeReviewSettingsLog/codeReviewSettingsLog.module';
+import { McpCoreModule } from '@libs/mcp-server/mcp-core.module';
+import { AIEngineModule } from '@libs/ai-engine/modules/ai-engine.module'; // Added
 
 @Module({
     imports: [
@@ -21,6 +25,9 @@ import { ParametersService } from '../infrastructure/adapters/services/parameter
         forwardRef(() => IntegrationModule),
         forwardRef(() => OrganizationParametersModule),
         PermissionsModule,
+        forwardRef(() => CodeReviewSettingsLogModule),
+        forwardRef(() => McpCoreModule),
+        forwardRef(() => AIEngineModule), // Added
     ],
     providers: [
         CreateOrUpdateParametersUseCase,
@@ -34,6 +41,7 @@ import { ParametersService } from '../infrastructure/adapters/services/parameter
             provide: PARAMETERS_SERVICE_TOKEN,
             useClass: ParametersService,
         },
+        UpdateOrCreateCodeReviewParameterUseCase,
     ],
     exports: [
         PARAMETERS_REPOSITORY_TOKEN,
@@ -41,6 +49,7 @@ import { ParametersService } from '../infrastructure/adapters/services/parameter
         CreateOrUpdateParametersUseCase,
         FindByKeyParametersUseCase,
         GetDefaultConfigUseCase,
+        UpdateOrCreateCodeReviewParameterUseCase,
     ],
 })
 export class ParametersModule {}

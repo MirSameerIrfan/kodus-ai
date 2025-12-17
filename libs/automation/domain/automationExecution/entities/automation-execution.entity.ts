@@ -14,7 +14,9 @@ export class AutomationExecutionEntity implements IAutomationExecution {
     private _pullRequestNumber?: number;
     private _repositoryId?: string;
     private _teamAutomation?: Partial<ITeamAutomation>;
-    private _codeReviewExecutions?: Array<Partial<CodeReviewExecution>>;
+    private _codeReviewExecutions?: Array<
+        Partial<CodeReviewExecution<IAutomationExecution>>
+    >;
     private _origin?: string;
 
     constructor(
@@ -97,7 +99,9 @@ export class AutomationExecutionEntity implements IAutomationExecution {
         return this._teamAutomation;
     }
 
-    public get codeReviewExecutions(): Array<Partial<CodeReviewExecution>> {
+    public get codeReviewExecutions(): Array<
+        Partial<CodeReviewExecution<IAutomationExecution>>
+    > {
         return [...this._codeReviewExecutions];
     }
 

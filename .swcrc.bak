@@ -1,0 +1,26 @@
+{
+    "$schema": "https://swc.rs/schema.json",
+    "jsc": {
+        "parser": {
+            "syntax": "typescript",
+            "decorators": true,
+            "dynamicImport": true
+        },
+        "target": "es2021",
+        "transform": {
+            "legacyDecorator": true,
+            "decoratorMetadata": true
+        },
+        "keepClassNames": true,
+        "baseUrl": "./",
+        "paths": {
+            "@libs/*": ["libs/*"],
+            "@/*": ["apps/api/src/*"],
+            "@kodus/kodus-common/*": ["node_modules/@kodus/kodus-common/*"],
+            "@kodus/kodus-common": ["node_modules/@kodus/kodus-common"],
+            "@kodus/flow/*": ["node_modules/@kodus/flow/*"],
+            "@kodus/flow": ["node_modules/@kodus/flow"]
+        }
+    },
+    "sourceMaps": true
+}

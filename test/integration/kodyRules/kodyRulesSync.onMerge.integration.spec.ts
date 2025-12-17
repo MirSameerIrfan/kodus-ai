@@ -179,7 +179,9 @@ describe('GitHubPullRequestHandler - KodyRules sync on PR merged', () => {
     afterAll(async () => {
         try {
             await (testingModule as any)?.close?.();
-        } catch {}
+        } catch {
+            // ignore error
+        }
     });
 
     it('deve crgetNovitaAIiar Kody Rules a partir de arquivos de rules ao mergear PR no default branch, preenchendo sourcePath e path', async () => {

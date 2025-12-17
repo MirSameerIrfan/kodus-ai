@@ -18,19 +18,17 @@ import { PromptExternalReferenceManagerService } from '../infrastructure/adapter
 import { FileContextAugmentationService } from '../infrastructure/adapters/services/context/file-context-augmentation.service';
 import { CONTEXT_REFERENCE_SERVICE_TOKEN } from '../domain/contextReference/contracts/context-reference.service.contract';
 import { CONTEXT_REFERENCE_REPOSITORY_TOKEN } from '../domain/contextReference/contracts/context-reference.repository.contract';
-import { McpModule } from '@libs/mcp-server/mcp.module';
+import { McpCoreModule } from '@libs/mcp-server/mcp-core.module';
 import { AgentsModule } from '@libs/agents/modules/agents.module';
 
 import { PermissionValidationModule } from '@libs/ee/shared/permission-validation.module';
-import { CodebaseModule } from '@libs/code-review/modules/codebase.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([ContextReferenceModel]),
         forwardRef(() => IntegrationConfigModule),
         forwardRef(() => PlatformModule),
-        forwardRef(() => CodebaseModule), // For CodeManagementService dependency
-        McpModule.forRoot(), // For MCPToolMetadataService
+        McpCoreModule, // For MCPToolMetadataService
         forwardRef(() => AgentsModule), // For ContextEvidenceAgentProvider
         forwardRef(() => PermissionValidationModule),
     ],

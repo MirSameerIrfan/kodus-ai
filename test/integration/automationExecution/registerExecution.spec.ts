@@ -10,7 +10,6 @@ import { AutomationExecutionRepository } from '@/core/infrastructure/adapters/re
 import { AutomationExecutionModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/automationExecution.model';
 import { AutomationExecutionService } from '@/core/infrastructure/adapters/services/automation/automation-execution.service';
 
-
 describe('AutomationExecutionService - Data Persistence', () => {
     let service: AutomationExecutionService;
     let repository: AutomationExecutionRepository;

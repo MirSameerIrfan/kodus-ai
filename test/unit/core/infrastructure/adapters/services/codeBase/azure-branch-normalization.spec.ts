@@ -3,12 +3,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
 
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import {
-    AUTOMATION_EXECUTION_SERVICE_TOKEN,
-} from '@/core/domain/automation/contracts/automation-execution.service';
-import {
-    ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
-} from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
+import { AUTOMATION_EXECUTION_SERVICE_TOKEN } from '@/core/domain/automation/contracts/automation-execution.service';
+import { ORGANIZATION_PARAMETERS_SERVICE_TOKEN } from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
 import { ValidateConfigStage } from '@/core/infrastructure/adapters/services/codeBase/codeReviewPipeline/stages/validate-config.stage';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';

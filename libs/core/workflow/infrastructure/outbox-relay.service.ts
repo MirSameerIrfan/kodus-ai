@@ -1,22 +1,43 @@
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { createLogger } from '@kodus/flow';
 import { ObservabilityService } from '@libs/core/log/observability.service';
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import {
+    Injectable,
+    OnModuleInit,
+    OnModuleDestroy,
+    Inject,
+} from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 import { OutboxMessageRepository } from './repositories/outbox-message.repository';
+import { InboxMessageRepository } from './repositories/inbox-message.repository';
 import { OutboxMessageModel } from './repositories/schemas/outbox-message.model';
+import {
+    IMessageBrokerService,
+    MESSAGE_BROKER_SERVICE_TOKEN,
+    MessagePayload,
+} from '@libs/core/domain/contracts/message-broker.service.contracts';
+
+// Helper interface to type the payload content we expect
+interface MessagePayloadContent {
+    correlationId?: string;
+    workflowType?: string;
+    jobId?: string;
+    [key: string]: unknown;
+}
 
 @Injectable()
 export class OutboxRelayService implements OnModuleInit, OnModuleDestroy {
     private isProcessing = false;
+    private isCleaning = false;
     private processingInterval?: NodeJS.Timeout;
 
     private readonly logger = createLogger(OutboxRelayService.name);
 
     constructor(
         private readonly outboxRepository: OutboxMessageRepository,
-        private readonly amqpConnection: AmqpConnection,
+        private readonly inboxRepository: InboxMessageRepository,
+        @Inject(MESSAGE_BROKER_SERVICE_TOKEN)
+        private readonly messageBroker: IMessageBrokerService,
         private readonly observability: ObservabilityService,
     ) {}
 
@@ -88,6 +109,56 @@ export class OutboxRelayService implements OnModuleInit, OnModuleDestroy {
         }
     }
 
+    /**
+     * Data Hygiene: Cleans up processed messages older than 7 days.
+     * Runs daily at midnight.
+     */
+    @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+    async cleanupOldMessages(): Promise<void> {
+        if (this.isCleaning) {
+            return;
+        }
+
+        this.isCleaning = true;
+
+        try {
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+            this.logger.log({
+                message: 'Starting cleanup of old outbox/inbox messages',
+                context: OutboxRelayService.name,
+                metadata: { threshold: sevenDaysAgo },
+            });
+
+            // Cleanup Outbox
+            const deletedOutboxCount =
+                await this.outboxRepository.deleteProcessedOlderThan(
+                    sevenDaysAgo,
+                );
+
+            // Cleanup Inbox
+            const deletedInboxCount =
+                await this.inboxRepository.deleteProcessedOlderThan(
+                    sevenDaysAgo,
+                );
+
+            this.logger.log({
+                message: 'Completed cleanup of old messages',
+                context: OutboxRelayService.name,
+                metadata: { deletedOutboxCount, deletedInboxCount },
+            });
+        } catch (error) {
+            this.logger.error({
+                message: 'Failed to cleanup old messages',
+                context: OutboxRelayService.name,
+                error,
+            });
+        } finally {
+            this.isCleaning = false;
+        }
+    }
+
     private async processMessage(message: OutboxMessageModel): Promise<void> {
         return await this.observability.runInSpan(
             'workflow.outbox.publish',
@@ -100,22 +171,31 @@ export class OutboxRelayService implements OnModuleInit, OnModuleDestroy {
                 });
 
                 try {
-                    const correlationId = message.payload
-                        .correlationId as string;
+                    // Safe access to payload properties using the helper interface
+                    const payloadContent =
+                        (
+                            message.payload as unknown as MessagePayload<MessagePayloadContent>
+                        ).payload ||
+                        (message.payload as unknown as MessagePayloadContent);
 
-                    // Publicar no RabbitMQ com correlation ID nos headers
-                    await this.amqpConnection.publish(
-                        message.exchange,
-                        message.routingKey,
-                        message.payload,
+                    const correlationId = payloadContent?.correlationId;
+                    const workflowType = payloadContent?.workflowType;
+                    const jobId = payloadContent?.jobId;
+
+                    await this.messageBroker.publishMessage(
+                        {
+                            exchange: message.exchange,
+                            routingKey: message.routingKey,
+                        },
+                        message.payload as unknown as MessagePayload,
                         {
                             messageId: message.uuid,
                             correlationId,
                             persistent: true,
                             headers: {
                                 'x-correlation-id': correlationId,
-                                'x-workflow-type': message.payload.workflowType,
-                                'x-job-id': message.payload.jobId,
+                                'x-workflow-type': workflowType,
+                                'x-job-id': jobId,
                             },
                         },
                     );

@@ -9,6 +9,10 @@ import { EventBufferService } from './engine/event-buffer.service';
 // Infrastructure - Repositories & Models
 import { WorkflowJobModel } from './infrastructure/repositories/schemas/workflow-job.model';
 import { WorkflowJobRepository } from './infrastructure/repositories/workflow-job.repository';
+import { OutboxMessageModel } from './infrastructure/repositories/schemas/outbox-message.model';
+import { OutboxMessageRepository } from './infrastructure/repositories/outbox-message.repository';
+import { InboxMessageModel } from './infrastructure/repositories/schemas/inbox-message.model';
+import { InboxMessageRepository } from './infrastructure/repositories/inbox-message.repository';
 import { JobStatusService } from './infrastructure/job-status.service';
 import { RetryPolicyService } from './infrastructure/retry-policy.service';
 
@@ -19,6 +23,8 @@ import { WORKFLOW_JOB_REPOSITORY_TOKEN } from './domain/contracts/workflow-job.r
 const coreProviders = [
     // Repositories
     WorkflowJobRepository,
+    OutboxMessageRepository,
+    InboxMessageRepository,
     {
         provide: WORKFLOW_JOB_REPOSITORY_TOKEN,
         useClass: WorkflowJobRepository,
@@ -39,7 +45,13 @@ const coreProviders = [
 
 @Global()
 @Module({
-    imports: [TypeOrmModule.forFeature([WorkflowJobModel])],
+    imports: [
+        TypeOrmModule.forFeature([
+            WorkflowJobModel,
+            OutboxMessageModel,
+            InboxMessageModel,
+        ]),
+    ],
     providers: [...coreProviders],
     exports: [...coreProviders, TypeOrmModule],
 })

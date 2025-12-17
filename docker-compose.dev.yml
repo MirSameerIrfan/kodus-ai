@@ -1,23 +1,20 @@
-# Template com configurações padrão para os serviços da aplicação
+# Template with default configuration for application services
 x-app-service-template: &app-service-defaults
   build:
     context: .
     dockerfile: DockerFiles/Dockerfile.dev
+    args:
+        - API_CLOUD_MODE=${API_CLOUD_MODE:-false}
   env_file:
     - ${ENV_FILE:-.env}
   environment:
     - CHOKIDAR_USEPOLLING=true
-    - CHOKIDAR_INTERVAL=1000
+    - CHOKIDAR_INTERVAL=3000
     - API_DEVELOPMENT_MODE=${API_DEVELOPMENT_MODE:-true}
   restart: unless-stopped
   volumes:
     - .:/usr/src/app:delegated
-    - /usr/src/app/node_modules
-  depends_on:
-    db_postgres:
-      condition: service_healthy
-    db_mongodb:
-      condition: service_healthy
+    - yalc_store:/root/.yalc
   networks:
     - kodus-backend-services
     - shared-network
@@ -29,18 +26,14 @@ services:
   api:
     <<: *app-service-defaults
     container_name: kodus_api_dev
-    build:
-      context: .
-      dockerfile: DockerFiles/Dockerfile.dev
-      args:
-        - API_CLOUD_MODE=${API_CLOUD_MODE:-false}
     ports:
       - "${API_PORT:-3331}:${API_PORT:-3331}"
       - "9229:9229"
+    # Entrypoint manages deps and migrations. Passing the start command.
     command: yarn start:dev:api
     environment:
       - CHOKIDAR_USEPOLLING=true
-      - CHOKIDAR_INTERVAL=1000
+      - CHOKIDAR_INTERVAL=3000
       - API_DEVELOPMENT_MODE=${API_DEVELOPMENT_MODE:-true}
       - WORKFLOW_QUEUE_WORKER_ENABLED=${WORKFLOW_QUEUE_WORKER_ENABLED:-true}
 
@@ -48,6 +41,9 @@ services:
     <<: *app-service-defaults
     container_name: kodus_worker_dev
     command: yarn start:dev:worker
+    ports:
+      - "9231:9231"
+    # Worker will also run migration on startup, which is OK as DB supports concurrency
 
   webhooks:
     <<: *app-service-defaults
@@ -55,6 +51,7 @@ services:
     command: yarn start:dev:webhooks
     ports:
       - "${WEBHOOKS_PORT:-3333}:${WEBHOOKS_PORT:-3333}"
+      - "9230:9230"
 
   #----------------------------------------------------------------
   # Databases & Infrastructure
@@ -62,8 +59,6 @@ services:
   db_postgres:
     profiles:
       - local-db
-    build:
-      context: ./docker/postgres
     image: pgvector/pgvector:pg16
     container_name: db_postgres
     ports:
@@ -117,6 +112,7 @@ services:
       start_period: 20s
 
 volumes:
+  yalc_store:
   pgdata:
   mongodbdata:
 

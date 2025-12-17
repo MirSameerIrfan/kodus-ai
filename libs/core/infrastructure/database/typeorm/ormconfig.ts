@@ -32,7 +32,7 @@ const optionsDataBase: DataSourceOptions = {
         max: 40,
         min: 1,
         idleTimeoutMillis: 10000,
-        connectionTimeoutMillis: 2000,
+        connectionTimeoutMillis: 20000,
         keepAlive: true,
         ...(isProduction
             ? {

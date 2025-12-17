@@ -30,6 +30,7 @@ module.exports = tseslint.config(
             '@typescript-eslint/explicit-module-boundary-types': 'off',
             '@typescript-eslint/no-explicit-any': 'off',
             '@typescript-eslint/no-empty-interface': 'off',
+            '@typescript-eslint/no-empty-object-type': 'off',
             '@typescript-eslint/no-unused-vars': 'off', // turned off in favor of unused-imports
             '@typescript-eslint/no-require-imports': 'off',
 

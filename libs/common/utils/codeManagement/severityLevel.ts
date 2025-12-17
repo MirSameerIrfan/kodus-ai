@@ -4,11 +4,11 @@ enum ShieldColor {
     LOW_BLUE = '1A8EBC',
     MEDIUM_BLUE = '1A7BBE',
     HIGH_PURPLE = '6B6B92',
-    CRITICAL_RED = 'FF3D3D'
+    CRITICAL_RED = 'FF3D3D',
 }
 
 const getSeverityLevelShield = (severityLevel: SeverityLevel) => {
-    const labelTitle = 'severity_level'
+    const labelTitle = 'severity_level';
     const shield = `![${severityLevel}](https://img.shields.io/badge/${labelTitle}-${severityLevel.replace(/ /g, '\_')}-`;
 
     switch (severityLevel) {

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsWhere, Repository, EntityManager } from 'typeorm';
 
 import { createLogger } from '@kodus/flow';
 import { IWorkflowJobRepository } from '@libs/core/workflow/domain/contracts/workflow-job.repository.contract';
@@ -22,9 +22,14 @@ export class WorkflowJobRepository implements IWorkflowJobRepository {
 
     async create(
         job: Omit<IWorkflowJob, 'id' | 'createdAt' | 'updatedAt'>,
+        transactionManager?: EntityManager,
     ): Promise<WorkflowJobModel> {
         try {
-            const model = this.repository.create({
+            const repo = transactionManager
+                ? transactionManager.getRepository(WorkflowJobModel)
+                : this.repository;
+
+            const model = repo.create({
                 correlationId: job.correlationId,
                 workflowType: job.workflowType,
                 handlerType: job.handlerType,
@@ -46,7 +51,7 @@ export class WorkflowJobRepository implements IWorkflowJobRepository {
                 pipelineState: job.pipelineState,
             });
 
-            const saved = await this.repository.save(model);
+            const saved = await repo.save(model);
 
             this.logger.log({
                 message: 'Workflow job created',

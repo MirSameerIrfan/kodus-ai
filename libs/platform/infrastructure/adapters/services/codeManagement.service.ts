@@ -124,25 +124,6 @@ export class CodeManagementService implements ICodeManagementService {
 
         return codeManagementService.getRepositories(params);
     }
-
-    async getWorkflows(params: any, type?: PlatformType): Promise<any> {
-        if (!type) {
-            type = await this.getTypeIntegration(
-                extractOrganizationAndTeamData(params),
-            );
-        }
-
-        const codeManagementService =
-            this.platformIntegrationFactory.getCodeManagementService(type);
-
-        if (type === PlatformType.AZURE_REPOS) {
-            return codeManagementService.getWorkflows(params);
-        }
-
-        return codeManagementService.getWorkflows(
-            params.organizationAndTeamData,
-        );
-    }
     async getListMembers(params: any, type?: PlatformType): Promise<any> {
         type =
             type ??

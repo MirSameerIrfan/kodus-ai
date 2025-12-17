@@ -13,8 +13,7 @@ export const SUGGESTION_EMBEDDED_SERVICE_TOKEN = Symbol(
     'SuggestionEmbeddedService',
 );
 
-export interface ISuggestionEmbeddedService
-    extends ISuggestionEmbeddedRepository {
+export interface ISuggestionEmbeddedService extends ISuggestionEmbeddedRepository {
     bulkCreateFromMongoData(
         suggestions: ISuggestionToEmbed[],
     ): Promise<SuggestionEmbeddedEntity[] | undefined>;

@@ -52,9 +52,11 @@ import { ImportFastKodyRulesUseCase } from '../application/use-cases/import-fast
 import { ResyncRulesFromIdeUseCase } from '../application/use-cases/resync-rules-from-ide.use-case';
 import { RemoveRuleLikeUseCase } from '../application/use-cases/rule-like/remove-rule-like.use-case';
 import { SetRuleLikeUseCase } from '../application/use-cases/rule-like/set-rule-like.use-case';
+import { FindRecommendedKodyRulesUseCase } from '../application/use-cases/find-recommended-kody-rules.use-case'; // Added
 
 import { PermissionsModule } from '@libs/identity/modules/permissions.module';
 import { KodyRulesSyncListener } from '../infrastructure/adapters/listeners/kody-rules-sync.listener';
+import { McpCoreModule } from '@libs/mcp-server/mcp-core.module';
 
 @Module({
     imports: [
@@ -81,6 +83,7 @@ import { KodyRulesSyncListener } from '../infrastructure/adapters/listeners/kody
         forwardRef(() => PermissionValidationModule),
         forwardRef(() => SharedHelpersModule),
         PermissionsModule,
+        forwardRef(() => McpCoreModule),
     ],
     providers: [
         {
@@ -120,6 +123,7 @@ import { KodyRulesSyncListener } from '../infrastructure/adapters/listeners/kody
         RemoveRuleLikeUseCase,
         SetRuleLikeUseCase,
         KodyRulesSyncListener,
+        FindRecommendedKodyRulesUseCase, // Added
     ],
     exports: [
         KODY_RULES_REPOSITORY_TOKEN,
@@ -150,6 +154,7 @@ import { KodyRulesSyncListener } from '../infrastructure/adapters/listeners/kody
         ResyncRulesFromIdeUseCase,
         RemoveRuleLikeUseCase,
         SetRuleLikeUseCase,
+        FindRecommendedKodyRulesUseCase, // Added
     ],
 })
 export class KodyRulesModule {}

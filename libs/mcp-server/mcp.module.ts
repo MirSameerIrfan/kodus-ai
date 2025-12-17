@@ -14,7 +14,7 @@ import { McpCoreModule } from './mcp-core.module';
 @Module({})
 export class McpModule {
     static forRoot(configService?: ConfigService): DynamicModule {
-        const imports = [McpCoreModule];
+        const imports: any[] = [McpCoreModule];
         const providers: Provider[] = [];
         const controllers = [];
         const exports: Provider[] = [McpCoreModule];

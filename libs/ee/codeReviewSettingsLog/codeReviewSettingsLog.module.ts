@@ -1,7 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import { SharedHelpersModule } from '@libs/common/modules/shared-helpers.module';
+import { ContextResolutionModule } from '@libs/core/context-resolution/context-resolution.module';
 import { PermissionValidationModule } from '@libs/ee/shared/permission-validation.module';
 import { PermissionsModule } from '@libs/identity/modules/permissions.module';
 import { FindCodeReviewSettingsLogsUseCase } from './application/use-cases/find-code-review-settings-logs.use-case';
@@ -31,7 +31,7 @@ import { UserStatusLogHandler } from './infrastructure/adapters/services/userSta
             },
         ]),
         forwardRef(() => PermissionValidationModule),
-        forwardRef(() => SharedHelpersModule),
+        ContextResolutionModule,
         forwardRef(() => PermissionsModule),
     ],
     providers: [

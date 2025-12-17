@@ -15,9 +15,9 @@ import { createNestedConditions } from '@libs/core/infrastructure/repositories/m
 import { CodeReviewExecutionModel } from './schemas/codeReviewExecution.model';
 
 @Injectable()
-export class CodeReviewExecutionRepository
-    implements ICodeReviewExecutionRepository
-{
+export class CodeReviewExecutionRepository<
+    T,
+> implements ICodeReviewExecutionRepository<T> {
     private readonly logger = createLogger(CodeReviewExecutionRepository.name);
 
     constructor(
@@ -27,10 +27,10 @@ export class CodeReviewExecutionRepository
 
     async create(
         codeReviewExecution: Omit<
-            CodeReviewExecution,
+            CodeReviewExecution<T>,
             'uuid' | 'createdAt' | 'updatedAt'
         >,
-    ): Promise<CodeReviewExecutionEntity | null> {
+    ): Promise<CodeReviewExecutionEntity<T> | null> {
         try {
             const newObj =
                 this.codeReviewExecutionRepository.create(codeReviewExecution);
@@ -71,11 +71,11 @@ export class CodeReviewExecutionRepository
     }
 
     async update(
-        filter: Partial<CodeReviewExecution>,
+        filter: Partial<CodeReviewExecution<T>>,
         codeReviewExecution: Partial<
-            Omit<CodeReviewExecution, 'uuid' | 'createdAt' | 'updatedAt'>
+            Omit<CodeReviewExecution<T>, 'uuid' | 'createdAt' | 'updatedAt'>
         >,
-    ): Promise<CodeReviewExecutionEntity | null> {
+    ): Promise<CodeReviewExecutionEntity<T> | null> {
         try {
             const conditions = this.getFilterConditions(filter);
 
@@ -120,8 +120,8 @@ export class CodeReviewExecutionRepository
     }
 
     async find(
-        filter?: Partial<CodeReviewExecution>,
-    ): Promise<CodeReviewExecutionEntity[]> {
+        filter?: Partial<CodeReviewExecution<T>>,
+    ): Promise<CodeReviewExecutionEntity<T>[]> {
         try {
             const conditions = this.getFilterConditions(filter);
 
@@ -153,8 +153,8 @@ export class CodeReviewExecutionRepository
     }
 
     async findOne(
-        filter?: Partial<CodeReviewExecution>,
-    ): Promise<CodeReviewExecutionEntity | null> {
+        filter?: Partial<CodeReviewExecution<T>>,
+    ): Promise<CodeReviewExecutionEntity<T> | null> {
         try {
             const conditions = this.getFilterConditions(filter);
 
@@ -205,7 +205,7 @@ export class CodeReviewExecutionRepository
     }
 
     private getFilterConditions(
-        filter: Partial<CodeReviewExecution>,
+        filter: Partial<CodeReviewExecution<T>>,
     ): FindOptionsWhere<CodeReviewExecutionModel> {
         const { automationExecution, ...restFilter } = filter || {};
 

@@ -16,4 +16,3 @@ import { OrganizationAutomationController } from './controllers/organization-aut
     exports: [SyncIgnoredBotsUseCase],
 })
 export class OrganizationAutomationModule {}
-

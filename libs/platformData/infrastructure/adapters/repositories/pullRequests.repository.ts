@@ -36,7 +36,7 @@ export class PullRequestsRepository implements IPullRequestsRepository {
     async create(
         suggestion: Omit<IPullRequests, 'uuid'>,
     ): Promise<PullRequestsEntity> {
-        const saved = await this.pullRequestsModel.create(suggestion);
+        const saved = await this.pullRequestsModel.create(suggestion as any);
         return mapSimpleModelToEntity(saved, PullRequestsEntity);
     }
     //#endregion

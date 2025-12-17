@@ -1,11 +1,13 @@
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
 import { Injectable, UseFilters, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { ConsumeMessage } from 'amqplib';
 
 import { RabbitmqConsumeErrorFilter } from '@libs/core/infrastructure/filters/rabbitmq-consume-error.exception';
 import { createLogger } from '@kodus/flow';
 import { ProcessWorkflowJobUseCase } from '@libs/core/workflow/application/use-cases/process-workflow-job.use-case';
 import { JobStatus } from '@libs/core/workflow/domain/enums/job-status.enum';
+import { MessagePayload } from '@libs/core/domain/contracts/message-broker.service.contracts';
 
 import { ObservabilityService } from '@libs/core/log/observability.service';
 import { WorkflowQueueConfig } from '@libs/core/infrastructure/config/types/general/workflow-queue.type';
@@ -38,7 +40,8 @@ export class WorkflowResumedConsumer {
         const workflowQueueConfig = this.configService.get<WorkflowQueueConfig>(
             'workflowQueueConfig',
         );
-        this.workerEnabled = workflowQueueConfig.WORKFLOW_QUEUE_WORKER_ENABLED;
+        this.workerEnabled =
+            workflowQueueConfig?.WORKFLOW_QUEUE_WORKER_ENABLED ?? false;
     }
 
     @RabbitSubscribe({
@@ -56,25 +59,35 @@ export class WorkflowResumedConsumer {
         },
     })
     async handleWorkflowResumed(
-        message: WorkflowResumedMessage,
-        amqpMsg: any,
+        message:
+            | WorkflowResumedMessage
+            | MessagePayload<WorkflowResumedMessage>,
+        amqpMsg: ConsumeMessage,
     ): Promise<void> {
         if (!this.workerEnabled) {
             this.logger.debug({
                 message:
                     'Workflow worker is disabled, skipping resumed message processing.',
                 context: WorkflowResumedConsumer.name,
-                metadata: { messageId: amqpMsg?.properties?.messageId },
+                metadata: { messageId: amqpMsg.properties.messageId },
             });
             return;
         }
 
-        const messageId = amqpMsg?.properties?.messageId;
+        // Unwrap message if it's in MessagePayload envelope
+        const unwrappedMessage: WorkflowResumedMessage = this.isMessagePayload(
+            message,
+        )
+            ? message.payload
+            : message;
+
+        const messageId = amqpMsg.properties.messageId;
         const correlationId =
-            amqpMsg?.properties?.headers?.['x-correlation-id'] ||
-            message.jobId ||
-            amqpMsg?.properties?.correlationId;
-        const jobId = message.jobId;
+            (amqpMsg.properties.headers &&
+                amqpMsg.properties.headers['x-correlation-id']) ||
+            (unwrappedMessage as any).jobId || // Assuming correlationId might be jobId fallback
+            amqpMsg.properties.correlationId;
+        const jobId = unwrappedMessage.jobId;
 
         if (!messageId || !jobId) {
             this.logger.error({
@@ -120,7 +133,7 @@ export class WorkflowResumedConsumer {
                 jobId,
                 correlationId,
                 messageId,
-                eventData: message.eventData,
+                eventData: unwrappedMessage.eventData,
             },
         });
 
@@ -142,5 +155,16 @@ export class WorkflowResumedConsumer {
             });
             throw error;
         }
+    }
+
+    private isMessagePayload(
+        message: any,
+    ): message is MessagePayload<WorkflowResumedMessage> {
+        return (
+            message &&
+            typeof message === 'object' &&
+            'event_name' in message &&
+            'payload' in message
+        );
     }
 }

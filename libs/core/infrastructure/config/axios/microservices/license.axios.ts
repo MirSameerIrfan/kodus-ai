@@ -25,7 +25,7 @@ export class AxiosLicenseService {
     public async post(
         url: string,
         body: Record<string, unknown> = {},
-        config: AxiosRequestConfig = {}
+        config: AxiosRequestConfig = {},
     ): Promise<any> {
         const { data } = await this.axiosInstance.post(url, body, config);
         return data;

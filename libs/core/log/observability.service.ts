@@ -1,11 +1,11 @@
 import { getObservability, IdGenerator } from '@kodus/flow';
-import { TokenTrackingHandler } from '@kodus/kodus-common/llm';
 import { Injectable } from '@nestjs/common';
 import { ConnectionString } from 'connection-string';
 
 import { DatabaseConnection } from '@libs/core/infrastructure/config/types';
 
 import { createLogger } from '@kodus/flow';
+import { TokenTrackingHandler } from '@kodus/kodus-common/llm';
 
 export type TokenUsage = {
     input_tokens?: number;
