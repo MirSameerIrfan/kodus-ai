@@ -1,6 +1,11 @@
 import { createLogger } from '@kodus/flow';
 import { ObservabilityService } from '@libs/core/log/observability.service';
-import { Injectable, Inject } from '@nestjs/common';
+import {
+    Injectable,
+    Inject,
+    OnApplicationBootstrap,
+    OnModuleDestroy,
+} from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 import { OutboxMessageRepository } from './repositories/outbox-message.repository';
@@ -21,9 +26,12 @@ interface MessagePayloadContent {
 }
 
 @Injectable()
-export class OutboxRelayService {
+export class OutboxRelayService
+    implements OnApplicationBootstrap, OnModuleDestroy
+{
     private isProcessing = false;
     private isCleaning = false;
+    private relayInterval: NodeJS.Timeout;
 
     private readonly logger = createLogger(OutboxRelayService.name);
 
@@ -35,40 +43,55 @@ export class OutboxRelayService {
         private readonly observability: ObservabilityService,
     ) {}
 
+    onApplicationBootstrap() {
+        console.log(
+            '--- OutboxRelayService: Starting manual polling loop (1s) ---',
+        );
+        this.relayInterval = setInterval(() => {
+            this.processOutbox().catch((err) => {
+                console.error('--- OutboxRelayService Error ---', err);
+            });
+        }, 1000);
+    }
+
+    onModuleDestroy() {
+        if (this.relayInterval) {
+            clearInterval(this.relayInterval);
+        }
+    }
+
     /**
      * Processa mensagens pendentes do outbox e publica no RabbitMQ
-     * Roda via cron ou intervalo configurado
      */
-    @Cron(CronExpression.EVERY_SECOND)
     async processOutbox(): Promise<void> {
         if (this.isProcessing) {
             return; // Evitar processamento concorrente
         }
 
+        console.log('--- [OutboxRelay] Polling database... ---');
         this.isProcessing = true;
 
         try {
             return await this.observability.runInSpan(
                 'workflow.outbox.relay',
                 async (span) => {
+                    this.logger.debug({
+                        message: 'Checking for unprocessed outbox messages',
+                        context: OutboxRelayService.name,
+                    });
+
                     const messages =
                         await this.outboxRepository.findUnprocessed(100);
 
-                    span.setAttributes({
-                        'workflow.outbox.pending_count': messages.length,
-                    });
-
-                    if (messages.length === 0) {
-                        return;
+                    if (messages.length > 0) {
+                        this.logger.log({
+                            message: 'Processing outbox messages',
+                            context: OutboxRelayService.name,
+                            metadata: {
+                                count: messages.length,
+                            },
+                        });
                     }
-
-                    this.logger.log({
-                        message: 'Processing outbox messages',
-                        context: OutboxRelayService.name,
-                        metadata: {
-                            count: messages.length,
-                        },
-                    });
 
                     for (const message of messages) {
                         await this.processMessage(message);

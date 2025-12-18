@@ -262,6 +262,7 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
     private async handleComment(params: IWebhookEventParams): Promise<void> {
         const { payload, event } = params;
         const prNumber = payload?.object_attributes?.iid;
+        let validationResult;
 
         try {
             // Extract comment data
@@ -332,7 +333,7 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
 
                     const userGitId = payload?.sender?.id?.toString();
 
-                    const teamData =
+                    const validationResult =
                         await this.runCodeReviewAutomationUseCase.findTeamWithActiveCodeReview(
                             {
                                 repository,
@@ -343,10 +344,26 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
                             },
                         );
 
-                    if (teamData?.organizationAndTeamData) {
+                    if (!validationResult?.organizationAndTeamData) {
+                        this.logger.warn({
+                            message: `No active code review found for PR #${payload.issue.number} via command`,
+                            context: GitHubPullRequestHandler.name,
+                            metadata: {
+                                repository,
+                                prNumber: payload.issue.number,
+                            },
+                        });
+                        return;
+                    }
+
+                    if (
+                        !payload?.pull_request &&
+                        payload?.issue &&
+                        payload?.issue?.number
+                    ) {
                         const data = await this.codeManagement.getPullRequest({
                             organizationAndTeamData:
-                                teamData?.organizationAndTeamData,
+                                validationResult?.organizationAndTeamData,
                             repository,
                             prNumber: payload.issue.number,
                         });
@@ -416,7 +433,48 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
 
                 // Execute the necessary use cases
                 await this.savePullRequestUseCase.execute(updatedParams);
-                this.runCodeReviewAutomationUseCase.execute(updatedParams);
+
+                const workflowQueueEnabled =
+                    this.configService?.get<boolean>(
+                        'workflowQueueConfig.WORKFLOW_QUEUE_ENABLED',
+                    ) || false;
+                const workflowQueueEnabledGitHub =
+                    this.configService?.get<boolean>(
+                        'workflowQueueConfig.WORKFLOW_QUEUE_ENABLED_GITHUB',
+                    ) || false;
+
+                if (
+                    workflowQueueEnabled &&
+                    workflowQueueEnabledGitHub &&
+                    this.enqueueCodeReviewJobUseCase &&
+                    validationResult?.organizationAndTeamData
+                ) {
+                    const jobId =
+                        await this.enqueueCodeReviewJobUseCase.execute({
+                            platformType: PlatformType.GITHUB,
+                            repositoryId: String(payload.repository.id),
+                            repositoryName: payload.repository.name,
+                            pullRequestNumber: payload.issue.number,
+                            pullRequestData: updatedParams.payload.pull_request,
+                            organizationId:
+                                validationResult.organizationAndTeamData
+                                    .organizationId,
+                            teamId: validationResult.organizationAndTeamData
+                                .teamId,
+                        });
+
+                    this.logger.log({
+                        message:
+                            'Code review job enqueued from command for asynchronous processing',
+                        context: GitHubPullRequestHandler.name,
+                        metadata: {
+                            jobId,
+                            prNumber,
+                        },
+                    });
+                } else {
+                    this.runCodeReviewAutomationUseCase.execute(updatedParams);
+                }
                 return;
             }
 

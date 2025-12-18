@@ -10,5 +10,6 @@
         "dist",
         "node_modules",
         "**/*.spec.ts"
-    ]
+    ],
+    "signal": "SIGTERM"
 }
