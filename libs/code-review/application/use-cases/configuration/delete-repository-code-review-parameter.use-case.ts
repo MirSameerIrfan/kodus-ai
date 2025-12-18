@@ -22,9 +22,9 @@ import { ParametersEntity } from '@libs/organization/domain/parameters/entities/
 import { ParametersKey } from '@libs/core/domain/enums';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { CodeReviewParameter } from '@libs/core/infrastructure/config/types/general/codeReviewConfig.type';
-import { RepositoryWithDirectoriesException } from '@libs/core';
 import { KodyRulesStatus } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 import { ActionType } from '@libs/core/infrastructure/config/types/general/codeReviewSettingsLog.type';
+import { RepositoryWithDirectoriesException } from '@libs/core/infrastructure/filters';
 
 @Injectable()
 export class DeleteRepositoryCodeReviewParameterUseCase {

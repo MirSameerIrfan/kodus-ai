@@ -61,7 +61,7 @@ export class WorkflowJobQueueService implements IJobQueueService {
                         // 2. Prepare Message Envelope
                         const messagePayload =
                             this.messageBroker.transformMessageToMessageBroker(
-                                'workflow.job.created',
+                                'workflow.jobs.created',
                                 payload,
                                 1,
                                 new Date(),
@@ -72,7 +72,7 @@ export class WorkflowJobQueueService implements IJobQueueService {
 
                         // Define exchange and routing key explicitly
                         const exchange = 'workflow.exchange';
-                        const routingKey = `workflow.job.created`;
+                        const routingKey = `workflow.jobs.created`;
 
                         // 3. Create Outbox Message in transaction
                         await this.outboxRepository.create(

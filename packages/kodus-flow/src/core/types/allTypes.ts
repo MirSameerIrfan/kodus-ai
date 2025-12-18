@@ -5061,7 +5061,7 @@ export interface MongoDBExporterConfig {
 export interface MongoDBLogItem {
     _id?: string;
     timestamp: Date;
-    level: 'debug' | 'info' | 'warn' | 'error' | 'verbose';
+    level: LogLevel;
     message: string;
     component: string;
     correlationId?: string;

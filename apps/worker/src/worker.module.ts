@@ -1,24 +1,30 @@
-import { Module, OnModuleInit } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { SharedMongoModule } from '@libs/shared/database/shared-mongo.module';
 import { SharedPostgresModule } from '@libs/shared/database/shared-postgres.module';
 import { SharedConfigModule } from '@libs/shared/infrastructure/shared-config.module';
 import { SharedLogModule } from '@libs/shared/infrastructure/shared-log.module';
 import { LLMModule } from '@kodus/kodus-common/llm';
-import { KodusLoggerService } from '@libs/core/log/kodus-logger.service';
+import { LoggerWrapperService } from '@libs/core/log/loggerWrapper.service';
 import { AutomationModule } from '@libs/automation/modules/automation.module';
-import { WorkflowModule } from '@libs/core/workflow/workflow.module';
 import { CodebaseModule } from '@libs/code-review/modules/codebase.module';
 import { PlatformModule } from '@libs/platform/modules/platform.module';
 
+import { SharedObservabilityModule } from '@libs/shared/infrastructure/shared-observability.module';
+import { WorkflowModule } from '@libs/core/workflow/modules/workflow.module';
+import { OutboxRelayService } from '@libs/core/workflow/infrastructure/outbox-relay.service';
+import { ScheduleModule } from '@nestjs/schedule';
+
 @Module({
     imports: [
+        ScheduleModule.forRoot(),
         SharedConfigModule,
         SharedLogModule,
+        SharedObservabilityModule,
         SharedPostgresModule.forRoot({ poolSize: 12 }),
         SharedMongoModule.forRoot(),
 
         LLMModule.forRoot({
-            logger: KodusLoggerService,
+            logger: LoggerWrapperService,
         }),
 
         WorkflowModule.register({ type: 'worker' }),
@@ -26,9 +32,6 @@ import { PlatformModule } from '@libs/platform/modules/platform.module';
         AutomationModule,
         PlatformModule,
     ],
+    providers: [OutboxRelayService],
 })
-export class WorkerModule implements OnModuleInit {
-    onModuleInit() {
-        console.log('@@@ WorkerModule.onModuleInit called @@@');
-    }
-}
+export class WorkerModule {}

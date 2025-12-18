@@ -3,7 +3,6 @@ import {
     createOrchestration,
     Thread,
     PlannerType,
-    StorageEnum,
     LLMAdapter,
     createLogger,
 } from '@kodus/flow';
@@ -11,10 +10,8 @@ import { SDKOrchestrator } from '@kodus/flow/dist/orchestration';
 import { LLMModelProvider, PromptRunnerService } from '@kodus/kodus-common/llm';
 import { Injectable } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 
 import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
-import { DatabaseConnection } from '@libs/core/infrastructure/config/types';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
 import {
@@ -29,7 +26,6 @@ import { MCPManagerService } from '@libs/mcp-server/services/mcp-manager.service
 @Injectable()
 export class ConversationAgentProvider extends BaseAgentProvider {
     private readonly logger = createLogger(ConversationAgentProvider.name);
-    protected config: DatabaseConnection;
     private orchestration: SDKOrchestrator;
     private mcpAdapter: ReturnType<typeof createMCPAdapter>;
     private llmAdapter: LLMAdapter;
@@ -44,7 +40,6 @@ export class ConversationAgentProvider extends BaseAgentProvider {
     constructor(
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
-        private readonly configService: ConfigService,
         promptRunnerService: PromptRunnerService,
         permissionValidationService: PermissionValidationService,
         observabilityService: ObservabilityService,
@@ -55,8 +50,6 @@ export class ConversationAgentProvider extends BaseAgentProvider {
             permissionValidationService,
             observabilityService,
         );
-        this.config =
-            this.configService.get<DatabaseConnection>('mongoDatabase');
     }
 
     protected async createMCPAdapter(
@@ -94,18 +87,10 @@ export class ConversationAgentProvider extends BaseAgentProvider {
             llmAdapter: this.llmAdapter,
             mcpAdapter: this.mcpAdapter,
             observability:
-                this.observabilityService.createAgentObservabilityConfig(
-                    this.config,
+                this.observabilityService.getAgentObservabilityConfig(
                     'kodus-flow',
                 ),
-            storage: {
-                type: StorageEnum.MONGODB,
-                connectionString:
-                    this.observabilityService.buildConnectionString(
-                        this.config,
-                    ),
-                database: this.config.database,
-            },
+            storage: this.observabilityService.getStorageConfig(),
         });
     }
 

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { HealthModule } from '@libs/core/health/health.module';
+import { SharedCoreModule } from '@libs/shared/infrastructure/shared-core.module';
 import { SharedConfigModule } from '@libs/shared/infrastructure/shared-config.module';
 import { SharedLogModule } from '@libs/shared/infrastructure/shared-log.module';
 import { SharedObservabilityModule } from '@libs/shared/infrastructure/shared-observability.module';
@@ -17,7 +18,6 @@ import { AgentsModule } from '@libs/agents/modules/agents.module';
 import { ParametersModule } from '@libs/organization/modules/parameters.module';
 import { McpModule } from '@libs/mcp-server/mcp.module';
 import { LLMModule } from '@kodus/kodus-common/llm';
-import { KodusLoggerService } from '@libs/core/log/kodus-logger.service';
 import { PlatformModule } from '@libs/platform/modules/platform.module';
 import { AIEngineModule } from '@libs/ai-engine/modules/ai-engine.module';
 import { CodebaseModule } from '@libs/code-review/modules/codebase.module';
@@ -30,11 +30,12 @@ import { CodeReviewSettingsLogModule } from '@libs/ee/codeReviewSettingsLog/code
 import { DryRunModule } from '@libs/dryRun/dry-run.module';
 import { AnalyticsModule } from '@libs/analytics/modules/analytics.module';
 import { AutomationModule } from '@libs/automation/modules/automation.module';
-import { WorkflowModule } from '@libs/core/workflow/workflow.module';
+import { WorkflowModule } from '@libs/core/workflow/modules/workflow.module';
 import { CodeReviewConfigurationModule } from '@libs/code-review/modules/code-review-configuration.module';
 import { OrganizationOnboardingModule } from '@libs/organization/modules/organization-onboarding.module';
 import { CodeReviewDashboardModule } from '@libs/code-review/modules/code-review-dashboard.module';
 
+import { CronModule } from './cron/cron.module';
 import { OrganizationParametersController } from './controllers/organizationParameters.controller';
 import { AgentController } from './controllers/agent.controller';
 import { AuthController } from './controllers/auth.controller';
@@ -57,27 +58,18 @@ import { TeamController } from './controllers/team.controller';
 import { TeamMembersController } from './controllers/teamMembers.controller';
 import { TokenUsageController } from './controllers/tokenUsage.controller';
 import { UsersController } from './controllers/user.controller';
+import { LoggerWrapperService } from '@libs/core/log/loggerWrapper.service';
 
-/**
- * API REST Module
- *
- * This module extends AppModule (base shared infrastructure) and adds:
- * - All HTTP controllers for API REST endpoints (dashboard, admin, etc.)
- * - Platform controllers (GitHub, GitLab, Bitbucket, Azure Repos) - includes both API and webhook endpoints
- * - JWT authentication guard
- * - Rate limiting, CORS, etc. (configured in main.ts)
- * *
- * Entry point: main.ts (porta 3331)
- */
 @Module({
     imports: [
+        SharedCoreModule,
         SharedConfigModule,
         SharedLogModule,
         SharedObservabilityModule,
         SharedPostgresModule.forRoot({ poolSize: 25 }),
         SharedMongoModule.forRoot(),
         LLMModule.forRoot({
-            logger: KodusLoggerService,
+            logger: LoggerWrapperService,
         }),
         AuthModule,
         UserModule,
@@ -107,6 +99,7 @@ import { UsersController } from './controllers/user.controller';
         CodeReviewDashboardModule,
         McpModule.forRoot(),
         HealthModule,
+        CronModule,
     ],
     controllers: [
         // WorkflowQueueController,

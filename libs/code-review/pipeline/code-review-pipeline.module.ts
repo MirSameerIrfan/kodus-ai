@@ -20,7 +20,7 @@ import { RequestChangesOrApproveStage } from './stages/finish-process-review.sta
 
 // Interfaces
 import { LOAD_EXTERNAL_CONTEXT_STAGE_TOKEN } from './stages/contracts/loadExternalContextStage.contract';
-import { WorkflowCoreModule } from '@libs/core/workflow/workflow-core.module';
+import { WorkflowCoreModule } from '@libs/core/workflow/modules/workflow-core.module';
 import { CodeReviewJobProcessorService } from '../workflow/code-review-job-processor.service';
 import { FileReviewModule } from '@libs/ee/codeReview/fileReviewContextPreparation/fileReview.module';
 import { KodyFineTuningStage } from '@libs/ee/codeReview/stages/kody-fine-tuning.stage';

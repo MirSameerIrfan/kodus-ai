@@ -1,5 +1,6 @@
-import { getObservability, IdGenerator } from '@kodus/flow';
+import { getObservability, IdGenerator, StorageEnum } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ConnectionString } from 'connection-string';
 
 import { DatabaseConnection } from '@libs/core/infrastructure/config/types';
@@ -26,7 +27,6 @@ export interface ObservabilityConfig {
     customCollections?: {
         logs?: string;
         telemetry?: string;
-        errors?: string;
     };
     customSettings?: {
         batchSize?: number;
@@ -44,10 +44,11 @@ export class ObservabilityService {
         ReturnType<typeof getObservability>
     >();
 
+    private isInitialized = false;
+
     private static readonly DEFAULT_COLLECTIONS = {
         logs: 'observability_logs',
         telemetry: 'observability_telemetry',
-        errors: 'observability_errors',
     };
 
     private static readonly DEFAULT_SETTINGS = {
@@ -60,66 +61,62 @@ export class ObservabilityService {
 
     private readonly logger = createLogger(ObservabilityService.name);
 
-    // ---------- bootstrap ----------
-    constructor() {}
+    constructor(private readonly configService: ConfigService) {}
 
-    createObservabilityConfig(
-        config: DatabaseConnection,
-        options: ObservabilityConfig,
-    ) {
-        const uri = this.buildConnectionString(config);
+    /**
+     * Initializes the observability engine automatically by fetching configurations from ConfigService.
+     * Should be called in each application's main.ts.
+     * @param serviceName Origin name to identify logs (e.g., 'api', 'worker')
+     */
+    async init(serviceName?: string) {
+        if (this.isInitialized) {
+            return getObservability();
+        }
 
-        const collections =
-            options.enableCollections !== false
-                ? {
-                      logs:
-                          options.customCollections?.logs ??
-                          ObservabilityService.DEFAULT_COLLECTIONS.logs,
-                      telemetry:
-                          options.customCollections?.telemetry ??
-                          ObservabilityService.DEFAULT_COLLECTIONS.telemetry,
-                      errors:
-                          options.customCollections?.errors ??
-                          ObservabilityService.DEFAULT_COLLECTIONS.errors,
-                  }
-                : undefined;
+        const mongoConfig =
+            this.configService.get<DatabaseConnection>('mongoDatabase');
 
-        return {
-            logging: { enabled: true },
-            mongodb: {
-                type: 'mongodb' as const,
-                connectionString: uri,
-                database: config.database,
-                ...(collections && { collections }),
-                batchSize:
-                    options.customSettings?.batchSize ??
-                    ObservabilityService.DEFAULT_SETTINGS.batchSize,
-                flushIntervalMs:
-                    options.customSettings?.flushIntervalMs ??
-                    ObservabilityService.DEFAULT_SETTINGS.flushIntervalMs,
-                ttlDays:
-                    options.customSettings?.ttlDays ??
-                    ObservabilityService.DEFAULT_SETTINGS.ttlDays,
-                enableObservability: true,
-            },
-            telemetry: {
-                enabled: true,
-                serviceName: options.serviceName,
-                sampling: {
-                    rate:
-                        options.customSettings?.samplingRate ??
-                        ObservabilityService.DEFAULT_SETTINGS.samplingRate,
-                    strategy: 'probabilistic' as const,
-                },
-                privacy: { includeSensitiveData: false },
-                ...(options.customSettings?.spanTimeoutMs && {
-                    spanTimeouts: {
-                        enabled: true,
-                        maxDurationMs: options.customSettings.spanTimeoutMs,
-                    },
-                }),
-            },
-        };
+        const finalName = serviceName
+            ? `kodus-${serviceName}`
+            : `kodus-${process.env.COMPONENT_TYPE || 'api'}`;
+
+        if (!mongoConfig) {
+            this.logger.warn({
+                message:
+                    'Observability not initialized: mongoDatabase config missing',
+                context: ObservabilityService.name,
+            });
+            return;
+        }
+
+        const obs = await this.initializeObservability(mongoConfig, {
+            serviceName: finalName,
+            enableCollections: true,
+        });
+
+        this.isInitialized = true;
+        return obs;
+    }
+
+    /**
+     * Sets the current execution context (correlationId).
+     * Used at the beginning of each request or job.
+     */
+    setContext(correlationId: string, threadId?: string) {
+        const obs = getObservability();
+        const ctx = obs.createContext(correlationId);
+
+        if (threadId) {
+            (ctx as any).sessionId = threadId;
+        }
+
+        obs.setContext(ctx);
+
+        this.logger.debug({
+            message: 'Execution context set',
+            context: ObservabilityService.name,
+            metadata: { correlationId, threadId },
+        });
     }
 
     async initializeObservability(
@@ -134,10 +131,12 @@ export class ObservabilityService {
 
         if (!obs) {
             const obsConfig = this.createObservabilityConfig(config, options);
+
             obs = getObservability(obsConfig);
+
             try {
                 await obs.initialize();
-                console.log('@@@Observability initialized');
+
                 this.logger.log({
                     message: 'Observability initialized',
                     context: ObservabilityService.name,
@@ -159,18 +158,17 @@ export class ObservabilityService {
                 });
             }
 
-            console.log('@@@Observability set');
             this.instances.set(key, obs);
         }
 
         if (correlationId) {
             const ctx = obs.createContext(correlationId);
+
             if (options.threadId) {
-                // threadId -> sessionId para correlação
                 (ctx as any).sessionId = options.threadId;
             }
+
             obs.setContext(ctx);
-            console.log('@@@Observability set context');
         }
 
         return obs;
@@ -201,67 +199,9 @@ export class ObservabilityService {
         });
     }
 
-    buildConnectionString(config: DatabaseConnection): string {
-        if (!config?.host) {
-            throw new Error(
-                'ObservabilityService: host inválido ou ausente em DatabaseConnection',
-            );
-        }
-
-        // const protocol = config.port ? 'mongodb' : 'mongodb+srv';
-
-        // const hostItems = String(config.host)
-        //     .split(',')
-        //     .map((raw) => raw.trim())
-        //     .filter(Boolean)
-        //     .map((h) => ({ name: h, port: config.port }));
-        const env = process.env.API_DATABASE_ENV ?? process.env.API_NODE_ENV;
-
-        let uri = new ConnectionString('', {
-            user: config.username,
-            password: config.password,
-            protocol: config.port ? 'mongodb' : 'mongodb+srv',
-            hosts: [{ name: config.host, port: config.port }],
-        }).toString();
-
-        const shouldAppendClusterConfig =
-            !['development', 'test'].includes(env ?? '') &&
-            !!process.env.API_MG_DB_PRODUCTION_CONFIG;
-
-        if (shouldAppendClusterConfig) {
-            uri = `${uri}/${process.env.API_MG_DB_PRODUCTION_CONFIG}`;
-        }
-
-        return uri;
-    }
-
-    generateCorrelationId(): string {
-        return IdGenerator.correlationId();
-    }
-
-    async ensureContext(
-        config: DatabaseConnection,
-        serviceName: string,
-        correlationId?: string,
-    ) {
-        return this.initializeObservability(config, {
-            serviceName,
-            correlationId: correlationId || this.generateCorrelationId(),
-        });
-    }
-
-    private makeKey(config: DatabaseConnection, serviceName: string): string {
-        return JSON.stringify({
-            h: config.host,
-            p: config.port ?? null,
-            db: config.database ?? null,
-            s: serviceName,
-        });
-    }
-
-    // ---------- spans (API simples e reutilizável) ----------
-
-    /** Abre um span e aplica atributos iniciais (se informados). */
+    /**
+     * Starts a span and applies initial attributes.
+     */
     startSpan(name: string, attributes?: Record<string, any>) {
         const obs = getObservability();
         const span = obs.startSpan(name);
@@ -272,8 +212,7 @@ export class ObservabilityService {
     }
 
     /**
-     * Executa uma função dentro de um span (com fechamento garantido).
-     * Ideal pra blocos curtos sem try/finally no chamador.
+     * Executes a function within a span.
      */
     async runInSpan<T>(
         name: string,
@@ -288,8 +227,7 @@ export class ObservabilityService {
 
         return obs.withSpan(span, async () => {
             try {
-                const result = await fn(span);
-                return result;
+                return await fn(span);
             } catch (err: any) {
                 span?.setAttributes?.({
                     'error': true,
@@ -301,46 +239,10 @@ export class ObservabilityService {
         });
     }
 
-    // ---------- LLM tracking integrado ----------
+    // ---------- Integrated LLM tracking ----------
 
     createLLMTracking(runName?: string) {
         const tracker = new TokenTrackingHandler();
-
-        function summarize(usages: TokenUsage[]) {
-            const acc = {
-                totalTokens: 0,
-                inputTokens: 0,
-                outputTokens: 0,
-                reasoningTokens: 0,
-                models: new Set<string>(),
-                runIds: new Set<string>(),
-                parentRunIds: new Set<string>(),
-                runNames: new Set<string>(),
-                details: [] as TokenUsage[],
-            };
-            for (const u of usages) {
-                const input = u.input_tokens ?? 0;
-                const output = u.output_tokens ?? 0;
-                const reasoning = (u as any).output_reasoning_tokens ?? 0;
-                const total = u.total_tokens ?? input + output;
-                if (u.model) acc.models.add(u.model);
-                if (u.runId) acc.runIds.add(u.runId);
-                if (u.parentRunId) acc.parentRunIds.add(u.parentRunId);
-                if (u.runName) acc.runNames.add(u.runName);
-                acc.totalTokens += total;
-                acc.inputTokens += input;
-                acc.outputTokens += output;
-                acc.reasoningTokens += reasoning;
-                acc.details.push(u);
-            }
-            return {
-                ...acc,
-                modelsArr: Array.from(acc.models),
-                runIdsArr: Array.from(acc.runIds),
-                parentRunIdsArr: Array.from(acc.parentRunIds),
-                runNamesArr: Array.from(acc.runNames),
-            };
-        }
 
         const finalize = async ({
             metadata,
@@ -360,11 +262,10 @@ export class ObservabilityService {
                 usages,
             } = tracker.consumeCompletedRunUsages(explicitName ?? runName);
 
-            const s = summarize(usages);
+            const s = this.summarize(usages);
 
             if (span) {
                 span.setAttributes({
-                    // OpenTelemetry GenAI semantic conventions
                     'gen_ai.usage.total_tokens': s.totalTokens,
                     'gen_ai.usage.input_tokens': s.inputTokens,
                     'gen_ai.usage.output_tokens': s.outputTokens,
@@ -407,21 +308,16 @@ export class ObservabilityService {
         return { callbacks: [tracker], tracker, finalize };
     }
 
-    /**
-     * Envolve a chamada de LLM num span, injeta callbacks de token e garante finalize + end() no finally.
-     * `exec` recebe os callbacks para usar em `.addCallbacks(callbacks)`.
-     */
     async runLLMInSpan<T>(params: {
         spanName: string;
         runName?: string;
         attrs?: Record<string, any>;
-        exec: (callbacks: any[]) => Promise<T>; // tipo de callbacks do seu runner
+        exec: (callbacks: any[]) => Promise<T>;
     }): Promise<{ result: T; usage: any }> {
         const { spanName, runName, attrs, exec } = params;
-
         const obs = getObservability();
         const span = obs.startSpan(spanName);
-        // atributos iniciais + correlação
+
         span?.setAttributes?.({
             ...(attrs ?? {}),
             correlationId: obs.getContext()?.correlationId || '',
@@ -438,7 +334,6 @@ export class ObservabilityService {
                 usage: await finalize({ metadata: attrs, reset: true }),
             };
         } catch (err: any) {
-            // marca erro no span (status + atributos)
             if (typeof span?.setStatus === 'function') {
                 span.setStatus({
                     code: 'error',
@@ -456,22 +351,201 @@ export class ObservabilityService {
         }
     }
 
-    /**
-     * LEGADO/compat: consolida uso de tokens no span corrente a partir de um tracker fornecido.
-     * Prefira `createLLMTracking(...).finalize(...)` para novos fluxos.
-     */
-    endSpan(
-        tracker?: TokenTrackingHandler,
-        metadata?: Record<string, any>,
-        reset: boolean = false,
+    // ---------- Helpers privados ----------
+
+    private createObservabilityConfig(
+        config: DatabaseConnection,
+        options: ObservabilityConfig,
     ) {
-        if (!tracker) {
-            const span = getObservability().getCurrentSpan();
-            span?.setAttributes?.({ ...(metadata || {}) });
-            return;
+        const uri = this.buildConnectionString(config);
+
+        const collections =
+            options.enableCollections !== false
+                ? {
+                      logs:
+                          options.customCollections?.logs ??
+                          ObservabilityService.DEFAULT_COLLECTIONS.logs,
+                      telemetry:
+                          options.customCollections?.telemetry ??
+                          ObservabilityService.DEFAULT_COLLECTIONS.telemetry,
+                  }
+                : undefined;
+
+        return {
+            logging: { enabled: true },
+            mongodb: {
+                type: 'mongodb' as const,
+                connectionString: uri,
+                database: config.database,
+                ...(collections && { collections }),
+                batchSize:
+                    options.customSettings?.batchSize ??
+                    ObservabilityService.DEFAULT_SETTINGS.batchSize,
+                flushIntervalMs:
+                    options.customSettings?.flushIntervalMs ??
+                    ObservabilityService.DEFAULT_SETTINGS.flushIntervalMs,
+                ttlDays:
+                    options.customSettings?.ttlDays ??
+                    ObservabilityService.DEFAULT_SETTINGS.ttlDays,
+                enableObservability: true,
+            },
+            telemetry: {
+                enabled: true,
+                serviceName: options.serviceName,
+                sampling: {
+                    rate:
+                        options.customSettings?.samplingRate ??
+                        ObservabilityService.DEFAULT_SETTINGS.samplingRate,
+                    strategy: 'probabilistic' as const,
+                },
+                privacy: { includeSensitiveData: false },
+                ...(options.customSettings?.spanTimeoutMs && {
+                    spanTimeouts: {
+                        enabled: true,
+                        maxDurationMs: options.customSettings.spanTimeoutMs,
+                    },
+                }),
+            },
+        };
+    }
+
+    public buildConnectionString(config: DatabaseConnection): string {
+        if (!config?.host) {
+            throw new Error(
+                'ObservabilityService: invalid or missing host in DatabaseConnection',
+            );
         }
-        const { finalize } = this.createLLMTracking(); // só para reaproveitar summarize + setAttributes
-        // usa o mesmo tracker recebido
-        (finalize as any)({ metadata, reset, tracker });
+
+        const env = process.env.API_DATABASE_ENV ?? process.env.API_NODE_ENV;
+
+        let uri = new ConnectionString('', {
+            user: config.username,
+            password: config.password,
+            protocol: config.port ? 'mongodb' : 'mongodb+srv',
+            hosts: [{ name: config.host, port: config.port }],
+        }).toString();
+
+        const shouldAppendClusterConfig =
+            !['development', 'test'].includes(env ?? '') &&
+            !!process.env.API_MG_DB_PRODUCTION_CONFIG;
+
+        if (shouldAppendClusterConfig) {
+            uri = `${uri}/${process.env.API_MG_DB_PRODUCTION_CONFIG}`;
+        }
+
+        return uri;
+    }
+
+    public getConnectionString(): string {
+        const mongoConfig =
+            this.configService.get<DatabaseConnection>('mongoDatabase');
+
+        if (!mongoConfig) {
+            this.logger.error({
+                message:
+                    'MongoDB connection string requested but config is missing',
+                context: ObservabilityService.name,
+            });
+            throw new Error('mongoDatabase configuration is not available.');
+        }
+
+        return this.buildConnectionString(mongoConfig);
+    }
+
+    public getAgentObservabilityConfig(
+        serviceName: string,
+        correlationId?: string,
+    ) {
+        const mongoConfig =
+            this.configService.get<DatabaseConnection>('mongoDatabase');
+        if (!mongoConfig) {
+            throw new Error('mongoDatabase configuration is not available.');
+        }
+        return this.createAgentObservabilityConfig(
+            mongoConfig,
+            serviceName,
+            correlationId,
+        );
+    }
+
+    public getStorageConfig() {
+        const mongoConfig =
+            this.configService.get<DatabaseConnection>('mongoDatabase');
+        if (!mongoConfig) {
+            throw new Error('mongoDatabase configuration is not available.');
+        }
+        return {
+            type: StorageEnum.MONGODB,
+            connectionString: this.getConnectionString(),
+            database: mongoConfig.database,
+        };
+    }
+
+    private summarize(usages: TokenUsage[]) {
+        const acc = {
+            totalTokens: 0,
+            inputTokens: 0,
+            outputTokens: 0,
+            reasoningTokens: 0,
+            models: new Set<string>(),
+            runIds: new Set<string>(),
+            parentRunIds: new Set<string>(),
+            runNames: new Set<string>(),
+            details: [] as TokenUsage[],
+        };
+        for (const u of usages) {
+            const input = u.input_tokens ?? 0;
+            const output = u.output_tokens ?? 0;
+            const reasoning = (u as any).output_reasoning_tokens ?? 0;
+            const total = u.total_tokens ?? input + output;
+            if (u.model) {
+                acc.models.add(u.model);
+            }
+            if (u.runId) {
+                acc.runIds.add(u.runId);
+            }
+            if (u.parentRunId) {
+                acc.parentRunIds.add(u.parentRunId);
+            }
+            if (u.runName) {
+                acc.runNames.add(u.runName);
+            }
+            acc.totalTokens += total;
+            acc.inputTokens += input;
+            acc.outputTokens += output;
+            acc.reasoningTokens += reasoning;
+            acc.details.push(u);
+        }
+        return {
+            ...acc,
+            modelsArr: Array.from(acc.models),
+            runIdsArr: Array.from(acc.runIds),
+            parentRunIdsArr: Array.from(acc.parentRunIds),
+            runNamesArr: Array.from(acc.runNames),
+        };
+    }
+
+    private makeKey(config: DatabaseConnection, serviceName: string): string {
+        return JSON.stringify({
+            h: config.host,
+            p: config.port ?? null,
+            db: config.database ?? null,
+            s: serviceName,
+        });
+    }
+
+    generateCorrelationId(): string {
+        return IdGenerator.correlationId();
+    }
+
+    async ensureContext(
+        config: DatabaseConnection,
+        serviceName: string,
+        correlationId?: string,
+    ) {
+        await this.initializeObservability(config, {
+            serviceName,
+            correlationId: correlationId || this.generateCorrelationId(),
+        });
     }
 }

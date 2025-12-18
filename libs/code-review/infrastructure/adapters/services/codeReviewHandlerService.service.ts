@@ -1,10 +1,10 @@
-import { createLogger } from '@kodus/flow';
 /**
  * @license
  * Kodus Tech. All rights reserved.
  */
+
+import { createLogger } from '@kodus/flow';
 import { Injectable, Inject } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 
 import {
     GitHubReaction,
@@ -12,7 +12,6 @@ import {
     ReviewStatusReaction,
 } from '@libs/code-review/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
-import { DatabaseConnection } from '@libs/core/infrastructure/config/types';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { CodeReviewPipelineContext } from '@libs/code-review/pipeline/context/code-review-pipeline.context';
 import { PipelineFactory } from '@libs/core/infrastructure/pipeline/services/pipeline-factory.service';
@@ -24,7 +23,6 @@ import { TaskStatus } from '@libs/ee/kodyAST/interfaces/code-ast-analysis.interf
 @Injectable()
 export class CodeReviewHandlerService {
     private readonly logger = createLogger(CodeReviewHandlerService.name);
-    private readonly config: DatabaseConnection;
 
     private readonly reactionMap = {
         [PlatformType.GITHUB]: {
@@ -44,13 +42,9 @@ export class CodeReviewHandlerService {
     constructor(
         @Inject('PIPELINE_PROVIDER')
         private readonly pipelineFactory: PipelineFactory<CodeReviewPipelineContext>,
-        private readonly configService: ConfigService,
         private readonly observabilityService: ObservabilityService,
         private readonly codeManagement: CodeManagementService,
-    ) {
-        this.config =
-            this.configService.get<DatabaseConnection>('mongoDatabase');
-    }
+    ) {}
 
     async handlePullRequest(
         organizationAndTeamData: OrganizationAndTeamData,
@@ -69,13 +63,7 @@ export class CodeReviewHandlerService {
         let initialContext: CodeReviewPipelineContext;
 
         try {
-            await this.observabilityService.initializeObservability(
-                this.config,
-                {
-                    serviceName: 'codeReviewPipeline',
-                    correlationId: executionId,
-                },
-            );
+            this.observabilityService.setContext(executionId);
 
             initialContext = {
                 workflowJobId,
@@ -119,7 +107,7 @@ export class CodeReviewHandlerService {
             };
 
             this.logger.log({
-                message: `Iniciando pipeline de code review para PR#${pullRequest.number}`,
+                message: `Starting code review pipeline for PR#${pullRequest.number}`,
                 context: CodeReviewHandlerService.name,
                 serviceName: CodeReviewHandlerService.name,
                 metadata: {
@@ -144,7 +132,7 @@ export class CodeReviewHandlerService {
             await this.handleReactionsByStatus(initialContext, result);
 
             this.logger.log({
-                message: `Pipeline de code review concluído com sucesso para PR#${pullRequest.number}`,
+                message: `Code review pipeline completed successfully for PR#${pullRequest.number}`,
                 context: CodeReviewHandlerService.name,
                 serviceName: CodeReviewHandlerService.name,
                 metadata: {

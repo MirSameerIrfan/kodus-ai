@@ -2,7 +2,7 @@ import { createLogger } from '@kodus/flow';
 import { Injectable, LoggerService } from '@nestjs/common';
 
 @Injectable()
-export class KodusLoggerService implements LoggerService {
+export class LoggerWrapperService implements LoggerService {
     private logger;
 
     constructor() {

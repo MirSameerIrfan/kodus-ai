@@ -9,7 +9,6 @@ import { IntegrationConfigCoreModule } from '@libs/integrations/modules/config-c
 import { IntegrationCoreModule } from '@libs/integrations/modules/integrations-core.module';
 import { ParametersModule } from '@libs/organization/modules/parameters.module';
 import { PULL_REQUEST_MESSAGES_SERVICE_TOKEN } from '../domain/pullRequestMessages/contracts/pullRequestMessages.service.contract';
-import { SharedHelpersModule } from '@libs/common/modules/shared-helpers.module';
 import { CodeReviewSettingsLogModule } from '@libs/ee/codeReviewSettingsLog/codeReviewSettingsLog.module';
 import { PullRequestMessagesModelInstance } from '../infrastructure/adapters/repositories/schemas/mongoose/pullRequestMessages.model';
 import { CreateOrUpdatePullRequestMessagesUseCase } from '../application/use-cases/pullRequestMessages/create-or-update-pull-request-messages.use-case';
@@ -23,7 +22,6 @@ import { PermissionsModule } from '@libs/identity/modules/permissions.module';
         forwardRef(() => IntegrationCoreModule),
         forwardRef(() => IntegrationConfigCoreModule),
         forwardRef(() => ParametersModule),
-        forwardRef(() => SharedHelpersModule),
         forwardRef(() => PermissionsModule),
     ],
     providers: [

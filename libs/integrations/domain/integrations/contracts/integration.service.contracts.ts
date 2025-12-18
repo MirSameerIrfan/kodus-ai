@@ -14,7 +14,5 @@ export interface IIntegrationService extends IIntegrationRepository {
         organizationAndTeamData: OrganizationAndTeamData,
     ): Promise<{
         codeManagement: string;
-        projectManagement: string;
-        communication: string;
     }>;
 }

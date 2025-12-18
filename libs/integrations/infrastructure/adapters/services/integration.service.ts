@@ -50,8 +50,6 @@ export class IntegrationService implements IIntegrationService {
         organizationAndTeamData: OrganizationAndTeamData,
     ): Promise<{
         codeManagement: string;
-        projectManagement: string;
-        communication: string;
     }> {
         try {
             const integrations = await this.find({
@@ -62,15 +60,11 @@ export class IntegrationService implements IIntegrationService {
             if (!integrations) {
                 return {
                     codeManagement: null,
-                    projectManagement: null,
-                    communication: null,
                 };
             }
 
             const integrationPlatforms = {
                 codeManagement: null,
-                projectManagement: null,
-                communication: null,
             };
 
             for (const item of integrations) {
@@ -79,26 +73,6 @@ export class IntegrationService implements IIntegrationService {
                     IntegrationCategory.CODE_MANAGEMENT
                 ) {
                     integrationPlatforms.codeManagement = item?.platform;
-                }
-
-                if (
-                    item?.integrationCategory.toUpperCase() ===
-                    IntegrationCategory.COMMUNICATION
-                ) {
-                    integrationPlatforms.communication = item?.platform;
-                }
-
-                if (
-                    item?.integrationCategory.toUpperCase() ===
-                    IntegrationCategory.PROJECT_MANAGEMENT
-                ) {
-                    // This was done because in the database it is being saved in snake_case, and on the frontend, we need the information in kebab-case to be compared with integration keys
-                    if (item?.platform === PlatformType.AZURE_BOARDS) {
-                        integrationPlatforms.projectManagement =
-                            item?.platform.replace('_', '-');
-                    } else {
-                        integrationPlatforms.projectManagement = item?.platform;
-                    }
                 }
             }
 

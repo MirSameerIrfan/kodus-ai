@@ -1,11 +1,6 @@
 import { createLogger } from '@kodus/flow';
 import { ObservabilityService } from '@libs/core/log/observability.service';
-import {
-    Injectable,
-    OnModuleInit,
-    OnModuleDestroy,
-    Inject,
-} from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 import { OutboxMessageRepository } from './repositories/outbox-message.repository';
@@ -26,10 +21,9 @@ interface MessagePayloadContent {
 }
 
 @Injectable()
-export class OutboxRelayService implements OnModuleInit, OnModuleDestroy {
+export class OutboxRelayService {
     private isProcessing = false;
     private isCleaning = false;
-    private processingInterval?: NodeJS.Timeout;
 
     private readonly logger = createLogger(OutboxRelayService.name);
 
@@ -40,25 +34,6 @@ export class OutboxRelayService implements OnModuleInit, OnModuleDestroy {
         private readonly messageBroker: IMessageBrokerService,
         private readonly observability: ObservabilityService,
     ) {}
-
-    onModuleInit() {
-        // Iniciar processamento do outbox a cada 1 segundo
-        this.processingInterval = setInterval(() => {
-            this.processOutbox().catch((error) => {
-                this.logger.error({
-                    message: 'Error in outbox relay interval',
-                    context: OutboxRelayService.name,
-                    error,
-                });
-            });
-        }, 1000);
-    }
-
-    onModuleDestroy() {
-        if (this.processingInterval) {
-            clearInterval(this.processingInterval);
-        }
-    }
 
     /**
      * Processa mensagens pendentes do outbox e publica no RabbitMQ

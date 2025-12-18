@@ -3,7 +3,6 @@ import {
     createOrchestration,
     createThreadId,
     PlannerType,
-    StorageEnum,
     EnhancedJSONParser,
     createLogger,
     ContextEvidence,
@@ -11,9 +10,6 @@ import {
 import { SDKOrchestrator } from '@kodus/flow/dist/orchestration';
 import { LLMModelProvider, PromptRunnerService } from '@kodus/kodus-common/llm';
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-
-import { DatabaseConnection } from '@libs/core/infrastructure/config/types';
 import type {
     CodeReviewConfig,
     FileChange,
@@ -48,7 +44,6 @@ export interface ContextMCPDependency {
 @Injectable()
 export class ContextEvidenceAgentProvider extends BaseAgentProvider {
     private readonly logger = createLogger(ContextEvidenceAgentProvider.name);
-    protected config: DatabaseConnection;
     private orchestration: SDKOrchestrator | null = null;
     private mcpAdapter: ReturnType<typeof createMCPAdapter>;
     private initializing: Promise<void> | null = null;
@@ -62,7 +57,6 @@ export class ContextEvidenceAgentProvider extends BaseAgentProvider {
     };
 
     constructor(
-        private readonly configService: ConfigService,
         promptRunnerService: PromptRunnerService,
         permissionValidationService: PermissionValidationService,
         observabilityService: ObservabilityService,
@@ -73,8 +67,6 @@ export class ContextEvidenceAgentProvider extends BaseAgentProvider {
             permissionValidationService,
             observabilityService,
         );
-        this.config =
-            this.configService.get<DatabaseConnection>('mongoDatabase');
     }
 
     protected async createMCPAdapter(
@@ -449,18 +441,10 @@ Task: Fulfill this request using available tools based on the provided code chan
             llmAdapter,
             mcpAdapter,
             observability:
-                this.observabilityService.createAgentObservabilityConfig(
-                    this.config,
+                this.observabilityService.getAgentObservabilityConfig(
                     'context-script-agent',
                 ),
-            storage: {
-                type: StorageEnum.MONGODB,
-                connectionString:
-                    this.observabilityService.buildConnectionString(
-                        this.config,
-                    ),
-                database: this.config.database,
-            },
+            storage: this.observabilityService.getStorageConfig(),
         });
 
         await orchestration.connectMCP();

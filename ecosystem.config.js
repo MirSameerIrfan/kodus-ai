@@ -8,17 +8,17 @@ module.exports = {
             max_memory_restart: '500M',
             env: {
                 COMPONENT_TYPE: 'webhook',
-                WEBHOOK_HANDLER_PORT: '3332',
+                WEBHOOKS_PORT: '3332',
                 API_NODE_ENV: 'development',
             },
             env_homolog: {
                 COMPONENT_TYPE: 'webhook',
-                WEBHOOK_HANDLER_PORT: '3332',
+                WEBHOOKS_PORT: '3332',
                 API_NODE_ENV: 'homolog',
             },
             env_production: {
                 COMPONENT_TYPE: 'webhook',
-                WEBHOOK_HANDLER_PORT: '3332',
+                WEBHOOKS_PORT: '3332',
                 API_NODE_ENV: 'production',
             },
             autorestart: true,

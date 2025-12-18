@@ -28,101 +28,83 @@ export class GlobalParametersRepository implements IGlobalParametersRepository {
     async find(
         filter?: Partial<IGlobalParameters>,
     ): Promise<GlobalParametersEntity[]> {
-        try {
-            const findOptions: FindManyOptions<GlobalParametersModel> = {
-                where: filter,
-            };
+        const findOptions: FindManyOptions<GlobalParametersModel> = {
+            where: filter,
+        };
 
-            const globalParametersModel =
-                await this.globalParametersRepository.find(findOptions);
+        const globalParametersModel =
+            await this.globalParametersRepository.find(findOptions);
 
-            return mapSimpleModelsToEntities(
-                globalParametersModel,
-                GlobalParametersEntity,
-            );
-        } catch (error) {
-            throw error;
-        }
+        return mapSimpleModelsToEntities(
+            globalParametersModel,
+            GlobalParametersEntity,
+        );
     }
 
     async findOne(
         filter?: Partial<IGlobalParameters>,
     ): Promise<GlobalParametersEntity> {
-        try {
-            const findOptions: FindManyOptions<GlobalParametersModel> = {
-                where: filter,
-            };
+        const findOptions: FindManyOptions<GlobalParametersModel> = {
+            where: filter,
+        };
 
-            const globalParametersModel =
-                await this.globalParametersRepository.findOne(findOptions);
+        const globalParametersModel =
+            await this.globalParametersRepository.findOne(findOptions);
 
-            return mapSimpleModelToEntity(
-                globalParametersModel,
-                GlobalParametersEntity,
-            );
-        } catch (error) {
-            throw error;
-        }
+        return mapSimpleModelToEntity(
+            globalParametersModel,
+            GlobalParametersEntity,
+        );
     }
 
     async findById(uuid: string): Promise<GlobalParametersEntity> {
-        try {
-            const queryBuilder =
-                this.globalParametersRepository.createQueryBuilder(
-                    'global_parameters',
-                );
-
-            const globalParametersSelected = await queryBuilder
-                .where('global_parameters.uuid = :uuid', { uuid })
-                .getOne();
-
-            return mapSimpleModelToEntity(
-                globalParametersSelected,
-                GlobalParametersEntity,
+        const queryBuilder =
+            this.globalParametersRepository.createQueryBuilder(
+                'global_parameters',
             );
-        } catch (error) {
-            throw error;
-        }
+
+        const globalParametersSelected = await queryBuilder
+            .where('global_parameters.uuid = :uuid', { uuid })
+            .getOne();
+
+        return mapSimpleModelToEntity(
+            globalParametersSelected,
+            GlobalParametersEntity,
+        );
     }
 
     async create(
         globalParameter: IGlobalParameters,
     ): Promise<GlobalParametersEntity> {
-        try {
-            const queryBuilder =
-                this.globalParametersRepository.createQueryBuilder(
-                    'global_parameters',
-                );
+        const queryBuilder =
+            this.globalParametersRepository.createQueryBuilder(
+                'global_parameters',
+            );
 
-            const globalParametersModel =
-                this.globalParametersRepository.create(globalParameter);
+        const globalParametersModel =
+            this.globalParametersRepository.create(globalParameter);
 
-            const globalParametersCreated = await queryBuilder
-                .insert()
-                .values(globalParametersModel)
-                .execute();
+        const globalParametersCreated = await queryBuilder
+            .insert()
+            .values(globalParametersModel)
+            .execute();
 
-            if (globalParametersCreated?.identifiers[0]?.uuid) {
-                const findOneOptions: FindOneOptions<GlobalParametersModel> = {
-                    where: {
-                        uuid: globalParametersCreated.identifiers[0].uuid,
-                    },
-                };
+        if (globalParametersCreated?.identifiers[0]?.uuid) {
+            const findOneOptions: FindOneOptions<GlobalParametersModel> = {
+                where: {
+                    uuid: globalParametersCreated.identifiers[0].uuid,
+                },
+            };
 
-                const globalParameters =
-                    await this.globalParametersRepository.findOne(
-                        findOneOptions,
-                    );
+            const globalParameters =
+                await this.globalParametersRepository.findOne(findOneOptions);
 
-                if (!globalParameters) return undefined;
+            if (!globalParameters) return undefined;
 
-                return mapSimpleModelToEntity(
-                    globalParameters,
-                    GlobalParametersEntity,
-                );
-            }
-        } catch (error) {
-            throw error;
+            return mapSimpleModelToEntity(
+                globalParameters,
+                GlobalParametersEntity,
+            );
         }
     }
 
@@ -130,44 +112,36 @@ export class GlobalParametersRepository implements IGlobalParametersRepository {
         filter: Partial<IGlobalParameters>,
         data: Partial<IGlobalParameters>,
     ): Promise<GlobalParametersEntity> {
-        try {
-            const queryBuilder: UpdateQueryBuilder<GlobalParametersModel> =
-                this.globalParametersRepository
-                    .createQueryBuilder('global_parameters')
-                    .update(GlobalParametersModel)
-                    .where(filter)
-                    .set(data);
+        const queryBuilder: UpdateQueryBuilder<GlobalParametersModel> =
+            this.globalParametersRepository
+                .createQueryBuilder('global_parameters')
+                .update(GlobalParametersModel)
+                .where(filter)
+                .set(data);
 
-            const result = await queryBuilder.execute();
+        const result = await queryBuilder.execute();
 
-            if (result.affected > 0) {
-                const findOptions: FindManyOptions<GlobalParametersModel> = {
-                    where: filter,
-                };
+        if (result.affected > 0) {
+            const findOptions: FindManyOptions<GlobalParametersModel> = {
+                where: filter,
+            };
 
-                const globalParameters =
-                    await this.globalParametersRepository.findOne(findOptions);
+            const globalParameters =
+                await this.globalParametersRepository.findOne(findOptions);
 
-                if (globalParameters) {
-                    return mapSimpleModelToEntity(
-                        globalParameters,
-                        GlobalParametersEntity,
-                    );
-                }
+            if (globalParameters) {
+                return mapSimpleModelToEntity(
+                    globalParameters,
+                    GlobalParametersEntity,
+                );
             }
-
-            return undefined;
-        } catch (error) {
-            throw error;
         }
+
+        return undefined;
     }
 
     async delete(uuid: string): Promise<void> {
-        try {
-            await this.globalParametersRepository.delete(uuid);
-        } catch (error) {
-            throw error;
-        }
+        await this.globalParametersRepository.delete(uuid);
     }
 
     async findByKey(

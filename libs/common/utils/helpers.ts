@@ -131,7 +131,7 @@ export function filterByColumn(rawData, columns, filterColumns) {
 export function parseJson(value: string) {
     try {
         return JSON.parse(value);
-    } catch (error) {
+    } catch {
         return {};
     }
 }
@@ -208,11 +208,11 @@ export const randomString = (length: number) => {
         .join('');
 };
 
-const retryWithBackoff = async (
-    fn: Function,
+const retryWithBackoff = async <T>(
+    fn: () => Promise<T>,
     retries: number = 4,
     delay: number = 1000,
-): Promise<any> => {
+): Promise<T> => {
     try {
         return await fn();
     } catch (error) {

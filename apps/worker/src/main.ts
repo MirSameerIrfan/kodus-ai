@@ -5,36 +5,58 @@ dotenv.config();
 process.env.API_RABBITMQ_ENABLED = 'true';
 
 import { NestFactory } from '@nestjs/core';
-import { Logger } from '@nestjs/common';
+import { ObservabilityService } from '@libs/core/log/observability.service';
 import { WorkerModule } from './worker.module';
-
-declare const module: any;
+import { LoggerWrapperService } from '@libs/core/log/loggerWrapper.service';
 
 async function bootstrap() {
     process.env.COMPONENT_TYPE = 'worker';
-    Logger.overrideLogger(['log', 'error', 'warn', 'debug', 'verbose']);
-    console.log('Starting Worker bootstrap...');
+
+    console.log('Starting Worker bootstrap...', 'Bootstrap');
+
+    let appContext;
 
     try {
-        const app = await NestFactory.create(WorkerModule);
+        appContext = await NestFactory.createApplicationContext(WorkerModule);
 
-        // This enables the NestJS built-in shutdown hooks,
-        // which will properly handle SIGINT and SIGTERM.
-        app.enableShutdownHooks();
+        const logger = appContext.get(LoggerWrapperService);
+        process.on('uncaughtException', (error) => {
+            logger.error({
+                message: `Uncaught Exception: ${error.message}`,
+                context: 'WorkerGlobalExceptionHandler',
+                error,
+            });
+        });
 
-        await app.init();
+        process.on('unhandledRejection', (reason: any) => {
+            logger.error({
+                message: `Unhandled Rejection: ${reason?.message || reason}`,
+                context: 'WorkerGlobalExceptionHandler',
+                error:
+                    reason instanceof Error
+                        ? reason
+                        : new Error(String(reason)),
+            });
+        });
 
-        // Keep the application running
-        setInterval(
-            () => {
-                // Keep alive
-            },
-            1000 * 60 * 60,
-        ); // 1 hour interval just to keep process alive
+        // Explicitly initialize observability for the 'worker' context
+        await appContext.get(ObservabilityService).init('worker');
+
+        // This is the crucial step to trigger OnApplicationBootstrap
+        await appContext.init();
+
+        appContext.enableShutdownHooks();
 
         console.log('🚀 Worker is initialized and running.');
     } catch (e) {
-        console.error('BOOTSTRAP FAILED', e);
+        console.error(
+            'BOOTSTRAP FAILED',
+            e instanceof Error ? e.stack : String(e),
+        );
+
+        if (appContext) {
+            await appContext.close();
+        }
         process.exit(1);
     }
 }

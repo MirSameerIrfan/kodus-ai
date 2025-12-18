@@ -9,11 +9,7 @@ export abstract class BasePipelineStage<
     abstract stageName: string;
 
     async execute(context: TContext): Promise<TContext> {
-        try {
-            return await this.executeStage(context);
-        } catch (error) {
-            throw error;
-        }
+        return await this.executeStage(context);
     }
 
     protected abstract executeStage(context: TContext): Promise<TContext>;

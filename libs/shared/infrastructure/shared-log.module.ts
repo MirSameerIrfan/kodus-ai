@@ -1,9 +1,9 @@
 import { Global, Module } from '@nestjs/common';
-import { KodusLoggerService } from '@libs/core/log/kodus-logger.service';
+import { LoggerWrapperService } from '@libs/core/log/loggerWrapper.service';
 
 @Global()
 @Module({
-    providers: [KodusLoggerService],
-    exports: [KodusLoggerService],
+    providers: [LoggerWrapperService],
+    exports: [LoggerWrapperService],
 })
 export class SharedLogModule {}

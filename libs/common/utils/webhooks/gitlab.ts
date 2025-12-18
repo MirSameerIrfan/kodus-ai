@@ -41,7 +41,7 @@ export class GitlabMappedPlatform implements IMappedPlatform {
     }): IMappedPullRequest {
         if (
             !params?.payload?.object_attributes &&
-            !('merge_request' in params?.payload)
+            (!params?.payload || !('merge_request' in params.payload))
         ) {
             return null;
         }

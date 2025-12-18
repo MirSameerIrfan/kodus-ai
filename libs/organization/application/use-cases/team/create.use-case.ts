@@ -33,44 +33,37 @@ export class CreateTeamUseCase implements IUseCase {
         teamName: string;
         organizationId: string;
     }): Promise<TeamEntity | undefined> {
-        try {
-            const orgId =
-                this.request?.user?.organization?.uuid ||
-                payload.organizationId;
+        const orgId =
+            this.request?.user?.organization?.uuid || payload.organizationId;
 
-            const validStatuses = Object.values(STATUS).filter(
-                (status) => status !== STATUS.REMOVED,
-            );
+        const validStatuses = Object.values(STATUS).filter(
+            (status) => status !== STATUS.REMOVED,
+        );
 
-            const hasTeams = await this.teamService.find(
-                {
-                    name: payload.teamName,
-                    organization: { uuid: orgId },
-                },
-                [...validStatuses],
-            );
+        const hasTeams = await this.teamService.find(
+            {
+                name: payload.teamName,
+                organization: { uuid: orgId },
+            },
+            [...validStatuses],
+        );
 
-            if (hasTeams?.length) {
-                throw new ConflictException(
-                    'api.team.team_name_already_exists',
-                );
-            }
-
-            const team = await this.teamService.createTeam({
-                ...payload,
-                organizationId: orgId,
-            });
-
-            if (team && team?.uuid) {
-                this.savePlatormConfigsParameters(orgId, team.uuid);
-            }
-
-            posthogClient.teamIdentify(team);
-
-            return team;
-        } catch (error) {
-            throw error;
+        if (hasTeams?.length) {
+            throw new ConflictException('api.team.team_name_already_exists');
         }
+
+        const team = await this.teamService.createTeam({
+            ...payload,
+            organizationId: orgId,
+        });
+
+        if (team && team?.uuid) {
+            this.savePlatormConfigsParameters(orgId, team.uuid);
+        }
+
+        posthogClient.teamIdentify(team);
+
+        return team;
     }
 
     savePlatormConfigsParameters(organizationId: string, teamId: string) {

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 
+import { SharedCoreModule } from '@libs/shared/infrastructure/shared-core.module';
 import { RabbitMQWrapperModule } from '@libs/core/infrastructure/queue/rabbitmq.module';
 import { SharedPostgresModule } from '@libs/shared/database/shared-postgres.module';
 import { SharedConfigModule } from '@libs/shared/infrastructure/shared-config.module';
@@ -16,6 +17,7 @@ import { WebhookHealthController } from '../controllers/webhook-health.controlle
 
 @Module({
     imports: [
+        SharedCoreModule,
         SharedConfigModule,
         SharedLogModule,
         SharedObservabilityModule,

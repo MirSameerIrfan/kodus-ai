@@ -9,30 +9,29 @@ import { WorkflowCoreModule } from './workflow-core.module';
 import { PlatformModule } from '@libs/platform/modules/platform.module';
 
 // Engine
-import { HeavyStageEventHandler } from './engine/heavy-stage-event.handler';
+import { HeavyStageEventHandler } from '@libs/core/workflow/engine/heavy-stage-event.handler';
 
 // Infrastructure - Services
-import { WorkflowJobQueueService } from './infrastructure/workflow-job-queue.service';
-import { WorkflowJobConsumer } from './infrastructure/workflow-job-consumer.service';
-import { WorkflowResumedConsumer } from './infrastructure/workflow-resumed-consumer.service';
-import { DistributedLockService } from './infrastructure/distributed-lock.service';
-import { ErrorClassifierService } from './infrastructure/error-classifier.service';
-import { JobProcessorRouterService } from './infrastructure/job-processor-router.service';
+import { WorkflowJobQueueService } from '@libs/core/workflow/infrastructure/workflow-job-queue.service';
+import { WorkflowJobConsumer } from '@libs/core/workflow/infrastructure/workflow-job-consumer.service';
+import { WorkflowResumedConsumer } from '@libs/core/workflow/infrastructure/workflow-resumed-consumer.service';
+import { DistributedLockService } from '@libs/core/workflow/infrastructure/distributed-lock.service';
+import { ErrorClassifierService } from '@libs/core/workflow/infrastructure/error-classifier.service';
+import { JobProcessorRouterService } from '@libs/core/workflow/infrastructure/job-processor-router.service';
 import { WebhookProcessingJobProcessorService } from '@libs/automation/webhook-processing/webhook-processing-job.processor';
-import { OutboxRelayService } from './infrastructure/outbox-relay.service';
 
 // Domain contracts
-import { JOB_QUEUE_SERVICE_TOKEN } from './domain/contracts/job-queue.service.contract';
-import { JOB_PROCESSOR_SERVICE_TOKEN } from './domain/contracts/job-processor.service.contract';
-import { ERROR_CLASSIFIER_SERVICE_TOKEN } from './domain/contracts/error-classifier.service.contract';
+import { JOB_QUEUE_SERVICE_TOKEN } from '@libs/core/workflow/domain/contracts/job-queue.service.contract';
+import { JOB_PROCESSOR_SERVICE_TOKEN } from '@libs/core/workflow/domain/contracts/job-processor.service.contract';
+import { ERROR_CLASSIFIER_SERVICE_TOKEN } from '@libs/core/workflow/domain/contracts/error-classifier.service.contract';
 
 // Use Cases
-import { EnqueueCodeReviewJobUseCase } from './application/use-cases/enqueue-code-review-job.use-case';
-import { ProcessWorkflowJobUseCase } from './application/use-cases/process-workflow-job.use-case';
-import { GetJobStatusUseCase } from './application/use-cases/get-job-status.use-case';
+import { EnqueueCodeReviewJobUseCase } from '@libs/core/workflow/application/use-cases/enqueue-code-review-job.use-case';
+import { ProcessWorkflowJobUseCase } from '@libs/core/workflow/application/use-cases/process-workflow-job.use-case';
+import { GetJobStatusUseCase } from '@libs/core/workflow/application/use-cases/get-job-status.use-case';
 import { CodeReviewValidationService } from '@libs/automation/infrastructure/adapters/services/code-review-validation.service';
 import { AutomationModule } from '@libs/automation/modules/automation.module';
-import { ASTEventHandler } from './infrastructure/ast-event-handler.service';
+import { ASTEventHandler } from '@libs/core/workflow/infrastructure/ast-event-handler.service';
 
 const sharedProviders = [
     {
@@ -68,7 +67,6 @@ const workerProviders = [
     DistributedLockService,
     JobProcessorRouterService,
     ASTEventHandler,
-    OutboxRelayService,
 
     // Processors
     WebhookProcessingJobProcessorService,

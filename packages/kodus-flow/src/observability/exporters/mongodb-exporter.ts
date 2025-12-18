@@ -1,13 +1,15 @@
 import {
     TraceItem,
     LogProcessor,
-    LogLevel,
     ObservabilityExporter,
     TraceItem as TraceItemType,
     LogContext,
+    AGENT,
+    TOOL,
 } from '../types.js';
 import { createLogger } from '../logger.js';
 import {
+    LogLevel,
     MongoDBExporterConfig,
     MongoDBLogItem,
     MongoDBTelemetryItem,
@@ -295,6 +297,8 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
         context?: LogContext,
         error?: Error,
     ) {
+        // MongoDB saves all logs for complete history/audit trail
+        // Console logging respects API_LOG_LEVEL via Pino
         // Prevent buffer overflow
         if (this.logBuffer.length >= this.maxBufferSize) {
             // Drop oldest logs to make space for new ones
@@ -341,20 +345,24 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
 
     exportTelemetry(item: TraceItem): void {
         const duration = item.endTime - item.startTime;
-        const correlationId = item.attributes['correlationId'] as string;
+        const correlationId =
+            (item.attributes[AGENT.CORRELATION_ID] as string) ||
+            (item.attributes[TOOL.CORRELATION_ID] as string) ||
+            (item.attributes['correlationId'] as string);
         const tenantId =
-            (item.attributes['agent.tenant.id'] as string) ||
+            (item.attributes[AGENT.TENANT_ID] as string) ||
             (item.attributes['tenantId'] as string) ||
             (item.attributes['tenant.id'] as string);
         const executionId =
-            (item.attributes['agent.execution.id'] as string) ||
+            (item.attributes[AGENT.EXECUTION_ID] as string) ||
+            (item.attributes[TOOL.EXECUTION_ID] as string) ||
             (item.attributes['execution.id'] as string);
         const sessionId =
-            (item.attributes['agent.conversation.id'] as string) ||
+            (item.attributes[AGENT.CONVERSATION_ID] as string) ||
             (item.attributes['sessionId'] as string) ||
             (item.attributes['conversation.id'] as string);
-        const agentName = item.attributes['agent.name'] as string;
-        const toolName = item.attributes['tool.name'] as string;
+        const agentName = item.attributes[AGENT.NAME] as string;
+        const toolName = item.attributes[TOOL.NAME] as string;
         const phase = item.attributes['agent.phase'] as
             | 'think'
             | 'act'
@@ -372,8 +380,13 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
             toolName,
             phase,
             attributes: item.attributes,
-            status: 'ok',
-            error: undefined,
+            status: item.status.code as any,
+            error: item.status.message
+                ? {
+                      name: 'Error',
+                      message: item.status.message,
+                  }
+                : undefined,
             createdAt: new Date(),
         };
 
@@ -416,18 +429,7 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
 
         try {
             await this.collections.logs.insertMany(logsToFlush);
-
-            if (this.config.enableObservability) {
-                this.logger.debug({
-                    message: 'Logs flushed to MongoDB',
-                    context: this.constructor.name,
-                    error: {
-                        count: logsToFlush.length,
-                        collection: this.config.collections.logs,
-                        skipProcessors: true,
-                    } as any,
-                });
-            }
+            // Removed debug log to avoid recursive logging and pollution
         } catch (error) {
             this.logger.error({
                 message: 'Failed to flush logs to MongoDB',
@@ -470,18 +472,7 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
 
         try {
             await this.collections.telemetry.insertMany(telemetryToFlush);
-
-            if (this.config.enableObservability) {
-                this.logger.debug({
-                    message: 'Telemetry flushed to MongoDB',
-                    context: this.constructor.name,
-                    error: {
-                        count: telemetryToFlush.length,
-                        collection: this.config.collections.telemetry,
-                        skipProcessors: true,
-                    } as any,
-                });
-            }
+            // Removed debug log to avoid recursive logging and pollution
         } catch (error) {
             this.logger.error({
                 message: 'Failed to flush telemetry to MongoDB',

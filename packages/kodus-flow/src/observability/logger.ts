@@ -1,7 +1,8 @@
 import { ExecutionContext } from '@nestjs/common';
 import { trace } from '@opentelemetry/api';
 import pino from 'pino';
-import { LogArguments, LogLevel, LogProcessor } from './types.js';
+import { LogArguments, LogProcessor } from './types.js';
+import { LogLevel } from '@/core/types/allTypes.js';
 
 /* -------------------------------------------------------------------------- */
 /*                                 Globals                                    */

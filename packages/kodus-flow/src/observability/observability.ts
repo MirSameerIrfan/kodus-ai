@@ -4,9 +4,9 @@ import {
     Span,
     SpanOptions,
     TraceItem,
-    LogLevel,
     LogContext,
     ObservabilityExporter,
+    AGENT,
 } from './types.js';
 import { TelemetrySystem } from './telemetry.js';
 import { isEnhancedError } from '../core/error-unified.js';
@@ -36,6 +36,7 @@ import { createMongoDBExporter } from './exporters/mongodb-exporter.js';
 import { OtlpTraceExporter } from './exporters/otlp-exporter.js';
 import { OtelAdapter } from './core/otel-adapter.js';
 import { SanitizationProcessor } from './processors/sanitization-processor.js';
+import { LogLevel } from '@/core/types/allTypes.js';
 
 /**
  * Main observability system that coordinates all components
@@ -240,14 +241,14 @@ export class ObservabilitySystem {
         const attrs: Record<string, string | number | boolean> = {
             ...(options.attributes || {}),
         };
-        if (ctx?.correlationId && attrs['correlationId'] === undefined) {
-            attrs['correlationId'] = ctx.correlationId;
+        if (ctx?.correlationId && attrs[AGENT.CORRELATION_ID] === undefined) {
+            attrs[AGENT.CORRELATION_ID] = ctx.correlationId;
         }
-        if (ctx?.tenantId && attrs['tenantId'] === undefined) {
-            attrs['tenantId'] = ctx.tenantId;
+        if (ctx?.tenantId && attrs[AGENT.TENANT_ID] === undefined) {
+            attrs[AGENT.TENANT_ID] = ctx.tenantId;
         }
-        if (ctx?.sessionId && attrs['sessionId'] === undefined) {
-            attrs['sessionId'] = ctx.sessionId;
+        if (ctx?.sessionId && attrs[AGENT.CONVERSATION_ID] === undefined) {
+            attrs[AGENT.CONVERSATION_ID] = ctx.sessionId;
         }
         return this.telemetry.startSpan(name, {
             ...options,
@@ -315,17 +316,14 @@ export class ObservabilitySystem {
             conversationId: options.sessionId,
             userId: options.userId,
             tenantId: options.tenantId,
+            correlationId: correlationId,
             input: options.input as string,
             inputTokens: options.inputTokens,
         });
 
-        // Add correlationId as span attribute for proper extraction
+        // Add executionId for internal tracking if needed (already in attributes from helper)
         spanOptions.attributes = {
             ...spanOptions.attributes,
-            correlationId: correlationId,
-            ...(options.sessionId && { sessionId: options.sessionId }),
-            ...(options.tenantId && { tenantId: options.tenantId }),
-            executionId: executionId,
         };
 
         const span = this.startSpan(SPAN_NAMES.AGENT_EXECUTE, spanOptions);
@@ -410,16 +408,15 @@ export class ObservabilitySystem {
         const spanOptions = createToolExecutionSpan(toolName, executionId, {
             toolType: options.toolType,
             parameters: options.parameters,
+            correlationId:
+                options.correlationId ||
+                this.currentContext?.correlationId ||
+                '',
         });
 
         // Add additional attributes
         spanOptions.attributes = {
             ...spanOptions.attributes,
-            correlationId:
-                options.correlationId ||
-                this.currentContext?.correlationId ||
-                '',
-            executionId: executionId,
             timeoutMs: options.timeoutMs || 0,
         };
 
@@ -547,6 +544,9 @@ export class ObservabilitySystem {
             context: this.constructor.name,
         });
 
+        // Clear execution tracker to prevent memory leaks on restart/shutdown
+        executionTracker.clear();
+
         await Promise.allSettled([
             this.telemetry.flush(),
             ...this.exporters.map((e) => e.shutdown()),
@@ -647,6 +647,8 @@ export class ObservabilitySystem {
         if (this.config.mongodb) {
             try {
                 // Adaptar config do MongoDB para o formato esperado pelo exporter
+                // Note: MongoDB saves all logs for complete history
+                // Console respects API_LOG_LEVEL via Pino logger
                 const mongoConfig = {
                     connectionString:
                         this.config.mongodb.connectionString ||
@@ -792,11 +794,7 @@ export class ObservabilitySystem {
                 process.exit(1);
             });
         });
-
-        this.logger.log({
-            message: 'Error processors configured',
-            context: this.constructor.name,
-        });
+        // Removed log: 'Error processors configured' - internal system message, no business value
     }
 
     private handleGlobalError(error: Error, type: string): void {
@@ -835,6 +833,9 @@ export class ObservabilitySystem {
     }
 
     async initialize(): Promise<void> {
+        // Clear execution tracker to ensure a clean state
+        executionTracker.clear();
+
         // Initialize all exporters in parallel
         await Promise.allSettled(
             this.exporters.map(async (exporter) => {

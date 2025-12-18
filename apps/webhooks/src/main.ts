@@ -12,7 +12,8 @@ import helmet from 'helmet';
 import * as volleyball from 'volleyball';
 
 import { HttpServerConfiguration } from '@libs/core/infrastructure/config/types';
-import { KodusLoggerService } from '@libs/core/log/kodus-logger.service';
+import { LoggerWrapperService } from '@libs/core/log/loggerWrapper.service';
+import { ObservabilityService } from '@libs/core/log/observability.service';
 
 import { WebhookHandlerModule } from './modules/webhook-handler.module';
 import { environment } from '@libs/ee/configs/environment';
@@ -29,16 +30,22 @@ async function bootstrap() {
         },
     );
 
-    const logger = app.get(KodusLoggerService);
+    const logger = app.get(LoggerWrapperService);
     app.useLogger(logger);
 
     const configService: ConfigService = app.get(ConfigService);
+
+    // Liga o motor de observabilidade
+    await app.get(ObservabilityService).init('webhooks');
+
     const config = configService.get<HttpServerConfiguration>('server');
     const { host } = config;
 
-    const webhookPort = process.env.WEBHOOK_HANDLER_PORT
-        ? parseInt(process.env.WEBHOOK_HANDLER_PORT, 10)
+    const webhookPort = process.env.WEBHOOKS_PORT
+        ? parseInt(process.env.WEBHOOKS_PORT, 10)
         : 3332;
+
+    console.log('webhookPort', webhookPort);
 
     app.useGlobalPipes(
         new ValidationPipe({

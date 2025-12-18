@@ -1,6 +1,4 @@
 import 'source-map-support/register';
-import * as dotenv from 'dotenv';
-dotenv.config();
 import { environment } from '@libs/ee/configs/environment';
 
 import { ValidationPipe } from '@nestjs/common';
@@ -13,31 +11,30 @@ import expressRateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import * as volleyball from 'volleyball';
 
-import { setupSentryAndOpenTelemetry } from '@libs/core/infrastructure/config/log/otel';
-import { HttpServerConfiguration } from '@libs/core/infrastructure/config/types/http/http-server.type';
-import { KodusLoggerService } from '@libs/core/log/kodus-logger.service';
+import { HttpServerConfiguration } from '@libs/core/infrastructure/config/types';
+import { ObservabilityService } from '@libs/core/log/observability.service';
 
 import { ApiModule } from './api.module';
+import { LoggerWrapperService } from '@libs/core/log/loggerWrapper.service';
 
 declare const module: any;
 
 async function bootstrap() {
-    // Inicializa Sentry e OpenTelemetry antes de tudo
-    setupSentryAndOpenTelemetry();
-
     console.log('Starting API bootstrap...');
 
-    // Define tipo de componente para configuração de pool de DB
     process.env.COMPONENT_TYPE = 'api';
 
     const app = await NestFactory.create<NestExpressApplication>(ApiModule, {
         snapshot: true,
     });
 
-    const logger = app.get(KodusLoggerService);
+    const logger = app.get(LoggerWrapperService);
     app.useLogger(logger);
 
     const configService: ConfigService = app.get(ConfigService);
+
+    await app.get(ObservabilityService).init('api');
+
     const config = configService.get<HttpServerConfiguration>('server');
     const { host, port, rateLimit } = config;
 

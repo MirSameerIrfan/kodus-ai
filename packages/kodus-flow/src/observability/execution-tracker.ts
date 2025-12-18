@@ -277,6 +277,14 @@ export class ExecutionTracker {
     }
 
     /**
+     * Clear all execution cycles (useful for shutdown or testing)
+     */
+    clear(): void {
+        this.cycles.clear();
+        // Removed log: 'All execution cycles cleared' - internal system message, no business value
+    }
+
+    /**
      * Clean up old completed cycles to prevent memory leaks
      */
     private cleanupOldCycles(): void {

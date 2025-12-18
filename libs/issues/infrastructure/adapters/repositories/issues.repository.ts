@@ -23,38 +23,22 @@ export class IssuesRepository implements IIssuesRepository {
     ) {}
 
     getNativeCollection() {
-        try {
-            return this.issuesModel.db.collection('issues');
-        } catch (error) {
-            throw error;
-        }
+        return this.issuesModel.db.collection('issues');
     }
 
     async create(issue: Omit<IIssue, 'uuid'>): Promise<IssuesEntity> {
-        try {
-            const saved = await this.issuesModel.create(issue);
-            return mapSimpleModelToEntity(saved, IssuesEntity);
-        } catch (error) {
-            throw error;
-        }
+        const saved = await this.issuesModel.create(issue);
+        return mapSimpleModelToEntity(saved, IssuesEntity);
     }
 
     async findById(uuid: string): Promise<IssuesEntity | null> {
-        try {
-            const doc = await this.issuesModel.findById(uuid).exec();
-            return doc ? mapSimpleModelToEntity(doc, IssuesEntity) : null;
-        } catch (error) {
-            throw error;
-        }
+        const doc = await this.issuesModel.findById(uuid).exec();
+        return doc ? mapSimpleModelToEntity(doc, IssuesEntity) : null;
     }
 
     async findOne(filter?: Partial<IIssue>): Promise<IssuesEntity | null> {
-        try {
-            const doc = await this.issuesModel.findOne(filter).exec();
-            return doc ? mapSimpleModelToEntity(doc, IssuesEntity) : null;
-        } catch (error) {
-            throw error;
-        }
+        const doc = await this.issuesModel.findOne(filter).exec();
+        return doc ? mapSimpleModelToEntity(doc, IssuesEntity) : null;
     }
 
     async findByFileAndStatus(
@@ -63,81 +47,59 @@ export class IssuesRepository implements IIssuesRepository {
         filePath: string,
         status?: IssueStatus,
     ): Promise<IssuesEntity[] | null> {
-        try {
-            const issues = await this.issuesModel.find({
-                'organizationId': organizationId,
-                'repository.id': repositoryId,
-                'filePath': filePath,
-                'status': status ? status : { $ne: IssueStatus.OPEN },
-            });
+        const issues = await this.issuesModel.find({
+            'organizationId': organizationId,
+            'repository.id': repositoryId,
+            'filePath': filePath,
+            'status': status ? status : { $ne: IssueStatus.OPEN },
+        });
 
-            return issues
-                ? mapSimpleModelsToEntities(issues, IssuesEntity)
-                : null;
-        } catch (error) {
-            throw error;
-        }
+        return issues ? mapSimpleModelsToEntities(issues, IssuesEntity) : null;
     }
 
     async findByFilters(filter?: Partial<IIssue>): Promise<IssuesEntity[]> {
-        try {
-            const query = this.issuesModel.find(filter);
+        const query = this.issuesModel.find(filter);
 
-            const docs = await query.exec();
-            return mapSimpleModelsToEntities(docs, IssuesEntity);
-        } catch (error) {
-            throw error;
-        }
+        const docs = await query.exec();
+        return mapSimpleModelsToEntities(docs, IssuesEntity);
     }
 
     async find(organizationId: string): Promise<IssuesEntity[]> {
-        try {
-            const docs = await this.issuesModel
-                .find({
-                    organizationId: organizationId,
-                })
-                .select({
-                    'uuid': 1,
-                    'title': 1,
-                    'filePath': 1,
-                    'label': 1,
-                    'severity': 1,
-                    'status': 1,
-                    'repository.id': 1,
-                    'repository.name': 1,
-                    'contributingSuggestions': 1,
-                    'createdAt': 1,
-                    '_id': 1,
-                })
-                .exec();
-            return mapSimpleModelsToEntities(docs, IssuesEntity);
-        } catch (error) {
-            throw error;
-        }
+        const docs = await this.issuesModel
+            .find({
+                organizationId: organizationId,
+            })
+            .select({
+                'uuid': 1,
+                'title': 1,
+                'filePath': 1,
+                'label': 1,
+                'severity': 1,
+                'status': 1,
+                'repository.id': 1,
+                'repository.name': 1,
+                'contributingSuggestions': 1,
+                'createdAt': 1,
+                '_id': 1,
+            })
+            .exec();
+        return mapSimpleModelsToEntities(docs, IssuesEntity);
     }
 
     async count(filter?: Partial<IIssue>): Promise<number> {
-        try {
-            return await this.issuesModel.countDocuments(filter).exec();
-        } catch (error) {
-            throw error;
-        }
+        return await this.issuesModel.countDocuments(filter).exec();
     }
 
     async findBySuggestionId(
         suggestionId: string,
     ): Promise<IssuesEntity | null> {
-        try {
-            const doc = await this.issuesModel
-                .findOne({
-                    contributingSuggestionIds: suggestionId,
-                })
-                .exec();
+        const doc = await this.issuesModel
+            .findOne({
+                contributingSuggestionIds: suggestionId,
+            })
+            .exec();
 
-            return doc ? mapSimpleModelToEntity(doc, IssuesEntity) : null;
-        } catch (error) {
-            throw error;
-        }
+        return doc ? mapSimpleModelToEntity(doc, IssuesEntity) : null;
     }
 
     //#region Update
@@ -145,91 +107,71 @@ export class IssuesRepository implements IIssuesRepository {
         issue: IssuesEntity,
         updateData: Omit<Partial<IIssue>, 'uuid' | 'id'>,
     ): Promise<IssuesEntity | null> {
-        try {
-            const doc = await this.issuesModel.findByIdAndUpdate(
-                issue.uuid,
-                { $set: updateData },
-                { new: true },
-            );
-            return doc ? mapSimpleModelToEntity(doc, IssuesEntity) : null;
-        } catch (error) {
-            throw error;
-        }
+        const doc = await this.issuesModel.findByIdAndUpdate(
+            issue.uuid,
+            { $set: updateData },
+            { new: true },
+        );
+        return doc ? mapSimpleModelToEntity(doc, IssuesEntity) : null;
     }
 
     async updateLabel(
         uuid: string,
         label: LabelType,
     ): Promise<IssuesEntity | null> {
-        try {
-            const doc = await this.issuesModel.findByIdAndUpdate(
-                uuid,
-                {
-                    $set: {
-                        'label': label,
-                        'representativeSuggestion.label': label,
-                    },
+        const doc = await this.issuesModel.findByIdAndUpdate(
+            uuid,
+            {
+                $set: {
+                    'label': label,
+                    'representativeSuggestion.label': label,
                 },
-                { new: true },
-            );
-            return doc ? mapSimpleModelToEntity(doc, IssuesEntity) : null;
-        } catch (error) {
-            throw error;
-        }
+            },
+            { new: true },
+        );
+        return doc ? mapSimpleModelToEntity(doc, IssuesEntity) : null;
     }
 
     async updateSeverity(
         uuid: string,
         severity: SeverityLevel,
     ): Promise<IssuesEntity | null> {
-        try {
-            const doc = await this.issuesModel.findByIdAndUpdate(
-                uuid,
-                {
-                    $set: {
-                        'severity': severity,
-                        'representativeSuggestion.severity': severity,
-                    },
+        const doc = await this.issuesModel.findByIdAndUpdate(
+            uuid,
+            {
+                $set: {
+                    'severity': severity,
+                    'representativeSuggestion.severity': severity,
                 },
-                { new: true },
-            );
-            return doc ? mapSimpleModelToEntity(doc, IssuesEntity) : null;
-        } catch (error) {
-            throw error;
-        }
+            },
+            { new: true },
+        );
+        return doc ? mapSimpleModelToEntity(doc, IssuesEntity) : null;
     }
 
     async updateStatus(
         uuid: string,
         status: IssueStatus,
     ): Promise<IssuesEntity | null> {
-        try {
-            const doc = await this.issuesModel.findByIdAndUpdate(
-                uuid,
-                { $set: { status: status } },
-                { new: true },
-            );
-            return doc ? mapSimpleModelToEntity(doc, IssuesEntity) : null;
-        } catch (error) {
-            throw error;
-        }
+        const doc = await this.issuesModel.findByIdAndUpdate(
+            uuid,
+            { $set: { status: status } },
+            { new: true },
+        );
+        return doc ? mapSimpleModelToEntity(doc, IssuesEntity) : null;
     }
 
     async updateStatusByIds(
         uuids: string[],
         status: IssueStatus,
     ): Promise<IssuesEntity[] | null> {
-        try {
-            await this.issuesModel.updateMany(
-                { _id: { $in: uuids } },
-                { $set: { status: status } },
-            );
+        await this.issuesModel.updateMany(
+            { _id: { $in: uuids } },
+            { $set: { status: status } },
+        );
 
-            const docs = await this.issuesModel.find({ _id: { $in: uuids } });
-            return mapSimpleModelsToEntities(docs, IssuesEntity);
-        } catch (error) {
-            throw error;
-        }
+        const docs = await this.issuesModel.find({ _id: { $in: uuids } });
+        return mapSimpleModelsToEntities(docs, IssuesEntity);
     }
     //#endregion
 
@@ -237,19 +179,15 @@ export class IssuesRepository implements IIssuesRepository {
         uuid: string,
         suggestionIds: string[],
     ): Promise<IssuesEntity | null> {
-        try {
-            const doc = await this.issuesModel.findByIdAndUpdate(
-                uuid,
-                {
-                    $addToSet: {
-                        contributingSuggestionIds: { $each: suggestionIds },
-                    },
+        const doc = await this.issuesModel.findByIdAndUpdate(
+            uuid,
+            {
+                $addToSet: {
+                    contributingSuggestionIds: { $each: suggestionIds },
                 },
-                { new: true },
-            );
-            return doc ? mapSimpleModelToEntity(doc, IssuesEntity) : null;
-        } catch (error) {
-            throw error;
-        }
+            },
+            { new: true },
+        );
+        return doc ? mapSimpleModelToEntity(doc, IssuesEntity) : null;
     }
 }

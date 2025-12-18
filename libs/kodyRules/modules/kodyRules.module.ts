@@ -26,7 +26,6 @@ import {
 import { UserModule } from '@libs/identity/modules/user.module';
 import { KODY_RULES_REPOSITORY_TOKEN } from '../domain/contracts/kodyRules.repository.contract';
 import { KODY_RULES_SERVICE_TOKEN } from '../domain/contracts/kodyRules.service.contract';
-import { SharedHelpersModule } from '@libs/common/modules/shared-helpers.module';
 import { RuleLikeModule } from './ruleLike.module';
 import { SyncSelectedRepositoriesKodyRulesUseCase } from '../application/use-cases/sync-selected-repositories.use-case';
 import { ExternalReferenceLoaderService } from '../infrastructure/adapters/services/externalReferenceLoader.service';
@@ -81,7 +80,6 @@ import { McpCoreModule } from '@libs/mcp-server/mcp-core.module';
         forwardRef(() => ContextReferenceModule),
         GlobalCacheModule,
         forwardRef(() => PermissionValidationModule),
-        forwardRef(() => SharedHelpersModule),
         PermissionsModule,
         forwardRef(() => McpCoreModule),
     ],

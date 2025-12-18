@@ -30,7 +30,132 @@ export class ParametersRepository implements IParametersRepository {
     async find<K extends ParametersKey>(
         filter?: Partial<IParameters<K>>,
     ): Promise<ParametersEntity<K>[]> {
-        try {
+        const { team, ...otherFilterAttributes } = filter || {};
+
+        const teamCondition = createNestedConditions('team', team);
+
+        const findOptions: FindManyOptions<ParametersModel> = {
+            where: {
+                ...otherFilterAttributes,
+                ...teamCondition,
+            },
+            relations: ['team'],
+        };
+
+        const integrationConfigModel =
+            await this.parametersRepository.find(findOptions);
+
+        return mapSimpleModelsToEntities(
+            integrationConfigModel,
+            ParametersEntity,
+        );
+    }
+
+    async findOne<K extends ParametersKey>(
+        filter?: Partial<IParameters<K>>,
+    ): Promise<ParametersEntity<K>> {
+        const { team, ...otherFilterAttributes } = filter || {};
+
+        const teamCondition = createNestedConditions('team', team);
+
+        const findOptions: FindOneOptions<ParametersModel> = {
+            where: {
+                ...otherFilterAttributes,
+                ...teamCondition,
+            },
+            relations: ['team'],
+            order: {
+                createdAt: 'DESC',
+            },
+        };
+
+        const integrationConfigModel =
+            await this.parametersRepository.findOne(findOptions);
+
+        return mapSimpleModelToEntity(integrationConfigModel, ParametersEntity);
+    }
+
+    async findByOrganizationName<K extends ParametersKey>(
+        organizationName: string,
+    ): Promise<ParametersEntity<K> | undefined> {
+        const response = await this.parametersRepository
+            .createQueryBuilder('parameters')
+            .leftJoinAndSelect('parameters.integration', 'integration')
+            .where('parameters.configValue @> :item::jsonb', {
+                item: JSON.stringify({
+                    organizationName: organizationName,
+                }),
+            })
+            .andWhere('parameters.active = :active', { active: true })
+            .getOne();
+
+        if (!response) {
+            return null;
+        }
+
+        return mapSimpleModelToEntity(response, ParametersEntity);
+    }
+
+    async findById<K extends ParametersKey>(
+        uuid: string,
+    ): Promise<ParametersEntity<K>> {
+        const queryBuilder =
+            this.parametersRepository.createQueryBuilder('parameters');
+
+        const integrationConfigSelected = await queryBuilder
+            .where('parameters.uuid = :uuid', { uuid })
+            .getOne();
+
+        return mapSimpleModelToEntity(
+            integrationConfigSelected,
+            ParametersEntity,
+        );
+    }
+
+    async create<K extends ParametersKey>(
+        integrationConfig: IParameters<K>,
+    ): Promise<ParametersEntity<K>> {
+        const queryBuilder =
+            this.parametersRepository.createQueryBuilder('parameters');
+
+        const integrationConfigModel =
+            this.parametersRepository.create(integrationConfig);
+
+        const integrationConfigCreated = await queryBuilder
+            .insert()
+            .values(integrationConfigModel)
+            .execute();
+
+        if (integrationConfigCreated?.identifiers[0]?.uuid) {
+            const findOneOptions: FindOneOptions<ParametersModel> = {
+                where: {
+                    uuid: integrationConfigCreated.identifiers[0].uuid,
+                },
+            };
+
+            const integrationConfig =
+                await this.parametersRepository.findOne(findOneOptions);
+
+            if (!integrationConfig) return undefined;
+
+            return mapSimpleModelToEntity(integrationConfig, ParametersEntity);
+        }
+    }
+
+    async update<K extends ParametersKey>(
+        filter: Partial<IParameters<K>>,
+        data: Partial<IParameters<K>>,
+    ): Promise<ParametersEntity<K>> {
+        const queryBuilder: UpdateQueryBuilder<ParametersModel> =
+            this.parametersRepository
+                .createQueryBuilder('parameters')
+                .update(ParametersModel)
+                .where(filter)
+                .set(data);
+
+        const result = await queryBuilder.execute();
+
+        if (result.affected > 0) {
             const { team, ...otherFilterAttributes } = filter || {};
 
             const teamCondition = createNestedConditions('team', team);
@@ -40,182 +165,23 @@ export class ParametersRepository implements IParametersRepository {
                     ...otherFilterAttributes,
                     ...teamCondition,
                 },
-                relations: ['team'],
             };
 
-            const integrationConfigModel =
-                await this.parametersRepository.find(findOptions);
-
-            return mapSimpleModelsToEntities(
-                integrationConfigModel,
-                ParametersEntity,
-            );
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    async findOne<K extends ParametersKey>(
-        filter?: Partial<IParameters<K>>,
-    ): Promise<ParametersEntity<K>> {
-        try {
-            const { team, ...otherFilterAttributes } = filter || {};
-
-            const teamCondition = createNestedConditions('team', team);
-
-            const findOptions: FindOneOptions<ParametersModel> = {
-                where: {
-                    ...otherFilterAttributes,
-                    ...teamCondition,
-                },
-                relations: ['team'],
-                order: {
-                    createdAt: 'DESC',
-                },
-            };
-
-            const integrationConfigModel =
+            const integrationConfig =
                 await this.parametersRepository.findOne(findOptions);
 
-            return mapSimpleModelToEntity(
-                integrationConfigModel,
-                ParametersEntity,
-            );
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    async findByOrganizationName<K extends ParametersKey>(
-        organizationName: string,
-    ): Promise<ParametersEntity<K> | undefined> {
-        try {
-            const response = await this.parametersRepository
-                .createQueryBuilder('parameters')
-                .leftJoinAndSelect('parameters.integration', 'integration')
-                .where('parameters.configValue @> :item::jsonb', {
-                    item: JSON.stringify({
-                        organizationName: organizationName,
-                    }),
-                })
-                .andWhere('parameters.active = :active', { active: true })
-                .getOne();
-
-            if (!response) {
-                return null;
-            }
-
-            return mapSimpleModelToEntity(response, ParametersEntity);
-        } catch (err) {
-            throw err;
-        }
-    }
-
-    async findById<K extends ParametersKey>(
-        uuid: string,
-    ): Promise<ParametersEntity<K>> {
-        try {
-            const queryBuilder =
-                this.parametersRepository.createQueryBuilder('parameters');
-
-            const integrationConfigSelected = await queryBuilder
-                .where('parameters.uuid = :uuid', { uuid })
-                .getOne();
-
-            return mapSimpleModelToEntity(
-                integrationConfigSelected,
-                ParametersEntity,
-            );
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    async create<K extends ParametersKey>(
-        integrationConfig: IParameters<K>,
-    ): Promise<ParametersEntity<K>> {
-        try {
-            const queryBuilder =
-                this.parametersRepository.createQueryBuilder('parameters');
-
-            const integrationConfigModel =
-                this.parametersRepository.create(integrationConfig);
-
-            const integrationConfigCreated = await queryBuilder
-                .insert()
-                .values(integrationConfigModel)
-                .execute();
-
-            if (integrationConfigCreated?.identifiers[0]?.uuid) {
-                const findOneOptions: FindOneOptions<ParametersModel> = {
-                    where: {
-                        uuid: integrationConfigCreated.identifiers[0].uuid,
-                    },
-                };
-
-                const integrationConfig =
-                    await this.parametersRepository.findOne(findOneOptions);
-
-                if (!integrationConfig) return undefined;
-
+            if (integrationConfig) {
                 return mapSimpleModelToEntity(
                     integrationConfig,
                     ParametersEntity,
                 );
             }
-        } catch (error) {
-            throw error;
         }
-    }
 
-    async update<K extends ParametersKey>(
-        filter: Partial<IParameters<K>>,
-        data: Partial<IParameters<K>>,
-    ): Promise<ParametersEntity<K>> {
-        try {
-            const queryBuilder: UpdateQueryBuilder<ParametersModel> =
-                this.parametersRepository
-                    .createQueryBuilder('parameters')
-                    .update(ParametersModel)
-                    .where(filter)
-                    .set(data);
-
-            const result = await queryBuilder.execute();
-
-            if (result.affected > 0) {
-                const { team, ...otherFilterAttributes } = filter || {};
-
-                const teamCondition = createNestedConditions('team', team);
-
-                const findOptions: FindManyOptions<ParametersModel> = {
-                    where: {
-                        ...otherFilterAttributes,
-                        ...teamCondition,
-                    },
-                };
-
-                const integrationConfig =
-                    await this.parametersRepository.findOne(findOptions);
-
-                if (integrationConfig) {
-                    return mapSimpleModelToEntity(
-                        integrationConfig,
-                        ParametersEntity,
-                    );
-                }
-            }
-
-            return undefined;
-        } catch (error) {
-            throw error;
-        }
+        return undefined;
     }
     async delete(uuid: string): Promise<void> {
-        try {
-            await this.parametersRepository.delete(uuid);
-        } catch (error) {
-            throw error;
-        }
+        await this.parametersRepository.delete(uuid);
     }
 
     async findByKey<K extends ParametersKey>(

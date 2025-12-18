@@ -28,9 +28,9 @@ import { GetConnectionsUseCase } from '../application/use-cases/integrations/get
 import { GetOrganizationLanguageUseCase } from '../application/use-cases/organization/get-organization-language.use-case';
 
 import { AutomationModule } from '@libs/automation/modules/automation.module';
-import { WorkflowModule } from '@libs/core/workflow/workflow.module';
 import { KodyRulesModule } from '@libs/kodyRules/modules/kodyRules.module';
 import { IssuesModule } from '@libs/issues/issues.module';
+import { WorkflowModule } from '@libs/core/workflow/modules/workflow.module';
 
 @Module({
     imports: [
