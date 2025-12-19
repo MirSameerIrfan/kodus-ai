@@ -197,6 +197,7 @@ export class UpdateCommentsAndGenerateSummaryStage extends BasePipelineStage<Cod
                 finalCommentBody,
                 context.pullRequestMessagesConfig,
                 context.dryRun,
+                context.prLevelCommentResults ?? [],
             );
         }
 
