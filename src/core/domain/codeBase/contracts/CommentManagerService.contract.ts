@@ -143,5 +143,6 @@ export interface ICommentManagerService {
         endReviewMessage?: string,
         pullRequestMessagesConfig?: IPullRequestMessages,
         dryRun?: CodeReviewPipelineContext['dryRun'],
+        prLevelCommentResults?: Array<CommentResult>,
     ): Promise<void>;
 }
