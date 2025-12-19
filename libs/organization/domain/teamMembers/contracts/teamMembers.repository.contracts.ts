@@ -4,7 +4,9 @@ import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/
 import { TeamMemberEntity } from '../entities/teamMember.entity';
 import { IMembers, ITeamMember } from '../interfaces/teamMembers.interface';
 
-export const TEAM_MEMBERS_REPOSITORY_TOKEN = Symbol('TeamMembersRepository');
+export const TEAM_MEMBERS_REPOSITORY_TOKEN = Symbol.for(
+    'TeamMembersRepository',
+);
 
 export interface ITeamMemberRepository {
     countByUser(userId: string, teamMemberStatus?: boolean): Promise<number>;

@@ -7,6 +7,7 @@ export interface IWebhookEventParams {
     payload: any;
     event: string;
     platformType: PlatformType;
+    correlationId?: string;
 }
 
 /**

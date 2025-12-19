@@ -14,7 +14,7 @@ import { IDryRunRepository } from './dryRun.repository.contract';
 import { DryRunEntity } from '../entities/dryRun.entity';
 import { DryRunStatus, IDryRun } from '../interfaces/dryRun.interface';
 
-export const DRY_RUN_SERVICE_TOKEN = Symbol('DRY_RUN_SERVICE_TOKEN');
+export const DRY_RUN_SERVICE_TOKEN = Symbol.for('DRY_RUN_SERVICE_TOKEN');
 
 export interface IDryRunService extends IDryRunRepository {
     findById(id: string): Promise<DryRunEntity | null>;

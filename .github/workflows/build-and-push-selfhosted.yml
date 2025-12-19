@@ -46,14 +46,13 @@ jobs:
               uses: docker/build-push-action@v6.15.0
               with:
                   context: .
-                  file: ./DockerFiles/Dockerfile.prod
+                  file: ./DockerFiles/Dockerfile.selfhosted.prod
                   push: true
                   tags: ${{ steps.meta.outputs.tags }}
                   labels: ${{ steps.meta.outputs.labels }}
                   platforms: linux/amd64,linux/arm64
                   build-args: |
                       APP_NAME=${{ matrix.app }}
-                      API_CLOUD_MODE=false
                       RELEASE_VERSION=${{ env.RELEASE_VERSION }}
 
             - name: Notify Discord on Success for ${{ matrix.app }}

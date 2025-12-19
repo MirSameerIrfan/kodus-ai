@@ -1,7 +1,7 @@
 import { ProfileEntity } from '../entities/profile.entity';
 import { IProfile } from '../interfaces/profile.interface';
 
-export const PROFILE_REPOSITORY_TOKEN = Symbol('ProfileRepository');
+export const PROFILE_REPOSITORY_TOKEN = Symbol.for('ProfileRepository');
 
 export interface IProfileRepository {
     find(filter: Partial<IProfile>): Promise<ProfileEntity[]>;

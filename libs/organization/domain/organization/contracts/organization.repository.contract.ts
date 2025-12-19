@@ -1,7 +1,9 @@
 import { OrganizationEntity } from '../entities/organization.entity';
 import { IOrganization } from '../interfaces/organization.interface';
 
-export const ORGANIZATION_REPOSITORY_TOKEN = Symbol('OrganizationRepository');
+export const ORGANIZATION_REPOSITORY_TOKEN = Symbol.for(
+    'OrganizationRepository',
+);
 
 export interface IOrganizationRepository {
     find(filter: Partial<IOrganization>): Promise<OrganizationEntity[]>;

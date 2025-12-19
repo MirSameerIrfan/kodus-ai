@@ -9,7 +9,7 @@ import {
     ITeamWithIntegrations,
 } from '../interfaces/team.interface';
 
-export const TEAM_REPOSITORY_TOKEN = Symbol('TeamRepository');
+export const TEAM_REPOSITORY_TOKEN = Symbol.for('TeamRepository');
 
 export interface ITeamRepository {
     find(

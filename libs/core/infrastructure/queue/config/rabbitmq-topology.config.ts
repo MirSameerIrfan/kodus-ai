@@ -38,9 +38,40 @@ export const RABBITMQ_TOPOLOGY_CONFIG = {
             durable: true,
         },
         {
+            // Delayed exchange for retry with backoff
+            // Requires: rabbitmq_delayed_message_exchange plugin
+            // Messages published here with x-delay header will be held and then
+            // forwarded to the bound queues after the delay expires.
+            name: 'workflow.exchange.delayed',
+            type: 'x-delayed-message',
+            durable: true,
+            options: {
+                arguments: {
+                    'x-delayed-type': 'topic',
+                },
+            },
+        },
+        {
             name: 'workflow.events',
             type: 'topic',
             durable: true,
+        },
+        {
+            name: 'workflow.events.dlx',
+            type: 'topic',
+            durable: true,
+        },
+        {
+            // Delayed exchange for retry with backoff (events)
+            // Requires: rabbitmq_delayed_message_exchange plugin
+            name: 'workflow.events.delayed',
+            type: 'x-delayed-message',
+            durable: true,
+            options: {
+                arguments: {
+                    'x-delayed-type': 'topic',
+                },
+            },
         },
     ],
 };

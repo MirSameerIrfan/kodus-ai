@@ -11,7 +11,7 @@ import {
     ISuggestionByPR,
 } from '../interfaces/pullRequests.interface';
 
-export const PULL_REQUESTS_SERVICE_TOKEN = Symbol('PullRequestsService');
+export const PULL_REQUESTS_SERVICE_TOKEN = Symbol.for('PullRequestsService');
 
 export interface IPullRequestsService extends IPullRequestsRepository {
     create(

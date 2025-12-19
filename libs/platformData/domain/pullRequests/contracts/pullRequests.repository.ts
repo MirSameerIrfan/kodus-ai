@@ -11,7 +11,9 @@ import {
     IPullRequestWithDeliveredSuggestions,
 } from '../interfaces/pullRequests.interface';
 
-export const PULL_REQUESTS_REPOSITORY_TOKEN = Symbol('PullRequestsRepository');
+export const PULL_REQUESTS_REPOSITORY_TOKEN = Symbol.for(
+    'PullRequestsRepository',
+);
 
 export interface IPeriodFilter {
     startDate: Date;

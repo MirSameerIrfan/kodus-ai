@@ -2,23 +2,20 @@ module.exports = {
     apps: [
         {
             name: 'webhook-handler',
-            script: './dist/apps/webhooks/apps/webhooks/src/main.js',
-            exec_mode: 'cluster',
-            instances: 'max',
+            script: './dist/apps/webhooks/main.js',
+            exec_mode: 'fork',
+            instances: 1,
             max_memory_restart: '500M',
             env: {
                 COMPONENT_TYPE: 'webhook',
-                WEBHOOKS_PORT: '3332',
                 API_NODE_ENV: 'development',
             },
             env_homolog: {
                 COMPONENT_TYPE: 'webhook',
-                WEBHOOKS_PORT: '3332',
                 API_NODE_ENV: 'homolog',
             },
             env_production: {
                 COMPONENT_TYPE: 'webhook',
-                WEBHOOKS_PORT: '3332',
                 API_NODE_ENV: 'production',
             },
             autorestart: true,
@@ -28,23 +25,20 @@ module.exports = {
         },
         {
             name: 'kodus-orchestrator',
-            script: './dist/apps/api/apps/api/src/main.js',
-            exec_mode: 'cluster',
-            instances: 'max',
+            script: './dist/apps/api/main.js',
+            exec_mode: 'fork',
+            instances: 1,
             max_memory_restart: '500M',
             env: {
                 COMPONENT_TYPE: 'api',
-                API_PORT: '3331',
                 API_NODE_ENV: 'development',
             },
             env_homolog: {
                 COMPONENT_TYPE: 'api',
-                API_PORT: '3331',
                 API_NODE_ENV: 'homolog',
             },
             env_production: {
                 COMPONENT_TYPE: 'api',
-                API_PORT: '3331',
                 API_NODE_ENV: 'production',
             },
             autorestart: true,
@@ -54,23 +48,20 @@ module.exports = {
         },
         {
             name: 'workflow-worker',
-            script: './dist/apps/worker/apps/worker/src/main.js',
-            exec_mode: 'cluster',
-            instances: 'max',
+            script: './dist/apps/worker/main.js',
+            exec_mode: 'fork',
+            instances: 1,
             max_memory_restart: '500M',
             env: {
                 COMPONENT_TYPE: 'worker',
-                WORKFLOW_QUEUE_WORKER_ENABLED: 'true',
                 API_NODE_ENV: 'development',
             },
             env_homolog: {
                 COMPONENT_TYPE: 'worker',
-                WORKFLOW_QUEUE_WORKER_ENABLED: 'true',
                 API_NODE_ENV: 'homolog',
             },
             env_production: {
                 COMPONENT_TYPE: 'worker',
-                WORKFLOW_QUEUE_WORKER_ENABLED: 'true',
                 API_NODE_ENV: 'production',
             },
             autorestart: true,

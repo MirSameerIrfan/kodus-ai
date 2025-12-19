@@ -1,12 +1,13 @@
-import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
+import {
+    RabbitSubscribe,
+    MessageHandlerErrorBehavior,
+} from '@golevelup/nestjs-rabbitmq';
 import { createLogger } from '@kodus/flow';
 import { Injectable } from '@nestjs/common';
-import { UseFilters } from '@nestjs/common';
 
 import { SaveCodeReviewFeedbackUseCase } from '@libs/code-review/application/use-cases/codeReviewFeedback/save-feedback.use-case';
-import { RabbitmqConsumeErrorFilter } from '@libs/core/infrastructure/filters/rabbitmq-consume-error.exception';
+import { RabbitMQErrorHandler } from '@libs/core/infrastructure/queue/rabbitmq-error.handler';
 
-@UseFilters(RabbitmqConsumeErrorFilter)
 @Injectable()
 export class CodeReviewFeedbackConsumer {
     private readonly logger = createLogger(CodeReviewFeedbackConsumer.name);
@@ -19,6 +20,11 @@ export class CodeReviewFeedbackConsumer {
         routingKey: 'codeReviewFeedback.syncCodeReviewReactions',
         queue: 'codeReviewFeedback.syncCodeReviewReactions.queue',
         allowNonJsonMessages: true,
+        errorBehavior: MessageHandlerErrorBehavior.ACK,
+        errorHandler: (channel, msg, err) =>
+            RabbitMQErrorHandler.instance?.handle(channel, msg, err, {
+                dlqRoutingKey: 'codeReviewFeedback.syncCodeReviewReactions',
+            }),
         queueOptions: {
             arguments: {
                 'x-queue-type': 'quorum',

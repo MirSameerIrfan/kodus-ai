@@ -14,6 +14,7 @@ import { getMappedPlatform } from '@libs/common/utils/webhooks';
 import { RunCodeReviewAutomationUseCase } from '@libs/ee/automation/runCodeReview.use-case';
 import { SavePullRequestUseCase } from '@libs/platformData/application/use-cases/pullRequests/save.use-case';
 import { PullRequestClosedEvent } from '@libs/core/domain/events/pull-request-closed.event';
+import { EnqueueCodeReviewJobUseCase } from '@libs/core/workflow/application/use-cases/enqueue-code-review-job.use-case';
 
 /**
  * Handler for GitLab webhook events.
@@ -29,6 +30,7 @@ export class GitLabMergeRequestHandler implements IWebhookEventHandler {
         private readonly generateIssuesFromPrClosedUseCase: GenerateIssuesFromPrClosedUseCase,
         private readonly eventEmitter: EventEmitter2,
         private readonly codeManagement: CodeManagementService,
+        private readonly enqueueCodeReviewJobUseCase: EnqueueCodeReviewJobUseCase,
     ) {}
 
     /**
@@ -103,8 +105,42 @@ export class GitLabMergeRequestHandler implements IWebhookEventHandler {
             if (this.shouldTriggerCodeReviewForGitLab(payload)) {
                 await this.savePullRequestUseCase.execute(params);
 
-                // Intentionally not awaiting this, as per original logic
-                this.runCodeReviewAutomationUseCase.execute(params);
+                if (
+                    this.enqueueCodeReviewJobUseCase &&
+                    orgData?.organizationAndTeamData
+                ) {
+                    const jobId = await this.enqueueCodeReviewJobUseCase.execute(
+                        {
+                            payload,
+                            event: params.event,
+                            platformType: PlatformType.GITLAB,
+                            organizationAndTeam: orgData.organizationAndTeamData,
+                            correlationId: params.correlationId,
+                        },
+                    );
+
+                    this.logger.log({
+                        message:
+                            'Code review job enqueued for asynchronous processing',
+                        context: GitLabMergeRequestHandler.name,
+                        metadata: {
+                            jobId,
+                            mrNumber,
+                            repositoryId: repository.id,
+                        },
+                    });
+                } else {
+                    this.logger.log({
+                        message:
+                            'Skipping code review job enqueue (missing org/team or enqueue use case)',
+                        context: GitLabMergeRequestHandler.name,
+                        metadata: {
+                            hasOrgAndTeam: !!orgData?.organizationAndTeamData,
+                            mrNumber,
+                            repositoryId: repository.id,
+                        },
+                    });
+                }
 
                 if (payload?.object_attributes?.action === 'merge') {
                     await this.generateIssuesFromPrClosedUseCase.execute(
@@ -199,6 +235,17 @@ export class GitLabMergeRequestHandler implements IWebhookEventHandler {
     private async handleComment(params: IWebhookEventParams): Promise<void> {
         const { payload } = params;
         const mrNumber = payload?.object_attributes?.iid;
+        const orgData =
+            await this.runCodeReviewAutomationUseCase.findTeamWithActiveCodeReview(
+                {
+                    repository: {
+                        id: String(payload?.project?.id),
+                        name: payload?.project?.path,
+                    },
+                    platformType: PlatformType.GITLAB,
+                    triggerCommentId: payload.comment?.id,
+                },
+            );
 
         try {
             // Verify if the action is create
@@ -246,20 +293,28 @@ export class GitLabMergeRequestHandler implements IWebhookEventHandler {
                     });
 
                     // Prepare params for use cases
-                    const updatedParams = {
-                        ...params,
-                        payload: {
-                            ...payload,
-                            action: 'synchronize',
-                            origin: 'command',
-                            triggerCommentId: comment?.id,
-                        },
-                    };
+                const updatedParams = {
+                    ...params,
+                    payload: {
+                        ...payload,
+                        action: 'synchronize',
+                        origin: 'command',
+                        triggerCommentId: comment?.id,
+                    },
+                };
 
-                    await this.savePullRequestUseCase.execute(updatedParams);
-                    this.runCodeReviewAutomationUseCase.execute(updatedParams);
-                    return;
+                await this.savePullRequestUseCase.execute(updatedParams);
+                if (orgData?.organizationAndTeamData) {
+                    await this.enqueueCodeReviewJobUseCase.execute({
+                        payload: updatedParams.payload,
+                        event: updatedParams.event,
+                        platformType: PlatformType.GITLAB,
+                        organizationAndTeam: orgData.organizationAndTeamData,
+                        correlationId: params.correlationId,
+                    });
                 }
+                return;
+            }
 
                 if (
                     !isStartCommand &&

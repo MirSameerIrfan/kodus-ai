@@ -1,5 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { v4 as uuid } from 'uuid';
 
 import { IJobQueueService } from '@libs/core/workflow/domain/contracts/job-queue.service.contract';
 import { IWorkflowJob } from '@libs/core/workflow/domain/interfaces/workflow-job.interface';
@@ -7,8 +8,14 @@ import { IWorkflowJob } from '@libs/core/workflow/domain/interfaces/workflow-job
 import { ObservabilityService } from '@libs/core/log/observability.service';
 import { createLogger } from '@kodus/flow';
 
-import { WorkflowJobRepository } from './repositories/workflow-job.repository';
-import { OutboxMessageRepository } from './repositories/outbox-message.repository';
+import {
+    IWorkflowJobRepository,
+    WORKFLOW_JOB_REPOSITORY_TOKEN,
+} from '@libs/core/workflow/domain/contracts/workflow-job.repository.contract';
+import {
+    IOutboxMessageRepository,
+    OUTBOX_MESSAGE_REPOSITORY_TOKEN,
+} from '@libs/core/workflow/domain/contracts/outbox-message.repository.contract';
 import {
     IMessageBrokerService,
     MESSAGE_BROKER_SERVICE_TOKEN,
@@ -21,8 +28,10 @@ export class WorkflowJobQueueService implements IJobQueueService {
     constructor(
         @Inject(MESSAGE_BROKER_SERVICE_TOKEN)
         private readonly messageBroker: IMessageBrokerService,
-        private readonly jobRepository: WorkflowJobRepository,
-        private readonly outboxRepository: OutboxMessageRepository,
+        @Inject(WORKFLOW_JOB_REPOSITORY_TOKEN)
+        private readonly jobRepository: IWorkflowJobRepository,
+        @Inject(OUTBOX_MESSAGE_REPOSITORY_TOKEN)
+        private readonly outboxRepository: IOutboxMessageRepository,
         private readonly dataSource: DataSource,
         private readonly observability: ObservabilityService,
     ) {}
@@ -42,7 +51,9 @@ export class WorkflowJobQueueService implements IJobQueueService {
                 // Transactional creation of Job and Outbox Message
                 const jobToSave = await this.dataSource.transaction(
                     async (transactionManager) => {
-                        // 1. Create Job in transaction
+                        const exchange = 'workflow.exchange';
+                        const routingKey = `workflow.jobs.created.${job.workflowType}`;
+
                         const savedJob = await this.jobRepository.create(
                             job,
                             transactionManager,
@@ -58,23 +69,12 @@ export class WorkflowJobQueueService implements IJobQueueService {
                             teamId: job.organizationAndTeam?.teamId,
                         };
 
-                        // 2. Prepare Message Envelope
                         const messagePayload =
-                            this.messageBroker.transformMessageToMessageBroker(
-                                'workflow.jobs.created',
-                                payload,
-                                1,
-                                new Date(),
-                            );
+                            this.messageBroker.transformMessageToMessageBroker({
+                                eventName: 'workflow.jobs.created',
+                                message: payload,
+                            });
 
-                        // Override messageId to match job UUID for consistency/tracing
-                        messagePayload.messageId = savedJob.uuid;
-
-                        // Define exchange and routing key explicitly
-                        const exchange = 'workflow.exchange';
-                        const routingKey = `workflow.jobs.created`;
-
-                        // 3. Create Outbox Message in transaction
                         await this.outboxRepository.create(
                             {
                                 jobId: savedJob.uuid,

@@ -1,6 +1,5 @@
 import { createLogger } from '@kodus/flow';
-import { Injectable, Optional } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
@@ -31,9 +30,7 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
         private readonly codeManagement: CodeManagementService,
         private readonly generateIssuesFromPrClosedUseCase: GenerateIssuesFromPrClosedUseCase,
         private readonly eventEmitter: EventEmitter2,
-        @Optional()
-        private readonly enqueueCodeReviewJobUseCase?: EnqueueCodeReviewJobUseCase,
-        private readonly configService?: ConfigService,
+        private readonly enqueueCodeReviewJobUseCase: EnqueueCodeReviewJobUseCase,
     ) {}
 
     public canHandle(params: IWebhookEventParams): boolean {
@@ -97,7 +94,7 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
     private async handlePullRequest(
         params: IWebhookEventParams,
     ): Promise<void> {
-        const { payload } = params;
+        const { payload, event } = params;
 
         const prNumber = payload?.pull_request?.number || payload?.number;
         const prUrl = payload?.pull_request?.html_url;
@@ -117,7 +114,8 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
             name: payload?.repository?.name,
             fullName: payload?.repository?.full_name,
         };
-        const organizationAndTeamData =
+
+        const validationResult =
             await this.runCodeReviewAutomationUseCase.findTeamWithActiveCodeReview(
                 {
                     repository: {
@@ -129,37 +127,19 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
             );
 
         try {
-            // Save the PR state
             await this.savePullRequestUseCase.execute(params);
 
-            // Check if workflow queue is enabled for GitHub
-            const workflowQueueEnabled =
-                this.configService?.get<boolean>(
-                    'workflowQueueConfig.WORKFLOW_QUEUE_ENABLED',
-                ) || false;
-            const workflowQueueEnabledGitHub =
-                this.configService?.get<boolean>(
-                    'workflowQueueConfig.WORKFLOW_QUEUE_ENABLED_GITHUB',
-                ) || false;
-
             if (
-                workflowQueueEnabled &&
-                workflowQueueEnabledGitHub &&
                 this.enqueueCodeReviewJobUseCase &&
-                organizationAndTeamData?.organizationAndTeamData
+                validationResult?.organizationAndTeamData
             ) {
-                // Enqueue job for asynchronous processing
                 const jobId = await this.enqueueCodeReviewJobUseCase.execute({
+                    payload: payload,
+                    event: event,
                     platformType: PlatformType.GITHUB,
-                    repositoryId: repository.id,
-                    repositoryName: repository.name,
-                    pullRequestNumber: prNumber,
-                    pullRequestData: payload,
-                    organizationId:
-                        organizationAndTeamData.organizationAndTeamData
-                            .organizationId,
-                    teamId: organizationAndTeamData.organizationAndTeamData
-                        .teamId,
+                    organizationAndTeam:
+                        validationResult.organizationAndTeamData,
+                    correlationId: params.correlationId,
                 });
 
                 this.logger.log({
@@ -173,8 +153,17 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
                     },
                 });
             } else {
-                // Execute code review automation synchronously (legacy behavior)
-                this.runCodeReviewAutomationUseCase.execute(params);
+                this.logger.log({
+                    message:
+                        'Skipping code review job enqueue (missing org/team or enqueue use case)',
+                    context: GitHubPullRequestHandler.name,
+                    metadata: {
+                        hasOrgAndTeam:
+                            !!validationResult?.organizationAndTeamData,
+                        prNumber,
+                        repositoryId: repository.id,
+                    },
+                });
             }
 
             if (payload?.action === 'closed') {
@@ -185,12 +174,11 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
                 const baseRef = payload?.pull_request?.base?.ref;
                 if (merged && baseRef) {
                     try {
-                        if (organizationAndTeamData?.organizationAndTeamData) {
-                            // validate default branch
+                        if (validationResult?.organizationAndTeamData) {
                             const defaultBranch =
                                 await this.codeManagement.getDefaultBranch({
                                     organizationAndTeamData:
-                                        organizationAndTeamData.organizationAndTeamData,
+                                        validationResult.organizationAndTeamData,
                                     repository: {
                                         id: repository.id,
                                         name: repository.name,
@@ -204,7 +192,7 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
                                 await this.codeManagement.getFilesByPullRequestId(
                                     {
                                         organizationAndTeamData:
-                                            organizationAndTeamData.organizationAndTeamData,
+                                            validationResult.organizationAndTeamData,
                                         repository: {
                                             id: repository.id,
                                             name: repository.name,
@@ -215,7 +203,7 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
                             this.eventEmitter.emit(
                                 'pull-request.closed',
                                 new PullRequestClosedEvent(
-                                    organizationAndTeamData.organizationAndTeamData,
+                                    validationResult.organizationAndTeamData,
                                     repository,
                                     payload?.pull_request?.number,
                                     changedFiles || [],
@@ -229,7 +217,7 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
                             error: e,
                             metadata: {
                                 organizationAndTeamData:
-                                    organizationAndTeamData?.organizationAndTeamData,
+                                    validationResult?.organizationAndTeamData,
                                 repository,
                                 pullRequestNumber:
                                     payload?.pull_request?.number,
@@ -247,7 +235,7 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
                     prNumber,
                     prUrl,
                     organizationAndTeamData:
-                        organizationAndTeamData?.organizationAndTeamData,
+                        validationResult?.organizationAndTeamData,
                 },
                 message: `Error processing GitHub pull request #${prNumber}: ${error.message}`,
                 error,
@@ -262,7 +250,6 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
     private async handleComment(params: IWebhookEventParams): Promise<void> {
         const { payload, event } = params;
         const prNumber = payload?.object_attributes?.iid;
-        let validationResult;
 
         try {
             // Extract comment data
@@ -356,11 +343,7 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
                         return;
                     }
 
-                    if (
-                        !payload?.pull_request &&
-                        payload?.issue &&
-                        payload?.issue?.number
-                    ) {
+                    if (validationResult?.organizationAndTeamData) {
                         const data = await this.codeManagement.getPullRequest({
                             organizationAndTeamData:
                                 validationResult?.organizationAndTeamData,
@@ -414,66 +397,49 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
                             },
                         };
                     }
-                }
 
-                // Prepare params for the use cases
-                const updatedParams = {
-                    ...params,
-                    payload: {
-                        ...payload,
-                        action: 'synchronize',
-                        origin: 'command',
-                        triggerCommentId: comment?.id,
-                        pull_request:
-                            pullRequestData ||
-                            pullRequest ||
-                            payload?.pull_request,
-                    },
-                };
-
-                // Execute the necessary use cases
-                await this.savePullRequestUseCase.execute(updatedParams);
-
-                const workflowQueueEnabled =
-                    this.configService?.get<boolean>(
-                        'workflowQueueConfig.WORKFLOW_QUEUE_ENABLED',
-                    ) || false;
-                const workflowQueueEnabledGitHub =
-                    this.configService?.get<boolean>(
-                        'workflowQueueConfig.WORKFLOW_QUEUE_ENABLED_GITHUB',
-                    ) || false;
-
-                if (
-                    workflowQueueEnabled &&
-                    workflowQueueEnabledGitHub &&
-                    this.enqueueCodeReviewJobUseCase &&
-                    validationResult?.organizationAndTeamData
-                ) {
-                    const jobId =
-                        await this.enqueueCodeReviewJobUseCase.execute({
-                            platformType: PlatformType.GITHUB,
-                            repositoryId: String(payload.repository.id),
-                            repositoryName: payload.repository.name,
-                            pullRequestNumber: payload.issue.number,
-                            pullRequestData: updatedParams.payload.pull_request,
-                            organizationId:
-                                validationResult.organizationAndTeamData
-                                    .organizationId,
-                            teamId: validationResult.organizationAndTeamData
-                                .teamId,
-                        });
-
-                    this.logger.log({
-                        message:
-                            'Code review job enqueued from command for asynchronous processing',
-                        context: GitHubPullRequestHandler.name,
-                        metadata: {
-                            jobId,
-                            prNumber,
+                    // Prepare params for the use cases
+                    const updatedParams = {
+                        ...params,
+                        payload: {
+                            ...payload,
+                            action: 'synchronize',
+                            origin: 'command',
+                            triggerCommentId: comment?.id,
+                            pull_request:
+                                pullRequestData ||
+                                pullRequest ||
+                                payload?.pull_request,
                         },
-                    });
-                } else {
-                    this.runCodeReviewAutomationUseCase.execute(updatedParams);
+                    };
+
+                    // Execute the necessary use cases
+                    await this.savePullRequestUseCase.execute(updatedParams);
+
+                    if (
+                        this.enqueueCodeReviewJobUseCase &&
+                        validationResult?.organizationAndTeamData
+                    ) {
+                        const jobId =
+                            await this.enqueueCodeReviewJobUseCase.execute({
+                                payload: updatedParams.payload,
+                                event: event,
+                                platformType: PlatformType.GITHUB,
+                                organizationAndTeam:
+                                    validationResult.organizationAndTeamData,
+                                correlationId: params.correlationId,
+                            });
+
+                        this.logger.log({
+                            message:
+                                'Code review job enqueued from command for asynchronous processing',
+                            context: GitHubPullRequestHandler.name,
+                            metadata: {
+                                jobId,
+                                prNumber,
+                            },
+                        });
+                    }
                 }
                 return;
             }

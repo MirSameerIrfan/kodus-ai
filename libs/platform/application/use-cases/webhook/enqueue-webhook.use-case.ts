@@ -19,6 +19,36 @@ export interface EnqueueWebhookInput {
     correlationId?: string;
 }
 
+function normalizePlatformType(
+    platformType: PlatformType | string,
+): PlatformType {
+    if (Object.values(PlatformType).includes(platformType as PlatformType)) {
+        return platformType as PlatformType;
+    }
+
+    const normalized = String(platformType)
+        .trim()
+        .toUpperCase()
+        .replace(/[\s-]+/g, '_');
+
+    const aliases: Record<string, PlatformType> = {
+        GITHUB: PlatformType.GITHUB,
+        GITLAB: PlatformType.GITLAB,
+        BITBUCKET: PlatformType.BITBUCKET,
+        AZURE_REPOS: PlatformType.AZURE_REPOS,
+        AZUREDEVOPS: PlatformType.AZURE_REPOS,
+        AZURE_DEVOPS: PlatformType.AZURE_REPOS,
+        AZURE_REPOSITORIES: PlatformType.AZURE_REPOS,
+    };
+
+    const mapped = aliases[normalized];
+    if (mapped) {
+        return mapped;
+    }
+
+    throw new Error(`Unsupported platformType: ${platformType}`);
+}
+
 @Injectable()
 export class EnqueueWebhookUseCase implements IUseCase {
     private readonly logger = createLogger(EnqueueWebhookUseCase.name);
@@ -30,6 +60,7 @@ export class EnqueueWebhookUseCase implements IUseCase {
 
     async execute(input: EnqueueWebhookInput): Promise<void> {
         try {
+            const platformType = normalizePlatformType(input.platformType);
             const correlationId = input.correlationId || uuid();
 
             this.logger.log({
@@ -37,21 +68,18 @@ export class EnqueueWebhookUseCase implements IUseCase {
                 context: EnqueueWebhookUseCase.name,
                 metadata: {
                     correlationId,
-                    platformType: input.platformType,
+                    platformType,
                     event: input.event,
                 },
             });
 
-            // Enfileira o payload bruto do webhook para processamento posterior pelo worker
-            // organizationAndTeam será identificado pelo worker ao processar o webhook
             await this.jobQueueService.enqueue({
                 correlationId,
                 workflowType: WorkflowType.WEBHOOK_PROCESSING,
                 handlerType: HandlerType.WEBHOOK_RAW,
                 payload: input.payload,
-                organizationAndTeam: undefined,
                 metadata: {
-                    platformType: input.platformType,
+                    platformType,
                     event: input.event,
                 },
                 status: JobStatus.PENDING,
@@ -65,7 +93,7 @@ export class EnqueueWebhookUseCase implements IUseCase {
                 context: EnqueueWebhookUseCase.name,
                 metadata: {
                     correlationId,
-                    platformType: input.platformType,
+                    platformType,
                     event: input.event,
                 },
             });

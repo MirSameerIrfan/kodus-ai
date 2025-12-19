@@ -106,3 +106,4 @@ specs
 .cursor/rules/bmad/
 .cursor
 .specify
+.build_cache

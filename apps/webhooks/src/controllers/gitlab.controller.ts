@@ -1,6 +1,6 @@
 import { createLogger } from '@kodus/flow';
 import { Controller, HttpStatus, Post, Req, Res } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { EnqueueWebhookUseCase } from '@libs/platform/application/use-cases/webhook/enqueue-webhook.use-case';
@@ -10,29 +10,25 @@ export class GitlabController {
     private readonly logger = createLogger(GitlabController.name);
     constructor(
         private readonly enqueueWebhookUseCase: EnqueueWebhookUseCase,
-        // TODO
-        // @Inject(WEBHOOK_LOG_SERVICE)
-        // private readonly webhookLogService: IWebhookLogService,
     ) {}
 
     @Post('/webhook')
     handleWebhook(@Req() req: Request, @Res() res: Response) {
-        // Validação síncrona rápida (não bloqueia event loop)
         const event = req.headers['x-gitlab-event'] as string;
         const payload = req.body as any;
 
-        // Retorna 200 OK imediatamente (não bloqueia)
         res.status(HttpStatus.OK).send('Webhook received');
 
-        // Processa assincronamente na próxima iteração do event loop
-        // setImmediate garante que não bloqueia a resposta HTTP
         setImmediate(() => {
-            // Usa void para garantir que não esperamos a Promise
-            // Erros são tratados internamente sem bloquear
-            void (async () => {
-                try {
+            void this.enqueueWebhookUseCase
+                .execute({
+                    platformType: PlatformType.GITLAB,
+                    event,
+                    payload,
+                })
+                .then(() => {
                     this.logger.log({
-                        message: `Webhook received, ${event}`,
+                        message: `Webhook enqueued, ${event}`,
                         context: GitlabController.name,
                         metadata: {
                             event,
@@ -40,21 +36,8 @@ export class GitlabController {
                             repository: payload?.repository?.name,
                         },
                     });
-
-                    //TODO isso pode ir para outro lugar melhor, pois não é responsabilidade do controller
-                    // this.webhookLogService.log(
-                    //     PlatformType.GITLAB,
-                    //     event,
-                    //     payload,
-                    // );
-
-                    await this.enqueueWebhookUseCase.execute({
-                        platformType: PlatformType.GITLAB,
-                        event,
-                        payload,
-                    });
-                } catch (error) {
-                    // Erro não deve quebrar o processo, apenas logar
+                })
+                .catch((error) => {
                     this.logger.error({
                         message: 'Error enqueuing webhook',
                         context: GitlabController.name,
@@ -64,8 +47,7 @@ export class GitlabController {
                             platformType: PlatformType.GITLAB,
                         },
                     });
-                }
-            })();
+                });
         });
     }
 }

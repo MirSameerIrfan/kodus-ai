@@ -3,7 +3,7 @@ import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/
 
 import { IIntegrationRepository } from './integration.repository.contracts';
 
-export const INTEGRATION_SERVICE_TOKEN = Symbol('IntegrationService');
+export const INTEGRATION_SERVICE_TOKEN = Symbol.for('IntegrationService');
 
 export interface IIntegrationService extends IIntegrationRepository {
     getPlatformAuthDetails<T>(

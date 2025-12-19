@@ -17,6 +17,7 @@ import { getMappedPlatform } from '@libs/common/utils/webhooks';
 import { RunCodeReviewAutomationUseCase } from '@libs/ee/automation/runCodeReview.use-case';
 import { SavePullRequestUseCase } from '@libs/platformData/application/use-cases/pullRequests/save.use-case';
 import { PullRequestClosedEvent } from '@libs/core/domain/events/pull-request-closed.event';
+import { EnqueueCodeReviewJobUseCase } from '@libs/core/workflow/application/use-cases/enqueue-code-review-job.use-case';
 
 @Injectable()
 export class AzureReposPullRequestHandler implements IWebhookEventHandler {
@@ -30,6 +31,7 @@ export class AzureReposPullRequestHandler implements IWebhookEventHandler {
         private readonly generateIssuesFromPrClosedUseCase: GenerateIssuesFromPrClosedUseCase,
         private readonly eventEmitter: EventEmitter2,
         private readonly codeManagement: CodeManagementService,
+        private readonly enqueueCodeReviewJobUseCase: EnqueueCodeReviewJobUseCase,
     ) {}
 
     /**
@@ -129,7 +131,44 @@ export class AzureReposPullRequestHandler implements IWebhookEventHandler {
                 case 'git.pullrequest.created':
                 case 'git.pullrequest.updated':
                     await this.savePullRequestUseCase.execute(params);
-                    this.runCodeReviewAutomationUseCase.execute(params);
+                    if (
+                        this.enqueueCodeReviewJobUseCase &&
+                        orgData?.organizationAndTeamData
+                    ) {
+                        const jobId =
+                            await this.enqueueCodeReviewJobUseCase.execute({
+                                payload: params.payload,
+                                event: params.event,
+                                platformType: PlatformType.AZURE_REPOS,
+                                organizationAndTeam:
+                                    orgData.organizationAndTeamData,
+                                correlationId: params.correlationId,
+                            });
+
+                        this.logger.log({
+                            message:
+                                'Code review job enqueued for asynchronous processing',
+                            context: AzureReposPullRequestHandler.name,
+                            metadata: {
+                                jobId,
+                                prId,
+                                repoName,
+                                repositoryId: repository.id,
+                            },
+                        });
+                    } else {
+                        this.logger.log({
+                            message:
+                                'Skipping code review job enqueue (missing org/team or enqueue use case)',
+                            context: AzureReposPullRequestHandler.name,
+                            metadata: {
+                                hasOrgAndTeam: !!orgData?.organizationAndTeamData,
+                                prId,
+                                repoName,
+                                repositoryId: repository.id,
+                            },
+                        });
+                    }
                     await this.generateIssuesFromPrClosedUseCase.execute(
                         params,
                     );
@@ -244,6 +283,21 @@ export class AzureReposPullRequestHandler implements IWebhookEventHandler {
         const prId =
             payload?.resource?.pullRequest?.pullRequestId || 'UNKNOWN_PR_ID';
         const repoName = payload?.resource?.repository?.name || 'UNKNOWN_REPO';
+        const repository = {
+            id: payload?.resource?.repository?.id,
+            name: payload?.resource?.repository?.name,
+        } as any;
+        const orgData =
+            await this.runCodeReviewAutomationUseCase.findTeamWithActiveCodeReview(
+                {
+                    repository: {
+                        id: repository.id,
+                        name: repository.name,
+                    },
+                    platformType: PlatformType.AZURE_REPOS,
+                    triggerCommentId: payload?.resource?.comment?.id,
+                },
+            );
 
         try {
             // Extract comment data
@@ -331,7 +385,15 @@ export class AzureReposPullRequestHandler implements IWebhookEventHandler {
 
                 // Execute the necessary use cases
                 await this.savePullRequestUseCase.execute(updatedParams);
-                this.runCodeReviewAutomationUseCase.execute(updatedParams);
+                if (orgData?.organizationAndTeamData) {
+                    await this.enqueueCodeReviewJobUseCase.execute({
+                        payload: updatedParams.payload,
+                        event: updatedParams.event,
+                        platformType: PlatformType.AZURE_REPOS,
+                        organizationAndTeam: orgData.organizationAndTeamData,
+                        correlationId: params.correlationId,
+                    });
+                }
             }
 
             // For pull_request_review_comment that is not a start-review command

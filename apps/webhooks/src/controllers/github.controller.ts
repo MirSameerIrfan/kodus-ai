@@ -11,14 +11,10 @@ export class GithubController {
 
     constructor(
         private readonly enqueueWebhookUseCase: EnqueueWebhookUseCase,
-        // TODO
-        // @Inject(WEBHOOK_LOG_SERVICE)
-        // private readonly webhookLogService: IWebhookLogService,
     ) {}
 
     @Post('/webhook')
-    async handleWebhook(@Req() req: Request, @Res() res: Response) {
-        // Validação síncrona
+    handleWebhook(@Req() req: Request, @Res() res: Response) {
         const event = req.headers['x-github-event'] as string;
         const payload = req.body as any;
 
@@ -36,45 +32,38 @@ export class GithubController {
             }
         }
 
-        try {
-            this.logger.log({
-                message: `Webhook received, ${event}`,
-                context: GithubController.name,
-                metadata: {
-                    event,
-                    installationId: payload?.installation?.id,
-                    repository: payload?.repository?.name,
-                },
-            });
+        // Responde imediatamente (não bloqueia a request aguardando persistência/fila)
+        res.status(HttpStatus.OK).send('Webhook received');
 
-            // Log de auditoria (opcional/legado)
-            //this.webhookLogService.log(PlatformType.GITHUB, event, payload);
-
-            // Transactional Outbox: Salva no banco de dados (atomicamente)
-            // Se falhar aqui, lança erro e retorna 500 para o GitHub tentar novamente
-            await this.enqueueWebhookUseCase.execute({
-                platformType: PlatformType.GITHUB,
-                event,
-                payload,
-            });
-
-            // Retorna 200 OK apenas se persistiu com sucesso
-            return res
-                .status(HttpStatus.OK)
-                .send('Webhook received and queued');
-        } catch (error) {
-            this.logger.error({
-                message: 'Error enqueuing webhook',
-                context: GithubController.name,
-                error,
-                metadata: {
-                    event,
+        setImmediate(() => {
+            void this.enqueueWebhookUseCase
+                .execute({
                     platformType: PlatformType.GITHUB,
-                },
-            });
-            return res
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .send('Error processing webhook');
-        }
+                    event,
+                    payload,
+                })
+                .then(() => {
+                    this.logger.log({
+                        message: `Webhook enqueued, ${event}`,
+                        context: GithubController.name,
+                        metadata: {
+                            event,
+                            installationId: payload?.installation?.id,
+                            repository: payload?.repository?.name,
+                        },
+                    });
+                })
+                .catch((error) => {
+                    this.logger.error({
+                        message: 'Error enqueuing webhook',
+                        context: GithubController.name,
+                        error,
+                        metadata: {
+                            event,
+                            platformType: PlatformType.GITHUB,
+                        },
+                    });
+                });
+        });
     }
 }

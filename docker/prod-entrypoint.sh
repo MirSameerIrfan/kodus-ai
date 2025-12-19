@@ -56,12 +56,22 @@ done
 # Standard Startup
 # ----------------------------------------------------------------
 
-# Run Migrations
-echo "▶ Running Migrations..."
-npm run migration:run:prod
+RUN_MIGRATIONS="${RUN_MIGRATIONS:-true}"
+RUN_SEEDS="${RUN_SEEDS:-true}"
 
-echo "▶ Running Seeds..."
-npm run seed:prod
+if [ "$RUN_MIGRATIONS" = "true" ]; then
+  echo "▶ Running Migrations (internal)..."
+  yarn migration:run:internal
+else
+  echo "▶ Skipping migrations (RUN_MIGRATIONS=$RUN_MIGRATIONS)"
+fi
+
+if [ "$RUN_SEEDS" = "true" ]; then
+  echo "▶ Running Seeds (internal)..."
+  yarn seed:internal
+else
+  echo "▶ Skipping seeds (RUN_SEEDS=$RUN_SEEDS)"
+fi
 
 echo "▶ Starting Application..."
 # exec "$@" executes the CMD defined in the Dockerfile (pm2-runtime ...)

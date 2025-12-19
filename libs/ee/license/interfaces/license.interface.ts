@@ -25,7 +25,7 @@ export type UserWithLicense = {
     git_id: string;
 };
 
-export const LICENSE_SERVICE_TOKEN = Symbol('LicenseService');
+export const LICENSE_SERVICE_TOKEN = Symbol.for('LicenseService');
 
 export interface ILicenseService {
     /**

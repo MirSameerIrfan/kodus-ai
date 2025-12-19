@@ -7,7 +7,7 @@ import {
     IUpdateOrCreateMembersResponse,
 } from '../interfaces/teamMembers.interface';
 
-export const TEAM_MEMBERS_SERVICE_TOKEN = Symbol('TeamMembersService');
+export const TEAM_MEMBERS_SERVICE_TOKEN = Symbol.for('TeamMembersService');
 
 export interface ITeamMemberService extends ITeamMemberRepository {
     findTeamMembersFormated(

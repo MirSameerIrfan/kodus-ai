@@ -1,7 +1,7 @@
 import { SSOConfigEntity } from '../entities/ssoConfig.entity';
 import { SSOConfig, SSOProtocol } from '../interfaces/ssoConfig.interface';
 
-export const SSO_CONFIG_REPOSITORY_TOKEN = Symbol('SSOConfigRepository');
+export const SSO_CONFIG_REPOSITORY_TOKEN = Symbol.for('SSOConfigRepository');
 
 export interface ISSOConfigRepository {
     create<P extends SSOProtocol>(

@@ -30,13 +30,19 @@ services:
       - "${API_PORT:-3001}:${API_PORT:-3001}"
       - "9229:9229"
     # Entrypoint manages deps and migrations. Passing the start command.
-    command: >
-      sh -c "nodemon --config nodemon.json --exec 'node --inspect=0.0.0.0:9229 -r ts-node/register -r tsconfig-paths/register apps/api/src/main.ts'"
+    command: yarn nest build api --watch --webpack --webpackPath webpack.config.js
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
     environment:
+      - NODE_OPTIONS=--max-old-space-size=4096
+      - DEBUG_PORT=9229
+      - API_LOG_PRETTY=true
       - CHOKIDAR_USEPOLLING=true
       - CHOKIDAR_INTERVAL=3000
       - API_DEVELOPMENT_MODE=${API_DEVELOPMENT_MODE:-true}
-      - WORKFLOW_QUEUE_WORKER_ENABLED=${WORKFLOW_QUEUE_WORKER_ENABLED:-true}
       - RUN_MIGRATIONS=true
 
   worker:
@@ -45,8 +51,16 @@ services:
     ports:
       - "9231:9231"
     # Worker will also run migration on startup, which is OK as DB supports concurrency
-    command: >
-      sh -c "nodemon --config nodemon.json --exec 'node --inspect=0.0.0.0:9231 -r ts-node/register -r tsconfig-paths/register apps/worker/src/main.ts'"
+    command: yarn nest build worker --watch --webpack --webpackPath webpack.config.js
+    environment:
+      - NODE_OPTIONS=--max-old-space-size=4096
+      - DEBUG_PORT=9231
+      - API_LOG_PRETTY=true
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+
 
   webhooks:
     <<: *app-service-defaults
@@ -54,8 +68,11 @@ services:
     ports:
       - "${WEBHOOKS_PORT:-3332}:${WEBHOOKS_PORT:-3332}"
       - "9230:9230"
-    command: >
-      sh -c "nodemon --config nodemon.json --exec 'node --inspect=0.0.0.0:9230 -r ts-node/register -r tsconfig-paths/register apps/webhooks/src/main.ts'"
+    command: yarn nest build webhooks --watch --webpack --webpackPath webpack.config.js
+    environment:
+      - NODE_OPTIONS=--max-old-space-size=4096
+      - DEBUG_PORT=9230
+      - API_LOG_PRETTY=true
 
   #----------------------------------------------------------------
   # Databases & Infrastructure

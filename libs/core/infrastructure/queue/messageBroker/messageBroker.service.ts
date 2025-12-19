@@ -27,26 +27,24 @@ export class MessageBrokerService implements IMessageBrokerService {
         options?: BrokerPublishOptions,
     ): Promise<void> {
         if (!this.amqpConnection) {
-            this.logger.warn({
-                message:
-                    'Attempted to publish a message without an available RabbitMQ connection.',
-                context: MessageBrokerService.name,
-            });
-            return;
+            throw new Error('RabbitMQ connection is not available');
+        }
+
+        if (!this.amqpConnection.connected) {
+            throw new Error('RabbitMQ is not connected');
         }
 
         try {
             const { exchange, routingKey } = config;
 
-            this.logger.log({
+            this.logger.debug({
                 message: 'Publishing message',
                 context: MessageBrokerService.name,
                 metadata: {
                     exchange,
                     routingKey,
                     messageId: message.messageId || 'N/A',
-                    payload: message.payload,
-                    options,
+                    eventName: message.event_name,
                 },
             });
 
@@ -55,13 +53,14 @@ export class MessageBrokerService implements IMessageBrokerService {
                 ...options,
             });
 
-            this.logger.log({
+            this.logger.debug({
                 message: 'Message successfully published',
                 context: MessageBrokerService.name,
                 metadata: {
                     exchange,
                     routingKey,
                     messageId: message.messageId || 'N/A',
+                    eventName: message.event_name,
                 },
             });
         } catch (error) {
@@ -70,26 +69,37 @@ export class MessageBrokerService implements IMessageBrokerService {
                 error: error.message,
                 context: MessageBrokerService.name,
                 metadata: {
-                    config,
-                    message,
+                    exchange: config.exchange,
+                    routingKey: config.routingKey,
+                    messageId: message.messageId,
+                    eventName: message.event_name,
                 },
             });
             throw error;
         }
     }
 
-    transformMessageToMessageBroker<T = any>(
-        eventName: string,
-        message: T,
+    transformMessageToMessageBroker<T = any>({
+        eventName,
+        message,
         event_version = 1,
         occurred_on = new Date(),
-    ): MessagePayload<T> {
+        messageId,
+    }: {
+        eventName: string;
+        message: T;
+        event_version?: number;
+        occurred_on?: Date;
+        messageId?: string;
+    }): MessagePayload<T> {
         return {
             event_name: eventName,
             payload: message,
             event_version,
             occurred_on,
-            messageId: `${eventName}-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`, // Adding a unique messageId
+            messageId:
+                messageId ||
+                `${eventName}-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`,
         };
     }
 }

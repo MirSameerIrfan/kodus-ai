@@ -99,6 +99,7 @@ export class RunCodeReviewAutomationUseCase implements IUseCase {
         event: string;
         platformType: PlatformType;
         automationName?: string;
+        throwOnError?: boolean;
     }) {
         let organizationAndTeamData = null;
 
@@ -255,21 +256,23 @@ export class RunCodeReviewAutomationUseCase implements IUseCase {
                 },
             });
 
+            const strategyParams = {
+                organizationAndTeamData,
+                teamAutomationId: automationId,
+                repository: repositoryData,
+                pullRequest: pullRequestData,
+                branch: pullRequestData?.head?.ref,
+                codeManagementEvent: event,
+                platformType: platformType,
+                origin: sanitizedPayload?.origin,
+                action,
+                byokConfig,
+                triggerCommentId: sanitizedPayload?.triggerCommentId,
+            };
+
             return await this.executeAutomation.executeStrategy(
                 AutomationType.AUTOMATION_CODE_REVIEW,
-                {
-                    organizationAndTeamData,
-                    teamAutomationId: automationId,
-                    repository: repositoryData,
-                    pullRequest: pullRequestData,
-                    branch: pullRequestData?.head?.ref,
-                    codeManagementEvent: event,
-                    platformType: platformType,
-                    origin: sanitizedPayload?.origin,
-                    action,
-                    byokConfig,
-                    triggerCommentId: sanitizedPayload?.triggerCommentId,
-                },
+                strategyParams,
             );
         } catch (error) {
             this.logger.error({
@@ -281,6 +284,10 @@ export class RunCodeReviewAutomationUseCase implements IUseCase {
                     teamId: organizationAndTeamData?.teamId,
                 },
             });
+
+            if (params.throwOnError) {
+                throw error;
+            }
         }
     }
 

@@ -52,7 +52,7 @@ import { WorkflowModule } from '@libs/core/workflow/modules/workflow.module';
         forwardRef(() => PullRequestMessagesModule),
         forwardRef(() => CodebaseModule),
         forwardRef(() => AutomationModule),
-        forwardRef(() => WorkflowModule),
+        WorkflowModule.register({ type: 'webhook' }),
         forwardRef(() => KodyRulesModule),
         forwardRef(() => IssuesModule),
     ],

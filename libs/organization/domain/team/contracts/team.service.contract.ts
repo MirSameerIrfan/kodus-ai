@@ -4,7 +4,7 @@ import { ITeamRepository } from './team.repository.contract';
 import { TeamsFilter } from '../interfaces/team.interface';
 import { TeamAutomationEntity } from '@libs/automation/domain/teamAutomation/entities/team-automation.entity';
 
-export const TEAM_SERVICE_TOKEN = Symbol('TeamService');
+export const TEAM_SERVICE_TOKEN = Symbol.for('TeamService');
 
 export interface ITeamService extends ITeamRepository {
     findOneOrganizationIdByTeamId(id: string): Promise<string>;

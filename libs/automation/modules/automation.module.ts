@@ -43,8 +43,6 @@ import { TeamMembersCoreModule } from '@libs/organization/modules/teamMembers-co
 import { OrganizationParametersModule } from '@libs/organization/modules/organizationParameters.module';
 import { CodeReviewCoreModule } from '@libs/code-review/modules/code-review-core.module';
 
-import { CodeReviewValidationService } from '../infrastructure/adapters/services/code-review-validation.service';
-
 @Module({
     imports: [
         TypeOrmModule.forFeature([
@@ -72,7 +70,6 @@ import { CodeReviewValidationService } from '../infrastructure/adapters/services
     providers: [
         SaveCodeReviewFeedbackUseCase,
         RunCodeReviewAutomationUseCase,
-        CodeReviewValidationService,
         {
             provide: AUTOMATION_REPOSITORY_TOKEN,
             useClass: AutomationRepository,
@@ -126,7 +123,6 @@ import { CodeReviewValidationService } from '../infrastructure/adapters/services
         AUTOMATION_EXECUTION_SERVICE_TOKEN,
         AUTOMATION_EXECUTION_REPOSITORY_TOKEN,
         RunCodeReviewAutomationUseCase,
-        CodeReviewValidationService,
 
         // --- Team Automation Exports ---
         TEAM_AUTOMATION_REPOSITORY_TOKEN,

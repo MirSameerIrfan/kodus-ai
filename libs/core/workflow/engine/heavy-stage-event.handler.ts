@@ -1,7 +1,11 @@
-import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
+import {
+    RabbitSubscribe,
+    MessageHandlerErrorBehavior,
+} from '@golevelup/nestjs-rabbitmq';
 import { createLogger } from '@kodus/flow';
 import { Injectable, Inject } from '@nestjs/common';
 import { ConsumeMessage } from 'amqplib';
+import * as os from 'os';
 
 import { ObservabilityService } from '@libs/core/log/observability.service';
 import {
@@ -16,6 +20,12 @@ import {
     IMessageBrokerService,
     MESSAGE_BROKER_SERVICE_TOKEN,
 } from '@libs/core/domain/contracts/message-broker.service.contracts';
+import { InboxStatus } from '../infrastructure/repositories/schemas/inbox-message.model';
+import {
+    IInboxMessageRepository,
+    INBOX_MESSAGE_REPOSITORY_TOKEN,
+} from '@libs/core/workflow/domain/contracts/inbox-message.repository.contract';
+import { RabbitMQErrorHandler } from '@libs/core/infrastructure/queue/rabbitmq-error.handler';
 
 /**
  * Generic handler for heavy stage completion events
@@ -24,6 +34,8 @@ import {
 @Injectable()
 export class HeavyStageEventHandler {
     private readonly logger = createLogger(HeavyStageEventHandler.name);
+    private readonly consumerId = 'workflow-events-stage-completed';
+    private readonly instanceId = os.hostname();
 
     constructor(
         @Inject(WORKFLOW_JOB_REPOSITORY_TOKEN)
@@ -33,6 +45,8 @@ export class HeavyStageEventHandler {
         private readonly observability: ObservabilityService,
         @Inject(MESSAGE_BROKER_SERVICE_TOKEN)
         private readonly messageBroker: IMessageBrokerService,
+        @Inject(INBOX_MESSAGE_REPOSITORY_TOKEN)
+        private readonly inboxRepository: IInboxMessageRepository,
     ) {}
 
     /**
@@ -44,9 +58,28 @@ export class HeavyStageEventHandler {
         routingKey: 'stage.completed.*',
         queue: 'workflow.events.stage.completed',
         allowNonJsonMessages: false,
+        errorBehavior: MessageHandlerErrorBehavior.ACK,
+        errorHandler: (channel, msg, err) =>
+            RabbitMQErrorHandler.instance?.handle(channel, msg, err, {
+                dlqRoutingKey: 'workflow.events.dlq',
+            }),
         queueOptions: {
             arguments: {
                 'x-queue-type': 'quorum',
+                'x-dead-letter-exchange': 'workflow.events.dlx',
+                'x-dead-letter-routing-key': 'workflow.events.dlq',
+            },
+        },
+    })
+    @RabbitSubscribe({
+        exchange: 'workflow.events.delayed',
+        routingKey: 'stage.completed.*',
+        queue: 'workflow.events.stage.completed',
+        queueOptions: {
+            arguments: {
+                'x-queue-type': 'quorum',
+                'x-dead-letter-exchange': 'workflow.events.dlx',
+                'x-dead-letter-routing-key': 'workflow.events.dlq',
             },
         },
     })
@@ -54,78 +87,137 @@ export class HeavyStageEventHandler {
         event: StageCompletedEvent,
         amqpMsg: ConsumeMessage,
     ): Promise<void> {
-        const messageId = amqpMsg.properties.messageId;
+        const messageId =
+            amqpMsg.properties.messageId ||
+            `stage.completed:${event.eventType}:${event.eventKey}:${event.taskId}`;
         const correlationId =
             (amqpMsg.properties.headers &&
                 amqpMsg.properties.headers['x-correlation-id']) ||
             amqpMsg.properties.correlationId;
 
+        const claimed = await this.inboxRepository.claim(
+            messageId,
+            this.consumerId,
+            this.instanceId,
+        );
+
+        if (!claimed) {
+            const existing =
+                await this.inboxRepository.findByConsumerAndMessageId(
+                    this.consumerId,
+                    messageId,
+                );
+
+            if (existing?.status === InboxStatus.PROCESSED) {
+                this.logger.debug({
+                    message: 'Message already processed (Idempotency skip)',
+                    context: HeavyStageEventHandler.name,
+                    metadata: { messageId, correlationId },
+                });
+                return;
+            }
+
+            this.logger.warn({
+                message:
+                    'Message already claimed by another worker, retrying with backoff',
+                context: HeavyStageEventHandler.name,
+                metadata: { messageId, correlationId },
+            });
+            throw new Error('Message already claimed but not finished');
+        }
+
         return await this.observability.runInSpan(
             'workflow.event.stage.completed',
             async (span) => {
-                span.setAttributes({
-                    'workflow.event.type': event.eventType,
-                    'workflow.event.stage': event.stageName,
-                    'workflow.event.task.id': event.taskId,
-                    'workflow.correlation.id': correlationId,
-                });
+                try {
+                    span.setAttributes({
+                        'workflow.event.type': event.eventType,
+                        'workflow.event.stage': event.stageName,
+                        'workflow.event.task.id': event.taskId,
+                        'workflow.correlation.id': correlationId,
+                    });
 
-                this.logger.log({
-                    message: `Received stage completion event: ${event.stageName}`,
-                    context: HeavyStageEventHandler.name,
-                    metadata: {
-                        stageName: event.stageName,
-                        eventType: event.eventType,
-                        eventKey: event.eventKey,
-                        taskId: event.taskId,
-                        messageId,
-                        correlationId,
-                    },
-                });
-
-                // Find workflows waiting for this event
-                const waitingJobs = await this.findWaitingWorkflows(
-                    event.eventType,
-                    event.eventKey,
-                );
-
-                if (waitingJobs.length === 0) {
-                    // Store event in buffer for potential race conditions
-                    await this.eventBuffer.store(
-                        event.eventType,
-                        event.eventKey,
-                        event,
-                    );
-                    this.logger.warn({
-                        message: `No workflows found waiting for event ${event.eventType} with key ${event.eventKey}`,
+                    this.logger.log({
+                        message: `Received stage completion event: ${event.stageName}`,
                         context: HeavyStageEventHandler.name,
                         metadata: {
+                            stageName: event.stageName,
                             eventType: event.eventType,
                             eventKey: event.eventKey,
                             taskId: event.taskId,
+                            messageId,
+                            correlationId,
                         },
                     });
-                    return;
-                }
 
-                // Resume each waiting workflow
-                for (const job of waitingJobs) {
-                    try {
-                        await this.resumeWorkflow(job.id, event);
-                    } catch (error) {
-                        this.logger.error({
-                            message: `Failed to resume workflow ${job.id}`,
+                    // Find workflows waiting for this event
+                    const waitingJobs = await this.findWaitingWorkflows(
+                        event.eventType,
+                        event.eventKey,
+                    );
+
+                    if (waitingJobs.length === 0) {
+                        // Store event in buffer for potential race conditions
+                        await this.eventBuffer.store(
+                            event.eventType,
+                            event.eventKey,
+                            event,
+                        );
+                        this.logger.warn({
+                            message: `No workflows found waiting for event ${event.eventType} with key ${event.eventKey}`,
                             context: HeavyStageEventHandler.name,
-                            error: error instanceof Error ? error : undefined,
                             metadata: {
-                                workflowJobId: job.id,
-                                stageName: event.stageName,
                                 eventType: event.eventType,
+                                eventKey: event.eventKey,
                                 taskId: event.taskId,
                             },
                         });
-                        // Continue with other workflows even if one fails
+
+                        await this.inboxRepository.markAsProcessed(
+                            messageId,
+                            this.consumerId,
+                        );
+                        return;
                     }
+
+                    // Resume each waiting workflow
+                    for (const job of waitingJobs) {
+                        try {
+                            await this.resumeWorkflow(job.id, event);
+                        } catch (error) {
+                            this.logger.error({
+                                message: `Failed to resume workflow ${job.id}`,
+                                context: HeavyStageEventHandler.name,
+                                error:
+                                    error instanceof Error ? error : undefined,
+                                metadata: {
+                                    workflowJobId: job.id,
+                                    stageName: event.stageName,
+                                    eventType: event.eventType,
+                                    taskId: event.taskId,
+                                },
+                            });
+                            // Continue with other workflows even if one fails
+                        }
+                    }
+
+                    await this.inboxRepository.markAsProcessed(
+                        messageId,
+                        this.consumerId,
+                    );
+                } catch (error) {
+                    span.setAttributes({
+                        error: true,
+                        'exception.type': error.name,
+                        'exception.message': error.message,
+                    });
+
+                    await this.inboxRepository.releaseLock(
+                        messageId,
+                        this.consumerId,
+                        error.message,
+                    );
+                    throw error;
                 }
             },
         );
@@ -151,7 +243,7 @@ export class HeavyStageEventHandler {
 
     /**
      * Resume a paused workflow
-     * Updates job status and enqueues for continued processing via WorkflowResumedConsumer
+     * Updates job status and enqueues for continued processing via workflow.jobs.* consumer
      */
     private async resumeWorkflow(
         workflowJobId: string,
@@ -210,7 +302,7 @@ export class HeavyStageEventHandler {
         await this.messageBroker.publishMessage(
             {
                 exchange: 'workflow.exchange',
-                routingKey: 'workflow.jobs.resumed',
+                routingKey: `workflow.jobs.resumed.${job.workflowType}`,
             },
             {
                 event_name: 'workflow.jobs.resumed',

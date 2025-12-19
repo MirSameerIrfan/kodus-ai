@@ -14,7 +14,6 @@ import { HeavyStageEventHandler } from '@libs/core/workflow/engine/heavy-stage-e
 // Infrastructure - Services
 import { WorkflowJobQueueService } from '@libs/core/workflow/infrastructure/workflow-job-queue.service';
 import { WorkflowJobConsumer } from '@libs/core/workflow/infrastructure/workflow-job-consumer.service';
-import { WorkflowResumedConsumer } from '@libs/core/workflow/infrastructure/workflow-resumed-consumer.service';
 import { DistributedLockService } from '@libs/core/workflow/infrastructure/distributed-lock.service';
 import { ErrorClassifierService } from '@libs/core/workflow/infrastructure/error-classifier.service';
 import { JobProcessorRouterService } from '@libs/core/workflow/infrastructure/job-processor-router.service';
@@ -29,7 +28,6 @@ import { ERROR_CLASSIFIER_SERVICE_TOKEN } from '@libs/core/workflow/domain/contr
 import { EnqueueCodeReviewJobUseCase } from '@libs/core/workflow/application/use-cases/enqueue-code-review-job.use-case';
 import { ProcessWorkflowJobUseCase } from '@libs/core/workflow/application/use-cases/process-workflow-job.use-case';
 import { GetJobStatusUseCase } from '@libs/core/workflow/application/use-cases/get-job-status.use-case';
-import { CodeReviewValidationService } from '@libs/automation/infrastructure/adapters/services/code-review-validation.service';
 import { AutomationModule } from '@libs/automation/modules/automation.module';
 import { ASTEventHandler } from '@libs/core/workflow/infrastructure/ast-event-handler.service';
 
@@ -41,14 +39,12 @@ const sharedProviders = [
 
     EnqueueCodeReviewJobUseCase,
     GetJobStatusUseCase,
-    CodeReviewValidationService,
 ];
 
 const sharedExports = [
     JOB_QUEUE_SERVICE_TOKEN,
     EnqueueCodeReviewJobUseCase,
     GetJobStatusUseCase,
-    CodeReviewValidationService,
 ];
 
 const workerProviders = [
@@ -73,7 +69,6 @@ const workerProviders = [
 
     // Consumers
     WorkflowJobConsumer,
-    WorkflowResumedConsumer,
 
     // Use Cases
     ProcessWorkflowJobUseCase,

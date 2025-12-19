@@ -1,3 +1,4 @@
+import * as os from 'os';
 import { createLogger } from '@kodus/flow';
 import { ObservabilityService } from '@libs/core/log/observability.service';
 import {
@@ -8,14 +9,47 @@ import {
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
-import { OutboxMessageRepository } from './repositories/outbox-message.repository';
-import { InboxMessageRepository } from './repositories/inbox-message.repository';
+import {
+    IOutboxMessageRepository,
+    OUTBOX_MESSAGE_REPOSITORY_TOKEN,
+} from '@libs/core/workflow/domain/contracts/outbox-message.repository.contract';
+import {
+    IInboxMessageRepository,
+    INBOX_MESSAGE_REPOSITORY_TOKEN,
+} from '@libs/core/workflow/domain/contracts/inbox-message.repository.contract';
 import { OutboxMessageModel } from './repositories/schemas/outbox-message.model';
+
 import {
     IMessageBrokerService,
     MESSAGE_BROKER_SERVICE_TOKEN,
     MessagePayload,
 } from '@libs/core/domain/contracts/message-broker.service.contracts';
+import {
+    calculateBackoffInterval,
+    BackoffOptions,
+} from '@libs/common/utils/polling';
+
+/**
+ * Backoff configuration for outbox relay.
+ * Progression: 2s, 4s, 8s, 16s, 32s, 64s, ... up to 1 hour
+ */
+const OUTBOX_BACKOFF: BackoffOptions = {
+    baseInterval: 2000, // 2 seconds
+    maxInterval: 3600000, // 1 hour
+    jitterFactor: 0.1, // ±10% jitter
+    multiplier: 2, // Exponential
+};
+
+const DEFAULT_OUTBOX_MAX_ATTEMPTS = 3;
+const DEFAULT_OUTBOX_PUBLISH_TIMEOUT_MS = 15000;
+
+function parsePositiveIntEnv(envKey: string, fallback: number): number {
+    const raw = process.env[envKey];
+    if (!raw) return fallback;
+    const parsed = Number.parseInt(raw, 10);
+    if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+    return parsed;
+}
 
 // Helper interface to type the payload content we expect
 interface MessagePayloadContent {
@@ -29,81 +63,176 @@ interface MessagePayloadContent {
 export class OutboxRelayService
     implements OnApplicationBootstrap, OnModuleDestroy
 {
-    private isProcessing = false;
+    private isDestroyed = false;
     private isCleaning = false;
-    private relayInterval: NodeJS.Timeout;
+    private readonly instanceId = os.hostname();
+    private readonly maxAttemptsOutbox = parsePositiveIntEnv(
+        'WORKFLOW_OUTBOX_MAX_ATTEMPTS',
+        DEFAULT_OUTBOX_MAX_ATTEMPTS,
+    );
+    private readonly publishTimeoutMs = parsePositiveIntEnv(
+        'WORKFLOW_OUTBOX_PUBLISH_TIMEOUT_MS',
+        DEFAULT_OUTBOX_PUBLISH_TIMEOUT_MS,
+    );
+
+    private readonly BATCH_SIZE = 50;
+    private readonly MIN_INTERVAL = 100; // 100ms when there is work
+    private readonly MAX_INTERVAL = 5000; // 5s when idle
+    private currentInterval = 1000;
 
     private readonly logger = createLogger(OutboxRelayService.name);
 
     constructor(
-        private readonly outboxRepository: OutboxMessageRepository,
-        private readonly inboxRepository: InboxMessageRepository,
+        @Inject(OUTBOX_MESSAGE_REPOSITORY_TOKEN)
+        private readonly outboxRepository: IOutboxMessageRepository,
+        @Inject(INBOX_MESSAGE_REPOSITORY_TOKEN)
+        private readonly inboxRepository: IInboxMessageRepository,
         @Inject(MESSAGE_BROKER_SERVICE_TOKEN)
         private readonly messageBroker: IMessageBrokerService,
         private readonly observability: ObservabilityService,
     ) {}
 
     onApplicationBootstrap() {
-        console.log(
-            '--- OutboxRelayService: Starting manual polling loop (1s) ---',
-        );
-        this.relayInterval = setInterval(() => {
-            this.processOutbox().catch((err) => {
-                console.error('--- OutboxRelayService Error ---', err);
+        this.logger.log({
+            message: 'Starting OutboxRelayService with adaptive polling',
+            context: OutboxRelayService.name,
+            metadata: {
+                instanceId: this.instanceId,
+                maxAttemptsOutbox: this.maxAttemptsOutbox,
+                publishTimeoutMs: this.publishTimeoutMs,
+            },
+        });
+
+        // Start the recursive polling loop
+        this.poll().catch((err) => {
+            this.logger.error({
+                message: 'Fatal error in outbox poll loop',
+                context: OutboxRelayService.name,
+                error: err,
             });
-        }, 1000);
+        });
     }
 
     onModuleDestroy() {
-        if (this.relayInterval) {
-            clearInterval(this.relayInterval);
+        this.isDestroyed = true;
+    }
+
+    private async poll(): Promise<void> {
+        if (this.isDestroyed) {
+            return;
+        }
+
+        try {
+            const processedCount = await this.processOutbox();
+
+            // Adaptive interval
+            if (processedCount > 0) {
+                this.currentInterval = this.MIN_INTERVAL;
+            } else {
+                this.currentInterval = Math.min(
+                    this.currentInterval * 2,
+                    this.MAX_INTERVAL,
+                );
+            }
+        } catch (error) {
+            this.logger.error({
+                message: 'Error during outbox processing cycle',
+                context: OutboxRelayService.name,
+                error,
+            });
+            this.currentInterval = this.MAX_INTERVAL;
+        } finally {
+            if (!this.isDestroyed) {
+                setTimeout(() => this.poll(), this.currentInterval);
+            }
         }
     }
 
     /**
-     * Processa mensagens pendentes do outbox e publica no RabbitMQ
+     * Processa mensagens pendentes do outbox e publica no RabbitMQ.
+     * Returns the number of successfully processed messages (for adaptive polling).
      */
-    async processOutbox(): Promise<void> {
-        if (this.isProcessing) {
-            return; // Evitar processamento concorrente
+    async processOutbox(): Promise<number> {
+        return await this.observability.runInSpan(
+            'workflow.outbox.relay',
+            async (span) => {
+                // Claim a batch of messages atomically
+                const messages = await this.outboxRepository.claimBatch(
+                    this.BATCH_SIZE,
+                    this.instanceId,
+                );
+
+                if (messages.length === 0) {
+                    return 0;
+                }
+
+                this.logger.log({
+                    message: 'Processing outbox batch',
+                    context: OutboxRelayService.name,
+                    metadata: { count: messages.length },
+                });
+
+                // Process each message individually to avoid batch blocking
+                const results = await Promise.allSettled(
+                    messages.map((m) => this.processMessage(m)),
+                );
+
+                const successCount = results.filter(
+                    (r) => r.status === 'fulfilled',
+                ).length;
+
+                span.setAttributes({
+                    'workflow.outbox.batch_size': messages.length,
+                    'workflow.outbox.success_count': successCount,
+                });
+
+                // Return successCount for adaptive polling (not batch size)
+                // If all messages fail, we should slow down, not speed up
+                return successCount;
+            },
+            {
+                'workflow.component': 'outbox',
+                'workflow.operation': 'relay',
+            },
+        );
+    }
+
+    /**
+     * Reaper to reclaim messages stuck in PROCESSING (Outbox)
+     */
+    @Cron(CronExpression.EVERY_5_MINUTES)
+    async reclaimStaleOutbox(): Promise<void> {
+        const fiveMinutesAgo = new Date();
+        fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
+
+        const reclaimed =
+            await this.outboxRepository.reclaimStaleMessages(fiveMinutesAgo);
+
+        if (reclaimed > 0) {
+            this.logger.log({
+                message: `Reclaimed ${reclaimed} stale outbox messages`,
+                context: OutboxRelayService.name,
+            });
         }
+    }
 
-        console.log('--- [OutboxRelay] Polling database... ---');
-        this.isProcessing = true;
+    /**
+     * Reaper to reclaim messages stuck in PROCESSING (Inbox)
+     * This handles cases where a consumer crashed mid-processing.
+     */
+    @Cron(CronExpression.EVERY_5_MINUTES)
+    async reclaimStaleInbox(): Promise<void> {
+        const fiveMinutesAgo = new Date();
+        fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
 
-        try {
-            return await this.observability.runInSpan(
-                'workflow.outbox.relay',
-                async (span) => {
-                    this.logger.debug({
-                        message: 'Checking for unprocessed outbox messages',
-                        context: OutboxRelayService.name,
-                    });
+        const reclaimed =
+            await this.inboxRepository.reclaimStaleMessages(fiveMinutesAgo);
 
-                    const messages =
-                        await this.outboxRepository.findUnprocessed(100);
-
-                    if (messages.length > 0) {
-                        this.logger.log({
-                            message: 'Processing outbox messages',
-                            context: OutboxRelayService.name,
-                            metadata: {
-                                count: messages.length,
-                            },
-                        });
-                    }
-
-                    for (const message of messages) {
-                        await this.processMessage(message);
-                    }
-                },
-                {
-                    'workflow.component': 'outbox',
-                    'workflow.operation': 'relay',
-                },
-            );
-        } finally {
-            this.isProcessing = false;
+        if (reclaimed > 0) {
+            this.logger.log({
+                message: `Reclaimed ${reclaimed} stale inbox messages`,
+                context: OutboxRelayService.name,
+            });
         }
     }
 
@@ -113,10 +242,7 @@ export class OutboxRelayService
      */
     @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
     async cleanupOldMessages(): Promise<void> {
-        if (this.isCleaning) {
-            return;
-        }
-
+        if (this.isCleaning) return;
         this.isCleaning = true;
 
         try {
@@ -129,13 +255,11 @@ export class OutboxRelayService
                 metadata: { threshold: sevenDaysAgo },
             });
 
-            // Cleanup Outbox
             const deletedOutboxCount =
                 await this.outboxRepository.deleteProcessedOlderThan(
                     sevenDaysAgo,
                 );
 
-            // Cleanup Inbox
             const deletedInboxCount =
                 await this.inboxRepository.deleteProcessedOlderThan(
                     sevenDaysAgo,
@@ -163,22 +287,33 @@ export class OutboxRelayService
             async (span) => {
                 span.setAttributes({
                     'workflow.outbox.message.id': message.uuid,
-                    'workflow.outbox.job.id': message.job?.uuid,
                     'workflow.outbox.exchange': message.exchange,
                     'workflow.outbox.routing_key': message.routingKey,
+                    'workflow.outbox.attempts': message.attempts,
+                    'workflow.outbox.max_attempts': this.maxAttemptsOutbox,
                 });
 
                 try {
-                    // Safe access to payload properties using the helper interface
+                    // Note: message.job is not populated by RETURNING * (only job_id column)
+                    // Always use payload.jobId which is set during enqueue
+                    const rawPayload = message?.payload as unknown as
+                        | MessagePayload<MessagePayloadContent>
+                        | MessagePayloadContent
+                        | undefined;
+
                     const payloadContent =
-                        (
-                            message.payload as unknown as MessagePayload<MessagePayloadContent>
-                        ).payload ||
-                        (message.payload as unknown as MessagePayloadContent);
+                        (rawPayload as MessagePayload<MessagePayloadContent>)
+                            ?.payload ??
+                        (rawPayload as MessagePayloadContent) ??
+                        {};
 
                     const correlationId = payloadContent?.correlationId;
                     const workflowType = payloadContent?.workflowType;
                     const jobId = payloadContent?.jobId;
+
+                    span.setAttributes({
+                        'workflow.outbox.job.id': jobId,
+                    });
 
                     await this.messageBroker.publishMessage(
                         {
@@ -190,50 +325,76 @@ export class OutboxRelayService
                             messageId: message.uuid,
                             correlationId,
                             persistent: true,
+                            timeout: this.publishTimeoutMs,
                             headers: {
                                 'x-correlation-id': correlationId,
                                 'x-workflow-type': workflowType,
                                 'x-job-id': jobId,
+                                'x-outbox-id': message.uuid,
+                                'x-attempts': message.attempts,
                             },
                         },
                     );
 
-                    // Marcar como processada apenas após Publisher Confirm
-                    await this.outboxRepository.markAsProcessed(message.uuid);
+                    await this.outboxRepository.markAsSent(message.uuid);
 
-                    span.setAttributes({
-                        'workflow.outbox.published': true,
-                    });
-
-                    this.logger.log({
-                        message: 'Outbox message published to RabbitMQ',
+                    this.logger.debug({
+                        message: 'Outbox message published',
                         context: OutboxRelayService.name,
                         metadata: {
                             messageId: message.uuid,
-                            jobId: message.job?.uuid,
-                            correlationId,
+                            jobId,
                             exchange: message.exchange,
                             routingKey: message.routingKey,
                         },
                     });
                 } catch (error) {
-                    span.setAttributes({
-                        'error': true,
-                        'exception.type': error.name,
-                        'exception.message': error.message,
-                    });
+                    if (message.attempts >= this.maxAttemptsOutbox) {
+                        // Permanently failed - mark as FAILED and alert
+                        await this.outboxRepository.markAsPermanentlyFailed(
+                            message.uuid,
+                            error.message,
+                        );
 
-                    this.logger.error({
-                        message: 'Failed to publish outbox message',
-                        context: OutboxRelayService.name,
-                        error,
-                        metadata: {
-                            messageId: message.uuid,
-                            jobId: message.job?.uuid,
-                        },
-                    });
+                        this.logger.error({
+                            message:
+                                'Outbox message permanently failed after max attempts',
+                            context: OutboxRelayService.name,
+                            error,
+                            metadata: {
+                                messageId: message.uuid,
+                                attempts: message.attempts,
+                                maxAttempts: this.maxAttemptsOutbox,
+                            },
+                        });
+                    } else {
+                        // Schedule for retry using centralized backoff
+                        const delayMs = calculateBackoffInterval(
+                            message.attempts,
+                            OUTBOX_BACKOFF,
+                        );
+                        const nextAttemptAt = new Date(Date.now() + delayMs);
 
-                    // Não marca como processada - será reprocessada na próxima iteração
+                        await this.outboxRepository.markAsFailed(
+                            message.uuid,
+                            error.message,
+                            nextAttemptAt,
+                        );
+
+                        this.logger.warn({
+                            message:
+                                'Failed to publish outbox message, scheduled for retry',
+                            context: OutboxRelayService.name,
+                            error,
+                            metadata: {
+                                messageId: message.uuid,
+                                attempts: message.attempts,
+                                delayMs,
+                                nextAttemptAt,
+                            },
+                        });
+                    }
+
                     throw error;
                 }
             },

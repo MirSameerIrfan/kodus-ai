@@ -4,7 +4,7 @@ import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/
 import { IParametersRepository } from './parameters.repository.contracts';
 import { ParametersEntity } from '../entities/parameters.entity';
 
-export const PARAMETERS_SERVICE_TOKEN = Symbol('ParametersService');
+export const PARAMETERS_SERVICE_TOKEN = Symbol.for('ParametersService');
 
 export interface IParametersService extends IParametersRepository {
     createOrUpdateConfig<K extends ParametersKey>(

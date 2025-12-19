@@ -4,10 +4,6 @@ import pino from 'pino';
 import { LogArguments, LogProcessor } from './types.js';
 import { LogLevel } from '@/core/types/allTypes.js';
 
-/* -------------------------------------------------------------------------- */
-/*                                 Globals                                    */
-/* -------------------------------------------------------------------------- */
-
 let pinoLogger: pino.Logger | null = null;
 let globalLogProcessors: LogProcessor[] = [];
 let spanContextProvider:
@@ -23,10 +19,6 @@ let observabilityContextProvider:
           | undefined)
     | null = null;
 
-/* -------------------------------------------------------------------------- */
-/*                         Create / Get Pino Logger                           */
-/* -------------------------------------------------------------------------- */
-
 function getPinoLogger(): pino.Logger {
     if (!pinoLogger) {
         const shouldPrettyPrint =
@@ -38,19 +30,6 @@ function getPinoLogger(): pino.Logger {
             level: process.env.API_LOG_LEVEL || 'info',
             formatters: {
                 level: (label) => ({ level: label }),
-                log(object) {
-                    if (isProduction && !shouldPrettyPrint) {
-                        return {
-                            message: object.message,
-                            serviceName: object.serviceName,
-                            environment: object.environment,
-                            error: object.error
-                                ? { message: (object.error as any)?.message }
-                                : undefined,
-                        };
-                    }
-                    return object;
-                },
             },
             serializers: {
                 error: pino.stdSerializers.err,
@@ -71,7 +50,7 @@ function getPinoLogger(): pino.Logger {
                     '*.apiKey',
                     '*.authorization',
                     'req.headers.authorization',
-                    'req.headers["x-api-key"]',
+                    'req.headers[\"x-api-key\"]',
                     'user.sensitiveInfo',
                 ],
                 censor: '[REDACTED]',
@@ -83,13 +62,10 @@ function getPinoLogger(): pino.Logger {
             },
         };
 
-        let logger: pino.Logger;
-
-        if (!shouldPrettyPrint && isProduction) {
-            /**
-             * Use a worker-thread based transport for performance
-             */
-            const transport = pino.transport({
+        let transport;
+        if (isProduction && !shouldPrettyPrint) {
+            // Production JSON logging to stdout
+            transport = pino.transport({
                 targets: [
                     {
                         target: 'pino/file',
@@ -101,48 +77,35 @@ function getPinoLogger(): pino.Logger {
                     },
                 ],
             });
-
-            // Add an error handler to the transport to catch logging pipeline failures
-            transport.on('error', (err) => {
-                // Use console.error as a safe fallback
-                console.error('Pino transport failure:', err);
-            });
-
-            logger = pino(baseConfig, transport);
         } else {
-            /**
-             * Development / pretty mode
-             */
-            logger = pino(
-                {
-                    ...baseConfig,
-                    transport: shouldPrettyPrint
-                        ? {
-                              target: 'pino-pretty',
-                              options: {
-                                  colorize: true,
-                                  translateTime: 'SYS:standard',
-                                  ignore: 'pid,hostname',
-                                  levelFirst: true,
-                                  errorProps: 'message,stack',
-                                  messageFormat:
-                                      '{level} | {serviceName} | {context} | {msg}',
-                              },
-                          }
-                        : undefined,
-                },
-                undefined,
-            );
+            // Development pretty-printed logging
+            transport = pino.transport({
+                targets: [
+                    {
+                        target: 'pino-pretty',
+                        options: {
+                            colorize: true,
+                            translateTime: 'SYS:standard',
+                            ignore: 'pid,hostname,environment,metadata,traceId,spanId,correlationId,tenantId,sessionId',
+                            levelFirst: true,
+                            errorProps: 'message,stack',
+                            messageFormat:
+                                'SYS:[{serviceName}] {level} - {context} - {msg}',
+                        },
+                        level: process.env.API_LOG_LEVEL || 'info',
+                    },
+                ],
+            });
         }
 
-        pinoLogger = logger;
+        transport.on('error', (err) => {
+            console.error('Pino transport failure:', err);
+        });
+
+        pinoLogger = pino(baseConfig, transport);
     }
     return pinoLogger;
 }
-
-/* -------------------------------------------------------------------------- */
-/*                                   Logger Class                              */
-/* -------------------------------------------------------------------------- */
 
 export class SimpleLogger {
     private defaultServiceName: string;
@@ -190,9 +153,12 @@ export class SimpleLogger {
             error,
         );
 
-        childLogger[level](logObject, message);
+        if (error) {
+            childLogger[level]({ ...logObject, err: error }, message);
+        } else {
+            childLogger[level](logObject, message);
+        }
 
-        // Forward to global log processors (e.g., MongoDB exporter)
         for (const processor of globalLogProcessors) {
             try {
                 processor.process(
@@ -201,9 +167,7 @@ export class SimpleLogger {
                     { ...metadata, component: effectiveServiceName },
                     error,
                 );
-            } catch {
-                // Fail silently to avoid recursion/crash
-            }
+            } catch {}
         }
     }
 
@@ -233,17 +197,20 @@ export class SimpleLogger {
         metadata: Record<string, any>,
         error?: Error,
     ) {
-        return {
+        const logObject: Record<string, any> = {
             environment: process.env.API_NODE_ENV || 'unknown',
             serviceName,
             ...metadata,
             metadata,
             ...this.getTraceContext(),
             ...this.getObservabilityContext(),
-            error: error
-                ? { message: error.message, stack: error.stack }
-                : undefined,
         };
+
+        if (error) {
+            logObject.error = { message: error.message, stack: error.stack };
+        }
+
+        return logObject;
     }
 
     private getTraceContext() {
@@ -271,10 +238,6 @@ export class SimpleLogger {
         return {};
     }
 }
-
-/* -------------------------------------------------------------------------- */
-/*                                   Public API                                */
-/* -------------------------------------------------------------------------- */
 
 export function createLogger(component: string): SimpleLogger {
     return new SimpleLogger(component);

@@ -4,7 +4,9 @@ import { IProfileConfigRepository } from './profileConfig.repository.contract';
 import { ProfileConfigEntity } from '../entities/profileConfig.entity';
 import { ProfileConfigKey } from '../enum/profileConfigKey.enum';
 
-export const PROFILE_CONFIG_SERVICE_TOKEN = Symbol('IntegrationConfigService');
+export const PROFILE_CONFIG_SERVICE_TOKEN = Symbol.for(
+    'IntegrationConfigService',
+);
 
 export interface IProfileConfigService extends IProfileConfigRepository {
     createOrUpdateConfig(

@@ -4,55 +4,88 @@ dotenv.config();
 
 process.env.API_RABBITMQ_ENABLED = 'true';
 
+import { INestApplicationContext } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { ObservabilityService } from '@libs/core/log/observability.service';
-import { WorkerModule } from './worker.module';
+
 import { LoggerWrapperService } from '@libs/core/log/loggerWrapper.service';
+import { ObservabilityService } from '@libs/core/log/observability.service';
+
+import { WorkerModule } from './worker.module';
+
+declare const module: any;
+
+function handleNestJSWebpackHmr(app: INestApplicationContext, module: any) {
+    if (module.hot) {
+        module.hot.accept();
+        module.hot.dispose(() => app.close());
+    }
+}
 
 async function bootstrap() {
     process.env.COMPONENT_TYPE = 'worker';
-
-    console.log('Starting Worker bootstrap...', 'Bootstrap');
-
-    let appContext;
+    let appContext: INestApplicationContext;
+    let logger: LoggerWrapperService | undefined;
 
     try {
-        appContext = await NestFactory.createApplicationContext(WorkerModule);
+        appContext = await NestFactory.createApplicationContext(WorkerModule, {
+            snapshot: true,
+        });
 
-        const logger = appContext.get(LoggerWrapperService);
+        logger = appContext.get(LoggerWrapperService);
+        appContext.useLogger(logger);
+
+        logger.log('Entering bootstrap try block...', 'Bootstrap');
+        logger.log('Initializing Worker...', 'Bootstrap');
+
         process.on('uncaughtException', (error) => {
-            logger.error({
-                message: `Uncaught Exception: ${error.message}`,
-                context: 'WorkerGlobalExceptionHandler',
-                error,
-            });
+            if (logger) {
+                logger.error({
+                    message: `Uncaught Exception: ${error.message}`,
+                    context: 'GlobalExceptionHandler',
+                    error,
+                });
+            } else {
+                console.error(
+                    'Uncaught Exception before logger was ready:',
+                    error,
+                );
+            }
         });
 
         process.on('unhandledRejection', (reason: any) => {
-            logger.error({
-                message: `Unhandled Rejection: ${reason?.message || reason}`,
-                context: 'WorkerGlobalExceptionHandler',
-                error:
-                    reason instanceof Error
-                        ? reason
-                        : new Error(String(reason)),
-            });
+            if (logger) {
+                logger.error({
+                    message: `Unhandled Rejection: ${reason?.message || reason}`,
+                    context: 'GlobalExceptionHandler',
+                    error:
+                        reason instanceof Error
+                            ? reason
+                            : new Error(String(reason)),
+                });
+            } else {
+                console.error(
+                    'Unhandled Rejection before logger was ready:',
+                    reason,
+                );
+            }
         });
 
-        // Explicitly initialize observability for the 'worker' context
         await appContext.get(ObservabilityService).init('worker');
-
-        // This is the crucial step to trigger OnApplicationBootstrap
-        await appContext.init();
 
         appContext.enableShutdownHooks();
 
-        console.log('🚀 Worker is initialized and running.');
+        console.log('[Worker] - Initialized and running.');
+
+        handleNestJSWebpackHmr(appContext, module);
     } catch (e) {
-        console.error(
-            'BOOTSTRAP FAILED',
-            e instanceof Error ? e.stack : String(e),
-        );
+        const error = e instanceof Error ? e : new Error(String(e));
+        const message = `Bootstrap failed: ${error.message}`;
+
+        if (logger) {
+            logger.error(message, error.stack, 'Bootstrap');
+        } else {
+            console.error(message, error.stack);
+        }
 
         if (appContext) {
             await appContext.close();

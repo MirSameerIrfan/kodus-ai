@@ -1,4 +1,4 @@
-export const PASSWORD_SERVICE_TOKEN = Symbol('PasswordService');
+export const PASSWORD_SERVICE_TOKEN = Symbol.for('PasswordService');
 
 export interface IPasswordService {
     generate(value: string, salts?: number): Promise<string>;

@@ -1,7 +1,7 @@
 import { DryRunEntity } from '../entities/dryRun.entity';
 import { IDryRun } from '../interfaces/dryRun.interface';
 
-export const DRY_RUN_REPOSITORY_TOKEN = Symbol('DRY_RUN_REPOSITORY_TOKEN');
+export const DRY_RUN_REPOSITORY_TOKEN = Symbol.for('DRY_RUN_REPOSITORY_TOKEN');
 
 export interface IDryRunRepository {
     create(

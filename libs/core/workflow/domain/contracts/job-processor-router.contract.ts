@@ -1,4 +1,4 @@
-export const JOB_PROCESSOR_ROUTER_TOKEN = Symbol('JobProcessorRouter');
+export const JOB_PROCESSOR_ROUTER_TOKEN = Symbol.for('JobProcessorRouter');
 
 export interface IJobProcessorRouter {
     /**

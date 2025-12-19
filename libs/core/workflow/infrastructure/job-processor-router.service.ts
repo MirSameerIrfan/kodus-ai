@@ -11,9 +11,6 @@ import { WorkflowType } from '@libs/core/workflow/domain/enums/workflow-type.enu
 import { WebhookProcessingJobProcessorService } from '@libs/automation/webhook-processing/webhook-processing-job.processor';
 import { CodeReviewJobProcessorService } from '@libs/code-review/workflow/code-review-job-processor.service';
 
-/**
- * Router that selects the correct job processor based on workflow type
- */
 @Injectable()
 export class JobProcessorRouterService
     implements IJobProcessorService, IJobProcessorRouter
@@ -28,17 +25,18 @@ export class JobProcessorRouterService
 
     async process(jobId: string): Promise<void> {
         const job = await this.jobRepository.findOne(jobId);
+
         if (!job) {
             throw new Error(`Workflow job ${jobId} not found`);
         }
 
-        // Route to appropriate processor based on workflow type
         const processor = this.getProcessor(job.workflowType);
         return await processor.process(jobId);
     }
 
     async handleFailure(jobId: string, error: Error): Promise<void> {
         const job = await this.jobRepository.findOne(jobId);
+
         if (!job) {
             throw new Error(`Workflow job ${jobId} not found`);
         }
@@ -49,6 +47,7 @@ export class JobProcessorRouterService
 
     async markCompleted(jobId: string, result?: unknown): Promise<void> {
         const job = await this.jobRepository.findOne(jobId);
+
         if (!job) {
             throw new Error(`Workflow job ${jobId} not found`);
         }

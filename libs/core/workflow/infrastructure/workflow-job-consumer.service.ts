@@ -1,40 +1,55 @@
-import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
+import * as os from 'os';
+import {
+    RabbitSubscribe,
+    MessageHandlerErrorBehavior,
+} from '@golevelup/nestjs-rabbitmq';
 import { Injectable, Inject } from '@nestjs/common';
-import { UseFilters } from '@nestjs/common';
 import { ConsumeMessage } from 'amqplib';
 
-import { RabbitmqConsumeErrorFilter } from '@libs/core/infrastructure/filters/rabbitmq-consume-error.exception';
 import { IJobProcessorService } from '@libs/core/workflow/domain/contracts/job-processor.service.contract';
 import { JOB_PROCESSOR_SERVICE_TOKEN } from '@libs/core/workflow/domain/contracts/job-processor.service.contract';
 import { MessagePayload } from '@libs/core/domain/contracts/message-broker.service.contracts';
 
 import { ObservabilityService } from '@libs/core/log/observability.service';
 import { createLogger } from '@kodus/flow';
-import { InboxMessageRepository } from './repositories/inbox-message.repository';
+import {
+    IInboxMessageRepository,
+    INBOX_MESSAGE_REPOSITORY_TOKEN,
+} from '@libs/core/workflow/domain/contracts/inbox-message.repository.contract';
+import { InboxStatus } from './repositories/schemas/inbox-message.model';
+import { RabbitMQErrorHandler } from '@libs/core/infrastructure/queue/rabbitmq-error.handler';
 
 interface WorkflowJobMessage {
     jobId: string;
-    correlationId: string;
+    correlationId?: string;
     [key: string]: unknown;
 }
 
-@UseFilters(RabbitmqConsumeErrorFilter)
 @Injectable()
 export class WorkflowJobConsumer {
     private readonly logger = createLogger(WorkflowJobConsumer.name);
-    private readonly consumerId = 'workflow-job-consumer';
+    private readonly instanceId = os.hostname();
 
     constructor(
         @Inject(JOB_PROCESSOR_SERVICE_TOKEN)
         private readonly jobProcessor: IJobProcessorService,
+        @Inject(INBOX_MESSAGE_REPOSITORY_TOKEN)
+        private readonly inboxRepository: IInboxMessageRepository,
         private readonly observability: ObservabilityService,
-        private readonly inboxRepository: InboxMessageRepository,
     ) {}
 
+    /**
+     * Webhook-processing jobs
+     */
     @RabbitSubscribe({
         exchange: 'workflow.exchange',
-        routingKey: 'workflow.jobs.*',
-        queue: 'workflow.jobs.queue',
+        routingKey: 'workflow.jobs.*.WEBHOOK_PROCESSING',
+        queue: 'workflow.jobs.webhook.queue',
+        errorBehavior: MessageHandlerErrorBehavior.ACK,
+        errorHandler: (channel, msg, err) =>
+            RabbitMQErrorHandler.instance?.handle(channel, msg, err, {
+                dlqRoutingKey: 'workflow.job.failed',
+            }),
         queueOptions: {
             arguments: {
                 'x-queue-type': 'quorum',
@@ -43,11 +58,85 @@ export class WorkflowJobConsumer {
             },
         },
     })
-    async handleWorkflowJob(
+    /**
+     * Binding from delayed exchange for retry messages.
+     * This creates the binding: workflow.exchange.delayed -> workflow.jobs.<type>.queue
+     * Required for the retry mechanism to work.
+     */
+    @RabbitSubscribe({
+        exchange: 'workflow.exchange.delayed',
+        routingKey: 'workflow.jobs.*.WEBHOOK_PROCESSING',
+        queue: 'workflow.jobs.webhook.queue',
+        queueOptions: {
+            arguments: {
+                'x-queue-type': 'quorum',
+                'x-dead-letter-exchange': 'workflow.exchange.dlx',
+                'x-dead-letter-routing-key': 'workflow.job.failed',
+            },
+        },
+    })
+    async handleWebhookProcessingJob(
         message: WorkflowJobMessage | MessagePayload<WorkflowJobMessage>,
         amqpMsg: ConsumeMessage,
     ): Promise<void> {
-        // Unwrap message if it's in MessagePayload envelope
+        return this.handleWorkflowJob(
+            'workflow-job-consumer.webhook',
+	            'workflow.jobs.webhook.queue',
+            message,
+            amqpMsg,
+        );
+    }
+
+    /**
+     * Code-review jobs
+     */
+    @RabbitSubscribe({
+        exchange: 'workflow.exchange',
+        routingKey: 'workflow.jobs.*.CODE_REVIEW',
+        queue: 'workflow.jobs.code_review.queue',
+        errorBehavior: MessageHandlerErrorBehavior.ACK,
+        errorHandler: (channel, msg, err) =>
+            RabbitMQErrorHandler.instance?.handle(channel, msg, err, {
+                dlqRoutingKey: 'workflow.job.failed',
+            }),
+        queueOptions: {
+            arguments: {
+                'x-queue-type': 'quorum',
+                'x-dead-letter-exchange': 'workflow.exchange.dlx',
+                'x-dead-letter-routing-key': 'workflow.job.failed',
+            },
+        },
+    })
+    @RabbitSubscribe({
+        exchange: 'workflow.exchange.delayed',
+        routingKey: 'workflow.jobs.*.CODE_REVIEW',
+        queue: 'workflow.jobs.code_review.queue',
+        queueOptions: {
+            arguments: {
+                'x-queue-type': 'quorum',
+                'x-dead-letter-exchange': 'workflow.exchange.dlx',
+                'x-dead-letter-routing-key': 'workflow.job.failed',
+            },
+        },
+    })
+    async handleCodeReviewJob(
+        message: WorkflowJobMessage | MessagePayload<WorkflowJobMessage>,
+        amqpMsg: ConsumeMessage,
+    ): Promise<void> {
+        return this.handleWorkflowJob(
+            'workflow-job-consumer.code_review',
+	            'workflow.jobs.code_review.queue',
+            message,
+            amqpMsg,
+        );
+    }
+
+    private async handleWorkflowJob(
+        consumerId: string,
+        queueName: string,
+        message: WorkflowJobMessage | MessagePayload<WorkflowJobMessage>,
+        amqpMsg: ConsumeMessage,
+    ): Promise<void> {
         const unwrappedMessage: WorkflowJobMessage = this.isMessagePayload(
             message,
         )
@@ -55,7 +144,6 @@ export class WorkflowJobConsumer {
             : message;
 
         const messageId = amqpMsg.properties.messageId;
-        // Extrai correlation ID dos headers primeiro, depois do payload, depois das properties
         const correlationId =
             (amqpMsg.properties.headers &&
                 amqpMsg.properties.headers['x-correlation-id']) ||
@@ -73,35 +161,57 @@ export class WorkflowJobConsumer {
                     amqpMsg: {
                         messageId,
                         correlationId,
+                        queueName,
                     },
                 },
             });
             throw new Error('Invalid message: missing messageId or jobId');
         }
 
-        // Check if message was already processed (Inbox Pattern)
-        const existingInbox =
-            await this.inboxRepository.findByConsumerAndMessageId(
-                this.consumerId,
-                messageId,
-            );
+        // 1. Atomic claim in Inbox
+        const claimed = await this.inboxRepository.claim(
+            messageId,
+            consumerId,
+            this.instanceId,
+            unwrappedMessage.jobId,
+        );
 
-        if (existingInbox && existingInbox.processed) {
-            this.logger.warn({
-                message: 'Duplicate message detected, skipping processing',
-                context: WorkflowJobConsumer.name,
-                metadata: {
+        if (!claimed) {
+            // Se não claimou, pode ser porque já foi processado ou está sendo processado por outro worker
+            const existing =
+                await this.inboxRepository.findByConsumerAndMessageId(
+                    consumerId,
                     messageId,
-                    jobId: unwrappedMessage.jobId,
-                    consumerId: this.consumerId,
-                },
+                );
+
+            if (existing?.status === InboxStatus.PROCESSED) {
+                this.logger.debug({
+                    message: 'Message already processed (Idempotency skip)',
+                    context: WorkflowJobConsumer.name,
+                    metadata: {
+                        messageId,
+                        jobId: unwrappedMessage.jobId,
+                        queueName,
+                    },
+                });
+                return;
+            }
+
+            // Se existe mas não está processado (e o claim falhou), lançamos erro pra disparar retry com backoff
+            // Isso evita o hot loop de Nack(true) e respeita o delivery-limit das quorum queues
+            this.logger.warn({
+                message:
+                    'Message already claimed by another worker, retrying with backoff',
+                context: WorkflowJobConsumer.name,
+                metadata: { messageId, jobId: unwrappedMessage.jobId, queueName },
             });
-            return;
+            throw new Error('Message already claimed but not finished');
         }
 
-        // Define correlation ID no contexto de observabilidade para propagação
+        // 2. Start observability span
         if (correlationId) {
             const obs = this.observability as any;
+
             if (obs.setContext) {
                 obs.setContext({ correlationId });
             }
@@ -114,25 +224,15 @@ export class WorkflowJobConsumer {
                     'workflow.job.id': unwrappedMessage.jobId,
                     'workflow.correlation.id': correlationId,
                     'workflow.message.id': messageId,
+                    'workflow.queue.name': queueName,
                 });
 
                 try {
-                    // Create inbox record if it doesn't exist
-                    if (!existingInbox) {
-                        await this.inboxRepository.create(
-                            messageId,
-                            unwrappedMessage.jobId,
-                            this.consumerId,
-                        );
-                    }
-
-                    // Processa o job
                     await this.jobProcessor.process(unwrappedMessage.jobId);
 
-                    // Mark as processed
                     await this.inboxRepository.markAsProcessed(
                         messageId,
-                        this.consumerId,
+                        consumerId,
                     );
 
                     this.logger.log({
@@ -142,6 +242,7 @@ export class WorkflowJobConsumer {
                             messageId,
                             jobId: unwrappedMessage.jobId,
                             correlationId,
+                            queueName,
                         },
                     });
 
@@ -163,10 +264,19 @@ export class WorkflowJobConsumer {
                             messageId,
                             jobId: unwrappedMessage.jobId,
                             correlationId,
+                            queueName,
                         },
                     });
 
-                    // Re-throw para que RabbitMQ possa fazer retry ou enviar para DLQ
+                    // Release lock so message can be re-claimed on retry
+                    // Retry scheduling is handled by RabbitMQErrorHandler (single source of truth)
+                    await this.inboxRepository.releaseLock(
+                        messageId,
+                        consumerId,
+                        error.message,
+                    );
+
+                    // Re-throw para que RabbitMQErrorHandler faça o republish com delay
                     throw error;
                 }
             },

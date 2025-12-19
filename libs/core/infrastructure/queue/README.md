@@ -12,9 +12,8 @@ The module follows a layered architecture to decouple the application from the s
 2.  **IMessageBrokerService**: An abstract interface defining the contract for publishing messages. This ensures that the application logic does not depend directly on AMQP or RabbitMQ libraries.
 3.  **MessageBrokerService**: The concrete implementation of `IMessageBrokerService` using `@golevelup/nestjs-rabbitmq`. It handles the actual publishing of messages to RabbitMQ.
 4.  **Configuration**:
-    - `core-queues.config.ts`: Defines base exchanges and queues used across the system (e.g., DLX).
-    - `workflow-queue.config.ts`: Defines workflow-specific exchanges and queues (e.g., `workflow.jobs.queue`).
-    - `rabbitmq.config.ts`: General configuration loading from environment variables.
+    - `config/rabbitmq-topology.config.ts`: Defines exchanges (e.g., `workflow.exchange`, `<base>.delayed`, `<base>.dlx`).
+    - Queues are defined in the `@RabbitSubscribe` decorators (e.g., `workflow.jobs.webhook.queue`, `workflow.jobs.code_review.queue`).
 
 ### Usage
 
@@ -39,10 +38,10 @@ export class MyService {
         const payload = { foo: 'bar' };
 
         // Wrap payload in standard envelope (optional but recommended)
-        const message = this.messageBroker.transformMessageToMessageBroker(
-            'my.event.name',
-            payload,
-        );
+        const message = this.messageBroker.transformMessageToMessageBroker({
+            eventName: 'my.event.name',
+            message: payload,
+        });
 
         await this.messageBroker.publishMessage(
             {

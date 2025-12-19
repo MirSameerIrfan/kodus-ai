@@ -5,7 +5,9 @@ import {
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 
-export const CODE_BASE_CONFIG_SERVICE_TOKEN = Symbol('CodeBaseConfigService');
+export const CODE_BASE_CONFIG_SERVICE_TOKEN = Symbol.for(
+    'CodeBaseConfigService',
+);
 
 export interface ICodeBaseConfigService {
     getConfig(

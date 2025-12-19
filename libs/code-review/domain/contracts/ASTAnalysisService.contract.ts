@@ -11,7 +11,7 @@ import {
     InitializeRepositoryResponse,
 } from '@libs/ee/kodyAST/interfaces/code-ast-analysis.interface';
 
-export const AST_ANALYSIS_SERVICE_TOKEN = Symbol('ASTAnalysisService');
+export const AST_ANALYSIS_SERVICE_TOKEN = Symbol.for('ASTAnalysisService');
 
 export interface IASTAnalysisService {
     awaitTask(

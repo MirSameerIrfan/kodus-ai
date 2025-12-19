@@ -1,6 +1,6 @@
 import { IPermissions } from '../types/permissions.types';
 
-export const PERMISSIONS_REPOSITORY_TOKEN = Symbol('PermissionsRepository');
+export const PERMISSIONS_REPOSITORY_TOKEN = Symbol.for('PermissionsRepository');
 
 export interface IPermissionsRepository {
     find(filter: Partial<IPermissions>): Promise<IPermissions[]>;

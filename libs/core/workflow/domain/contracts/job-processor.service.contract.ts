@@ -1,4 +1,4 @@
-export const JOB_PROCESSOR_SERVICE_TOKEN = Symbol('JobProcessorService');
+export const JOB_PROCESSOR_SERVICE_TOKEN = Symbol.for('JobProcessorService');
 
 export interface IJobProcessorService {
     process(jobId: string): Promise<void>;

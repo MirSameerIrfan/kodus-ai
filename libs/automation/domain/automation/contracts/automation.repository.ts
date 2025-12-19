@@ -1,7 +1,7 @@
 import { AutomationEntity } from '../entities/automation.entity';
 import { IAutomation } from '../interfaces/automation.interface';
 
-export const AUTOMATION_REPOSITORY_TOKEN = Symbol('AutomationRepository');
+export const AUTOMATION_REPOSITORY_TOKEN = Symbol.for('AutomationRepository');
 
 export interface IAutomationRepository {
     create(automation: IAutomation): Promise<AutomationEntity>;

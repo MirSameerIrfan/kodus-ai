@@ -1,4 +1,4 @@
-export const CODE_REVIEW_ANALYZER_TOKEN = Symbol('CodeReviewAnalyzer');
+export const CODE_REVIEW_ANALYZER_TOKEN = Symbol.for('CodeReviewAnalyzer');
 
 export interface CodeIssue {
     type:

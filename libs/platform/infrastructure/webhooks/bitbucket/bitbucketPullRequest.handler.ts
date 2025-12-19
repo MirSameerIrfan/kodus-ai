@@ -24,6 +24,7 @@ import { SavePullRequestUseCase } from '@libs/platformData/application/use-cases
 import { RunCodeReviewAutomationUseCase } from '@libs/ee/automation/runCodeReview.use-case';
 import { getMappedPlatform } from '@libs/common/utils/webhooks';
 import { PullRequestClosedEvent } from '@libs/core/domain/events/pull-request-closed.event';
+import { EnqueueCodeReviewJobUseCase } from '@libs/core/workflow/application/use-cases/enqueue-code-review-job.use-case';
 
 /**
  * Handler for Bitbucket webhook events.
@@ -43,6 +44,7 @@ export class BitbucketPullRequestHandler implements IWebhookEventHandler {
         private readonly codeManagement: CodeManagementService,
         private readonly generateIssuesFromPrClosedUseCase: GenerateIssuesFromPrClosedUseCase,
         private readonly eventEmitter: EventEmitter2,
+        private readonly enqueueCodeReviewJobUseCase: EnqueueCodeReviewJobUseCase,
     ) {}
 
     /**
@@ -127,8 +129,43 @@ export class BitbucketPullRequestHandler implements IWebhookEventHandler {
                     event === 'pullrequest:created' ||
                     event === 'pullrequest:updated'
                 ) {
-                    // Intentionally not awaiting this, as per original logic
-                    this.runCodeReviewAutomationUseCase.execute(params);
+                    if (
+                        this.enqueueCodeReviewJobUseCase &&
+                        orgData?.organizationAndTeamData
+                    ) {
+                        const jobId =
+                            await this.enqueueCodeReviewJobUseCase.execute({
+                                payload: params.payload,
+                                event: params.event,
+                                platformType: PlatformType.BITBUCKET,
+                                organizationAndTeam:
+                                    orgData.organizationAndTeamData,
+                                correlationId: params.correlationId,
+                            });
+
+                        this.logger.log({
+                            message:
+                                'Code review job enqueued for asynchronous processing',
+                            context: BitbucketPullRequestHandler.name,
+                            metadata: {
+                                jobId,
+                                prId,
+                                repositoryId: repository.id,
+                            },
+                        });
+                    } else {
+                        this.logger.log({
+                            message:
+                                'Skipping code review job enqueue (missing org/team or enqueue use case)',
+                            context: BitbucketPullRequestHandler.name,
+                            metadata: {
+                                hasOrgAndTeam:
+                                    !!orgData?.organizationAndTeamData,
+                                prId,
+                                repositoryId: repository.id,
+                            },
+                        });
+                    }
                 }
             } else {
                 // For events that don't trigger code review, just save the state
@@ -217,6 +254,21 @@ export class BitbucketPullRequestHandler implements IWebhookEventHandler {
     private async handleComment(params: IWebhookEventParams): Promise<void> {
         const { payload } = params;
         const prId = payload?.pullrequest?.id;
+        const repository = {
+            id: payload?.repository?.uuid?.replace(/[{}]/g, ''),
+            name: payload?.repository?.name,
+        } as any;
+        const orgData =
+            await this.runCodeReviewAutomationUseCase.findTeamWithActiveCodeReview(
+                {
+                    repository: {
+                        id: repository.id,
+                        name: repository.name,
+                    },
+                    platformType: PlatformType.BITBUCKET,
+                    triggerCommentId: payload.comment?.id,
+                },
+            );
 
         try {
             const mappedPlatform = getMappedPlatform(PlatformType.BITBUCKET);
@@ -282,7 +334,15 @@ export class BitbucketPullRequestHandler implements IWebhookEventHandler {
                 };
 
                 await this.savePullRequestUseCase.execute(updatedParams);
-                this.runCodeReviewAutomationUseCase.execute(updatedParams);
+                if (orgData?.organizationAndTeamData) {
+                    await this.enqueueCodeReviewJobUseCase.execute({
+                        payload: updatedParams.payload,
+                        event: updatedParams.event,
+                        platformType: PlatformType.BITBUCKET,
+                        organizationAndTeam: orgData.organizationAndTeamData,
+                        correlationId: params.correlationId,
+                    });
+                }
                 return;
             }
 

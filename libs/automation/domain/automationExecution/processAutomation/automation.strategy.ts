@@ -1,4 +1,4 @@
-export const AUTOMATION_STRATEGY_TOKEN = Symbol('AutomationStrategy');
+export const AUTOMATION_STRATEGY_TOKEN = Symbol.for('AutomationStrategy');
 
 export interface IAutomationStrategy {
     route(

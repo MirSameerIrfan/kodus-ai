@@ -11,7 +11,7 @@ export interface IRuleLike {
     feedback: RuleFeedbackType;
 }
 
-export const RULE_LIKES_REPOSITORY_TOKEN = Symbol('RuleLikesRepository');
+export const RULE_LIKES_REPOSITORY_TOKEN = Symbol.for('RuleLikesRepository');
 
 export interface IRuleLikeRepository {
     getNativeCollection(): any;

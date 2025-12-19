@@ -12,14 +12,10 @@ export class AzureReposController {
 
     constructor(
         private readonly enqueueWebhookUseCase: EnqueueWebhookUseCase,
-        // TODO
-        // @Inject(WEBHOOK_LOG_SERVICE)
-        // private readonly webhookLogService: IWebhookLogService,
     ) {}
 
     @Post('/webhook')
     handleWebhook(@Req() req: Request, @Res() res: Response) {
-        // Validação síncrona rápida (não bloqueia event loop)
         const encrypted = req.query.token as string;
 
         if (!validateWebhookToken(encrypted)) {
@@ -37,25 +33,27 @@ export class AzureReposController {
             this.logger.log({
                 message: 'Webhook Azure DevOps recebido sem eventType',
                 context: AzureReposController.name,
-                metadata: { payload },
+                metadata: {
+                    payloadKeys: Object.keys(payload || {}).slice(0, 30),
+                },
             });
             return res
                 .status(HttpStatus.BAD_REQUEST)
-                .send('Evento não reconhecido');
+                .send('Unrecognized event');
         }
 
-        // Retorna 200 OK imediatamente (não bloqueia)
         res.status(HttpStatus.OK).send('Webhook received');
 
-        // Processa assincronamente na próxima iteração do event loop
-        // setImmediate garante que não bloqueia a resposta HTTP
         setImmediate(() => {
-            // Usa void para garantir que não esperamos a Promise
-            // Erros são tratados internamente sem bloquear
-            void (async () => {
-                try {
+            void this.enqueueWebhookUseCase
+                .execute({
+                    platformType: PlatformType.AZURE_REPOS,
+                    event: eventType,
+                    payload,
+                })
+                .then(() => {
                     this.logger.log({
-                        message: `Webhook received, ${eventType}`,
+                        message: `Webhook enqueued, ${eventType}`,
                         context: AzureReposController.name,
                         metadata: {
                             event: eventType,
@@ -64,20 +62,8 @@ export class AzureReposController {
                             projectId: payload?.resourceContainers?.project?.id,
                         },
                     });
-
-                    // this.webhookLogService.log(
-                    //     PlatformType.AZURE_REPOS,
-                    //     eventType,
-                    //     payload,
-                    // );
-
-                    await this.enqueueWebhookUseCase.execute({
-                        platformType: PlatformType.AZURE_REPOS,
-                        event: eventType,
-                        payload,
-                    });
-                } catch (error) {
-                    // Erro não deve quebrar o processo, apenas logar
+                })
+                .catch((error) => {
                     this.logger.error({
                         message: 'Error enqueuing webhook',
                         context: AzureReposController.name,
@@ -87,8 +73,7 @@ export class AzureReposController {
                             platformType: PlatformType.AZURE_REPOS,
                         },
                     });
-                }
-            })();
+                });
         });
     }
 }

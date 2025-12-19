@@ -1,4 +1,4 @@
-export const AUTOMATION_FACTORY_TOKEN = Symbol('AutomationFactory');
+export const AUTOMATION_FACTORY_TOKEN = Symbol.for('AutomationFactory');
 
 export interface IAutomationFactory {
     automationType: string;

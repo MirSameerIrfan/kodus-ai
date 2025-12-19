@@ -4,34 +4,17 @@ import { Repository, LessThan, EntityManager } from 'typeorm';
 
 import { createLogger } from '@kodus/flow';
 
-import { InboxMessageModel } from './schemas/inbox-message.model';
+import { InboxMessageModel, InboxStatus } from './schemas/inbox-message.model';
+import { IInboxMessageRepository } from '../../domain/contracts/inbox-message.repository.contract';
 
 @Injectable()
-export class InboxMessageRepository {
+export class InboxMessageRepository implements IInboxMessageRepository {
     private readonly logger = createLogger(InboxMessageRepository.name);
 
     constructor(
         @InjectRepository(InboxMessageModel)
         private readonly repository: Repository<InboxMessageModel>,
     ) {}
-
-    async findByMessageId(
-        messageId: string,
-    ): Promise<InboxMessageModel | null> {
-        try {
-            return await this.repository.findOne({
-                where: { messageId },
-            });
-        } catch (error) {
-            this.logger.error({
-                message: 'Failed to find inbox message by messageId',
-                context: InboxMessageRepository.name,
-                error,
-                metadata: { messageId },
-            });
-            throw error;
-        }
-    }
 
     async findByConsumerAndMessageId(
         consumerId: string,
@@ -52,34 +35,55 @@ export class InboxMessageRepository {
         }
     }
 
-    async create(
+    /**
+     * Claims a message for processing using an atomic UPSERT.
+     * Returns the message model if successfully claimed, or null if it's already being processed or finished.
+     */
+    async claim(
         messageId: string,
+        consumerId: string,
+        lockedBy: string,
         jobId?: string,
-        consumerId?: string,
-    ): Promise<InboxMessageModel> {
+    ): Promise<InboxMessageModel | null> {
+        const query = `
+            INSERT INTO "kodus_workflow"."inbox_messages"
+                ("messageId", "consumerId", "job_id", "status", "lockedBy", "lockedAt", "attempts", "createdAt", "updatedAt")
+            VALUES
+                ($1, $2, $3, $4, $5, NOW(), 1, NOW(), NOW())
+            ON CONFLICT ("consumerId", "messageId")
+            DO UPDATE SET
+                "status" = $4,
+                "lockedBy" = $5,
+                "lockedAt" = NOW(),
+                "attempts" = "inbox_messages"."attempts" + 1,
+                "updatedAt" = NOW()
+            WHERE "inbox_messages"."status" NOT IN ($6, $7)
+               OR ("inbox_messages"."status" = $7 AND "inbox_messages"."lockedAt" < NOW() - INTERVAL '5 minutes')
+            RETURNING *;
+        `;
+
         try {
-            const model = this.repository.create({
+            const results = await this.repository.query(query, [
                 messageId,
                 consumerId,
-                job: jobId ? { uuid: jobId } : undefined,
-                processed: false,
-            });
+                jobId || null,
+                InboxStatus.PROCESSING,
+                lockedBy,
+                InboxStatus.PROCESSED,
+                InboxStatus.PROCESSING,
+            ]);
 
-            const saved = await this.repository.save(model);
+            if (results && results.length > 0) {
+                return this.repository.create(results[0] as InboxMessageModel);
+            }
 
-            this.logger.debug({
-                message: 'Inbox message created',
-                context: InboxMessageRepository.name,
-                metadata: { messageId, jobId, consumerId },
-            });
-
-            return saved;
+            return null;
         } catch (error) {
             this.logger.error({
-                message: 'Failed to create inbox message',
+                message: 'Failed to claim inbox message',
                 context: InboxMessageRepository.name,
                 error,
-                metadata: { messageId },
+                metadata: { messageId, consumerId },
             });
             throw error;
         }
@@ -87,18 +91,18 @@ export class InboxMessageRepository {
 
     async markAsProcessed(
         messageId: string,
-        consumerId?: string,
+        consumerId: string,
     ): Promise<void> {
         try {
-            const where: any = { messageId };
-            if (consumerId) {
-                where.consumerId = consumerId;
-            }
-
-            await this.repository.update(where, {
-                processed: true,
-                processedAt: new Date(),
-            });
+            await this.repository.update(
+                { messageId, consumerId },
+                {
+                    status: InboxStatus.PROCESSED,
+                    processedAt: new Date(),
+                    lockedBy: null,
+                    lockedAt: null,
+                },
+            );
 
             this.logger.debug({
                 message: 'Inbox message marked as processed',
@@ -110,7 +114,67 @@ export class InboxMessageRepository {
                 message: 'Failed to mark inbox message as processed',
                 context: InboxMessageRepository.name,
                 error,
+                metadata: { messageId, consumerId },
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * Releases the lock on a message after a failed processing attempt.
+     * Sets status back to READY so it can be re-claimed on retry.
+     * Retry scheduling is handled by RabbitMQ (single source of truth for backoff).
+     */
+    async releaseLock(
+        messageId: string,
+        consumerId: string,
+        error?: string,
+    ): Promise<void> {
+        try {
+            await this.repository.update(
+                { messageId, consumerId },
+                {
+                    status: InboxStatus.READY,
+                    lastError: error?.substring(0, 2000),
+                    lockedBy: null,
+                    lockedAt: null,
+                },
+            );
+        } catch (err) {
+            this.logger.error({
+                message: 'Failed to release inbox lock',
+                context: InboxMessageRepository.name,
+                error: err,
                 metadata: { messageId },
+            });
+            throw err;
+        }
+    }
+
+    /**
+     * Reclaims messages stuck in PROCESSING status for too long.
+     * These messages will be re-processed when RabbitMQ redelivers them.
+     */
+    async reclaimStaleMessages(olderThan: Date): Promise<number> {
+        try {
+            const result = await this.repository.update(
+                {
+                    status: InboxStatus.PROCESSING,
+                    lockedAt: LessThan(olderThan),
+                },
+                {
+                    status: InboxStatus.READY,
+                    lockedBy: null,
+                    lockedAt: null,
+                    lastError: 'Stuck in PROCESSING - Reclaimed by reaper',
+                },
+            );
+            return result.affected || 0;
+        } catch (error) {
+            this.logger.error({
+                message: 'Failed to reclaim stale inbox messages',
+                context: InboxMessageRepository.name,
+                error,
             });
             throw error;
         }
@@ -119,16 +183,9 @@ export class InboxMessageRepository {
     async deleteProcessedOlderThan(date: Date): Promise<number> {
         try {
             const result = await this.repository.delete({
-                processed: true,
+                status: InboxStatus.PROCESSED,
                 processedAt: LessThan(date),
             });
-
-            this.logger.log({
-                message: `Deleted ${result.affected} processed inbox messages`,
-                context: InboxMessageRepository.name,
-                metadata: { olderThan: date },
-            });
-
             return result.affected || 0;
         } catch (error) {
             this.logger.error({
@@ -146,40 +203,44 @@ export class InboxMessageRepository {
     async isProcessedInTransaction(
         manager: EntityManager,
         messageId: string,
-        consumerId: string,
+        consumerId: string = 'default',
     ): Promise<boolean> {
-        const existing = await manager.findOne(InboxMessageModel, {
-            where: { messageId, consumerId },
-        });
-        return existing !== null;
+        const query = `
+            SELECT status FROM "kodus_workflow"."inbox_messages"
+            WHERE "messageId" = $1 AND "consumerId" = $2
+        `;
+        const results = await manager.query(query, [messageId, consumerId]);
+        return (
+            results.length > 0 && results[0].status === InboxStatus.PROCESSED
+        );
     }
 
     /**
-     * Mark message as processed within a transaction
+     * Atomic mark as processed within a transaction.
      */
     async markAsProcessedInTransaction(
         manager: EntityManager,
         messageId: string,
         consumerId: string,
+        jobId?: string,
     ): Promise<void> {
-        const existing = await manager.findOne(InboxMessageModel, {
-            where: { messageId, consumerId },
-        });
+        const query = `
+            INSERT INTO "kodus_workflow"."inbox_messages"
+                ("messageId", "consumerId", "job_id", "status", "processedAt", "createdAt", "updatedAt")
+            VALUES
+                ($1, $2, $3, $4, NOW(), NOW(), NOW())
+            ON CONFLICT ("consumerId", "messageId")
+            DO UPDATE SET
+                "status" = $4,
+                "processedAt" = NOW(),
+                "updatedAt" = NOW();
+        `;
 
-        if (existing) {
-            await manager.update(
-                InboxMessageModel,
-                { uuid: existing.uuid },
-                { processed: true, processedAt: new Date() },
-            );
-        } else {
-            const model = manager.create(InboxMessageModel, {
-                messageId,
-                consumerId,
-                processed: true,
-                processedAt: new Date(),
-            });
-            await manager.save(InboxMessageModel, model);
-        }
+        await manager.query(query, [
+            messageId,
+            consumerId,
+            jobId || null,
+            InboxStatus.PROCESSED,
+        ]);
     }
 }

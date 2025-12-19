@@ -28,7 +28,7 @@ import { PermissionValidationModule } from '@libs/ee/shared/permission-validatio
         TypeOrmModule.forFeature([ContextReferenceModel]),
         forwardRef(() => IntegrationConfigModule),
         forwardRef(() => PlatformModule),
-        McpCoreModule, // For MCPToolMetadataService
+        forwardRef(() => McpCoreModule), // For MCPToolMetadataService
         forwardRef(() => AgentsModule), // For ContextEvidenceAgentProvider
         forwardRef(() => PermissionValidationModule),
     ],

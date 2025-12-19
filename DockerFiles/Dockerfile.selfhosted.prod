@@ -1,0 +1,50 @@
+# Self-hosted runtime image (single component: api | worker | webhooks)
+#
+# Build args:
+#   - APP_NAME: api | worker | webhooks
+#
+# Runtime:
+#   - Starts `node dist/apps/<APP_NAME>/main.js`
+
+FROM node:22.14.0-slim AS base
+WORKDIR /usr/src/app
+
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ca-certificates git python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN corepack disable \
+ && npm i -g yarn@1.22.22
+
+FROM base AS deps
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile --production=false
+
+FROM deps AS build
+ARG APP_NAME
+ARG RELEASE_VERSION=local
+ENV SENTRY_RELEASE=$RELEASE_VERSION
+
+COPY . .
+
+RUN if [ -z "$APP_NAME" ]; then echo "APP_NAME is required (api|worker|webhooks)"; exit 1; fi
+RUN yarn build "$APP_NAME"
+
+# Prune to production dependencies only
+RUN yarn install --frozen-lockfile --production=true
+
+FROM base AS runtime
+ENV NODE_ENV=production
+
+ARG APP_NAME
+ENV APP_NAME=$APP_NAME
+
+COPY --from=build /usr/src/app/dist ./dist
+COPY --from=build /usr/src/app/node_modules ./node_modules
+COPY --from=build /usr/src/app/package.json ./package.json
+COPY --from=build /usr/src/app/default-kodus-config.yml ./default-kodus-config.yml
+
+CMD ["sh", "-lc", "node dist/apps/$APP_NAME/main.js"]
+

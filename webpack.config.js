@@ -4,14 +4,30 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const { RunScriptWebpackPlugin } = require('run-script-webpack-plugin');
 
 module.exports = function (options, webpack) {
+    const debugPort = process.env.DEBUG_PORT || 9229;
+    const debugBreak = process.env.DEBUG_BREAK === 'true';
+    const inspectArg = debugBreak ? '--inspect-brk' : '--inspect';
+
     return {
         ...options,
-        entry: ['webpack/hot/poll?100', options.entry],
+        cache: {
+            type: 'filesystem',
+            cacheDirectory: path.resolve(__dirname, '.build_cache'),
+        },
+        stats: 'errors-warnings',
+        devtool: 'source-map',
         externals: [
             nodeExternals({
-                allowlist: ['webpack/hot/poll?100'],
+                allowlist: [],
             }),
         ],
+        output: {
+            ...options.output,
+            devtoolModuleFilenameTemplate: (info) =>
+                info.absoluteResourcePath.replace(/\\\\/g, '/'),
+            devtoolFallbackModuleFilenameTemplate: (info) =>
+                info.absoluteResourcePath.replace(/\\\\/g, '/'),
+        },
         resolve: {
             plugins: [
                 new TsconfigPathsPlugin({ configFile: './tsconfig.json' }),
@@ -27,6 +43,7 @@ module.exports = function (options, webpack) {
             new RunScriptWebpackPlugin({
                 name: options.output.filename,
                 autoRestart: false,
+                nodeArgs: [`${inspectArg}=0.0.0.0:${debugPort}`],
             }),
         ],
         watchOptions: {
@@ -42,7 +59,7 @@ module.exports = function (options, webpack) {
                         {
                             loader: 'ts-loader',
                             options: {
-                                transpileOnly: true, // Acelera o build ignorando checagem de tipos (já feita pelo IDE/TSC check)
+                                transpileOnly: true,
                             },
                         },
                     ],

@@ -5,7 +5,7 @@ import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
 import { IssuesEntity } from '../entities/issues.entity';
 import { IIssue } from '../interfaces/issues.interface';
 
-export const ISSUES_REPOSITORY_TOKEN = Symbol('IssuesRepository');
+export const ISSUES_REPOSITORY_TOKEN = Symbol.for('IssuesRepository');
 
 export interface IIssuesRepository {
     getNativeCollection(): any;

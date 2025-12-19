@@ -3,7 +3,7 @@ import { AuthModel } from '@libs/identity/infrastructure/adapters/repositories/s
 import { AuthEntity } from '../entities/auth.entity';
 import { IAuth } from '../interfaces/auth.interface';
 
-export const AUTH_REPOSITORY_TOKEN = Symbol('AuthRepository');
+export const AUTH_REPOSITORY_TOKEN = Symbol.for('AuthRepository');
 
 export interface IAuthRepository {
     saveRefreshToken(auth: IAuth): Promise<AuthEntity | undefined>;

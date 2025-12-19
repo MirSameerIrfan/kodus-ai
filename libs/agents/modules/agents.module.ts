@@ -17,7 +17,7 @@ import { LLMModule } from '@kodus/kodus-common/llm';
         forwardRef(() => OrganizationModule),
         forwardRef(() => ParametersModule),
         LLMModule,
-        McpCoreModule,
+        forwardRef(() => McpCoreModule),
     ],
     providers: [
         BusinessRulesValidationAgentUseCase,

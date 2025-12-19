@@ -178,7 +178,7 @@ export class WorkflowJobRepository implements IWorkflowJobRepository {
         }
     }
 
-    async getExecutionHistory(jobId: string): Promise<IJobExecutionHistory[]> {
+    async getExecutionHistory(_jobId: string): Promise<IJobExecutionHistory[]> {
         // TODO: Implement execution history tracking if needed
         // For now, return empty array as we don't have a separate execution_history table
         return [];

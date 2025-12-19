@@ -275,10 +275,10 @@ export class CodeReviewFeedbackCronProvider {
         };
 
         const runCodeReviewReactionsPayload =
-            this.messageBroker.transformMessageToMessageBroker(
-                'cron.codeReviewFeedback.syncCodeReviewReactions',
-                task,
-            );
+            this.messageBroker.transformMessageToMessageBroker({
+                eventName: 'cron.codeReviewFeedback.syncCodeReviewReactions',
+                message: task,
+            });
 
         await this.messageBroker.publishMessage(
             {

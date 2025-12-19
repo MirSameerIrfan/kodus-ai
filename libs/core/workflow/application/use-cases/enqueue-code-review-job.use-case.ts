@@ -11,15 +11,14 @@ import { HandlerType } from '@libs/core/workflow/domain/enums/handler-type.enum'
 import { JobStatus } from '@libs/core/workflow/domain/enums/job-status.enum';
 import { WorkflowType } from '@libs/core/workflow/domain/enums/workflow-type.enum';
 import { createLogger } from '@kodus/flow';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 
 export interface EnqueueCodeReviewJobInput {
+    payload: any;
+    event: string;
     platformType: PlatformType;
-    repositoryId: string;
-    repositoryName: string;
-    pullRequestNumber: number;
-    pullRequestData: Record<string, unknown>;
-    organizationId: string;
-    teamId: string;
+    organizationAndTeam: OrganizationAndTeamData;
+    correlationId?: string;
 }
 
 @Injectable()
@@ -33,7 +32,7 @@ export class EnqueueCodeReviewJobUseCase implements IUseCase {
 
     async execute(input: EnqueueCodeReviewJobInput): Promise<string> {
         try {
-            const correlationId = uuid();
+            const correlationId = input.correlationId || uuid();
 
             this.logger.log({
                 message: 'Enqueuing code review job',
@@ -41,31 +40,27 @@ export class EnqueueCodeReviewJobUseCase implements IUseCase {
                 metadata: {
                     correlationId,
                     platformType: input.platformType,
-                    repositoryId: input.repositoryId,
-                    pullRequestNumber: input.pullRequestNumber,
+                    repositoryId: input.payload.repositoryId,
+                    pullRequestNumber: input.payload.pullRequestNumber,
                 },
             });
 
-            // Cria WorkflowJob genérico com dados do code review no payload
+            const jobPayload = {
+                event: input.event,
+                platformType: input.platformType,
+                payload: input.payload,
+            };
+
             const jobId = await this.jobQueueService.enqueue({
                 correlationId,
                 workflowType: WorkflowType.CODE_REVIEW,
                 handlerType: HandlerType.PIPELINE_SYNC,
-                payload: {
-                    platformType: input.platformType,
-                    repositoryId: input.repositoryId,
-                    repositoryName: input.repositoryName,
-                    pullRequestNumber: input.pullRequestNumber,
-                    pullRequestData: input.pullRequestData,
-                },
-                organizationAndTeam: {
-                    organizationId: input.organizationId,
-                    teamId: input.teamId,
-                },
+                payload: jobPayload,
+                organizationAndTeam: input.organizationAndTeam,
                 status: JobStatus.PENDING,
                 priority: 0,
                 retryCount: 0,
-                maxRetries: 3,
+                maxRetries: 1,
             });
 
             this.logger.log({

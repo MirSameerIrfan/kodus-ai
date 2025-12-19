@@ -13,7 +13,10 @@
                 "outDir": "dist"
             }
         ],
-        "watchAssets": true
+        "watchAssets": true,
+        "watchOptions": {
+            "poll": 1000
+        }
     },
     "projects": {
         "webhooks": {

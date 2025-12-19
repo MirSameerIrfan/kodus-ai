@@ -4,7 +4,7 @@ import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/
 import { IntegrationEntity } from '../entities/integration.entity';
 import { IIntegration } from '../interfaces/integration.interface';
 
-export const INTEGRATION_REPOSITORY_TOKEN = Symbol('IntegrationRepository');
+export const INTEGRATION_REPOSITORY_TOKEN = Symbol.for('IntegrationRepository');
 
 export interface IIntegrationRepository {
     find(filter?: Partial<IIntegration>): Promise<IntegrationEntity[]>;

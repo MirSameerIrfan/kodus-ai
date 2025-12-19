@@ -7,10 +7,8 @@
 # Usage:
 # 1. Create a `.env.prod` file by copying `.env.example.prod`.
 # 2. Fill in the required environment variables in `.env.prod`.
-# 3. Run `docker compose -f docker-compose.prod.yml --env-file .env.prod up -d`.
+# 3. Run `ENV_FILE=.env.prod docker compose -f docker-compose.prod.yml up -d`.
 # ==============================================================================
-
-version: '3.8'
 
 services:
   #----------------------------------------------------------------
@@ -21,11 +19,11 @@ services:
     container_name: kodus_api_prod
     restart: unless-stopped
     env_file:
-      - .env.prod
+      - ${ENV_FILE:-.env.prod}
     environment:
       - API_CLOUD_MODE=false # Default for self-hosted
     ports:
-      - "3331:3000" # Maps internal port 3000 to host port 3331
+      - "3331:3001" # Host 3331 -> container API_PORT (default 3001)
     depends_on:
       db_postgres:
         condition: service_healthy
@@ -39,7 +37,7 @@ services:
     container_name: kodus_worker_prod
     restart: unless-stopped
     env_file:
-      - .env.prod
+      - ${ENV_FILE:-.env.prod}
     environment:
       - API_CLOUD_MODE=false
     depends_on:
@@ -55,11 +53,11 @@ services:
     container_name: kodus_webhooks_prod
     restart: unless-stopped
     env_file:
-      - .env.prod
+      - ${ENV_FILE:-.env.prod}
     environment:
       - API_CLOUD_MODE=false
     ports:
-      - "3333:3000" # Assumes webhooks also run on internal port 3000
+      - "3333:3332" # Host 3333 -> container WEBHOOKS_PORT (default 3332)
     depends_on:
       db_postgres:
         condition: service_healthy
@@ -76,7 +74,7 @@ services:
     container_name: kodus_postgres_prod
     restart: unless-stopped
     env_file:
-      - .env.prod
+      - ${ENV_FILE:-.env.prod}
     volumes:
       - pgdata_prod:/var/lib/postgresql/data
     networks:
@@ -93,7 +91,7 @@ services:
     container_name: kodus_mongodb_prod
     restart: unless-stopped
     env_file:
-      - .env.prod
+      - ${ENV_FILE:-.env.prod}
     volumes:
       - mongodbdata_prod:/data/db
     networks:

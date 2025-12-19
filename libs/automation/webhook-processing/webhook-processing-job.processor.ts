@@ -1,10 +1,8 @@
 import { createLogger } from '@kodus/flow';
-import { Injectable, Inject, Optional } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, Inject } from '@nestjs/common';
 
 import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 
-import { EnqueueCodeReviewJobUseCase } from '@libs/core/workflow/application/use-cases/enqueue-code-review-job.use-case';
 import { IJobProcessorService } from '@libs/core/workflow/domain/contracts/job-processor.service.contract';
 import { ErrorClassification } from '@libs/core/workflow/domain/enums/error-classification.enum';
 import { JobStatus } from '@libs/core/workflow/domain/enums/job-status.enum';
@@ -13,7 +11,6 @@ import {
     IWebhookEventHandler,
     IWebhookEventParams,
 } from '@libs/platform/domain/platformIntegrations/interfaces/webhook-event-handler.interface';
-import { CodeReviewValidationService } from '@libs/automation/infrastructure/adapters/services/code-review-validation.service';
 import { ObservabilityService } from '@libs/core/log/observability.service';
 import {
     IWorkflowJobRepository,
@@ -38,7 +35,6 @@ export class WebhookProcessingJobProcessorService implements IJobProcessorServic
     constructor(
         @Inject(WORKFLOW_JOB_REPOSITORY_TOKEN)
         private readonly jobRepository: IWorkflowJobRepository,
-        private readonly validationService: CodeReviewValidationService,
         @Inject('GITHUB_WEBHOOK_HANDLER')
         private readonly githubPullRequestHandler: IWebhookEventHandler,
         @Inject('GITLAB_WEBHOOK_HANDLER')
@@ -47,9 +43,6 @@ export class WebhookProcessingJobProcessorService implements IJobProcessorServic
         private readonly bitbucketPullRequestHandler: IWebhookEventHandler,
         @Inject('AZURE_REPOS_WEBHOOK_HANDLER')
         private readonly azureReposPullRequestHandler: IWebhookEventHandler,
-        @Optional()
-        private readonly enqueueCodeReviewJobUseCase?: EnqueueCodeReviewJobUseCase,
-        private readonly configService?: ConfigService,
         private readonly observability?: ObservabilityService,
     ) {
         // Initialize handlers map
@@ -95,7 +88,6 @@ export class WebhookProcessingJobProcessorService implements IJobProcessorServic
                 });
 
                 try {
-                    // Extract platformType from metadata
                     const platformType = job.metadata?.platformType as
                         | PlatformType
                         | undefined;
@@ -105,7 +97,6 @@ export class WebhookProcessingJobProcessorService implements IJobProcessorServic
                         );
                     }
 
-                    // Extract event from metadata
                     const event = job.metadata?.event as string | undefined;
                     if (!event) {
                         throw new Error(
@@ -126,6 +117,7 @@ export class WebhookProcessingJobProcessorService implements IJobProcessorServic
                         payload: job.payload,
                         platformType,
                         event,
+                        correlationId: job.correlationId,
                     };
 
                     // Check if handler can handle this event
@@ -145,15 +137,8 @@ export class WebhookProcessingJobProcessorService implements IJobProcessorServic
                         });
                         return;
                     }
-
-                    // Execute handler
-                    // Handler will:
-                    // 1. Save PR to MongoDB (using SavePullRequestUseCase)
-                    // 2. Validate organization/team/license (using CodeReviewValidationService internally)
-                    // 3. Enqueue CODE_REVIEW if validations pass
                     await handler.execute(webhookParams);
 
-                    // Mark job as completed
                     await this.jobRepository.update(jobId, {
                         status: JobStatus.COMPLETED,
                     });
@@ -185,7 +170,6 @@ export class WebhookProcessingJobProcessorService implements IJobProcessorServic
                         },
                     });
 
-                    // Mark as FAILED (no retry for validation errors)
                     await this.jobRepository.update(jobId, {
                         status: JobStatus.FAILED,
                         errorClassification: ErrorClassification.PERMANENT,

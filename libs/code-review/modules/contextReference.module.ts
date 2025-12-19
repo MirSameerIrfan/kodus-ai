@@ -21,7 +21,7 @@ import { McpCoreModule } from '@libs/mcp-server/mcp-core.module';
         forwardRef(() => PermissionValidationModule),
         forwardRef(() => PromptsModule),
         forwardRef(() => PlatformModule),
-        McpCoreModule,
+        forwardRef(() => McpCoreModule),
     ],
     providers: [
         ContextReferenceService,

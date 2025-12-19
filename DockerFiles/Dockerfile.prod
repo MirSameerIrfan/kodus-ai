@@ -1,84 +1,49 @@
-# ==================================
-# Base Stage
-# Defines the specific Node.js slim environment.
-# ==================================
+# Cloud/QA "orchestrator" image (runs api + webhooks + worker via PM2)
+#
+# Notes:
+# - We keep full dependencies (including dev deps) so we can run TypeORM migrations via ts-node.
+# - Apps are built as webpack bundles: dist/apps/<app>/main.js
+
 FROM node:22.14.0-slim AS base
 WORKDIR /usr/src/app
 
-# Install git and other essentials
-RUN apt-get update && apt-get install -y --no-install-recommends git libc6 && rm -rf /var/lib/apt/lists/*
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 
-# ==================================
-# Dependencies Stage
-# Installs all dependencies to leverage Docker cache.
-# ==================================
-FROM base AS dependencies
-WORKDIR /usr/src/app
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ca-certificates git python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy dependency definition files
+RUN corepack disable \
+ && npm i -g yarn@1.22.22 pm2@5.4.3
+
+FROM base AS deps
 COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile
 
-# Install all dependencies
-RUN yarn install --frozen-lockfile --production=false
-
-# ==================================
-# Builder Stage
-# Builds the specific application using an ARG.
-# ==================================
-FROM dependencies AS builder
-WORKDIR /usr/src/app
-
-# Declare build arguments
-ARG APP_NAME
-ARG API_CLOUD_MODE=false
+FROM deps AS build
 ARG RELEASE_VERSION=local
-
-# Copy the rest of the source code
+ENV SENTRY_RELEASE=$RELEASE_VERSION
 COPY . .
+RUN yarn build:apps
 
-# Check if APP_NAME is provided
-RUN if [ -z "$APP_NAME" ]; then \
-      echo "Error: Build argument APP_NAME is required."; \
-      exit 1; \
-    fi
+FROM deps AS runtime
+ENV NODE_ENV=production
 
-# Build the specified application
-RUN yarn build $APP_NAME
+COPY --from=build /usr/src/app/dist ./dist
+COPY --from=build /usr/src/app/apps ./apps
+COPY --from=build /usr/src/app/libs ./libs
+COPY --from=build /usr/src/app/scripts ./scripts
+COPY --from=build /usr/src/app/nest-cli.json ./nest-cli.json
+COPY --from=build /usr/src/app/tsconfig*.json ./
+COPY --from=build /usr/src/app/package.json ./package.json
+COPY --from=build /usr/src/app/default-kodus-config.yml ./default-kodus-config.yml
+COPY --from=build /usr/src/app/ecosystem.config.js ./ecosystem.config.js
 
-# Prune dev dependencies for a smaller production image
-RUN yarn install --frozen-lockfile --production=true
+RUN mkdir -p /usr/src/app/certs
 
-# ==================================
-# Production Stage
-# Creates the final, lean production image.
-# ==================================
-FROM base AS production
-WORKDIR /usr/src/app
+COPY --chmod=0755 docker/prod-entrypoint.sh /usr/local/bin/prod-entrypoint
+ENTRYPOINT ["/usr/local/bin/prod-entrypoint"]
 
-# Declare build arguments again for use in this stage
-ARG API_CLOUD_MODE=false
-
-# Copy built application from builder stage
-COPY --from=builder /usr/src/app/dist ./dist
-
-# Copy production node_modules from builder stage
-COPY --from=builder /usr/src/app/node_modules ./node_modules
-
-# Copy necessary config files
-COPY --from=builder /usr/src/app/package.json .
-COPY --from=builder /usr/src/app/ecosystem.config.js .
-
-# Set environment at runtime
-# 1. API Flow (Standard TSC): File exists in libs/ee/...
-RUN if [ -f dist/ee/configs/environment/environment.template.ts ]; then \
-    sed -e "s/__CLOUD_MODE__/${API_CLOUD_MODE}/g" -e "s/__DEVELOPMENT_MODE__/false/g" dist/ee/configs/environment/environment.template.ts > dist/ee/configs/environment/environment.ts; \
-    fi
-
-# 2. Worker Flow (Webpack): The file does not exist because it became a bundle.
-# We need to generate an environment.js manually for require('./environment') to work.
-RUN echo "Object.defineProperty(exports, \"__esModule\", { value: true }); exports.environment = { API_CLOUD_MODE: ${API_CLOUD_MODE}, API_DEVELOPMENT_MODE: false };" > dist/environment.js
-# Copy to apps subfolders (where main.js might be)
-RUN for d in dist/apps/*; do if [ -d "$d" ]; then cp dist/environment.js "$d/"; fi; done
-
-# Set the command to run the application using pm2
+# Default to "production" pm2 env. QA Dockerfile overrides this to "homolog".
 CMD ["pm2-runtime", "start", "ecosystem.config.js", "--env", "production"]
+

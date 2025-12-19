@@ -43,7 +43,7 @@ import {
 } from '@libs/common/utils/langchainCommon/prompts';
 import { prompt_selectorLightOrHeavyMode_system } from '@libs/common/utils/langchainCommon/prompts/seletorLightOrHeavyMode';
 
-export const LLM_ANALYSIS_SERVICE_TOKEN = Symbol('LLMAnalysisService');
+export const LLM_ANALYSIS_SERVICE_TOKEN = Symbol.for('LLMAnalysisService');
 
 @Injectable()
 export class LLMAnalysisService implements IAIAnalysisService {

@@ -6,7 +6,7 @@ import {
     UsageByPrResultContract,
 } from '../types/tokenUsage.types';
 
-export const TOKEN_USAGE_REPOSITORY_TOKEN = Symbol('TokenUsageRepository');
+export const TOKEN_USAGE_REPOSITORY_TOKEN = Symbol.for('TokenUsageRepository');
 
 export interface ITokenUsageRepository {
     getSummary(query: TokenUsageQueryContract): Promise<UsageSummaryContract>;

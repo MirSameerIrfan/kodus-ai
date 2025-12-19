@@ -5,7 +5,7 @@ import {
     KodyRulesStatus,
 } from '../interfaces/kodyRules.interface';
 
-export const KODY_RULES_REPOSITORY_TOKEN = Symbol('KodyRulesRepository');
+export const KODY_RULES_REPOSITORY_TOKEN = Symbol.for('KodyRulesRepository');
 
 export interface IKodyRulesRepository {
     getNativeCollection(): any;

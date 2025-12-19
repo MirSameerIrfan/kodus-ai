@@ -1,18 +1,25 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class InboxOutboxWorkflow1765994361756 implements MigrationInterface {
-    name = 'InboxOutboxWorkflow1765994361756';
+export class InboxOutboxWorkflow1766092668018 implements MigrationInterface {
+    name = 'InboxOutboxWorkflow1766092668018'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query('CREATE SCHEMA IF NOT EXISTS "kodus_workflow"');
+        await queryRunner.query(`
+            CREATE TYPE "kodus_workflow"."inbox_messages_status_enum" AS ENUM('READY', 'PROCESSING', 'PROCESSED', 'FAILED')
+        `);
         await queryRunner.query(`
             CREATE TABLE "kodus_workflow"."inbox_messages" (
                 "uuid" uuid NOT NULL DEFAULT uuid_generate_v4(),
                 "createdAt" TIMESTAMP NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
                 "updatedAt" TIMESTAMP NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
                 "messageId" character varying(255) NOT NULL,
-                "consumerId" character varying(255),
-                "processed" boolean NOT NULL DEFAULT false,
+                "consumerId" character varying(255) NOT NULL DEFAULT 'default',
+                "status" "kodus_workflow"."inbox_messages_status_enum" NOT NULL DEFAULT 'READY',
+                "attempts" integer NOT NULL DEFAULT '0',
+                "nextAttemptAt" TIMESTAMP NOT NULL DEFAULT now(),
+                "lockedAt" TIMESTAMP,
+                "lockedBy" character varying(255),
+                "lastError" text,
                 "processedAt" TIMESTAMP,
                 "job_id" uuid,
                 CONSTRAINT "PK_b840542ad70b1d599d0a54c84a3" PRIMARY KEY ("uuid")
@@ -22,7 +29,13 @@ export class InboxOutboxWorkflow1765994361756 implements MigrationInterface {
             CREATE UNIQUE INDEX "IDX_inbox_messages_consumer_message" ON "kodus_workflow"."inbox_messages" ("consumerId", "messageId")
         `);
         await queryRunner.query(`
-            CREATE UNIQUE INDEX "IDX_inbox_messages_message_id" ON "kodus_workflow"."inbox_messages" ("messageId")
+            CREATE INDEX "IDX_inbox_messages_created_at" ON "kodus_workflow"."inbox_messages" ("createdAt")
+        `);
+        await queryRunner.query(`
+            CREATE INDEX "IDX_inbox_messages_next_attempt_at" ON "kodus_workflow"."inbox_messages" ("nextAttemptAt")
+        `);
+        await queryRunner.query(`
+            CREATE INDEX "IDX_inbox_messages_status" ON "kodus_workflow"."inbox_messages" ("status")
         `);
         await queryRunner.query(`
             CREATE TYPE "kodus_workflow"."workflow_jobs_workflowtype_enum" AS ENUM(
@@ -99,6 +112,9 @@ export class InboxOutboxWorkflow1765994361756 implements MigrationInterface {
             CREATE INDEX "IDX_workflow_jobs_status" ON "kodus_workflow"."workflow_jobs" ("status")
         `);
         await queryRunner.query(`
+            CREATE TYPE "kodus_workflow"."outbox_messages_status_enum" AS ENUM('READY', 'PROCESSING', 'SENT', 'FAILED')
+        `);
+        await queryRunner.query(`
             CREATE TABLE "kodus_workflow"."outbox_messages" (
                 "uuid" uuid NOT NULL DEFAULT uuid_generate_v4(),
                 "createdAt" TIMESTAMP NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
@@ -106,7 +122,12 @@ export class InboxOutboxWorkflow1765994361756 implements MigrationInterface {
                 "exchange" character varying(255) NOT NULL,
                 "routingKey" character varying(255) NOT NULL,
                 "payload" jsonb NOT NULL,
-                "processed" boolean NOT NULL DEFAULT false,
+                "status" "kodus_workflow"."outbox_messages_status_enum" NOT NULL DEFAULT 'READY',
+                "attempts" integer NOT NULL DEFAULT '0',
+                "nextAttemptAt" TIMESTAMP NOT NULL DEFAULT now(),
+                "lockedAt" TIMESTAMP,
+                "lockedBy" character varying(255),
+                "lastError" text,
                 "processedAt" TIMESTAMP,
                 "job_id" uuid,
                 CONSTRAINT "PK_76a88191a9dcb3c0c4d9fde5818" PRIMARY KEY ("uuid")
@@ -116,7 +137,10 @@ export class InboxOutboxWorkflow1765994361756 implements MigrationInterface {
             CREATE INDEX "IDX_outbox_messages_created_at" ON "kodus_workflow"."outbox_messages" ("createdAt")
         `);
         await queryRunner.query(`
-            CREATE INDEX "IDX_outbox_messages_processed" ON "kodus_workflow"."outbox_messages" ("processed")
+            CREATE INDEX "IDX_outbox_messages_next_attempt_at" ON "kodus_workflow"."outbox_messages" ("nextAttemptAt")
+        `);
+        await queryRunner.query(`
+            CREATE INDEX "IDX_outbox_messages_status" ON "kodus_workflow"."outbox_messages" ("status")
         `);
         await queryRunner.query(`
             ALTER TABLE "team_member" DROP COLUMN "teamRole"
@@ -156,13 +180,19 @@ export class InboxOutboxWorkflow1765994361756 implements MigrationInterface {
             ADD "teamRole" character varying NOT NULL DEFAULT 'team_member'
         `);
         await queryRunner.query(`
-            DROP INDEX "kodus_workflow"."IDX_outbox_messages_processed"
+            DROP INDEX "kodus_workflow"."IDX_outbox_messages_status"
+        `);
+        await queryRunner.query(`
+            DROP INDEX "kodus_workflow"."IDX_outbox_messages_next_attempt_at"
         `);
         await queryRunner.query(`
             DROP INDEX "kodus_workflow"."IDX_outbox_messages_created_at"
         `);
         await queryRunner.query(`
             DROP TABLE "kodus_workflow"."outbox_messages"
+        `);
+        await queryRunner.query(`
+            DROP TYPE "kodus_workflow"."outbox_messages_status_enum"
         `);
         await queryRunner.query(`
             DROP INDEX "kodus_workflow"."IDX_workflow_jobs_status"
@@ -192,7 +222,13 @@ export class InboxOutboxWorkflow1765994361756 implements MigrationInterface {
             DROP TYPE "kodus_workflow"."workflow_jobs_workflowtype_enum"
         `);
         await queryRunner.query(`
-            DROP INDEX "kodus_workflow"."IDX_inbox_messages_message_id"
+            DROP INDEX "kodus_workflow"."IDX_inbox_messages_status"
+        `);
+        await queryRunner.query(`
+            DROP INDEX "kodus_workflow"."IDX_inbox_messages_next_attempt_at"
+        `);
+        await queryRunner.query(`
+            DROP INDEX "kodus_workflow"."IDX_inbox_messages_created_at"
         `);
         await queryRunner.query(`
             DROP INDEX "kodus_workflow"."IDX_inbox_messages_consumer_message"
@@ -200,5 +236,9 @@ export class InboxOutboxWorkflow1765994361756 implements MigrationInterface {
         await queryRunner.query(`
             DROP TABLE "kodus_workflow"."inbox_messages"
         `);
+        await queryRunner.query(`
+            DROP TYPE "kodus_workflow"."inbox_messages_status_enum"
+        `);
     }
+
 }

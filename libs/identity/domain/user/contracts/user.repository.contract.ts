@@ -4,7 +4,7 @@ import { Role } from '../../permissions/enums/permissions.enum';
 import { UserEntity } from '../entities/user.entity';
 import { IUser } from '../interfaces/user.interface';
 
-export const USER_REPOSITORY_TOKEN = Symbol('UserRepository');
+export const USER_REPOSITORY_TOKEN = Symbol.for('UserRepository');
 
 export interface IUserRepository {
     find(filter: Partial<IUser>): Promise<UserEntity[]>;

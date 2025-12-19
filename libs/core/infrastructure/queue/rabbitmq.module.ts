@@ -16,7 +16,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { MESSAGE_BROKER_SERVICE_TOKEN } from '@libs/core/domain/contracts/message-broker.service.contracts';
 import { RabbitMQLoader } from '@libs/core/infrastructure/config/loaders/rabbitmq.loader';
-import { RabbitmqConsumeErrorFilter } from '@libs/core/infrastructure/filters/rabbitmq-consume-error.exception';
+import { RabbitMQErrorHandler } from '@libs/core/infrastructure/queue/rabbitmq-error.handler';
+import { RabbitMQDLQInitializer } from '@libs/core/infrastructure/queue/rabbitmq-dlq.initializer';
 import { MessageBrokerService } from '@libs/core/infrastructure/queue/messageBroker/messageBroker.service';
 import { RABBITMQ_TOPOLOGY_CONFIG } from './config/rabbitmq-topology.config';
 
@@ -42,6 +43,8 @@ export class RabbitMQWrapperModule {
                 provide: MESSAGE_BROKER_SERVICE_TOKEN,
                 useClass: MessageBrokerService,
             },
+            RabbitMQErrorHandler,
+            RabbitMQDLQInitializer,
         ];
 
         const exports: ModuleMetadata['exports'] = [
@@ -77,8 +80,11 @@ export class RabbitMQWrapperModule {
                         heartbeat: 60,
                     },
                     reconnectTimeInSeconds: 10,
-                    enableControllerDiscovery: true, // IMPORTANT: Must be true to find consumers
-                    prefetchCount: 1,
+                    enableControllerDiscovery: options.enableConsumers,
+                    prefetchCount:
+                        configService.get<number>(
+                            'workflowQueue.WORKFLOW_QUEUE_WORKER_PREFETCH',
+                        ) ?? 1,
                 };
             },
             inject: [ConfigService],
@@ -96,11 +102,6 @@ export class RabbitMQWrapperModule {
             );
             imports.push(rabbitMQModule);
             exports.push(rabbitMQModule);
-
-            // Only register consumers if enabled
-            if (options.enableConsumers) {
-                providers.push(RabbitmqConsumeErrorFilter);
-            }
         } else {
             console.log(
                 '[RabbitMQWrapperModule] RabbitMQ is DISABLED. Skipping RabbitMQModule import.',

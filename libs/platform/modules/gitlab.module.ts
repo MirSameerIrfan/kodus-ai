@@ -13,7 +13,7 @@ import { McpCoreModule } from '@libs/mcp-server/mcp-core.module';
         forwardRef(() => IntegrationCoreModule),
         forwardRef(() => IntegrationConfigCoreModule),
         forwardRef(() => GlobalCacheModule),
-        McpCoreModule,
+        forwardRef(() => McpCoreModule),
     ],
     providers: [GitlabService],
     exports: [GitlabService],

@@ -4,18 +4,6 @@ import { WorkflowQueueConfig } from '../types/general/workflow-queue.type';
 export const WorkflowQueueLoader = registerAs(
     'workflowQueue',
     (): WorkflowQueueConfig => ({
-        WORKFLOW_QUEUE_ENABLED:
-            process.env.WORKFLOW_QUEUE_ENABLED === 'true' || false,
-        WORKFLOW_QUEUE_ENABLED_GITHUB:
-            process.env.WORKFLOW_QUEUE_ENABLED_GITHUB === 'true' || false,
-        WORKFLOW_QUEUE_ENABLED_GITLAB:
-            process.env.WORKFLOW_QUEUE_ENABLED_GITLAB === 'true' || false,
-        WORKFLOW_QUEUE_ENABLED_BITBUCKET:
-            process.env.WORKFLOW_QUEUE_ENABLED_BITBUCKET === 'true' || false,
-        WORKFLOW_QUEUE_ENABLED_AZURE_REPOS:
-            process.env.WORKFLOW_QUEUE_ENABLED_AZURE_REPOS === 'true' || false,
-        WORKFLOW_QUEUE_WORKER_ENABLED:
-            process.env.WORKFLOW_QUEUE_WORKER_ENABLED === 'true' || false,
         WORKFLOW_QUEUE_WORKER_PREFETCH: parseInt(
             process.env.WORKFLOW_QUEUE_WORKER_PREFETCH || '1',
             10,

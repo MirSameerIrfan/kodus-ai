@@ -2,7 +2,9 @@ import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/
 
 import { IAuthIntegrationRepository } from './auth-integration.repository.contracts';
 
-export const AUTH_INTEGRATION_SERVICE_TOKEN = Symbol('AuthIntegrationService');
+export const AUTH_INTEGRATION_SERVICE_TOKEN = Symbol.for(
+    'AuthIntegrationService',
+);
 
 export interface IAuthIntegrationService extends IAuthIntegrationRepository {
     getPlatformAuthDetails(
