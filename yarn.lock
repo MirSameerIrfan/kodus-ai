@@ -1249,10 +1249,10 @@
     zod "^4.1.13"
     zod-from-json-schema "^0.5.2"
 
-"@kodus/kodus-common@1.2.17":
-  version "1.2.17"
-  resolved "https://us-central1-npm.pkg.dev/kodus-infra-prod/kodus-pkg/@kodus/kodus-common/-/@kodus/kodus-common-1.2.17.tgz#5a0bce0581ec171a44d1f6175173ade77926e449"
-  integrity sha512-xGLrnKJteLkg8XFbOaBjaiB57+RY7UKiKRLotV5ItE/Z2DX7lWpbDTfThqSCWsm5pPX/clBuRR8rgRmeJdryUQ==
+"@kodus/kodus-common@1.2.18":
+  version "1.2.18"
+  resolved "https://us-central1-npm.pkg.dev/kodus-infra-prod/kodus-pkg/@kodus/kodus-common/-/@kodus/kodus-common-1.2.18.tgz#d169a9adb2ac6ff13c1b545a08f5d4b11fb4d96b"
+  integrity sha512-U39FZL+06gX3myo0RJrWxZT2yBthIZXq+VXcjixosY/wvuc7TIDo3HW7c9425Iz8H8BLqIbSFuxI/mqajBQ5jw==
 
 "@kwsites/file-exists@^1.1.1":
   version "1.1.1"

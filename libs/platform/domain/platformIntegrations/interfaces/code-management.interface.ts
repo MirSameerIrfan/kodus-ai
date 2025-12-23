@@ -212,6 +212,7 @@ export interface ICodeManagementService
         includeFooter?: boolean;
         language?: string;
         organizationAndTeamData: OrganizationAndTeamData;
+        suggestionCopyPrompt?: boolean;
     }): Promise<string>;
 
     getRepositoryTree(params: {

@@ -280,6 +280,10 @@ export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
                     overrideConfig.globalSettings?.hideComments ??
                     baseConfig.globalSettings?.hideComments ??
                     false,
+                suggestionCopyPrompt:
+                    overrideConfig.globalSettings?.suggestionCopyPrompt ??
+                    baseConfig.globalSettings?.suggestionCopyPrompt ??
+                    true,
             },
         } as IPullRequestMessages;
     }
@@ -288,7 +292,10 @@ export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
         return {
             startReviewMessage: config.startReviewMessage,
             endReviewMessage: config.endReviewMessage,
-            globalSettings: config.globalSettings || { hideComments: false },
+            globalSettings: config.globalSettings || {
+                hideComments: false,
+                suggestionCopyPrompt: true,
+            },
         } as IPullRequestMessages;
     }
 
@@ -358,6 +365,9 @@ export class CreateOrUpdatePullRequestMessagesUseCase implements IUseCase {
         if (!settings1 && !settings2) return true;
         if (!settings1 || !settings2) return false;
 
-        return settings1.hideComments === settings2.hideComments;
+        return (
+            settings1.hideComments === settings2.hideComments &&
+            settings1.suggestionCopyPrompt === settings2.suggestionCopyPrompt
+        );
     }
 }

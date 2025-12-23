@@ -26,10 +26,10 @@ import {
 } from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context.utils';
 import { FileContextAugmentationService } from '@libs/ai-engine/infrastructure/adapters/services/context/file-context-augmentation.service';
 import {
-    FileChangeContext,
-    AnalysisContext,
     AIAnalysisResult,
+    AnalysisContext,
     CodeSuggestion,
+    FileChangeContext,
     ReviewModeResponse,
     ReviewOptions,
     SuggestionControlConfig,
@@ -1226,6 +1226,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
                 severity?: string;
                 violatedKodyRulesIds?: string[];
                 brokenKodyRulesIds?: string[];
+                llmPrompt?: string;
             }>;
         }
 
@@ -1281,6 +1282,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
                             Number(suggestion.relevantLinesEnd) || undefined,
                         label: suggestion.label,
                         severity: suggestion.severity,
+                        llmPrompt: suggestion.llmPrompt,
                     };
 
                     // "Has violated" means a standard suggestion violates a kody rule, so we silently fix it.

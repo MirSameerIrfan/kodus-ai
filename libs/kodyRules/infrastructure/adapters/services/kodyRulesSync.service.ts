@@ -1355,7 +1355,7 @@ export class KodyRulesSyncService {
                                 '- The rule should be self-contained and actionable without needing to read the source file',
 
                                 'Examples: prefer 1 incorrect and 1 correct (minimal snippets). When the source has many examples, include the most representative ones.',
-                                'Language: keep the rule language consistent with the source (EN or PT-BR).',
+                                'Language: always return the rule text in English, even if the source content is in another language.',
                                 'Do NOT include keys like repositoryId, origin, createdAt, updatedAt, uuid, or any extra keys.',
                                 'Keep strings strictly typed, but COMPREHENSIVE in content - do not sacrifice completeness for brevity.',
                             ].join(' '),
@@ -1552,7 +1552,7 @@ export class KodyRulesSyncService {
                                 'Severity map: must/required/security/blocker → "high"/"critical"; should/warn → "medium"; tip/info/optional → "low".',
                                 'Scope: "file" for code/content; "pull-request" for PR titles/descriptions/commits/reviewers/labels.',
                                 'Include sourceSnippet when you can copy an exact excerpt that triggered the rule.',
-                                'Do NOT translate. Keep each rule in the SAME language as its source file (if the file is in English, return English; if in Portuguese, return Portuguese).',
+                                'Always return the rule text in English, even if the source file is in another language. Do NOT mirror the source language.',
                                 'Do NOT include extra keys (repositoryId, origin, uuid, timestamps).',
                                 'Be exhaustive: preserve specific APIs, steps, anti-patterns, and examples from each file.',
                             ].join(' '),
@@ -1607,7 +1607,7 @@ export class KodyRulesSyncService {
                                     prompt: [
                                         'Return ONLY a JSON object { "rules": [...] } (no code fences, no text), capped at 3 rules.',
                                         'Each rule must include: title, rule, path, sourcePath, severity ("low"|"medium"|"high"|"critical"), optional scope ("file"|"pull-request"), examples: [{ "snippet": string, "isCorrect": boolean }], and optional sourceSnippet.',
-                                        'Keep the language the same as the source file; do NOT translate.',
+                                        'Always respond in English, even if the source file uses another language.',
                                         'If a file is a dependency manifest (package.json, requirements.txt, pyproject.toml, go.mod, Cargo.toml, pom.xml, build.gradle(.kts), csproj, Gemfile, mix.exs, etc.), infer rules for that stack based on dependencies (security, auth, logging, testing, linting, secrets).',
                                         'Do NOT include extra keys (repositoryId, origin, uuid, timestamps).',
                                     ].join(' '),
@@ -1715,7 +1715,7 @@ export class KodyRulesSyncService {
                                 'Do NOT propose rules that depend on CI/CD, bots, or specific version pinning/patch enforcement. Rules must be actionable via code/config only.',
                                 'Return ONLY a JSON object { "rules": [...] } with no code fences. If none, return { "rules": [] }.',
                                 'Each rule must include: title, rule, path (use the manifest path or glob inferred from it), severity ("low"|"medium"|"high"|"critical"), optional scope ("file"|"pull-request"), and examples: [{ "snippet": string, "isCorrect": boolean }].',
-                                'Keep language consistent with the source (do NOT translate).',
+                                'Always respond in English, even if the manifest uses another language.',
                                 'Do NOT include extra keys such as repositoryId, sourcePath, origin, uuid, or timestamps.',
                             ].join(' '),
                         })
@@ -1770,7 +1770,7 @@ export class KodyRulesSyncService {
                                         'Return ONLY a JSON object { "rules": [...] } (no code fences, no text), capped at 3 rules.',
                                         'Rules must be HIGH-IMPACT and actionable in code/config only (security/auth, secrets handling, logging/observability, testing/linting/type-check, dependency hygiene). Avoid generic style nits.',
                                         'Do NOT propose rules that depend on CI/CD, bots, or pinning/enforcing specific library versions/patches.',
-                                        'Each rule must include: title, rule, path (manifest path or derived glob), severity ("low"|"medium"|"high"|"critical"), optional scope ("file"|"pull-request"), and examples: [{ "snippet": string, "isCorrect": boolean }]. Keep the language consistent with the manifest. Do NOT translate.',
+                                        'Each rule must include: title, rule, path (manifest path or derived glob), severity ("low"|"medium"|"high"|"critical"), optional scope ("file"|"pull-request"), and examples: [{ "snippet": string, "isCorrect": boolean }]. Always respond in English, even if the manifest uses another language.',
                                         'Do NOT include repositoryId, sourcePath, origin, uuid, or timestamps.',
                                     ].join(' '),
                                 })

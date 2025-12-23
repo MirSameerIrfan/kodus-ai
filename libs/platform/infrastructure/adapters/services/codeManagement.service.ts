@@ -437,6 +437,7 @@ export class CodeManagementService implements ICodeManagementService {
             commit: any;
             language: string;
             dryRun?: CodeReviewPipelineContext['dryRun'];
+            suggestionCopyPrompt?: boolean;
         },
         type?: PlatformType,
     ) {
@@ -1124,6 +1125,7 @@ export class CodeManagementService implements ICodeManagementService {
             includeFooter?: boolean;
             language?: string;
             organizationAndTeamData: OrganizationAndTeamData;
+            suggestionCopyPrompt?: boolean;
         },
         type?: PlatformType,
     ): Promise<string> {
@@ -1143,6 +1145,7 @@ export class CodeManagementService implements ICodeManagementService {
             includeFooter: params.includeFooter ?? true,
             language: params.language,
             organizationAndTeamData: params.organizationAndTeamData,
+            suggestionCopyPrompt: params.suggestionCopyPrompt,
         });
     }
 

@@ -1788,6 +1788,49 @@ export class BitbucketService
         }
     }
 
+    formatCodeBlock(language: string, code: string) {
+        return `\`\`\`${language}\n${code}\n\`\`\``;
+    }
+
+    private formatBodyForBitbucket(lineComment: any, repository: any) {
+        const codeBlock = lineComment?.body?.improvedCode
+            ? this.formatCodeBlock(
+                  repository?.language?.toLowerCase(),
+                  lineComment?.body?.improvedCode,
+              )
+            : '';
+        const suggestionContent = lineComment?.body?.suggestionContent || '';
+        const actionStatement = lineComment?.body?.actionStatement
+            ? `${lineComment.body.actionStatement}\n\n`
+            : '';
+
+        const severityText = lineComment?.suggestion
+            ? lineComment.suggestion.severity
+            : '';
+        const labelText = lineComment?.suggestion
+            ? lineComment.suggestion.label
+            : '';
+
+        const header = `\`kody|code-review\` \`${labelText}\` \`severity-level|${severityText}\`\n\n`;
+
+        const thumbsUpBlock = `\`\`\`\n👍\n\`\`\`\n`;
+        const thumbsDownBlock = `\`\`\`\n👎\n\`\`\`\n`;
+
+        const footer = `Was this suggestion helpful? reply with 👍 or 👎 to help Kody learn from this interaction.\n`;
+
+        return [
+            header,
+            suggestionContent,
+            actionStatement,
+            codeBlock,
+            footer,
+            thumbsUpBlock,
+            thumbsDownBlock,
+        ]
+            .join('\n')
+            .trim();
+    }
+
     async createReviewComment(params: {
         organizationAndTeamData: OrganizationAndTeamData;
         repository: any;
@@ -1821,27 +1864,10 @@ export class BitbucketService
             const bitbucketAPI =
                 this.instanceBitbucketApi(bitbucketAuthDetails);
 
-            const severityText = lineComment?.suggestion
-                ? lineComment.suggestion.severity
-                : '';
-            const labelText = lineComment?.suggestion
-                ? lineComment.suggestion.label
-                : '';
-
-            const bodyFormatted =
-                `\`kody|code-review\` \`${labelText}\` \`severity-level|${severityText}\`\n\n` +
-                `\`\`\`${repository?.language?.toLowerCase()}\n` +
-                `${lineComment?.body?.improvedCode}\n` +
-                `\`\`\`\n` +
-                `${lineComment?.body?.suggestionContent}\n\n\n\n` +
-                `${lineComment?.body?.actionStatement ? `${lineComment?.body?.actionStatement}\n\n\n\n` : ''}` +
-                `Was this suggestion helpful? reply with 👍 or 👎 to help Kody learn from this interaction.\n`;
-
-            const thumbsUpBlock = `\`\`\`\n👍\n\`\`\`\n`;
-            const thumbsDownBlock = `\`\`\`\n👎\n\`\`\`\n`;
-
-            const updatedBodyFormatted =
-                bodyFormatted + thumbsUpBlock + thumbsDownBlock;
+            const bodyFormatted = this.formatBodyForBitbucket(
+                lineComment,
+                repository,
+            );
 
             // added ts-ignore because _body expects a type property but Bitbucket rejects it
             const comment = await bitbucketAPI.pullrequests
@@ -1852,7 +1878,7 @@ export class BitbucketService
                     // @ts-ignore
                     _body: {
                         content: {
-                            raw: updatedBodyFormatted,
+                            raw: bodyFormatted,
                         },
                         inline: {
                             path: lineComment?.path,
@@ -4289,21 +4315,21 @@ export class BitbucketService
             const severityText = suggestion?.severity || '';
             const labelText = suggestion?.label || '';
 
-            commentBody += `\`kody|code-review\` \`${labelText}\` \`severity-level|${severityText}\`\n\n`;
+            commentBody += `\`kody|code-review\` \`${labelText}\` \`severity-level|${severityText}\`\n\n\n`;
         }
 
         // BODY - Conteúdo principal
-        if (suggestion?.improvedCode) {
-            const lang = repository?.language?.toLowerCase() || 'javascript';
-            commentBody += `\`\`\`${lang}\n${suggestion.improvedCode}\n\`\`\`\n\n`;
-        }
-
         if (suggestion?.suggestionContent) {
             commentBody += `${suggestion.suggestionContent}\n\n`;
         }
 
         if (suggestion?.clusteringInformation?.actionStatement) {
             commentBody += `${suggestion.clusteringInformation.actionStatement}\n\n`;
+        }
+
+        if (suggestion?.improvedCode) {
+            const lang = repository?.language?.toLowerCase() || 'javascript';
+            commentBody += `\`\`\`${lang}\n${suggestion.improvedCode}\n\`\`\`\n\n`;
         }
 
         // FOOTER - Interação/Feedback (formato Bitbucket)

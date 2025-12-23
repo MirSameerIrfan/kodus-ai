@@ -290,6 +290,7 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
                                     label: z.string(),
                                     severity: z.string().optional(),
                                     rankScore: z.number().optional(),
+                                    llmPrompt: z.string().optional(),
                                 }),
                             ),
                         });
