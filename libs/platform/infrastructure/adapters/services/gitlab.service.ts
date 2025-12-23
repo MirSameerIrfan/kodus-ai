@@ -3468,11 +3468,6 @@ export class GitlabService implements Omit<
         }
 
         // BODY - Conteúdo principal
-        if (suggestion?.improvedCode) {
-            const lang = repository?.language?.toLowerCase() || 'javascript';
-            commentBody += `\`\`\`${lang}\n${suggestion.improvedCode}\n\`\`\`\n\n`;
-        }
-
         if (suggestion?.suggestionContent) {
             commentBody += `${suggestion.suggestionContent}\n\n`;
         }

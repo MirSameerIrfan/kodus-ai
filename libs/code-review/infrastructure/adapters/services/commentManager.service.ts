@@ -44,6 +44,7 @@ import {
 } from '@libs/common/utils/translations/translations';
 import { prompt_repeated_suggestion_clustering_system } from '@libs/common/utils/langchainCommon/prompts/repeatedCodeReviewSuggestionClustering';
 import { createLogger } from '@kodus/flow';
+import { DeliveryStatus } from '@libs/platformData/domain/pullRequests/enums/deliveryStatus.enum';
 
 interface ClusteredSuggestion {
     id: string;
@@ -686,12 +687,14 @@ export class CommentManagerService implements ICommentManagerService {
         platformType: PlatformType,
         codeSuggestions?: Array<CommentResult>,
         codeReviewConfig?: CodeReviewConfig,
+        prLevelCommentResults?: Array<CommentResult>,
     ): Promise<string> {
         let commentBody = await this.generatePullRequestFinishSummaryMarkdown(
             organizationAndTeamData,
             prNumber,
             codeSuggestions,
             codeReviewConfig,
+            prLevelCommentResults,
         );
 
         commentBody = this.sanitizeBitbucketMarkdown(commentBody, platformType);
@@ -781,7 +784,7 @@ export class CommentManagerService implements ICommentManagerService {
 
                     commentResults.push({
                         comment,
-                        deliveryStatus: 'sent',
+                        deliveryStatus: DeliveryStatus.SENT,
                         codeReviewFeedbackData: {
                             commentId: createdComment?.id,
                             pullRequestReviewId:
@@ -793,7 +796,8 @@ export class CommentManagerService implements ICommentManagerService {
                 } catch (error) {
                     commentResults.push({
                         comment,
-                        deliveryStatus: error.errorType || 'failed',
+                        deliveryStatus:
+                            error.errorType || DeliveryStatus.FAILED,
                     });
                 }
             }
@@ -820,6 +824,7 @@ export class CommentManagerService implements ICommentManagerService {
         prNumber: number,
         commentResults?: Array<CommentResult>,
         codeReviewConfig?: CodeReviewConfig,
+        prLevelCommentResults?: Array<CommentResult>,
     ): Promise<string> {
         try {
             const language =
@@ -835,7 +840,16 @@ export class CommentManagerService implements ICommentManagerService {
                 );
             }
 
-            const hasComments = !!commentResults?.length;
+            const hasPrLevelComments = !!prLevelCommentResults?.filter(
+                (comment) => comment.deliveryStatus === DeliveryStatus.SENT,
+            ).length;
+
+            const hasFileComments = !!commentResults?.filter(
+                (comment) => comment.deliveryStatus === DeliveryStatus.SENT,
+            ).length;
+
+            const hasComments = hasPrLevelComments || hasFileComments;
+
             const resultText = hasComments
                 ? translation.withComments
                 : translation.withoutComments;
@@ -1399,7 +1413,7 @@ ${reviewOptions}
                                 body: commentBody,
                                 type: 'pr_level',
                             },
-                            deliveryStatus: 'sent',
+                            deliveryStatus: DeliveryStatus.SENT,
                             codeReviewFeedbackData: {
                                 commentId: createdComment.id,
                                 pullRequestReviewId: null, // PR-level comments não têm review ID
@@ -1425,7 +1439,7 @@ ${reviewOptions}
                                 body: commentBody,
                                 type: 'pr_level',
                             },
-                            deliveryStatus: 'failed',
+                            deliveryStatus: DeliveryStatus.FAILED,
                         });
                     }
                 } catch (error) {
@@ -1447,7 +1461,7 @@ ${reviewOptions}
                             suggestion,
                             type: 'pr_level',
                         },
-                        deliveryStatus: 'failed',
+                        deliveryStatus: DeliveryStatus.FAILED,
                     });
                 }
             }
@@ -1624,6 +1638,7 @@ ${reviewOptions}
         endReviewMessage?: string,
         pullRequestMessagesConfig?: IPullRequestMessages,
         dryRun?: CodeReviewPipelineContext['dryRun'],
+        prLevelCommentResults?: Array<CommentResult>,
     ): Promise<void> {
         let commentBody: string;
 
@@ -1652,6 +1667,7 @@ ${reviewOptions}
                 platformType,
                 codeSuggestions,
                 codeReviewConfig,
+                prLevelCommentResults,
             );
         }
 

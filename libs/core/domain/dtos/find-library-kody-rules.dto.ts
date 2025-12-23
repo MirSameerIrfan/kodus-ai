@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsString, IsOptional, IsArray } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsBoolean } from 'class-validator';
 
 import { ProgrammingLanguage } from '@libs/core/domain/enums/programming-language.enum';
 import { KodyRuleFilters } from '@libs/core/infrastructure/config/types/general/kodyRules.type';
@@ -33,6 +33,16 @@ export class FindLibraryKodyRulesDto
     @IsArray()
     @IsString({ each: true })
     tags?: string[];
+
+    @IsOptional()
+    @IsBoolean()
+    @Transform(FindLibraryKodyRulesDto.transformToBoolean)
+    plug_and_play?: boolean;
+
+    @IsOptional()
+    @IsBoolean()
+    @Transform(FindLibraryKodyRulesDto.transformToBoolean)
+    needMCPS?: boolean;
 
     @IsOptional()
     language?: ProgrammingLanguage;

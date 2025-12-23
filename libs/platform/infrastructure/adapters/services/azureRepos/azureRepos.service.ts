@@ -3655,22 +3655,25 @@ ${copyPrompt}
         const severityShield = lineComment?.suggestion
             ? getSeverityLevelShield(lineComment.suggestion.severity)
             : '';
-        const codeBlock = this.formatCodeBlock(
-            repository?.language?.toLowerCase(),
-            lineComment?.body?.improvedCode,
-        );
+        const codeBlock = lineComment?.body?.improvedCode
+            ? this.formatCodeBlock(
+                  repository?.language?.toLowerCase(),
+                  lineComment?.body?.improvedCode,
+              )
+            : '';
         const suggestionContent = lineComment?.body?.suggestionContent || '';
         const actionStatement = lineComment?.body?.actionStatement
             ? `${lineComment.body.actionStatement}\n\n`
             : '';
 
-        const badges = [
-            getCodeReviewBadge(),
-            lineComment?.suggestion
-                ? getLabelShield(lineComment.suggestion.label)
-                : '',
-            severityShield,
-        ].join(' ');
+        const badges =
+            [
+                getCodeReviewBadge(),
+                lineComment?.suggestion
+                    ? getLabelShield(lineComment.suggestion.label)
+                    : '',
+                severityShield,
+            ].join(' ') + '\n\n';
 
         const thumbsUpBlock = `\`\`\`\n👍\n\`\`\`\n`;
         const thumbsDownBlock = `\`\`\`\n👎\n\`\`\`\n`;
@@ -3913,11 +3916,6 @@ ${copyPrompt}
         }
 
         // BODY - Conteúdo principal
-        if (suggestion?.improvedCode) {
-            const lang = repository?.language?.toLowerCase() || 'javascript';
-            commentBody += `\`\`\`${lang}\n${suggestion.improvedCode}\n\`\`\`\n\n`;
-        }
-
         if (suggestion?.suggestionContent) {
             commentBody += `${suggestion.suggestionContent}\n\n`;
         }

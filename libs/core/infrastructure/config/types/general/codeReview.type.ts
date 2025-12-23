@@ -170,6 +170,7 @@ export type CodeSuggestion = {
     relevantLinesStart?: number;
     relevantLinesEnd?: number;
     label: string;
+    llmPrompt?: string;
     severity?: string;
     rankScore?: number;
     priorityStatus?: PriorityStatus;

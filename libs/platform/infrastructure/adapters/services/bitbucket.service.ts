@@ -4310,15 +4310,10 @@ export class BitbucketService implements Omit<
             const severityText = suggestion?.severity || '';
             const labelText = suggestion?.label || '';
 
-            commentBody += `\`kody|code-review\` \`${labelText}\` \`severity-level|${severityText}\`\n\n`;
+            commentBody += `\`kody|code-review\` \`${labelText}\` \`severity-level|${severityText}\`\n\n\n`;
         }
 
         // BODY - Conteúdo principal
-        if (suggestion?.improvedCode) {
-            const lang = repository?.language?.toLowerCase() || 'javascript';
-            commentBody += `\`\`\`${lang}\n${suggestion.improvedCode}\n\`\`\`\n\n`;
-        }
-
         if (suggestion?.suggestionContent) {
             commentBody += `${suggestion.suggestionContent}\n\n`;
         }
