@@ -6,9 +6,9 @@ Esta pasta contém os microserviços da aplicação Kodus AI.
 
 ```
 apps/
-  ├── webhook-handler/    # Recebe webhooks e enfileira na fila
-  ├── api-rest/          # API REST - Endpoints administrativos
-  └── worker/            # Worker - Processa jobs da fila
+  ├── webhooks/          # Recebe webhooks e enfileira jobs
+  ├── api/               # API REST - Endpoints administrativos
+  └── worker/            # Worker - Processa jobs/filas
 ```
 
 ## Webhook Handler
@@ -59,19 +59,13 @@ apps/
 Cada app pode ser buildado e deployado independentemente:
 
 ```bash
-# Build webhook handler
-cd apps/webhook-handler
-yarn build
+# Build webhooks
+yarn build:webhooks
 
-# Build API REST
-cd apps/api-rest
-yarn build
+# Build API
+yarn build:api
 
 # Build worker
-cd apps/worker
-yarn build
+yarn build:worker
 ```
-
-## PM2
-
-Os apps são gerenciados pelo PM2 via `ecosystem.config.js` na raiz do projeto.
+Em ambiente cloud (ECS), cada app roda como **1 processo por container**.

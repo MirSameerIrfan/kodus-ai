@@ -1,0 +1,101 @@
+name: PROD (GitOps) - Promote traffic (weights) PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Motivo/nota para promoção (opcional)"
+        required: false
+
+concurrency:
+  group: prod-gitops-promote
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  # GitOps (infra repo + path do tfvars)
+  INFRA_REPO: ${{ vars.INFRA_REPO }}
+  INFRA_BASE_BRANCH: ${{ vars.INFRA_BASE_BRANCH }}
+  INFRA_TFVARS_PATH: ${{ vars.INFRA_TFVARS_PATH }}
+
+jobs:
+  open_pr_weights:
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+
+    steps:
+      - name: Validate required secrets
+        run: |
+          set -euo pipefail
+          if [ -z "${{ vars.INFRA_GITHUB_APP_ID }}" ]; then
+            echo "Missing variable: INFRA_GITHUB_APP_ID"
+            exit 1
+          fi
+          for v in INFRA_REPO INFRA_BASE_BRANCH INFRA_TFVARS_PATH; do
+            if [ -z "${!v:-}" ]; then
+              echo "Missing required variable: $v"
+              exit 1
+            fi
+          done
+          if [ -z "${{ secrets.INFRA_GITHUB_APP_PRIVATE_KEY }}" ]; then
+            echo "Missing secret: INFRA_GITHUB_APP_PRIVATE_KEY"
+            exit 1
+          fi
+
+      - name: Get infra repo token (GitHub App)
+        id: infra_token
+        uses: actions/create-github-app-token@5d869da34e18e7287c1daad50e0b8ea0f506ce69 # v1.11.0
+        with:
+          app-id: ${{ vars.INFRA_GITHUB_APP_ID }}
+          private-key: ${{ secrets.INFRA_GITHUB_APP_PRIVATE_KEY }}
+
+      - name: Checkout infra repo
+        uses: actions/checkout@v4.2.2
+        with:
+          repository: ${{ env.INFRA_REPO }}
+          ref: ${{ env.INFRA_BASE_BRANCH }}
+          token: ${{ steps.infra_token.outputs.token }}
+          path: infra
+
+      - name: Update weights (100% green)
+        run: |
+          set -euo pipefail
+
+          FILE="infra/${{ env.INFRA_TFVARS_PATH }}"
+          ./scripts/update-tfvars-promote-weights.sh "$FILE"
+
+          echo "Updated weights in $FILE"
+
+      - name: Verify infra changes scope
+        run: |
+          set -euo pipefail
+          cd infra
+          changed="$(git diff --name-only)"
+          if [ "$(echo "$changed" | wc -l | tr -d ' ')" -ne 1 ]; then
+            echo "Expected exactly 1 changed file in infra repo."
+            exit 1
+          fi
+          if [ "$changed" != "${{ env.INFRA_TFVARS_PATH }}" ]; then
+            echo "Unexpected changed file: $changed"
+            exit 1
+          fi
+
+      - name: Create PR (promote traffic)
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ steps.infra_token.outputs.token }}
+          path: infra
+          branch: ci/prod-promote-traffic-${{ github.run_id }}
+          base: ${{ env.INFRA_BASE_BRANCH }}
+          title: "PROD: promote traffic (100% green)"
+          body: |
+            Ajusta pesos do ALB para 100% green (api/webhook).
+
+            Nota: ${{ github.event.inputs.reason || 'n/a' }}
+
+            Rollback: reverter este PR (volta pesos para blue).
+          commit-message: "prod: promote traffic weights to green"

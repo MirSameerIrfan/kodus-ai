@@ -1,14 +1,16 @@
-name: CI/CD Workflow QA
+name: CI/CD Workflow QA (LEGACY EC2)
 
 on:
-    push:
-        branches:
-            - main
+    workflow_dispatch:
 
 jobs:
     build_and_push_image:
         name: Build and push image
         runs-on: ubuntu-latest
+        environment: qa
+        permissions:
+            contents: read
+            id-token: write
 
         steps:
             - name: Checkout code
@@ -18,11 +20,10 @@ jobs:
               run: echo "RELEASE_VERSION=${{ github.sha }}" >> $GITHUB_ENV
 
               # see: https://github.com/aws-actions/configure-aws-credentials
-            - name: Configure AWS Credentials
+            - name: Configure AWS Credentials (OIDC)
               uses: aws-actions/configure-aws-credentials@v4.1.0
               with:
-                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
                   aws-region: ${{ secrets.AWS_REGION }}
 
             - name: Login to Amazon ECR
@@ -53,8 +54,18 @@ jobs:
         name: Deploy in server
         runs-on: ubuntu-latest
         needs: build_and_push_image
+        environment: qa
+        permissions:
+            contents: read
+            id-token: write
 
         steps:
+            - name: Configure AWS Credentials (OIDC)
+              uses: aws-actions/configure-aws-credentials@v4.1.0
+              with:
+                  role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+                  aws-region: ${{ secrets.AWS_REGION }}
+
             - name: Get runner IP
               run: |
                   ip=$(curl -s https://ipinfo.io/ip)
@@ -64,10 +75,6 @@ jobs:
             - name: Add Github Actions IP to Security group as a Postgres inbound rule
               run: |
                   aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SECURITY_GROUP }} --protocol tcp --port 22 --cidr ${{ env.runner_ip }}/32 > /dev/null 2>&1
-              env:
-                  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-                  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-                  AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
 
             - name: Execute start-app.sh on EC2
               uses: appleboy/ssh-action@v1.2.2
@@ -82,14 +89,10 @@ jobs:
             - name: Remove Github Actions IP from security group
               run: |
                   aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_SECURITY_GROUP }} --protocol tcp --port 22 --cidr ${{ env.runner_ip }}/32 > /dev/null 2>&1
-              env:
-                  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-                  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-                  AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
               if: always()
 
             - name: Notify Discord on Success
-              if: success()
+              if: success() && secrets.DISCORD_WEBHOOK != ''
               uses: sarisia/actions-status-discord@v1.15.3
               with:
                   webhook: ${{ secrets.DISCORD_WEBHOOK }}
@@ -99,7 +102,7 @@ jobs:
                   color: 0x00FF00
 
             - name: Notify Discord on Failure
-              if: failure()
+              if: failure() && secrets.DISCORD_WEBHOOK != ''
               uses: sarisia/actions-status-discord@v1.15.3
               with:
                   webhook: ${{ secrets.DISCORD_WEBHOOK }}

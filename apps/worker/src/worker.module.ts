@@ -13,6 +13,7 @@ import { SharedObservabilityModule } from '@libs/shared/infrastructure/shared-ob
 import { WorkflowModule } from '@libs/core/workflow/modules/workflow.module';
 import { OutboxRelayService } from '@libs/core/workflow/infrastructure/outbox-relay.service';
 import { ScheduleModule } from '@nestjs/schedule';
+import { WorkerDrainService } from './worker-drain.service';
 
 @Module({
     imports: [
@@ -32,6 +33,6 @@ import { ScheduleModule } from '@nestjs/schedule';
         AutomationModule,
         PlatformModule,
     ],
-    providers: [OutboxRelayService],
+    providers: [OutboxRelayService, WorkerDrainService],
 })
 export class WorkerModule {}

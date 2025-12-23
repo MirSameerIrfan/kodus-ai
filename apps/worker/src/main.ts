@@ -2,8 +2,6 @@ import 'source-map-support/register';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-process.env.API_RABBITMQ_ENABLED = 'true';
-
 import { INestApplicationContext } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 
@@ -23,7 +21,7 @@ function handleNestJSWebpackHmr(app: INestApplicationContext, module: any) {
 
 async function bootstrap() {
     process.env.COMPONENT_TYPE = 'worker';
-    let appContext: INestApplicationContext;
+    let appContext: INestApplicationContext | undefined;
     let logger: LoggerWrapperService | undefined;
 
     try {
