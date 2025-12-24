@@ -178,26 +178,61 @@ export class EnhancedJSONParser {
     static extractFromLangChainResponse(text: string): unknown | null {
         try {
             // Try to parse the outer structure first
-            const langChainResponse = this.parse<any>(text);
+            const langChainResponse = this.parse<Record<string, unknown>>(text);
 
-            if (
-                langChainResponse &&
-                langChainResponse.kwargs &&
-                langChainResponse.kwargs.content
-            ) {
-                const content = langChainResponse.kwargs.content;
-
-                if (Array.isArray(content)) {
-                    for (const item of content) {
-                        if (item.type === 'text' && item.text) {
-                            const parsed = this.parse(item.text);
-                            if (parsed) return parsed;
-                        }
-                    }
-                } else if (typeof content === 'string') {
-                    return this.parse(content);
+            const extractContentText = (value: unknown): string | null => {
+                if (typeof value === 'string') {
+                    return value;
                 }
+
+                if (Array.isArray(value)) {
+                    const textParts = value
+                        .map((item) => {
+                            if (!item || typeof item !== 'object') return '';
+                            const block = item as {
+                                type?: string;
+                                text?: unknown;
+                            };
+                            if (
+                                block.type &&
+                                block.type !== 'text' &&
+                                block.type !== 'text_delta'
+                            ) {
+                                return '';
+                            }
+                            return typeof block.text === 'string'
+                                ? block.text
+                                : '';
+                        })
+                        .filter(Boolean);
+                    return textParts.length ? textParts.join('\n') : null;
+                }
+
+                return null;
+            };
+
+            if (!langChainResponse || typeof langChainResponse !== 'object') {
+                return null;
             }
+
+            const candidates = [
+                (langChainResponse as { content?: unknown }).content,
+                (langChainResponse as { contentBlocks?: unknown })
+                    .contentBlocks,
+                (
+                    langChainResponse as {
+                        kwargs?: { content?: unknown };
+                    }
+                ).kwargs?.content,
+            ];
+
+            for (const candidate of candidates) {
+                const contentText = extractContentText(candidate);
+                if (!contentText) continue;
+                const parsed = this.parse(contentText);
+                if (parsed) return parsed;
+            }
+
             return null;
         } catch {
             return null;

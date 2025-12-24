@@ -24,6 +24,17 @@ import {
     ToolMetadataForLLM,
 } from '../types/allTypes.js';
 
+type ToolCallLike = {
+    id?: string;
+    type?: string;
+    name?: string;
+    args?: unknown;
+    function?: {
+        name?: string;
+        arguments?: string;
+    };
+};
+
 export class DirectLLMAdapter implements LLMAdapter {
     private llm: LangChainLLM;
     private logger = createLogger('direct-llm-adapter');
@@ -143,30 +154,39 @@ export class DirectLLMAdapter implements LLMAdapter {
                 span,
                 async () => {
                     try {
-                        const res = await this.llm.call(messages, {
+                        const res = await this.invokeLLM(messages, {
                             ...options,
                             signal: context?.signal,
                         });
                         // Record usage if present
-                        if (typeof res !== 'string' && res?.usage) {
-                            const usage = res.usage;
-                            if (usage?.totalTokens !== undefined) {
-                                span.setAttribute(
-                                    'gen_ai.usage.total_tokens',
-                                    usage.totalTokens,
-                                );
-                            }
-                            if (usage?.promptTokens !== undefined) {
-                                span.setAttribute(
-                                    'gen_ai.usage.input_tokens',
-                                    usage.promptTokens,
-                                );
-                            }
-                            if (usage?.completionTokens !== undefined) {
-                                span.setAttribute(
-                                    'gen_ai.usage.output_tokens',
-                                    usage.completionTokens,
-                                );
+                        if (res && typeof res === 'object') {
+                            const usage = (res as Record<string, unknown>)[
+                                'usage'
+                            ];
+                            if (usage && typeof usage === 'object') {
+                                const typedUsage = usage as {
+                                    promptTokens?: number;
+                                    completionTokens?: number;
+                                    totalTokens?: number;
+                                };
+                                if (typedUsage.totalTokens !== undefined) {
+                                    span.setAttribute(
+                                        'gen_ai.usage.total_tokens',
+                                        typedUsage.totalTokens,
+                                    );
+                                }
+                                if (typedUsage.promptTokens !== undefined) {
+                                    span.setAttribute(
+                                        'gen_ai.usage.input_tokens',
+                                        typedUsage.promptTokens,
+                                    );
+                                }
+                                if (typedUsage.completionTokens !== undefined) {
+                                    span.setAttribute(
+                                        'gen_ai.usage.output_tokens',
+                                        typedUsage.completionTokens,
+                                    );
+                                }
                             }
                         }
                         markSpanOk(span);
@@ -343,7 +363,7 @@ export class DirectLLMAdapter implements LLMAdapter {
             const response = await getObservability().withSpan(
                 span,
                 async () => {
-                    const res = await this.llm.call(messages, options);
+                    const res = await this.invokeLLM(messages, options);
 
                     // Normalize usage (supports LangSmith usage_metadata string)
                     if (typeof res !== 'string') {
@@ -351,7 +371,9 @@ export class DirectLLMAdapter implements LLMAdapter {
                             (res as any).usage ||
                             (res as any).usage_metadata ||
                             (res as any).additionalKwargs?.usage ||
-                            (res as any).additionalKwargs?.usage_metadata;
+                            (res as any).additionalKwargs?.usage_metadata ||
+                            (res as any).response_metadata?.tokenUsage ||
+                            (res as any).response_metadata?.usage;
 
                         let usageObj: any | null = null;
                         if (usageRaw) {
@@ -421,6 +443,7 @@ export class DirectLLMAdapter implements LLMAdapter {
                 },
             );
             const content = normalizeLLMContent(response as unknown);
+            const toolCalls = this.extractToolCalls(response);
 
             let usage: LLMResponse['usage'] | undefined = undefined;
             if (typeof response !== 'string') {
@@ -435,10 +458,35 @@ export class DirectLLMAdapter implements LLMAdapter {
                         totalTokens: u.totalTokens ?? 0,
                         reasoningTokens: (u as any).reasoningTokens,
                     };
+                } else if ((response as any).usage_metadata) {
+                    const u = (response as any).usage_metadata;
+                    usage = {
+                        promptTokens: u.input_tokens ?? 0,
+                        completionTokens: u.output_tokens ?? 0,
+                        totalTokens:
+                            u.total_tokens ??
+                            (u.input_tokens ?? 0) + (u.output_tokens ?? 0),
+                    };
+                } else if ((response as any).response_metadata?.tokenUsage) {
+                    const u = (response as any).response_metadata.tokenUsage;
+                    usage = {
+                        promptTokens: u.promptTokens ?? 0,
+                        completionTokens: u.completionTokens ?? 0,
+                        totalTokens: u.totalTokens ?? 0,
+                    };
+                } else if ((response as any).response_metadata?.usage) {
+                    const u = (response as any).response_metadata.usage;
+                    usage = {
+                        promptTokens: u.input_tokens ?? 0,
+                        completionTokens: u.output_tokens ?? 0,
+                        totalTokens:
+                            u.total_tokens ??
+                            (u.input_tokens ?? 0) + (u.output_tokens ?? 0),
+                    };
                 }
             }
 
-            return { content, usage } as LLMResponse;
+            return { content, usage, toolCalls } as LLMResponse;
         } catch (error) {
             this.logger.error({
                 message: 'Direct call failed',
@@ -447,6 +495,85 @@ export class DirectLLMAdapter implements LLMAdapter {
             });
             throw error;
         }
+    }
+
+    private async invokeLLM(
+        messages: LangChainMessage[],
+        options: LangChainOptions,
+    ): Promise<unknown> {
+        if (typeof this.llm.invoke === 'function') {
+            return this.llm.invoke(messages, options);
+        }
+        if (typeof this.llm.call === 'function') {
+            return this.llm.call(messages, options);
+        }
+        throw new Error('LangChain LLM does not implement invoke or call');
+    }
+
+    private extractToolCalls(
+        response: unknown,
+    ): LLMResponse['toolCalls'] | undefined {
+        if (!response || typeof response !== 'object') {
+            return undefined;
+        }
+        const record = response as Record<string, unknown>;
+        const raw =
+            record['tool_calls'] ??
+            (record as { toolCalls?: unknown }).toolCalls ??
+            (
+                record['additional_kwargs'] as
+                    | Record<string, unknown>
+                    | undefined
+            )?.['tool_calls'] ??
+            (
+                record['additionalKwargs'] as
+                    | Record<string, unknown>
+                    | undefined
+            )?.['tool_calls'];
+
+        if (!Array.isArray(raw)) {
+            return undefined;
+        }
+
+        type ParsedToolCall = NonNullable<LLMResponse['toolCalls']>[number];
+        const parsed = raw
+            .map((call) => {
+                if (!call || typeof call !== 'object') {
+                    return undefined;
+                }
+                const typed = call as ToolCallLike;
+                const name = typed.name ?? typed.function?.name;
+                const args = typed.args ?? typed.function?.arguments;
+                if (!name) {
+                    return undefined;
+                }
+
+                if (typeof args === 'string') {
+                    try {
+                        return {
+                            name,
+                            arguments: JSON.parse(args) as Record<
+                                string,
+                                unknown
+                            >,
+                        };
+                    } catch {
+                        return { name, arguments: {} };
+                    }
+                }
+
+                if (args && typeof args === 'object') {
+                    return {
+                        name,
+                        arguments: args as Record<string, unknown>,
+                    };
+                }
+
+                return { name, arguments: {} };
+            })
+            .filter((call): call is ParsedToolCall => Boolean(call));
+
+        return parsed.length ? parsed : undefined;
     }
 }
 

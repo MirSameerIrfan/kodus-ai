@@ -35,7 +35,6 @@ import { REQUEST } from '@nestjs/core';
 import { AddLibraryKodyRulesDto } from '@libs/kodyRules/dtos/add-library-kody-rules.dto';
 import { ChangeStatusKodyRulesDTO } from '@libs/kodyRules/dtos/change-status-kody-rules.dto';
 import { FindLibraryKodyRulesDto } from '../dtos/find-library-kody-rules.dto';
-import { FindRecommendedKodyRulesDto } from '../dtos/find-recommended-kody-rules.dto';
 import { FindSuggestionsByRuleDto } from '../dtos/find-suggestions-by-rule.dto';
 import { GenerateKodyRulesDTO } from '../dtos/generate-kody-rules.dto';
 import { CacheService } from '@libs/core/cache/cache.service';

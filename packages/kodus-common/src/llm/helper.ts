@@ -48,16 +48,15 @@ export const getChatGPT = (options?: Partial<FactoryArgs>) => {
         : defaultOptions;
 
     return new ChatOpenAI({
-        modelName: finalOptions.model,
-        openAIApiKey: finalOptions.apiKey,
+        model: finalOptions.model,
+        apiKey: finalOptions.apiKey,
         temperature: finalOptions.temperature,
         maxTokens: finalOptions.maxTokens,
         streaming: finalOptions.streaming,
         verbose: finalOptions.verbose,
         callbacks: finalOptions.callbacks,
         configuration: {
-            baseURL: finalOptions.baseURL,
-            apiKey: finalOptions.apiKey,
+            baseURL: finalOptions.baseURL ?? undefined,
         },
     });
 };
@@ -80,8 +79,8 @@ const getChatAnthropic = (options?: Partial<FactoryArgs>) => {
         : defaultOptions;
 
     return new ChatAnthropic({
-        modelName: finalOptions.model,
-        anthropicApiKey: process.env.API_ANTHROPIC_API_KEY,
+        model: finalOptions.model,
+        apiKey: process.env.API_ANTHROPIC_API_KEY,
         temperature: finalOptions.temperature,
         maxTokens: finalOptions.maxTokens,
         callbacks: finalOptions.callbacks,
@@ -222,16 +221,15 @@ const getGroq = (options?: Partial<FactoryArgs>) => {
         : defaultOptions;
 
     return new ChatOpenAI({
-        modelName: finalOptions.model,
-        openAIApiKey: finalOptions.apiKey,
+        model: finalOptions.model,
+        apiKey: finalOptions.apiKey,
         temperature: finalOptions.temperature,
         maxTokens: finalOptions.maxTokens,
         streaming: finalOptions.streaming,
         verbose: finalOptions.verbose,
         callbacks: finalOptions.callbacks,
         configuration: {
-            baseURL: finalOptions.baseURL,
-            apiKey: finalOptions.apiKey,
+            baseURL: finalOptions.baseURL ?? undefined,
         },
     });
 };

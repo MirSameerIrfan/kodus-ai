@@ -5539,9 +5539,17 @@ export const DEFAULT_LLM_SETTINGS = {
     ],
 } as const;
 
+export type LangChainContentBlock = {
+    type?: string;
+    text?: unknown;
+    [key: string]: unknown;
+};
+
+export type LangChainContent = string | LangChainContentBlock[];
+
 export interface LangChainMessage {
     role: AgentInputEnum;
-    content: string;
+    content: LangChainContent;
     name?: string;
     toolCallId?: string;
     toolCalls?: Array<{
@@ -5552,6 +5560,7 @@ export interface LangChainMessage {
             arguments: string;
         };
     }>;
+    [key: string]: unknown;
 }
 
 export interface LangChainOptions {
@@ -5565,12 +5574,18 @@ export interface LangChainOptions {
     stop?: readonly string[] | string[];
     stream?: boolean;
     tools?: unknown[];
-    toolChoice?: string;
+    toolChoice?:
+        | 'auto'
+        | 'none'
+        | { type: 'function'; function: { name: string } }
+        | string;
     signal?: AbortSignal;
+    [key: string]: unknown;
 }
 
 export interface LangChainResponse {
-    content: string;
+    content?: LangChainContent;
+    contentBlocks?: LangChainContentBlock[];
     toolCalls?: Array<{
         id: string;
         type: string;
@@ -5585,17 +5600,22 @@ export interface LangChainResponse {
         totalTokens?: number;
     };
     additionalKwargs?: Record<string, unknown>;
+    [key: string]: unknown;
 }
 
 export interface LangChainLLM {
-    call(
+    invoke?: (
+        messages: LangChainMessage[] | string,
+        options?: LangChainOptions,
+    ) => Promise<LangChainResponse | string | unknown>;
+    call?: (
         messages: LangChainMessage[],
         options?: LangChainOptions,
-    ): Promise<LangChainResponse | string>;
-    stream?(
-        messages: LangChainMessage[],
+    ) => Promise<LangChainResponse | string | unknown>;
+    stream?: (
+        messages: LangChainMessage[] | string,
         options?: LangChainOptions,
-    ): AsyncGenerator<LangChainResponse | string>;
+    ) => AsyncGenerator<LangChainResponse | string | unknown>;
     name?: string;
 }
 

@@ -1,3 +1,35 @@
+import {
+    LangChainLLM,
+    LangChainMessage,
+    LangChainOptions,
+    LangChainResponse,
+    LLMMessage,
+    LLMResponse,
+} from '../../../core/types/allTypes.js';
+import { createLogger } from '../../../observability/index.js';
+import { EngineError } from '../../errors.js';
+import { normalizeLLMContent } from '../normalizers.js';
+
+type OpenAIToolDefinition = {
+    type: 'function';
+    function: {
+        name: string;
+        description?: string;
+        parameters: Record<string, unknown>;
+    };
+};
+
+type ToolCallLike = {
+    id?: string;
+    type?: string;
+    name?: string;
+    args?: unknown;
+    function?: {
+        name?: string;
+        arguments?: string;
+    };
+};
+
 // Simple provider interface for legacy providers
 export interface LLMProvider {
     name: string;
@@ -26,69 +58,6 @@ export interface LLMOptions {
         | 'auto'
         | 'none'
         | { type: 'function'; function: { name: string } };
-}
-import {
-    AgentInputEnum,
-    LLMMessage,
-    LLMResponse,
-} from '../../../core/types/allTypes.js';
-import { createLogger } from '../../../observability/index.js';
-import { EngineError } from '../../errors.js';
-
-// ──────────────────────────────────────────────────────────────────────────────
-// 📋 LANGCHAIN TYPES (simplified interfaces)
-// ──────────────────────────────────────────────────────────────────────────────
-
-export interface LangChainLLM {
-    call(
-        messages: LangChainMessage[],
-        options?: LangChainOptions,
-    ): Promise<LangChainResponse>;
-    stream?(
-        messages: LangChainMessage[],
-        options?: LangChainOptions,
-    ): AsyncGenerator<LangChainResponse>;
-    name?: string;
-}
-
-export interface LangChainMessage {
-    role: AgentInputEnum;
-    content: string;
-    name?: string;
-    toolCallId?: string;
-    toolCalls?: ToolCall[];
-}
-
-export interface ToolCall {
-    id: string;
-    type: string;
-    function: {
-        name: string;
-        arguments: string;
-    };
-}
-
-export interface LangChainOptions {
-    temperature?: number;
-    maxTokens?: number;
-    topP?: number;
-    frequencyPenalty?: number;
-    presencePenalty?: number;
-    stop?: string[];
-    stream?: boolean;
-    tools?: unknown[];
-    toolChoice?: string;
-}
-
-export interface LangChainResponse {
-    content: string;
-    toolCalls?: ToolCall[];
-    usage?: {
-        promptTokens?: number;
-        completionTokens?: number;
-        totalTokens?: number;
-    };
-    additionalKwargs?: Record<string, unknown>;
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -137,7 +106,7 @@ export class LangChainProvider implements LLMProvider {
             });
 
             // Call the LangChain LLM
-            const response = await this.llm.call(
+            const response = await this.invokeLLM(
                 langchainMessages,
                 langchainOptions,
             );
@@ -176,13 +145,6 @@ export class LangChainProvider implements LLMProvider {
         messages: LLMMessage[],
         options?: LLMOptions,
     ): AsyncGenerator<LLMResponse> {
-        if (!this.llm.stream) {
-            throw new EngineError(
-                'LLM_ERROR',
-                'Streaming not supported by this LangChain LLM',
-            );
-        }
-
         try {
             const langchainMessages = this.convertToLangChainMessages(messages);
             const langchainOptions = this.convertToLangChainOptions(options);
@@ -197,7 +159,7 @@ export class LangChainProvider implements LLMProvider {
                 },
             });
 
-            const stream = this.llm.stream(langchainMessages, langchainOptions);
+            const stream = this.streamLLM(langchainMessages, langchainOptions);
 
             for await (const chunk of stream) {
                 const convertedChunk = this.convertFromLangChainResponse(chunk);
@@ -224,19 +186,37 @@ export class LangChainProvider implements LLMProvider {
     private convertToLangChainMessages(
         messages: LLMMessage[],
     ): LangChainMessage[] {
-        return messages.map((msg) => ({
-            role: msg.role,
-            content: msg.content,
-            name: msg.name,
-            toolCallId: msg.toolCallId,
-            toolCalls: msg.toolCalls,
-        }));
+        return messages.map((msg) => {
+            const base: Record<string, unknown> = {
+                role: msg.role,
+                content: msg.content,
+                name: msg.name,
+            };
+            if (msg.toolCalls) {
+                base['tool_calls'] = msg.toolCalls;
+            }
+            if (msg.toolCallId) {
+                base['tool_call_id'] = msg.toolCallId;
+            }
+            return base as LangChainMessage;
+        });
     }
 
     private convertToLangChainOptions(options?: LLMOptions): LangChainOptions {
         if (!options) return {};
 
-        return {
+        const tools: OpenAIToolDefinition[] | undefined = options.tools?.length
+            ? options.tools.map((tool) => ({
+                  type: 'function',
+                  function: {
+                      name: tool.name,
+                      description: tool.description,
+                      parameters: tool.parameters,
+                  },
+              }))
+            : undefined;
+
+        const payload: LangChainOptions = {
             temperature: options.temperature,
             maxTokens: options.maxTokens,
             topP: options.topP,
@@ -244,67 +224,213 @@ export class LangChainProvider implements LLMProvider {
             presencePenalty: options.presencePenalty,
             stop: options.stop,
             stream: options.stream,
-            tools: options.tools,
-            toolChoice:
-                typeof options.toolChoice === 'string'
-                    ? options.toolChoice
-                    : undefined,
+            tools,
         };
+        const toolChoice =
+            typeof options.toolChoice === 'string'
+                ? options.toolChoice
+                : options.toolChoice;
+        if (toolChoice) {
+            (payload as Record<string, unknown>)['tool_choice'] = toolChoice;
+        }
+        return payload;
     }
 
     private convertFromLangChainResponse(
-        response: LangChainResponse | string,
+        response: LangChainResponse | string | unknown,
     ): LLMResponse {
-        // Handle different LangChain response formats
-        let content = '';
-        let toolCalls:
-            | {
-                  id: string;
-                  type: 'function';
-                  function: { name: string; arguments: string };
-              }[]
-            | undefined;
-
         if (typeof response === 'string') {
-            // Simple string response
-            content = response;
-        } else if (response.content) {
-            // Standard LangChain response
-            content = response.content;
-            toolCalls = response.toolCalls?.map((tc) => ({
-                id: tc.id,
-                type: 'function' as const,
-                function: tc.function,
-            }));
+            return { content: response };
         }
 
-        // Create result with type assertion to bypass linter
-        const result = {
-            content,
-            toolCalls: toolCalls,
-            usage:
-                response && typeof response === 'object' && response.usage
-                    ? {
-                          promptTokens: response.usage.promptTokens || 0,
-                          completionTokens:
-                              response.usage.completionTokens || 0,
-                          totalTokens: response.usage.totalTokens || 0,
-                      }
-                    : undefined,
-        };
+        const content = normalizeLLMContent(response);
+        const toolCalls = this.extractToolCalls(response);
+        const usage = this.extractUsage(response);
 
-        // Convert to LLMResponse format with type assertion
         return {
-            content: result.content,
-            toolCalls: result.toolCalls,
-            usage: result.usage
-                ? {
-                      promptTokens: result.usage.promptTokens,
-                      completionTokens: result.usage.completionTokens,
-                      totalTokens: result.usage.totalTokens,
-                  }
-                : undefined,
-        } as LLMResponse;
+            content,
+            toolCalls,
+            usage,
+        };
+    }
+
+    private async invokeLLM(
+        messages: LangChainMessage[],
+        options?: LangChainOptions,
+    ): Promise<LangChainResponse | string | unknown> {
+        if (typeof this.llm.invoke === 'function') {
+            return this.llm.invoke(messages, options);
+        }
+        if (typeof this.llm.call === 'function') {
+            return this.llm.call(messages, options);
+        }
+        throw new Error('LangChain LLM does not implement invoke or call');
+    }
+
+    private streamLLM(
+        messages: LangChainMessage[],
+        options?: LangChainOptions,
+    ): AsyncGenerator<LangChainResponse | string | unknown> {
+        if (!this.llm.stream) {
+            throw new EngineError(
+                'LLM_ERROR',
+                'Streaming not supported by this LangChain LLM',
+            );
+        }
+        return this.llm.stream(messages, options);
+    }
+
+    private extractToolCalls(
+        response: unknown,
+    ): LLMResponse['toolCalls'] | undefined {
+        if (!response || typeof response !== 'object') return undefined;
+        const record = response as Record<string, unknown>;
+        const raw =
+            record['tool_calls'] ??
+            (record as { toolCalls?: unknown }).toolCalls ??
+            (
+                record['additional_kwargs'] as
+                    | Record<string, unknown>
+                    | undefined
+            )?.['tool_calls'] ??
+            (
+                record['additionalKwargs'] as
+                    | Record<string, unknown>
+                    | undefined
+            )?.['tool_calls'];
+
+        if (!Array.isArray(raw)) return undefined;
+
+        type ParsedToolCall = NonNullable<LLMResponse['toolCalls']>[number];
+        const parsed = raw
+            .map((call) => {
+                if (!call || typeof call !== 'object') return undefined;
+                const typed = call as ToolCallLike;
+                const name = typed.name ?? typed.function?.name;
+                const args = typed.args ?? typed.function?.arguments;
+                if (!name) return undefined;
+
+                if (typeof args === 'string') {
+                    try {
+                        return {
+                            name,
+                            arguments: JSON.parse(args) as Record<
+                                string,
+                                unknown
+                            >,
+                        };
+                    } catch {
+                        return { name, arguments: {} };
+                    }
+                }
+
+                if (args && typeof args === 'object') {
+                    return {
+                        name,
+                        arguments: args as Record<string, unknown>,
+                    };
+                }
+
+                return { name, arguments: {} };
+            })
+            .filter((call): call is ParsedToolCall => Boolean(call));
+
+        return parsed.length ? parsed : undefined;
+    }
+
+    private extractUsage(response: unknown): LLMResponse['usage'] | undefined {
+        if (!response || typeof response !== 'object') {
+            return undefined;
+        }
+        const record = response as Record<string, unknown>;
+        const usageMetadata = record['usage_metadata'];
+        const responseMetadata = record['response_metadata'];
+        const legacyUsage = (record as { usage?: unknown }).usage;
+        const additionalUsage = (
+            record as { additionalKwargs?: { usage?: unknown } }
+        ).additionalKwargs?.usage;
+
+        if (usageMetadata && typeof usageMetadata === 'object') {
+            const meta = usageMetadata as Record<string, unknown>;
+            const inputTokens =
+                typeof meta['input_tokens'] === 'number'
+                    ? meta['input_tokens']
+                    : undefined;
+            const outputTokens =
+                typeof meta['output_tokens'] === 'number'
+                    ? meta['output_tokens']
+                    : undefined;
+            const totalTokens =
+                typeof meta['total_tokens'] === 'number'
+                    ? meta['total_tokens']
+                    : undefined;
+            return {
+                promptTokens: inputTokens ?? 0,
+                completionTokens: outputTokens ?? 0,
+                totalTokens:
+                    totalTokens ?? (inputTokens ?? 0) + (outputTokens ?? 0),
+            };
+        }
+
+        if (responseMetadata && typeof responseMetadata === 'object') {
+            const meta = responseMetadata as {
+                tokenUsage?: {
+                    promptTokens?: number;
+                    completionTokens?: number;
+                    totalTokens?: number;
+                };
+                usage?: Record<string, unknown>;
+            };
+            if (meta.tokenUsage) {
+                return {
+                    promptTokens: meta.tokenUsage.promptTokens ?? 0,
+                    completionTokens: meta.tokenUsage.completionTokens ?? 0,
+                    totalTokens: meta.tokenUsage.totalTokens ?? 0,
+                };
+            }
+            if (meta.usage) {
+                const inputTokens =
+                    typeof meta.usage['input_tokens'] === 'number'
+                        ? meta.usage['input_tokens']
+                        : undefined;
+                const outputTokens =
+                    typeof meta.usage['output_tokens'] === 'number'
+                        ? meta.usage['output_tokens']
+                        : undefined;
+                const totalTokens =
+                    typeof meta.usage['total_tokens'] === 'number'
+                        ? meta.usage['total_tokens']
+                        : undefined;
+                return {
+                    promptTokens: inputTokens ?? 0,
+                    completionTokens: outputTokens ?? 0,
+                    totalTokens:
+                        totalTokens ?? (inputTokens ?? 0) + (outputTokens ?? 0),
+                };
+            }
+        }
+
+        const finalUsage =
+            legacyUsage && typeof legacyUsage === 'object'
+                ? legacyUsage
+                : additionalUsage && typeof additionalUsage === 'object'
+                  ? additionalUsage
+                  : undefined;
+
+        if (finalUsage) {
+            const u = finalUsage as {
+                promptTokens?: number;
+                completionTokens?: number;
+                totalTokens?: number;
+            };
+            return {
+                promptTokens: u.promptTokens ?? 0,
+                completionTokens: u.completionTokens ?? 0,
+                totalTokens: u.totalTokens ?? 0,
+            };
+        }
+
+        return undefined;
     }
 
     // ──────────────────────────────────────────────────────────────────────────────

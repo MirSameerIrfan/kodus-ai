@@ -20,8 +20,8 @@ export class OpenAIAdapter implements ProviderAdapter {
                 : undefined;
 
         const payload: ConstructorParameters<typeof ChatOpenAI>[0] = {
-            modelName: model,
-            openAIApiKey: apiKey,
+            model,
+            apiKey,
             ...(resolved.resolvedMaxTokens
                 ? { maxTokens: resolved.resolvedMaxTokens }
                 : {}),
@@ -45,7 +45,6 @@ export class OpenAIAdapter implements ProviderAdapter {
             callbacks: options?.callbacks,
             configuration: {
                 ...(baseURL ? { baseURL } : {}),
-                apiKey,
             },
         };
 

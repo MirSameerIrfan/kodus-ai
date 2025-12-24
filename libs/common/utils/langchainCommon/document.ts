@@ -51,8 +51,8 @@ const getEmbedder = (options?: {
         const config = { ...defaultOptions, ...options };
 
         embedder = new OpenAIEmbeddings({
-            openAIApiKey: config.apiKey,
-            modelName: config.model,
+            apiKey: config.apiKey,
+            model: config.model,
         });
     }
 

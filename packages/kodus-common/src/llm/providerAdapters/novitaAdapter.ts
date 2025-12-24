@@ -21,7 +21,8 @@ export class NovitaAdapter implements ProviderAdapter {
                 : undefined;
 
         const payload: ConstructorParameters<typeof ChatOpenAI>[0] = {
-            modelName: model,
+            model,
+            apiKey,
             ...(resolved.temperature !== undefined
                 ? { temperature: resolved.temperature }
                 : {}),
@@ -40,7 +41,6 @@ export class NovitaAdapter implements ProviderAdapter {
             callbacks: options?.callbacks,
             configuration: {
                 baseURL: 'https://api.novita.ai/v3/openai',
-                apiKey,
             },
         };
 
