@@ -1,16 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { IssuesService } from '@/core/infrastructure/adapters/services/issues/issues.service';
+import { v4 as uuidv4 } from 'uuid';
+
+import { IssueStatus } from '@/config/types/general/issues.type';
 import {
     IIssuesRepository,
     ISSUES_REPOSITORY_TOKEN,
 } from '@/core/domain/issues/contracts/issues.repository';
 import { IssuesEntity } from '@/core/domain/issues/entities/issues.entity';
-import { IIssue } from '@/core/domain/issues/interfaces/issues.interface';
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
-import { LabelType } from '@/shared/utils/codeManagement/labels';
-import { IssueStatus } from '@/config/types/general/issues.type';
+import { IssuesService } from '@/core/infrastructure/adapters/services/issues/issues.service';
 import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { v4 as uuidv4 } from 'uuid';
+import { LabelType } from '@/shared/utils/codeManagement/labels';
+import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
 
 describe('IssuesService', () => {
     let service: IssuesService;
@@ -151,7 +151,9 @@ describe('IssuesService', () => {
 
                 // Assert
                 expect(mockRepository.find).toHaveBeenCalledTimes(1);
-                expect(mockRepository.find).toHaveBeenCalledWith(organizationId);
+                expect(mockRepository.find).toHaveBeenCalledWith(
+                    organizationId,
+                );
                 expect(result).toEqual(mockIssuesArray);
                 expect(result).toHaveLength(2);
                 expect(result[0]).toBeInstanceOf(IssuesEntity);
@@ -167,7 +169,9 @@ describe('IssuesService', () => {
                 const result = await service.find(organizationId);
 
                 // Assert
-                expect(mockRepository.find).toHaveBeenCalledWith(organizationId);
+                expect(mockRepository.find).toHaveBeenCalledWith(
+                    organizationId,
+                );
                 expect(result).toEqual([]);
                 expect(result).toHaveLength(0);
             });
@@ -179,8 +183,12 @@ describe('IssuesService', () => {
                 mockRepository.find.mockRejectedValue(new Error(errorMessage));
 
                 // Act & Assert
-                await expect(service.find(organizationId)).rejects.toThrow(errorMessage);
-                expect(mockRepository.find).toHaveBeenCalledWith(organizationId);
+                await expect(service.find(organizationId)).rejects.toThrow(
+                    errorMessage,
+                );
+                expect(mockRepository.find).toHaveBeenCalledWith(
+                    organizationId,
+                );
             });
         });
 
@@ -192,14 +200,21 @@ describe('IssuesService', () => {
                         organizationId: 'org-123',
                     };
 
-                    mockRepository.findByFilters.mockResolvedValue(mockIssuesArray);
+                    mockRepository.findByFilters.mockResolvedValue(
+                        mockIssuesArray,
+                    );
 
                     // Act
-                    const result = await service.findByFilters(organizationFilter);
+                    const result =
+                        await service.findByFilters(organizationFilter);
 
                     // Assert
-                    expect(mockRepository.findByFilters).toHaveBeenCalledTimes(1);
-                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(organizationFilter);
+                    expect(mockRepository.findByFilters).toHaveBeenCalledTimes(
+                        1,
+                    );
+                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(
+                        organizationFilter,
+                    );
                     expect(result).toEqual(mockIssuesArray);
                     expect(result).toHaveLength(2);
                     expect(result[0]).toBeInstanceOf(IssuesEntity);
@@ -216,13 +231,17 @@ describe('IssuesService', () => {
                     };
 
                     const filteredResults = [mockIssuesArray[0]]; // Só o primeiro que é crítico
-                    mockRepository.findByFilters.mockResolvedValue(filteredResults);
+                    mockRepository.findByFilters.mockResolvedValue(
+                        filteredResults,
+                    );
 
                     // Act
                     const result = await service.findByFilters(complexFilter);
 
                     // Assert
-                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(complexFilter);
+                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(
+                        complexFilter,
+                    );
                     expect(result).toEqual(filteredResults);
                     expect(result).toHaveLength(1);
                     expect(result[0].severity).toBe(SeverityLevel.CRITICAL);
@@ -237,7 +256,9 @@ describe('IssuesService', () => {
                     const result = await service.findByFilters(filter);
 
                     // Assert
-                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(filter);
+                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(
+                        filter,
+                    );
                     expect(result).toEqual([]);
                     expect(result).toHaveLength(0);
                 });
@@ -246,14 +267,20 @@ describe('IssuesService', () => {
             describe('direct method testing', () => {
                 it('should find issues without filters', async () => {
                     // Arrange
-                    mockRepository.findByFilters.mockResolvedValue(mockIssuesArray);
+                    mockRepository.findByFilters.mockResolvedValue(
+                        mockIssuesArray,
+                    );
 
                     // Act
                     const result = await service.findByFilters();
 
                     // Assert
-                    expect(mockRepository.findByFilters).toHaveBeenCalledTimes(1);
-                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(undefined);
+                    expect(mockRepository.findByFilters).toHaveBeenCalledTimes(
+                        1,
+                    );
+                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(
+                        undefined,
+                    );
                     expect(result).toEqual(mockIssuesArray);
                 });
 
@@ -264,16 +291,23 @@ describe('IssuesService', () => {
                     };
                     const criticalIssues = [mockIssuesArray[0]];
 
-                    mockRepository.findByFilters.mockResolvedValue(criticalIssues);
+                    mockRepository.findByFilters.mockResolvedValue(
+                        criticalIssues,
+                    );
 
                     // Act
                     const result = await service.findByFilters(severityFilter);
 
                     // Assert
-                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(severityFilter);
+                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(
+                        severityFilter,
+                    );
                     expect(result).toEqual(criticalIssues);
                     expect(
-                        result.every((issue) => issue.severity === SeverityLevel.CRITICAL),
+                        result.every(
+                            (issue) =>
+                                issue.severity === SeverityLevel.CRITICAL,
+                        ),
                     ).toBe(true);
                 });
 
@@ -284,16 +318,22 @@ describe('IssuesService', () => {
                     };
                     const securityIssues = [mockIssuesArray[0]];
 
-                    mockRepository.findByFilters.mockResolvedValue(securityIssues);
+                    mockRepository.findByFilters.mockResolvedValue(
+                        securityIssues,
+                    );
 
                     // Act
                     const result = await service.findByFilters(categoryFilter);
 
                     // Assert
-                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(categoryFilter);
+                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(
+                        categoryFilter,
+                    );
                     expect(result).toEqual(securityIssues);
                     expect(
-                        result.every((issue) => issue.label === LabelType.SECURITY),
+                        result.every(
+                            (issue) => issue.label === LabelType.SECURITY,
+                        ),
                     ).toBe(true);
                 });
 
@@ -304,13 +344,18 @@ describe('IssuesService', () => {
                     };
                     const authServiceIssues = [mockIssuesArray[0]];
 
-                    mockRepository.findByFilters.mockResolvedValue(authServiceIssues);
+                    mockRepository.findByFilters.mockResolvedValue(
+                        authServiceIssues,
+                    );
 
                     // Act
-                    const result = await service.findByFilters(repositoryFilter);
+                    const result =
+                        await service.findByFilters(repositoryFilter);
 
                     // Assert
-                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(repositoryFilter);
+                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(
+                        repositoryFilter,
+                    );
                     expect(result).toEqual(authServiceIssues);
                 });
 
@@ -327,7 +372,9 @@ describe('IssuesService', () => {
                     const result = await service.findByFilters(prNumberFilter);
 
                     // Assert
-                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(prNumberFilter);
+                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(
+                        prNumberFilter,
+                    );
                     expect(result).toEqual(prIssues);
                 });
 
@@ -338,13 +385,17 @@ describe('IssuesService', () => {
                     };
                     const authorIssues = [mockIssuesArray[0]];
 
-                    mockRepository.findByFilters.mockResolvedValue(authorIssues);
+                    mockRepository.findByFilters.mockResolvedValue(
+                        authorIssues,
+                    );
 
                     // Act
                     const result = await service.findByFilters(prAuthorFilter);
 
                     // Assert
-                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(prAuthorFilter);
+                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(
+                        prAuthorFilter,
+                    );
                     expect(result).toEqual(authorIssues);
                 });
 
@@ -361,7 +412,9 @@ describe('IssuesService', () => {
                     const result = await service.findByFilters(filePathFilter);
 
                     // Assert
-                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(filePathFilter);
+                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(
+                        filePathFilter,
+                    );
                     expect(result).toEqual(fileIssues);
                 });
 
@@ -378,7 +431,9 @@ describe('IssuesService', () => {
                     const result = await service.findByFilters(titleFilter);
 
                     // Assert
-                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(titleFilter);
+                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(
+                        titleFilter,
+                    );
                     expect(result).toEqual(titleIssues);
                 });
             });
@@ -388,48 +443,68 @@ describe('IssuesService', () => {
                     // Arrange
                     const filter = { organizationId: 'org-123' };
                     const errorMessage = 'Database connection failed';
-                    mockRepository.findByFilters.mockRejectedValue(new Error(errorMessage));
+                    mockRepository.findByFilters.mockRejectedValue(
+                        new Error(errorMessage),
+                    );
 
                     // Act & Assert
-                    await expect(service.findByFilters(filter)).rejects.toThrow(errorMessage);
-                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(filter);
+                    await expect(service.findByFilters(filter)).rejects.toThrow(
+                        errorMessage,
+                    );
+                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(
+                        filter,
+                    );
                 });
 
                 it('should handle network timeout errors', async () => {
                     // Arrange
                     const filter = { organizationId: 'org-123' };
                     const timeoutError = new Error('Request timeout');
-                    mockRepository.findByFilters.mockRejectedValue(timeoutError);
+                    mockRepository.findByFilters.mockRejectedValue(
+                        timeoutError,
+                    );
 
                     // Act & Assert
-                    await expect(service.findByFilters(filter)).rejects.toThrow('Request timeout');
-                    expect(mockRepository.findByFilters).toHaveBeenCalledTimes(1);
+                    await expect(service.findByFilters(filter)).rejects.toThrow(
+                        'Request timeout',
+                    );
+                    expect(mockRepository.findByFilters).toHaveBeenCalledTimes(
+                        1,
+                    );
                 });
             });
 
             describe('edge cases', () => {
                 it('should handle null filter gracefully', async () => {
                     // Arrange
-                    mockRepository.findByFilters.mockResolvedValue(mockIssuesArray);
+                    mockRepository.findByFilters.mockResolvedValue(
+                        mockIssuesArray,
+                    );
 
                     // Act
                     const result = await service.findByFilters(null);
 
                     // Assert
-                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(null);
+                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(
+                        null,
+                    );
                     expect(result).toEqual(mockIssuesArray);
                 });
 
                 it('should handle empty filter object', async () => {
                     // Arrange
                     const emptyFilter = {};
-                    mockRepository.findByFilters.mockResolvedValue(mockIssuesArray);
+                    mockRepository.findByFilters.mockResolvedValue(
+                        mockIssuesArray,
+                    );
 
                     // Act
                     const result = await service.findByFilters(emptyFilter);
 
                     // Assert
-                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(emptyFilter);
+                    expect(mockRepository.findByFilters).toHaveBeenCalledWith(
+                        emptyFilter,
+                    );
                     expect(result).toEqual(mockIssuesArray);
                 });
 
@@ -449,7 +524,9 @@ describe('IssuesService', () => {
                         afterAt: '2024-01-02',
                     };
 
-                    mockRepository.findByFilters.mockResolvedValue([mockIssuesArray[0]]);
+                    mockRepository.findByFilters.mockResolvedValue([
+                        mockIssuesArray[0],
+                    ]);
 
                     // Act
                     const result = await service.findByFilters(complexFilter);

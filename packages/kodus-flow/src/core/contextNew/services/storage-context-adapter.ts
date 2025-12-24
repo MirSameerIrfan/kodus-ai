@@ -163,9 +163,7 @@ class ContextDateUtils {
 // 🏗️ CONTEXT SESSIONS ADAPTER
 // ===============================================
 
-export class StorageContextSessionAdapter
-    implements BaseStorage<ContextSessionStorageItem>
-{
+export class StorageContextSessionAdapter implements BaseStorage<ContextSessionStorageItem> {
     private storage: BaseStorage<ContextSessionStorageItem> | null = null;
     private config: StorageAdapterConfig;
     private isInitialized = false;
@@ -210,9 +208,14 @@ export class StorageContextSessionAdapter
         await this.ensureIndexes();
 
         this.isInitialized = true;
-        logger.info('StorageContextSessionAdapter initialized', {
-            adapterType: this.config.type,
-            collection: this.config.options?.collection,
+        logger.log({
+            message: 'StorageContextSessionAdapter initialized',
+            context: 'initialize',
+
+            metadata: {
+                adapterType: this.config.type,
+                collection: this.config.options?.collection,
+            },
         });
     }
 
@@ -246,9 +249,16 @@ export class StorageContextSessionAdapter
                     );
                 }
 
-                logger.info('MongoDB indexes created for sessions collection');
+                logger.log({
+                    message: 'MongoDB indexes created for sessions collection',
+                    context: 'ensureIndexes',
+                });
             } catch (error) {
-                logger.warn('Failed to create MongoDB indexes', { error });
+                logger.warn({
+                    message: 'Failed to create MongoDB indexes',
+                    context: 'ensureIndexes',
+                    error: error as Error,
+                });
             }
         }
     }
@@ -256,8 +266,13 @@ export class StorageContextSessionAdapter
     async store(item: ContextSessionStorageItem): Promise<void> {
         await this.ensureInitialized();
         await this.storage!.store(item);
-        logger.debug('Context session stored', {
-            sessionId: item.sessionData.sessionId,
+        logger.debug({
+            message: 'Context session stored',
+            context: 'store',
+
+            metadata: {
+                sessionId: item.sessionData.sessionId,
+            },
         });
     }
 
@@ -270,7 +285,14 @@ export class StorageContextSessionAdapter
         await this.ensureInitialized();
         const deleted = await this.storage!.delete(id);
         if (deleted) {
-            logger.debug('Context session deleted', { sessionId: id });
+            logger.debug({
+                message: 'Context session deleted',
+                context: 'delete',
+
+                metadata: {
+                    sessionId: id,
+                },
+            });
         }
         return deleted;
     }
@@ -278,7 +300,10 @@ export class StorageContextSessionAdapter
     async clear(): Promise<void> {
         await this.ensureInitialized();
         await this.storage!.clear();
-        logger.info('All context sessions cleared');
+        logger.log({
+            message: 'All context sessions cleared',
+            context: 'clear',
+        });
     }
 
     async getStats(): Promise<BaseStorageStats> {
@@ -296,7 +321,10 @@ export class StorageContextSessionAdapter
             await this.storage.cleanup();
         }
         this.isInitialized = false;
-        logger.info('StorageContextSessionAdapter cleaned up');
+        logger.log({
+            message: 'StorageContextSessionAdapter cleaned up',
+            context: 'cleanup',
+        });
     }
 
     // ===== CONTEXT-SPECIFIC METHODS =====
@@ -375,13 +403,15 @@ export class StorageContextSessionAdapter
                 res.matchedCount === 0 &&
                 res.upsertedCount === 0
             ) {
-                logger.warn(
-                    'Optimistic concurrency conflict on session store',
-                    {
+                logger.warn({
+                    message: 'Optimistic concurrency conflict on session store',
+                    context: 'storeContextSession',
+
+                    metadata: {
                         sessionId,
                         expectedVersion: extras?.expectedVersion,
                     },
-                );
+                });
             }
             return;
         }
@@ -433,10 +463,12 @@ export class StorageContextSessionAdapter
                 (restored as any).version = (item as any).sessionData?.version;
                 return restored;
             } catch (error) {
-                logger.warn(
-                    'Direct MongoDB query failed, falling back to generic query',
-                    { error },
-                );
+                logger.warn({
+                    message:
+                        'Direct MongoDB query failed, falling back to generic query',
+                    context: 'retrieveContextSessionByThreadId',
+                    error: error as Error,
+                });
             }
         }
 
@@ -470,7 +502,15 @@ export class StorageContextSessionAdapter
 
             return null;
         } catch (error) {
-            logger.warn('Query failed', { error, query });
+            logger.warn({
+                message: 'Query failed',
+                context: 'findContextSessionByQuery',
+                error: error as Error,
+
+                metadata: {
+                    query,
+                },
+            });
             return null;
         }
     }
@@ -486,9 +526,7 @@ export class StorageContextSessionAdapter
 // 🏗️ EXECUTION SNAPSHOTS ADAPTER
 // ===============================================
 
-export class StorageSnapshotAdapter
-    implements BaseStorage<SnapshotStorageItem>
-{
+export class StorageSnapshotAdapter implements BaseStorage<SnapshotStorageItem> {
     private storage: BaseStorage<SnapshotStorageItem> | null = null;
     private config: StorageAdapterConfig;
     private isInitialized = false;
@@ -532,18 +570,28 @@ export class StorageSnapshotAdapter
         >(this.config);
 
         this.isInitialized = true;
-        logger.info('StorageSnapshotAdapter initialized', {
-            adapterType: this.config.type,
-            collection: this.config.options?.collection,
+        logger.log({
+            message: 'StorageSnapshotAdapter initialized',
+            context: 'initialize',
+
+            metadata: {
+                adapterType: this.config.type,
+                collection: this.config.options?.collection,
+            },
         });
     }
 
     async store(item: SnapshotStorageItem): Promise<void> {
         await this.ensureInitialized();
         await this.storage!.store(item);
-        logger.debug('Execution snapshot stored', {
-            executionId: item.snapshotData.executionId,
-            sessionId: item.snapshotData.sessionId,
+        logger.debug({
+            message: 'Execution snapshot stored',
+            context: 'store',
+
+            metadata: {
+                executionId: item.snapshotData.executionId,
+                sessionId: item.snapshotData.sessionId,
+            },
         });
     }
 
@@ -560,7 +608,10 @@ export class StorageSnapshotAdapter
     async clear(): Promise<void> {
         await this.ensureInitialized();
         await this.storage!.clear();
-        logger.info('All execution snapshots cleared');
+        logger.log({
+            message: 'All execution snapshots cleared',
+            context: 'clear',
+        });
     }
 
     async getStats(): Promise<BaseStorageStats> {
@@ -578,7 +629,10 @@ export class StorageSnapshotAdapter
             await this.storage.cleanup();
         }
         this.isInitialized = false;
-        logger.info('StorageSnapshotAdapter cleaned up');
+        logger.log({
+            message: 'StorageSnapshotAdapter cleaned up',
+            context: 'cleanup',
+        });
     }
 
     // ===== SNAPSHOT-SPECIFIC METHODS =====
@@ -632,9 +686,14 @@ export class StorageSnapshotAdapter
 
             return null;
         } catch (error) {
-            logger.warn('Failed to retrieve latest snapshot', {
-                error,
-                sessionId,
+            logger.warn({
+                message: 'Failed to retrieve latest snapshot',
+                context: 'retrieveLatestSnapshotForSession',
+                error: error as Error,
+
+                metadata: {
+                    sessionId,
+                },
             });
             return null;
         }

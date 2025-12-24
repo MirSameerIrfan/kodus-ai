@@ -54,8 +54,12 @@ export class StoragePersistorAdapter implements Persistor {
         });
 
         this.isInitialized = true;
-        logger.info('StoragePersistorAdapter initialized', {
-            type: this.config.type,
+        logger.log({
+            message: 'StoragePersistorAdapter initialized',
+            context: 'persistor-storage-adapter',
+            metadata: {
+                type: this.config.type,
+            },
         });
     }
 
@@ -73,7 +77,14 @@ export class StoragePersistorAdapter implements Persistor {
         };
 
         await this.storage!.store(storageItem);
-        logger.debug('Snapshot appended', { hash: s.hash, xcId: s.xcId });
+        logger.debug({
+            message: 'Snapshot appended',
+            context: 'persistor-storage-adapter',
+            metadata: {
+                hash: s.hash,
+                xcId: s.xcId,
+            },
+        });
     }
 
     async *load(xcId: string): AsyncIterable<Snapshot> {
@@ -98,7 +109,10 @@ export class StoragePersistorAdapter implements Persistor {
             return;
         }
 
-        logger.warn('load() not supported by underlying storage');
+        logger.warn({
+            message: 'load() not supported by underlying storage',
+            context: 'persistor-storage-adapter',
+        });
     }
 
     async has(hash: string): Promise<boolean> {
@@ -137,7 +151,10 @@ export class StoragePersistorAdapter implements Persistor {
             return result;
         }
 
-        logger.warn('listHashes() not supported by underlying storage');
+        logger.warn({
+            message: 'listHashes() not supported by underlying storage',
+            context: 'persistor-storage-adapter',
+        });
         return result;
     }
 

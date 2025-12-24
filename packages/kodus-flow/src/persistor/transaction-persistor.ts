@@ -28,7 +28,10 @@ export class TransactionPersistor extends BasePersistor {
             maxKeysPerNamespace: 1000,
         });
 
-        logger.info('TransactionPersistor initialized');
+        logger.log({
+            message: 'TransactionPersistor initialized',
+            context: 'transaction-persistor',
+        });
     }
 
     /**
@@ -48,7 +51,13 @@ export class TransactionPersistor extends BasePersistor {
         const transaction: Transaction = {
             id: transactionId,
             begin: async () => {
-                logger.debug('Transaction begun', { transactionId });
+                logger.debug({
+                    message: 'Transaction begun',
+                    context: 'transaction-persistor',
+                    metadata: {
+                        transactionId,
+                    },
+                });
             },
             commit: async () => {
                 await this.commitTransaction(transactionId);
@@ -103,10 +112,14 @@ export class TransactionPersistor extends BasePersistor {
             state.status = 'committed';
             state.endTime = Date.now();
 
-            logger.info('Transaction committed', {
-                transactionId,
-                operationCount: state.operations.length,
-                duration: state.endTime - state.startTime,
+            logger.log({
+                message: 'Transaction committed',
+                context: 'transaction-persistor',
+                metadata: {
+                    transactionId,
+                    operationCount: state.operations.length,
+                    duration: state.endTime - state.startTime,
+                },
             });
         } catch (error) {
             // Rollback on error
@@ -132,10 +145,14 @@ export class TransactionPersistor extends BasePersistor {
         state.status = 'rolled_back';
         state.endTime = Date.now();
 
-        logger.warn('Transaction rolled back', {
-            transactionId,
-            operationCount: state.operations.length,
-            duration: state.endTime - state.startTime,
+        logger.warn({
+            message: 'Transaction rolled back',
+            context: 'transaction-persistor',
+            metadata: {
+                transactionId,
+                operationCount: state.operations.length,
+                duration: state.endTime - state.startTime,
+            },
         });
 
         // Clean up transaction state
@@ -268,7 +285,10 @@ export class TransactionPersistor extends BasePersistor {
         }
 
         await this.stateManager.cleanup();
-        logger.info('TransactionPersistor cleaned up');
+        logger.log({
+            message: 'TransactionPersistor cleaned up',
+            context: 'transaction-persistor',
+        });
     }
 }
 

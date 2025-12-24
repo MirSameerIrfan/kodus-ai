@@ -1,15 +1,23 @@
 import {
+    TraceItem,
+    LogProcessor,
+    ObservabilityExporter,
+    TraceItem as TraceItemType,
     LogContext,
-    MongoDBErrorItem,
+    AGENT,
+    TOOL,
+} from '../types.js';
+import { createLogger } from '../logger.js';
+import {
+    LogLevel,
     MongoDBExporterConfig,
     MongoDBLogItem,
     MongoDBTelemetryItem,
     ObservabilityStorageConfig,
-} from '@/core/types/allTypes.js';
-import { createLogger } from '../logger.js';
-import { TraceItem, LogProcessor, LogLevel } from '../types.js';
+} from '../../core/types/allTypes.js';
 
-export class MongoDBExporter implements LogProcessor {
+export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
+    public readonly name = 'MongoDBExporter';
     private config: MongoDBExporterConfig;
     private logger: ReturnType<typeof createLogger>;
 
@@ -18,23 +26,20 @@ export class MongoDBExporter implements LogProcessor {
     private db: any = null;
     private collections: {
         logs: any;
-
         telemetry: any;
-
-        errors: any;
     } | null = null;
 
     // Buffers para batch processing
     private logBuffer: MongoDBLogItem[] = [];
     private telemetryBuffer: MongoDBTelemetryItem[] = [];
-
-    private errorBuffer: MongoDBErrorItem[] = [];
+    private readonly maxBufferSize = 5000; // Cap buffer size to prevent memory leaks
 
     // Flush timers
     private logFlushTimer: NodeJS.Timeout | null = null;
     private telemetryFlushTimer: NodeJS.Timeout | null = null;
 
-    private errorFlushTimer: NodeJS.Timeout | null = null;
+    private isFlushingLogs = false;
+    private isFlushingTelemetry = false;
 
     private isInitialized = false;
 
@@ -45,10 +50,9 @@ export class MongoDBExporter implements LogProcessor {
             collections: {
                 logs: 'observability_logs',
                 telemetry: 'observability_telemetry',
-                errors: 'observability_errors',
             },
-            batchSize: 50, // Otimizado para menor latência
-            flushIntervalMs: 15000, // 15s para dados mais frescos
+            batchSize: 50,
+            flushIntervalMs: 15000,
             maxRetries: 3,
             ttlDays: 30,
             enableObservability: true,
@@ -57,6 +61,18 @@ export class MongoDBExporter implements LogProcessor {
 
         this.logger = createLogger('mongodb-exporter');
     }
+
+    // --- ObservabilityExporter Implementation ---
+
+    async exportTrace(item: TraceItemType): Promise<void> {
+        this.exportTelemetry(item);
+    }
+
+    async shutdown(): Promise<void> {
+        return this.dispose();
+    }
+
+    // --- End ObservabilityExporter Implementation ---
 
     async initialize(): Promise<void> {
         if (this.isInitialized) return;
@@ -80,7 +96,6 @@ export class MongoDBExporter implements LogProcessor {
                 telemetry: this.db.collection(
                     this.config.collections.telemetry,
                 ),
-                errors: this.db.collection(this.config.collections.errors),
             };
 
             // Criar índices para performance
@@ -94,17 +109,22 @@ export class MongoDBExporter implements LogProcessor {
 
             this.isInitialized = true;
 
-            this.logger.info('MongoDB Exporter initialized', {
-                database: this.config.database,
-                collections: this.config.collections,
-                batchSize: this.config.batchSize,
-                flushIntervalMs: this.config.flushIntervalMs,
+            this.logger.log({
+                message: 'MongoDB Exporter initialized',
+                context: this.constructor.name,
+                metadata: {
+                    database: this.config.database,
+                    collections: this.config.collections,
+                    batchSize: this.config.batchSize,
+                    flushIntervalMs: this.config.flushIntervalMs,
+                },
             });
         } catch (error) {
-            this.logger.error(
-                'Failed to initialize MongoDB Exporter',
-                error as Error,
-            );
+            this.logger.error({
+                message: 'Failed to initialize MongoDB Exporter',
+                context: this.constructor.name,
+                error: error as Error,
+            });
             throw error;
         }
     }
@@ -132,22 +152,17 @@ export class MongoDBExporter implements LogProcessor {
             await this.collections.telemetry.createIndex({ toolName: 1 });
             await this.collections.telemetry.createIndex({ phase: 1 });
 
-            // Errors indexes
-            await this.collections.errors.createIndex({ timestamp: 1 });
-            await this.collections.errors.createIndex({ correlationId: 1 });
-            await this.collections.errors.createIndex({ tenantId: 1 });
-            await this.collections.errors.createIndex({ errorName: 1 });
-
-            this.logger.info('Performance indexes created successfully');
+            this.logger.log({
+                message: 'Performance indexes created successfully',
+                context: this.constructor.name,
+            });
         } catch (error) {
-            this.logger.warn(
-                'Failed to create performance indexes, continuing without indexes',
-                {
-                    error:
-                        error instanceof Error ? error.message : String(error),
-                },
-            );
-            // Não falhar a inicialização por causa dos índices
+            this.logger.warn({
+                message:
+                    'Failed to create performance indexes, continuing without indexes',
+                context: this.constructor.name,
+                error: error as Error,
+            });
         }
     }
 
@@ -157,9 +172,11 @@ export class MongoDBExporter implements LogProcessor {
     private async setupTTL(): Promise<void> {
         if (!this.collections) return;
 
-        // Só criar TTL se ttlDays estiver configurado e for maior que 0
         if (!this.config.ttlDays || this.config.ttlDays <= 0) {
-            this.logger.info('TTL not configured, skipping TTL setup');
+            this.logger.log({
+                message: 'TTL not configured, skipping TTL setup',
+                context: this.constructor.name,
+            });
             return;
         }
 
@@ -169,36 +186,33 @@ export class MongoDBExporter implements LogProcessor {
             const collections = [
                 { name: 'logs', collection: this.collections.logs },
                 { name: 'telemetry', collection: this.collections.telemetry },
-                { name: 'errors', collection: this.collections.errors },
             ];
 
             for (const { name, collection } of collections) {
                 try {
-                    // Check if TTL index already exists
                     const existingIndexes = await collection
                         .listIndexes()
                         .toArray();
                     const ttlIndexExists = existingIndexes.some(
-                        (index) =>
+                        (index: any) =>
                             index.key.createdAt === 1 &&
                             index.expireAfterSeconds,
                     );
 
                     if (!ttlIndexExists) {
-                        // Try to drop existing non-TTL index if it exists
                         try {
                             await collection.dropIndex('createdAt_1');
-                            this.logger.info(
-                                `Dropped existing createdAt index without TTL for ${name}`,
-                            );
+                            this.logger.log({
+                                message: `Dropped existing createdAt index without TTL for ${name}`,
+                                context: this.constructor.name,
+                            });
                         } catch {
-                            // Index doesn't exist or can't be dropped, continue
-                            this.logger.debug(
-                                `Could not drop existing createdAt index for ${name}, continuing`,
-                            );
+                            this.logger.debug({
+                                message: `Could not drop existing createdAt index for ${name}, continuing`,
+                                context: this.constructor.name,
+                            });
                         }
 
-                        // Create TTL index
                         await collection.createIndex(
                             { createdAt: 1 },
                             {
@@ -206,31 +220,33 @@ export class MongoDBExporter implements LogProcessor {
                                 background: true,
                             },
                         );
-                        this.logger.info(
-                            `Created TTL index for ${name} collection`,
-                        );
+                        this.logger.log({
+                            message: `Created TTL index for ${name} collection`,
+                            context: this.constructor.name,
+                        });
                     } else {
-                        this.logger.debug(
-                            `TTL index already exists for ${name} collection`,
-                        );
+                        this.logger.debug({
+                            message: `TTL index already exists for ${name} collection`,
+                            context: this.constructor.name,
+                        });
                     }
                 } catch (collectionError) {
-                    this.logger.warn(
-                        `Failed to setup TTL for ${name} collection`,
-                        { error: (collectionError as Error).message },
-                    );
+                    this.logger.warn({
+                        message: `Failed to setup TTL for ${name} collection`,
+                        context: this.constructor.name,
+                        error: collectionError as Error,
+                    });
                 }
             }
         } catch (error) {
-            this.logger.warn(
-                'Failed to create TTL indexes, continuing without TTL',
-                {
-                    error:
-                        error instanceof Error ? error.message : String(error),
+            this.logger.warn({
+                message: 'Failed to create TTL indexes, continuing without TTL',
+                context: this.constructor.name,
+                error: error as Error,
+                metadata: {
                     ttlDays: this.config.ttlDays,
                 },
-            );
-            // Não falhar a inicialização por causa do TTL
+            });
         }
     }
 
@@ -247,24 +263,49 @@ export class MongoDBExporter implements LogProcessor {
             () => this.flushTelemetry(),
             this.config.flushIntervalMs,
         );
-
-        this.errorFlushTimer = setInterval(
-            () => this.flushErrors(),
-            this.config.flushIntervalMs,
-        );
     }
 
     /**
      * Exportar log
      */
-    exportLog(
-        level: 'debug' | 'info' | 'warn' | 'error',
+    async exportLog(
+        level: LogLevel,
+        message: string,
+        context?: LogContext | string,
+        error?: Error,
+        legacyError?: Error,
+    ): Promise<void> {
+        let component = 'unknown';
+        let metadata: LogContext | undefined;
+        const actualError = error || legacyError;
+
+        if (typeof context === 'string') {
+            component = context;
+            metadata = undefined;
+        } else if (typeof context === 'object') {
+            component = String(context?.component || 'unknown');
+            metadata = context;
+        }
+
+        this._pushLog(level, message, component, metadata, actualError);
+    }
+
+    private _pushLog(
+        level: LogLevel,
         message: string,
         component: string,
         context?: LogContext,
         error?: Error,
-    ): void {
-        if (!this.isInitialized) return;
+    ) {
+        // MongoDB saves all logs for complete history/audit trail
+        // Console logging respects API_LOG_LEVEL via Pino
+        // Prevent buffer overflow
+        if (this.logBuffer.length >= this.maxBufferSize) {
+            // Drop oldest logs to make space for new ones
+            const droppedCount = this.logBuffer.length - this.maxBufferSize + 1;
+            this.logBuffer.splice(0, droppedCount);
+            // Optionally log internally that we dropped logs, but be careful not to loop
+        }
 
         const logItem: MongoDBLogItem = {
             timestamp: new Date(),
@@ -274,7 +315,7 @@ export class MongoDBExporter implements LogProcessor {
             correlationId: context?.correlationId as string | undefined,
             tenantId: context?.tenantId as string | undefined,
             executionId: context?.executionId as string | undefined,
-            sessionId: context?.sessionId as string | undefined, // ✅ NEW: Extract sessionId from context
+            sessionId: context?.sessionId as string | undefined,
             metadata: context,
             error: error
                 ? {
@@ -288,7 +329,6 @@ export class MongoDBExporter implements LogProcessor {
 
         this.logBuffer.push(logItem);
 
-        // Flush se buffer cheio
         if (this.logBuffer.length >= this.config.batchSize) {
             void this.flushLogs();
         }
@@ -300,34 +340,29 @@ export class MongoDBExporter implements LogProcessor {
         context?: LogContext,
         error?: Error,
     ): void {
-        const component = String(context?.component || 'unknown');
-
-        this.exportLog(level, message, component, context, error);
+        void this.exportLog(level, message, context, error);
     }
 
     exportTelemetry(item: TraceItem): void {
-        if (!this.isInitialized) {
-            return;
-        }
-
         const duration = item.endTime - item.startTime;
-
-        // Extract values from attributes using OpenTelemetry semantic conventions
-        // correlationId, sessionId, tenantId, executionId are now stored as span attributes
-        const correlationId = item.attributes['correlationId'] as string;
+        const correlationId =
+            (item.attributes[AGENT.CORRELATION_ID] as string) ||
+            (item.attributes[TOOL.CORRELATION_ID] as string) ||
+            (item.attributes['correlationId'] as string);
         const tenantId =
-            (item.attributes['agent.tenant.id'] as string) ||
+            (item.attributes[AGENT.TENANT_ID] as string) ||
             (item.attributes['tenantId'] as string) ||
             (item.attributes['tenant.id'] as string);
         const executionId =
-            (item.attributes['agent.execution.id'] as string) ||
+            (item.attributes[AGENT.EXECUTION_ID] as string) ||
+            (item.attributes[TOOL.EXECUTION_ID] as string) ||
             (item.attributes['execution.id'] as string);
         const sessionId =
-            (item.attributes['agent.conversation.id'] as string) ||
+            (item.attributes[AGENT.CONVERSATION_ID] as string) ||
             (item.attributes['sessionId'] as string) ||
             (item.attributes['conversation.id'] as string);
-        const agentName = item.attributes['agent.name'] as string;
-        const toolName = item.attributes['tool.name'] as string;
+        const agentName = item.attributes[AGENT.NAME] as string;
+        const toolName = item.attributes[TOOL.NAME] as string;
         const phase = item.attributes['agent.phase'] as
             | 'think'
             | 'act'
@@ -339,87 +374,84 @@ export class MongoDBExporter implements LogProcessor {
             duration,
             correlationId,
             tenantId,
-            executionId, // ✅ Now properly extracted from trace attributes
-            sessionId, // ✅ Link to session for proper hierarchy
+            executionId,
+            sessionId,
             agentName,
             toolName,
             phase,
             attributes: item.attributes,
-            status: 'ok', // Assumir OK por padrão
-            error: undefined, // Não disponível no TraceItem
+            status: item.status.code as any,
+            error: item.status.message
+                ? {
+                      name: 'Error',
+                      message: item.status.message,
+                  }
+                : undefined,
             createdAt: new Date(),
         };
 
         this.telemetryBuffer.push(telemetryItem);
 
-        // Flush se buffer cheio
+        // Prevent buffer overflow
+        if (this.telemetryBuffer.length >= this.maxBufferSize) {
+            const droppedCount =
+                this.telemetryBuffer.length - this.maxBufferSize + 1;
+            this.telemetryBuffer.splice(0, droppedCount);
+        }
+
         if (this.telemetryBuffer.length >= this.config.batchSize) {
             void this.flushTelemetry();
         }
     }
 
-    /**
-     * Exportar erro
-     */
-    exportError(
-        error: Error,
-        context?: {
-            correlationId?: string;
-            tenantId?: string;
-            executionId?: string;
-            [key: string]: unknown;
-        },
-    ): void {
-        if (!this.isInitialized) return;
-
-        const errorItem: MongoDBErrorItem = {
-            timestamp: new Date(),
-            correlationId: context?.correlationId,
-            tenantId: context?.tenantId,
-            executionId: context?.executionId,
-            sessionId: context?.sessionId as string | undefined, // ✅ NEW: Extract sessionId from context
-            errorName: error.name,
-            errorMessage: error.message,
-            errorStack: error.stack,
-            context: context || {},
-            createdAt: new Date(),
+    async exportError(error: Error, context?: LogContext): Promise<void> {
+        const logContext = {
+            ...context,
+            component: 'error-handler',
         };
-
-        this.errorBuffer.push(errorItem);
-
-        // Flush se buffer cheio
-        if (this.errorBuffer.length >= this.config.batchSize) {
-            void this.flushErrors();
-        }
+        await this.exportLog('error', error.message, logContext, error);
     }
 
     /**
      * Flush logs para MongoDB
      */
     private async flushLogs(): Promise<void> {
-        if (!this.collections || this.logBuffer.length === 0) return;
+        if (
+            !this.collections ||
+            this.logBuffer.length === 0 ||
+            this.isFlushingLogs
+        )
+            return;
 
+        this.isFlushingLogs = true;
         const logsToFlush = [...this.logBuffer];
         this.logBuffer = [];
 
         try {
             await this.collections.logs.insertMany(logsToFlush);
-
-            if (this.config.enableObservability) {
-                this.logger.debug('Logs flushed to MongoDB', {
-                    count: logsToFlush.length,
-                    collection: this.config.collections.logs,
-                    // prevent re-processing this log by exporters
-                    skipProcessors: true,
-                } as any);
-            }
+            // Removed debug log to avoid recursive logging and pollution
         } catch (error) {
-            this.logger.error(
-                'Failed to flush logs to MongoDB',
-                error as Error,
-            );
-            // Re-add to buffer for retry
-            this.logBuffer.unshift(...logsToFlush);
+            this.logger.error({
+                message: 'Failed to flush logs to MongoDB',
+                context: this.constructor.name,
+                error: error as Error,
+            });
+
+            // Put logs back (LIFO to preserve order roughly, or just push back)
+            // But respect max buffer size
+            const availableSpace = this.maxBufferSize - this.logBuffer.length;
+            if (availableSpace > 0) {
+                // Keep the most recent ones if we have to drop
+                const toKeep = logsToFlush.slice(
+                    Math.max(0, logsToFlush.length - availableSpace),
+                );
+                this.logBuffer.unshift(...toKeep);
+            }
+
+            // Exponential Backoff logic could be applied by pausing the timer, but here we just rely on interval.
+            // A more sophisticated approach would be to dynamically adjust flushIntervalMs, but simplest is just logging and retrying next tick.
+        } finally {
+            this.isFlushingLogs = false;
         }
     }
 
@@ -427,57 +459,37 @@ export class MongoDBExporter implements LogProcessor {
      * Flush telemetry para MongoDB
      */
     private async flushTelemetry(): Promise<void> {
-        if (!this.collections || this.telemetryBuffer.length === 0) return;
+        if (
+            !this.collections ||
+            this.telemetryBuffer.length === 0 ||
+            this.isFlushingTelemetry
+        )
+            return;
 
+        this.isFlushingTelemetry = true;
         const telemetryToFlush = [...this.telemetryBuffer];
         this.telemetryBuffer = [];
 
         try {
             await this.collections.telemetry.insertMany(telemetryToFlush);
-
-            if (this.config.enableObservability) {
-                this.logger.debug('Telemetry flushed to MongoDB', {
-                    count: telemetryToFlush.length,
-                    collection: this.config.collections.telemetry,
-                    skipProcessors: true,
-                } as any);
-            }
+            // Removed debug log to avoid recursive logging and pollution
         } catch (error) {
-            this.logger.error(
-                'Failed to flush telemetry to MongoDB',
-                error as Error,
-            );
-            // Re-add to buffer for retry
-            this.telemetryBuffer.unshift(...telemetryToFlush);
-        }
-    }
+            this.logger.error({
+                message: 'Failed to flush telemetry to MongoDB',
+                context: this.constructor.name,
+                error: error as Error,
+            });
 
-    /**
-     * Flush erros para MongoDB
-     */
-    private async flushErrors(): Promise<void> {
-        if (!this.collections || this.errorBuffer.length === 0) return;
-
-        const errorsToFlush = [...this.errorBuffer];
-        this.errorBuffer = [];
-
-        try {
-            await this.collections.errors.insertMany(errorsToFlush);
-
-            if (this.config.enableObservability) {
-                this.logger.debug('Errors flushed to MongoDB', {
-                    count: errorsToFlush.length,
-                    collection: this.config.collections.errors,
-                    skipProcessors: true,
-                } as any);
+            const availableSpace =
+                this.maxBufferSize - this.telemetryBuffer.length;
+            if (availableSpace > 0) {
+                const toKeep = telemetryToFlush.slice(
+                    Math.max(0, telemetryToFlush.length - availableSpace),
+                );
+                this.telemetryBuffer.unshift(...toKeep);
             }
-        } catch (error) {
-            this.logger.error(
-                'Failed to flush errors to MongoDB',
-                error as Error,
-            );
-            // Re-add to buffer for retry
-            this.errorBuffer.unshift(...errorsToFlush);
+        } finally {
+            this.isFlushingTelemetry = false;
         }
     }
 
@@ -485,38 +497,30 @@ export class MongoDBExporter implements LogProcessor {
      * Flush todos os buffers
      */
     async flush(): Promise<void> {
-        await Promise.allSettled([
-            this.flushLogs(),
-            this.flushTelemetry(),
-            this.flushErrors(),
-        ]);
+        await Promise.allSettled([this.flushLogs(), this.flushTelemetry()]);
     }
 
     /**
      * Dispose do exporter
      */
     async dispose(): Promise<void> {
-        // Parar timers
         if (this.logFlushTimer) clearInterval(this.logFlushTimer);
         if (this.telemetryFlushTimer) clearInterval(this.telemetryFlushTimer);
-        if (this.errorFlushTimer) clearInterval(this.errorFlushTimer);
 
-        // Flush final
         await this.flush();
 
-        // Fechar conexão
         if (this.client) {
             await this.client.close();
         }
 
         this.isInitialized = false;
-        this.logger.info('MongoDB Exporter disposed');
+        this.logger.log({
+            message: 'MongoDB Exporter disposed',
+            context: this.constructor.name,
+        });
     }
 }
 
-/**
- * Converter configuração de storage para MongoDB Exporter
- */
 export function createMongoDBExporterFromStorage(
     storageConfig: ObservabilityStorageConfig,
 ): MongoDBExporter {
@@ -528,8 +532,6 @@ export function createMongoDBExporterFromStorage(
             telemetry:
                 storageConfig.collections?.telemetry ||
                 'observability_telemetry',
-
-            errors: storageConfig.collections?.errors || 'observability_errors',
         },
         batchSize: storageConfig.batchSize || 100,
         flushIntervalMs: storageConfig.flushIntervalMs || 5000,
@@ -541,9 +543,6 @@ export function createMongoDBExporterFromStorage(
     return new MongoDBExporter(config);
 }
 
-/**
- * Factory para criar MongoDB Exporter
- */
 export function createMongoDBExporter(
     config?: Partial<MongoDBExporterConfig>,
 ): MongoDBExporter {

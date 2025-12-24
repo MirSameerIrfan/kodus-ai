@@ -31,9 +31,14 @@ export class DirectLLMAdapter implements LLMAdapter {
     constructor(langchainLLM: LangChainLLM) {
         this.llm = langchainLLM;
 
-        this.logger.info('Direct LLM adapter initialized (SIMPLIFIED)', {
-            llmName: langchainLLM.name || 'unknown-llm',
-            hasStreaming: typeof langchainLLM.stream === 'function',
+        this.logger.log({
+            message: 'Direct LLM adapter initialized (SIMPLIFIED)',
+            context: this.constructor.name,
+
+            metadata: {
+                llmName: langchainLLM.name || 'unknown-llm',
+                hasStreaming: typeof langchainLLM.stream === 'function',
+            },
         });
     }
 
@@ -178,10 +183,12 @@ export class DirectLLMAdapter implements LLMAdapter {
 
             return response as any;
         } catch (error) {
-            this.logger.error(
-                'Planning failed',
-                error instanceof Error ? error : new Error('Unknown error'),
-            );
+            this.logger.error({
+                message: 'Planning failed',
+                context: this.constructor.name,
+                error:
+                    error instanceof Error ? error : new Error('Unknown error'),
+            });
             throw new EngineError(
                 'LLM_ERROR',
                 `Planning failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -433,7 +440,11 @@ export class DirectLLMAdapter implements LLMAdapter {
 
             return { content, usage } as LLMResponse;
         } catch (error) {
-            this.logger.error('Direct call failed', error as Error);
+            this.logger.error({
+                message: 'Direct call failed',
+                context: this.constructor.name,
+                error: error as Error,
+            });
             throw error;
         }
     }

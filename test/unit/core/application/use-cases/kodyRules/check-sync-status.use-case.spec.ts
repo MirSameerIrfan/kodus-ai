@@ -1,14 +1,15 @@
+import { REQUEST } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
+
 import { CheckSyncStatusUseCase } from '@/core/application/use-cases/kodyRules/check-sync-status.use-case';
-import { INTEGRATION_SERVICE_TOKEN } from '@/core/domain/integrations/contracts/integration.service.contracts';
-import { INTEGRATION_CONFIG_SERVICE_TOKEN } from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { PARAMETERS_SERVICE_TOKEN } from '@/core/domain/parameters/contracts/parameters.service.contract';
 import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/find-rules-in-organization-by-filter.use-case';
+import { INTEGRATION_CONFIG_SERVICE_TOKEN } from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import { INTEGRATION_SERVICE_TOKEN } from '@/core/domain/integrations/contracts/integration.service.contracts';
+import { KodyRulesStatus } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+import { PARAMETERS_SERVICE_TOKEN } from '@/core/domain/parameters/contracts/parameters.service.contract';
+import { KodyLearningStatus } from '@/core/domain/parameters/types/configValue.type';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { KodyLearningStatus } from '@/core/domain/parameters/types/configValue.type';
-import { KodyRulesStatus } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
-import { REQUEST } from '@nestjs/core';
 
 describe('CheckSyncStatusUseCase', () => {
     let useCase: CheckSyncStatusUseCase;
@@ -103,7 +104,8 @@ describe('CheckSyncStatusUseCase', () => {
                     useValue: mockParametersService,
                 },
                 {
-                    provide: FindRulesInOrganizationByRuleFilterKodyRulesUseCase,
+                    provide:
+                        FindRulesInOrganizationByRuleFilterKodyRulesUseCase,
                     useValue: mockFindRulesUseCase,
                 },
                 {
@@ -407,7 +409,9 @@ describe('CheckSyncStatusUseCase', () => {
                     .mockResolvedValueOnce(mockPlatformConfig)
                     .mockResolvedValueOnce(configWithIdeDisabled);
 
-                mockFindRulesUseCase.execute.mockResolvedValue(rulesWithSourcePath);
+                mockFindRulesUseCase.execute.mockResolvedValue(
+                    rulesWithSourcePath,
+                );
 
                 const result = await useCase.execute('team-456', 'repo-3');
 
@@ -451,7 +455,9 @@ describe('CheckSyncStatusUseCase', () => {
                     .mockResolvedValueOnce(mockPlatformConfig)
                     .mockResolvedValueOnce(configWithIdeDisabled);
 
-                mockFindRulesUseCase.execute.mockResolvedValue(rulesWithoutSourcePath);
+                mockFindRulesUseCase.execute.mockResolvedValue(
+                    rulesWithoutSourcePath,
+                );
 
                 const result = await useCase.execute('team-456', 'repo-4');
 
@@ -524,7 +530,9 @@ describe('CheckSyncStatusUseCase', () => {
                     .mockResolvedValueOnce(mockPlatformConfig)
                     .mockResolvedValueOnce(configWithIdeDisabled);
 
-                mockFindRulesUseCase.execute.mockResolvedValue(rulesWithoutSourcePath);
+                mockFindRulesUseCase.execute.mockResolvedValue(
+                    rulesWithoutSourcePath,
+                );
 
                 const result = await useCase.execute('team-456', 'repo-6');
 
@@ -645,7 +653,9 @@ describe('CheckSyncStatusUseCase', () => {
                     .mockResolvedValueOnce(mockPlatformConfig) // kodyLearningStatus=ENABLED
                     .mockResolvedValueOnce(configWithBothDisabled);
 
-                mockFindRulesUseCase.execute.mockResolvedValue(rulesWithSourcePath);
+                mockFindRulesUseCase.execute.mockResolvedValue(
+                    rulesWithSourcePath,
+                );
 
                 const result = await useCase.execute('team-456', 'repo-10');
 
@@ -692,7 +702,9 @@ describe('CheckSyncStatusUseCase', () => {
 
     describe('getCodeReviewConfigs', () => {
         it('deve retornar configValue do codeReviewConfig', async () => {
-            mockParametersService.findByKey.mockResolvedValue(mockCodeReviewConfig);
+            mockParametersService.findByKey.mockResolvedValue(
+                mockCodeReviewConfig,
+            );
 
             const result = await useCase['getCodeReviewConfigs'](mockOrgData);
 
@@ -711,13 +723,13 @@ describe('CheckSyncStatusUseCase', () => {
                 mockRepositories,
             );
 
-            const result = await useCase['getFormattedRepositories'](mockOrgData);
+            const result =
+                await useCase['getFormattedRepositories'](mockOrgData);
 
             expect(result).toEqual(mockRepositories);
-            expect(mockIntegrationConfigService.findIntegrationConfigFormatted).toHaveBeenCalledWith(
-                'repositories',
-                mockOrgData,
-            );
+            expect(
+                mockIntegrationConfigService.findIntegrationConfigFormatted,
+            ).toHaveBeenCalledWith('repositories', mockOrgData);
         });
     });
 });

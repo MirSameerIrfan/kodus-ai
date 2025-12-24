@@ -1,3 +1,7 @@
+import { Test, TestingModule } from '@nestjs/testing';
+
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+
 import {
     BehaviourForExistingDescription,
     CodeReviewConfig,
@@ -7,20 +11,18 @@ import {
 } from '@/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import { INTEGRATION_CONFIG_SERVICE_TOKEN } from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import { INTEGRATION_SERVICE_TOKEN } from '@/core/domain/integrations/contracts/integration.service.contracts';
 import { KODY_RULES_SERVICE_TOKEN } from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
 import { KodyRulesEntity } from '@/core/domain/kodyRules/entities/kodyRules.entity';
-import { PARAMETERS_SERVICE_TOKEN } from '@/core/domain/parameters/contracts/parameters.service.contract';
 import { ORGANIZATION_PARAMETERS_SERVICE_TOKEN } from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
+import { PARAMETERS_SERVICE_TOKEN } from '@/core/domain/parameters/contracts/parameters.service.contract';
 import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
-import CodeBaseConfigService from '@/ee/codeBase/codeBaseConfig.service';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
+import CodeBaseConfigService from '@/ee/codeBase/codeBaseConfig.service';
 import { KodyRulesValidationService } from '@/ee/kodyRules/service/kody-rules-validation.service';
-import { INTEGRATION_SERVICE_TOKEN } from '@/core/domain/integrations/contracts/integration.service.contracts';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { Test, TestingModule } from '@nestjs/testing';
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
 import * as globalPathsJsonFile from '@/shared/utils/codeBase/ignorePaths/generated/paths.json';
+import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
 
 // Mock the crypto module to avoid requiring API_CRYPTO_KEY
 jest.mock('@/shared/utils/crypto', () => ({

@@ -1,14 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
+import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
+import { IAutomationExecution } from '@/core/domain/automation/interfaces/automation-execution.interface';
 import { AutomationExecutionRepository } from '@/core/infrastructure/adapters/repositories/typeorm/automationExecution.repository';
 import { AutomationExecutionModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/automationExecution.model';
-import { IAutomationExecution } from '@/core/domain/automation/interfaces/automation-execution.interface';
-import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
 
 describe('AutomationExecutionRepository', () => {
     let repository: AutomationExecutionRepository;
-    let mockTypeOrmRepository: jest.Mocked<Repository<AutomationExecutionModel>>;
+    let mockTypeOrmRepository: jest.Mocked<
+        Repository<AutomationExecutionModel>
+    >;
 
     beforeEach(async () => {
         const mockTypeOrmRepositoryValue = {
@@ -30,8 +33,12 @@ describe('AutomationExecutionRepository', () => {
             ],
         }).compile();
 
-        repository = module.get<AutomationExecutionRepository>(AutomationExecutionRepository);
-        mockTypeOrmRepository = module.get(getRepositoryToken(AutomationExecutionModel));
+        repository = module.get<AutomationExecutionRepository>(
+            AutomationExecutionRepository,
+        );
+        mockTypeOrmRepository = module.get(
+            getRepositoryToken(AutomationExecutionModel),
+        );
     });
 
     describe('find', () => {
@@ -64,7 +71,9 @@ describe('AutomationExecutionRepository', () => {
                 },
             ];
 
-            mockTypeOrmRepository.find.mockResolvedValue(mockExecutions as AutomationExecutionModel[]);
+            mockTypeOrmRepository.find.mockResolvedValue(
+                mockExecutions as AutomationExecutionModel[],
+            );
 
             // Act
             await repository.find(filter);
@@ -72,7 +81,7 @@ describe('AutomationExecutionRepository', () => {
             // Assert - Should load all nested relations since filter includes deep nested properties
             expect(mockTypeOrmRepository.find).toHaveBeenCalledWith({
                 where: {
-                    status: AutomationStatus.SUCCESS,
+                    'status': AutomationStatus.SUCCESS,
                     'teamAutomation.team.organization.uuid': 'test-org-id',
                 },
                 relations: [
@@ -99,7 +108,9 @@ describe('AutomationExecutionRepository', () => {
                 },
             ];
 
-            mockTypeOrmRepository.find.mockResolvedValue(mockExecutions as AutomationExecutionModel[]);
+            mockTypeOrmRepository.find.mockResolvedValue(
+                mockExecutions as AutomationExecutionModel[],
+            );
 
             // Act
             await repository.find(filter);
@@ -110,10 +121,7 @@ describe('AutomationExecutionRepository', () => {
                     status: AutomationStatus.SUCCESS,
                     pullRequestNumber: 123,
                 },
-                relations: [
-                    'teamAutomation',
-                    'codeReviewExecutions',
-                ],
+                relations: ['teamAutomation', 'codeReviewExecutions'],
             });
         });
 
@@ -168,10 +176,7 @@ describe('AutomationExecutionRepository', () => {
             // Assert - Should only load basic relations since no filter properties require deep relations
             expect(mockTypeOrmRepository.find).toHaveBeenCalledWith({
                 where: {},
-                relations: [
-                    'teamAutomation',
-                    'codeReviewExecutions',
-                ],
+                relations: ['teamAutomation', 'codeReviewExecutions'],
             });
         });
 
@@ -185,10 +190,7 @@ describe('AutomationExecutionRepository', () => {
             // Assert - Should only load basic relations since no filter properties require deep relations
             expect(mockTypeOrmRepository.find).toHaveBeenCalledWith({
                 where: {},
-                relations: [
-                    'teamAutomation',
-                    'codeReviewExecutions',
-                ],
+                relations: ['teamAutomation', 'codeReviewExecutions'],
             });
         });
     });
@@ -221,14 +223,15 @@ describe('AutomationExecutionRepository', () => {
             // Assert - Verify that nested objects are flattened correctly and all relations are loaded
             expect(mockTypeOrmRepository.find).toHaveBeenCalledWith({
                 where: {
-                    status: AutomationStatus.SUCCESS,
-                    pullRequestNumber: 123,
+                    'status': AutomationStatus.SUCCESS,
+                    'pullRequestNumber': 123,
                     'teamAutomation.uuid': 'team-automation-id',
                     'teamAutomation.status': true,
                     'teamAutomation.team.uuid': 'team-id',
                     'teamAutomation.team.name': 'Test Team',
                     'teamAutomation.team.organization.uuid': 'org-id',
-                    'teamAutomation.team.organization.name': 'Test Organization',
+                    'teamAutomation.team.organization.name':
+                        'Test Organization',
                 },
                 relations: [
                     'teamAutomation',
@@ -291,10 +294,7 @@ describe('AutomationExecutionRepository', () => {
                     'teamAutomation.uuid': 'team-automation-id',
                     'teamAutomation.status': true,
                 },
-                relations: [
-                    'teamAutomation',
-                    'codeReviewExecutions',
-                ],
+                relations: ['teamAutomation', 'codeReviewExecutions'],
             });
         });
     });

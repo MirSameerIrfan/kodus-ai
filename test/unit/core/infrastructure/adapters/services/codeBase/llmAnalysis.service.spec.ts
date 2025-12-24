@@ -1,7 +1,8 @@
+import { LLMModelProvider, LLMProviderService } from '@kodus/kodus-common/llm';
 import { Test, TestingModule } from '@nestjs/testing';
+
 import { LLMAnalysisService } from '@/core/infrastructure/adapters/services/codeBase/llmAnalysis.service';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { LLMModelProvider, LLMProviderService } from '@kodus/kodus-common/llm';
 
 describe('LLMAnalysisService', () => {
     let service: LLMAnalysisService;

@@ -1,0 +1,21 @@
+import { Module, forwardRef } from '@nestjs/common';
+
+import { BitbucketService } from '../infrastructure/adapters/services/bitbucket.service';
+import { IntegrationCoreModule } from '@libs/integrations/modules/integrations-core.module';
+import { IntegrationConfigCoreModule } from '@libs/integrations/modules/config-core.module';
+import { AuthIntegrationModule } from '@libs/integrations/modules/authIntegration.module';
+import { GlobalCacheModule } from '@libs/core/cache/cache.module';
+import { McpCoreModule } from '@libs/mcp-server/mcp-core.module';
+
+@Module({
+    imports: [
+        forwardRef(() => IntegrationCoreModule),
+        forwardRef(() => IntegrationConfigCoreModule),
+        forwardRef(() => AuthIntegrationModule),
+        forwardRef(() => GlobalCacheModule),
+        forwardRef(() => McpCoreModule),
+    ],
+    providers: [BitbucketService],
+    exports: [BitbucketService],
+})
+export class BitbucketModule {}

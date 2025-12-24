@@ -1,0 +1,82 @@
+import { ConflictException, Inject } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+
+import { CreateOrUpdateParametersUseCase } from '../parameters/create-or-update-use-case';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import {
+    ITeamService,
+    TEAM_SERVICE_TOKEN,
+} from '@libs/organization/domain/team/contracts/team.service.contract';
+import { TeamEntity } from '@libs/organization/domain/team/entities/team.entity';
+import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
+import {
+    KodyLearningStatus,
+    PlatformConfigValue,
+} from '@libs/organization/domain/parameters/types/configValue.type';
+import { ParametersKey } from '@libs/core/domain/enums';
+import posthogClient from '@libs/common/utils/posthog';
+
+export class CreateTeamUseCase implements IUseCase {
+    constructor(
+        @Inject(TEAM_SERVICE_TOKEN)
+        private readonly teamService: ITeamService,
+
+        @Inject(REQUEST)
+        private readonly request: Request & {
+            user: { organization: { uuid: string } };
+        },
+
+        private readonly createOrUpdateParametersUseCase: CreateOrUpdateParametersUseCase,
+    ) {}
+
+    public async execute(payload: {
+        teamName: string;
+        organizationId: string;
+    }): Promise<TeamEntity | undefined> {
+        const orgId =
+            this.request?.user?.organization?.uuid || payload.organizationId;
+
+        const validStatuses = Object.values(STATUS).filter(
+            (status) => status !== STATUS.REMOVED,
+        );
+
+        const hasTeams = await this.teamService.find(
+            {
+                name: payload.teamName,
+                organization: { uuid: orgId },
+            },
+            [...validStatuses],
+        );
+
+        if (hasTeams?.length) {
+            throw new ConflictException('api.team.team_name_already_exists');
+        }
+
+        const team = await this.teamService.createTeam({
+            ...payload,
+            organizationId: orgId,
+        });
+
+        if (team && team?.uuid) {
+            this.savePlatormConfigsParameters(orgId, team.uuid);
+        }
+
+        posthogClient.teamIdentify(team);
+
+        return team;
+    }
+
+    savePlatormConfigsParameters(organizationId: string, teamId: string) {
+        const initialStatus: PlatformConfigValue = {
+            finishOnboard: false,
+            finishProjectManagementConnection: false,
+            kodyLearningStatus: KodyLearningStatus.ENABLED,
+        };
+
+        return this.createOrUpdateParametersUseCase.execute(
+            ParametersKey.PLATFORM_CONFIGS,
+            initialStatus,
+            { organizationId, teamId },
+        );
+    }
+}

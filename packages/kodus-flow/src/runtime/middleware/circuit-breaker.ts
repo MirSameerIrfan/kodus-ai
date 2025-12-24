@@ -218,10 +218,14 @@ export const circuitBreakerUtils = {
      */
     defaultOnRejected: (event: unknown, result: CircuitResult<unknown>) => {
         const logger = createLogger('circuit-breaker');
-        logger.warn('Circuit breaker rejected operation', {
-            event,
-            circuit: result.state,
-            error: result.error?.message,
+        logger.warn({
+            message: 'Circuit breaker rejected operation',
+            context: 'circuit-breaker',
+            metadata: {
+                event,
+                circuit: result.state,
+                error: result.error?.message,
+            },
         });
     },
 };

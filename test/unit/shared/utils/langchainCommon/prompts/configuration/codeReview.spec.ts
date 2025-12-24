@@ -1,6 +1,7 @@
+import type { ContextPack } from '@kodus/flow';
+
 import type { CodeReviewPayload } from '@/shared/utils/langchainCommon/prompts/configuration/codeReview';
 import { prompt_codereview_system_gemini_v2 } from '@/shared/utils/langchainCommon/prompts/configuration/codeReview';
-import type { ContextPack } from '@context-os-core/interfaces';
 
 const createBaseContextPack = (knowledgeContent: string): ContextPack => ({
     id: 'ctx::test',

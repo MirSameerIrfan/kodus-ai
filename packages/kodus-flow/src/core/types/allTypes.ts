@@ -9,7 +9,6 @@ import { IdGenerator } from '../../utils/index.js';
 import { createLogger, TelemetrySystem } from '../../observability/index.js';
 import type { ObservabilitySystem } from '../../observability/index.js';
 import { zodToJSONSchema } from '../utils/zod-to-json-schema.js';
-// ContextStateService removed - using contextNew architecture
 import { EventStore } from '../../runtime/index.js';
 import { EventChainTracker } from '../../runtime/core/event-processor-optimized.js';
 import { EventQueue } from '../../runtime/core/index.js';
@@ -45,7 +44,7 @@ export type AgentIdentity = {
 };
 
 export const agentIdentitySchema = z.object({
-    role: z.enum(AgentInputEnum).optional(),
+    role: z.nativeEnum(AgentInputEnum).optional(),
     goal: z.string().optional(),
     description: z.string().optional(),
     expertise: z.array(z.string()).optional(),
@@ -585,8 +584,9 @@ export type EventHandler<E extends AnyEvent = AnyEvent, R = AnyEvent | void> = (
 
 export type HandlerReturn = AnyEvent | void | Promise<AnyEvent | void>;
 
-export interface EventStream<T extends AnyEvent = AnyEvent>
-    extends AsyncIterable<T> {
+export interface EventStream<
+    T extends AnyEvent = AnyEvent,
+> extends AsyncIterable<T> {
     filter(predicate: (event: T) => boolean): EventStream<T>;
     map<U extends AnyEvent>(mapper: (event: T) => U): EventStream<U>;
     until(predicate: (event: T) => boolean): EventStream<T>;
@@ -1776,8 +1776,10 @@ export type ToolHandler<TInput = unknown, TOutput = unknown> = (
     context: ToolContext,
 ) => Promise<TOutput> | TOutput;
 
-export interface ToolDefinition<TInput = unknown, TOutput = unknown>
-    extends BaseDefinition {
+export interface ToolDefinition<
+    TInput = unknown,
+    TOutput = unknown,
+> extends BaseDefinition {
     execute: ToolHandler<TInput, TOutput>;
 
     inputSchema: z.ZodSchema<TInput>;
@@ -1879,6 +1881,8 @@ export interface ToolContext extends BaseContext {
     parameters: Record<string, unknown>;
 
     signal: AbortSignal;
+
+    traceContext?: Record<string, string>; // W3C Trace Context
 
     logger?: {
         debug: (message: string, meta?: Record<string, unknown>) => void;
@@ -2000,6 +2004,7 @@ export function createToolContext(
         parentId?: string;
         metadata?: Metadata;
         signal?: AbortSignal;
+        traceContext?: Record<string, string>;
     } = {},
 ): ToolContext {
     return {
@@ -2011,6 +2016,7 @@ export function createToolContext(
         callId,
         parameters,
         signal: options.signal || new AbortController().signal,
+        traceContext: options.traceContext,
 
         cleanup: async () => {},
     };
@@ -2302,25 +2308,58 @@ export function createWorkflow(
             eventType: string,
             _handler: (event: unknown) => void | Promise<void>,
         ): void {
-            logger.info('Event handler registered', { eventType });
+            logger.log({
+                message: 'Event handler registered',
+                context: 'createWorkflow',
+
+                metadata: {
+                    eventType,
+                },
+            });
         },
 
         emit(eventType: string, data?: unknown): void {
-            logger.info('Event emitted', { eventType, data });
+            logger.log({
+                message: 'Event emitted',
+                context: 'createWorkflow',
+
+                metadata: {
+                    eventType,
+                    data,
+                },
+            });
         },
 
         async pause(reason?: string): Promise<string> {
             const snapshotId = `snapshot_${Date.now()}`;
-            logger.warn('Workflow paused', { reason, snapshotId });
+            logger.warn({
+                message: 'Workflow paused',
+                context: 'createWorkflow',
+
+                metadata: {
+                    reason,
+                    snapshotId,
+                },
+            });
             return snapshotId;
         },
 
         async resume(snapshotId?: string): Promise<void> {
-            logger.info('Workflow resumed', { snapshotId });
+            logger.log({
+                message: 'Workflow resumed',
+                context: 'createWorkflow',
+
+                metadata: {
+                    snapshotId,
+                },
+            });
         },
 
         async cleanup(): Promise<void> {
-            logger.info('Workflow cleanup completed');
+            logger.log({
+                message: 'Workflow cleanup completed',
+                context: 'createWorkflow',
+            });
         },
     };
 }
@@ -3808,8 +3847,9 @@ export interface Runtime {
     cleanup(): Promise<void>;
 }
 
-export interface TrackedEventHandler<TEvent extends AnyEvent = AnyEvent>
-    extends EventHandler<TEvent> {
+export interface TrackedEventHandler<
+    TEvent extends AnyEvent = AnyEvent,
+> extends EventHandler<TEvent> {
     _handlerId?: string;
     _lastUsed?: number;
     _isActive?: boolean;
@@ -4997,8 +5037,6 @@ export interface ObservabilityStorageConfig {
     collections?: {
         logs?: string;
         telemetry?: string;
-        metrics?: string;
-        errors?: string;
     };
     batchSize?: number;
     flushIntervalMs?: number;
@@ -5012,7 +5050,6 @@ export interface MongoDBExporterConfig {
     collections: {
         logs: string;
         telemetry: string;
-        errors: string;
     };
     batchSize: number;
     flushIntervalMs: number;
@@ -5024,7 +5061,7 @@ export interface MongoDBExporterConfig {
 export interface MongoDBLogItem {
     _id?: string;
     timestamp: Date;
-    level: 'debug' | 'info' | 'warn' | 'error';
+    level: LogLevel;
     message: string;
     component: string;
     correlationId?: string;
@@ -5824,8 +5861,10 @@ export interface OrchestrationConfig {
     observability?: Partial<ObservabilityConfig>;
 }
 
-export interface OrchestrationConfigInternal
-    extends Omit<OrchestrationConfig, 'mcpAdapter'> {
+export interface OrchestrationConfigInternal extends Omit<
+    OrchestrationConfig,
+    'mcpAdapter'
+> {
     mcpAdapter: MCPAdapter | null;
 }
 

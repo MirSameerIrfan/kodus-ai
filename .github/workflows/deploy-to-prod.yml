@@ -1,4 +1,4 @@
-name: 🚀 Deploy Manual para Cloud Production
+name: LEGACY (EC2) - Deploy Manual para Cloud Production
 
 on:
     workflow_dispatch:
@@ -13,6 +13,9 @@ env:
 jobs:
     deploy:
         runs-on: ubuntu-latest
+        environment: production
+        permissions:
+            contents: read
         steps:
             - name: 🧠 Definir imagem a ser usada
               id: define-image
@@ -94,7 +97,7 @@ jobs:
                   AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
 
             - name: 📣 Notificar Sucesso no Discord
-              if: success()
+              if: success() && secrets.DISCORD_WEBHOOK != ''
               uses: sarisia/actions-status-discord@v1.15.3
               with:
                   webhook: ${{ secrets.DISCORD_WEBHOOK }}
@@ -103,7 +106,7 @@ jobs:
                   color: 0x00FF00
 
             - name: ❌ Notificar Falha no Discord
-              if: failure()
+              if: failure() && secrets.DISCORD_WEBHOOK != ''
               uses: sarisia/actions-status-discord@v1.15.3
               with:
                   webhook: ${{ secrets.DISCORD_WEBHOOK }}

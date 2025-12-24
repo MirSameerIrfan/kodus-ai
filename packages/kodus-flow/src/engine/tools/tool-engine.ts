@@ -43,8 +43,13 @@ export class ToolEngine {
             tool.name as ToolId,
             tool as ToolDefinition<unknown, unknown>,
         );
-        this.logger.info('Tool registered', {
-            toolName: tool.name,
+        this.logger.log({
+            message: 'Tool registered',
+            context: this.constructor.name,
+
+            metadata: {
+                toolName: tool.name,
+            },
         });
     }
 
@@ -139,10 +144,12 @@ export class ToolEngine {
             const lastError = error as Error;
             const executionTime = Date.now() - startTime;
 
-            this.logger.error(
-                '❌ TOOL ENGINE - Tool execution failed',
-                lastError,
-                {
+            this.logger.error({
+                message: '❌ TOOL ENGINE - Tool execution failed',
+                context: this.constructor.name,
+                error: lastError,
+
+                metadata: {
                     toolName,
                     callId,
                     correlationId,
@@ -156,7 +163,7 @@ export class ToolEngine {
                         timestamp: Date.now(),
                     },
                 },
-            );
+            });
 
             throw lastError;
         }
@@ -193,10 +200,12 @@ export class ToolEngine {
                     },
                 },
             );
-            this.logger.error(
-                '❌ TOOL ENGINE - Tool not found',
-                notFoundError,
-                {
+            this.logger.error({
+                message: '❌ TOOL ENGINE - Tool not found',
+                context: this.constructor.name,
+                error: notFoundError,
+
+                metadata: {
                     toolName,
                     callId,
                     availableTools: Array.from(this.tools.keys()),
@@ -206,7 +215,7 @@ export class ToolEngine {
                         timestamp: Date.now(),
                     },
                 },
-            );
+            });
             throw notFoundError;
         }
 
@@ -253,6 +262,13 @@ export class ToolEngine {
             signal?: AbortSignal;
         },
     ): Promise<ToolContext> {
+        // Extract trace context for propagation
+        const obs = getObservability();
+        const traceContext: Record<string, string> = {};
+        try {
+            obs.injectContext(traceContext);
+        } catch {}
+
         // Start with basic tool context
         const basicContext = createToolContext(
             toolName,
@@ -267,6 +283,7 @@ export class ToolEngine {
                 ...(options?.parentId && { parentId: options.parentId }),
                 metadata: options?.metadata,
                 signal: options?.signal,
+                traceContext,
             },
         );
 
@@ -592,10 +609,12 @@ export class ToolEngine {
             const lastError = error as Error;
             const executionTime = Date.now() - startTime;
 
-            this.logger.error(
-                '❌ TOOL EXECUTION FAILED (executeTool)',
-                lastError,
-                {
+            this.logger.error({
+                message: '❌ TOOL EXECUTION FAILED (executeTool)',
+                context: this.constructor.name,
+                error: lastError,
+
+                metadata: {
                     toolName,
                     callId,
                     error: lastError.message,
@@ -606,7 +625,7 @@ export class ToolEngine {
                         timestamp: Date.now(),
                     },
                 },
-            );
+            });
 
             throw lastError;
         }
@@ -725,7 +744,14 @@ export class ToolEngine {
         );
 
         for (const warning of warnings) {
-            this.logger.warn('Dependency resolution warning', { warning });
+            this.logger.warn({
+                message: 'Dependency resolution warning',
+                context: this.constructor.name,
+
+                metadata: {
+                    warning,
+                },
+            });
         }
 
         const allResults: Array<{
@@ -884,13 +910,17 @@ export class ToolEngine {
                     });
 
                     if (action.stopOnError) {
-                        this.logger.warn(
-                            'Sequential execution stopped due to error',
-                            {
+                        this.logger.warn({
+                            message:
+                                'Sequential execution stopped due to error',
+                            context: this.constructor.name,
+                            error: error as Error,
+
+                            metadata: {
                                 toolName: toolCall.toolName,
-                                error: errorMessage,
+                                errorMessage,
                             },
-                        );
+                        });
                         break;
                     }
                 }
@@ -1034,26 +1064,35 @@ export class ToolEngine {
             return;
         }
 
-        this.logger.debug('🔍 Validating tool input', {
-            toolName: tool.name,
-            inputType: typeof input,
-            hasInputSchema: !!tool.inputSchema,
-            inputValue:
-                typeof input === 'object'
-                    ? JSON.stringify(input)
-                    : String(input),
+        this.logger.debug({
+            message: '🔍 Validating tool input',
+            context: this.constructor.name,
+
+            metadata: {
+                toolName: tool.name,
+                inputType: typeof input,
+                hasInputSchema: !!tool.inputSchema,
+
+                inputValue:
+                    typeof input === 'object'
+                        ? JSON.stringify(input)
+                        : String(input),
+            },
         });
 
         if (tool.inputSchema) {
             try {
                 const validation = validateWithZod(tool.inputSchema, input);
                 if (!validation.success) {
-                    this.logger.error(
-                        `Tool input validation failed: ${validation.error}`,
-                        new Error(
+                    this.logger.error({
+                        message: `Tool input validation failed: ${validation.error}`,
+                        context: this.constructor.name,
+
+                        error: new Error(
                             `Tool input validation failed: ${validation.error}`,
                         ),
-                        {
+
+                        metadata: {
                             toolName: tool.name,
                             validationError: validation.error,
                             inputType: typeof input,
@@ -1063,7 +1102,7 @@ export class ToolEngine {
                                     : String(input),
                             schemaType: tool.inputSchema.constructor.name,
                         },
-                    );
+                    });
 
                     const missingParams = this.extractMissingParameters(
                         validation.error,
@@ -1090,17 +1129,25 @@ export class ToolEngine {
                     });
                 }
 
-                this.logger.debug('✅ Tool input validation passed', {
-                    toolName: tool.name,
-                    inputType: typeof input,
+                this.logger.debug({
+                    message: '✅ Tool input validation passed',
+                    context: this.constructor.name,
+
+                    metadata: {
+                        toolName: tool.name,
+                        inputType: typeof input,
+                    },
                 });
             } catch (validationError) {
-                this.logger.error(
-                    `Unexpected validation error: ${validationError instanceof Error ? validationError.message : String(validationError)}`,
-                    new Error(
+                this.logger.error({
+                    message: `Unexpected validation error: ${validationError instanceof Error ? validationError.message : String(validationError)}`,
+                    context: this.constructor.name,
+
+                    error: new Error(
                         `Unexpected validation error: ${validationError instanceof Error ? validationError.message : String(validationError)}`,
                     ),
-                    {
+
+                    metadata: {
                         toolName: tool.name,
                         error:
                             validationError instanceof Error
@@ -1112,7 +1159,7 @@ export class ToolEngine {
                                 ? JSON.stringify(input)
                                 : String(input),
                     },
-                );
+                });
 
                 throw createToolError(
                     validationError instanceof Error
@@ -1185,6 +1232,9 @@ export class ToolEngine {
 
     async cleanup(): Promise<void> {
         this.tools.clear();
-        this.logger.info('Tool engine cleaned up');
+        this.logger.log({
+            message: 'Tool engine cleaned up',
+            context: this.constructor.name,
+        });
     }
 }

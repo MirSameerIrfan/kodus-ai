@@ -1,3 +1,6 @@
+import { BadRequestException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 import {
     IParametersRepository,
@@ -6,8 +9,6 @@ import {
 import { IParameters } from '@/core/domain/parameters/interfaces/parameters.interface';
 import { ParametersService } from '@/core/infrastructure/adapters/services/parameters.service';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
-import { BadRequestException } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
 
 describe('ParametersService', () => {
     let parametersService: ParametersService;

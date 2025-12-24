@@ -78,10 +78,15 @@ export class ConcurrentStateManager implements StateManager {
 
             namespaceMap.set(key, value);
 
-            this.logger.debug('State value set', {
-                namespace,
-                key,
-                valueType: typeof value,
+            this.logger.debug({
+                message: 'State value set',
+                context: this.constructor.name,
+
+                metadata: {
+                    namespace,
+                    key,
+                    valueType: typeof value,
+                },
             });
         } finally {
             this.releaseLock(namespace);
@@ -107,7 +112,15 @@ export class ConcurrentStateManager implements StateManager {
             }
 
             if (deleted) {
-                this.logger.debug('State value deleted', { namespace, key });
+                this.logger.debug({
+                    message: 'State value deleted',
+                    context: this.constructor.name,
+
+                    metadata: {
+                        namespace,
+                        key,
+                    },
+                });
             }
 
             return deleted;
@@ -124,7 +137,14 @@ export class ConcurrentStateManager implements StateManager {
             await this.acquireLock(namespace);
             try {
                 this.states.delete(namespace);
-                this.logger.debug('Namespace cleared', { namespace });
+                this.logger.debug({
+                    message: 'Namespace cleared',
+                    context: this.constructor.name,
+
+                    metadata: {
+                        namespace,
+                    },
+                });
             } finally {
                 this.releaseLock(namespace);
             }
@@ -134,7 +154,10 @@ export class ConcurrentStateManager implements StateManager {
             await Promise.all(namespaces.map((ns) => this.acquireLock(ns)));
             try {
                 this.states.clear();
-                this.logger.debug('All state cleared');
+                this.logger.debug({
+                    message: 'All state cleared',
+                    context: this.constructor.name,
+                });
             } finally {
                 namespaces.forEach((ns) => this.releaseLock(ns));
             }
@@ -262,7 +285,11 @@ export class ConcurrentStateManager implements StateManager {
     private startGarbageCollection(): void {
         this.gcTimer = setInterval(() => {
             this.performGarbageCollection().catch((error) => {
-                this.logger.error('Garbage collection failed', error as Error);
+                this.logger.error({
+                    message: 'Garbage collection failed',
+                    context: this.constructor.name,
+                    error: error as Error,
+                });
             });
         }, this.gcInterval);
     }
@@ -289,10 +316,15 @@ export class ConcurrentStateManager implements StateManager {
 
         if (cleaned > 0) {
             const after = await this.size();
-            this.logger.debug('Garbage collection completed', {
-                cleanedNamespaces: cleaned,
-                beforeSize: before,
-                afterSize: after,
+            this.logger.debug({
+                message: 'Garbage collection completed',
+                context: this.constructor.name,
+
+                metadata: {
+                    cleanedNamespaces: cleaned,
+                    beforeSize: before,
+                    afterSize: after,
+                },
             });
         }
     }
@@ -357,7 +389,10 @@ export class ConcurrentStateManager implements StateManager {
         }
 
         await this.clear();
-        this.logger.debug('State manager cleaned up');
+        this.logger.debug({
+            message: 'State manager cleaned up',
+            context: this.constructor.name,
+        });
     }
 }
 

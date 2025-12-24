@@ -14,7 +14,11 @@ export {
     normalizeLLMContent,
     toHumanAiMessages,
 } from './core/llm/normalizers.js';
-export { getObservability, createLogger } from './observability/index.js';
+export {
+    getObservability,
+    createLogger,
+    SimpleLogger,
+} from './observability/index.js';
 export {
     getExecutionTraceability,
     getExecutionSummary,

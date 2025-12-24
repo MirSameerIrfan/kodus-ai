@@ -1,9 +1,10 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { CacheModule } from '@nestjs/cache-manager';
-import { PullRequestController } from '@/core/infrastructure/http/controllers/pullRequest.controller';
+import { Test, TestingModule } from '@nestjs/testing';
+
+import { GetEnrichedPullRequestsUseCase } from '@/core/application/use-cases/pullRequests/get-enriched-pull-requests.use-case';
 import { GetPullRequestAuthorsUseCase } from '@/core/application/use-cases/pullRequests/get-pull-request-authors-orderedby-contributions.use-case';
 import { UpdatePullRequestToNewFormatUseCase } from '@/core/application/use-cases/pullRequests/update-pull-request-to-new-format.use-case';
-import { GetEnrichedPullRequestsUseCase } from '@/core/application/use-cases/pullRequests/get-enriched-pull-requests.use-case';
+import { PullRequestController } from '@/core/infrastructure/http/controllers/pullRequest.controller';
 import { EnrichedPullRequestsQueryDto } from '@/core/infrastructure/http/dtos/enriched-pull-requests-query.dto';
 import { PaginatedEnrichedPullRequestsResponse } from '@/core/infrastructure/http/dtos/paginated-enriched-pull-requests.dto';
 
@@ -51,9 +52,15 @@ describe('PullRequestController', () => {
         }).compile();
 
         controller = module.get<PullRequestController>(PullRequestController);
-        mockGetPullRequestAuthorsUseCase = module.get(GetPullRequestAuthorsUseCase);
-        mockUpdatePullRequestToNewFormatUseCase = module.get(UpdatePullRequestToNewFormatUseCase);
-        mockGetEnrichedPullRequestsUseCase = module.get(GetEnrichedPullRequestsUseCase);
+        mockGetPullRequestAuthorsUseCase = module.get(
+            GetPullRequestAuthorsUseCase,
+        );
+        mockUpdatePullRequestToNewFormatUseCase = module.get(
+            UpdatePullRequestToNewFormatUseCase,
+        );
+        mockGetEnrichedPullRequestsUseCase = module.get(
+            GetEnrichedPullRequestsUseCase,
+        );
     });
 
     describe('getPullRequestExecutions', () => {
@@ -120,13 +127,17 @@ describe('PullRequestController', () => {
                 },
             };
 
-            mockGetEnrichedPullRequestsUseCase.execute.mockResolvedValue(expectedResponse);
+            mockGetEnrichedPullRequestsUseCase.execute.mockResolvedValue(
+                expectedResponse,
+            );
 
             // Act
             const result = await controller.getPullRequestExecutions(query);
 
             // Assert
-            expect(mockGetEnrichedPullRequestsUseCase.execute).toHaveBeenCalledWith(query);
+            expect(
+                mockGetEnrichedPullRequestsUseCase.execute,
+            ).toHaveBeenCalledWith(query);
             expect(result).toEqual(expectedResponse);
         });
 
@@ -146,13 +157,17 @@ describe('PullRequestController', () => {
                 },
             };
 
-            mockGetEnrichedPullRequestsUseCase.execute.mockResolvedValue(expectedResponse);
+            mockGetEnrichedPullRequestsUseCase.execute.mockResolvedValue(
+                expectedResponse,
+            );
 
             // Act
             const result = await controller.getPullRequestExecutions(query);
 
             // Assert
-            expect(mockGetEnrichedPullRequestsUseCase.execute).toHaveBeenCalledWith(query);
+            expect(
+                mockGetEnrichedPullRequestsUseCase.execute,
+            ).toHaveBeenCalledWith(query);
             expect(result).toEqual(expectedResponse);
         });
 
@@ -166,7 +181,9 @@ describe('PullRequestController', () => {
             mockGetEnrichedPullRequestsUseCase.execute.mockRejectedValue(error);
 
             // Act & Assert
-            await expect(controller.getPullRequestExecutions(query)).rejects.toThrow('No organization found in request');
+            await expect(
+                controller.getPullRequestExecutions(query),
+            ).rejects.toThrow('No organization found in request');
         });
 
         it('should handle repository filtering', async () => {
@@ -232,13 +249,17 @@ describe('PullRequestController', () => {
                 },
             };
 
-            mockGetEnrichedPullRequestsUseCase.execute.mockResolvedValue(expectedResponse);
+            mockGetEnrichedPullRequestsUseCase.execute.mockResolvedValue(
+                expectedResponse,
+            );
 
             // Act
             const result = await controller.getPullRequestExecutions(query);
 
             // Assert
-            expect(mockGetEnrichedPullRequestsUseCase.execute).toHaveBeenCalledWith(query);
+            expect(
+                mockGetEnrichedPullRequestsUseCase.execute,
+            ).toHaveBeenCalledWith(query);
             expect(result.data).toHaveLength(1);
             expect(result.data[0].repositoryId).toBe('specific-repo-id');
             expect(result.data[0].repositoryName).toBe('specific-repo');
@@ -249,9 +270,15 @@ describe('PullRequestController', () => {
         it('should have cache interceptor and TTL configured', () => {
             // This test verifies that the endpoint has the correct decorators
             // The actual cache behavior would be tested in e2e tests
-            const metadata = Reflect.getMetadata('__interceptors__', controller.getPullRequestExecutions);
-            const ttlMetadata = Reflect.getMetadata('cache_ttl', controller.getPullRequestExecutions);
-            
+            const metadata = Reflect.getMetadata(
+                '__interceptors__',
+                controller.getPullRequestExecutions,
+            );
+            const ttlMetadata = Reflect.getMetadata(
+                'cache_ttl',
+                controller.getPullRequestExecutions,
+            );
+
             // These checks verify that the decorators are properly applied
             expect(metadata).toBeDefined();
             expect(ttlMetadata).toBe(300000); // 5 minutes

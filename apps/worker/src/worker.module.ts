@@ -1,0 +1,38 @@
+import { Module } from '@nestjs/common';
+import { SharedMongoModule } from '@libs/shared/database/shared-mongo.module';
+import { SharedPostgresModule } from '@libs/shared/database/shared-postgres.module';
+import { SharedConfigModule } from '@libs/shared/infrastructure/shared-config.module';
+import { SharedLogModule } from '@libs/shared/infrastructure/shared-log.module';
+import { LLMModule } from '@kodus/kodus-common/llm';
+import { LoggerWrapperService } from '@libs/core/log/loggerWrapper.service';
+import { AutomationModule } from '@libs/automation/modules/automation.module';
+import { CodebaseModule } from '@libs/code-review/modules/codebase.module';
+import { PlatformModule } from '@libs/platform/modules/platform.module';
+
+import { SharedObservabilityModule } from '@libs/shared/infrastructure/shared-observability.module';
+import { WorkflowModule } from '@libs/core/workflow/modules/workflow.module';
+import { OutboxRelayService } from '@libs/core/workflow/infrastructure/outbox-relay.service';
+import { ScheduleModule } from '@nestjs/schedule';
+import { WorkerDrainService } from './worker-drain.service';
+
+@Module({
+    imports: [
+        ScheduleModule.forRoot(),
+        SharedConfigModule,
+        SharedLogModule,
+        SharedObservabilityModule,
+        SharedPostgresModule.forRoot({ poolSize: 12 }),
+        SharedMongoModule.forRoot(),
+
+        LLMModule.forRoot({
+            logger: LoggerWrapperService,
+        }),
+
+        WorkflowModule.register({ type: 'worker' }),
+        CodebaseModule,
+        AutomationModule,
+        PlatformModule,
+    ],
+    providers: [OutboxRelayService, WorkerDrainService],
+})
+export class WorkerModule {}

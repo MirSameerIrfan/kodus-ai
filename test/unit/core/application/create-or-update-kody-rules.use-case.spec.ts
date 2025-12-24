@@ -15,23 +15,23 @@ jest.mock('@/shared/utils/crypto', () => ({
     decrypt: jest.fn((text) => text.replace('encrypted_', '')),
 }));
 
+import { REQUEST } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
+
 import { CreateOrUpdateKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/create-or-update.use-case';
 import { IKodyRulesService } from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
 import { KODY_RULES_SERVICE_TOKEN } from '@/core/domain/kodyRules/contracts/kodyRules.service.contract';
+import {
+    KodyRulesOrigin,
+    KodyRulesStatus,
+} from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
+import { ExternalReferenceDetectorService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceDetector.service';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
-import { ExternalReferenceDetectorService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceDetector.service';
 import {
     CreateKodyRuleDto,
     KodyRuleSeverity,
 } from '@/core/infrastructure/http/dtos/create-kody-rule.dto';
-import {
-    KodyRulesOrigin,
-    KodyRulesStatus,
-    KodyRulesScope,
-} from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
-import { REQUEST } from '@nestjs/core';
 
 describe('CreateOrUpdateKodyRulesUseCase', () => {
     let useCase: CreateOrUpdateKodyRulesUseCase;
@@ -180,7 +180,9 @@ describe('CreateOrUpdateKodyRulesUseCase', () => {
         });
 
         it('should clear references when none detected', async () => {
-            mockDetectorService.detectAndResolveReferences.mockResolvedValue([]);
+            mockDetectorService.detectAndResolveReferences.mockResolvedValue(
+                [],
+            );
 
             const kodyRule: CreateKodyRuleDto = {
                 title: 'Simple rule',
@@ -242,7 +244,8 @@ describe('CreateOrUpdateKodyRulesUseCase', () => {
             expect(mockKodyRulesService.createOrUpdate).toHaveBeenCalled();
             expect(mockLogger.warn).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    message: 'Failed to detect external references for manual rule creation',
+                    message:
+                        'Failed to detect external references for manual rule creation',
                 }),
             );
         });
@@ -278,7 +281,9 @@ describe('CreateOrUpdateKodyRulesUseCase', () => {
         });
 
         it('should work with kody-system user without authorization check', async () => {
-            mockDetectorService.detectAndResolveReferences.mockResolvedValue([]);
+            mockDetectorService.detectAndResolveReferences.mockResolvedValue(
+                [],
+            );
 
             const kodyRule: CreateKodyRuleDto = {
                 title: 'System rule',
@@ -300,4 +305,3 @@ describe('CreateOrUpdateKodyRulesUseCase', () => {
         });
     });
 });
-

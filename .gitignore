@@ -1,6 +1,28 @@
 # compiled output
 /dist
+apps/*/dist
 /node_modules
+
+# TypeScript compiled files (should NOT be in src/ or packages/)
+# These should only exist in dist/ directories
+*.d.ts
+*.js.map
+
+# Ignore compiled .js files in src/ and packages/ (they should be in dist/)
+# But exclude dist/ directories (those are OK - managed by each package)
+src/**/*.js
+packages/**/*.js
+!src/**/dist/**/*.js
+!packages/**/dist/**/*.js
+
+# But keep source .js files (config files, scripts, fixtures, etc.)
+!*.config.js
+!**/*.config.js
+!scripts/**/*.js
+!**/scripts/**/*.js
+!**/__fixtures__/**/*.js
+# Explicit exceptions for root-level source .js files (for clarity)
+!tsconfig-paths-bootstrap.js
 
 .env
 .env.qa
@@ -31,6 +53,8 @@ lerna-debug.log*
 *.launch
 .settings/
 *.sublime-workspace
+.cursor/
+.specify/
 
 # IDE - VSCode
 .vscode/*
@@ -78,6 +102,8 @@ scripts/duplicate-prs
 
 # Custom
 test.json
+specs
 .cursor/rules/bmad/
 .cursor
 .specify
+.build_cache

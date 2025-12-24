@@ -127,7 +127,6 @@ export class LLMProviderService {
 
             return llm;
         } catch (error) {
-            // Se o erro veio de BYOK, deve propagar (não fazer fallback)
             if (options.byokConfig?.main?.apiKey) {
                 this.logger.error({
                     message: 'BYOK provider failed - propagating error',

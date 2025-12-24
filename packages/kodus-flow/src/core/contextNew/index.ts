@@ -103,10 +103,15 @@ export class EnhancedContextBuilder {
             sessionTTL: resolvedTTL || DEFAULT_SESSION_CONFIG.sessionTTL,
         };
 
-        logger.info('EnhancedContextBuilder created', {
-            adapterType: this.config.adapterType,
-            database: this.config.database,
-            sessionTTL: this.config.sessionTTL,
+        logger.log({
+            message: 'EnhancedContextBuilder created',
+            context: 'constructor',
+
+            metadata: {
+                adapterType: this.config.adapterType,
+                database: this.config.database,
+                sessionTTL: this.config.sessionTTL,
+            },
         });
     }
 
@@ -173,20 +178,35 @@ export class EnhancedContextBuilder {
             return;
         }
 
-        logger.info('🚀 Starting ContextNew initialization', {
-            adapterType: this.config.adapterType,
-            connectionString: this.config.connectionString
-                ? '[SET]'
-                : '[NOT SET]',
-            database: this.config.database,
+        logger.log({
+            message: '🚀 Starting ContextNew initialization',
+            context: 'ensureInitialized',
+
+            metadata: {
+                adapterType: this.config.adapterType,
+
+                connectionString: this.config.connectionString
+                    ? '[SET]'
+                    : '[NOT SET]',
+
+                database: this.config.database,
+            },
         });
 
         // 1. Initialize memory manager
-        logger.info('🧠 Step 1: Initializing memory manager...');
+        logger.log({
+            message: '🧠 Step 1: Initializing memory manager...',
+            context: 'ensureInitialized',
+        });
         if (this.config.adapterType === 'mongodb') {
-            logger.info('🔗 Creating MongoDB memory manager', {
-                database: this.config.database,
-                collection: SESSION_CONSTANTS.COLLECTIONS.MEMORY,
+            logger.log({
+                message: '🔗 Creating MongoDB memory manager',
+                context: 'ensureInitialized',
+
+                metadata: {
+                    database: this.config.database,
+                    collection: SESSION_CONSTANTS.COLLECTIONS.MEMORY,
+                },
             });
 
             this.memoryManager = new MemoryManager({
@@ -206,11 +226,16 @@ export class EnhancedContextBuilder {
             setGlobalMemoryManager(this.memoryManager);
 
             // Initialize memory manager to create collection
-            logger.info(
-                '📦 Initializing memory manager to create collection...',
-            );
+            logger.log({
+                message:
+                    '📦 Initializing memory manager to create collection...',
+                context: 'ensureInitialized',
+            });
             await this.memoryManager.initialize();
-            logger.info('✅ MongoDB memory manager created and initialized');
+            logger.log({
+                message: '✅ MongoDB memory manager created and initialized',
+                context: 'ensureInitialized',
+            });
         } else {
             // Use existing global memory manager (InMemory case)
             this.memoryManager = getGlobalMemoryManager();
@@ -238,19 +263,29 @@ export class EnhancedContextBuilder {
             snapshotTTL: SESSION_CONSTANTS.SNAPSHOT_TTL,
         });
 
-        logger.info(
-            '📂 Step 3: Initializing session manager (creates sessions + snapshots collections)...',
-        );
+        logger.log({
+            message:
+                '📂 Step 3: Initializing session manager (creates sessions + snapshots collections)...',
+            context: 'ensureInitialized',
+        });
         await this.sessionManager.initialize();
-        logger.info('✅ Session manager initialized');
+        logger.log({
+            message: '✅ Session manager initialized',
+            context: 'ensureInitialized',
+        });
 
         this.isInitialized = true;
 
-        logger.info('EnhancedContextBuilder initialized', {
-            memoryManager: 'ready',
-            sessionManager: 'ready',
-            contextBridge: 'ready',
-            collectionsEnsured: this.config.adapterType === 'mongodb',
+        logger.log({
+            message: 'EnhancedContextBuilder initialized',
+            context: 'ensureInitialized',
+
+            metadata: {
+                memoryManager: 'ready',
+                sessionManager: 'ready',
+                contextBridge: 'ready',
+                collectionsEnsured: this.config.adapterType === 'mongodb',
+            },
         });
     }
 
@@ -264,17 +299,27 @@ export class EnhancedContextBuilder {
     ): Promise<void> {
         await this.ensureInitialized();
 
-        logger.info('Initializing enhanced agent session', {
-            threadId,
-            tenantId,
+        logger.log({
+            message: 'Initializing enhanced agent session',
+            context: 'initializeAgentSession',
+
+            metadata: {
+                threadId,
+                tenantId,
+            },
         });
 
         // Create or recover session based on threadId
         await this.sessionManager.getOrCreateSession(threadId, tenantId);
 
-        logger.debug('Enhanced agent session initialized', {
-            threadId,
-            tenantId,
+        logger.debug({
+            message: 'Enhanced agent session initialized',
+            context: 'initializeAgentSession',
+
+            metadata: {
+                threadId,
+                tenantId,
+            },
         });
     }
 
@@ -310,7 +355,10 @@ export class EnhancedContextBuilder {
             await this.sessionManager.cleanup();
             await this.memoryManager.cleanup();
             this.isInitialized = false;
-            logger.info('EnhancedContextBuilder cleaned up');
+            logger.log({
+                message: 'EnhancedContextBuilder cleaned up',
+                context: 'cleanup',
+            });
         }
     }
 }

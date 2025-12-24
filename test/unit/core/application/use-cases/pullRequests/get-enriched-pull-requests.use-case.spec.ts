@@ -1,25 +1,28 @@
 import { Test, TestingModule } from '@nestjs/testing';
+
 import { GetEnrichedPullRequestsUseCase } from '@/core/application/use-cases/pullRequests/get-enriched-pull-requests.use-case';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import {
     AUTOMATION_EXECUTION_SERVICE_TOKEN,
     IAutomationExecutionService,
 } from '@/core/domain/automation/contracts/automation-execution.service';
-import {
-    PULL_REQUESTS_SERVICE_TOKEN,
-    IPullRequestsService,
-} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
+import { AutomationExecutionEntity } from '@/core/domain/automation/entities/automation-execution.entity';
+import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
 import {
     CODE_REVIEW_EXECUTION_SERVICE,
     ICodeReviewExecutionService,
 } from '@/core/domain/codeReviewExecutions/contracts/codeReviewExecution.service.contract';
-import { AutomationExecutionEntity } from '@/core/domain/automation/entities/automation-execution.entity';
-import { PullRequestsEntity } from '@/core/domain/pullRequests/entities/pullRequests.entity';
 import { CodeReviewExecutionEntity } from '@/core/domain/codeReviewExecutions/entities/codeReviewExecution.entity';
-import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
+import {
+    PULL_REQUESTS_SERVICE_TOKEN,
+    IPullRequestsService,
+} from '@/core/domain/pullRequests/contracts/pullRequests.service.contracts';
+import { PullRequestsEntity } from '@/core/domain/pullRequests/entities/pullRequests.entity';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { AuthorizationService } from '@/core/infrastructure/adapters/services/permissions/authorization.service';
 
-const buildAutomationExecution = (overrides: Partial<AutomationExecutionEntity> = {}) =>
+const buildAutomationExecution = (
+    overrides: Partial<AutomationExecutionEntity> = {},
+) =>
     new AutomationExecutionEntity({
         uuid: 'execution-id',
         pullRequestNumber: 123,
@@ -144,7 +147,9 @@ describe('GetEnrichedPullRequestsUseCase', () => {
             AUTOMATION_EXECUTION_SERVICE_TOKEN,
         );
         mockPullRequestsService = module.get(PULL_REQUESTS_SERVICE_TOKEN);
-        mockCodeReviewExecutionService = module.get(CODE_REVIEW_EXECUTION_SERVICE);
+        mockCodeReviewExecutionService = module.get(
+            CODE_REVIEW_EXECUTION_SERVICE,
+        );
         mockLogger = module.get(PinoLoggerService);
         mockAuthorizationService = module.get(AuthorizationService);
     });
@@ -153,17 +158,20 @@ describe('GetEnrichedPullRequestsUseCase', () => {
         it('returns pull requests that have code review history', async () => {
             const query = { repositoryId: 'test-repo-id', limit: 10, page: 1 };
 
-            const executionWithHistory = buildAutomationExecution({ uuid: 'exec-1' });
+            const executionWithHistory = buildAutomationExecution({
+                uuid: 'exec-1',
+            });
             const executionWithoutHistory = buildAutomationExecution({
                 uuid: 'exec-2',
                 pullRequestNumber: 456,
             });
 
-            mockAutomationExecutionService
-                .findPullRequestExecutionsByOrganization.mockResolvedValueOnce({
+            mockAutomationExecutionService.findPullRequestExecutionsByOrganization.mockResolvedValueOnce(
+                {
                     data: [executionWithHistory, executionWithoutHistory],
                     total: 2,
-                });
+                },
+            );
 
             mockPullRequestsService.findByNumberAndRepositoryId
                 .mockResolvedValueOnce(buildPullRequest())
@@ -207,10 +215,12 @@ describe('GetEnrichedPullRequestsUseCase', () => {
         });
 
         it('returns empty data when there are no executions', async () => {
-            mockAutomationExecutionService.findPullRequestExecutionsByOrganization.mockResolvedValue({
-                data: [],
-                total: 0,
-            });
+            mockAutomationExecutionService.findPullRequestExecutionsByOrganization.mockResolvedValue(
+                {
+                    data: [],
+                    total: 0,
+                },
+            );
 
             const result = await useCase.execute({ limit: 10, page: 1 } as any);
 
@@ -224,12 +234,18 @@ describe('GetEnrichedPullRequestsUseCase', () => {
         });
 
         it('invokes authorization ensure when filtering by repositoryId', async () => {
-            mockAutomationExecutionService.findPullRequestExecutionsByOrganization.mockResolvedValue({
-                data: [],
-                total: 0,
-            });
+            mockAutomationExecutionService.findPullRequestExecutionsByOrganization.mockResolvedValue(
+                {
+                    data: [],
+                    total: 0,
+                },
+            );
 
-            await useCase.execute({ repositoryId: 'repo-id', limit: 10, page: 1 } as any);
+            await useCase.execute({
+                repositoryId: 'repo-id',
+                limit: 10,
+                page: 1,
+            } as any);
 
             expect(mockAuthorizationService.ensure).toHaveBeenCalledWith({
                 user: mockRequest.user,
@@ -240,10 +256,12 @@ describe('GetEnrichedPullRequestsUseCase', () => {
         });
 
         it('passes pagination parameters to automation execution service', async () => {
-            mockAutomationExecutionService.findPullRequestExecutionsByOrganization.mockResolvedValue({
-                data: [],
-                total: 0,
-            });
+            mockAutomationExecutionService.findPullRequestExecutionsByOrganization.mockResolvedValue(
+                {
+                    data: [],
+                    total: 0,
+                },
+            );
 
             await useCase.execute({ limit: 15, page: 2 } as any);
 

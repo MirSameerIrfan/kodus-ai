@@ -1,3 +1,6 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { v4 as uuidv4 } from 'uuid';
+
 import { STATUS } from '@/config/types/database/status.type';
 import { AUTH_SERVICE_TOKEN } from '@/core/domain/auth/contracts/auth.service.contracts';
 import {
@@ -16,9 +19,6 @@ import { Role } from '@/core/domain/user/enums/Role.enum';
 import { ProfilesService } from '@/core/infrastructure/adapters/services/profile.service';
 import { TeamService } from '@/core/infrastructure/adapters/services/team.service';
 import { UsersService } from '@/core/infrastructure/adapters/services/users.service';
-import { Test, TestingModule } from '@nestjs/testing';
-
-import { v4 as uuidv4 } from 'uuid';
 
 describe('User SignUp', () => {
     let usersService: UsersService;

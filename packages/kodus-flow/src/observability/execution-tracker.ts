@@ -33,9 +33,11 @@ export class ExecutionTracker {
 
         // Prevent memory leaks by limiting active cycles
         if (this.cycles.size >= this.maxCycles) {
-            this.logger.warn(
-                'Maximum execution cycles reached, cleaning up old cycles',
-            );
+            this.logger.warn({
+                message:
+                    'Maximum execution cycles reached, cleaning up old cycles',
+                context: this.constructor.name,
+            });
             this.cleanupOldCycles();
         }
 
@@ -64,10 +66,15 @@ export class ExecutionTracker {
             input: input ? this.truncateValue(input) : undefined,
         });
 
-        this.logger.debug('Execution cycle started', {
-            executionId,
-            agentName,
-            correlationId,
+        this.logger.debug({
+            message: 'Execution cycle started',
+            context: this.constructor.name,
+
+            metadata: {
+                executionId,
+                agentName,
+                correlationId,
+            },
         });
 
         return executionId;
@@ -85,10 +92,15 @@ export class ExecutionTracker {
     ): void {
         const cycle = this.cycles.get(executionId);
         if (!cycle) {
-            this.logger.warn('Attempted to add step to unknown execution', {
-                executionId,
-                type,
-                component,
+            this.logger.warn({
+                message: 'Attempted to add step to unknown execution',
+                context: this.constructor.name,
+
+                metadata: {
+                    executionId,
+                    type,
+                    component,
+                },
             });
             return;
         }
@@ -109,11 +121,16 @@ export class ExecutionTracker {
             cycle.steps.shift();
         }
 
-        this.logger.debug('Execution step added', {
-            executionId,
-            type,
-            component,
-            stepCount: cycle.steps.length,
+        this.logger.debug({
+            message: 'Execution step added',
+            context: this.constructor.name,
+
+            metadata: {
+                executionId,
+                type,
+                component,
+                stepCount: cycle.steps.length,
+            },
         });
     }
 
@@ -123,8 +140,13 @@ export class ExecutionTracker {
     completeExecution(executionId: string, output?: unknown): void {
         const cycle = this.cycles.get(executionId);
         if (!cycle) {
-            this.logger.warn('Attempted to complete unknown execution', {
-                executionId,
+            this.logger.warn({
+                message: 'Attempted to complete unknown execution',
+                context: this.constructor.name,
+
+                metadata: {
+                    executionId,
+                },
             });
             return;
         }
@@ -143,11 +165,16 @@ export class ExecutionTracker {
             stepCount: cycle.steps.length,
         });
 
-        this.logger.info('Execution cycle completed', {
-            executionId,
-            agentName: cycle.agentName,
-            totalDuration: cycle.totalDuration,
-            stepCount: cycle.steps.length,
+        this.logger.log({
+            message: 'Execution cycle completed',
+            context: this.constructor.name,
+
+            metadata: {
+                executionId,
+                agentName: cycle.agentName,
+                totalDuration: cycle.totalDuration,
+                stepCount: cycle.steps.length,
+            },
         });
 
         // Clean up after 5 minutes to prevent memory leaks
@@ -165,8 +192,13 @@ export class ExecutionTracker {
     failExecution(executionId: string, error: Error): void {
         const cycle = this.cycles.get(executionId);
         if (!cycle) {
-            this.logger.warn('Attempted to fail unknown execution', {
-                executionId,
+            this.logger.warn({
+                message: 'Attempted to fail unknown execution',
+                context: this.constructor.name,
+
+                metadata: {
+                    executionId,
+                },
             });
             return;
         }
@@ -183,10 +215,16 @@ export class ExecutionTracker {
             totalDuration: cycle.totalDuration,
         });
 
-        this.logger.error('Execution cycle failed', error, {
-            executionId,
-            agentName: cycle.agentName,
-            totalDuration: cycle.totalDuration,
+        this.logger.error({
+            message: 'Execution cycle failed',
+            context: this.constructor.name,
+            error: error,
+
+            metadata: {
+                executionId,
+                agentName: cycle.agentName,
+                totalDuration: cycle.totalDuration,
+            },
         });
 
         // Clean up after 10 minutes for failed executions
@@ -239,6 +277,14 @@ export class ExecutionTracker {
     }
 
     /**
+     * Clear all execution cycles (useful for shutdown or testing)
+     */
+    clear(): void {
+        this.cycles.clear();
+        // Removed log: 'All execution cycles cleared' - internal system message, no business value
+    }
+
+    /**
      * Clean up old completed cycles to prevent memory leaks
      */
     private cleanupOldCycles(): void {
@@ -256,9 +302,14 @@ export class ExecutionTracker {
             this.cycles.delete(executionId);
         }
 
-        this.logger.debug('Cleaned up old execution cycles', {
-            deleted: toDelete.length,
-            remaining: this.cycles.size,
+        this.logger.debug({
+            message: 'Cleaned up old execution cycles',
+            context: this.constructor.name,
+
+            metadata: {
+                deleted: toDelete.length,
+                remaining: this.cycles.size,
+            },
         });
     }
 

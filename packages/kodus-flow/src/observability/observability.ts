@@ -4,8 +4,9 @@ import {
     Span,
     SpanOptions,
     TraceItem,
-    LogLevel,
     LogContext,
+    ObservabilityExporter,
+    AGENT,
 } from './types.js';
 import { TelemetrySystem } from './telemetry.js';
 import { isEnhancedError } from '../core/error-unified.js';
@@ -31,10 +32,11 @@ import {
     SPAN_NAMES,
 } from './semantic-conventions.js';
 import { IdGenerator } from '../utils/id-generator.js';
-import {
-    createMongoDBExporter,
-    MongoDBExporter,
-} from './exporters/mongodb-exporter.js';
+import { createMongoDBExporter } from './exporters/mongodb-exporter.js';
+import { OtlpTraceExporter } from './exporters/otlp-exporter.js';
+import { OtelAdapter } from './core/otel-adapter.js';
+import { SanitizationProcessor } from './processors/sanitization-processor.js';
+import { LogLevel } from '@/core/types/allTypes.js';
 
 /**
  * Main observability system that coordinates all components
@@ -45,8 +47,8 @@ export class ObservabilitySystem {
     private logger = createLogger('observability');
     private currentContext?: ObservabilityContext;
     private alsContext = new AsyncLocalStorage<ObservabilityContext>();
-    private mongodbExporter?: MongoDBExporter;
-    // Metrics exporter removed: metrics collection not used
+    private exporters: ObservabilityExporter[] = [];
+    private otelAdapter = new OtelAdapter();
 
     constructor(config: Partial<ObservabilityConfig> = {}) {
         this.config = {
@@ -67,7 +69,6 @@ export class ObservabilitySystem {
                 features: config.telemetry?.features || {
                     traceSpans: true,
                     traceEvents: true,
-                    metricsEnabled: false,
                 },
                 globalAttributes: config.telemetry?.globalAttributes,
             },
@@ -110,13 +111,17 @@ export class ObservabilitySystem {
         } catch {}
 
         // Setup exporters (async initialization will be handled separately)
-        // We'll call setupExporters after construction to avoid making constructor async
         this.setupExportersSync();
 
-        this.logger.info('Observability system initialized', {
-            environment: this.config.environment,
-            enabled: this.config.enabled,
-            serviceName: this.config.serviceName,
+        this.logger.log({
+            message: 'Observability system initialized',
+            context: this.constructor.name,
+
+            metadata: {
+                environment: this.config.environment,
+                enabled: this.config.enabled,
+                serviceName: this.config.serviceName,
+            },
         });
     }
 
@@ -130,8 +135,13 @@ export class ObservabilitySystem {
             startTime: Date.now(),
         };
 
-        this.logger.debug('Observability context created', {
-            correlationId: context.correlationId,
+        this.logger.debug({
+            message: 'Observability context created',
+            context: this.constructor.name,
+
+            metadata: {
+                correlationId: context.correlationId,
+            },
         });
 
         return context;
@@ -160,8 +170,13 @@ export class ObservabilitySystem {
      */
     clearContext(): void {
         if (this.currentContext) {
-            this.logger.debug('Observability context cleared', {
-                correlationId: this.currentContext.correlationId,
+            this.logger.debug({
+                message: 'Observability context cleared',
+                context: this.constructor.name,
+
+                metadata: {
+                    correlationId: this.currentContext.correlationId,
+                },
             });
         }
         this.currentContext = undefined;
@@ -175,6 +190,49 @@ export class ObservabilitySystem {
     }
 
     /**
+     * Inject current context into carrier (e.g. HTTP headers)
+     * Uses W3C Trace Context standard via OTel
+     */
+    injectContext(carrier: Record<string, string>): void {
+        if (this.otelAdapter.isAvailable()) {
+            const currentSpan = this.getCurrentSpan();
+            const sc = currentSpan?.getSpanContext();
+
+            let ctx = this.otelAdapter.getCurrentContext();
+
+            if (sc && sc.traceId && sc.spanId) {
+                ctx = this.otelAdapter.contextFromIds(
+                    sc.traceId,
+                    sc.spanId,
+                    sc.traceFlags,
+                );
+            }
+
+            this.otelAdapter.inject(ctx, carrier);
+        }
+
+        // Also inject internal correlationId for backward compatibility
+        const ctx = this.getContext();
+        if (ctx?.correlationId) {
+            carrier['x-correlation-id'] = ctx.correlationId;
+        }
+    }
+
+    /**
+     * Extract context from carrier (e.g. HTTP headers)
+     * Uses W3C Trace Context standard via OTel
+     */
+    extractContext(carrier: Record<string, string>): any {
+        if (this.otelAdapter.isAvailable()) {
+            return this.otelAdapter.extract(
+                this.otelAdapter.getCurrentContext(),
+                carrier,
+            );
+        }
+        return undefined;
+    }
+
+    /**
      * Start a span
      */
     startSpan(name: string, options: SpanOptions = {}): Span {
@@ -183,14 +241,14 @@ export class ObservabilitySystem {
         const attrs: Record<string, string | number | boolean> = {
             ...(options.attributes || {}),
         };
-        if (ctx?.correlationId && attrs['correlationId'] === undefined) {
-            attrs['correlationId'] = ctx.correlationId;
+        if (ctx?.correlationId && attrs[AGENT.CORRELATION_ID] === undefined) {
+            attrs[AGENT.CORRELATION_ID] = ctx.correlationId;
         }
-        if (ctx?.tenantId && attrs['tenantId'] === undefined) {
-            attrs['tenantId'] = ctx.tenantId;
+        if (ctx?.tenantId && attrs[AGENT.TENANT_ID] === undefined) {
+            attrs[AGENT.TENANT_ID] = ctx.tenantId;
         }
-        if (ctx?.sessionId && attrs['sessionId'] === undefined) {
-            attrs['sessionId'] = ctx.sessionId;
+        if (ctx?.sessionId && attrs[AGENT.CONVERSATION_ID] === undefined) {
+            attrs[AGENT.CONVERSATION_ID] = ctx.sessionId;
         }
         return this.telemetry.startSpan(name, {
             ...options,
@@ -258,17 +316,14 @@ export class ObservabilitySystem {
             conversationId: options.sessionId,
             userId: options.userId,
             tenantId: options.tenantId,
+            correlationId: correlationId,
             input: options.input as string,
             inputTokens: options.inputTokens,
         });
 
-        // Add correlationId as span attribute for proper extraction
+        // Add executionId for internal tracking if needed (already in attributes from helper)
         spanOptions.attributes = {
             ...spanOptions.attributes,
-            correlationId: correlationId,
-            ...(options.sessionId && { sessionId: options.sessionId }),
-            ...(options.tenantId && { tenantId: options.tenantId }),
-            executionId: executionId,
         };
 
         const span = this.startSpan(SPAN_NAMES.AGENT_EXECUTE, spanOptions);
@@ -283,11 +338,16 @@ export class ObservabilitySystem {
 
             completeExecutionTracking(executionId, result);
 
-            this.logger.debug('Agent execution completed', {
-                agentName,
-                executionId,
-                correlationId,
-                duration,
+            this.logger.debug({
+                message: 'Agent execution completed',
+                context: this.constructor.name,
+
+                metadata: {
+                    agentName,
+                    executionId,
+                    correlationId,
+                    duration,
+                },
             });
 
             return result;
@@ -311,11 +371,17 @@ export class ObservabilitySystem {
             }
             failExecutionTracking(executionId, error as Error);
 
-            this.logger.error('Agent execution failed', error as Error, {
-                agentName,
-                executionId,
-                correlationId,
-                duration,
+            this.logger.error({
+                message: 'Agent execution failed',
+                context: this.constructor.name,
+                error: error as Error,
+
+                metadata: {
+                    agentName,
+                    executionId,
+                    correlationId,
+                    duration,
+                },
             });
 
             throw error;
@@ -342,16 +408,15 @@ export class ObservabilitySystem {
         const spanOptions = createToolExecutionSpan(toolName, executionId, {
             toolType: options.toolType,
             parameters: options.parameters,
+            correlationId:
+                options.correlationId ||
+                this.currentContext?.correlationId ||
+                '',
         });
 
         // Add additional attributes
         spanOptions.attributes = {
             ...spanOptions.attributes,
-            correlationId:
-                options.correlationId ||
-                this.currentContext?.correlationId ||
-                '',
-            executionId: executionId,
             timeoutMs: options.timeoutMs || 0,
         };
 
@@ -399,19 +464,40 @@ export class ObservabilitySystem {
         // Route to correct severity; logger handles processors (e.g., MongoDB)
         switch (level) {
             case 'debug':
-                this.logger.debug(message, mergedContext);
+                this.logger.debug({
+                    message: message,
+                    context: this.constructor.name,
+                    metadata: mergedContext,
+                });
                 break;
             case 'info':
-                this.logger.info(message, mergedContext);
+                this.logger.log({
+                    message: message,
+                    context: this.constructor.name,
+                    metadata: mergedContext,
+                });
                 break;
             case 'warn':
-                this.logger.warn(message, mergedContext);
+                this.logger.warn({
+                    message: message,
+                    context: this.constructor.name,
+                    metadata: mergedContext,
+                });
                 break;
             case 'error':
-                this.logger.error(message, undefined, mergedContext);
+                this.logger.error({
+                    message: message,
+                    context: this.constructor.name,
+                    error: undefined,
+                    metadata: mergedContext,
+                });
                 break;
             default:
-                this.logger.info(message, mergedContext);
+                this.logger.log({
+                    message: message,
+                    context: this.constructor.name,
+                    metadata: mergedContext,
+                });
         }
     }
 
@@ -445,7 +531,7 @@ export class ObservabilitySystem {
     async flush(): Promise<void> {
         await Promise.allSettled([
             this.telemetry.flush(),
-            this.mongodbExporter?.flush(),
+            ...this.exporters.map((e) => e.flush()),
         ]);
     }
 
@@ -453,11 +539,17 @@ export class ObservabilitySystem {
      * Shutdown the observability system
      */
     async shutdown(): Promise<void> {
-        this.logger.info('Shutting down observability system');
+        this.logger.log({
+            message: 'Shutting down observability system',
+            context: this.constructor.name,
+        });
+
+        // Clear execution tracker to prevent memory leaks on restart/shutdown
+        executionTracker.clear();
 
         await Promise.allSettled([
             this.telemetry.flush(),
-            this.mongodbExporter?.dispose(),
+            ...this.exporters.map((e) => e.shutdown()),
         ]);
 
         this.clearContext();
@@ -468,9 +560,14 @@ export class ObservabilitySystem {
      */
     updateContextWithExecution(executionId: string, agentName: string): void {
         // Implementation for compatibility
-        this.logger.debug('Context updated with execution', {
-            executionId,
-            agentName,
+        this.logger.debug({
+            message: 'Context updated with execution',
+            context: this.constructor.name,
+
+            metadata: {
+                executionId,
+                agentName,
+            },
         });
     }
 
@@ -479,9 +576,14 @@ export class ObservabilitySystem {
      */
     async saveAgentExecutionCycle(cycle: any): Promise<void> {
         // Implementation for compatibility
-        this.logger.info('Agent execution cycle saved', {
-            executionId: cycle.executionId,
-            agentName: cycle.agentName,
+        this.logger.log({
+            message: 'Agent execution cycle saved',
+            context: this.constructor.name,
+
+            metadata: {
+                executionId: cycle.executionId,
+                agentName: cycle.agentName,
+            },
         });
     }
 
@@ -517,17 +619,26 @@ export class ObservabilitySystem {
      * Setup exporters based on configuration
      */
     private setupExportersSync(): void {
+        // Setup Sanitization Processor first to clean data before any export
+        const sanitizationProcessor = new SanitizationProcessor();
+        this.telemetry.addTraceProcessor(sanitizationProcessor);
+
         // Console logging is handled directly in telemetry processors
 
         // Setup telemetry processor for console
         this.telemetry.addTraceProcessor({
             process: async (item: TraceItem) => {
                 // Simple console export for traces using structured logging
-                this.logger.info(`[TRACE] ${item.name}`, {
-                    traceId: item.context.traceId,
-                    spanId: item.context.spanId,
-                    duration: `${item.duration}ms`,
-                    status: item.status.code,
+                this.logger.log({
+                    message: `[TRACE] ${item.name}`,
+                    context: this.constructor.name,
+
+                    metadata: {
+                        traceId: item.context.traceId,
+                        spanId: item.context.spanId,
+                        duration: `${item.duration}ms`,
+                        status: item.status.code,
+                    },
                 });
             },
         });
@@ -536,6 +647,8 @@ export class ObservabilitySystem {
         if (this.config.mongodb) {
             try {
                 // Adaptar config do MongoDB para o formato esperado pelo exporter
+                // Note: MongoDB saves all logs for complete history
+                // Console respects API_LOG_LEVEL via Pino logger
                 const mongoConfig = {
                     connectionString:
                         this.config.mongodb.connectionString ||
@@ -548,9 +661,6 @@ export class ObservabilitySystem {
                         telemetry:
                             this.config.mongodb.collections?.telemetry ||
                             'observability_telemetry',
-                        errors:
-                            this.config.mongodb.collections?.errors ||
-                            'observability_errors',
                     },
                     batchSize: this.config.mongodb.batchSize || 100,
                     flushIntervalMs:
@@ -558,37 +668,68 @@ export class ObservabilitySystem {
                     ttlDays: this.config.mongodb.ttlDays ?? 30,
                 };
 
-                this.mongodbExporter = createMongoDBExporter(mongoConfig);
+                const mongoExporter = createMongoDBExporter(mongoConfig);
+                this.exporters.push(mongoExporter);
 
                 // Add telemetry processor for MongoDB (will be initialized later)
                 this.telemetry.addTraceProcessor({
                     process: async (item: TraceItem) => {
-                        if (this.mongodbExporter) {
-                            try {
-                                await this.mongodbExporter.exportTelemetry(
-                                    item,
-                                );
-                            } catch (error) {
-                                this.logger.debug(
+                        try {
+                            await mongoExporter.exportTrace(item);
+                        } catch (error) {
+                            this.logger.debug({
+                                message:
                                     'MongoDB export failed (possibly not initialized)',
-                                    {
-                                        error: (error as Error).message,
-                                    },
-                                );
-                            }
+                                context: this.constructor.name,
+                                error: error as Error,
+                            });
                         }
                     },
                 });
 
                 // Add MongoDB exporter as log processor
-                addLogProcessor(this.mongodbExporter);
+                addLogProcessor(mongoExporter);
 
-                this.logger.info(
-                    'MongoDB exporter configured (needs initialization)',
-                );
+                this.logger.log({
+                    message:
+                        'MongoDB exporter configured (needs initialization)',
+                    context: this.constructor.name,
+                });
             } catch (error) {
-                this.logger.warn('Failed to setup MongoDB exporter', {
-                    error: (error as Error).message,
+                this.logger.warn({
+                    message: 'Failed to setup MongoDB exporter',
+                    context: this.constructor.name,
+                    error: error as Error,
+                });
+            }
+        }
+
+        // Setup OTLP Exporter if configured
+        if (this.config.otlp?.enabled) {
+            try {
+                const otlpExporter = new OtlpTraceExporter(this.otelAdapter);
+                this.exporters.push(otlpExporter);
+
+                // Add telemetry processor for OTLP
+                this.telemetry.addTraceProcessor({
+                    process: async (item: TraceItem) => {
+                        try {
+                            await otlpExporter.exportTrace(item);
+                        } catch {
+                            // Silent fail or debug log
+                        }
+                    },
+                });
+
+                this.logger.log({
+                    message: 'OTLP exporter configured',
+                    context: this.constructor.name,
+                });
+            } catch (error) {
+                this.logger.warn({
+                    message: 'Failed to setup OTLP exporter',
+                    context: this.constructor.name,
+                    error: error as Error,
                 });
             }
         }
@@ -604,7 +745,10 @@ export class ObservabilitySystem {
         // Idempotent guard to avoid multiple handler registrations
         const anyProcess = process as any;
         if (anyProcess.__kodusObsHandlersInstalled) {
-            this.logger.debug('Error processors already configured');
+            this.logger.debug({
+                message: 'Error processors already configured',
+                context: this.constructor.name,
+            });
             return;
         }
         anyProcess.__kodusObsHandlersInstalled = true;
@@ -622,28 +766,35 @@ export class ObservabilitySystem {
 
         // Setup graceful shutdown
         process.on('SIGTERM', () => {
-            this.logger.info('SIGTERM received, shutting down gracefully');
+            this.logger.log({
+                message: 'SIGTERM received, shutting down gracefully',
+                context: this.constructor.name,
+            });
             this.shutdown().catch((error) => {
-                this.logger.error(
-                    'Error during SIGTERM shutdown',
-                    error as Error,
-                );
+                this.logger.error({
+                    message: 'Error during SIGTERM shutdown',
+                    context: this.constructor.name,
+                    error: error as Error,
+                });
                 process.exit(1);
             });
         });
 
         process.on('SIGINT', () => {
-            this.logger.info('SIGINT received, shutting down gracefully');
+            this.logger.log({
+                message: 'SIGINT received, shutting down gracefully',
+                context: this.constructor.name,
+            });
             this.shutdown().catch((error) => {
-                this.logger.error(
-                    'Error during SIGINT shutdown',
-                    error as Error,
-                );
+                this.logger.error({
+                    message: 'Error during SIGINT shutdown',
+                    context: this.constructor.name,
+                    error: error as Error,
+                });
                 process.exit(1);
             });
         });
-
-        this.logger.info('Error processors configured');
+        // Removed log: 'Error processors configured' - internal system message, no business value
     }
 
     private handleGlobalError(error: Error, type: string): void {
@@ -660,29 +811,52 @@ export class ObservabilitySystem {
             },
         };
 
-        this.logger.error(`Global ${type} caught`, error, errorContext);
+        this.logger.error({
+            message: `Global ${type} caught`,
+            context: this.constructor.name,
+            error: error,
+            metadata: errorContext,
+        });
 
-        if (this.mongodbExporter) {
-            this.mongodbExporter.exportError(error, {
-                ...errorContext,
-                errorType: type,
-            });
-        }
+        // Use exporters
+        this.exporters.forEach((exporter) => {
+            void exporter.exportLog(
+                'error',
+                error.message,
+                {
+                    ...errorContext,
+                    errorType: type,
+                },
+                error,
+            );
+        });
     }
 
     async initialize(): Promise<void> {
-        if (this.mongodbExporter) {
-            try {
-                await this.mongodbExporter.initialize();
-                this.logger.info('MongoDB exporter initialized successfully');
-            } catch (error) {
-                this.logger.error(
-                    'Failed to initialize MongoDB exporter',
-                    error as Error,
-                );
-                throw error;
-            }
-        }
+        // Clear execution tracker to ensure a clean state
+        executionTracker.clear();
+
+        // Initialize all exporters in parallel
+        await Promise.allSettled(
+            this.exporters.map(async (exporter) => {
+                try {
+                    if (exporter.initialize) {
+                        await exporter.initialize();
+                        this.logger.log({
+                            message: `${exporter.name} initialized successfully`,
+                            context: this.constructor.name,
+                        });
+                    }
+                } catch (error) {
+                    this.logger.error({
+                        message: `Failed to initialize ${exporter.name}`,
+                        context: this.constructor.name,
+                        error: error as Error,
+                    });
+                    // Don't throw, let other exporters continue
+                }
+            }),
+        );
 
         // Metrics exporter removed — no initialization
     }

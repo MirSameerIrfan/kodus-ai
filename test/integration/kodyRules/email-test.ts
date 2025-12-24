@@ -1,4 +1,4 @@
-import { sendKodyRulesNotification } from '@/shared/utils/email/sendMail';
+import { sendKodyRulesNotification } from '@libs/common/utils/email/sendMail';
 
 // Teste simples para envio real de email
 export async function testEmailSend() {

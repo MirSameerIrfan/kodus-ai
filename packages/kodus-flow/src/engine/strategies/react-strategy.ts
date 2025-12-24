@@ -117,13 +117,16 @@ export class ReActStrategy extends BaseExecutionStrategy {
                             actionHistory,
                         );
                         if (potentialLoop && iteration > 2) {
-                            this.logger.warn(
-                                'Potential loop detected, forcing final answer',
-                                {
+                            this.logger.warn({
+                                message:
+                                    'Potential loop detected, forcing final answer',
+                                context: this.constructor.name,
+
+                                metadata: {
                                     repeatedAction: potentialLoop,
                                     iteration,
                                 },
-                            );
+                            });
                             const finalStep = await this.forceFinalAnswer(
                                 context,
                                 iteration,
@@ -147,9 +150,14 @@ export class ReActStrategy extends BaseExecutionStrategy {
                             step.thought?.scratchpadUpdate
                         ) {
                             currentScratchpad = step.thought.scratchpadUpdate;
-                            this.logger.debug('Scratchpad updated', {
-                                length: currentScratchpad.length,
-                                iteration,
+                            this.logger.debug({
+                                message: 'Scratchpad updated',
+                                context: this.constructor.name,
+
+                                metadata: {
+                                    length: currentScratchpad.length,
+                                    iteration,
+                                },
                             });
                         }
 
@@ -165,13 +173,16 @@ export class ReActStrategy extends BaseExecutionStrategy {
                         }
 
                         if (step.action?.type === 'final_answer') {
-                            this.logger.debug(
-                                'Final answer reached, stopping execution',
-                                {
+                            this.logger.debug({
+                                message:
+                                    'Final answer reached, stopping execution',
+                                context: this.constructor.name,
+
+                                metadata: {
                                     iteration: iteration + 1,
                                     totalSteps: steps.length,
                                 },
-                            );
+                            });
                             break;
                         }
 
@@ -199,9 +210,10 @@ export class ReActStrategy extends BaseExecutionStrategy {
                         toolCallsCount,
                     );
 
-                    this.logger.error(
-                        `ReAct strategy completed with error: ${result.error}`,
-                    );
+                    this.logger.error({
+                        message: `ReAct strategy completed with error: ${result.error}`,
+                        context: this.constructor.name,
+                    });
 
                     return result;
                 }
@@ -229,30 +241,45 @@ export class ReActStrategy extends BaseExecutionStrategy {
         }
 
         if (context.input.length > 10000) {
-            this.logger.warn('Input is very long, may affect performance', {
-                inputLength: context.input.length,
+            this.logger.warn({
+                message: 'Input is very long, may affect performance',
+                context: this.constructor.name,
+
+                metadata: {
+                    inputLength: context.input.length,
+                },
             });
         }
 
         if (context.agentContext?.availableTools.length === 0) {
-            this.logger.warn(
-                'No tools provided - React strategy may not be able to perform complex actions',
-            );
+            this.logger.warn({
+                message:
+                    'No tools provided - React strategy may not be able to perform complex actions',
+                context: this.constructor.name,
+            });
         }
 
         if (context.agentContext?.availableTools.length > 50) {
-            this.logger.warn(
-                'Many tools provided - may impact prompt size and performance',
-                {
+            this.logger.warn({
+                message:
+                    'Many tools provided - may impact prompt size and performance',
+                context: this.constructor.name,
+
+                metadata: {
                     toolsCount: context.agentContext?.availableTools.length,
                 },
-            );
+            });
         }
 
-        this.logger.debug('Context validation passed', {
-            inputLength: context.input.length,
-            toolsCount: context.agentContext?.availableTools?.length || 0,
-            hasAgentContext: !!context.agentContext,
+        this.logger.debug({
+            message: 'Context validation passed',
+            context: this.constructor.name,
+
+            metadata: {
+                inputLength: context.input.length,
+                toolsCount: context.agentContext?.availableTools?.length || 0,
+                hasAgentContext: !!context.agentContext,
+            },
         });
     }
 
@@ -266,11 +293,16 @@ export class ReActStrategy extends BaseExecutionStrategy {
         try {
             const threadId = context.agentContext.thread?.id;
 
-            this.logger.debug('Starting iteration execution', {
-                threadId,
-                iteration,
-                previousStepsCount: previousSteps.length,
-                hasLLMAdapter: !!this.llmAdapter,
+            this.logger.debug({
+                message: 'Starting iteration execution',
+                context: this.constructor.name,
+
+                metadata: {
+                    threadId,
+                    iteration,
+                    previousStepsCount: previousSteps.length,
+                    hasLLMAdapter: !!this.llmAdapter,
+                },
             });
 
             if (!this.llmAdapter) {
@@ -287,21 +319,31 @@ export class ReActStrategy extends BaseExecutionStrategy {
                     previousSteps,
                 );
 
-                this.logger.debug('Thought generated', {
-                    threadId,
-                    iteration,
-                    actionType: thought.action.type,
-                    hasReasoning: !!thought.reasoning,
+                this.logger.debug({
+                    message: 'Thought generated',
+                    context: this.constructor.name,
+
+                    metadata: {
+                        threadId,
+                        iteration,
+                        actionType: thought.action.type,
+                        hasReasoning: !!thought.reasoning,
+                    },
                 });
             } catch (thoughtError) {
-                this.logger.error(
-                    'Thought generation failed in iteration',
-                    thoughtError instanceof Error ? thoughtError : undefined,
-                    {
+                this.logger.error({
+                    message: 'Thought generation failed in iteration',
+                    context: this.constructor.name,
+                    error:
+                        thoughtError instanceof Error
+                            ? thoughtError
+                            : undefined,
+
+                    metadata: {
                         iteration,
                         threadId,
                     },
-                );
+                });
 
                 thought = {
                     reasoning: `Thought generation failed: ${thoughtError instanceof Error ? thoughtError.message : String(thoughtError)}`,
@@ -333,22 +375,32 @@ export class ReActStrategy extends BaseExecutionStrategy {
                 context,
             );
 
-            this.logger.debug('Action executed', {
-                threadId,
-                iteration,
-                actionType: thought.action.type,
-                resultType: actionResult.type,
-                hasContent: !!actionResult.content,
+            this.logger.debug({
+                message: 'Action executed',
+                context: this.constructor.name,
+
+                metadata: {
+                    threadId,
+                    iteration,
+                    actionType: thought.action.type,
+                    resultType: actionResult.type,
+                    hasContent: !!actionResult.content,
+                },
             });
 
             const observation = await this.analyzeResult(actionResult);
 
-            this.logger.debug('Result analyzed', {
-                threadId,
-                iteration,
-                isComplete: observation.isComplete,
-                shouldContinue: observation.shouldContinue,
-                isSuccessful: observation.isSuccessful,
+            this.logger.debug({
+                message: 'Result analyzed',
+                context: this.constructor.name,
+
+                metadata: {
+                    threadId,
+                    iteration,
+                    isComplete: observation.isComplete,
+                    shouldContinue: observation.shouldContinue,
+                    isSuccessful: observation.isSuccessful,
+                },
             });
 
             if (threadId) {
@@ -364,17 +416,24 @@ export class ReActStrategy extends BaseExecutionStrategy {
                                 : undefined,
                     });
                 } catch (error) {
-                    this.logger.debug('Session update failed (non-critical)', {
-                        error,
+                    this.logger.debug({
+                        message: 'Session update failed (non-critical)',
+                        context: this.constructor.name,
+                        error: error as Error,
                     });
                 }
             }
 
-            this.logger.debug('Observe step completed', {
-                threadId,
-                iteration,
-                isComplete: observation.isComplete,
-                shouldContinue: observation.shouldContinue,
+            this.logger.debug({
+                message: 'Observe step completed',
+                context: this.constructor.name,
+
+                metadata: {
+                    threadId,
+                    iteration,
+                    isComplete: observation.isComplete,
+                    shouldContinue: observation.shouldContinue,
+                },
             });
 
             const step: ExecutionStep = {
@@ -396,23 +455,30 @@ export class ReActStrategy extends BaseExecutionStrategy {
                 },
             };
 
-            this.logger.debug('Step completed successfully', {
-                threadId,
-                iteration,
-                stepId: step.id,
-                actionType: thought.action.type,
-                resultType: actionResult.type,
+            this.logger.debug({
+                message: 'Step completed successfully',
+                context: this.constructor.name,
+
+                metadata: {
+                    threadId,
+                    iteration,
+                    stepId: step.id,
+                    actionType: thought.action.type,
+                    resultType: actionResult.type,
+                },
             });
 
             return step;
         } catch (error) {
-            this.logger.error(
-                `Iteration ${iteration + 1} failed`,
-                error instanceof Error ? error : undefined,
-                {
+            this.logger.error({
+                message: `Iteration ${iteration + 1} failed`,
+                context: this.constructor.name,
+                error: error instanceof Error ? error : undefined,
+
+                metadata: {
                     iteration,
                 },
-            );
+            });
 
             const errorThought: AgentThought = {
                 reasoning: `Unexpected error: ${error instanceof Error ? error.message : String(error)}`,
@@ -489,10 +555,15 @@ export class ReActStrategy extends BaseExecutionStrategy {
         const thoughtStartTime = Date.now();
 
         try {
-            this.logger.debug('Starting thought generation', {
-                iteration,
-                previousStepsCount: previousSteps.length,
-                hasLLMAdapter: !!this.llmAdapter?.call,
+            this.logger.debug({
+                message: 'Starting thought generation',
+                context: this.constructor.name,
+
+                metadata: {
+                    iteration,
+                    previousStepsCount: previousSteps.length,
+                    hasLLMAdapter: !!this.llmAdapter?.call,
+                },
             });
 
             if (!this.llmAdapter?.call) {
@@ -503,16 +574,21 @@ export class ReActStrategy extends BaseExecutionStrategy {
             context.step = previousSteps[previousSteps.length - 1];
 
             context.history = previousSteps.map((step, index) => {
-                this.logger.debug('Processing step for history', {
-                    stepIndex: index,
-                    stepId: step.id,
-                    stepType: step.type,
-                    hasThought: !!step.thought,
-                    hasAction: !!step.action,
-                    hasResult: !!step.result,
-                    thoughtReasoning: step.thought?.reasoning,
-                    actionType: step.action?.type,
-                    resultType: step.result?.type,
+                this.logger.debug({
+                    message: 'Processing step for history',
+                    context: this.constructor.name,
+
+                    metadata: {
+                        stepIndex: index,
+                        stepId: step.id,
+                        stepType: step.type,
+                        hasThought: !!step.thought,
+                        hasAction: !!step.action,
+                        hasResult: !!step.result,
+                        thoughtReasoning: step.thought?.reasoning,
+                        actionType: step.action?.type,
+                        resultType: step.result?.type,
+                    },
                 });
 
                 return {
@@ -537,20 +613,30 @@ export class ReActStrategy extends BaseExecutionStrategy {
             context.currentIteration = iteration;
             context.maxIterations = this.config.maxIterations;
 
-            this.logger.debug('Context prepared for LLM', {
-                iteration,
-                historyLength: context.history.length,
-                hasCollectedInfo: !!context.collectedInfo,
-                currentIteration: context.currentIteration,
-                maxIterations: context.maxIterations,
+            this.logger.debug({
+                message: 'Context prepared for LLM',
+                context: this.constructor.name,
+
+                metadata: {
+                    iteration,
+                    historyLength: context.history.length,
+                    hasCollectedInfo: !!context.collectedInfo,
+                    currentIteration: context.currentIteration,
+                    maxIterations: context.maxIterations,
+                },
             });
 
             const prompts = this.promptFactory.createReActPrompt(context);
 
-            this.logger.debug('Calling LLM', {
-                iteration,
-                systemPromptLength: prompts.systemPrompt.length,
-                userPromptLength: prompts.userPrompt.length,
+            this.logger.debug({
+                message: 'Calling LLM',
+                context: this.constructor.name,
+
+                metadata: {
+                    iteration,
+                    systemPromptLength: prompts.systemPrompt.length,
+                    userPromptLength: prompts.userPrompt.length,
+                },
             });
 
             let response;
@@ -574,11 +660,16 @@ export class ReActStrategy extends BaseExecutionStrategy {
                     signal: context.agentContext?.signal,
                 });
 
-                this.logger.debug('LLM call successful', {
-                    iteration,
-                    hasResponse: !!response,
-                    responseType: typeof response,
-                    hasContent: !!response?.content,
+                this.logger.debug({
+                    message: 'LLM call successful',
+                    context: this.constructor.name,
+
+                    metadata: {
+                        iteration,
+                        hasResponse: !!response,
+                        responseType: typeof response,
+                        hasContent: !!response?.content,
+                    },
                 });
             } catch (llmError) {
                 const errorMessage =
@@ -586,13 +677,15 @@ export class ReActStrategy extends BaseExecutionStrategy {
                         ? llmError.message
                         : String(llmError);
 
-                this.logger.error(
-                    'LLM call failed',
-                    llmError instanceof Error ? llmError : undefined,
-                    {
+                this.logger.error({
+                    message: 'LLM call failed',
+                    context: this.constructor.name,
+                    error: llmError instanceof Error ? llmError : undefined,
+
+                    metadata: {
                         iteration,
                     },
-                );
+                });
 
                 return {
                     reasoning: `LLM encountered an error: ${errorMessage}`,
@@ -639,31 +732,43 @@ export class ReActStrategy extends BaseExecutionStrategy {
                 throw new Error('LLM returned empty or invalid response');
             }
 
-            this.logger.debug('LLM response content extracted', {
-                iteration,
-                contentLength: content.length,
-                contentPreview: content.substring(0, 200),
+            this.logger.debug({
+                message: 'LLM response content extracted',
+                context: this.constructor.name,
+
+                metadata: {
+                    iteration,
+                    contentLength: content.length,
+                    contentPreview: content.substring(0, 200),
+                },
             });
 
             const thought = await this.parseLLMResponse(content, iteration);
 
-            this.logger.debug('Thought successfully generated', {
-                iteration,
-                actionType: thought.action.type,
-                hasReasoning: !!thought.reasoning,
-                thoughtGenerationTime: Date.now() - thoughtStartTime,
+            this.logger.debug({
+                message: 'Thought successfully generated',
+                context: this.constructor.name,
+
+                metadata: {
+                    iteration,
+                    actionType: thought.action.type,
+                    hasReasoning: !!thought.reasoning,
+                    thoughtGenerationTime: Date.now() - thoughtStartTime,
+                },
             });
 
             return thought;
         } catch (error) {
-            this.logger.error(
-                'Thought generation failed',
-                error instanceof Error ? error : undefined,
-                {
+            this.logger.error({
+                message: 'Thought generation failed',
+                context: this.constructor.name,
+                error: error instanceof Error ? error : undefined,
+
+                metadata: {
                     iteration,
                     thoughtGenerationTime: Date.now() - thoughtStartTime,
                 },
-            );
+            });
 
             return {
                 reasoning: `Thought generation failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -710,18 +815,28 @@ export class ReActStrategy extends BaseExecutionStrategy {
         const actionStartTime = Date.now();
 
         try {
-            this.logger.debug('Starting action execution', {
-                actionType: action.type,
-                threadId: context.agentContext.thread?.id,
+            this.logger.debug({
+                message: 'Starting action execution',
+                context: this.constructor.name,
+
+                metadata: {
+                    actionType: action.type,
+                    threadId: context.agentContext.thread?.id,
+                },
             });
 
             switch (action.type) {
                 case 'tool_call':
-                    this.logger.debug('Executing tool call', {
-                        toolName: action.toolName,
-                        hasInput: !!action.input,
-                        inputType: typeof action.input,
-                        threadId: context.agentContext.thread?.id,
+                    this.logger.debug({
+                        message: 'Executing tool call',
+                        context: this.constructor.name,
+
+                        metadata: {
+                            toolName: action.toolName,
+                            hasInput: !!action.input,
+                            inputType: typeof action.input,
+                            threadId: context.agentContext.thread?.id,
+                        },
                     });
 
                     try {
@@ -730,12 +845,17 @@ export class ReActStrategy extends BaseExecutionStrategy {
                             context,
                         );
 
-                        this.logger.debug('Tool executed successfully', {
-                            toolName: action.toolName,
-                            hasResult: !!result,
-                            resultType: typeof result,
-                            executionTime: Date.now() - actionStartTime,
-                            threadId: context.agentContext.thread?.id,
+                        this.logger.debug({
+                            message: 'Tool executed successfully',
+                            context: this.constructor.name,
+
+                            metadata: {
+                                toolName: action.toolName,
+                                hasResult: !!result,
+                                resultType: typeof result,
+                                executionTime: Date.now() - actionStartTime,
+                                threadId: context.agentContext.thread?.id,
+                            },
                         });
 
                         try {
@@ -772,15 +892,20 @@ export class ReActStrategy extends BaseExecutionStrategy {
                             },
                         };
                     } catch (toolError) {
-                        this.logger.error(
-                            'Tool execution failed',
-                            toolError instanceof Error ? toolError : undefined,
-                            {
+                        this.logger.error({
+                            message: 'Tool execution failed',
+                            context: this.constructor.name,
+                            error:
+                                toolError instanceof Error
+                                    ? toolError
+                                    : undefined,
+
+                            metadata: {
                                 toolName: action.toolName,
                                 executionTime: Date.now() - actionStartTime,
                                 threadId: context.agentContext.thread?.id,
                             },
-                        );
+                        });
 
                         try {
                             const threadId = context.agentContext.thread?.id;
@@ -834,12 +959,19 @@ export class ReActStrategy extends BaseExecutionStrategy {
                     }
 
                 case 'final_answer':
-                    this.logger.debug('Providing final answer', {
-                        hasContent: !!action.content,
-                        contentLength: action.content
-                            ? action.content.length
-                            : 0,
-                        threadId: context.agentContext.thread?.id,
+                    this.logger.debug({
+                        message: 'Providing final answer',
+                        context: this.constructor.name,
+
+                        metadata: {
+                            hasContent: !!action.content,
+
+                            contentLength: action.content
+                                ? action.content.length
+                                : 0,
+
+                            threadId: context.agentContext.thread?.id,
+                        },
                     });
 
                     return {
@@ -854,9 +986,15 @@ export class ReActStrategy extends BaseExecutionStrategy {
                     };
 
                 default:
-                    this.logger.error('Unknown action type', undefined, {
-                        actionType: action.type,
-                        threadId: context.agentContext.thread?.id,
+                    this.logger.error({
+                        message: 'Unknown action type',
+                        context: this.constructor.name,
+                        error: undefined,
+
+                        metadata: {
+                            actionType: action.type,
+                            threadId: context.agentContext.thread?.id,
+                        },
                     });
                     return {
                         type: 'error',
@@ -872,14 +1010,16 @@ export class ReActStrategy extends BaseExecutionStrategy {
                     };
             }
         } catch (error) {
-            this.logger.error(
-                'Action execution failed',
-                error instanceof Error ? error : undefined,
-                {
+            this.logger.error({
+                message: 'Action execution failed',
+                context: this.constructor.name,
+                error: error instanceof Error ? error : undefined,
+
+                metadata: {
                     actionType: action.type,
                     executionTime: Date.now() - actionStartTime,
                 },
-            );
+            });
             throw error;
         }
     }
@@ -888,10 +1028,15 @@ export class ReActStrategy extends BaseExecutionStrategy {
         const analysisStartTime = Date.now();
 
         try {
-            this.logger.debug('Starting result analysis', {
-                resultType: result.type,
-                hasContent: !!result.content,
-                contentType: typeof result.content,
+            this.logger.debug({
+                message: 'Starting result analysis',
+                context: this.constructor.name,
+
+                metadata: {
+                    resultType: result.type,
+                    hasContent: !!result.content,
+                    contentType: typeof result.content,
+                },
             });
 
             const isComplete = result.type === 'final_answer';
@@ -911,26 +1056,33 @@ export class ReActStrategy extends BaseExecutionStrategy {
                 },
             };
 
-            this.logger.debug('Result analysis completed', {
-                resultType: result.type,
-                isComplete,
-                isSuccessful,
-                shouldContinue,
-                hasFeedback: !!feedback,
-                feedbackLength: feedback.length,
-                analysisTime: Date.now() - analysisStartTime,
+            this.logger.debug({
+                message: 'Result analysis completed',
+                context: this.constructor.name,
+
+                metadata: {
+                    resultType: result.type,
+                    isComplete,
+                    isSuccessful,
+                    shouldContinue,
+                    hasFeedback: !!feedback,
+                    feedbackLength: feedback.length,
+                    analysisTime: Date.now() - analysisStartTime,
+                },
             });
 
             return analysis;
         } catch (error) {
-            this.logger.error(
-                'Result analysis failed',
-                error instanceof Error ? error : undefined,
-                {
+            this.logger.error({
+                message: 'Result analysis failed',
+                context: this.constructor.name,
+                error: error instanceof Error ? error : undefined,
+
+                metadata: {
                     resultType: result.type,
                     analysisTime: Date.now() - analysisStartTime,
                 },
-            );
+            });
 
             return {
                 isComplete: result.type === 'final_answer',
@@ -954,18 +1106,27 @@ export class ReActStrategy extends BaseExecutionStrategy {
         steps: ExecutionStep[],
     ): boolean {
         if (Date.now() - startTime > this.config.maxExecutionTime) {
-            this.logger.info('Stopping: Max execution time reached');
+            this.logger.log({
+                message: 'Stopping: Max execution time reached',
+                context: this.constructor.name,
+            });
             return true;
         }
 
         if (toolCallsCount >= this.config.maxToolCalls) {
-            this.logger.info('Stopping: Max tool calls reached');
+            this.logger.log({
+                message: 'Stopping: Max tool calls reached',
+                context: this.constructor.name,
+            });
             return true;
         }
 
         const lastStep = steps[steps.length - 1];
         if (lastStep?.action?.type === 'final_answer') {
-            this.logger.info('Stopping: Final answer found');
+            this.logger.log({
+                message: 'Stopping: Final answer found',
+                context: this.constructor.name,
+            });
             return true;
         }
 
@@ -1043,9 +1204,10 @@ export class ReActStrategy extends BaseExecutionStrategy {
         const parseResult = EnhancedJSONParser.parse(content);
 
         if (!parseResult || typeof parseResult !== 'object') {
-            this.logger.error(
-                'LLM Response Content (Failed Parse): ' + content,
-            );
+            this.logger.error({
+                message: 'LLM Response Content (Failed Parse): ' + content,
+                context: this.constructor.name,
+            });
             throw new Error('Failed to parse JSON from LLM response');
         }
 
@@ -1105,13 +1267,18 @@ export class ReActStrategy extends BaseExecutionStrategy {
             thought.earlyStopping = data.earlyStopping;
         }
 
-        this.logger.debug('Successfully parsed LLM response', {
-            reasoningLength: data.reasoning.length,
-            confidence,
-            actionType: actionData.type,
-            hasHypotheses: !!data.hypotheses,
-            hasReflection: !!data.reflection,
-            hasEarlyStopping: !!data.earlyStopping,
+        this.logger.debug({
+            message: 'Successfully parsed LLM response',
+            context: this.constructor.name,
+
+            metadata: {
+                reasoningLength: data.reasoning.length,
+                confidence,
+                actionType: actionData.type,
+                hasHypotheses: !!data.hypotheses,
+                hasReflection: !!data.reflection,
+                hasEarlyStopping: !!data.earlyStopping,
+            },
         });
 
         return thought;
@@ -1129,9 +1296,11 @@ export class ReActStrategy extends BaseExecutionStrategy {
             const toolName = actionData.toolName || actionData.tool_name;
 
             if (!toolName) {
-                this.logger.warn(
-                    'Parsed tool_call without toolName, falling back to final_answer error',
-                );
+                this.logger.warn({
+                    message:
+                        'Parsed tool_call without toolName, falling back to final_answer error',
+                    context: this.constructor.name,
+                });
                 return {
                     type: 'final_answer',
                     content:
@@ -1197,17 +1366,27 @@ export class ReActStrategy extends BaseExecutionStrategy {
 
             await ContextService.updateExecution(threadId, executionUpdate);
 
-            this.logger.debug('Session updated (minimal)', {
-                threadId,
-                iteration: update.iteration,
-                stepId: update.stepId,
-                actionType: update.actionType,
-                isCompleted: update.isCompleted,
+            this.logger.debug({
+                message: 'Session updated (minimal)',
+                context: this.constructor.name,
+
+                metadata: {
+                    threadId,
+                    iteration: update.iteration,
+                    stepId: update.stepId,
+                    actionType: update.actionType,
+                    isCompleted: update.isCompleted,
+                },
             });
         } catch (error) {
-            this.logger.debug('Session update failed', {
-                threadId,
-                error: error instanceof Error ? error.message : String(error),
+            this.logger.debug({
+                message: 'Session update failed',
+                context: this.constructor.name,
+                error: error as Error,
+
+                metadata: {
+                    threadId,
+                },
             });
         }
     }
@@ -1234,11 +1413,16 @@ export class ReActStrategy extends BaseExecutionStrategy {
         const finalResult = this.extractFinalResult(steps);
         const executionTime = Date.now() - startTime;
 
-        this.logger.info('ReAct execution completed successfully', {
-            steps: steps.length,
-            iterations,
-            toolCalls: toolCallsCount,
-            executionTime,
+        this.logger.log({
+            message: 'ReAct execution completed successfully',
+            context: this.constructor.name,
+
+            metadata: {
+                steps: steps.length,
+                iterations,
+                toolCalls: toolCallsCount,
+                executionTime,
+            },
         });
 
         return {
@@ -1267,16 +1451,18 @@ export class ReActStrategy extends BaseExecutionStrategy {
             error instanceof Error ? error.message : 'Unknown error';
         const executionTime = Date.now() - startTime;
 
-        this.logger.error(
-            'ReAct execution failed',
-            error instanceof Error ? error : undefined,
-            {
+        this.logger.error({
+            message: 'ReAct execution failed',
+            context: this.constructor.name,
+            error: error instanceof Error ? error : undefined,
+
+            metadata: {
                 stepsCompleted: steps.length,
                 iterations,
                 toolCalls: toolCallsCount,
                 executionTime,
             },
-        );
+        });
 
         return {
             output: null,
@@ -1297,7 +1483,10 @@ export class ReActStrategy extends BaseExecutionStrategy {
     async createFinalResponse(
         context: StrategyExecutionContext,
     ): Promise<string> {
-        this.logger.info('ReAct: Creating final response with ContextBridge');
+        this.logger.log({
+            message: 'ReAct: Creating final response with ContextBridge',
+            context: this.constructor.name,
+        });
 
         try {
             const plannerContext = {
@@ -1363,14 +1552,16 @@ export class ReActStrategy extends BaseExecutionStrategy {
                 (await plannerContext.getFinalResult().result.content) ?? 'Kody'
             );
         } catch (error) {
-            this.logger.error(
-                'ReAct: ContextBridge failed, using fallback response',
-                error instanceof Error ? error : undefined,
-                {
+            this.logger.error({
+                message: 'ReAct: ContextBridge failed, using fallback response',
+                context: this.constructor.name,
+                error: error instanceof Error ? error : undefined,
+
+                metadata: {
                     input: context.input,
                     agentName: context.agentContext.agentName,
                 },
-            );
+            });
             return 'Kody';
         }
     }
@@ -1494,17 +1685,24 @@ export class ReActStrategy extends BaseExecutionStrategy {
                         stepId: `react-step-force-final-${iteration}`,
                     });
                 } catch (error) {
-                    this.logger.debug('Session update failed (non-critical)', {
-                        error,
+                    this.logger.debug({
+                        message: 'Session update failed (non-critical)',
+                        context: this.constructor.name,
+                        error: error as Error,
                     });
                 }
             }
 
-            this.logger.info('Forced final answer completed', {
-                threadId,
-                iteration: iteration + 1,
-                forced: true,
-                reason,
+            this.logger.log({
+                message: 'Forced final answer completed',
+                context: this.constructor.name,
+
+                metadata: {
+                    threadId,
+                    iteration: iteration + 1,
+                    forced: true,
+                    reason,
+                },
             });
 
             return {
@@ -1527,16 +1725,18 @@ export class ReActStrategy extends BaseExecutionStrategy {
                 },
             };
         } catch (error) {
-            this.logger.error(
-                'Force final answer failed',
-                error instanceof Error ? error : undefined,
-                {
+            this.logger.error({
+                message: 'Force final answer failed',
+                context: this.constructor.name,
+                error: error instanceof Error ? error : undefined,
+
+                metadata: {
                     iteration,
                     reason,
                     errorMessage:
                         error instanceof Error ? error.message : String(error),
                 },
-            );
+            });
 
             return {
                 id: `react-step-force-final-error-${iteration}-${Date.now()}`,

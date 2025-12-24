@@ -1,14 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { AutomationExecutionRepository } from '@/core/infrastructure/adapters/repositories/typeorm/automationExecution.repository';
-import { AutomationExecutionModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/automationExecution.model';
-import { TeamAutomationModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/teamAutomation.model';
-import { TeamModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/team.model';
-import { OrganizationModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/organization.model';
-import { AutomationModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/automation.model';
+
 import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
 import { IAutomationExecution } from '@/core/domain/automation/interfaces/automation-execution.interface';
+import { AutomationExecutionRepository } from '@/core/infrastructure/adapters/repositories/typeorm/automationExecution.repository';
+import { AutomationModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/automation.model';
+import { AutomationExecutionModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/automationExecution.model';
+import { OrganizationModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/organization.model';
+import { TeamModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/team.model';
+import { TeamAutomationModel } from '@/core/infrastructure/adapters/repositories/typeorm/schema/teamAutomation.model';
 
 describe('AutomationExecutionRepository - Organization Filtering Integration', () => {
     let module: TestingModule;
@@ -55,12 +56,25 @@ describe('AutomationExecutionRepository - Organization Filtering Integration', (
             providers: [AutomationExecutionRepository],
         }).compile();
 
-        automationExecutionRepository = module.get<AutomationExecutionRepository>(AutomationExecutionRepository);
-        typeormAutomationExecutionRepo = module.get<Repository<AutomationExecutionModel>>('AutomationExecutionModelRepository');
-        typeormTeamAutomationRepo = module.get<Repository<TeamAutomationModel>>('TeamAutomationModelRepository');
-        typeormTeamRepo = module.get<Repository<TeamModel>>('TeamModelRepository');
-        typeormOrganizationRepo = module.get<Repository<OrganizationModel>>('OrganizationModelRepository');
-        typeormAutomationRepo = module.get<Repository<AutomationModel>>('AutomationModelRepository');
+        automationExecutionRepository =
+            module.get<AutomationExecutionRepository>(
+                AutomationExecutionRepository,
+            );
+        typeormAutomationExecutionRepo = module.get<
+            Repository<AutomationExecutionModel>
+        >('AutomationExecutionModelRepository');
+        typeormTeamAutomationRepo = module.get<Repository<TeamAutomationModel>>(
+            'TeamAutomationModelRepository',
+        );
+        typeormTeamRepo = module.get<Repository<TeamModel>>(
+            'TeamModelRepository',
+        );
+        typeormOrganizationRepo = module.get<Repository<OrganizationModel>>(
+            'OrganizationModelRepository',
+        );
+        typeormAutomationRepo = module.get<Repository<AutomationModel>>(
+            'AutomationModelRepository',
+        );
 
         await setupTestData();
     });
@@ -188,10 +202,14 @@ describe('AutomationExecutionRepository - Organization Filtering Integration', (
 
             // Assert
             expect(results).toHaveLength(2);
-            expect(results.every(r => r.uuid.startsWith('execution-org1'))).toBe(true);
-            expect(results.map(r => r.uuid)).toContain('execution-org1-1');
-            expect(results.map(r => r.uuid)).toContain('execution-org1-2');
-            expect(results.map(r => r.uuid)).not.toContain('execution-org2-1');
+            expect(
+                results.every((r) => r.uuid.startsWith('execution-org1')),
+            ).toBe(true);
+            expect(results.map((r) => r.uuid)).toContain('execution-org1-1');
+            expect(results.map((r) => r.uuid)).toContain('execution-org1-2');
+            expect(results.map((r) => r.uuid)).not.toContain(
+                'execution-org2-1',
+            );
         });
 
         it('should return automation executions for different organization', async () => {
@@ -272,13 +290,17 @@ describe('AutomationExecutionRepository - Organization Filtering Integration', (
 
             // Assert
             expect(results).toHaveLength(2);
-            
+
             const execution = results[0];
             expect(execution.teamAutomation).toBeDefined();
             expect(execution.teamAutomation.team).toBeDefined();
             expect(execution.teamAutomation.team.organization).toBeDefined();
-            expect(execution.teamAutomation.team.organization.uuid).toBe('org-1-id');
-            expect(execution.teamAutomation.team.organization.name).toBe('Organization 1');
+            expect(execution.teamAutomation.team.organization.uuid).toBe(
+                'org-1-id',
+            );
+            expect(execution.teamAutomation.team.organization.name).toBe(
+                'Organization 1',
+            );
         });
 
         it('should return all executions when no organization filter is provided', async () => {

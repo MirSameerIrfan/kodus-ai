@@ -1,0 +1,106 @@
+import { createLogger } from '@kodus/flow';
+import { Injectable, Inject } from '@nestjs/common';
+
+import { JobStatus } from '@libs/core/workflow/domain/enums/job-status.enum';
+import {
+    WORKFLOW_JOB_REPOSITORY_TOKEN,
+    IWorkflowJobRepository,
+} from '@libs/core/workflow/domain/contracts/workflow-job.repository.contract';
+import { IJobProcessorService } from '@libs/core/workflow/domain/contracts/job-processor.service.contract';
+import { ErrorClassification } from '@libs/core/workflow/domain/enums/error-classification.enum';
+import { RunCodeReviewAutomationUseCase } from '@libs/ee/automation/runCodeReview.use-case';
+
+@Injectable()
+export class CodeReviewJobProcessorService implements IJobProcessorService {
+    private readonly logger = createLogger(CodeReviewJobProcessorService.name);
+
+    constructor(
+        @Inject(WORKFLOW_JOB_REPOSITORY_TOKEN)
+        private readonly jobRepository: IWorkflowJobRepository,
+        private readonly runCodeReviewAutomationUseCase: RunCodeReviewAutomationUseCase,
+    ) {}
+
+    async process(jobId: string): Promise<void> {
+        const job = await this.jobRepository.findOne(jobId);
+
+        if (!job) {
+            throw new Error(`Job ${jobId} not found`);
+        }
+
+        const correlationId = job.correlationId;
+        if (!correlationId) {
+            throw new Error(`Job ${jobId} missing correlationId`);
+        }
+
+        this.logger.log({
+            message: `Processing Code Review Job ${jobId}`,
+            context: CodeReviewJobProcessorService.name,
+            metadata: { jobId, correlationId },
+        });
+
+        try {
+            await this.jobRepository.update(jobId, {
+                status: JobStatus.PROCESSING,
+                startedAt: new Date(),
+            });
+
+            const jobPayload = job.payload || {};
+            const { payload, event, platformType } = jobPayload as any;
+
+            if (!payload || !event || !platformType) {
+                throw new Error('Invalid payload: missing required fields');
+            }
+
+            await this.runCodeReviewAutomationUseCase.execute({
+                payload,
+                event,
+                platformType,
+                throwOnError: true,
+            });
+
+            await this.markCompleted(jobId);
+
+            this.logger.log({
+                message: `Job ${jobId} completed successfully`,
+                context: CodeReviewJobProcessorService.name,
+            });
+        } catch (error) {
+            if (error.name === 'WorkflowPausedError') {
+                await this.jobRepository.update(jobId, {
+                    status: JobStatus.WAITING_FOR_EVENT,
+                    waitingForEvent: {
+                        eventType: error.eventType,
+                        eventKey: error.eventKey,
+                    },
+                });
+                return;
+            }
+
+            this.logger.error({
+                message: `Job ${jobId} failed`,
+                error,
+                context: CodeReviewJobProcessorService.name,
+            });
+
+            await this.handleFailure(jobId, error);
+            throw error;
+        }
+    }
+
+    async handleFailure(jobId: string, error: Error): Promise<void> {
+        await this.jobRepository.update(jobId, {
+            status: JobStatus.FAILED,
+            errorClassification: ErrorClassification.PERMANENT,
+            lastError: error.message,
+            failedAt: new Date(),
+        });
+    }
+
+    async markCompleted(jobId: string, result?: unknown): Promise<void> {
+        await this.jobRepository.update(jobId, {
+            status: JobStatus.COMPLETED,
+            completedAt: new Date(),
+            result: result,
+        });
+    }
+}

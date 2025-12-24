@@ -1,8 +1,16 @@
 /**
  * Core types for the observability system
  */
+import { LogLevel } from '@/core/types/allTypes.js';
+import { ExecutionContext } from '@nestjs/common';
 
-export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+export type LogArguments = {
+    message: string;
+    context: ExecutionContext | string;
+    serviceName?: string;
+    error?: Error;
+    metadata?: Record<string, any>;
+};
 
 export type SpanKind =
     | 'internal'
@@ -120,7 +128,6 @@ export interface TelemetryConfig {
         traceKernel?: boolean;
         traceSnapshots?: boolean;
         tracePersistence?: boolean;
-        metricsEnabled?: boolean;
     };
     globalAttributes?: Record<string, string | number | boolean>;
 }
@@ -132,7 +139,6 @@ export interface MongoDBConfig {
     collections?: {
         logs?: string;
         telemetry?: string;
-        errors?: string;
     };
     batchSize?: number;
     flushIntervalMs?: number;
@@ -154,6 +160,13 @@ export interface ObservabilityConfig {
     telemetry?: Partial<TelemetryConfig>;
     mongodb?: MongoDBConfig;
     apiPort?: number;
+    otlp?: {
+        enabled: boolean;
+        endpoint?: string;
+        protocol?: 'http/proto' | 'http/json' | 'grpc';
+        headers?: Record<string, string>;
+        timeoutMs?: number;
+    };
 }
 
 // Agent tracking types
@@ -223,6 +236,7 @@ export type GenAISpanAttributeKey =
     | 'agent.conversation.id'
     | 'agent.user.id'
     | 'agent.tenant.id'
+    | 'agent.correlation.id'
     // Tool-specific attributes
     | 'tool.name'
     | 'tool.type'
@@ -230,6 +244,7 @@ export type GenAISpanAttributeKey =
     | 'tool.parameters'
     | 'tool.result.size'
     | 'tool.error.type'
+    | 'tool.correlation.id'
     // Workflow attributes
     | 'workflow.name'
     | 'workflow.step'
@@ -289,6 +304,7 @@ export const AGENT = {
     CONVERSATION_ID: 'agent.conversation.id' as const,
     USER_ID: 'agent.user.id' as const,
     TENANT_ID: 'agent.tenant.id' as const,
+    CORRELATION_ID: 'agent.correlation.id' as const,
 } as const;
 
 export const TOOL = {
@@ -298,6 +314,7 @@ export const TOOL = {
     PARAMETERS: 'tool.parameters' as const,
     RESULT_SIZE: 'tool.result.size' as const,
     ERROR_TYPE: 'tool.error.type' as const,
+    CORRELATION_ID: 'tool.correlation.id' as const,
 } as const;
 
 export const WORKFLOW = {
@@ -383,6 +400,23 @@ export interface LogExporter {
     ): void;
     flush?(): Promise<void>;
     shutdown?(): Promise<void>;
+}
+
+/**
+ * Unified Exporter Interface
+ */
+export interface ObservabilityExporter {
+    name: string;
+    initialize?(): Promise<void>;
+    exportTrace(item: TraceItem): Promise<void>;
+    exportLog(
+        level: LogLevel,
+        message: string,
+        context?: LogContext,
+        error?: Error,
+    ): Promise<void>;
+    flush(): Promise<void>;
+    shutdown(): Promise<void>;
 }
 
 /**

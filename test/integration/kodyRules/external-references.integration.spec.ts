@@ -27,25 +27,27 @@ jest.mock('@/shared/utils/crypto', () => ({
     decrypt: jest.fn((text) => text.replace('encrypted_', '')),
 }));
 
+import { PromptRunnerService } from '@kodus/kodus-common/llm';
 import { Test, TestingModule } from '@nestjs/testing';
+
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+
+import { AnalysisContext } from '@/config/types/general/codeReview.type';
 import { CreateOrUpdateKodyRulesUseCase } from '@/core/application/use-cases/kodyRules/create-or-update.use-case';
-import { ExternalReferenceDetectorService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceDetector.service';
-import { ExternalReferenceLoaderService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceLoader.service';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import {
-    CreateKodyRuleDto,
-    KodyRuleSeverity,
-} from '@/core/infrastructure/http/dtos/create-kody-rule.dto';
 import {
     KodyRulesOrigin,
     KodyRulesStatus,
     KodyRulesScope,
 } from '@/core/domain/kodyRules/interfaces/kodyRules.interface';
-import { AnalysisContext } from '@/config/types/general/codeReview.type';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
-import { PromptRunnerService } from '@kodus/kodus-common/llm';
 import { CodeReviewContextPackService } from '@/core/infrastructure/adapters/services/context/code-review-context-pack.service';
+import { ExternalReferenceDetectorService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceDetector.service';
+import { ExternalReferenceLoaderService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceLoader.service';
+import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
+import {
+    CreateKodyRuleDto,
+    KodyRuleSeverity,
+} from '@/core/infrastructure/http/dtos/create-kody-rule.dto';
 
 describe('External References - Integration Tests', () => {
     let createOrUpdateUseCase: CreateOrUpdateKodyRulesUseCase;
@@ -274,11 +276,13 @@ describe('External References - Integration Tests', () => {
             });
 
             expect(kodyRule.externalReferences).toHaveLength(3);
-            expect(kodyRule.externalReferences?.map((r) => r.filePath)).toEqual([
-                '.github/CODEOWNERS',
-                'src/types/UserRole.enum.ts',
-                'docs/openapi.yml',
-            ]);
+            expect(kodyRule.externalReferences?.map((r) => r.filePath)).toEqual(
+                [
+                    '.github/CODEOWNERS',
+                    'src/types/UserRole.enum.ts',
+                    'docs/openapi.yml',
+                ],
+            );
         });
 
         it('should not create rule when referenced file does not exist', async () => {
@@ -295,7 +299,9 @@ describe('External References - Integration Tests', () => {
                 'detectReferences',
             ).mockResolvedValue(mockLLMDetectionResult.references);
 
-            mockCodeManagementService.getRepositoryAllFiles.mockResolvedValue([]);
+            mockCodeManagementService.getRepositoryAllFiles.mockResolvedValue(
+                [],
+            );
 
             const kodyRule: CreateKodyRuleDto = {
                 title: 'Missing ref rule',
@@ -319,13 +325,11 @@ describe('External References - Integration Tests', () => {
             jest.spyOn(
                 detectorService as any,
                 'detectReferences',
-            ).mockResolvedValueOnce([
-                { fileName: 'CODEOWNERS' },
-            ]);
+            ).mockResolvedValueOnce([{ fileName: 'CODEOWNERS' }]);
 
-            mockCodeManagementService.getRepositoryAllFiles.mockResolvedValueOnce([
-                { path: '.github/CODEOWNERS', size: 100 },
-            ] as any);
+            mockCodeManagementService.getRepositoryAllFiles.mockResolvedValueOnce(
+                [{ path: '.github/CODEOWNERS', size: 100 }] as any,
+            );
 
             const kodyRule: CreateKodyRuleDto = {
                 uuid: 'existing-rule',
@@ -351,13 +355,11 @@ describe('External References - Integration Tests', () => {
             jest.spyOn(
                 detectorService as any,
                 'detectReferences',
-            ).mockResolvedValueOnce([
-                { fileName: 'UserRole.enum.ts' },
-            ]);
+            ).mockResolvedValueOnce([{ fileName: 'UserRole.enum.ts' }]);
 
-            mockCodeManagementService.getRepositoryAllFiles.mockResolvedValueOnce([
-                { path: 'src/types/UserRole.enum.ts', size: 200 },
-            ] as any);
+            mockCodeManagementService.getRepositoryAllFiles.mockResolvedValueOnce(
+                [{ path: 'src/types/UserRole.enum.ts', size: 200 }] as any,
+            );
 
             kodyRule.rule = 'Validate against UserRole.enum.ts';
 
@@ -400,7 +402,9 @@ describe('External References - Integration Tests', () => {
             });
 
             expect(result[0].filePath).toBe('src/types/UserRole.enum.ts');
-            expect(mockCodeManagementService.getRepositoryAllFiles).toHaveBeenCalledWith(
+            expect(
+                mockCodeManagementService.getRepositoryAllFiles,
+            ).toHaveBeenCalledWith(
                 expect.objectContaining({
                     filters: expect.objectContaining({
                         filePatterns: ['**/types/UserRole.enum.ts'],
@@ -485,7 +489,10 @@ describe('External References - Integration Tests', () => {
                 new Error('Context OS unavailable'),
             );
 
-            const result = await loaderService.loadReferences(rule, mockContext);
+            const result = await loaderService.loadReferences(
+                rule,
+                mockContext,
+            );
 
             expect(result.references).toEqual([]);
             expect(result.augmentations.size).toBe(0);
@@ -524,7 +531,9 @@ describe('External References - Integration Tests', () => {
             });
 
             expect(result.length).toBeLessThanOrEqual(10);
-            expect(mockCodeManagementService.getRepositoryAllFiles).toHaveBeenCalledWith(
+            expect(
+                mockCodeManagementService.getRepositoryAllFiles,
+            ).toHaveBeenCalledWith(
                 expect.objectContaining({
                     filters: expect.objectContaining({
                         maxFiles: 10,

@@ -1,13 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { 
+
+import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import {
     GetCockpitMetricsVisibilityUseCase,
-    GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN
+    GET_COCKPIT_METRICS_VISIBILITY_USE_CASE_TOKEN,
 } from '@/core/application/use-cases/organizationParameters/get-cockpit-metrics-visibility.use-case';
 import { ORGANIZATION_PARAMETERS_SERVICE_TOKEN } from '@/core/domain/organizationParameters/contracts/organizationParameters.service.contract';
+import {
+    DEFAULT_COCKPIT_METRICS_VISIBILITY,
+    ICockpitMetricsVisibility,
+} from '@/core/domain/organizationParameters/interfaces/cockpit-metrics-visibility.interface';
 import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { OrganizationParametersKey } from '@/shared/domain/enums/organization-parameters-key.enum';
-import { DEFAULT_COCKPIT_METRICS_VISIBILITY, ICockpitMetricsVisibility } from '@/core/domain/organizationParameters/interfaces/cockpit-metrics-visibility.interface';
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
 
 describe('GetCockpitMetricsVisibilityUseCase', () => {
     let useCase: GetCockpitMetricsVisibilityUseCase;
@@ -61,12 +65,15 @@ describe('GetCockpitMetricsVisibilityUseCase', () => {
             const result = await useCase.execute(mockOrgData);
 
             expect(result).toEqual(DEFAULT_COCKPIT_METRICS_VISIBILITY);
-            expect(mockOrganizationParametersService.findByKey).toHaveBeenCalledWith(
+            expect(
+                mockOrganizationParametersService.findByKey,
+            ).toHaveBeenCalledWith(
                 OrganizationParametersKey.COCKPIT_METRICS_VISIBILITY,
                 mockOrgData,
             );
             expect(mockLogger.log).toHaveBeenCalledWith({
-                message: 'Cockpit metrics visibility config not found, returning default values (all true)',
+                message:
+                    'Cockpit metrics visibility config not found, returning default values (all true)',
                 context: GetCockpitMetricsVisibilityUseCase.name,
                 metadata: {
                     organizationId: mockOrgData.organizationId,
@@ -101,7 +108,9 @@ describe('GetCockpitMetricsVisibilityUseCase', () => {
             const result = await useCase.execute(mockOrgData);
 
             expect(result).toEqual(customConfig);
-            expect(mockOrganizationParametersService.findByKey).toHaveBeenCalledWith(
+            expect(
+                mockOrganizationParametersService.findByKey,
+            ).toHaveBeenCalledWith(
                 OrganizationParametersKey.COCKPIT_METRICS_VISIBILITY,
                 mockOrgData,
             );
@@ -149,7 +158,8 @@ describe('GetCockpitMetricsVisibilityUseCase', () => {
 
             expect(result).toEqual(DEFAULT_COCKPIT_METRICS_VISIBILITY);
             expect(mockLogger.error).toHaveBeenCalledWith({
-                message: 'Error getting cockpit metrics visibility, returning default values',
+                message:
+                    'Error getting cockpit metrics visibility, returning default values',
                 context: GetCockpitMetricsVisibilityUseCase.name,
                 error: expect.any(Error),
                 metadata: {
@@ -169,24 +179,45 @@ describe('GetCockpitMetricsVisibilityUseCase', () => {
             const result = await useCase.execute(orgDataWithTeam);
 
             expect(result).toEqual(DEFAULT_COCKPIT_METRICS_VISIBILITY);
-            expect(mockOrganizationParametersService.findByKey).toHaveBeenCalledWith(
+            expect(
+                mockOrganizationParametersService.findByKey,
+            ).toHaveBeenCalledWith(
                 OrganizationParametersKey.COCKPIT_METRICS_VISIBILITY,
                 orgDataWithTeam,
             );
         });
 
         it('should ensure default config has all metrics enabled', () => {
-            expect(DEFAULT_COCKPIT_METRICS_VISIBILITY.summary.deployFrequency).toBe(true);
-            expect(DEFAULT_COCKPIT_METRICS_VISIBILITY.summary.prCycleTime).toBe(true);
-            expect(DEFAULT_COCKPIT_METRICS_VISIBILITY.summary.kodySuggestions).toBe(true);
-            expect(DEFAULT_COCKPIT_METRICS_VISIBILITY.summary.bugRatio).toBe(true);
-            expect(DEFAULT_COCKPIT_METRICS_VISIBILITY.summary.prSize).toBe(true);
-            expect(DEFAULT_COCKPIT_METRICS_VISIBILITY.details.leadTimeBreakdown).toBe(true);
-            expect(DEFAULT_COCKPIT_METRICS_VISIBILITY.details.prCycleTime).toBe(true);
-            expect(DEFAULT_COCKPIT_METRICS_VISIBILITY.details.prsOpenedVsClosed).toBe(true);
-            expect(DEFAULT_COCKPIT_METRICS_VISIBILITY.details.prsMergedByDeveloper).toBe(true);
-            expect(DEFAULT_COCKPIT_METRICS_VISIBILITY.details.teamActivity).toBe(true);
+            expect(
+                DEFAULT_COCKPIT_METRICS_VISIBILITY.summary.deployFrequency,
+            ).toBe(true);
+            expect(DEFAULT_COCKPIT_METRICS_VISIBILITY.summary.prCycleTime).toBe(
+                true,
+            );
+            expect(
+                DEFAULT_COCKPIT_METRICS_VISIBILITY.summary.kodySuggestions,
+            ).toBe(true);
+            expect(DEFAULT_COCKPIT_METRICS_VISIBILITY.summary.bugRatio).toBe(
+                true,
+            );
+            expect(DEFAULT_COCKPIT_METRICS_VISIBILITY.summary.prSize).toBe(
+                true,
+            );
+            expect(
+                DEFAULT_COCKPIT_METRICS_VISIBILITY.details.leadTimeBreakdown,
+            ).toBe(true);
+            expect(DEFAULT_COCKPIT_METRICS_VISIBILITY.details.prCycleTime).toBe(
+                true,
+            );
+            expect(
+                DEFAULT_COCKPIT_METRICS_VISIBILITY.details.prsOpenedVsClosed,
+            ).toBe(true);
+            expect(
+                DEFAULT_COCKPIT_METRICS_VISIBILITY.details.prsMergedByDeveloper,
+            ).toBe(true);
+            expect(
+                DEFAULT_COCKPIT_METRICS_VISIBILITY.details.teamActivity,
+            ).toBe(true);
         });
     });
 });
-

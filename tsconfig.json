@@ -10,6 +10,7 @@
         "target": "ES2022",
         "sourceMap": true,
         "outDir": "./dist",
+        "rootDir": ".",
         "baseUrl": ".",
         "incremental": true,
         "skipLibCheck": true,
@@ -29,25 +30,19 @@
         "disableSourceOfProjectReferenceRedirect": true,
 
         "paths": {
-            "@/*": ["src/*"],
-            "@context-os-core/*": ["packages/kodus-flow/src/context/core/*"]
+            "@libs/*": ["./libs/*"],
+            "@apps/*": ["./apps/*/src"]
         }
     },
     "watchOptions": {
         // Avoid looping in "npm run start:dev"
         "watchFile": "useFsEventsOnParentDirectory"
     },
-    "include": [
-        "src",
-        "test/**/*.ts",
-        "tsconfig-paths-bootstrap.js",
-        "src/**/*.json"
-    ],
+    "include": ["libs", "apps", "test/**/*.ts", "tsconfig-paths-bootstrap.js"],
     "exclude": [
         "node_modules",
         "dist",
         "ormlogs.log",
-        "packages/kodus-flow/src",
         "**/*.map",
         "**/*.spec.ts",
         "**/*.test.ts"

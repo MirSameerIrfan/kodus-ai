@@ -59,9 +59,14 @@ export class GeminiProvider implements LLMProvider {
         this.modelName = config.model || 'gemini-1.5-flash'; // Use stable model by default
         this.defaultOptions = config.defaultOptions || {};
 
-        this.logger.info('Gemini Provider initialized', {
-            model: this.modelName,
-            hasApiKey: !!config.apiKey,
+        this.logger.log({
+            message: 'Gemini Provider initialized',
+            context: this.constructor.name,
+
+            metadata: {
+                model: this.modelName,
+                hasApiKey: !!config.apiKey,
+            },
         });
     }
 
@@ -76,11 +81,16 @@ export class GeminiProvider implements LLMProvider {
             // Merge options with defaults
             const mergedOptions = this.mergeOptions(options);
 
-            this.logger.debug('Calling Gemini API', {
-                model: this.modelName,
-                messageCount: messages.length,
-                promptLength: prompt.length,
-                temperature: mergedOptions.temperature,
+            this.logger.debug({
+                message: 'Calling Gemini API',
+                context: this.constructor.name,
+
+                metadata: {
+                    model: this.modelName,
+                    messageCount: messages.length,
+                    promptLength: prompt.length,
+                    temperature: mergedOptions.temperature,
+                },
             });
 
             // Get model with current options
@@ -104,14 +114,23 @@ export class GeminiProvider implements LLMProvider {
                 },
             };
 
-            this.logger.debug('Gemini API response received', {
-                contentLength: llmResponse.content.length,
-                usage: llmResponse.usage,
+            this.logger.debug({
+                message: 'Gemini API response received',
+                context: this.constructor.name,
+
+                metadata: {
+                    contentLength: llmResponse.content.length,
+                    usage: llmResponse.usage,
+                },
             });
 
             return llmResponse;
         } catch (error) {
-            this.logger.error('Gemini API call failed', error as Error);
+            this.logger.error({
+                message: 'Gemini API call failed',
+                context: this.constructor.name,
+                error: error as Error,
+            });
             throw new Error(
                 `Gemini API call failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
             );
@@ -126,9 +145,14 @@ export class GeminiProvider implements LLMProvider {
             const prompt = this.convertMessagesToPrompt(messages);
             const mergedOptions = this.mergeOptions(options);
 
-            this.logger.debug('Starting Gemini stream', {
-                model: this.modelName,
-                messageCount: messages.length,
+            this.logger.debug({
+                message: 'Starting Gemini stream',
+                context: this.constructor.name,
+
+                metadata: {
+                    model: this.modelName,
+                    messageCount: messages.length,
+                },
             });
 
             const model = this.client.getGenerativeModel({
@@ -158,7 +182,11 @@ export class GeminiProvider implements LLMProvider {
                 }
             }
         } catch (error) {
-            this.logger.error('Gemini streaming failed', error as Error);
+            this.logger.error({
+                message: 'Gemini streaming failed',
+                context: this.constructor.name,
+                error: error as Error,
+            });
             throw new Error(
                 `Gemini streaming failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
             );
@@ -212,7 +240,14 @@ export class GeminiProvider implements LLMProvider {
      */
     setModel(model: string): void {
         this.modelName = model;
-        this.logger.info('Model changed', { newModel: model });
+        this.logger.log({
+            message: 'Model changed',
+            context: this.constructor.name,
+
+            metadata: {
+                newModel: model,
+            },
+        });
     }
 
     /**
@@ -231,14 +266,23 @@ export class GeminiProvider implements LLMProvider {
                 { maxTokens: 10 },
             );
 
-            this.logger.info('Gemini connection test successful', {
-                responseLength: response.content.length,
-                usage: response.usage,
+            this.logger.log({
+                message: 'Gemini connection test successful',
+                context: this.constructor.name,
+
+                metadata: {
+                    responseLength: response.content.length,
+                    usage: response.usage,
+                },
             });
 
             return true;
         } catch (error) {
-            this.logger.error('Gemini connection test failed', error as Error);
+            this.logger.error({
+                message: 'Gemini connection test failed',
+                context: this.constructor.name,
+                error: error as Error,
+            });
             return false;
         }
     }

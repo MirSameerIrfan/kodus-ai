@@ -1,0 +1,88 @@
+import { Injectable, Inject } from '@nestjs/common';
+import { v4 as uuid } from 'uuid';
+
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import {
+    IJobQueueService,
+    JOB_QUEUE_SERVICE_TOKEN,
+} from '@libs/core/workflow/domain/contracts/job-queue.service.contract';
+import { HandlerType } from '@libs/core/workflow/domain/enums/handler-type.enum';
+import { JobStatus } from '@libs/core/workflow/domain/enums/job-status.enum';
+import { WorkflowType } from '@libs/core/workflow/domain/enums/workflow-type.enum';
+import { createLogger } from '@kodus/flow';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+
+export interface EnqueueCodeReviewJobInput {
+    payload: any;
+    event: string;
+    platformType: PlatformType;
+    organizationAndTeam: OrganizationAndTeamData;
+    correlationId?: string;
+}
+
+@Injectable()
+export class EnqueueCodeReviewJobUseCase implements IUseCase {
+    private readonly logger = createLogger(EnqueueCodeReviewJobUseCase.name);
+
+    constructor(
+        @Inject(JOB_QUEUE_SERVICE_TOKEN)
+        private readonly jobQueueService: IJobQueueService,
+    ) {}
+
+    async execute(input: EnqueueCodeReviewJobInput): Promise<string> {
+        try {
+            const correlationId = input.correlationId || uuid();
+
+            this.logger.log({
+                message: 'Enqueuing code review job',
+                context: EnqueueCodeReviewJobUseCase.name,
+                metadata: {
+                    correlationId,
+                    platformType: input.platformType,
+                    repositoryId: input.payload.repositoryId,
+                    pullRequestNumber: input.payload.pullRequestNumber,
+                },
+            });
+
+            const jobPayload = {
+                event: input.event,
+                platformType: input.platformType,
+                payload: input.payload,
+            };
+
+            const jobId = await this.jobQueueService.enqueue({
+                correlationId,
+                workflowType: WorkflowType.CODE_REVIEW,
+                handlerType: HandlerType.PIPELINE_SYNC,
+                payload: jobPayload,
+                organizationAndTeam: input.organizationAndTeam,
+                status: JobStatus.PENDING,
+                priority: 0,
+                retryCount: 0,
+                maxRetries: 1,
+            });
+
+            this.logger.log({
+                message: 'Code review job enqueued successfully',
+                context: EnqueueCodeReviewJobUseCase.name,
+                metadata: {
+                    jobId,
+                    correlationId,
+                },
+            });
+
+            return jobId;
+        } catch (error) {
+            this.logger.error({
+                message: 'Failed to enqueue code review job',
+                context: EnqueueCodeReviewJobUseCase.name,
+                error,
+                metadata: {
+                    input,
+                },
+            });
+            throw error;
+        }
+    }
+}

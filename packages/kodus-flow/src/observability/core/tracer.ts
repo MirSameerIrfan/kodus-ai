@@ -32,9 +32,14 @@ export class SimpleTracer implements TracerInterface {
 
         // Check if we're approaching the limit
         if (this.activeSpans.size >= this.maxActiveSpans) {
-            this.logger.warn('Too many active spans, creating no-op span', {
-                activeSpans: this.activeSpans.size,
-                maxActiveSpans: this.maxActiveSpans,
+            this.logger.warn({
+                message: 'Too many active spans, creating no-op span',
+                context: this.constructor.name,
+
+                metadata: {
+                    activeSpans: this.activeSpans.size,
+                    maxActiveSpans: this.maxActiveSpans,
+                },
             });
             return new SimpleSpan(
                 this.createSpanContext(

@@ -4,7 +4,7 @@ import { ObservabilitySystem } from './observability.js';
 export { ObservabilitySystem } from './observability.js';
 import { ObservabilityConfig } from './types.js';
 export { TelemetrySystem } from './telemetry.js';
-export { createLogger } from './logger.js';
+export { createLogger, SimpleLogger } from './logger.js';
 
 export {
     ExecutionTracker,
@@ -53,3 +53,8 @@ export {
 } from './traceability.js';
 
 export type { TraceabilityResponse } from './traceability.js';
+
+// New Exports for OTLP
+export { OtelAdapter } from './core/otel-adapter.js';
+export { OtlpTraceExporter } from './exporters/otlp-exporter.js';
+export { MongoDBExporter } from './exporters/mongodb-exporter.js';

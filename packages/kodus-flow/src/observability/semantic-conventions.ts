@@ -88,6 +88,7 @@ export function createAgentSpanAttributes(options: {
     conversationId?: string;
     userId?: string;
     tenantId?: string;
+    correlationId?: string;
     input?: string;
     inputTokens?: number;
 }): GenAISpanAttributes {
@@ -99,6 +100,7 @@ export function createAgentSpanAttributes(options: {
         [AGENT.CONVERSATION_ID]: options.conversationId,
         [AGENT.USER_ID]: options.userId,
         [AGENT.TENANT_ID]: options.tenantId,
+        [AGENT.CORRELATION_ID]: options.correlationId,
         [GEN_AI.USAGE_INPUT_TOKENS]: options.inputTokens,
     };
 }
@@ -112,6 +114,7 @@ export function createToolSpanAttributes(options: {
     executionId: string;
     parameters?: Record<string, unknown>;
     inputTokens?: number;
+    correlationId?: string;
 }): GenAISpanAttributes {
     return {
         [TOOL.NAME]: options.toolName,
@@ -119,6 +122,7 @@ export function createToolSpanAttributes(options: {
         [TOOL.EXECUTION_ID]: options.executionId,
         [TOOL.PARAMETERS]: options.parameters,
         [GEN_AI.USAGE_INPUT_TOKENS]: options.inputTokens,
+        [TOOL.CORRELATION_ID]: options.correlationId,
     };
 }
 
@@ -233,6 +237,7 @@ export function createAgentExecutionSpan(
         tenantId?: string;
         input?: string;
         inputTokens?: number;
+        correlationId?: string;
         parentSpanId?: string;
     } = {},
 ) {
@@ -244,6 +249,7 @@ export function createAgentExecutionSpan(
         conversationId: options.conversationId,
         userId: options.userId,
         tenantId: options.tenantId,
+        correlationId: options.correlationId,
         input: options.input,
         inputTokens: options.inputTokens,
     });
@@ -292,6 +298,7 @@ export function createToolExecutionSpan(
     options: {
         toolType?: string;
         parameters?: Record<string, unknown>;
+        correlationId?: string;
         parentSpanId?: string;
     } = {},
 ) {
@@ -300,6 +307,7 @@ export function createToolExecutionSpan(
         toolType: options.toolType,
         executionId,
         parameters: options.parameters,
+        correlationId: options.correlationId,
     });
 
     return createSemanticSpanOptions(SPAN_NAMES.TOOL_EXECUTE, attributes, {

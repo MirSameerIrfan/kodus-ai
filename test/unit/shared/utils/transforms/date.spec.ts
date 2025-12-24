@@ -1,4 +1,5 @@
 import * as moment from 'moment';
+
 import { getDayForFilter } from '../../../../../src/shared/utils/transforms/date';
 
 describe('getDayForFilter Function', () => {
@@ -6,17 +7,24 @@ describe('getDayForFilter Function', () => {
         const days = 7;
         const { dateAfterDaysInformed } = getDayForFilter(days);
 
-        const expectedDateAfterDaysInformed = moment().subtract(days, 'days').format('YYYY-MM-DD HH:mm:ss');
+        const expectedDateAfterDaysInformed = moment()
+            .subtract(days, 'days')
+            .format('YYYY-MM-DD HH:mm:ss');
         expect(dateAfterDaysInformed).toBe(expectedDateAfterDaysInformed);
     });
 
     test('should correctly handle custom start date', () => {
         const days = 7;
         const startDate = new Date('2024-01-01T00:00:00Z');
-        const { today, dateAfterDaysInformed } = getDayForFilter(days, startDate);
+        const { today, dateAfterDaysInformed } = getDayForFilter(
+            days,
+            startDate,
+        );
 
         const expectedToday = moment(startDate).format('YYYY-MM-DD HH:mm:ss');
-        const expectedDateAfterDaysInformed = moment(startDate).subtract(days, 'days').format('YYYY-MM-DD HH:mm:ss');
+        const expectedDateAfterDaysInformed = moment(startDate)
+            .subtract(days, 'days')
+            .format('YYYY-MM-DD HH:mm:ss');
 
         expect(today).toBe(expectedToday);
         expect(dateAfterDaysInformed).toBe(expectedDateAfterDaysInformed);

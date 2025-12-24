@@ -8,9 +8,14 @@ import {
 const logger = createLogger('tool-result-parser');
 
 export function parseToolResult(result: unknown): ParsedToolResult {
-    logger.debug('Parsing tool result', {
-        resultType: typeof result,
-        hasResult: !!result,
+    logger.debug({
+        message: 'Parsing tool result',
+        context: 'parseToolResult',
+
+        metadata: {
+            resultType: typeof result,
+            hasResult: !!result,
+        },
     });
 
     const parsingSteps: string[] = ['start'];
@@ -78,9 +83,14 @@ export function parseToolResult(result: unknown): ParsedToolResult {
             source = 'simple';
         }
     } catch (error) {
-        logger.warn('Error parsing tool result, using fallback', {
-            error: (error as Error).message,
-            resultType: typeof result,
+        logger.warn({
+            message: 'Error parsing tool result, using fallback',
+            context: 'parseToolResult',
+            error: error as Error,
+
+            metadata: {
+                resultType: typeof result,
+            },
         });
 
         parsingSteps.push('error-fallback');

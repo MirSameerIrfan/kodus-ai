@@ -19,10 +19,15 @@ export class VectorStore {
             ...options,
         };
 
-        logger.info('VectorStore initialized', {
-            dimensions: this.options.dimensions,
-            distanceMetric: this.options.distanceMetric,
-            storageType: this.options.storage?.type ?? 'unknown',
+        logger.log({
+            message: 'VectorStore initialized',
+            context: 'constructor',
+
+            metadata: {
+                dimensions: this.options.dimensions,
+                distanceMetric: this.options.distanceMetric,
+                storageType: this.options.storage?.type ?? 'unknown',
+            },
         });
     }
 
@@ -44,10 +49,15 @@ export class VectorStore {
 
         this.vectors.set(vector.id, vector);
 
-        logger.debug('Vector stored', {
-            id: vector.id,
-            dimensions: vector.vector.length,
-            hasText: !!vector.text,
+        logger.debug({
+            message: 'Vector stored',
+            context: 'store',
+
+            metadata: {
+                id: vector.id,
+                dimensions: vector.vector.length,
+                hasText: !!vector.text,
+            },
         });
     }
 
@@ -135,11 +145,16 @@ export class VectorStore {
         // Apply topK limit
         const topResults = results.slice(0, query.topK);
 
-        logger.debug('Vector search completed', {
-            queryText: query.text,
-            totalVectors: this.vectors.size,
-            resultsCount: topResults.length,
-            topScore: topResults[0]?.score || 0,
+        logger.debug({
+            message: 'Vector search completed',
+            context: 'search',
+
+            metadata: {
+                queryText: query.text,
+                totalVectors: this.vectors.size,
+                resultsCount: topResults.length,
+                topScore: topResults[0]?.score || 0,
+            },
         });
 
         return topResults;
@@ -151,7 +166,14 @@ export class VectorStore {
     async delete(id: string): Promise<boolean> {
         const deleted = this.vectors.delete(id);
         if (deleted) {
-            logger.debug('Vector deleted', { id });
+            logger.debug({
+                message: 'Vector deleted',
+                context: 'delete',
+
+                metadata: {
+                    id,
+                },
+            });
         }
         return deleted;
     }
@@ -161,7 +183,10 @@ export class VectorStore {
      */
     async clear(): Promise<void> {
         this.vectors.clear();
-        logger.info('Vector store cleared');
+        logger.log({
+            message: 'Vector store cleared',
+            context: 'clear',
+        });
     }
 
     /**

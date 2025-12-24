@@ -18,13 +18,15 @@ jest.mock('@/shared/utils/crypto', () => ({
     decrypt: jest.fn((text) => text.replace('encrypted_', '')),
 }));
 
-import { Test, TestingModule } from '@nestjs/testing';
-import { ExternalReferenceDetectorService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceDetector.service';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
 import { PromptRunnerService } from '@kodus/kodus-common/llm';
+import { Test, TestingModule } from '@nestjs/testing';
+
+import { CodeManagementService } from '@libs/platform/infrastructure/services/codeManagement.service';
+
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { ExternalReferenceDetectorService } from '@/core/infrastructure/adapters/services/kodyRules/externalReferenceDetector.service';
+import { ObservabilityService } from '@/core/infrastructure/adapters/services/logger/observability.service';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 
 describe('ExternalReferenceDetectorService', () => {
     let service: ExternalReferenceDetectorService;
@@ -131,7 +133,9 @@ describe('ExternalReferenceDetectorService', () => {
                 },
             ]);
 
-            expect(mockCodeManagementService.getRepositoryAllFiles).toHaveBeenCalledWith({
+            expect(
+                mockCodeManagementService.getRepositoryAllFiles,
+            ).toHaveBeenCalledWith({
                 organizationAndTeamData: mockOrganizationAndTeamData,
                 repository: { id: 'repo-123', name: '' },
                 filters: {
@@ -245,7 +249,9 @@ describe('ExternalReferenceDetectorService', () => {
                 },
             );
 
-            mockCodeManagementService.getRepositoryAllFiles.mockResolvedValue([]);
+            mockCodeManagementService.getRepositoryAllFiles.mockResolvedValue(
+                [],
+            );
 
             const result = await service.detectAndResolveReferences({
                 ruleText: 'Check NonExistent.ts',
@@ -315,9 +321,9 @@ describe('ExternalReferenceDetectorService', () => {
                 setRunName: jest.fn().mockReturnThis(),
                 execute: jest.fn().mockResolvedValue({
                     references: [
-                    {
-                        fileName: 'types/UserRole.enum.ts',
-                    },
+                        {
+                            fileName: 'types/UserRole.enum.ts',
+                        },
                     ],
                 }),
             };
@@ -339,7 +345,9 @@ describe('ExternalReferenceDetectorService', () => {
             });
 
             expect(result[0].filePath).toBe('src/types/UserRole.enum.ts');
-            expect(mockCodeManagementService.getRepositoryAllFiles).toHaveBeenCalledWith(
+            expect(
+                mockCodeManagementService.getRepositoryAllFiles,
+            ).toHaveBeenCalledWith(
                 expect.objectContaining({
                     filters: expect.objectContaining({
                         filePatterns: ['**/types/UserRole.enum.ts'],
@@ -385,7 +393,9 @@ describe('ExternalReferenceDetectorService', () => {
             });
 
             expect(result).toHaveLength(2);
-            expect(mockCodeManagementService.getRepositoryAllFiles).toHaveBeenCalledWith(
+            expect(
+                mockCodeManagementService.getRepositoryAllFiles,
+            ).toHaveBeenCalledWith(
                 expect.objectContaining({
                     filters: expect.objectContaining({
                         filePatterns: expect.arrayContaining(['**/*.enum.ts']),
@@ -527,4 +537,3 @@ describe('ExternalReferenceDetectorService', () => {
         });
     });
 });
-

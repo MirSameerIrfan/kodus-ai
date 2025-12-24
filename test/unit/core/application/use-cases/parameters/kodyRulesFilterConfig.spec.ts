@@ -1,17 +1,14 @@
 import { Test } from '@nestjs/testing';
-import { UpdateOrCreateCodeReviewParameterUseCase } from '@/core/application/use-cases/parameters/update-or-create-code-review-parameter-use-case';
-import { PARAMETERS_SERVICE_TOKEN } from '@/core/domain/parameters/contracts/parameters.service.contract';
-import { INTEGRATION_CONFIG_SERVICE_TOKEN } from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
-import {
-    SuggestionControlConfig,
-    LimitationType,
-    GroupingModeSuggestions,
-} from '@/config/types/general/codeReview.type';
-import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
+
+import { LimitationType } from '@/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
+import { UpdateOrCreateCodeReviewParameterUseCase } from '@/core/application/use-cases/parameters/update-or-create-code-review-parameter-use-case';
+import { INTEGRATION_CONFIG_SERVICE_TOKEN } from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import { PARAMETERS_SERVICE_TOKEN } from '@/core/domain/parameters/contracts/parameters.service.contract';
+import { ParametersEntity } from '@/core/domain/parameters/entities/parameters.entity';
+import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
 import { ParametersKey } from '@/shared/domain/enums/parameters-key.enum';
+import { SeverityLevel } from '@/shared/utils/enums/severityLevel.enum';
 
 describe('UpdateOrCreateCodeReviewParameterUseCase - Kody Rules Filter Config', () => {
     let useCase: UpdateOrCreateCodeReviewParameterUseCase;
@@ -78,7 +75,9 @@ describe('UpdateOrCreateCodeReviewParameterUseCase - Kody Rules Filter Config', 
             });
 
             // ✅ Verifica se foi chamado com padrão false
-            expect(mockParametersService.createOrUpdateConfig).toHaveBeenCalledWith(
+            expect(
+                mockParametersService.createOrUpdateConfig,
+            ).toHaveBeenCalledWith(
                 ParametersKey.CODE_REVIEW_CONFIG,
                 expect.objectContaining({
                     global: expect.objectContaining({
@@ -87,7 +86,7 @@ describe('UpdateOrCreateCodeReviewParameterUseCase - Kody Rules Filter Config', 
                         }),
                     }),
                 }),
-                mockOrgData
+                mockOrgData,
             );
         });
 
@@ -106,7 +105,9 @@ describe('UpdateOrCreateCodeReviewParameterUseCase - Kody Rules Filter Config', 
             });
 
             // ✅ Verifica se preservou o valor explícito
-            expect(mockParametersService.createOrUpdateConfig).toHaveBeenCalledWith(
+            expect(
+                mockParametersService.createOrUpdateConfig,
+            ).toHaveBeenCalledWith(
                 ParametersKey.CODE_REVIEW_CONFIG,
                 expect.objectContaining({
                     global: expect.objectContaining({
@@ -115,7 +116,7 @@ describe('UpdateOrCreateCodeReviewParameterUseCase - Kody Rules Filter Config', 
                         }),
                     }),
                 }),
-                mockOrgData
+                mockOrgData,
             );
         });
 
@@ -134,7 +135,9 @@ describe('UpdateOrCreateCodeReviewParameterUseCase - Kody Rules Filter Config', 
                 },
             } as ParametersEntity;
 
-            mockParametersService.findByKey.mockResolvedValue(existingLegacyConfig);
+            mockParametersService.findByKey.mockResolvedValue(
+                existingLegacyConfig,
+            );
 
             await useCase.execute({
                 organizationAndTeamData: mockOrgData,
@@ -146,7 +149,9 @@ describe('UpdateOrCreateCodeReviewParameterUseCase - Kody Rules Filter Config', 
             });
 
             // ✅ Verifica se adicionou o padrão para config legada
-            expect(mockParametersService.createOrUpdateConfig).toHaveBeenCalledWith(
+            expect(
+                mockParametersService.createOrUpdateConfig,
+            ).toHaveBeenCalledWith(
                 ParametersKey.CODE_REVIEW_CONFIG,
                 expect.objectContaining({
                     global: expect.objectContaining({
@@ -156,7 +161,7 @@ describe('UpdateOrCreateCodeReviewParameterUseCase - Kody Rules Filter Config', 
                         }),
                     }),
                 }),
-                mockOrgData
+                mockOrgData,
             );
         });
 
@@ -185,7 +190,9 @@ describe('UpdateOrCreateCodeReviewParameterUseCase - Kody Rules Filter Config', 
             });
 
             // ✅ Verifica se mudança foi aplicada
-            expect(mockParametersService.createOrUpdateConfig).toHaveBeenCalledWith(
+            expect(
+                mockParametersService.createOrUpdateConfig,
+            ).toHaveBeenCalledWith(
                 ParametersKey.CODE_REVIEW_CONFIG,
                 expect.objectContaining({
                     global: expect.objectContaining({
@@ -194,7 +201,7 @@ describe('UpdateOrCreateCodeReviewParameterUseCase - Kody Rules Filter Config', 
                         }),
                     }),
                 }),
-                mockOrgData
+                mockOrgData,
             );
         });
 
@@ -218,7 +225,9 @@ describe('UpdateOrCreateCodeReviewParameterUseCase - Kody Rules Filter Config', 
                 },
             } as ParametersEntity;
 
-            mockParametersService.findByKey.mockResolvedValue(existingCompleteConfig);
+            mockParametersService.findByKey.mockResolvedValue(
+                existingCompleteConfig,
+            );
 
             await useCase.execute({
                 organizationAndTeamData: mockOrgData,
@@ -230,7 +239,9 @@ describe('UpdateOrCreateCodeReviewParameterUseCase - Kody Rules Filter Config', 
             });
 
             // ✅ Verifica se outras configs foram preservadas
-            expect(mockParametersService.createOrUpdateConfig).toHaveBeenCalledWith(
+            expect(
+                mockParametersService.createOrUpdateConfig,
+            ).toHaveBeenCalledWith(
                 ParametersKey.CODE_REVIEW_CONFIG,
                 expect.objectContaining({
                     global: expect.objectContaining({
@@ -247,7 +258,7 @@ describe('UpdateOrCreateCodeReviewParameterUseCase - Kody Rules Filter Config', 
                         }),
                     }),
                 }),
-                mockOrgData
+                mockOrgData,
             );
         });
     });

@@ -1,0 +1,34 @@
+import { CodeReviewConfigLogParams } from '../../infrastructure/adapters/services/codeReviewConfigLog.handler';
+import { IntegrationLogParams } from '../../infrastructure/adapters/services/integrationLog.handler';
+import { KodyRuleLogParams } from '../../infrastructure/adapters/services/kodyRulesLog.handler';
+import { PullRequestMessagesLogParams } from '../../infrastructure/adapters/services/pullRequestMessageLog.handler';
+import {
+    DirectoryConfigRemovalParams,
+    RepositoriesLogParams,
+    RepositoryConfigRemovalParams,
+} from '../../infrastructure/adapters/services/repositoriesLog.handler';
+import { UserStatusLogParams } from '../../infrastructure/adapters/services/userStatusLog.handler';
+import { ICodeReviewSettingsLogRepository } from './codeReviewSettingsLog.repository.contract';
+
+export const CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN = Symbol(
+    'CodeReviewSettingsLogService',
+);
+
+export interface ICodeReviewSettingsLogService extends ICodeReviewSettingsLogRepository {
+    registerCodeReviewConfigLog(
+        params: CodeReviewConfigLogParams,
+    ): Promise<void>;
+    registerKodyRulesLog(params: KodyRuleLogParams): Promise<void>;
+    registerRepositoriesLog(params: RepositoriesLogParams): Promise<void>;
+    registerRepositoryConfigurationRemoval(
+        params: RepositoryConfigRemovalParams,
+    ): Promise<void>;
+    registerDirectoryConfigurationRemoval(
+        params: DirectoryConfigRemovalParams,
+    ): Promise<void>;
+    registerIntegrationLog(params: IntegrationLogParams): Promise<void>;
+    registerUserStatusLog(params: UserStatusLogParams): Promise<void>;
+    registerPullRequestMessagesLog(
+        params: PullRequestMessagesLogParams,
+    ): Promise<void>;
+}

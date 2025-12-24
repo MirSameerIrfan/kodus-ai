@@ -99,17 +99,27 @@ export abstract class AgentCore<
             successThreshold: 2, // Close after 2 successes
             operationTimeout: this.config.toolTimeout || 60000, // ✅ 60s timeout
             onStateChange: (newState, prevState) => {
-                this.logger.info('Tool circuit breaker state changed', {
-                    agentName: this.config.agentName,
-                    from: prevState,
-                    to: newState,
+                this.logger.log({
+                    message: 'Tool circuit breaker state changed',
+                    context: this.constructor.name,
+
+                    metadata: {
+                        agentName: this.config.agentName,
+                        from: prevState,
+                        to: newState,
+                    },
                 });
             },
             onFailure: (error, context) => {
-                this.logger.warn('Tool circuit breaker recorded failure', {
-                    agentName: this.config.agentName,
-                    error: error.message,
-                    context,
+                this.logger.warn({
+                    message: 'Tool circuit breaker recorded failure',
+                    context: this.constructor.name,
+                    error: error as Error,
+
+                    metadata: {
+                        agentName: this.config.agentName,
+                        context,
+                    },
                 });
             },
         });
@@ -244,14 +254,20 @@ export abstract class AgentCore<
 
         if (this.toolEngine) {
             // ToolEngine configured directly in AgentCore (ContextNew architecture)
-            this.logger.info('ToolEngine configured', {
-                toolCount: this.toolEngine.listTools().length,
+            this.logger.log({
+                message: 'ToolEngine configured',
+                context: this.constructor.name,
+
+                metadata: {
+                    toolCount: this.toolEngine.listTools().length,
+                },
             });
 
             // 🔥 ContextService availability will be checked during execution
-            this.logger.info(
-                '✅ ContextService will be verified during execution',
-            );
+            this.logger.log({
+                message: '✅ ContextService will be verified during execution',
+                context: this.constructor.name,
+            });
         }
     }
 
@@ -271,22 +287,29 @@ export abstract class AgentCore<
         const optionsSessionId = agentExecutionOptions.sessionId;
         const optionsThreadId = agentExecutionOptions.thread?.id;
 
-        this.logger.debug('🔍 Session consistency check', {
-            enhancedSessionId,
-            enhancedThreadId,
-            optionsSessionId,
-            optionsThreadId,
+        this.logger.debug({
+            message: '🔍 Session consistency check',
+            context: this.constructor.name,
+
+            metadata: {
+                enhancedSessionId,
+                enhancedThreadId,
+                optionsSessionId,
+                optionsThreadId,
+            },
         });
 
         if (enhancedSessionId && enhancedThreadId) {
             if (optionsThreadId && optionsThreadId !== enhancedThreadId) {
-                this.logger.warn(
-                    '⚠️ ThreadId mismatch - using enhanced context',
-                    {
+                this.logger.warn({
+                    message: '⚠️ ThreadId mismatch - using enhanced context',
+                    context: this.constructor.name,
+
+                    metadata: {
                         optionsThreadId,
                         enhancedThreadId,
                     },
-                );
+                });
             }
             return {
                 sessionId: enhancedSessionId,
@@ -295,10 +318,15 @@ export abstract class AgentCore<
         }
 
         if (optionsThreadId) {
-            this.logger.warn('⚠️ Using fallback sessionId from options', {
-                optionsSessionId,
-                optionsThreadId,
-                reason: 'enhanced_context_incomplete',
+            this.logger.warn({
+                message: '⚠️ Using fallback sessionId from options',
+                context: this.constructor.name,
+
+                metadata: {
+                    optionsSessionId,
+                    optionsThreadId,
+                    reason: 'enhanced_context_incomplete',
+                },
             });
             return {
                 sessionId: optionsSessionId || optionsThreadId,
@@ -309,9 +337,15 @@ export abstract class AgentCore<
         const error = new Error(
             'Cannot determine sessionId/threadId - both enhanced context and options are invalid',
         );
-        this.logger.error('❌ Session consistency failure', error, {
-            enhancedRuntimeContext: !!enhancedRuntimeContext,
-            agentExecutionOptions: !!agentExecutionOptions,
+        this.logger.error({
+            message: '❌ Session consistency failure',
+            context: this.constructor.name,
+            error: error,
+
+            metadata: {
+                enhancedRuntimeContext: !!enhancedRuntimeContext,
+                agentExecutionOptions: !!agentExecutionOptions,
+            },
         });
         throw error;
     }
@@ -423,15 +457,17 @@ export abstract class AgentCore<
             agentExecutionOptions,
         );
 
-        this.logger.info(
-            '🚀 Progressive Persistence: Placeholder message created',
-            {
+        this.logger.log({
+            message: '🚀 Progressive Persistence: Placeholder message created',
+            context: this.constructor.name,
+
+            metadata: {
                 threadId: completeContext.threadId,
                 assistantMessageId: completeContext.metadata.assistantMessageId,
                 agentName: agent.name,
                 executionId: completeContext.executionId,
             },
-        );
+        });
 
         try {
             const result = await this.processAgentThinking(
@@ -440,16 +476,21 @@ export abstract class AgentCore<
             );
             const duration = Date.now() - startTime;
 
-            this.logger.info(
-                '🔄 Progressive Persistence: Updating with final response',
-                {
+            this.logger.log({
+                message:
+                    '🔄 Progressive Persistence: Updating with final response',
+                context: this.constructor.name,
+
+                metadata: {
                     threadId: completeContext.threadId,
+
                     assistantMessageId:
                         completeContext.metadata.assistantMessageId,
+
                     hasOutput: !!result.output,
                     outputType: typeof result.output,
                 },
-            );
+            });
 
             // 🔧 FIX: Ensure full content is transmitted without truncation
             const finalContent =
@@ -483,17 +524,19 @@ export abstract class AgentCore<
                 agent.name,
             );
         } catch (error) {
-            this.logger.error(
-                '🚨 Progressive Persistence: Updating with error',
-                error instanceof Error ? error : undefined,
-                {
+            this.logger.error({
+                message: '🚨 Progressive Persistence: Updating with error',
+                context: this.constructor.name,
+                error: error instanceof Error ? error : undefined,
+
+                metadata: {
                     threadId: completeContext.threadId,
                     assistantMessageId:
                         completeContext.metadata.assistantMessageId,
                     errorMessage:
                         error instanceof Error ? error.message : String(error),
                 },
-            );
+            });
 
             // 🔧 FIX: Ensure full error content is transmitted
             const errorContent = `❌ Error processing your request: ${error instanceof Error ? error.message : String(error)}`;
@@ -628,11 +671,16 @@ export abstract class AgentCore<
             this.agentInboxes.set(agent.name, []);
         }
 
-        this.logger.info('Agent registered', {
-            agentName: agent.name,
-            totalAgents: this.agents.size,
-            hasCapabilities: !!capabilities,
-            hasInbox: this.config.enableMessaging,
+        this.logger.log({
+            message: 'Agent registered',
+            context: this.constructor.name,
+
+            metadata: {
+                agentName: agent.name,
+                totalAgents: this.agents.size,
+                hasCapabilities: !!capabilities,
+                hasInbox: this.config.enableMessaging,
+            },
         });
     }
 
@@ -680,21 +728,28 @@ export abstract class AgentCore<
 
             await ContextService.addMessage(threadId, sessionMessage);
 
-            this.logger.debug('✅ Session message added (minimal)', {
-                threadId,
-                role: message.role,
-                contentLength: message.content.length,
-                isToolResponse: !!message.toolCallId,
+            this.logger.debug({
+                message: '✅ Session message added (minimal)',
+                context: this.constructor.name,
+
+                metadata: {
+                    threadId,
+                    role: message.role,
+                    contentLength: message.content.length,
+                    isToolResponse: !!message.toolCallId,
+                },
             });
         } catch (error) {
-            this.logger.error(
-                '❌ Failed to add session message',
-                error instanceof Error ? error : undefined,
-                {
+            this.logger.error({
+                message: '❌ Failed to add session message',
+                context: this.constructor.name,
+                error: error instanceof Error ? error : undefined,
+
+                metadata: {
                     threadId,
                     messageRole: message.role,
                 },
-            );
+            });
             // Don't throw - session updates shouldn't break execution flow
         }
     }
@@ -716,18 +771,24 @@ export abstract class AgentCore<
         try {
             await ContextService.updateState(threadId, stateUpdate);
 
-            this.logger.debug('✅ Context state updated', {
-                threadId,
-                phase: stateUpdate.phase,
-                currentIteration: stateUpdate.currentIteration,
-                pendingActionsCount: stateUpdate.pendingActions?.length,
+            this.logger.debug({
+                message: '✅ Context state updated',
+                context: this.constructor.name,
+
+                metadata: {
+                    threadId,
+                    phase: stateUpdate.phase,
+                    currentIteration: stateUpdate.currentIteration,
+                    pendingActionsCount: stateUpdate.pendingActions?.length,
+                },
             });
         } catch (error) {
-            this.logger.error(
-                '❌ Failed to update context state',
-                error instanceof Error ? error : undefined,
-                { threadId },
-            );
+            this.logger.error({
+                message: '❌ Failed to update context state',
+                context: this.constructor.name,
+                error: error instanceof Error ? error : undefined,
+                metadata: { threadId },
+            });
             // Don't throw - state updates shouldn't break execution flow
         }
     }
@@ -760,19 +821,25 @@ export abstract class AgentCore<
         try {
             await ContextService.updateExecution(threadId, executionUpdate);
 
-            this.logger.debug('✅ Session execution updated (minimal)', {
-                threadId,
-                status: executionUpdate.status,
-                completedSteps: executionUpdate.completedSteps?.length || 0,
-                toolCallCount: executionUpdate.toolCallCount,
-                iterationCount: executionUpdate.iterationCount,
+            this.logger.debug({
+                message: '✅ Session execution updated (minimal)',
+                context: this.constructor.name,
+
+                metadata: {
+                    threadId,
+                    status: executionUpdate.status,
+                    completedSteps: executionUpdate.completedSteps?.length || 0,
+                    toolCallCount: executionUpdate.toolCallCount,
+                    iterationCount: executionUpdate.iterationCount,
+                },
             });
         } catch (error) {
-            this.logger.error(
-                '❌ Failed to update session execution',
-                error instanceof Error ? error : undefined,
-                { threadId },
-            );
+            this.logger.error({
+                message: '❌ Failed to update session execution',
+                context: this.constructor.name,
+                error: error instanceof Error ? error : undefined,
+                metadata: { threadId },
+            });
             // Don't throw - session updates shouldn't break execution flow
         }
     }
@@ -788,23 +855,32 @@ export abstract class AgentCore<
             // 🎯 CLEAN API: Direct method call via ContextService
             await ContextService.addEntities(threadId, entities);
 
-            this.logger.debug('✅ Session entities added', {
-                threadId,
-                entityTypes: Object.keys(entities),
-                totalEntities: Object.values(entities).reduce(
-                    (sum, arr) => sum + (Array.isArray(arr) ? arr.length : 1),
-                    0,
-                ),
+            this.logger.debug({
+                message: '✅ Session entities added',
+                context: this.constructor.name,
+
+                metadata: {
+                    threadId,
+                    entityTypes: Object.keys(entities),
+
+                    totalEntities: Object.values(entities).reduce(
+                        (sum, arr) =>
+                            sum + (Array.isArray(arr) ? arr.length : 1),
+                        0,
+                    ),
+                },
             });
         } catch (error) {
-            this.logger.error(
-                '❌ Failed to add session entities',
-                error instanceof Error ? error : undefined,
-                {
+            this.logger.error({
+                message: '❌ Failed to add session entities',
+                context: this.constructor.name,
+                error: error instanceof Error ? error : undefined,
+
+                metadata: {
                     threadId,
                     entityTypes: Object.keys(entities),
                 },
-            );
+            });
         }
     }
 
@@ -820,12 +896,14 @@ export abstract class AgentCore<
         this.toolEngine = toolEngine;
         SharedStrategyMethods.setToolEngine(toolEngine);
 
-        this.logger.info(
-            '🔧 SharedStrategyMethods configured with ToolEngine',
-            {
+        this.logger.log({
+            message: '🔧 SharedStrategyMethods configured with ToolEngine',
+            context: this.constructor.name,
+
+            metadata: {
                 toolCount: toolEngine.listTools().length,
             },
-        );
+        });
     }
 
     getAgent(
@@ -843,7 +921,14 @@ export abstract class AgentCore<
         if (existed) {
             this.agentCapabilities.delete(agentName);
             this.agentInboxes.delete(agentName);
-            this.logger.info('Agent removed', { agentName });
+            this.logger.log({
+                message: 'Agent removed',
+                context: this.constructor.name,
+
+                metadata: {
+                    agentName,
+                },
+            });
         }
         return existed;
     }
@@ -853,7 +938,10 @@ export abstract class AgentCore<
     }
 
     async cleanup(): Promise<void> {
-        this.logger.info('Cleaning up AgentCore');
+        this.logger.log({
+            message: 'Cleaning up AgentCore',
+            context: this.constructor.name,
+        });
 
         // Clear event history
         this.eventHistory = [];
@@ -873,7 +961,10 @@ export abstract class AgentCore<
             this.deliveryQueue.length = 0;
         }
 
-        this.logger.info('AgentCore cleanup completed');
+        this.logger.log({
+            message: 'AgentCore cleanup completed',
+            context: this.constructor.name,
+        });
     }
 
     // ──────────────────────────────────────────────────────────────────────────────
@@ -961,7 +1052,12 @@ export abstract class AgentCore<
             ...additionalContext,
         });
 
-        this.logger.error(message, error, context);
+        this.logger.error({
+            message: message,
+            context: this.constructor.name,
+            error: error,
+            metadata: context,
+        });
     }
 
     /**
@@ -973,7 +1069,11 @@ export abstract class AgentCore<
         additionalContext?: Record<string, unknown>,
     ): void {
         const context = this.captureLogContext(operation, additionalContext);
-        this.logger.info(message, context);
+        this.logger.log({
+            message: message,
+            context: this.constructor.name,
+            metadata: context,
+        });
     }
 
     /**
@@ -989,7 +1089,11 @@ export abstract class AgentCore<
                 operation,
                 additionalContext,
             );
-            this.logger.debug(message, context);
+            this.logger.debug({
+                message: message,
+                context: this.constructor.name,
+                metadata: context,
+            });
         }
     }
 
@@ -1486,7 +1590,10 @@ export abstract class AgentCore<
         const result = await this.strategy.execute(strategyContext);
 
         try {
-            this.logger.info('🌉 Calling createFinalResponse for synthesis');
+            this.logger.log({
+                message: '🌉 Calling createFinalResponse for synthesis',
+                context: this.constructor.name,
+            });
 
             const enhancedContext = {
                 ...strategyContext,
@@ -1496,31 +1603,45 @@ export abstract class AgentCore<
             const finalResponse =
                 await this.strategy.createFinalResponse(enhancedContext);
 
-            this.logger.info('✅ Final response created via synthesis', {
-                responseLength:
-                    typeof finalResponse === 'string'
-                        ? finalResponse.length
-                        : 0,
-                synthesisUsed: true,
+            this.logger.log({
+                message: '✅ Final response created via synthesis',
+                context: this.constructor.name,
+
+                metadata: {
+                    responseLength:
+                        typeof finalResponse === 'string'
+                            ? finalResponse.length
+                            : 0,
+
+                    synthesisUsed: true,
+                },
             });
 
-            this.logger.debug('🚀 Final response created', {
-                finalResponse:
-                    typeof finalResponse === 'string'
-                        ? finalResponse.substring(0, 100)
-                        : finalResponse,
+            this.logger.debug({
+                message: '🚀 Final response created',
+                context: this.constructor.name,
+
+                metadata: {
+                    finalResponse:
+                        typeof finalResponse === 'string'
+                            ? finalResponse.substring(0, 100)
+                            : finalResponse,
+                },
             });
 
             return finalResponse as TOutput;
         } catch (error) {
-            this.logger.error(
-                '❌ createFinalResponse failed, using original result output',
-                error instanceof Error ? error : undefined,
-                {
+            this.logger.error({
+                message:
+                    '❌ createFinalResponse failed, using original result output',
+                context: this.constructor.name,
+                error: error instanceof Error ? error : undefined,
+
+                metadata: {
                     strategyType: this.strategy.constructor.name,
                     fallbackToOriginal: true,
                 },
-            );
+            });
 
             // Return clean output from ExecutionResult, not the full result
             return (result.output || 'Processing completed') as TOutput;
@@ -1552,33 +1673,43 @@ export abstract class AgentCore<
                     },
                 );
 
-                this.logger.info('Strategy components initialized', {
-                    strategyType,
-                    hasLLMAdapter: !!this.llmAdapter,
-                    hasStrategy: !!this.strategy,
-                    agentName: this.config.agentName,
+                this.logger.log({
+                    message: 'Strategy components initialized',
+                    context: this.constructor.name,
+
+                    metadata: {
+                        strategyType,
+                        hasLLMAdapter: !!this.llmAdapter,
+                        hasStrategy: !!this.strategy,
+                        agentName: this.config.agentName,
+                    },
                 });
             } catch (error) {
-                this.logger.error(
-                    'Failed to initialize strategy',
-                    error as Error,
-                    {
+                this.logger.error({
+                    message: 'Failed to initialize strategy',
+                    context: this.constructor.name,
+                    error: error as Error,
+
+                    metadata: {
                         strategyType,
                         errorMessage:
                             error instanceof Error
                                 ? error.message
                                 : String(error),
                     },
-                );
+                });
                 throw error;
             }
         } else {
-            this.logger.warn(
-                'No LLM adapter provided - strategy components not initialized',
-                {
+            this.logger.warn({
+                message:
+                    'No LLM adapter provided - strategy components not initialized',
+                context: this.constructor.name,
+
+                metadata: {
                     agentName: this.config.agentName,
                 },
-            );
+            });
         }
     }
 

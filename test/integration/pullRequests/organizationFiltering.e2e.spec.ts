@@ -1,11 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { CacheModule } from '@nestjs/cache-manager';
 import { INestApplication } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
-import { PullRequestController } from '@/core/infrastructure/http/controllers/pullRequest.controller';
+
 import { GetEnrichedPullRequestsUseCase } from '@/core/application/use-cases/pullRequests/get-enriched-pull-requests.use-case';
 import { GetPullRequestAuthorsUseCase } from '@/core/application/use-cases/pullRequests/get-pull-request-authors-orderedby-contributions.use-case';
 import { UpdatePullRequestToNewFormatUseCase } from '@/core/application/use-cases/pullRequests/update-pull-request-to-new-format.use-case';
-import { CacheModule } from '@nestjs/cache-manager';
+import { PullRequestController } from '@/core/infrastructure/http/controllers/pullRequest.controller';
 
 describe('Pull Request Organization Filtering (e2e)', () => {
     let app: INestApplication;
@@ -53,9 +54,15 @@ describe('Pull Request Organization Filtering (e2e)', () => {
         app = moduleFixture.createNestApplication();
         await app.init();
 
-        mockGetEnrichedPullRequestsUseCase = moduleFixture.get(GetEnrichedPullRequestsUseCase);
-        mockGetPullRequestAuthorsUseCase = moduleFixture.get(GetPullRequestAuthorsUseCase);
-        mockUpdatePullRequestToNewFormatUseCase = moduleFixture.get(UpdatePullRequestToNewFormatUseCase);
+        mockGetEnrichedPullRequestsUseCase = moduleFixture.get(
+            GetEnrichedPullRequestsUseCase,
+        );
+        mockGetPullRequestAuthorsUseCase = moduleFixture.get(
+            GetPullRequestAuthorsUseCase,
+        );
+        mockUpdatePullRequestToNewFormatUseCase = moduleFixture.get(
+            UpdatePullRequestToNewFormatUseCase,
+        );
     });
 
     afterEach(async () => {
@@ -111,7 +118,9 @@ describe('Pull Request Organization Filtering (e2e)', () => {
                 },
             };
 
-            mockGetEnrichedPullRequestsUseCase.execute.mockResolvedValue(mockResponse);
+            mockGetEnrichedPullRequestsUseCase.execute.mockResolvedValue(
+                mockResponse,
+            );
 
             // Act
             const response = await request(app.getHttpServer())
@@ -124,7 +133,9 @@ describe('Pull Request Organization Filtering (e2e)', () => {
                 .expect(200);
 
             // Assert
-            expect(mockGetEnrichedPullRequestsUseCase.execute).toHaveBeenCalledWith({
+            expect(
+                mockGetEnrichedPullRequestsUseCase.execute,
+            ).toHaveBeenCalledWith({
                 repositoryId: 'test-repo-id',
                 limit: '10',
                 page: '1',
@@ -147,7 +158,9 @@ describe('Pull Request Organization Filtering (e2e)', () => {
                 },
             };
 
-            mockGetEnrichedPullRequestsUseCase.execute.mockResolvedValue(mockResponse);
+            mockGetEnrichedPullRequestsUseCase.execute.mockResolvedValue(
+                mockResponse,
+            );
 
             // Act
             const response = await request(app.getHttpServer())
@@ -162,7 +175,7 @@ describe('Pull Request Organization Filtering (e2e)', () => {
         it('should handle errors when organization is missing', async () => {
             // Arrange
             mockGetEnrichedPullRequestsUseCase.execute.mockRejectedValue(
-                new Error('No organization found in request')
+                new Error('No organization found in request'),
             );
 
             // Act & Assert
@@ -185,7 +198,9 @@ describe('Pull Request Organization Filtering (e2e)', () => {
                 },
             };
 
-            mockGetEnrichedPullRequestsUseCase.execute.mockResolvedValue(mockResponse);
+            mockGetEnrichedPullRequestsUseCase.execute.mockResolvedValue(
+                mockResponse,
+            );
 
             // Act
             const response = await request(app.getHttpServer())
@@ -213,7 +228,9 @@ describe('Pull Request Organization Filtering (e2e)', () => {
                 },
             };
 
-            mockGetEnrichedPullRequestsUseCase.execute.mockResolvedValue(mockResponse);
+            mockGetEnrichedPullRequestsUseCase.execute.mockResolvedValue(
+                mockResponse,
+            );
 
             // Act
             await request(app.getHttpServer())
@@ -227,7 +244,9 @@ describe('Pull Request Organization Filtering (e2e)', () => {
                 .expect(200);
 
             // Assert
-            expect(mockGetEnrichedPullRequestsUseCase.execute).toHaveBeenCalledWith({
+            expect(
+                mockGetEnrichedPullRequestsUseCase.execute,
+            ).toHaveBeenCalledWith({
                 repositoryId: 'specific-repo-id',
                 repositoryName: 'specific-repo',
                 limit: '20',
