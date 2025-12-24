@@ -46,12 +46,28 @@ jobs:
             exit 1
           fi
 
+      - name: Parse infra repo
+        run: |
+          set -euo pipefail
+          repo="${{ env.INFRA_REPO }}"
+          if [[ "$repo" == */* ]]; then
+            owner="${repo%%/*}"
+            name="${repo#*/}"
+          else
+            owner="${{ github.repository_owner }}"
+            name="$repo"
+          fi
+          echo "INFRA_REPO_OWNER=$owner" >> "$GITHUB_ENV"
+          echo "INFRA_REPO_NAME=$name" >> "$GITHUB_ENV"
+
       - name: Get infra repo token (GitHub App)
         id: infra_token
         uses: actions/create-github-app-token@5d869da34e18e7287c1daad50e0b8ea0f506ce69 # v1.11.0
         with:
           app-id: ${{ vars.INFRA_GITHUB_APP_ID }}
           private-key: ${{ secrets.INFRA_GITHUB_APP_PRIVATE_KEY }}
+          owner: ${{ env.INFRA_REPO_OWNER }}
+          repositories: ${{ env.INFRA_REPO_NAME }}
 
       - name: Checkout infra repo
         uses: actions/checkout@v4.2.2
