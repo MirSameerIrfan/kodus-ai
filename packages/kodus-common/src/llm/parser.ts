@@ -1,15 +1,34 @@
-import { MessageContentComplex } from '@langchain/core/messages';
+import { ContentBlock } from '@langchain/core/messages';
 import {
     BaseOutputParser,
     JsonOutputParser,
     StringOutputParser,
     StructuredOutputParser,
 } from '@langchain/core/output_parsers';
+import { InteropZodType, interopSafeParse } from '@langchain/core/utils/types';
 import { PromptRunnerService } from './promptRunner.service';
-import z from 'zod';
 import { LLMModelProvider } from './helper';
 import { ParserType } from './builder';
 import { tryParseJSONObject } from '@/utils/json';
+
+const getBlockType = (block: ContentBlock): string | undefined => {
+    const typeValue = (block as { type?: unknown }).type;
+    return typeof typeValue === 'string' ? typeValue : undefined;
+};
+
+const contentBlocksToText = (content: ContentBlock[]): string => {
+    const noReasoningContent = content.filter((block) => {
+        const type = getBlockType(block);
+        return type !== 'reasoning' && type !== 'thinking';
+    });
+
+    const text = noReasoningContent.map((block) => {
+        const maybeText = (block as { text?: unknown }).text;
+        return typeof maybeText === 'string' ? maybeText : '';
+    });
+
+    return text.join('\n').trim();
+};
 
 export class CustomStringOutputParser extends StringOutputParser {
     static override lc_name(): string {
@@ -17,16 +36,14 @@ export class CustomStringOutputParser extends StringOutputParser {
     }
     lc_namespace = ['kodus', 'output_parsers', 'string'];
 
-    protected override _messageContentComplexToString(
-        content: MessageContentComplex,
-    ): string {
-        if (
-            content &&
-            (content.type === 'reasoning' || content.type === 'thinking')
-        ) {
+    protected override _messageContentToString(content: ContentBlock): string {
+        const type = getBlockType(content);
+        if (type === 'reasoning' || type === 'thinking') {
             return '';
         }
-        return super._messageContentComplexToString(content);
+        return (
+            super._messageContentToString as (value: ContentBlock) => string
+        )(content);
     }
 }
 
@@ -37,31 +54,26 @@ export class CustomJsonOutputParser extends JsonOutputParser {
     lc_namespace = ['kodus', 'output_parsers', 'json'];
 
     protected override _baseMessageContentToString(
-        content: MessageContentComplex[],
+        content: ContentBlock[],
     ): string {
-        const noReasoningContent = content.filter(
-            (c) => c.type !== 'reasoning' && c.type !== 'thinking',
-        );
-        const text = noReasoningContent.map((c) =>
-            c.type === 'text' && c.text && typeof c.text === 'string'
-                ? c.text
-                : '',
-        );
-        return text.join('\n').trim();
+        return contentBlocksToText(content);
     }
 }
 
-export class ZodOutputParser<T extends z.ZodObject> extends BaseOutputParser {
+export class ZodOutputParser<
+    Output,
+    Schema extends InteropZodType<Output> = InteropZodType<Output>,
+> extends BaseOutputParser<Output> {
     static override lc_name(): string {
         return 'ZodOutputParser';
     }
     lc_namespace = ['kodus', 'output_parsers', 'zod'];
 
-    private readonly structuredParser: BaseOutputParser<z.infer<T>>;
+    private readonly structuredParser: BaseOutputParser<Output>;
 
     constructor(
         private readonly config: {
-            schema: T;
+            schema: Schema;
             promptRunnerService: PromptRunnerService;
             provider?: LLMModelProvider;
             fallbackProvider?: LLMModelProvider;
@@ -69,26 +81,26 @@ export class ZodOutputParser<T extends z.ZodObject> extends BaseOutputParser {
     ) {
         super();
         this.structuredParser = StructuredOutputParser.fromZodSchema(
-            this.config.schema as any,
-        ) as BaseOutputParser<z.infer<T>>;
+            this.config.schema,
+        ) as BaseOutputParser<Output>;
     }
 
     protected override _baseMessageContentToString(
-        content: MessageContentComplex[],
+        content: ContentBlock[],
     ): string {
-        const noReasoningContent = content.filter(
-            (c) => c.type !== 'reasoning' && c.type !== 'thinking',
-        );
-        const text = noReasoningContent.map((c) =>
-            c.type === 'text' && c.text && typeof c.text === 'string'
-                ? c.text
-                : '',
-        );
-        return text.join('\n').trim();
+        return contentBlocksToText(content);
     }
 
     public override getFormatInstructions(): string {
         return this.structuredParser.getFormatInstructions();
+    }
+
+    private parseWithSchema(value: unknown): Output {
+        const parsed = interopSafeParse<Output>(this.config.schema, value);
+        if (!parsed.success) {
+            throw new Error('Failed to parse JSON with provided schema');
+        }
+        return parsed.data;
     }
 
     /**
@@ -96,61 +108,39 @@ export class ZodOutputParser<T extends z.ZodObject> extends BaseOutputParser {
      * It attempts to extract and parse JSON, and if it fails,
      * it uses another LLM call to correct the format.
      */
-    public override async parse(text: string): Promise<z.infer<T>> {
+    public override async parse(text: string): Promise<Output> {
         if (!text) {
             throw new Error('Input text is empty or undefined');
         }
 
-        const parseJsonPreprocessor = (
-            value: unknown,
-            ctx: z.RefinementCtx,
-        ): unknown => {
-            if (typeof value === 'string') {
-                try {
-                    let cleanResponse = value;
-
-                    if (value.startsWith('```')) {
-                        cleanResponse = value
-                            .replace(/^```json\n/, '')
-                            .replace(/\n```(\n)?$/, '')
-                            .trim();
-                    }
-
-                    const parsedResponse = tryParseJSONObject(cleanResponse);
-
-                    if (parsedResponse) {
-                        return parsedResponse;
-                    }
-
-                    throw new Error(
-                        'Failed to parse JSON from the provided string',
-                    );
-                } catch {
-                    ctx.addIssue({
-                        code: 'custom',
-                        message: 'Invalid JSON string',
-                    });
-                    return z.NEVER;
-                }
+        const parseJsonPreprocessorValue = (value: unknown): unknown => {
+            if (typeof value !== 'string') {
+                throw new Error('Input must be a string');
             }
 
-            ctx.addIssue({
-                code: 'custom',
-                message: 'Input must be a string',
-            });
-            return z.NEVER;
+            let cleanResponse = value;
+            if (value.startsWith('```')) {
+                cleanResponse = value
+                    .replace(/^```json\n/, '')
+                    .replace(/\n```(\n)?$/, '')
+                    .trim();
+            }
+
+            const parsedResponse = tryParseJSONObject(cleanResponse);
+            if (parsedResponse) {
+                return parsedResponse;
+            }
+
+            throw new Error('Failed to parse JSON from the provided string');
         };
 
         try {
-            return await this.structuredParser.parse(text);
+            const parsed = await this.structuredParser.parse(text);
+            return this.parseWithSchema(parsed);
         } catch {
             try {
-                const preprocessorSchema = z.preprocess(
-                    parseJsonPreprocessor,
-                    this.config.schema,
-                );
-
-                return preprocessorSchema.parse(text);
+                const preprocessed = parseJsonPreprocessorValue(text);
+                return this.parseWithSchema(preprocessed);
             } catch {
                 // If parsing fails, use the LLM to fix the JSON
                 return this._runCorrectionChain(text);
@@ -163,7 +153,7 @@ export class ZodOutputParser<T extends z.ZodObject> extends BaseOutputParser {
      */
     private async _runCorrectionChain(
         malformedOutput: string,
-    ): Promise<z.infer<T>> {
+    ): Promise<Output> {
         if (!this.config.schema) {
             throw new Error('Schema is required for JSON correction');
         }
@@ -192,10 +182,14 @@ export class ZodOutputParser<T extends z.ZodObject> extends BaseOutputParser {
             .setRunName('fixAndExtractJson')
             .execute();
 
-        if (!result || !this.config.schema.safeParse(result).success) {
+        if (!result) {
             throw new Error('Failed to correct JSON even after LLM fallback.');
         }
 
-        return result;
+        try {
+            return this.parseWithSchema(result);
+        } catch {
+            throw new Error('Failed to correct JSON even after LLM fallback.');
+        }
     }
 }

@@ -30,6 +30,25 @@ addFormatsFunction(ajv);
 
 const logger = createLogger('response-validator');
 
+type TextLikeBlock = { type?: string; text?: unknown };
+
+const shouldSkipBlock = (type?: string): boolean =>
+    type === 'reasoning' || type === 'thinking';
+
+const extractTextFromBlocks = (blocks: unknown[]): string => {
+    const text = blocks
+        .map((block) => {
+            if (!block || typeof block !== 'object') return '';
+            const typed = block as TextLikeBlock;
+            if (shouldSkipBlock(typed.type)) return '';
+            return typeof typed.text === 'string' ? typed.text : '';
+        })
+        .filter(Boolean)
+        .join('\n');
+
+    return text.trim();
+};
+
 /**
  * Extract content from various response formats
  */
@@ -43,38 +62,16 @@ function extractContent(response: unknown): string {
     if (typeof response === 'object' && response !== null) {
         const obj = response as Record<string, unknown>;
 
+        // Standard content blocks accessor (LangChain v1)
+        if (Array.isArray(obj.contentBlocks)) {
+            const text = extractTextFromBlocks(obj.contentBlocks);
+            if (text) return text;
+        }
+
         // ✅ ENHANCED: Handle array content with text blocks (Claude/Anthropic format)
         if (Array.isArray(obj.content)) {
-            // Find text block in content array
-            const textBlock = obj.content.find((block: unknown) => {
-                if (typeof block === 'object' && block !== null) {
-                    const blockObj = block as Record<string, unknown>;
-                    return (
-                        blockObj.type === 'text' &&
-                        typeof blockObj.text === 'string'
-                    );
-                }
-                return false;
-            });
-
-            if (textBlock) {
-                const textObj = textBlock as Record<string, unknown>;
-                return textObj.text as string;
-            }
-
-            // Fallback: concatenate all text content
-            return obj.content
-                .map((block: unknown) => {
-                    if (typeof block === 'string') return block;
-                    if (typeof block === 'object' && block !== null) {
-                        const blockObj = block as Record<string, unknown>;
-                        if (blockObj.text) return blockObj.text;
-                        if (blockObj.reasoning) return blockObj.reasoning;
-                    }
-                    return '';
-                })
-                .filter(Boolean)
-                .join('\n');
+            const text = extractTextFromBlocks(obj.content);
+            if (text) return text;
         }
 
         // Direct content field (string)
@@ -87,6 +84,10 @@ function extractContent(response: unknown): string {
             const msg = obj.message as Record<string, unknown>;
             if (typeof msg.content === 'string') {
                 return msg.content;
+            }
+            if (Array.isArray(msg.content)) {
+                const text = extractTextFromBlocks(msg.content);
+                if (text) return text;
             }
         }
 

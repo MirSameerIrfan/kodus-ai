@@ -18,8 +18,8 @@ export class AnthropicAdapter implements ProviderAdapter {
                 : undefined;
 
         const payload: ConstructorParameters<typeof ChatAnthropic>[0] = {
-            modelName: model,
-            anthropicApiKey: apiKey,
+            model,
+            apiKey,
             ...(resolved.temperature !== undefined &&
             typeof reasoningBudget !== 'number'
                 ? { temperature: resolved.temperature }

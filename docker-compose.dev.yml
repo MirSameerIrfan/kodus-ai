@@ -30,7 +30,7 @@ services:
       - "${API_PORT:-3001}:${API_PORT:-3001}"
       - "9229:9229"
     # Entrypoint manages deps and migrations. Passing the start command.
-    command: yarn nest build api --watch --webpack --webpackPath webpack.config.js
+    command: yarn start:dev:api
     deploy:
       resources:
         limits:
@@ -51,7 +51,7 @@ services:
     ports:
       - "9231:9231"
     # Worker will also run migration on startup, which is OK as DB supports concurrency
-    command: yarn nest build worker --watch --webpack --webpackPath webpack.config.js
+    command: yarn start:dev:worker
     environment:
       - NODE_OPTIONS=--max-old-space-size=4096
       - DEBUG_PORT=9231
@@ -68,7 +68,7 @@ services:
     ports:
       - "${WEBHOOKS_PORT:-3332}:${WEBHOOKS_PORT:-3332}"
       - "9230:9230"
-    command: yarn nest build webhooks --watch --webpack --webpackPath webpack.config.js
+    command: yarn start:dev:webhooks
     environment:
       - NODE_OPTIONS=--max-old-space-size=4096
       - DEBUG_PORT=9230

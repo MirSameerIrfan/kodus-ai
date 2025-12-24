@@ -2,13 +2,17 @@ import {
     BaseOutputParser,
     JsonOutputParser,
 } from '@langchain/core/output_parsers';
+import {
+    InferInteropZodOutput,
+    InteropZodType,
+    isInteropZodSchema,
+} from '@langchain/core/utils/types';
 import { CustomStringOutputParser, ZodOutputParser } from './parser';
 import {
     PromptRole,
     PromptRunnerParams,
     PromptRunnerService,
 } from './promptRunner.service';
-import z from 'zod';
 import { BYOKProvider } from './byokProvider.service';
 
 export enum ParserType {
@@ -175,15 +179,15 @@ export class PromptBuilderWithProviders {
         type: ParserType.JSON,
     ): ConfigurablePromptBuilderWithoutPayload<NewOutputType, ParserType.JSON>;
 
-    setParser<NewOutputType extends z.ZodObject>(
+    setParser<Schema extends InteropZodType>(
         type: ParserType.ZOD,
-        parserOrSchema: NewOutputType,
+        parserOrSchema: Schema,
         config?: Pick<
-            PromptRunnerParams<void, NewOutputType>,
+            PromptRunnerParams<void, InferInteropZodOutput<Schema>>,
             'provider' | 'fallbackProvider'
         >,
     ): ConfigurablePromptBuilderWithoutPayload<
-        z.infer<NewOutputType>,
+        InferInteropZodOutput<Schema>,
         ParserType.ZOD
     >;
 
@@ -199,13 +203,13 @@ export class PromptBuilderWithProviders {
         type: ParserType,
         parserOrSchema?:
             | PromptRunnerParams<void, NewOutputType>['parser']
-            | z.ZodObject,
+            | InteropZodType,
         config?: Pick<
             PromptRunnerParams<void, NewOutputType>,
             'provider' | 'fallbackProvider'
         >,
     ): ConfigurablePromptBuilderWithoutPayload<
-        NewOutputType | string | z.infer<z.ZodObject>,
+        NewOutputType | string | InferInteropZodOutput<InteropZodType>,
         ParserType
     > {
         const newParams = {
@@ -268,21 +272,23 @@ export class PromptBuilderWithProviders {
                 );
             }
             case ParserType.ZOD: {
-                if (!parserOrSchema || !(parserOrSchema instanceof z.ZodType)) {
+                if (!parserOrSchema || !isInteropZodSchema(parserOrSchema)) {
                     throw new Error(
-                        'Zod schema must be provided for ZOD type, and it must be a valid Zod schema',
+                        'Zod schema must be provided for ZOD type, and it must be a valid Zod v3/v4 schema',
                     );
                 }
 
+                const schema = parserOrSchema as InteropZodType;
+
                 return new ConfigurablePromptBuilderWithoutPayload<
-                    z.infer<typeof parserOrSchema>,
+                    InferInteropZodOutput<typeof schema>,
                     ParserType.ZOD
                 >(
                     this.runner,
                     {
                         ...newParams,
                         parser: new ZodOutputParser({
-                            schema: parserOrSchema,
+                            schema,
                             promptRunnerService: this.runner,
                             provider: config?.provider,
                             fallbackProvider: config?.fallbackProvider,
