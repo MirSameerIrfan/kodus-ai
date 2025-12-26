@@ -703,7 +703,7 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
                 ),
             });
 
-            const { result: filteredSuggestions } =
+            const { result: filteredSuggestionsRaw } =
                 await this.observabilityService.runLLMInSpan({
                     spanName,
                     runName,
@@ -750,6 +750,11 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
                             .execute();
                     },
                 });
+
+            const parsedSuggestions = schema.safeParse(filteredSuggestionsRaw);
+            const filteredSuggestions = parsedSuggestions.success
+                ? parsedSuggestions.data
+                : undefined;
 
             if (!filteredSuggestions) {
                 const message = `No response from safeguard for PR#${prNumber}`;
