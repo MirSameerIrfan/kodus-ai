@@ -33,6 +33,8 @@ export ECR_REPOSITORY_WORKER="kodus-orchestrator-worker-qa"
 
 ## CI/CD (GitHub Actions) — QA (GitOps)
 
+As imagens publicadas no ECR são multi-arch (linux/amd64 + linux/arm64).
+
 ### Workflows (repo do código)
 
 - Deploy green (build/push + PR no repo infra): `.github/workflows/qa-build-push-and-pr-green.yml`
@@ -83,6 +85,8 @@ Implementado em `apps/worker/src/worker-drain.service.ts:1`.
 - Webhooks usa `WEBHOOKS_PORT` (obrigatório).
 
 ## CI/CD (GitHub Actions) — PROD (GitOps)
+
+As imagens publicadas no ECR são multi-arch (linux/amd64 + linux/arm64).
 
 PROD roda **somente por release** (tag `x.y.z`, ex.: `1.0.92`) e usa o environment `production` com aprovação.
 
