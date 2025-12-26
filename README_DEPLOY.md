@@ -91,10 +91,9 @@ PROD roda **somente por release** (tag `x.y.z`, ex.: `1.0.92`) e usa o environme
 - Deploy green (release → build/push + PR no repo infra): `.github/workflows/prod-build-push-and-pr-green.yml`
 - Promote traffic (manual, PR de weights): `.github/workflows/prod-promote-traffic-pr.yml`
 
-### Workflows legados (não usados no GitOps)
+### Workflows legados
 
-- `.github/workflows/build-and-push-production.yml` (monolito/PM2) — agora manual e com `environment: production`
-- `.github/workflows/deploy-to-prod.yml` (EC2/SSH) — manual e com `environment: production`
+Removidos. Mantemos apenas GitOps via PR no repo de infra.
 
 ### Contrato com o infra (PROD)
 
