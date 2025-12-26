@@ -113,44 +113,50 @@ jobs:
       - name: Mask ECR registry
         run: echo "::add-mask::${{ steps.login-ecr.outputs.registry }}"
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3.2.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.10.0
+
       - name: Build, tag, and push (api)
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          docker build \
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
             --build-arg RELEASE_VERSION=${{ env.IMAGE_TAG }} \
             -f docker/Dockerfile \
             --target api \
             -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }} \
+            --push \
             .
-
-          docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}
 
       - name: Build, tag, and push (webhooks)
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          docker build \
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
             --build-arg RELEASE_VERSION=${{ env.IMAGE_TAG }} \
             -f docker/Dockerfile \
             --target webhooks \
             -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }} \
+            --push \
             .
-
-          docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}
 
       - name: Build, tag, and push (worker)
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          docker build \
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
             --build-arg RELEASE_VERSION=${{ env.IMAGE_TAG }} \
             -f docker/Dockerfile \
             --target worker \
             -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }} \
+            --push \
             .
-
-          docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}
 
       - name: Checkout infra repo
         uses: actions/checkout@v4.2.2
