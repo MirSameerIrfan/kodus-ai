@@ -31,7 +31,7 @@ export class WebhookHealthController {
             };
 
             const allHealthy = Object.values(checks).every(
-                (check) => check.status === 'ok',
+                (check) => check.status === 'ok' || check.status === 'skipped',
             );
 
             const response = {
@@ -66,6 +66,16 @@ export class WebhookHealthController {
         });
     }
 
+    @Get('ready')
+    readyCheck(@Res() res: Response) {
+        return this.check(res);
+    }
+
+    @Get('live')
+    liveCheck(@Res() res: Response) {
+        return this.simpleCheck(res);
+    }
+
     private async checkApplication(): Promise<{
         status: string;
         error?: string;
@@ -77,8 +87,19 @@ export class WebhookHealthController {
         }
     }
 
-    private async checkRabbitMQ(): Promise<{ status: string; error?: string }> {
+    private async checkRabbitMQ(): Promise<{
+        status: string;
+        error?: string;
+        message?: string;
+    }> {
         try {
+            const rabbitEnabled = process.env.API_RABBITMQ_ENABLED !== 'false';
+            if (!rabbitEnabled) {
+                return {
+                    status: 'skipped',
+                    message: 'RabbitMQ disabled',
+                };
+            }
             if (!this.amqpConnection) {
                 return {
                     status: 'error',

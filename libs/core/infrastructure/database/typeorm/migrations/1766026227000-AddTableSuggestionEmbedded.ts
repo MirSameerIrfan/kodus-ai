@@ -4,6 +4,10 @@ export class AddTableSuggestionEmbedded1766026227000 implements MigrationInterfa
     name = 'AddTableSuggestionEmbedded1766026227000';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        const tableExists = await queryRunner.hasTable('suggestion_embedded');
+        if (tableExists) {
+            return;
+        }
         await queryRunner.query(`
             CREATE TABLE "suggestion_embedded" (
                 "uuid" uuid NOT NULL DEFAULT uuid_generate_v4(),

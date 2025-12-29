@@ -10,7 +10,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN corepack disable \
   && npm i -g yarn@1.22.22
 
-
 FROM base AS deps
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
@@ -43,7 +42,6 @@ COPY --from=build /usr/src/app/package.json ./package.json
 COPY --from=build /usr/src/app/default-kodus-config.yml ./default-kodus-config.yml
 COPY --from=build /usr/src/app/kodus-config.yml ./kodus-config.yml
 
-RUN mkdir -p /usr/src/app/certs
 
 
 FROM runtime-common AS api
@@ -56,4 +54,3 @@ CMD ["node", "dist/apps/webhooks/main.js"]
 
 FROM runtime-common AS worker
 CMD ["node", "dist/apps/worker/main.js"]
-
