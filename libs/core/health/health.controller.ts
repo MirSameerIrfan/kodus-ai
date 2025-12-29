@@ -52,6 +52,11 @@ export class HealthController {
         }
     }
 
+    @Get('ready')
+    readyCheck(@Res() res: Response) {
+        return this.check(res);
+    }
+
     @Get('simple')
     simpleCheck(@Res() res: Response) {
         return res.status(HttpStatus.OK).json({
@@ -60,5 +65,10 @@ export class HealthController {
             message: 'API is running',
             uptime: Math.floor(process.uptime()),
         });
+    }
+
+    @Get('live')
+    liveCheck(@Res() res: Response) {
+        return this.simpleCheck(res);
     }
 }

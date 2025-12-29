@@ -38,10 +38,8 @@ COPY --from=build /usr/src/app/package.json ./package.json
 COPY --from=build /usr/src/app/default-kodus-config.yml ./default-kodus-config.yml
 COPY --from=build /usr/src/app/ecosystem.config.js ./ecosystem.config.js
 
-RUN mkdir -p /usr/src/app/certs
 
 COPY --chmod=0755 docker/prod-entrypoint.sh /usr/local/bin/prod-entrypoint
 ENTRYPOINT ["/usr/local/bin/prod-entrypoint"]
 
 CMD ["pm2-runtime", "start", "ecosystem.config.js", "--env", "homolog"]
-

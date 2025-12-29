@@ -38,14 +38,17 @@ export class RabbitMQWrapperModule {
             | ForwardReference
         )[] = [ConfigModule.forRoot(), ConfigModule.forFeature(RabbitMQLoader)];
 
+        const rabbitMQEnabled = process.env.API_RABBITMQ_ENABLED !== 'false';
         const providers: Provider[] = [
             {
                 provide: MESSAGE_BROKER_SERVICE_TOKEN,
                 useClass: MessageBrokerService,
             },
-            RabbitMQErrorHandler,
             RabbitMQDLQInitializer,
         ];
+        if (rabbitMQEnabled) {
+            providers.push(RabbitMQErrorHandler);
+        }
 
         const exports: ModuleMetadata['exports'] = [
             MESSAGE_BROKER_SERVICE_TOKEN,
@@ -89,8 +92,6 @@ export class RabbitMQWrapperModule {
             },
             inject: [ConfigService],
         });
-
-        const rabbitMQEnabled = process.env.API_RABBITMQ_ENABLED !== 'false';
 
         console.log(
             `[RabbitMQWrapperModule] Registering module. ENABLED=${rabbitMQEnabled}, ENV_VAR=${process.env.API_RABBITMQ_ENABLED}`,
