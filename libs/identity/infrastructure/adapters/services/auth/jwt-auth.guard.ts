@@ -29,7 +29,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         // We can use this to allow public routes;
         const excludePaths = [
             '/health',
+            '/health/ready',
             '/health/simple',
+            '/health/live',
             '/auth/refresh',
             '/auth/login',
             '/auth/signup',
