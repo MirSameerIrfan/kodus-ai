@@ -15,7 +15,7 @@ export const WorkflowQueueLoader = registerAs(
         ),
         WORKFLOW_QUEUE_WORKER_MAX_RETRIES: parseIntOrDefault(
             process.env.WORKFLOW_QUEUE_WORKER_MAX_RETRIES,
-            3,
+            5,
         ),
         WORKFLOW_QUEUE_WORKER_RETRY_DELAY_MS: parseIntOrDefault(
             process.env.WORKFLOW_QUEUE_WORKER_RETRY_DELAY_MS,

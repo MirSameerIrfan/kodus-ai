@@ -7,7 +7,6 @@ import { FindByOrganizationIdKodyRulesUseCase } from './find-by-organization-id.
 import { FindLibraryKodyRulesBucketsUseCase } from './find-library-kody-rules-buckets.use-case';
 import { FindLibraryKodyRulesWithFeedbackUseCase } from './find-library-kody-rules-with-feedback.use-case';
 import { FindLibraryKodyRulesUseCase } from './find-library-kody-rules.use-case';
-import { FindRecommendedKodyRulesUseCase } from './find-recommended-kody-rules.use-case';
 import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from './find-rules-in-organization-by-filter.use-case';
 import { FindSuggestionsByRuleUseCase } from './find-suggestions-by-rule.use-case';
 import { GenerateKodyRulesUseCase } from './generate-kody-rules.use-case';

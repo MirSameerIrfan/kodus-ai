@@ -2,6 +2,7 @@ import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConsumeMessage } from 'amqplib';
 import { createLogger } from '@kodus/flow';
+import { ConfigService } from '@nestjs/config';
 import {
     BackoffOptions,
     calculateBackoffInterval,
@@ -9,16 +10,10 @@ import {
 
 /**
  * Backoff configuration for consumer retries.
- * Progression: 2s, 4s, 8s (3 attempts max, then DLQ)
+ * Uses workflow queue config for base interval and max retries.
  */
-const CONSUMER_BACKOFF: BackoffOptions = {
-    baseInterval: 2000, // 2 seconds
-    maxInterval: 30000, // 30 seconds cap
-    jitterFactor: 0.1, // ±10% jitter
-    multiplier: 2, // Exponential
-};
-
-const MAX_RETRIES_CONSUMER = 3;
+const DEFAULT_MAX_RETRIES_CONSUMER = 5;
+const DEFAULT_RETRY_DELAY_MS = 1000;
 
 /**
  * Handles RabbitMQ consumer errors with retry logic and DLQ support.
@@ -34,8 +29,27 @@ export class RabbitMQErrorHandler implements OnModuleInit {
     private static _instance: RabbitMQErrorHandler;
     private readonly logger = createLogger(RabbitMQErrorHandler.name);
     private readonly RETRY_COUNT_HEADER = 'x-retry-count';
+    private readonly maxRetriesConsumer: number;
+    private readonly retryDelayMs: number;
 
-    constructor(private readonly amqpConnection: AmqpConnection) {}
+    constructor(
+        private readonly amqpConnection: AmqpConnection,
+        private readonly configService: ConfigService,
+    ) {
+        const maxRetries = this.configService.get<number>(
+            'workflowQueue.WORKFLOW_QUEUE_WORKER_MAX_RETRIES',
+        );
+        const retryDelayMs = this.configService.get<number>(
+            'workflowQueue.WORKFLOW_QUEUE_WORKER_RETRY_DELAY_MS',
+        );
+
+        this.maxRetriesConsumer = Number.isFinite(maxRetries)
+            ? maxRetries
+            : DEFAULT_MAX_RETRIES_CONSUMER;
+        this.retryDelayMs = Number.isFinite(retryDelayMs)
+            ? retryDelayMs
+            : DEFAULT_RETRY_DELAY_MS;
+    }
 
     onModuleInit() {
         // Set instance for static access (required by @RabbitSubscribe errorHandler)
@@ -61,7 +75,7 @@ export class RabbitMQErrorHandler implements OnModuleInit {
         const dlxExchange = `${baseExchange}.dlx`;
 
         try {
-            if (retryCount < MAX_RETRIES_CONSUMER) {
+            if (retryCount < this.maxRetriesConsumer) {
                 await this.retryWithDelay(
                     msg,
                     headers,
@@ -114,14 +128,20 @@ export class RabbitMQErrorHandler implements OnModuleInit {
         headers[this.RETRY_COUNT_HEADER] = nextRetryCount;
 
         // Use centralized backoff calculation
+        const backoffOptions: BackoffOptions = {
+            baseInterval: this.retryDelayMs,
+            maxInterval: Math.max(this.retryDelayMs, 30000),
+            jitterFactor: 0.1,
+            multiplier: 2,
+        };
         const delayMs = calculateBackoffInterval(
             nextRetryCount,
-            CONSUMER_BACKOFF,
+            backoffOptions,
         );
         headers['x-delay'] = delayMs;
 
         this.logger.warn({
-            message: `Message processing failed, retrying (${nextRetryCount}/${MAX_RETRIES_CONSUMER})`,
+            message: `Message processing failed, retrying (${nextRetryCount}/${this.maxRetriesConsumer})`,
             context: RabbitMQErrorHandler.name,
             metadata: {
                 messageId: msg.properties.messageId,

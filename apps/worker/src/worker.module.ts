@@ -3,6 +3,7 @@ import { SharedMongoModule } from '@libs/shared/database/shared-mongo.module';
 import { SharedPostgresModule } from '@libs/shared/database/shared-postgres.module';
 import { SharedConfigModule } from '@libs/shared/infrastructure/shared-config.module';
 import { SharedLogModule } from '@libs/shared/infrastructure/shared-log.module';
+import { RabbitMQWrapperModule } from '@libs/core/infrastructure/queue/rabbitmq.module';
 import { LLMModule } from '@kodus/kodus-common/llm';
 import { LoggerWrapperService } from '@libs/core/log/loggerWrapper.service';
 import { AutomationModule } from '@libs/automation/modules/automation.module';
@@ -23,6 +24,7 @@ import { WorkerDrainService } from './worker-drain.service';
         SharedObservabilityModule,
         SharedPostgresModule.forRoot({ poolSize: 12 }),
         SharedMongoModule.forRoot(),
+        RabbitMQWrapperModule.register({ enableConsumers: true }),
 
         LLMModule.forRoot({
             logger: LoggerWrapperService,

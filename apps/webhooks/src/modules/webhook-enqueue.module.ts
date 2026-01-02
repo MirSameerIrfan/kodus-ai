@@ -4,7 +4,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { WorkflowQueueLoader } from '@libs/core/infrastructure/config/loaders/workflow-queue.loader';
 
-import { RabbitMQWrapperModule } from '@libs/core/infrastructure/queue/rabbitmq.module';
 import { EnqueueWebhookUseCase } from '@libs/platform/application/use-cases/webhook/enqueue-webhook.use-case';
 import { JOB_QUEUE_SERVICE_TOKEN } from '@libs/core/workflow/domain/contracts/job-queue.service.contract';
 import { WORKFLOW_JOB_REPOSITORY_TOKEN } from '@libs/core/workflow/domain/contracts/workflow-job.repository.contract';
@@ -19,7 +18,6 @@ import { OutboxMessageModel } from '@libs/core/workflow/infrastructure/repositor
     imports: [
         ConfigModule.forFeature(WorkflowQueueLoader),
         TypeOrmModule.forFeature([WorkflowJobModel, OutboxMessageModel]),
-        RabbitMQWrapperModule.register({ enableConsumers: false }),
     ],
     providers: [
         WorkflowJobRepository,

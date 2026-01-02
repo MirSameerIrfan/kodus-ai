@@ -80,7 +80,9 @@ export class RabbitMQWrapperModule {
                     connectionInitOptions: {
                         wait: false,
                         timeout: 5000,
-                        heartbeat: 60,
+                    },
+                    connectionManagerOptions: {
+                        heartbeatIntervalInSeconds: 30,
                     },
                     reconnectTimeInSeconds: 10,
                     enableControllerDiscovery: options.enableConsumers,

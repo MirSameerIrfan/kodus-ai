@@ -1,25 +1,26 @@
-import { OrganizationAndTeamData } from '@/config/types/general/organizationAndTeamData';
-import { UserRequest } from '@/config/types/http/user-request.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@/core/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { IntegrationConfigKey } from '@/shared/domain/enums/Integration-config-key.enum';
-import { IUseCase } from '@/shared/domain/interfaces/use-case.interface';
-import { CodeManagementService } from '@/core/infrastructure/adapters/services/platformIntegration/codeManagement.service';
-import { PinoLoggerService } from '@/core/infrastructure/adapters/services/logger/pino.service';
-import { PlatformType } from '@/shared/domain/enums/platform-type.enum';
-import { Repositories } from '@/core/domain/platformIntegrations/types/codeManagement/repositories.type';
+} from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
+import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
+import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
+import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
+import { createLogger } from '@kodus/flow';
 
 @Injectable()
 export class GetOrganizationLanguageUseCase implements IUseCase {
+    private readonly logger = createLogger(GetOrganizationLanguageUseCase.name);
+
     constructor(
         @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
         private readonly integrationConfigService: IIntegrationConfigService,
         private readonly codeManagementService: CodeManagementService,
-        private readonly logger: PinoLoggerService,
         @Inject(REQUEST)
         private readonly request: UserRequest,
     ) {}
@@ -96,12 +97,11 @@ export class GetOrganizationLanguageUseCase implements IUseCase {
 
                 if (!id || !name) return null;
 
-                const fetched = await this.codeManagementService.getLanguageRepository(
-                    {
+                const fetched =
+                    await this.codeManagementService.getLanguageRepository({
                         organizationAndTeamData,
                         repository: { id: String(id), name: String(name) },
-                    },
-                );
+                    });
 
                 return this.normalizeLanguage(fetched);
             }),
@@ -182,7 +182,9 @@ export class GetOrganizationLanguageUseCase implements IUseCase {
 
         if (repositoryId) {
             const match =
-                repositories.find((r) => String((r as any)?.id) === repositoryId) ??
+                repositories.find(
+                    (r) => String((r as any)?.id) === repositoryId,
+                ) ??
                 repositories.find(
                     (r) => String((r as any)?.name) === repositoryId,
                 );
@@ -190,7 +192,9 @@ export class GetOrganizationLanguageUseCase implements IUseCase {
         }
 
         const selected = repositories.filter(
-            (r) => (r as any)?.selected === true || (r as any)?.isSelected === true,
+            (r) =>
+                (r as any)?.selected === true ||
+                (r as any)?.isSelected === true,
         );
 
         return (selected.length ? selected : repositories).slice(0, sampleSize);
@@ -202,7 +206,9 @@ export class GetOrganizationLanguageUseCase implements IUseCase {
         return trimmed.length ? trimmed : null;
     }
 
-    private pickMostCommonLanguage(values: Array<string | null>): string | null {
+    private pickMostCommonLanguage(
+        values: Array<string | null>,
+    ): string | null {
         const normalized = values.filter((v): v is string => !!v);
         if (!normalized.length) return null;
 

@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AutomationModule } from '@libs/automation/modules/automation.module';
-import { RabbitMQWrapperModule } from '@libs/core/infrastructure/queue/rabbitmq.module';
 import { IntegrationModule } from '@libs/integrations/modules/integrations.module';
 import { IntegrationConfigModule } from '@libs/integrations/modules/config.module';
 
@@ -22,9 +21,6 @@ import { CodebaseModule } from '@libs/code-review/modules/codebase.module';
 @Module({
     imports: [
         ScheduleModule.forRoot(),
-        RabbitMQWrapperModule.register({
-            enableConsumers: false,
-        }),
         AutomationModule,
         ParametersModule,
         TeamModule,

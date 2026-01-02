@@ -31,10 +31,10 @@ export class TypeORMFactory implements TypeOrmOptionsFactory {
 
         // Configuração de pool por componente (otimização de escalabilidade)
         const poolConfigs = {
-            webhook: { max: 8, min: 1 }, // Webhook handler: leve, só escreve logs
-            api: { max: 25, min: 2 }, // API REST: consultas variadas
-            worker: { max: 12, min: 2 }, // Workers: processamento pesado
-            default: { max: 40, min: 1 }, // Fallback: comportamento original
+            webhook: { max: 4, min: 1 }, // Webhook handler: leve, só escreve logs
+            api: { max: 10, min: 2 }, // API REST: consultas variadas
+            worker: { max: 6, min: 1 }, // Workers: processamento pesado
+            default: { max: 12, min: 1 }, // Fallback: conservador para QA/Dev
         };
         const poolConfig = poolConfigs[componentType] || poolConfigs.default;
 
@@ -59,8 +59,8 @@ export class TypeORMFactory implements TypeOrmOptionsFactory {
             extra: {
                 max: poolConfig.max,
                 min: poolConfig.min,
-                idleTimeoutMillis: 10000,
-                connectionTimeoutMillis: 20000,
+                idleTimeoutMillis: 30000,
+                connectionTimeoutMillis: 60000,
                 keepAlive: true,
                 ...(isProduction
                     ? {
