@@ -494,6 +494,15 @@ export class CommentManagerService implements ICommentManagerService {
                 );
             }
 
+            if (!commentBody || commentBody.trim().length === 0) {
+                commentBody = [
+                    '# Code Review Started',
+                    '',
+                    '<!-- kody-codereview -->',
+                    '&#8203;',
+                ].join('\n');
+            }
+
             const comment = await this.codeManagementService.createIssueComment(
                 {
                     organizationAndTeamData,

@@ -11,6 +11,9 @@ import { WorkflowType } from '@libs/core/workflow/domain/enums/workflow-type.enu
 import { WebhookProcessingJobProcessorService } from '@libs/automation/webhook-processing/webhook-processing-job.processor';
 import { CodeReviewJobProcessorService } from '@libs/code-review/workflow/code-review-job-processor.service';
 
+const WEBHOOK_PROCESS_TIMEOUT_MS = 10 * 60 * 1000;
+const CODE_REVIEW_PROCESS_TIMEOUT_MS = 2 * 60 * 60 * 1000;
+
 @Injectable()
 export class JobProcessorRouterService
     implements IJobProcessorService, IJobProcessorRouter
@@ -31,7 +34,13 @@ export class JobProcessorRouterService
         }
 
         const processor = this.getProcessor(job.workflowType);
-        return await processor.process(jobId);
+        const timeoutMs = this.getProcessTimeoutMs(job.workflowType);
+
+        return await this.runWithTimeout(
+            processor.process(jobId),
+            timeoutMs,
+            `Workflow job ${jobId} timeout after ${timeoutMs}ms`,
+        );
     }
 
     async handleFailure(jobId: string, error: Error): Promise<void> {
@@ -66,6 +75,38 @@ export class JobProcessorRouterService
                 throw new Error(
                     `No processor found for workflow type: ${workflowType}`,
                 );
+        }
+    }
+
+    private getProcessTimeoutMs(workflowType: WorkflowType): number {
+        switch (workflowType) {
+            case WorkflowType.WEBHOOK_PROCESSING:
+                return WEBHOOK_PROCESS_TIMEOUT_MS;
+            case WorkflowType.CODE_REVIEW:
+                return CODE_REVIEW_PROCESS_TIMEOUT_MS;
+            default:
+                return CODE_REVIEW_PROCESS_TIMEOUT_MS;
+        }
+    }
+
+    private async runWithTimeout<T>(
+        promise: Promise<T>,
+        timeoutMs: number,
+        timeoutMessage: string,
+    ): Promise<T> {
+        let timeoutId: ReturnType<typeof setTimeout> | undefined;
+        const timeoutPromise = new Promise<never>((_, reject) => {
+            timeoutId = setTimeout(() => {
+                reject(new Error(timeoutMessage));
+            }, timeoutMs);
+        });
+
+        try {
+            return await Promise.race([promise, timeoutPromise]);
+        } finally {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
         }
     }
 }

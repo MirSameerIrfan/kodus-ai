@@ -4,7 +4,6 @@ dotenv.config();
 import { Module, forwardRef, DynamicModule } from '@nestjs/common';
 import { CodeReviewPipelineModule } from '@libs/code-review/pipeline/code-review-pipeline.module';
 import { CodebaseModule } from '@libs/code-review/modules/codebase.module';
-import { RabbitMQWrapperModule } from '@libs/core/infrastructure/queue/rabbitmq.module';
 import { WorkflowCoreModule } from './workflow-core.module';
 import { PlatformModule } from '@libs/platform/modules/platform.module';
 
@@ -96,13 +95,6 @@ export class WorkflowModule {
             SharedMongoModule, // Ensure MongoDB is available for worker
         ];
 
-        // Use standard wrapper module instead of manual configuration
-        imports.push(
-            RabbitMQWrapperModule.register({
-                enableConsumers: isWorker,
-            }),
-        );
-
         return {
             module: WorkflowModule,
             imports: imports,
@@ -113,7 +105,6 @@ export class WorkflowModule {
             exports: [
                 WorkflowCoreModule,
                 ...sharedExports,
-                RabbitMQWrapperModule, // Re-export the wrapper
                 ...(isWorker ? workerProviders : []),
             ],
         };

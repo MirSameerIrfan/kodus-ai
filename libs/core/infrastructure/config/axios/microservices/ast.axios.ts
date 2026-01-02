@@ -4,8 +4,12 @@ export class AxiosASTService {
     private readonly axiosInstance: AxiosInstance;
 
     constructor() {
+        const baseUrl = AxiosASTService.normalizeBaseUrl(
+            process.env.API_SERVICE_AST_URL,
+        );
+
         this.axiosInstance = axios.create({
-            baseURL: process.env.API_SERVICE_AST_URL,
+            baseURL: baseUrl,
             timeout: 120000,
             headers: {
                 'Content-Type': 'application/json',
@@ -13,6 +17,19 @@ export class AxiosASTService {
         });
 
         this.setupInterceptors();
+    }
+
+    private static normalizeBaseUrl(baseUrl?: string): string | undefined {
+        if (!baseUrl) {
+            return undefined;
+        }
+
+        if (/^https?:\/\//i.test(baseUrl)) {
+            return baseUrl;
+        }
+
+        const scheme = /:443(\/|$)/.test(baseUrl) ? 'https://' : 'http://';
+        return `${scheme}${baseUrl}`;
     }
 
     private setupInterceptors() {

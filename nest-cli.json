@@ -9,7 +9,7 @@
         "webpack": true,
         "assets": [
             {
-                "include": "shared/utils/translations/dictionaries/**",
+                "include": "libs/common/utils/translations/dictionaries/**",
                 "outDir": "dist"
             }
         ],

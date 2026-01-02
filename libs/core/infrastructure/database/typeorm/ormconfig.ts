@@ -29,10 +29,10 @@ const optionsDataBase: DataSourceOptions = {
     migrations: [join(__dirname, './migrations/*{.ts,.js}')],
     ssl: isProduction,
     extra: {
-        max: 40,
+        max: 10,
         min: 1,
         idleTimeoutMillis: 60000,
-        connectionTimeoutMillis: 20000,
+        connectionTimeoutMillis: 60000,
         keepAlive: true,
         ...(isProduction
             ? {

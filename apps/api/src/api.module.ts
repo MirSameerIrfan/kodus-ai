@@ -6,6 +6,7 @@ import { SharedLogModule } from '@libs/shared/infrastructure/shared-log.module';
 import { SharedObservabilityModule } from '@libs/shared/infrastructure/shared-observability.module';
 import { SharedPostgresModule } from '@libs/shared/database/shared-postgres.module';
 import { SharedMongoModule } from '@libs/shared/database/shared-mongo.module';
+import { RabbitMQWrapperModule } from '@libs/core/infrastructure/queue/rabbitmq.module';
 import { AuthModule } from '@libs/identity/modules/auth.module';
 import { UserModule } from '@libs/identity/modules/user.module';
 import { PermissionsModule } from '@libs/identity/modules/permissions.module';
@@ -68,6 +69,7 @@ import { LoggerWrapperService } from '@libs/core/log/loggerWrapper.service';
         SharedObservabilityModule,
         SharedPostgresModule.forRoot({ poolSize: 25 }),
         SharedMongoModule.forRoot(),
+        RabbitMQWrapperModule.register({ enableConsumers: false }),
         LLMModule.forRoot({
             logger: LoggerWrapperService,
         }),

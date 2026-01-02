@@ -1,26 +1,65 @@
 import * as path from 'path';
+import * as fs from 'fs';
 
 import { LanguageValue } from '@libs/core/domain/enums/language-parameter.enum';
 
 import { loadJsonFile } from '../transforms/file';
 
+const getDictionaryPaths = (language: LanguageValue): string[] => {
+    return [
+        path.resolve(__dirname, `./dictionaries/${language}.json`),
+        path.resolve(
+            process.cwd(),
+            'dist/apps/api/dictionaries',
+            `${language}.json`,
+        ),
+        path.resolve(
+            process.cwd(),
+            'dist/apps/worker/dictionaries',
+            `${language}.json`,
+        ),
+        path.resolve(
+            process.cwd(),
+            'dist/apps/webhooks/dictionaries',
+            `${language}.json`,
+        ),
+        path.resolve(
+            process.cwd(),
+            'libs/common/utils/translations/dictionaries',
+            `${language}.json`,
+        ),
+    ];
+};
+
+const findDictionaryPath = (language: LanguageValue): string | null => {
+    for (const candidate of getDictionaryPaths(language)) {
+        if (fs.existsSync(candidate)) {
+            return candidate;
+        }
+    }
+
+    return null;
+};
+
 const getTranslationsForLanguage = (
     language: LanguageValue,
 ): Translations | null => {
     try {
-        const dictionaryPath = path.resolve(
-            __dirname,
-            `./dictionaries/${language}.json`,
-        );
+        const dictionaryPath = findDictionaryPath(language);
+        if (!dictionaryPath) {
+            throw new Error(`Translation file not found for ${language}`);
+        }
+
         return loadJsonFile(dictionaryPath);
     } catch (error) {
         console.error(
             `Translation file for language "${language}" not found. Falling back to en-US.`,
         );
-        const dictionaryPath = path.resolve(
-            __dirname,
-            './dictionaries/en-US.json',
-        );
+        const dictionaryPath = findDictionaryPath(LanguageValue.ENGLISH);
+        if (!dictionaryPath) {
+            throw new Error('Fallback translation file not found for en-US');
+        }
+
         return loadJsonFile(dictionaryPath);
     }
 };
