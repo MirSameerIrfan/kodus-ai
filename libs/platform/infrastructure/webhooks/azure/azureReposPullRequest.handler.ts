@@ -162,7 +162,8 @@ export class AzureReposPullRequestHandler implements IWebhookEventHandler {
                                 'Skipping code review job enqueue (missing org/team or enqueue use case)',
                             context: AzureReposPullRequestHandler.name,
                             metadata: {
-                                hasOrgAndTeam: !!orgData?.organizationAndTeamData,
+                                hasOrgAndTeam:
+                                    !!orgData?.organizationAndTeamData,
                                 prId,
                                 repoName,
                                 repositoryId: repository.id,
@@ -178,9 +179,6 @@ export class AzureReposPullRequestHandler implements IWebhookEventHandler {
                             if (orgData?.organizationAndTeamData) {
                                 const baseRefFull =
                                     params?.payload?.resource?.targetRefName; // refs/heads/main
-                                const baseRef =
-                                    baseRefFull?.replace('refs/heads/', '') ||
-                                    baseRefFull;
                                 const defaultBranch =
                                     await this.codeManagement.getDefaultBranch({
                                         organizationAndTeamData:
@@ -282,10 +280,13 @@ export class AzureReposPullRequestHandler implements IWebhookEventHandler {
         const { payload } = params;
         const prId =
             payload?.resource?.pullRequest?.pullRequestId || 'UNKNOWN_PR_ID';
-        const repoName = payload?.resource?.repository?.name || 'UNKNOWN_REPO';
         const repository = {
-            id: payload?.resource?.repository?.id,
-            name: payload?.resource?.repository?.name,
+            id:
+                payload?.resource?.pullRequest?.repository?.id ||
+                payload?.resource?.repository?.id,
+            name:
+                payload?.resource?.pullRequest?.repository?.name ||
+                payload?.resource?.repository?.name,
         } as any;
         const orgData =
             await this.runCodeReviewAutomationUseCase.findTeamWithActiveCodeReview(
@@ -312,7 +313,7 @@ export class AzureReposPullRequestHandler implements IWebhookEventHandler {
                     serviceName: AzureReposPullRequestHandler.name,
                     metadata: {
                         prId,
-                        repoName,
+                        repository,
                         hasComment: !!commentContent,
                         isPullRequestActive,
                     },
@@ -367,7 +368,7 @@ export class AzureReposPullRequestHandler implements IWebhookEventHandler {
                     serviceName: AzureReposPullRequestHandler.name,
                     metadata: {
                         prId,
-                        repoName,
+                        repository,
                     },
                     context: AzureReposPullRequestHandler.name,
                 });
@@ -411,7 +412,7 @@ export class AzureReposPullRequestHandler implements IWebhookEventHandler {
                 serviceName: AzureReposPullRequestHandler.name,
                 metadata: {
                     prId,
-                    repoName,
+                    repository,
                 },
                 message: `Error processing Azure Repos comment: ${error.message}`,
                 error,

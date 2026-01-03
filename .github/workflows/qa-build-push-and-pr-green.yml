@@ -92,6 +92,11 @@ jobs:
           owner: ${{ env.INFRA_REPO_OWNER }}
           repositories: ${{ env.INFRA_REPO_NAME }}
 
+      - name: Debug infra token
+        run: |
+          curl -sS -H "Authorization: token ${{ steps.infra_token.outputs.token }}" \
+            https://api.github.com/repos/kodustech/kodus-infra | jq '{full_name, permissions}'
+
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4.1.0
         with:
