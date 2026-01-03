@@ -23,7 +23,6 @@
         "format": "prettier --write \"{apps,libs,core,shared,test}/**/*.ts\"",
         "lint": "eslint \"{apps,libs,core,shared,test}/**/*.ts\" --fix",
         "start": "nest start --debug 0.0.0.0:9229",
-        "start:dev": "nest start --watch --debug 0.0.0.0:9229",
         "start:dev:api": "nest start api --watch --debug 0.0.0.0:9229",
         "start:dev:webhooks": "nest start webhooks --watch --debug 0.0.0.0:9230",
         "start:dev:worker": "nest start worker --watch --debug 0.0.0.0:9231",

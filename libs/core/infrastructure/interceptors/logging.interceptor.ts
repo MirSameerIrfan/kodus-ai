@@ -41,7 +41,7 @@ export class LoggingInterceptor implements NestInterceptor {
         this.observability.setContext(correlationId);
 
         setImmediate(() => {
-            this.logService.log({
+            this.logService.debug({
                 message: `[${req.requestId}] Request started: ${req.method} ${req.url}`,
                 context: 'HTTP Request',
                 serviceName: 'LoggingInterceptor',
@@ -62,7 +62,7 @@ export class LoggingInterceptor implements NestInterceptor {
         return next.handle().pipe(
             tap(() => {
                 setImmediate(() => {
-                    this.logService.log({
+                    this.logService.debug({
                         message: `[${req.requestId}] Request finished: ${req.method} ${req.url} in ${Date.now() - now}ms`,
                         context: 'HTTP Request',
                         serviceName: 'LoggingInterceptor',

@@ -19,7 +19,8 @@
             ],
             "sourceMapPathOverrides": {
                 "webpack:///./*": "${workspaceFolder}/*",
-                "webpack:///*": "${workspaceFolder}/*"
+                "webpack:///*": "${workspaceFolder}/*",
+                "/usr/src/app/*": "${workspaceFolder}/*"
             },
             "skipFiles": ["<node_internals>/**"]
         },
@@ -41,7 +42,8 @@
             ],
             "sourceMapPathOverrides": {
                 "webpack:///./*": "${workspaceFolder}/*",
-                "webpack:///*": "${workspaceFolder}/*"
+                "webpack:///*": "${workspaceFolder}/*",
+                "/usr/src/app/*": "${workspaceFolder}/*"
             },
             "skipFiles": ["<node_internals>/**"]
         },
@@ -63,7 +65,8 @@
             ],
             "sourceMapPathOverrides": {
                 "webpack:///./*": "${workspaceFolder}/*",
-                "webpack:///*": "${workspaceFolder}/*"
+                "webpack:///*": "${workspaceFolder}/*",
+                "/usr/src/app/*": "${workspaceFolder}/*"
             },
             "skipFiles": ["<node_internals>/**"]
         }
