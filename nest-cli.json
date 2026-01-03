@@ -7,12 +7,6 @@
         "webpackConfigPath": "webpack.config.js",
         "deleteOutDir": true,
         "webpack": true,
-        "assets": [
-            {
-                "include": "libs/common/utils/translations/dictionaries/**",
-                "outDir": "dist"
-            }
-        ],
         "watchAssets": true,
         "watchOptions": {
             "poll": 1000
@@ -26,7 +20,13 @@
             "sourceRoot": "apps/webhooks/src",
             "compilerOptions": {
                 "tsConfigPath": "apps/webhooks/tsconfig.json",
-                "deleteOutDir": true
+                "deleteOutDir": true,
+                "assets": [
+                    {
+                        "include": "libs/common/utils/translations/dictionaries/**",
+                        "outDir": "dist/apps/webhooks/dictionaries"
+                    }
+                ]
             }
         },
         "api": {
@@ -36,7 +36,13 @@
             "sourceRoot": "apps/api/src",
             "compilerOptions": {
                 "tsConfigPath": "apps/api/tsconfig.json",
-                "deleteOutDir": true
+                "deleteOutDir": true,
+                "assets": [
+                    {
+                        "include": "libs/common/utils/translations/dictionaries/**",
+                        "outDir": "dist/apps/api/dictionaries"
+                    }
+                ]
             }
         },
         "worker": {
@@ -46,7 +52,13 @@
             "sourceRoot": "apps/worker/src",
             "compilerOptions": {
                 "tsConfigPath": "apps/worker/tsconfig.json",
-                "deleteOutDir": true
+                "deleteOutDir": true,
+                "assets": [
+                    {
+                        "include": "libs/common/utils/translations/dictionaries/**",
+                        "outDir": "dist/apps/worker/dictionaries"
+                    }
+                ]
             }
         }
     }

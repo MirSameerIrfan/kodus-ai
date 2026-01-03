@@ -107,7 +107,7 @@ export class GetModelsByProviderUseCase {
                 );
 
             case BYOKProvider.NOVITA:
-                return this.getNovitaModels(process.env.API_NOVITA_API_KEY);
+                return this.getNovitaModels(process.env.API_NOVITA_AI_API_KEY);
 
             case BYOKProvider.OPENAI_COMPATIBLE:
                 return this.getOpenAICompatibleModels(
