@@ -42,6 +42,9 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
     private isFlushingTelemetry = false;
 
     private isInitialized = false;
+    private reconnectInProgress = false;
+    private lastReconnectAt = 0;
+    private readonly reconnectDelayMs = 5000;
 
     constructor(config: Partial<MongoDBExporterConfig> = {}) {
         this.config = {
@@ -254,6 +257,10 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
      * Iniciar timers de flush
      */
     private startFlushTimers(): void {
+        if (this.logFlushTimer || this.telemetryFlushTimer) {
+            return;
+        }
+
         this.logFlushTimer = setInterval(
             () => this.flushLogs(),
             this.config.flushIntervalMs,
@@ -416,12 +423,13 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
      * Flush logs para MongoDB
      */
     private async flushLogs(): Promise<void> {
-        if (
-            !this.collections ||
-            this.logBuffer.length === 0 ||
-            this.isFlushingLogs
-        )
+        if (this.logBuffer.length === 0 || this.isFlushingLogs) {
             return;
+        }
+        if (!this.collections) {
+            void this.scheduleReconnect('flushLogs');
+            return;
+        }
 
         this.isFlushingLogs = true;
         const logsToFlush = [...this.logBuffer];
@@ -436,6 +444,8 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
                 context: this.constructor.name,
                 error: error as Error,
             });
+
+            await this.handleConnectionError(error as Error, 'flushLogs');
 
             // Put logs back (LIFO to preserve order roughly, or just push back)
             // But respect max buffer size
@@ -459,12 +469,13 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
      * Flush telemetry para MongoDB
      */
     private async flushTelemetry(): Promise<void> {
-        if (
-            !this.collections ||
-            this.telemetryBuffer.length === 0 ||
-            this.isFlushingTelemetry
-        )
+        if (this.telemetryBuffer.length === 0 || this.isFlushingTelemetry) {
             return;
+        }
+        if (!this.collections) {
+            void this.scheduleReconnect('flushTelemetry');
+            return;
+        }
 
         this.isFlushingTelemetry = true;
         const telemetryToFlush = [...this.telemetryBuffer];
@@ -479,6 +490,8 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
                 context: this.constructor.name,
                 error: error as Error,
             });
+
+            await this.handleConnectionError(error as Error, 'flushTelemetry');
 
             const availableSpace =
                 this.maxBufferSize - this.telemetryBuffer.length;
@@ -513,11 +526,79 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
             await this.client.close();
         }
 
+        this.collections = null;
+        this.db = null;
+        this.client = null;
         this.isInitialized = false;
+        this.reconnectInProgress = false;
         this.logger.log({
             message: 'MongoDB Exporter disposed',
             context: this.constructor.name,
         });
+    }
+
+    private isConnectionError(error: Error): boolean {
+        const message = error?.message ?? '';
+        return (
+            error?.name === 'MongoNotConnectedError' ||
+            error?.name === 'MongoNetworkError' ||
+            message.includes('Client must be connected') ||
+            message.includes('Topology is closed')
+        );
+    }
+
+    private async handleConnectionError(
+        error: Error,
+        operation: string,
+    ): Promise<void> {
+        if (!this.isConnectionError(error)) return;
+
+        this.logger.warn({
+            message: `MongoDB connection lost during ${operation}, scheduling reconnect`,
+            context: this.constructor.name,
+            error,
+        });
+
+        await this.resetConnection();
+        void this.scheduleReconnect(operation);
+    }
+
+    private async resetConnection(): Promise<void> {
+        this.collections = null;
+        this.db = null;
+        this.isInitialized = false;
+
+        if (this.client) {
+            try {
+                await this.client.close();
+            } catch {
+                // Ignore close errors when resetting.
+            }
+        }
+
+        this.client = null;
+    }
+
+    private async scheduleReconnect(operation: string): Promise<void> {
+        if (this.reconnectInProgress) return;
+
+        const now = Date.now();
+        if (now - this.lastReconnectAt < this.reconnectDelayMs) return;
+
+        this.reconnectInProgress = true;
+        this.lastReconnectAt = now;
+
+        try {
+            await this.initialize();
+        } catch (error) {
+            this.logger.warn({
+                message: `MongoDB reconnect attempt failed during ${operation}`,
+                context: this.constructor.name,
+                error: error as Error,
+            });
+        } finally {
+            this.reconnectInProgress = false;
+        }
     }
 }
 

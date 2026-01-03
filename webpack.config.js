@@ -42,9 +42,15 @@ class CopyDictionariesPlugin {
 
 module.exports = function (options, webpack) {
     const isWatchMode = Boolean(options.watch);
+    const isProduction = process.env.NODE_ENV === 'production';
     const debugPort = process.env.DEBUG_PORT || 9229;
     const debugBreak = process.env.DEBUG_BREAK === 'true';
     const inspectArg = debugBreak ? '--inspect-brk' : '--inspect';
+    const devtool = isWatchMode
+        ? 'source-map'
+        : isProduction
+          ? 'hidden-source-map'
+          : 'source-map';
 
     const plugins = [...options.plugins];
     plugins.push(new CopyDictionariesPlugin());
@@ -72,7 +78,7 @@ module.exports = function (options, webpack) {
             cacheDirectory: path.resolve(__dirname, '.build_cache'),
         },
         stats: 'errors-warnings',
-        devtool: 'source-map',
+        devtool,
         externals: [
             nodeExternals({
                 allowlist: [],

@@ -210,11 +210,7 @@ export class WorkflowJobConsumer {
 
         // 2. Start observability span
         if (correlationId) {
-            const obs = this.observability as any;
-
-            if (obs.setContext) {
-                obs.setContext({ correlationId });
-            }
+            this.observability.setContext(correlationId);
         }
 
         return await this.observability.runInSpan(

@@ -105,6 +105,8 @@ KEYS=(
 
     "/qa/kodus-orchestrator/API_GROQ_BASE_URL"
     "/qa/kodus-orchestrator/API_GROQ_API_KEY"
+
+    "/qa/kodus-orchestrator/GLOBAL_KODUS_SERVICE_BILLING"
 )
 
 # Lista de todas as chaves que você precisa

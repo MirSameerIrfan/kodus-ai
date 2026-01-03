@@ -12,7 +12,11 @@
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/app",
             "sourceMaps": true,
-            "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+            "outFiles": ["${workspaceFolder}/dist/apps/api/**/*.js"],
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/dist/**",
+                "!**/node_modules/**"
+            ],
             "sourceMapPathOverrides": {
                 "webpack:///./*": "${workspaceFolder}/*",
                 "webpack:///*": "${workspaceFolder}/*"
@@ -30,7 +34,11 @@
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/app",
             "sourceMaps": true,
-            "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+            "outFiles": ["${workspaceFolder}/dist/apps/webhooks/**/*.js"],
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/dist/**",
+                "!**/node_modules/**"
+            ],
             "sourceMapPathOverrides": {
                 "webpack:///./*": "${workspaceFolder}/*",
                 "webpack:///*": "${workspaceFolder}/*"
@@ -48,7 +56,11 @@
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/app",
             "sourceMaps": true,
-            "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+            "outFiles": ["${workspaceFolder}/dist/apps/worker/**/*.js"],
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/dist/**",
+                "!**/node_modules/**"
+            ],
             "sourceMapPathOverrides": {
                 "webpack:///./*": "${workspaceFolder}/*",
                 "webpack:///*": "${workspaceFolder}/*"
@@ -59,7 +71,11 @@
     "compounds": [
         {
             "name": "Debug: All Services",
-            "configurations": ["Debug: API", "Debug: Webhooks", "Debug: Worker"]
+            "configurations": [
+                "Debug: API",
+                "Debug: Webhooks",
+                "Debug: Worker"
+            ]
         }
     ]
 }

@@ -6,6 +6,7 @@ import {
     Injectable,
     NestInterceptor,
 } from '@nestjs/common';
+import { ObservabilityService } from '@libs/core/log/observability.service';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,7 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
     private readonly logService = createLogger(LoggingInterceptor.name);
-    constructor() {}
+    constructor(private readonly observability: ObservabilityService) {}
 
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
         const shouldSkip = isRabbitContext(context);
@@ -25,9 +26,19 @@ export class LoggingInterceptor implements NestInterceptor {
         const now = Date.now();
         const req = context.switchToHttp().getRequest();
         const userID = req.user?.uuid;
+        const headerCorrelationId = req.headers['x-correlation-id'];
+        const headerRequestId = req.headers['x-request-id'];
 
         // Generate a unique request ID
-        req.requestId = req.requestId || uuidv4();
+        const correlationId =
+            (Array.isArray(headerCorrelationId)
+                ? headerCorrelationId[0]
+                : headerCorrelationId) ||
+            (Array.isArray(headerRequestId) ? headerRequestId[0] : headerRequestId) ||
+            req.requestId ||
+            uuidv4();
+        req.requestId = correlationId;
+        this.observability.setContext(correlationId);
 
         setImmediate(() => {
             this.logService.log({
@@ -42,6 +53,7 @@ export class LoggingInterceptor implements NestInterceptor {
                     query: req.query,
                     params: req.params,
                     requestId: req.requestId,
+                    correlationId,
                     userID: userID,
                 },
             });
@@ -58,14 +70,15 @@ export class LoggingInterceptor implements NestInterceptor {
                             method: req.method,
                             url: req.url,
                             body: req.method === 'POST' ? '[Body]' : {},
-                            headers: req.headers,
-                            query: req.query,
-                            params: req.params,
-                            requestId: req.requestId,
-                            durationMs: Date.now() - now,
-                            userID: userID,
-                        },
-                    });
+                        headers: req.headers,
+                        query: req.query,
+                        params: req.params,
+                        requestId: req.requestId,
+                        correlationId,
+                        durationMs: Date.now() - now,
+                        userID: userID,
+                    },
+                });
                 });
             }),
         );
