@@ -31,7 +31,8 @@ class CopyDictionariesPlugin {
                 'libs/common/utils/translations/dictionaries',
             );
             const targetDir = path.resolve(
-                compiler.options.output.path,
+                __dirname,
+                'dist',
                 'dictionaries',
             );
 

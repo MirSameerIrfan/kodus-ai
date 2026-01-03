@@ -289,12 +289,25 @@ export class PromptRunnerService {
                             );
                     }
 
+                    if (typeof text !== 'string') {
+                        throw new Error(
+                            `Prompt must resolve to a string (role: ${role}).`,
+                        );
+                    }
+
+                    const normalizedText = text.trim();
+                    if (!normalizedText) {
+                        throw new Error(
+                            `Prompt content is empty (role: ${role}).`,
+                        );
+                    }
+
                     result.push({
                         role,
                         content: [
                             {
                                 type,
-                                text,
+                                text: normalizedText,
                             },
                         ],
                     });

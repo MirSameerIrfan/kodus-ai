@@ -24,7 +24,7 @@
                 "assets": [
                     {
                         "include": "libs/common/utils/translations/dictionaries/**",
-                        "outDir": "dist/apps/webhooks/dictionaries"
+                        "outDir": "dist/dictionaries"
                     }
                 ]
             }
@@ -40,7 +40,7 @@
                 "assets": [
                     {
                         "include": "libs/common/utils/translations/dictionaries/**",
-                        "outDir": "dist/apps/api/dictionaries"
+                        "outDir": "dist/dictionaries"
                     }
                 ]
             }
@@ -56,7 +56,7 @@
                 "assets": [
                     {
                         "include": "libs/common/utils/translations/dictionaries/**",
-                        "outDir": "dist/apps/worker/dictionaries"
+                        "outDir": "dist/dictionaries"
                     }
                 ]
             }

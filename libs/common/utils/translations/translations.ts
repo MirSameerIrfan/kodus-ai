@@ -6,27 +6,23 @@ import { LanguageValue } from '@libs/core/domain/enums/language-parameter.enum';
 import { loadJsonFile } from '../transforms/file';
 
 const getDictionaryPaths = (language: LanguageValue): string[] => {
+    const fileName = `${language}.json`;
+
     return [
-        path.resolve(__dirname, `./dictionaries/${language}.json`),
+        path.resolve(__dirname, 'dictionaries', fileName),
+        path.resolve(__dirname, '../../../../..', 'dictionaries', fileName),
         path.resolve(
-            process.cwd(),
-            'dist/apps/api/dictionaries',
-            `${language}.json`,
+            __dirname,
+            '../../../../..',
+            'dist',
+            'dictionaries',
+            fileName,
         ),
-        path.resolve(
-            process.cwd(),
-            'dist/apps/worker/dictionaries',
-            `${language}.json`,
-        ),
-        path.resolve(
-            process.cwd(),
-            'dist/apps/webhooks/dictionaries',
-            `${language}.json`,
-        ),
+        path.resolve(process.cwd(), 'dist/dictionaries', fileName),
         path.resolve(
             process.cwd(),
             'libs/common/utils/translations/dictionaries',
-            `${language}.json`,
+            fileName,
         ),
     ];
 };
