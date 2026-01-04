@@ -34,7 +34,7 @@ env:
 
 jobs:
   build_push_and_open_pr:
-    runs-on: ubuntu-22.04-arm
+    runs-on: ubuntu-latest
     environment: production
     permissions:
       contents: read
@@ -120,6 +120,11 @@ jobs:
       - name: Mask ECR registry
         run: echo "::add-mask::${{ steps.login-ecr.outputs.registry }}"
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3.2.0
+        with:
+          platforms: arm64
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3.10.0
 
@@ -135,9 +140,9 @@ jobs:
 
           docker buildx bake -f docker-bake.hcl \
             --set base.args.RELEASE_VERSION=${{ env.IMAGE_TAG }} \
-            --set base.platforms=${{ env.BUILDX_PLATFORMS }} \
             --set base.cache-from=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }} \
             --set base.cache-to=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }},mode=max \
+            --set *.platform=${{ env.BUILDX_PLATFORMS }} \
             --set api.tags="$API_TAGS" \
             --set webhooks.tags="$WEBHOOKS_TAGS" \
             --set worker.tags="$WORKER_TAGS" \
