@@ -55,7 +55,7 @@ If you prefer manual setup or need to customize settings:
 
 1. Gere o arquivo de variáveis do ambiente desejado (`aws ssm` requerido):
    ```bash
-   ./scripts/fetch-env-qa.sh qa    # ou ./scripts/fetch-env-prod.sh prod
+   ./scripts/dev/fetch-env-qa.sh qa    # ou ./scripts/dev/fetch-env-prod.sh prod
    ```
 2. Suba os serviços (por padrão o compose usa o `.env` da raiz). Se preferir outro arquivo, exporte `ENV_FILE` antes do comando:
    ```bash

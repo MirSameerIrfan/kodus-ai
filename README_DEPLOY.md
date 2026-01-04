@@ -27,8 +27,8 @@ export ECR_REPOSITORY_API="kodus-orchestrator-api-qa"
 export ECR_REPOSITORY_WEBHOOKS="kodus-orchestrator-webhook-qa"
 export ECR_REPOSITORY_WORKER="kodus-orchestrator-worker-qa"
 
-./scripts/build-ecr-images.sh
-./scripts/push-ecr-images.sh
+./scripts/docker/build-ecr-images.sh
+./scripts/docker/push-ecr-images.sh
 ```
 
 ## CI/CD (GitHub Actions) — QA (GitOps)
@@ -68,8 +68,8 @@ Crie o environment `qa` em `Settings → Environments` e mova os secrets de depl
 
 Os workflows chamam scripts locais para manter o YAML mais enxuto:
 
-- `scripts/update-tfvars-green.sh:1` (atualiza `*_green_image` + `*_green_desired_count`)
-- `scripts/update-tfvars-promote-weights.sh:1` (ajusta pesos para 100% green)
+- `scripts/gitops/update-tfvars-green.sh:1` (atualiza `*_green_image` + `*_green_desired_count`)
+- `scripts/gitops/update-tfvars-promote-weights.sh:1` (ajusta pesos para 100% green)
 
 ## Shutdown / drain (worker)
 

@@ -11,7 +11,7 @@ on:
 
 concurrency:
   group: qa-gitops-green
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -19,6 +19,8 @@ permissions:
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
   IMAGE_TAG: ${{ github.event.inputs.image_tag || github.sha }}
+  BUILDX_PLATFORMS: linux/arm64
+  BUILDX_CACHE_SCOPE: kodus-ai-arm64
 
   # ECR repositories (required)
   ECR_REPOSITORY_API: ${{ vars.ECR_REPOSITORY_API }}
@@ -32,7 +34,7 @@ env:
 
 jobs:
   build_push_and_open_pr:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04-arm
     if: github.ref == 'refs/heads/main'
     environment: qa
     permissions:
@@ -92,11 +94,6 @@ jobs:
           owner: ${{ env.INFRA_REPO_OWNER }}
           repositories: ${{ env.INFRA_REPO_NAME }}
 
-      - name: Debug infra token
-        run: |
-          curl -sS -H "Authorization: token ${{ steps.infra_token.outputs.token }}" \
-            https://api.github.com/repos/kodustech/kodus-infra | jq '{full_name, permissions}'
-
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4.1.0
         with:
@@ -110,53 +107,28 @@ jobs:
       - name: Mask ECR registry
         run: echo "::add-mask::${{ steps.login-ecr.outputs.registry }}"
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3.2.0
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3.10.0
 
-      - name: Build, tag, and push (api)
+      - name: Build, tag, and push (api/webhooks/worker)
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          docker buildx build \
-            --platform linux/arm64 \
-            --build-arg RELEASE_VERSION=${{ env.IMAGE_TAG }} \
-            -f docker/Dockerfile \
-            --target api \
-            -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }} \
-            -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:qa-latest \
-            --push \
-            .
+          set -euo pipefail
 
-      - name: Build, tag, and push (webhooks)
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        run: |
-          docker buildx build \
-            --platform linux/arm64 \
-            --build-arg RELEASE_VERSION=${{ env.IMAGE_TAG }} \
-            -f docker/Dockerfile \
-            --target webhooks \
-            -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }} \
-            -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:qa-latest \
-            --push \
-            .
+          API_TAGS="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }},$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:qa-latest"
+          WEBHOOKS_TAGS="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }},$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:qa-latest"
+          WORKER_TAGS="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }},$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:qa-latest"
 
-      - name: Build, tag, and push (worker)
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        run: |
-          docker buildx build \
-            --platform linux/arm64 \
-            --build-arg RELEASE_VERSION=${{ env.IMAGE_TAG }} \
-            -f docker/Dockerfile \
-            --target worker \
-            -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }} \
-            -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:qa-latest \
-            --push \
-            .
+          docker buildx bake -f docker-bake.hcl \
+            --set base.args.RELEASE_VERSION=${{ env.IMAGE_TAG }} \
+            --set base.platforms=${{ env.BUILDX_PLATFORMS }} \
+            --set base.cache-from=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }} \
+            --set base.cache-to=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }},mode=max \
+            --set api.tags="$API_TAGS" \
+            --set webhooks.tags="$WEBHOOKS_TAGS" \
+            --set worker.tags="$WORKER_TAGS" \
+            --push
 
       - name: Checkout infra repo
         uses: actions/checkout@v4.2.2
@@ -176,8 +148,9 @@ jobs:
           API_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}"
           WEBHOOKS_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}"
           WORKER_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}"
+          DESIRED_COUNT=1
 
-          ./scripts/update-tfvars-green.sh "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE"
+          ./scripts/gitops/update-tfvars-green.sh "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE" "$DESIRED_COUNT"
 
           echo "Updated $FILE"
 
@@ -204,7 +177,7 @@ jobs:
           base: ${{ env.INFRA_BASE_BRANCH }}
           title: "QA: deploy green (${{ env.IMAGE_TAG }})"
           body: |
-            Atualiza as imagens green (api/webhooks/worker) para a tag `${{ env.IMAGE_TAG }}` e escala green para 2 tasks.
+            Atualiza as imagens green (api/webhooks/worker) para a tag `${{ env.IMAGE_TAG }}` e escala green para 1 task.
 
             Próximo passo (manual): rodar o workflow de promoção de tráfego (weights) no repo da aplicação.
           commit-message: "qa: deploy green images (${{ env.IMAGE_TAG }})"

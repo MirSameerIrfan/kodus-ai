@@ -23,7 +23,6 @@ env:
 jobs:
   open_pr_weights:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
     environment: qa
     permissions:
       contents: read
@@ -88,7 +87,7 @@ jobs:
           set -euo pipefail
 
           FILE="infra/${{ env.INFRA_TFVARS_PATH }}"
-          ./scripts/update-tfvars-promote-weights.sh "$FILE"
+          ./scripts/gitops/update-tfvars-promote-weights.sh "$FILE"
 
           echo "Updated weights in $FILE"
 

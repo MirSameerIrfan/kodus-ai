@@ -87,7 +87,7 @@ jobs:
           set -euo pipefail
 
           FILE="infra/${{ env.INFRA_TFVARS_PATH }}"
-          ./scripts/update-tfvars-promote-weights.sh "$FILE"
+          ./scripts/gitops/update-tfvars-promote-weights.sh "$FILE"
 
           echo "Updated weights in $FILE"
 

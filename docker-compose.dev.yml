@@ -1,7 +1,7 @@
 x-app-service-template: &app-service-defaults
   build:
     context: .
-    dockerfile: DockerFiles/Dockerfile.dev
+    dockerfile: docker/Dockerfile.dev
     args:
         - API_CLOUD_MODE=${API_CLOUD_MODE:-false}
   env_file:
@@ -89,7 +89,7 @@ services:
       POSTGRES_DB: ${API_PG_DB_DATABASE}
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+      - ./docker/postgres/initdb.d:/docker-entrypoint-initdb.d
     networks:
       - kodus-backend-services
     restart: unless-stopped
