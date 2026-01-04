@@ -121,26 +121,31 @@ jobs:
         run: |
           set -euo pipefail
 
-          API_TAG_1="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}"
-          API_TAG_2="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:qa-latest"
-          WEBHOOKS_TAG_1="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}"
-          WEBHOOKS_TAG_2="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:qa-latest"
-          WORKER_TAG_1="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}"
-          WORKER_TAG_2="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:qa-latest"
-
-          API_TAGS=$(printf '[\"%s\",\"%s\"]' "$API_TAG_1" "$API_TAG_2")
-          WEBHOOKS_TAGS=$(printf '[\"%s\",\"%s\"]' "$WEBHOOKS_TAG_1" "$WEBHOOKS_TAG_2")
-          WORKER_TAGS=$(printf '[\"%s\",\"%s\"]' "$WORKER_TAG_1" "$WORKER_TAG_2")
+          API_TAG="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}"
+          WEBHOOKS_TAG="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}"
+          WORKER_TAG="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}"
 
           docker buildx bake -f docker-bake.hcl \
             --set base.args.RELEASE_VERSION=${{ env.IMAGE_TAG }} \
             --set base.cache-from=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }} \
             --set base.cache-to=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }},mode=max \
             --set *.platform=${{ env.BUILDX_PLATFORMS }} \
-            --set api.tags="$API_TAGS" \
-            --set webhooks.tags="$WEBHOOKS_TAGS" \
-            --set worker.tags="$WORKER_TAGS" \
+            --set api.tags="$API_TAG" \
+            --set webhooks.tags="$WEBHOOKS_TAG" \
+            --set worker.tags="$WORKER_TAG" \
             --push
+
+          docker buildx imagetools create \
+            -t "$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:qa-latest" \
+            "$API_TAG"
+
+          docker buildx imagetools create \
+            -t "$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:qa-latest" \
+            "$WEBHOOKS_TAG"
+
+          docker buildx imagetools create \
+            -t "$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:qa-latest" \
+            "$WORKER_TAG"
 
       - name: Checkout infra repo
         uses: actions/checkout@v4.2.2

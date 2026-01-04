@@ -134,22 +134,18 @@ jobs:
         run: |
           set -euo pipefail
 
-          API_TAG_1="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}"
-          WEBHOOKS_TAG_1="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}"
-          WORKER_TAG_1="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}"
-
-          API_TAGS=$(printf '[\"%s\"]' "$API_TAG_1")
-          WEBHOOKS_TAGS=$(printf '[\"%s\"]' "$WEBHOOKS_TAG_1")
-          WORKER_TAGS=$(printf '[\"%s\"]' "$WORKER_TAG_1")
+          API_TAG="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}"
+          WEBHOOKS_TAG="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}"
+          WORKER_TAG="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}"
 
           docker buildx bake -f docker-bake.hcl \
             --set base.args.RELEASE_VERSION=${{ env.IMAGE_TAG }} \
             --set base.cache-from=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }} \
             --set base.cache-to=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }},mode=max \
             --set *.platform=${{ env.BUILDX_PLATFORMS }} \
-            --set api.tags="$API_TAGS" \
-            --set webhooks.tags="$WEBHOOKS_TAGS" \
-            --set worker.tags="$WORKER_TAGS" \
+            --set api.tags="$API_TAG" \
+            --set webhooks.tags="$WEBHOOKS_TAG" \
+            --set worker.tags="$WORKER_TAG" \
             --push
 
       - name: Checkout infra repo
