@@ -121,9 +121,16 @@ jobs:
         run: |
           set -euo pipefail
 
-          API_TAGS="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }},$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:qa-latest"
-          WEBHOOKS_TAGS="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }},$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:qa-latest"
-          WORKER_TAGS="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }},$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:qa-latest"
+          API_TAG_1="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}"
+          API_TAG_2="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:qa-latest"
+          WEBHOOKS_TAG_1="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}"
+          WEBHOOKS_TAG_2="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:qa-latest"
+          WORKER_TAG_1="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}"
+          WORKER_TAG_2="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:qa-latest"
+
+          API_TAGS=$(printf '[\"%s\",\"%s\"]' "$API_TAG_1" "$API_TAG_2")
+          WEBHOOKS_TAGS=$(printf '[\"%s\",\"%s\"]' "$WEBHOOKS_TAG_1" "$WEBHOOKS_TAG_2")
+          WORKER_TAGS=$(printf '[\"%s\",\"%s\"]' "$WORKER_TAG_1" "$WORKER_TAG_2")
 
           docker buildx bake -f docker-bake.hcl \
             --set base.args.RELEASE_VERSION=${{ env.IMAGE_TAG }} \
