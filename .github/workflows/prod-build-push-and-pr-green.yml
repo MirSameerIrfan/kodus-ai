@@ -134,9 +134,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          API_TAGS="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}"
-          WEBHOOKS_TAGS="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}"
-          WORKER_TAGS="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}"
+          API_TAG_1="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}"
+          WEBHOOKS_TAG_1="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}"
+          WORKER_TAG_1="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}"
+
+          API_TAGS=$(printf '[\"%s\"]' "$API_TAG_1")
+          WEBHOOKS_TAGS=$(printf '[\"%s\"]' "$WEBHOOKS_TAG_1")
+          WORKER_TAGS=$(printf '[\"%s\"]' "$WORKER_TAG_1")
 
           docker buildx bake -f docker-bake.hcl \
             --set base.args.RELEASE_VERSION=${{ env.IMAGE_TAG }} \
