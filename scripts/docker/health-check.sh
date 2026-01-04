@@ -205,7 +205,7 @@ else
         echo -e "   ${YELLOW}yarn seed           # Load initial data${NC}"
     fi
     echo -e "   ${YELLOW}yarn docker:logs    # Check API startup progress${NC}"
-    echo -e "   ${YELLOW}./scripts/health-check.sh  # Re-run this check${NC}"
+    echo -e "   ${YELLOW}./scripts/docker/health-check.sh  # Re-run this check${NC}"
     echo ""
     echo -e "${BLUE}🕐 Wait 1-2 minutes for full startup${NC}"
     exit 1

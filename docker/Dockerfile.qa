@@ -1,6 +1,6 @@
 # QA "orchestrator" image (runs api + webhooks + worker via PM2, homolog env)
 #
-# This is intentionally aligned with DockerFiles/Dockerfile.prod, but defaults
+# This is intentionally aligned with docker/Dockerfile.prod, but defaults
 # the PM2 environment to "homolog".
 
 FROM node:22.14.0-slim AS base

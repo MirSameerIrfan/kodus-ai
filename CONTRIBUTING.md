@@ -75,6 +75,10 @@ The project follows a clean, modular architecture:
 │   └── modules/
 ├── test/
 ├── scripts/
+│   ├── dev/
+│   ├── docker/
+│   ├── gitops/
+│   └── seed/
 ├── docker/
 └── docs/
 ```

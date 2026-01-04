@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ "$#" -ne 4 ]; then
-  echo "Usage: $0 <tfvars-file> <api-image> <webhooks-image> <worker-image>" >&2
+if [ "$#" -lt 4 ] || [ "$#" -gt 5 ]; then
+  echo "Usage: $0 <tfvars-file> <api-image> <webhooks-image> <worker-image> [desired-count]" >&2
   exit 2
 fi
 
@@ -10,13 +10,14 @@ FILE="$1"
 API_IMAGE="$2"
 WEBHOOKS_IMAGE="$3"
 WORKER_IMAGE="$4"
+DESIRED_COUNT="${5:-2}"
 
 if [ ! -f "$FILE" ]; then
   echo "tfvars file not found: $FILE" >&2
   exit 1
 fi
 
-node - "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE" <<'NODE'
+node - "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE" "$DESIRED_COUNT" <<'NODE'
 const fs = require('fs');
 
 // argv[0]=node, argv[1]='-' (script from stdin), argv[2..]=args
@@ -24,6 +25,12 @@ const file = process.argv[2];
 const apiImage = process.argv[3];
 const webhooksImage = process.argv[4];
 const workerImage = process.argv[5];
+const desiredCountArg = process.argv[6];
+const desiredCount = desiredCountArg ? Number(desiredCountArg) : 2;
+
+if (!Number.isInteger(desiredCount) || desiredCount < 1) {
+  throw new Error(`Invalid desired count: ${desiredCountArg}`);
+}
 
 if (!file.endsWith('.json')) {
   throw new Error(`Expected a JSON tfvars file (*.auto.tfvars.json): ${file}`);
@@ -49,9 +56,9 @@ for (const k of keys) {
 obj.api_green_image = apiImage;
 obj.webhook_green_image = webhooksImage;
 obj.worker_green_image = workerImage;
-obj.api_green_desired_count = 2;
-obj.webhook_green_desired_count = 2;
-obj.worker_green_desired_count = 2;
+obj.api_green_desired_count = desiredCount;
+obj.webhook_green_desired_count = desiredCount;
+obj.worker_green_desired_count = desiredCount;
 
 fs.writeFileSync(file, JSON.stringify(obj, null, 2) + '\n');
 NODE

@@ -1,2 +1,1 @@
-node scripts/check-yalc.js
-
+node scripts/dev/check-yalc.js
