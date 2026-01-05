@@ -67,11 +67,11 @@ services:
     container_name: kodus_webhooks
     ports:
       - "${WEBHOOKS_PORT:-3332}:${WEBHOOKS_PORT:-3332}"
-      - "9230:9230"
+      - "9232:9232"
     command: yarn start:dev:webhooks
     environment:
       - NODE_OPTIONS=--max-old-space-size=4096
-      - DEBUG_PORT=9230
+      - DEBUG_PORT=9232
       - API_LOG_PRETTY=true
 
   #----------------------------------------------------------------

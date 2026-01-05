@@ -29,7 +29,7 @@
             "type": "node",
             "request": "attach",
             "name": "Debug: Webhooks",
-            "port": 9230,
+            "port": 9232,
             "address": "localhost",
             "timeout": 60000,
             "restart": true,
@@ -77,11 +77,7 @@
     "compounds": [
         {
             "name": "Debug: All Services",
-            "configurations": [
-                "Debug: API",
-                "Debug: Webhooks",
-                "Debug: Worker"
-            ]
+            "configurations": ["Debug: API", "Debug: Webhooks", "Debug: Worker"]
         }
     ]
 }
