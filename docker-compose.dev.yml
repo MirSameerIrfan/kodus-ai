@@ -13,6 +13,7 @@ x-app-service-template: &app-service-defaults
   restart: unless-stopped
   volumes:
     - .:/usr/src/app:delegated
+    - node_modules_cache:/usr/src/app/node_modules
     - yalc_store:/root/.yalc
   networks:
     - kodus-backend-services
@@ -66,11 +67,11 @@ services:
     container_name: kodus_webhooks
     ports:
       - "${WEBHOOKS_PORT:-3332}:${WEBHOOKS_PORT:-3332}"
-      - "9230:9230"
+      - "9232:9232"
     command: yarn start:dev:webhooks
     environment:
       - NODE_OPTIONS=--max-old-space-size=4096
-      - DEBUG_PORT=9230
+      - DEBUG_PORT=9232
       - API_LOG_PRETTY=true
 
   #----------------------------------------------------------------
@@ -133,6 +134,7 @@ services:
 
 volumes:
   yalc_store:
+  node_modules_cache:
   pgdata:
   mongodbdata:
 

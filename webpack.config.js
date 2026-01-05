@@ -43,6 +43,7 @@ class CopyDictionariesPlugin {
 
 module.exports = function (options, webpack) {
     const isWatchMode = Boolean(options.watch);
+    const isNestCliStart = process.env.NEST_CLI_START === 'true';
     const isProduction = process.env.NODE_ENV === 'production';
     const debugPort = process.env.DEBUG_PORT || 9229;
     const debugBreak = process.env.DEBUG_BREAK === 'true';
@@ -64,20 +65,21 @@ module.exports = function (options, webpack) {
             new webpack.WatchIgnorePlugin({
                 paths: [/\.js$/, /\.d\.ts$/],
             }),
-            new RunScriptWebpackPlugin({
-                name: options.output.filename,
-                autoRestart: false,
-                nodeArgs: [`${inspectArg}=0.0.0.0:${debugPort}`],
-            }),
         );
+
+        if (!isNestCliStart) {
+            plugins.push(
+                new RunScriptWebpackPlugin({
+                    name: options.output.filename,
+                    autoRestart: false,
+                    nodeArgs: [`${inspectArg}=0.0.0.0:${debugPort}`],
+                }),
+            );
+        }
     }
 
     return {
         ...options,
-        cache: {
-            type: 'filesystem',
-            cacheDirectory: path.resolve(__dirname, '.build_cache'),
-        },
         stats: 'errors-warnings',
         devtool,
         externals: [

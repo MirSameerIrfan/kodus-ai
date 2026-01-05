@@ -4,10 +4,33 @@ import {
     SpanOptions,
     TraceItem,
     SpanProcessor,
+    GEN_AI,
 } from './types.js';
 import { SimpleTracer } from './core/tracer.js';
 import { createLogger } from './logger.js';
 import { AsyncLocalStorage } from 'node:async_hooks';
+
+/**
+ * Determines if a span represents an LLM/AI operation based on OpenTelemetry semantic conventions.
+ * LLM spans are critical for billing and must be handled with higher reliability guarantees.
+ *
+ * @param span - The trace item to check
+ * @returns true if the span contains Gen AI usage data (billing critical)
+ */
+export function isLLMSpan(span: TraceItem): boolean {
+    return !!span.attributes[GEN_AI.USAGE_TOTAL_TOKENS];
+}
+
+/**
+ * Determines if a span is critical (requires synchronous processing and higher reliability).
+ * Currently, only LLM spans are considered critical due to billing implications.
+ *
+ * @param span - The trace item to check
+ * @returns true if the span is critical (LLM/billing data)
+ */
+export function isCriticalSpan(span: TraceItem): boolean {
+    return isLLMSpan(span);
+}
 
 /**
  * Simple and robust telemetry system
@@ -136,14 +159,40 @@ export class TelemetrySystem {
 
     /**
      * Execute a function within a span context
+     * @param span The span to execute within
+     * @param fn The function to execute
+     * @param options Optional configuration including timeout
      */
-    async withSpan<T>(span: Span, fn: () => T | Promise<T>): Promise<T> {
+    async withSpan<T>(
+        span: Span,
+        fn: () => T | Promise<T>,
+        options?: { timeoutMs?: number },
+    ): Promise<T> {
         const previousSpan = this.currentSpan;
         this.currentSpan = span;
 
         return await this.als.run(span, async () => {
             try {
-                const result = await fn();
+                let result: T;
+
+                // Apply timeout if specified
+                if (options?.timeoutMs) {
+                    result = await Promise.race<T>([
+                        Promise.resolve(fn()),
+                        new Promise<T>((_, reject) =>
+                            setTimeout(() => {
+                                const error = new Error(
+                                    `Span execution timeout after ${options.timeoutMs}ms`,
+                                );
+                                error.name = 'SpanTimeoutError';
+                                reject(error);
+                            }, options.timeoutMs),
+                        ),
+                    ]);
+                } else {
+                    result = await fn();
+                }
+
                 span.setStatus({ code: 'ok' });
                 return result;
             } catch (error) {
@@ -156,7 +205,16 @@ export class TelemetrySystem {
                 // Process the completed span (skip no-op spans)
                 if (span.getSpanContext().traceId !== 'noop') {
                     const traceItem = span.toTraceItem();
-                    void this.processTraceItem(traceItem);
+
+                    // CRITICAL: For LLM spans (billing data), we MUST ensure they are saved
+                    // For normal spans, we use fire-and-forget for performance
+                    if (isCriticalSpan(traceItem)) {
+                        // Synchronous processing for critical spans - blocks until saved
+                        await this.processTraceItem(traceItem);
+                    } else {
+                        // Async fire-and-forget for normal spans - doesn't block
+                        void this.processTraceItem(traceItem);
+                    }
                 }
             }
         });
@@ -190,18 +248,50 @@ export class TelemetrySystem {
      * Process a trace item through all processors
      */
     private async processTraceItem(item: TraceItem): Promise<void> {
+        const isCritical = isCriticalSpan(item);
+
         for (const processor of this.processors) {
-            try {
-                await processor.process(item);
-            } catch (error) {
-                this.logger.error({
-                    message: 'Trace processor failed',
+            const maxRetries = isCritical ? 3 : 1; // Critical spans get 3 retries
+            let lastError: Error | undefined;
+
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                    await processor.process(item);
+                    lastError = undefined;
+                    break; // Success, exit retry loop
+                } catch (error) {
+                    lastError = error as Error;
+
+                    if (attempt < maxRetries) {
+                        // Wait before retry (exponential backoff)
+                        const backoffMs = Math.min(
+                            100 * Math.pow(2, attempt - 1),
+                            1000,
+                        );
+                        await new Promise((resolve) =>
+                            setTimeout(resolve, backoffMs),
+                        );
+                    }
+                }
+            }
+
+            // If all retries failed, log critical error
+            if (lastError) {
+                const errorLevel = isCritical ? 'error' : 'warn';
+                this.logger[errorLevel]({
+                    message: isCritical
+                        ? '🚨 CRITICAL: LLM span processing failed after all retries - BILLING DATA MAY BE LOST'
+                        : 'Trace processor failed',
                     context: this.constructor.name,
-                    error: error as Error,
+                    error: lastError,
                     metadata: {
                         processor: processor.constructor.name,
                         traceId: item.context.traceId,
                         spanId: item.context.spanId,
+                        isCriticalSpan: isCritical,
+                        isLLMSpan: isCritical,
+                        totalTokens: item.attributes[GEN_AI.USAGE_TOTAL_TOKENS],
+                        maxRetriesAttempted: maxRetries,
                     },
                 });
             }
@@ -229,6 +319,46 @@ export class TelemetrySystem {
                 });
             }
         }
+    }
+
+    /**
+     * Shutdown telemetry system and cleanup resources
+     */
+    async shutdown(): Promise<void> {
+        this.logger.log({
+            message: 'Shutting down telemetry system',
+            context: this.constructor.name,
+        });
+
+        // Flush all pending data
+        await this.flush();
+
+        // Shutdown all processors
+        for (const processor of this.processors) {
+            try {
+                if (processor.shutdown) {
+                    await processor.shutdown();
+                }
+            } catch (error) {
+                this.logger.error({
+                    message: 'Failed to shutdown processor',
+                    context: this.constructor.name,
+                    error: error as Error,
+                    metadata: {
+                        processor: processor.constructor.name,
+                    },
+                });
+            }
+        }
+
+        // Clear resources
+        this.processors = [];
+        this.currentSpan = undefined;
+
+        this.logger.log({
+            message: 'Telemetry system shutdown complete',
+            context: this.constructor.name,
+        });
     }
 
     /**
