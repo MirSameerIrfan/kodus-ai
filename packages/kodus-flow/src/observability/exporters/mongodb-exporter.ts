@@ -581,19 +581,6 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
     }
 
     exportTelemetry(item: TraceItem): void {
-        // Debug: Log telemetry export
-        const hasGenAITokens = !!item.attributes[GEN_AI.USAGE_TOTAL_TOKENS];
-        this.logger.debug({
-            message: 'Exporting telemetry item',
-            context: this.constructor.name,
-            metadata: {
-                spanName: item.name,
-                hasGenAITokens,
-                totalTokens: item.attributes[GEN_AI.USAGE_TOTAL_TOKENS],
-                attributes: Object.keys(item.attributes),
-            },
-        });
-
         const duration = item.endTime - item.startTime;
         const correlationId =
             (item.attributes[AGENT.CORRELATION_ID] as string) ||
