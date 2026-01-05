@@ -13,6 +13,7 @@ x-app-service-template: &app-service-defaults
   restart: unless-stopped
   volumes:
     - .:/usr/src/app:delegated
+    - node_modules_cache:/usr/src/app/node_modules
     - yalc_store:/root/.yalc
   networks:
     - kodus-backend-services
@@ -133,6 +134,7 @@ services:
 
 volumes:
   yalc_store:
+  node_modules_cache:
   pgdata:
   mongodbdata:
 

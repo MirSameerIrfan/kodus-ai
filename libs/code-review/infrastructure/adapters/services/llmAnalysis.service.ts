@@ -52,7 +52,7 @@ export class LLMAnalysisService implements IAIAnalysisService {
 
     constructor(
         private readonly promptRunnerService: PromptRunnerService,
-        private readonly observabilityService: ObservabilityService,
+        private readonly observability: ObservabilityService,
     ) {
         this.llmResponseProcessor = new LLMResponseProcessor();
     }
@@ -145,50 +145,49 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
         };
 
         try {
-            const { result: analysis } =
-                await this.observabilityService.runLLMInSpan({
-                    spanName,
-                    runName,
-                    attrs: spanAttrs,
-                    exec: async (callbacks) => {
-                        return await promptRunner
-                            .builder()
-                            .setParser(ParserType.STRING)
-                            .setLLMJsonMode(true)
-                            .setPayload(baseContext)
-                            .addPrompt({
-                                prompt: prompt_codereview_system_gemini,
-                                role: PromptRole.SYSTEM,
-                                scope: PromptScope.MAIN,
-                            })
-                            .addPrompt({
-                                prompt: prompt_codereview_user_gemini,
-                                role: PromptRole.USER,
-                                scope: PromptScope.MAIN,
-                            })
-                            .addPrompt({
-                                prompt: prompt_codereview_user_deepseek,
-                                role: PromptRole.USER,
-                                scope: PromptScope.FALLBACK,
-                            })
-                            .setTemperature(0)
-                            .addCallbacks(callbacks)
-                            .addMetadata({
-                                organizationId:
-                                    baseContext?.organizationAndTeamData
-                                        ?.organizationId,
-                                teamId: baseContext?.organizationAndTeamData
-                                    ?.teamId,
-                                pullRequestId: baseContext?.pullRequest?.number,
-                                provider,
-                                fallbackProvider,
-                                reviewMode: reviewModeResponse,
-                                runName,
-                            })
-                            .setRunName(runName)
-                            .execute();
-                    },
-                });
+            const { result: analysis } = await this.observability.runLLMInSpan({
+                spanName,
+                runName,
+                attrs: spanAttrs,
+                exec: async (callbacks) => {
+                    return await promptRunner
+                        .builder()
+                        .setParser(ParserType.STRING)
+                        .setLLMJsonMode(true)
+                        .setPayload(baseContext)
+                        .addPrompt({
+                            prompt: prompt_codereview_system_gemini,
+                            role: PromptRole.SYSTEM,
+                            scope: PromptScope.MAIN,
+                        })
+                        .addPrompt({
+                            prompt: prompt_codereview_user_gemini,
+                            role: PromptRole.USER,
+                            scope: PromptScope.MAIN,
+                        })
+                        .addPrompt({
+                            prompt: prompt_codereview_user_deepseek,
+                            role: PromptRole.USER,
+                            scope: PromptScope.FALLBACK,
+                        })
+                        .setTemperature(0)
+                        .addCallbacks(callbacks)
+                        .addMetadata({
+                            organizationId:
+                                baseContext?.organizationAndTeamData
+                                    ?.organizationId,
+                            teamId: baseContext?.organizationAndTeamData
+                                ?.teamId,
+                            pullRequestId: baseContext?.pullRequest?.number,
+                            provider,
+                            fallbackProvider,
+                            reviewMode: reviewModeResponse,
+                            runName,
+                        })
+                        .setRunName(runName)
+                        .execute();
+                },
+            });
 
             if (!analysis) {
                 const message = `No analysis result for PR#${prNumber}`;
@@ -209,12 +208,15 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
                 prNumber,
                 analysis,
             );
+
             if (!analysisResult) {
                 return null;
             }
+
             analysisResult.codeReviewModelUsed = {
                 generateSuggestions: provider,
             };
+
             return analysisResult;
         } catch (error) {
             this.logger.error({
@@ -262,89 +264,82 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
         };
 
         try {
-            const { result: analysis } =
-                await this.observabilityService.runLLMInSpan({
-                    spanName,
-                    runName,
-                    attrs: spanAttrs,
-                    exec: async (callbacks) => {
-                        const schema = z.object({
-                            codeSuggestions: z.array(
-                                z.object({
-                                    id: z.string().optional(),
-                                    relevantFile: z.string(),
-                                    language: z.string(),
-                                    suggestionContent: z.string(),
-                                    existingCode: z.string().optional(),
-                                    improvedCode: z.string(),
-                                    oneSentenceSummary: z.string().optional(),
-                                    relevantLinesStart: z
-                                        .number()
-                                        .min(1)
-                                        .optional(),
-                                    relevantLinesEnd: z
-                                        .number()
-                                        .min(1)
-                                        .optional(),
-                                    label: z.string(),
-                                    severity: z.string().optional(),
-                                    rankScore: z.number().optional(),
-                                    llmPrompt: z.string().optional(),
-                                }),
-                            ),
-                        });
+            const { result: analysis } = await this.observability.runLLMInSpan({
+                spanName,
+                runName,
+                attrs: spanAttrs,
+                exec: async (callbacks) => {
+                    const schema = z.object({
+                        codeSuggestions: z.array(
+                            z.object({
+                                id: z.string().optional(),
+                                relevantFile: z.string(),
+                                language: z.string(),
+                                suggestionContent: z.string(),
+                                existingCode: z.string().optional(),
+                                improvedCode: z.string(),
+                                oneSentenceSummary: z.string().optional(),
+                                relevantLinesStart: z
+                                    .number()
+                                    .min(1)
+                                    .optional(),
+                                relevantLinesEnd: z.number().min(1).optional(),
+                                label: z.string(),
+                                severity: z.string().optional(),
+                                rankScore: z.number().optional(),
+                                llmPrompt: z.string().optional(),
+                            }),
+                        ),
+                    });
 
-                        return await promptRunner
-                            .builder()
-                            .setParser(ParserType.ZOD, schema, {
-                                provider: LLMModelProvider.OPENAI_GPT_4O_MINI,
-                                fallbackProvider:
-                                    LLMModelProvider.OPENAI_GPT_4O,
-                            })
-                            .setLLMJsonMode(true)
-                            .setPayload(baseContext)
-                            .addPrompt({
-                                prompt: prompt_codereview_system_gemini_v2,
-                                role: PromptRole.SYSTEM,
-                                scope: PromptScope.MAIN,
-                            })
-                            .addPrompt({
-                                prompt: prompt_codereview_user_gemini_v2,
-                                role: PromptRole.USER,
-                                scope: PromptScope.MAIN,
-                            })
-                            .addPrompt({
-                                prompt: prompt_codereview_user_deepseek,
-                                role: PromptRole.USER,
-                                scope: PromptScope.FALLBACK,
-                            })
-                            .setTemperature(0)
-                            .addCallbacks(callbacks)
-                            .addMetadata({
-                                hasRelevantContent:
-                                    baseContext?.hasRelevantContent,
-                                organizationId:
-                                    baseContext?.organizationAndTeamData
-                                        ?.organizationId,
-                                teamId: baseContext?.organizationAndTeamData
-                                    ?.teamId,
-                                pullRequestId: baseContext?.pullRequest?.number,
-                                provider:
-                                    byokConfig?.main?.provider ||
-                                    defaultProvider,
-                                model: byokConfig?.main?.model,
-                                fallbackProvider:
-                                    byokConfig?.fallback?.provider ||
-                                    defaultFallback,
-                                fallbackModel: byokConfig?.fallback?.model,
-                                reviewMode: reviewModeResponse,
-                                runName,
-                            })
-                            .setRunName(runName)
-                            .setMaxReasoningTokens(3000)
-                            .execute();
-                    },
-                });
+                    return await promptRunner
+                        .builder()
+                        .setParser(ParserType.ZOD, schema, {
+                            provider: LLMModelProvider.OPENAI_GPT_4O_MINI,
+                            fallbackProvider: LLMModelProvider.OPENAI_GPT_4O,
+                        })
+                        .setLLMJsonMode(true)
+                        .setPayload(baseContext)
+                        .addPrompt({
+                            prompt: prompt_codereview_system_gemini_v2,
+                            role: PromptRole.SYSTEM,
+                            scope: PromptScope.MAIN,
+                        })
+                        .addPrompt({
+                            prompt: prompt_codereview_user_gemini_v2,
+                            role: PromptRole.USER,
+                            scope: PromptScope.MAIN,
+                        })
+                        .addPrompt({
+                            prompt: prompt_codereview_user_deepseek,
+                            role: PromptRole.USER,
+                            scope: PromptScope.FALLBACK,
+                        })
+                        .setTemperature(0)
+                        .addCallbacks(callbacks)
+                        .addMetadata({
+                            hasRelevantContent: baseContext?.hasRelevantContent,
+                            organizationId:
+                                baseContext?.organizationAndTeamData
+                                    ?.organizationId,
+                            teamId: baseContext?.organizationAndTeamData
+                                ?.teamId,
+                            pullRequestId: baseContext?.pullRequest?.number,
+                            provider:
+                                byokConfig?.main?.provider || defaultProvider,
+                            model: byokConfig?.main?.model,
+                            fallbackProvider:
+                                byokConfig?.fallback?.provider ||
+                                defaultFallback,
+                            fallbackModel: byokConfig?.fallback?.model,
+                            reviewMode: reviewModeResponse,
+                            runName,
+                        })
+                        .setRunName(runName)
+                        .setMaxReasoningTokens(3000)
+                        .execute();
+                },
+            });
 
             if (!analysis) {
                 const message = `No analysis result for PR#${prNumber}`;
@@ -452,7 +447,7 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
         };
 
         try {
-            const { result } = await this.observabilityService.runLLMInSpan({
+            const { result } = await this.observability.runLLMInSpan({
                 spanName,
                 runName,
                 attrs: spanAttrs,
@@ -554,7 +549,7 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
         };
 
         try {
-            const { result } = await this.observabilityService.runLLMInSpan({
+            const { result } = await this.observability.runLLMInSpan({
                 spanName,
                 runName,
                 attrs: spanAttrs,
@@ -704,7 +699,7 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
             });
 
             const { result: filteredSuggestionsRaw } =
-                await this.observabilityService.runLLMInSpan({
+                await this.observability.runLLMInSpan({
                     spanName,
                     runName,
                     attrs: spanAttrs,
@@ -852,7 +847,7 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
         };
 
         try {
-            const { result } = await this.observabilityService.runLLMInSpan({
+            const { result } = await this.observability.runLLMInSpan({
                 spanName,
                 runName,
                 attrs: spanAttrs,
@@ -951,7 +946,7 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
         };
 
         try {
-            const { result } = await this.observabilityService.runLLMInSpan({
+            const { result } = await this.observability.runLLMInSpan({
                 spanName,
                 runName,
                 attrs: spanAttrs,

@@ -12,14 +12,15 @@
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/app",
             "sourceMaps": true,
-            "outFiles": ["${workspaceFolder}/dist/apps/api/**/*.js"],
+            "outFiles": ["${workspaceFolder}/dist/**/*.js"],
             "resolveSourceMapLocations": [
-                "${workspaceFolder}/dist/**",
+                "${workspaceFolder}/dist/**/*.map",
                 "!**/node_modules/**"
             ],
             "sourceMapPathOverrides": {
                 "webpack:///./*": "${workspaceFolder}/*",
                 "webpack:///*": "${workspaceFolder}/*",
+                "file:///usr/src/app/*": "${workspaceFolder}/*",
                 "/usr/src/app/*": "${workspaceFolder}/*"
             },
             "skipFiles": ["<node_internals>/**"]
@@ -35,14 +36,15 @@
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/app",
             "sourceMaps": true,
-            "outFiles": ["${workspaceFolder}/dist/apps/webhooks/**/*.js"],
+            "outFiles": ["${workspaceFolder}/dist/**/*.js"],
             "resolveSourceMapLocations": [
-                "${workspaceFolder}/dist/**",
+                "${workspaceFolder}/dist/**/*.map",
                 "!**/node_modules/**"
             ],
             "sourceMapPathOverrides": {
                 "webpack:///./*": "${workspaceFolder}/*",
                 "webpack:///*": "${workspaceFolder}/*",
+                "file:///usr/src/app/*": "${workspaceFolder}/*",
                 "/usr/src/app/*": "${workspaceFolder}/*"
             },
             "skipFiles": ["<node_internals>/**"]
@@ -58,14 +60,15 @@
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/app",
             "sourceMaps": true,
-            "outFiles": ["${workspaceFolder}/dist/apps/worker/**/*.js"],
+            "outFiles": ["${workspaceFolder}/dist/**/*.js"],
             "resolveSourceMapLocations": [
-                "${workspaceFolder}/dist/**",
+                "${workspaceFolder}/dist/**/*.map",
                 "!**/node_modules/**"
             ],
             "sourceMapPathOverrides": {
                 "webpack:///./*": "${workspaceFolder}/*",
                 "webpack:///*": "${workspaceFolder}/*",
+                "file:///usr/src/app/*": "${workspaceFolder}/*",
                 "/usr/src/app/*": "${workspaceFolder}/*"
             },
             "skipFiles": ["<node_internals>/**"]

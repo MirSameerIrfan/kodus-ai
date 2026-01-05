@@ -6,6 +6,7 @@ import {
     LogContext,
     AGENT,
     TOOL,
+    GEN_AI,
 } from '../types.js';
 import { createLogger } from '../logger.js';
 import {
@@ -15,6 +16,9 @@ import {
     MongoDBTelemetryItem,
     ObservabilityStorageConfig,
 } from '../../core/types/allTypes.js';
+import { promises as fs } from 'fs';
+import { EOL, tmpdir } from 'os';
+import { join } from 'path';
 
 export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
     public readonly name = 'MongoDBExporter';
@@ -29,22 +33,48 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
         telemetry: any;
     } | null = null;
 
-    // Buffers para batch processing
+    // Dual Buffers: Crítico (LLM) vs Normal
     private logBuffer: MongoDBLogItem[] = [];
-    private telemetryBuffer: MongoDBTelemetryItem[] = [];
-    private readonly maxBufferSize = 5000; // Cap buffer size to prevent memory leaks
+    private criticalTelemetryBuffer: MongoDBTelemetryItem[] = []; // LLM spans (billing)
+    private normalTelemetryBuffer: MongoDBTelemetryItem[] = []; // Normal spans
+    private readonly maxBufferSize = 5000; // Normal buffer
+    private readonly maxCriticalBufferSize = 10000; // Critical buffer (maior, nunca descarta)
 
     // Flush timers
     private logFlushTimer: NodeJS.Timeout | null = null;
     private telemetryFlushTimer: NodeJS.Timeout | null = null;
+    private healthCheckTimer: NodeJS.Timeout | null = null;
 
     private isFlushingLogs = false;
     private isFlushingTelemetry = false;
+
+    // Write-Ahead Log (WAL) para spans críticos
+    private walEnabled = true;
+    private walPath =
+        process.env.KODUS_WAL_PATH ||
+        join(
+            process.env.KODUS_DATA_DIR || tmpdir(),
+            'kodus-wal-critical-spans.jsonl',
+        );
+    private dlqPath =
+        process.env.KODUS_DLQ_PATH ||
+        join(
+            process.env.KODUS_DATA_DIR || tmpdir(),
+            'kodus-dlq-overflow.jsonl',
+        );
 
     private isInitialized = false;
     private reconnectInProgress = false;
     private lastReconnectAt = 0;
     private readonly reconnectDelayMs = 5000;
+
+    // Circuit Breaker state
+    private circuitBreakerState: 'closed' | 'open' | 'half-open' = 'closed';
+    private failureCount = 0;
+    private readonly failureThreshold = 5; // Open circuit after 5 failures
+    private readonly resetTimeout = 30000; // Try to close circuit after 30s
+    private lastFailureTime = 0;
+    private successCount = 0;
 
     constructor(config: Partial<MongoDBExporterConfig> = {}) {
         this.config = {
@@ -63,6 +93,137 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
         };
 
         this.logger = createLogger('mongodb-exporter');
+    }
+
+    /**
+     * Identifica se um span é crítico (LLM = billing)
+     */
+    private isCriticalSpan(item: MongoDBTelemetryItem): boolean {
+        return !!item.attributes?.[GEN_AI.USAGE_TOTAL_TOKENS];
+    }
+
+    /**
+     * WAL: Escreve span crítico em arquivo local (async, não bloqueia)
+     */
+    private async writeToWal(item: MongoDBTelemetryItem): Promise<void> {
+        if (!this.walEnabled) return;
+
+        try {
+            const line = JSON.stringify(item) + EOL;
+            await fs.appendFile(this.walPath, line, 'utf8');
+        } catch (error) {
+            // Não deve travar se WAL falhar, mas loga o erro
+            this.logger.error({
+                message: 'Failed to write to WAL',
+                context: this.constructor.name,
+                error: error as Error,
+            });
+        }
+    }
+
+    /**
+     * WAL: Recupera spans críticos do arquivo local
+     */
+    private async recoverFromWal(): Promise<void> {
+        if (!this.walEnabled) return;
+
+        try {
+            const content = await fs.readFile(this.walPath, 'utf8');
+            const lines = content.split(EOL).filter((line) => line.trim());
+
+            if (lines.length === 0) return;
+
+            this.logger.log({
+                message: `Recovering ${lines.length} critical spans from WAL`,
+                context: this.constructor.name,
+            });
+
+            for (const line of lines) {
+                try {
+                    const item = JSON.parse(line) as MongoDBTelemetryItem;
+                    this.criticalTelemetryBuffer.push(item);
+                } catch (parseError) {
+                    this.logger.warn({
+                        message: 'Failed to parse WAL line',
+                        context: this.constructor.name,
+                        error: parseError as Error,
+                    });
+                }
+            }
+
+            this.logger.log({
+                message: `WAL recovery complete: ${this.criticalTelemetryBuffer.length} spans recovered`,
+                context: this.constructor.name,
+            });
+        } catch (error) {
+            if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+                this.logger.error({
+                    message: 'Failed to recover from WAL',
+                    context: this.constructor.name,
+                    error: error as Error,
+                });
+            }
+        }
+    }
+
+    /**
+     * WAL: Limpa arquivo após flush bem-sucedido
+     */
+    private async clearWal(): Promise<void> {
+        if (!this.walEnabled) return;
+
+        try {
+            await fs.unlink(this.walPath);
+        } catch (error) {
+            if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+                this.logger.warn({
+                    message: 'Failed to clear WAL',
+                    context: this.constructor.name,
+                    error: error as Error,
+                });
+            }
+        }
+    }
+
+    /**
+     * DLQ: Escreve overflow para Dead Letter Queue
+     */
+    private async writeToDeadLetterQueue(
+        items: MongoDBTelemetryItem[],
+    ): Promise<void> {
+        try {
+            const lines =
+                items.map((item) => JSON.stringify(item)).join(EOL) + EOL;
+            await fs.appendFile(this.dlqPath, lines, 'utf8');
+
+            this.logger.error({
+                message:
+                    '🚨 CRITICAL: Buffer overflow - spans moved to Dead Letter Queue',
+                context: this.constructor.name,
+                metadata: {
+                    overflowCount: items.length,
+                    dlqPath: this.dlqPath,
+                    totalTokens: items.reduce(
+                        (sum, item) =>
+                            sum +
+                            ((item.attributes?.[
+                                GEN_AI.USAGE_TOTAL_TOKENS
+                            ] as number) || 0),
+                        0,
+                    ),
+                },
+            });
+        } catch (error) {
+            this.logger.error({
+                message:
+                    '🚨🚨 CATASTROPHIC: Failed to write to DLQ - DATA LOST',
+                context: this.constructor.name,
+                error: error as Error,
+                metadata: {
+                    lostSpans: items.length,
+                },
+            });
+        }
     }
 
     // --- ObservabilityExporter Implementation ---
@@ -84,10 +245,14 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
             const { MongoClient: mongoClient } = await import('mongodb');
 
             this.client = new mongoClient(this.config.connectionString, {
-                maxPoolSize: 10,
-                serverSelectionTimeoutMS: 5000,
-                connectTimeoutMS: 10000,
-                socketTimeoutMS: 45000,
+                maxPoolSize: 20, // Aumentado para alto volume
+                minPoolSize: 5, // Pool mínimo sempre ativo
+                serverSelectionTimeoutMS: 3000, // Mais rápido
+                connectTimeoutMS: 5000, // Timeout menor
+                socketTimeoutMS: 30000, // Evita conexões travadas
+                maxIdleTimeMS: 30000, // Limpa conexões idle
+                retryWrites: true, // Retry automático em caso de falha
+                retryReads: true, // Retry reads também
             });
 
             await this.client.connect();
@@ -106,6 +271,9 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
 
             // Configurar TTL para limpeza automática
             await this.setupTTL();
+
+            // Recuperar spans críticos do WAL (se existir)
+            await this.recoverFromWal();
 
             // Iniciar timers de flush
             this.startFlushTimers();
@@ -136,7 +304,9 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
      * Criar índices para performance
      */
     private async createIndexes(): Promise<void> {
-        if (!this.collections) return;
+        if (!this.collections) {
+            return;
+        }
 
         try {
             // Logs indexes
@@ -270,6 +440,66 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
             () => this.flushTelemetry(),
             this.config.flushIntervalMs,
         );
+
+        // Health check a cada 30s
+        this.healthCheckTimer = setInterval(() => this.checkHealth(), 30000);
+    }
+
+    /**
+     * Monitoramento automático: Verifica alertas e loga warnings
+     */
+    private checkHealth(): void {
+        const metrics = this.getMetrics();
+
+        if (metrics.alerts.circuitOpen) {
+            this.logger.warn({
+                message:
+                    '⚠️ ALERT: Circuit breaker is OPEN - MongoDB unavailable',
+                context: this.constructor.name,
+                metadata: {
+                    failureCount: metrics.failureCount,
+                    criticalBuffered: metrics.criticalTelemetryBuffered,
+                },
+            });
+        }
+
+        if (metrics.alerts.criticalBufferCritical) {
+            this.logger.error({
+                message:
+                    '🚨 ALERT: Critical buffer at 95% capacity - Data loss imminent!',
+                context: this.constructor.name,
+                metadata: {
+                    criticalBuffered: metrics.criticalTelemetryBuffered,
+                    maxSize: this.maxCriticalBufferSize,
+                    percentage:
+                        (metrics.criticalTelemetryBuffered /
+                            this.maxCriticalBufferSize) *
+                        100,
+                },
+            });
+        } else if (metrics.alerts.criticalBufferHigh) {
+            this.logger.warn({
+                message:
+                    '⚠️ ALERT: Critical buffer at 80% capacity - Action needed',
+                context: this.constructor.name,
+                metadata: {
+                    criticalBuffered: metrics.criticalTelemetryBuffered,
+                    maxSize: this.maxCriticalBufferSize,
+                },
+            });
+        }
+
+        if (metrics.alerts.multipleFailures && !metrics.alerts.circuitOpen) {
+            this.logger.warn({
+                message:
+                    '⚠️ ALERT: Multiple MongoDB failures detected - Circuit may open soon',
+                context: this.constructor.name,
+                metadata: {
+                    failureCount: metrics.failureCount,
+                    threshold: this.failureThreshold,
+                },
+            });
+        }
     }
 
     /**
@@ -351,6 +581,19 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
     }
 
     exportTelemetry(item: TraceItem): void {
+        // Debug: Log telemetry export
+        const hasGenAITokens = !!item.attributes[GEN_AI.USAGE_TOTAL_TOKENS];
+        this.logger.debug({
+            message: 'Exporting telemetry item',
+            context: this.constructor.name,
+            metadata: {
+                spanName: item.name,
+                hasGenAITokens,
+                totalTokens: item.attributes[GEN_AI.USAGE_TOTAL_TOKENS],
+                attributes: Object.keys(item.attributes),
+            },
+        });
+
         const duration = item.endTime - item.startTime;
         const correlationId =
             (item.attributes[AGENT.CORRELATION_ID] as string) ||
@@ -397,16 +640,59 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
             createdAt: new Date(),
         };
 
-        this.telemetryBuffer.push(telemetryItem);
+        // Dual Buffer: Crítico (LLM) vs Normal
+        const isCritical = this.isCriticalSpan(telemetryItem);
 
-        // Prevent buffer overflow
-        if (this.telemetryBuffer.length >= this.maxBufferSize) {
-            const droppedCount =
-                this.telemetryBuffer.length - this.maxBufferSize + 1;
-            this.telemetryBuffer.splice(0, droppedCount);
+        if (isCritical) {
+            // Span crítico (LLM = billing): NUNCA descarta + WAL
+            this.criticalTelemetryBuffer.push(telemetryItem);
+
+            // WAL: Persiste localmente (async, não bloqueia)
+            void this.writeToWal(telemetryItem);
+
+            // Critical buffer hard cap: Move overflow para DLQ
+            if (
+                this.criticalTelemetryBuffer.length >=
+                this.maxCriticalBufferSize
+            ) {
+                // Remove os 1000 mais antigos para DLQ
+                const overflowCount = Math.min(
+                    1000,
+                    this.criticalTelemetryBuffer.length -
+                        this.maxCriticalBufferSize +
+                        1000,
+                );
+                const overflow = this.criticalTelemetryBuffer.splice(
+                    0,
+                    overflowCount,
+                );
+
+                // Escreve no DLQ (async, não bloqueia)
+                void this.writeToDeadLetterQueue(overflow);
+            }
+        } else {
+            // Span normal: Buffer menor, pode descartar se necessário
+            this.normalTelemetryBuffer.push(telemetryItem);
+
+            // Prevent buffer overflow (apenas para normal)
+            if (this.normalTelemetryBuffer.length >= this.maxBufferSize) {
+                const droppedCount =
+                    this.normalTelemetryBuffer.length - this.maxBufferSize + 1;
+                this.normalTelemetryBuffer.splice(0, droppedCount);
+                this.logger.warn({
+                    message:
+                        'Normal telemetry buffer overflow, dropping old items',
+                    context: this.constructor.name,
+                    metadata: { droppedCount },
+                });
+            }
         }
 
-        if (this.telemetryBuffer.length >= this.config.batchSize) {
+        // Trigger flush if either buffer reaches batch size
+        const totalTelemetry =
+            this.criticalTelemetryBuffer.length +
+            this.normalTelemetryBuffer.length;
+        if (totalTelemetry >= this.config.batchSize) {
             void this.flushTelemetry();
         }
     }
@@ -466,44 +752,193 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
     }
 
     /**
-     * Flush telemetry para MongoDB
+     * Circuit Breaker: Check if we should allow the operation
+     */
+    private canExecute(): boolean {
+        const now = Date.now();
+
+        // If circuit is open, check if we should try half-open
+        if (this.circuitBreakerState === 'open') {
+            if (now - this.lastFailureTime >= this.resetTimeout) {
+                this.circuitBreakerState = 'half-open';
+                this.logger.warn({
+                    message: 'Circuit breaker entering half-open state',
+                    context: this.constructor.name,
+                });
+                return true;
+            }
+            return false; // Circuit still open
+        }
+
+        return true; // Closed or half-open, allow execution
+    }
+
+    /**
+     * Circuit Breaker: Record a successful operation
+     */
+    private recordSuccess(): void {
+        if (this.circuitBreakerState === 'half-open') {
+            this.successCount++;
+            if (this.successCount >= 2) {
+                // After 2 successes in half-open, close the circuit
+                this.circuitBreakerState = 'closed';
+                this.failureCount = 0;
+                this.successCount = 0;
+                this.logger.log({
+                    message: 'Circuit breaker closed - MongoDB healthy',
+                    context: this.constructor.name,
+                });
+            }
+        } else if (this.circuitBreakerState === 'closed') {
+            // Reset failure count on success
+            this.failureCount = 0;
+        }
+    }
+
+    /**
+     * Circuit Breaker: Record a failed operation
+     */
+    private recordFailure(): void {
+        this.lastFailureTime = Date.now();
+        this.failureCount++;
+        this.successCount = 0;
+
+        if (
+            this.failureCount >= this.failureThreshold &&
+            this.circuitBreakerState !== 'open'
+        ) {
+            this.circuitBreakerState = 'open';
+            this.logger.error({
+                message: '🚨 Circuit breaker OPENED - MongoDB unavailable',
+                context: this.constructor.name,
+                metadata: {
+                    failureCount: this.failureCount,
+                    threshold: this.failureThreshold,
+                    resetTimeout: this.resetTimeout,
+                },
+            });
+        }
+    }
+
+    /**
+     * Flush telemetry para MongoDB (Dual Buffer: Crítico + Normal)
      */
     private async flushTelemetry(): Promise<void> {
-        if (this.telemetryBuffer.length === 0 || this.isFlushingTelemetry) {
+        if (
+            this.criticalTelemetryBuffer.length === 0 &&
+            this.normalTelemetryBuffer.length === 0
+        ) {
             return;
         }
+
+        if (this.isFlushingTelemetry) return;
+
+        // Circuit Breaker: Skip normal spans if circuit is open, but try critical anyway
+        const circuitOpen = !this.canExecute();
+
         if (!this.collections) {
+            this.recordFailure();
             void this.scheduleReconnect('flushTelemetry');
             return;
         }
 
         this.isFlushingTelemetry = true;
-        const telemetryToFlush = [...this.telemetryBuffer];
-        this.telemetryBuffer = [];
 
-        try {
-            await this.collections.telemetry.insertMany(telemetryToFlush);
-            // Removed debug log to avoid recursive logging and pollution
-        } catch (error) {
-            this.logger.error({
-                message: 'Failed to flush telemetry to MongoDB',
-                context: this.constructor.name,
-                error: error as Error,
-            });
+        // 1️⃣ CRITICAL SPANS (LLM = Billing) - SEMPRE tenta, mesmo com circuit open
+        if (this.criticalTelemetryBuffer.length > 0) {
+            const criticalToFlush = [...this.criticalTelemetryBuffer];
+            this.criticalTelemetryBuffer = [];
 
-            await this.handleConnectionError(error as Error, 'flushTelemetry');
+            try {
+                await this.collections.telemetry.insertMany(criticalToFlush);
+                this.recordSuccess();
 
-            const availableSpace =
-                this.maxBufferSize - this.telemetryBuffer.length;
-            if (availableSpace > 0) {
-                const toKeep = telemetryToFlush.slice(
-                    Math.max(0, telemetryToFlush.length - availableSpace),
+                // WAL: Limpa após sucesso
+                await this.clearWal();
+
+                this.logger.log({
+                    message: `Flushed ${criticalToFlush.length} critical LLM spans`,
+                    context: this.constructor.name,
+                });
+            } catch (error) {
+                this.recordFailure();
+
+                this.logger.error({
+                    message:
+                        '🚨 CRITICAL: Failed to flush LLM spans - DATA IN WAL',
+                    context: this.constructor.name,
+                    error: error as Error,
+                    metadata: {
+                        lostSpans: criticalToFlush.length,
+                        totalTokens: criticalToFlush.reduce(
+                            (sum, item) =>
+                                sum +
+                                (item.attributes?.[
+                                    GEN_AI.USAGE_TOTAL_TOKENS
+                                ] as number),
+                            0,
+                        ),
+                    },
+                });
+
+                await this.handleConnectionError(
+                    error as Error,
+                    'flushTelemetry',
                 );
-                this.telemetryBuffer.unshift(...toKeep);
+
+                // Re-adiciona ao buffer (críticos NUNCA são descartados)
+                this.criticalTelemetryBuffer.unshift(...criticalToFlush);
             }
-        } finally {
-            this.isFlushingTelemetry = false;
         }
+
+        // 2️⃣ NORMAL SPANS - Só flush se circuit closed
+        if (
+            !circuitOpen &&
+            this.normalTelemetryBuffer.length > 0 &&
+            this.collections
+        ) {
+            const normalToFlush = [...this.normalTelemetryBuffer];
+            this.normalTelemetryBuffer = [];
+
+            try {
+                await this.collections.telemetry.insertMany(normalToFlush);
+                this.recordSuccess();
+            } catch (error) {
+                this.recordFailure();
+
+                this.logger.warn({
+                    message: 'Failed to flush normal telemetry to MongoDB',
+                    context: this.constructor.name,
+                    error: error as Error,
+                });
+
+                await this.handleConnectionError(
+                    error as Error,
+                    'flushTelemetry',
+                );
+
+                // Re-adiciona respeitando limite do buffer
+                const availableSpace =
+                    this.maxBufferSize - this.normalTelemetryBuffer.length;
+                if (availableSpace > 0) {
+                    const toKeep = normalToFlush.slice(
+                        Math.max(0, normalToFlush.length - availableSpace),
+                    );
+                    this.normalTelemetryBuffer.unshift(...toKeep);
+                }
+            }
+        } else if (circuitOpen && this.normalTelemetryBuffer.length > 0) {
+            this.logger.warn({
+                message:
+                    'Circuit breaker OPEN - skipping normal telemetry flush',
+                context: this.constructor.name,
+                metadata: {
+                    normalBufferSize: this.normalTelemetryBuffer.length,
+                },
+            });
+        }
+
+        this.isFlushingTelemetry = false;
     }
 
     /**
@@ -514,16 +949,72 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
     }
 
     /**
-     * Dispose do exporter
+     * Dispose do exporter com graceful shutdown
      */
     async dispose(): Promise<void> {
+        this.logger.log({
+            message: 'Graceful shutdown initiated',
+            context: this.constructor.name,
+            metadata: {
+                pendingLogs: this.logBuffer.length,
+                pendingCriticalTelemetry: this.criticalTelemetryBuffer.length,
+                pendingNormalTelemetry: this.normalTelemetryBuffer.length,
+                circuitState: this.circuitBreakerState,
+            },
+        });
+
+        // Stop accepting new data
         if (this.logFlushTimer) clearInterval(this.logFlushTimer);
         if (this.telemetryFlushTimer) clearInterval(this.telemetryFlushTimer);
+        if (this.healthCheckTimer) clearInterval(this.healthCheckTimer);
 
-        await this.flush();
+        // Temporarily force circuit closed to allow final flush
+        const originalCircuitState = this.circuitBreakerState;
+        this.circuitBreakerState = 'closed';
 
+        // Flush all pending data with timeout
+        try {
+            await Promise.race([
+                this.flush(),
+                new Promise((_, reject) =>
+                    setTimeout(
+                        () =>
+                            reject(new Error('Flush timeout during shutdown')),
+                        10000,
+                    ),
+                ),
+            ]);
+            this.logger.log({
+                message: 'All buffers flushed successfully during shutdown',
+                context: this.constructor.name,
+            });
+        } catch (error) {
+            this.logger.error({
+                message:
+                    '🚨 CRITICAL: Failed to flush buffers during shutdown - DATA MAY BE LOST',
+                context: this.constructor.name,
+                error: error as Error,
+                metadata: {
+                    lostLogs: this.logBuffer.length,
+                    lostCriticalTelemetry: this.criticalTelemetryBuffer.length,
+                    lostNormalTelemetry: this.normalTelemetryBuffer.length,
+                },
+            });
+        } finally {
+            this.circuitBreakerState = originalCircuitState;
+        }
+
+        // Close MongoDB connection
         if (this.client) {
-            await this.client.close();
+            try {
+                await this.client.close();
+            } catch (error) {
+                this.logger.error({
+                    message: 'Error closing MongoDB connection',
+                    context: this.constructor.name,
+                    error: error as Error,
+                });
+            }
         }
 
         this.collections = null;
@@ -531,10 +1022,110 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
         this.client = null;
         this.isInitialized = false;
         this.reconnectInProgress = false;
+
         this.logger.log({
-            message: 'MongoDB Exporter disposed',
+            message: 'Graceful shutdown completed',
             context: this.constructor.name,
         });
+    }
+
+    /**
+     * Get health status of the exporter
+     */
+    getHealthStatus(): {
+        healthy: boolean;
+        initialized: boolean;
+        circuitState: string;
+        bufferStats: {
+            logs: number;
+            criticalTelemetry: number;
+            normalTelemetry: number;
+            totalTelemetry: number;
+            logsPercentage: number;
+            criticalTelemetryPercentage: number;
+            normalTelemetryPercentage: number;
+        };
+        connectionStats: {
+            connected: boolean;
+            failureCount: number;
+            lastFailureTime: number;
+        };
+    } {
+        const totalTelemetry =
+            this.criticalTelemetryBuffer.length +
+            this.normalTelemetryBuffer.length;
+
+        return {
+            healthy:
+                this.isInitialized &&
+                this.circuitBreakerState !== 'open' &&
+                !!this.collections,
+            initialized: this.isInitialized,
+            circuitState: this.circuitBreakerState,
+            bufferStats: {
+                logs: this.logBuffer.length,
+                criticalTelemetry: this.criticalTelemetryBuffer.length,
+                normalTelemetry: this.normalTelemetryBuffer.length,
+                totalTelemetry,
+                logsPercentage:
+                    (this.logBuffer.length / this.maxBufferSize) * 100,
+                criticalTelemetryPercentage:
+                    (this.criticalTelemetryBuffer.length /
+                        this.maxCriticalBufferSize) *
+                    100,
+                normalTelemetryPercentage:
+                    (this.normalTelemetryBuffer.length / this.maxBufferSize) *
+                    100,
+            },
+            connectionStats: {
+                connected: !!this.client && !!this.collections,
+                failureCount: this.failureCount,
+                lastFailureTime: this.lastFailureTime,
+            },
+        };
+    }
+
+    /**
+     * Get metrics for monitoring
+     */
+    getMetrics(): {
+        totalLogsBuffered: number;
+        criticalTelemetryBuffered: number;
+        normalTelemetryBuffered: number;
+        totalTelemetryBuffered: number;
+        circuitState: string;
+        failureCount: number;
+        isHealthy: boolean;
+        alerts: {
+            circuitOpen: boolean;
+            criticalBufferHigh: boolean;
+            criticalBufferCritical: boolean;
+            normalBufferHigh: boolean;
+            multipleFailures: boolean;
+        };
+    } {
+        const health = this.getHealthStatus();
+        const criticalBufferUsage =
+            this.criticalTelemetryBuffer.length / this.maxCriticalBufferSize;
+        const normalBufferUsage =
+            this.normalTelemetryBuffer.length / this.maxBufferSize;
+
+        return {
+            totalLogsBuffered: health.bufferStats.logs,
+            criticalTelemetryBuffered: health.bufferStats.criticalTelemetry,
+            normalTelemetryBuffered: health.bufferStats.normalTelemetry,
+            totalTelemetryBuffered: health.bufferStats.totalTelemetry,
+            circuitState: health.circuitState,
+            failureCount: health.connectionStats.failureCount,
+            isHealthy: health.healthy,
+            alerts: {
+                circuitOpen: this.circuitBreakerState === 'open',
+                criticalBufferHigh: criticalBufferUsage > 0.8, // >80%
+                criticalBufferCritical: criticalBufferUsage > 0.95, // >95%
+                normalBufferHigh: normalBufferUsage > 0.8,
+                multipleFailures: this.failureCount >= 3,
+            },
+        };
     }
 
     private isConnectionError(error: Error): boolean {
