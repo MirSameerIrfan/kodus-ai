@@ -67,4 +67,17 @@ export interface IASTAnalysisService {
         filePath: string,
         taskId: string,
     ): Promise<{ content: string }>;
+    startDiagnostic(payload: {
+        repository: any;
+        pullRequest: any;
+        organizationAndTeamData: OrganizationAndTeamData;
+        platformType: string;
+        files: {
+            filePath: string;
+            patchedCode: string;
+        }[];
+    }): Promise<string>;
+    getDiagnostic(taskId: string): Promise<any>;
+    test(payload: any): Promise<any>;
+    getTest(id: string): Promise<any>;
 }

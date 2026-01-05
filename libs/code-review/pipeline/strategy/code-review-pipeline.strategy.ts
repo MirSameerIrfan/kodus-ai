@@ -2,29 +2,29 @@
  * @license
  * Kodus Tech. All rights reserved.
  */
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ValidateConfigStage } from '../stages/validate-config.stage';
 
-import { ValidateNewCommitsStage } from '../stages/validate-new-commits.stage';
+import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
+import { IPipelineStrategy } from '@libs/core/infrastructure/pipeline/interfaces/pipeline-strategy.interface';
+import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
+import { AggregateResultsStage } from '../stages/aggregate-result.stage';
 import {
     ILoadExternalContextStage,
     LOAD_EXTERNAL_CONTEXT_STAGE_TOKEN,
 } from '../stages/contracts/loadExternalContextStage.contract';
-import { Inject } from '@nestjs/common';
-import { IPipelineStrategy } from '@libs/core/infrastructure/pipeline/interfaces/pipeline-strategy.interface';
-import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
-import { ResolveConfigStage } from '../stages/resolve-config.stage';
+import { CreateFileCommentsStage } from '../stages/create-file-comments.stage';
+import { CreatePrLevelCommentsStage } from '../stages/create-pr-level-comments.stage';
 import { FetchChangedFilesStage } from '../stages/fetch-changed-files.stage';
 import { FileContextGateStage } from '../stages/file-context-gate.stage';
+import { UpdateCommentsAndGenerateSummaryStage } from '../stages/finish-comments.stage';
+import { RequestChangesOrApproveStage } from '../stages/finish-process-review.stage';
 import { InitialCommentStage } from '../stages/initial-comment.stage';
 import { ProcessFilesPrLevelReviewStage } from '../stages/process-files-pr-level-review.stage';
 import { ProcessFilesReview } from '../stages/process-files-review.stage';
-import { CreatePrLevelCommentsStage } from '../stages/create-pr-level-comments.stage';
-import { AggregateResultsStage } from '../stages/aggregate-result.stage';
-import { UpdateCommentsAndGenerateSummaryStage } from '../stages/finish-comments.stage';
-import { RequestChangesOrApproveStage } from '../stages/finish-process-review.stage';
-import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
-import { CreateFileCommentsStage } from '../stages/create-file-comments.stage';
+import { ResolveConfigStage } from '../stages/resolve-config.stage';
+import { ValidateNewCommitsStage } from '../stages/validate-new-commits.stage';
+import { ValidateSuggestionsStage } from '../stages/validate-suggestions.stage';
 
 @Injectable()
 export class CodeReviewPipelineStrategy implements IPipelineStrategy<CodeReviewPipelineContext> {
@@ -44,6 +44,7 @@ export class CodeReviewPipelineStrategy implements IPipelineStrategy<CodeReviewP
         private readonly aggregateResultsStage: AggregateResultsStage,
         private readonly updateCommentsAndGenerateSummaryStage: UpdateCommentsAndGenerateSummaryStage,
         private readonly requestChangesOrApproveStage: RequestChangesOrApproveStage,
+        private readonly validateSuggestionsStage: ValidateSuggestionsStage,
     ) {}
 
     configureStages(): BasePipelineStage<CodeReviewPipelineContext>[] {
@@ -62,6 +63,7 @@ export class CodeReviewPipelineStrategy implements IPipelineStrategy<CodeReviewP
             this.aggregateResultsStage,
             this.updateCommentsAndGenerateSummaryStage,
             this.requestChangesOrApproveStage,
+            this.validateSuggestionsStage,
         ];
     }
 

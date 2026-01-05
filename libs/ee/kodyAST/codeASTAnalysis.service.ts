@@ -2,43 +2,43 @@ import { Injectable } from '@nestjs/common';
 
 import {
     LLMModelProvider,
-    PromptRunnerService,
-    PromptRole,
     ParserType,
+    PromptRole,
+    PromptRunnerService,
 } from '@kodus/kodus-common/llm';
 
 import type { ContextPack } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { createLogger } from '@kodus/flow';
+import {
+    getAugmentationsFromPack,
+    getOverridesFromPack,
+} from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context.utils';
+import { ContextAugmentationsMap } from '@libs/ai-engine/infrastructure/adapters/services/context/interfaces/code-review-context-pack.interface';
+import { LLMResponseProcessor } from '@libs/ai-engine/infrastructure/adapters/services/llmResponseProcessor.transform';
+import { IASTAnalysisService } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
+import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
+import { prompt_detectBreakingChanges } from '@libs/common/utils/langchainCommon/prompts/detectBreakingChanges';
 import { calculateBackoffInterval } from '@libs/common/utils/polling';
+import { AxiosASTService } from '@libs/core/infrastructure/config/axios/microservices/ast.axios';
 import {
     AIAnalysisResult,
     AnalysisContext,
     CodeSuggestion,
     Repository,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import {
-    getAugmentationsFromPack,
-    getOverridesFromPack,
-} from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context.utils';
-import { ContextAugmentationsMap } from '@libs/ai-engine/infrastructure/adapters/services/context/interfaces/code-review-context-pack.interface';
-import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
-import { prompt_detectBreakingChanges } from '@libs/common/utils/langchainCommon/prompts/detectBreakingChanges';
-import { AxiosASTService } from '@libs/core/infrastructure/config/axios/microservices/ast.axios';
-import { LLMResponseProcessor } from '@libs/ai-engine/infrastructure/adapters/services/llmResponseProcessor.transform';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { ObservabilityService } from '@libs/core/log/observability.service';
-import { createLogger } from '@kodus/flow';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
-import { IASTAnalysisService } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
 
 import {
-    TaskStatus,
-    InitializeRepositoryResponse,
-    InitializeImpactAnalysisResponse,
-    GetTaskInfoResponse,
     GetImpactAnalysisResponse,
+    GetTaskInfoResponse,
+    InitializeImpactAnalysisResponse,
+    InitializeRepositoryResponse,
     ProtoAuthMode,
     ProtoPlatformType,
     RepositoryData,
+    TaskStatus,
 } from './interfaces/code-ast-analysis.interface';
 
 @Injectable()
@@ -417,7 +417,7 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
             {
                 id: repository.id,
                 name: repository.name,
-                defaultBranch: pullRequest.head.ref,
+                defaultBranch: pullRequest.head?.ref,
                 fullName:
                     repository.full_name ||
                     `${repository.owner}/${repository.name}`,
@@ -439,7 +439,7 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
             {
                 id: repository.id,
                 name: repository.name,
-                defaultBranch: pullRequest.base.ref,
+                defaultBranch: pullRequest.base?.ref,
                 fullName:
                     repository.full_name ||
                     `${repository.owner}/${repository.name}`,
@@ -645,5 +645,68 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
             });
             throw error;
         }
+    }
+
+    async startDiagnostic(payload: {
+        repository: any;
+        pullRequest: any;
+        organizationAndTeamData: OrganizationAndTeamData;
+        platformType: string;
+        files: {
+            filePath: string;
+            patchedCode: string;
+        }[];
+    }): Promise<string> {
+        const { headRepo } = await this.getRepoParams(
+            payload.repository,
+            payload.pullRequest,
+            payload.organizationAndTeamData,
+            payload.platformType,
+        );
+
+        const taskId = await this.astAxios.post(
+            '/api/lsp/suggestion/diagnostic',
+            {
+                repoData: headRepo,
+                files: payload.files,
+            },
+        );
+
+        return taskId;
+    }
+
+    async getDiagnostic(taskId: string) {
+        const response = await this.astAxios.get(
+            `/api/lsp/suggestion/diagnostic/${taskId}`,
+        );
+
+        return response;
+    }
+
+    async test(payload: any): Promise<any> {
+        const { headRepo } = await this.getRepoParams(
+            payload.repository,
+            payload.pullRequest,
+            payload.organizationAndTeamData,
+            payload.platformType,
+        );
+
+        const response = await this.astAxios.post(
+            '/api/lsp/suggestion/diagnostic',
+            {
+                repoData: headRepo,
+                suggestions: payload.suggestions,
+            },
+        );
+
+        return response;
+    }
+
+    async getTest(id: string): Promise<any> {
+        const response = await this.astAxios.get(
+            `/api/lsp/suggestion/diagnostic/${id}`,
+        );
+
+        return response;
     }
 }

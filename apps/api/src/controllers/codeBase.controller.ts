@@ -1,13 +1,15 @@
-import { writeFileSync, createReadStream, unlink } from 'fs';
+import { createReadStream, unlink, writeFileSync } from 'fs';
 import { join } from 'path';
 
 import {
-    Controller,
-    Post,
     Body,
-    StreamableFile,
-    Res,
+    Controller,
+    Get,
     Inject,
+    Post,
+    Query,
+    Res,
+    StreamableFile,
     UseGuards,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
@@ -24,8 +26,8 @@ import {
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
-    PolicyGuard,
     CheckPolicies,
+    PolicyGuard,
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
 import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
 
@@ -230,5 +232,45 @@ export class CodeBaseController {
         });
 
         return new StreamableFile(fileStream);
+    }
+
+    @Post('test')
+    async test(@Body() body: any): Promise<any> {
+        const {
+            id,
+            name,
+            full_name,
+            number,
+            head,
+            base,
+            platformType,
+            teamId,
+            filePath,
+            suggestions,
+        } = body;
+
+        return await this.codeASTAnalysisService.test({
+            repository: {
+                id,
+                name,
+                full_name,
+            },
+            pullRequest: {
+                number,
+                head,
+                base,
+            },
+            platformType,
+            organizationAndTeamData: {
+                organizationId: this.request.user?.organization.uuid,
+                teamId,
+            },
+            suggestions,
+        });
+    }
+
+    @Get('test')
+    async getTest(@Query('id') id: string) {
+        return await this.codeASTAnalysisService.getTest(id);
     }
 }

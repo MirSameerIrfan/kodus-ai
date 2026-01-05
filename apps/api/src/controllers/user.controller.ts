@@ -22,15 +22,16 @@ import {
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
 import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
 
+import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
+import { AcceptUserInvitationUseCase } from '@libs/identity/application/use-cases/user/accept-user-invitation.use-case';
+import { CheckUserWithEmailUserUseCase } from '@libs/identity/application/use-cases/user/check-user-email.use-case';
+import { GetUserUseCase } from '@libs/identity/application/use-cases/user/get-user.use-case';
+import { InviteDataUserUseCase } from '@libs/identity/application/use-cases/user/invite-data.use-case';
+import { UpdateAnotherUserUseCase } from '@libs/identity/application/use-cases/user/update-another.use-case';
 import { AcceptUserInvitationDto } from '@libs/identity/dtos/accept-user-invitation.dto';
 import { JoinOrganizationDto } from '@libs/identity/dtos/join-organization.dto';
 import { UpdateAnotherUserDto } from '@libs/identity/dtos/update-another-user.dto';
-import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
-import { InviteDataUserUseCase } from '@libs/identity/application/use-cases/user/invite-data.use-case';
-import { AcceptUserInvitationUseCase } from '@libs/identity/application/use-cases/user/accept-user-invitation.use-case';
-import { CheckUserWithEmailUserUseCase } from '@libs/identity/application/use-cases/user/check-user-email.use-case';
 import { JoinOrganizationUseCase } from '@libs/organization/application/use-cases/onboarding/join-organization.use-case';
-import { UpdateAnotherUserUseCase } from '@libs/identity/application/use-cases/user/update-another.use-case';
 
 @Controller('user')
 export class UsersController {
@@ -40,6 +41,7 @@ export class UsersController {
         private readonly checkUserWithEmailUserUseCase: CheckUserWithEmailUserUseCase,
         private readonly joinOrganizationUseCase: JoinOrganizationUseCase,
         private readonly updateAnotherUserUseCase: UpdateAnotherUserUseCase,
+        private readonly getUserUseCase: GetUserUseCase,
 
         @Inject(REQUEST)
         private readonly request: UserRequest,
@@ -111,5 +113,10 @@ export class UsersController {
             body,
             organizationId,
         );
+    }
+
+    @Get('/info')
+    public async show() {
+        return await this.getUserUseCase.execute();
     }
 }
