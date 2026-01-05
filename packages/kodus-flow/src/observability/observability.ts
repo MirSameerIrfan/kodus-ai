@@ -7,8 +7,9 @@ import {
     LogContext,
     ObservabilityExporter,
     AGENT,
+    GEN_AI,
 } from './types.js';
-import { TelemetrySystem } from './telemetry.js';
+import { TelemetrySystem, isCriticalSpan } from './telemetry.js';
 import { isEnhancedError } from '../core/error-unified.js';
 import {
     createLogger,
@@ -536,23 +537,72 @@ export class ObservabilitySystem {
     }
 
     /**
-     * Shutdown the observability system
+     * Shutdown the observability system gracefully
      */
     async shutdown(): Promise<void> {
         this.logger.log({
             message: 'Shutting down observability system',
             context: this.constructor.name,
+            metadata: {
+                exporters: this.exporters.length,
+                hasExecutionTracker: true,
+            },
         });
 
-        // Clear execution tracker to prevent memory leaks on restart/shutdown
+        // 1. Shutdown telemetry (flushes and cleans up processors)
+        try {
+            await this.telemetry.shutdown();
+        } catch (error) {
+            this.logger.error({
+                message: 'Error shutting down telemetry',
+                context: this.constructor.name,
+                error: error as Error,
+            });
+        }
+
+        // 2. Shutdown all exporters (MongoDB, OTLP, etc)
+        const shutdownResults = await Promise.allSettled(
+            this.exporters.map(async (exporter) => {
+                try {
+                    await exporter.shutdown();
+                    this.logger.log({
+                        message: `Exporter shutdown complete: ${exporter.name}`,
+                        context: this.constructor.name,
+                    });
+                } catch (error) {
+                    this.logger.error({
+                        message: `Failed to shutdown exporter: ${exporter.name}`,
+                        context: this.constructor.name,
+                        error: error as Error,
+                    });
+                    throw error;
+                }
+            }),
+        );
+
+        // 3. Log shutdown failures
+        const failures = shutdownResults.filter((r) => r.status === 'rejected');
+        if (failures.length > 0) {
+            this.logger.warn({
+                message: `${failures.length} exporter(s) failed to shutdown cleanly`,
+                context: this.constructor.name,
+                metadata: {
+                    total: this.exporters.length,
+                    failed: failures.length,
+                },
+            });
+        }
+
+        // 4. Clear execution tracker to prevent memory leaks
         executionTracker.clear();
 
-        await Promise.allSettled([
-            this.telemetry.flush(),
-            ...this.exporters.map((e) => e.shutdown()),
-        ]);
-
+        // 5. Clear context
         this.clearContext();
+
+        this.logger.log({
+            message: 'Observability system shutdown complete',
+            context: this.constructor.name,
+        });
     }
 
     /**
@@ -674,15 +724,33 @@ export class ObservabilitySystem {
                 // Add telemetry processor for MongoDB (will be initialized later)
                 this.telemetry.addTraceProcessor({
                     process: async (item: TraceItem) => {
+                        const isCritical = isCriticalSpan(item);
+
                         try {
                             await mongoExporter.exportTrace(item);
                         } catch (error) {
-                            this.logger.debug({
-                                message:
-                                    'MongoDB export failed (possibly not initialized)',
+                            // Critical error for LLM spans - these are billing data
+                            const logLevel = isCritical ? 'error' : 'debug';
+                            this.logger[logLevel]({
+                                message: isCritical
+                                    ? '🚨 CRITICAL: MongoDB export failed for LLM span - BILLING DATA MAY BE LOST'
+                                    : 'MongoDB export failed (possibly not initialized)',
                                 context: this.constructor.name,
                                 error: error as Error,
+                                metadata: {
+                                    traceId: item.context.traceId,
+                                    spanId: item.context.spanId,
+                                    spanName: item.name,
+                                    isCriticalSpan: isCritical,
+                                    totalTokens:
+                                        item.attributes?.[
+                                            GEN_AI.USAGE_TOTAL_TOKENS
+                                        ],
+                                },
                             });
+
+                            // Re-throw error so retry mechanism can catch it
+                            throw error;
                         }
                     },
                 });

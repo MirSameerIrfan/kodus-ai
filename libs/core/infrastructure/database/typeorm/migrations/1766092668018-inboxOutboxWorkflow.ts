@@ -1,9 +1,12 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class InboxOutboxWorkflow1766092668018 implements MigrationInterface {
-    name = 'InboxOutboxWorkflow1766092668018'
+    name = 'InboxOutboxWorkflow1766092668018';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`
+            CREATE SCHEMA IF NOT EXISTS "kodus_workflow"
+        `);
         await queryRunner.query(`
             CREATE TYPE "kodus_workflow"."inbox_messages_status_enum" AS ENUM('READY', 'PROCESSING', 'PROCESSED', 'FAILED')
         `);
@@ -240,5 +243,4 @@ export class InboxOutboxWorkflow1766092668018 implements MigrationInterface {
             DROP TYPE "kodus_workflow"."inbox_messages_status_enum"
         `);
     }
-
 }

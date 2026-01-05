@@ -2,7 +2,19 @@
  * Core types for the observability system
  */
 import { LogLevel } from '@/core/types/allTypes.js';
-import { ExecutionContext } from '@nestjs/common';
+
+/**
+ * Minimal ExecutionContext interface compatible with NestJS
+ * This avoids hard dependency on @nestjs/common
+ */
+export interface ExecutionContext {
+    switchToHttp(): {
+        getRequest(): { url?: string; [key: string]: unknown };
+        getResponse(): unknown;
+        getNext(): unknown;
+    };
+    [key: string]: unknown;
+}
 
 export type LogArguments = {
     message: string;

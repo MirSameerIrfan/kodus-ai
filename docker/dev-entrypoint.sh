@@ -9,6 +9,13 @@ if [ ! -x node_modules/.bin/nest ]; then
   yarn install --frozen-lockfile
 fi
 
+# 1b. Ensure @nestjs/common exports are valid (guard against broken node_modules)
+if ! node -e "const { Module } = require('@nestjs/common'); process.exit(typeof Module === 'function' ? 0 : 1)"; then
+  echo "▶ @nestjs/common export invalid; reinstalling deps..."
+  rm -rf node_modules
+  yarn install --frozen-lockfile
+fi
+
 # 2. Run Migrations and Seeds (if configured)
 if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
 echo "▶ Running Migrations..."

@@ -1,7 +1,6 @@
-import { ExecutionContext } from '@nestjs/common';
 import { trace } from '@opentelemetry/api';
 import pino from 'pino';
-import { LogArguments, LogProcessor } from './types.js';
+import { LogArguments, LogProcessor, ExecutionContext } from './types.js';
 import { LogLevel } from '@/core/types/allTypes.js';
 
 let pinoLogger: pino.Logger | null = null;

@@ -52,8 +52,8 @@ export class ObservabilityService {
     };
 
     private static readonly DEFAULT_SETTINGS = {
-        batchSize: 150,
-        flushIntervalMs: 5000,
+        batchSize: 75, // Reduzido de 150 para flush mais frequente (melhor para LLM spans)
+        flushIntervalMs: 3000, // Reduzido de 5s para 3s (menor janela de perda de dados)
         ttlDays: 0,
         samplingRate: 1,
         spanTimeoutMs: 10 * 60 * 1000,
@@ -146,7 +146,6 @@ export class ObservabilityService {
                     },
                 });
             } catch (error) {
-                console.log('@@@Error initializing observability');
                 this.logger.error({
                     message: 'Error initializing observability',
                     context: ObservabilityService.name,
@@ -264,6 +263,20 @@ export class ObservabilityService {
 
             const s = this.summarize(usages);
 
+            // Debug: Log what we're about to set
+            this.logger.debug({
+                message: 'Finalizing LLM tracking',
+                context: ObservabilityService.name,
+                metadata: {
+                    hasSpan: !!span,
+                    spanName: span?.getName?.(),
+                    totalTokens: s.totalTokens,
+                    inputTokens: s.inputTokens,
+                    outputTokens: s.outputTokens,
+                    usageCount: usages.length,
+                },
+            });
+
             if (span) {
                 span.setAttributes({
                     'gen_ai.usage.total_tokens': s.totalTokens,
@@ -318,36 +331,36 @@ export class ObservabilityService {
         const obs = getObservability();
         const span = obs.startSpan(spanName);
 
-        span?.setAttributes?.({
-            ...(attrs ?? {}),
-            correlationId: obs.getContext()?.correlationId || '',
-        });
-
-        const { callbacks, finalize } = this.createLLMTracking(runName);
-
         try {
-            const result = await obs.withSpan(span, async () =>
-                exec(callbacks),
-            );
-            return {
-                result,
-                usage: await finalize({ metadata: attrs, reset: true }),
-            };
-        } catch (err: any) {
-            if (typeof span?.setStatus === 'function') {
-                span.setStatus({
-                    code: 'error',
-                    message: err?.message || String(err),
-                });
-            }
             span?.setAttributes?.({
-                'error': true,
-                'exception.type': err?.name || 'Error',
-                'exception.message': err?.message || String(err),
+                ...(attrs ?? {}),
+                correlationId: obs.getContext()?.correlationId || '',
             });
-            throw err;
-        } finally {
-            span?.end?.();
+
+            const { callbacks, finalize } = this.createLLMTracking(runName);
+
+            // Execute the LLM operation and finalize usage BEFORE span.end() is called by withSpan
+            // Note: withSpan handles errors that occur INSIDE the callback (recordException, setStatus, span.end())
+            const { result, usage } = await obs.withSpan(span, async () => {
+                const result = await exec(callbacks);
+                // CRITICAL: finalize() must be called BEFORE withSpan's finally block
+                // ends the span, so gen_ai.usage.* attributes are captured
+                const usage = await finalize({
+                    metadata: attrs,
+                    reset: true,
+                });
+                return { result, usage };
+            });
+
+            return { result, usage };
+        } catch (error) {
+            // If error occurs BEFORE withSpan is called, we need to end the span
+            // If error occurs INSIDE withSpan, it already called span.end()
+            // So we check if span is still recording before calling end()
+            if (span?.isRecording?.()) {
+                span.end();
+            }
+            throw error;
         }
     }
 
