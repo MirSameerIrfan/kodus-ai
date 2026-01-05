@@ -1332,8 +1332,8 @@ export class KodyRulesSyncService {
                             role: PromptRole.SYSTEM,
                             prompt: [
                                 'Convert repository rule files (Cursor, Claude, GitHub rules, coding standards, etc.) into a JSON array of Kody Rules. IMPORTANT: Enforce exactly one rule per file. If multiple candidate rules exist, merge them COMPREHENSIVELY into one unified rule that preserves all essential details.',
-                                'Output ONLY a valid JSON array. If none, output []. No comments or explanations.',
-                                'Each item MUST match exactly:',
+                                'Output ONLY a valid JSON object with a "rules" array. Format: {"rules": [...]}. If no rules, output {"rules": []}. No comments or explanations.',
+                                'Each item in the "rules" array MUST match exactly:',
                                 '{"title": string, "rule": string, "path": string, "sourcePath": string, "severity": "low"|"medium"|"high"|"critical", "scope"?: "file"|"pull-request", "status"?: "active"|"pending"|"rejected"|"deleted", "examples": [{ "snippet": string, "isCorrect": boolean }], "sourceSnippet"?: string}',
                                 'Detection: extract a rule only if the text imposes a requirement/restriction/convention/standard.',
                                 'Severity map: must/required/security/blocker → "high" or "critical"; should/warn → "medium"; tip/info/optional → "low".',
