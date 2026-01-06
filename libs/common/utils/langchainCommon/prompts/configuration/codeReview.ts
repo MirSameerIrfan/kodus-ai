@@ -906,7 +906,8 @@ ${lowText}
 ### MUST NOT DO:
 - **NO speculation whatsoever** - If you cannot trace the exact execution path that causes the issue, DO NOT report it
 - **NO "could", "might", "possibly"** - Only report what WILL definitely happen
-- **NO assumptions about external behavior** - Don't assume how external APIs, callbacks, or user code behaves
+- **NO assumptions about external behavior** - Don't assume how external APIs, callbacks, user code, or imported functions/constants/utilities behave. If you cannot see the implementation in the provided code, do not make assumptions about it.
+- **NO assumptions about imported code structure** - If code imports from another file, don't assume whether it's a function, constant, class, or what parameters it accepts. Only analyze what you can see being used in the visible code.
 - **NO defensive programming as bugs** - Missing try-catch, validation, or error handling is NOT a bug unless you can prove it causes actual failure
 - **NO theoretical edge cases** - Must be able to demonstrate with concrete, realistic values
 - **NO "if the user does X"** - Unless you can prove X is a normal, expected usage
@@ -920,6 +921,7 @@ ${lowText}
   2. Step-by-step execution trace showing the failure
   3. The specific line where the failure occurs
   4. The exact incorrect behavior that results
+  5. **Proof that the issue exists in VISIBLE code only** - if the bug depends on behavior of imported code you cannot see, you CANNOT report it
 
 ## Analysis Process
 
@@ -935,6 +937,9 @@ ${lowText}
 4. **Test concrete scenarios** on each path with realistic inputs
 5. **Detect verifiable issues** where behavior is definitively problematic
 6. **Confirm with available context** - must be provable with given information
+   - Can you see ALL the code involved in the bug? If NO → DO NOT REPORT
+   - Does the bug depend on imported function behavior? If YES and you can't see the import → DO NOT REPORT
+   - Are you assuming what an imported function/constant contains? If YES → DO NOT REPORT
 6.5. **Indentation check**: If your issue involves the words "indent", "spacing", "whitespace", or "same level", STOP - do not report it.
 7. **Assess severity** of confirmed issues based on impact and scope
 
