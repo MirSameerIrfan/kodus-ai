@@ -1,5 +1,10 @@
 import { createLogger } from '@kodus/flow';
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+    Inject,
+    Injectable,
+    NotFoundException,
+    Optional,
+} from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 
 import { PromptSourceType } from '@libs/ai-engine/domain/prompt/interfaces/promptExternalReference.interface';
@@ -25,8 +30,7 @@ import {
 export class CreateOrUpdateKodyRulesUseCase {
     private readonly logger = createLogger(CreateOrUpdateKodyRulesUseCase.name);
     constructor(
-        @Inject(KODY_RULES_SERVICE_TOKEN)
-        private readonly kodyRulesService: IKodyRulesService,
+        @Optional()
         @Inject(REQUEST)
         private readonly request: Request & {
             user: {
@@ -35,10 +39,14 @@ export class CreateOrUpdateKodyRulesUseCase {
                 email: string;
             };
         },
-        private readonly authorizationService: AuthorizationService,
-        private readonly contextReferenceDetectionService: ContextReferenceDetectionService,
+
+        @Inject(KODY_RULES_SERVICE_TOKEN)
+        private readonly kodyRulesService: IKodyRulesService,
         @Inject(CONTEXT_RESOLUTION_SERVICE_TOKEN)
         private readonly contextResolutionService: IContextResolutionService,
+
+        private readonly authorizationService: AuthorizationService,
+        private readonly contextReferenceDetectionService: ContextReferenceDetectionService,
     ) {}
 
     async execute(
@@ -59,7 +67,7 @@ export class CreateOrUpdateKodyRulesUseCase {
                     ? { userId: reqUser.uuid, userEmail: reqUser.email }
                     : { userId: 'kody-system', userEmail: 'kody@kodus.io' });
 
-            if (userInfoData.userId !== 'kody-system') {
+            if (userInfoData.userId !== 'kody-system' && this.request?.user) {
                 await this.authorizationService.ensure({
                     user: this.request.user,
                     action: Action.Create,

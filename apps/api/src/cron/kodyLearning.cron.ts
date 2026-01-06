@@ -173,9 +173,15 @@ export class KodyLearningCronProvider {
                 return;
             }
 
+            const kodyRulesGeneratorEnabled =
+                (codeReviewConfig.configValue.configs as any)
+                    ?.kodyRulesGeneratorEnabled ?? false;
+
             const filteredRepos = repos.filter(
                 (repo) =>
-                    repo.isSelected && repo.configs.kodyRulesGeneratorEnabled,
+                    repo.isSelected &&
+                    (repo.configs?.kodyRulesGeneratorEnabled ??
+                        kodyRulesGeneratorEnabled),
             );
 
             if (!filteredRepos || filteredRepos.length === 0) {

@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 
 import {
@@ -34,6 +34,7 @@ export class FindRulesInOrganizationByRuleFilterKodyRulesUseCase implements IUse
         @Inject(KODY_RULES_SERVICE_TOKEN)
         private readonly kodyRulesService: IKodyRulesService,
 
+        @Optional()
         @Inject(REQUEST)
         private readonly request: UserRequest,
 
@@ -50,12 +51,14 @@ export class FindRulesInOrganizationByRuleFilterKodyRulesUseCase implements IUse
         directoryId?: string,
     ) {
         try {
-            await this.authorizationService.ensure({
-                user: this.request.user,
-                action: Action.Read,
-                resource: ResourceType.KodyRules,
-                repoIds: [repositoryId],
-            });
+            if (this.request?.user) {
+                await this.authorizationService.ensure({
+                    user: this.request.user,
+                    action: Action.Read,
+                    resource: ResourceType.KodyRules,
+                    repoIds: [repositoryId],
+                });
+            }
 
             const ruleFilters: Partial<IKodyRule>[] = [];
 

@@ -8,6 +8,7 @@ import { LLMModule } from '@kodus/kodus-common/llm';
 import { LoggerWrapperService } from '@libs/core/log/loggerWrapper.service';
 import { AutomationModule } from '@libs/automation/modules/automation.module';
 import { CodebaseModule } from '@libs/code-review/modules/codebase.module';
+import { CodeReviewFeedbackModule } from '@libs/code-review/modules/codeReviewFeedback.module';
 import { PlatformModule } from '@libs/platform/modules/platform.module';
 
 import { SharedObservabilityModule } from '@libs/shared/infrastructure/shared-observability.module';
@@ -32,6 +33,7 @@ import { WorkerDrainService } from './worker-drain.service';
 
         WorkflowModule.register({ type: 'worker' }),
         CodebaseModule,
+        CodeReviewFeedbackModule,
         AutomationModule,
         PlatformModule,
     ],
