@@ -11,6 +11,12 @@ import {
 } from './schemas/outbox-message.model';
 import { IOutboxMessageRepository } from '../../domain/contracts/outbox-message.repository.contract';
 
+/**
+ * Outbox Message Repository
+ *
+ * Indexes are defined in outbox-message.model.ts using TypeORM decorators.
+ * Most critical: IDX_outbox_messages_status_created for relay polling performance.
+ */
 @Injectable()
 export class OutboxMessageRepository implements IOutboxMessageRepository {
     private readonly logger = createLogger(OutboxMessageRepository.name);
@@ -43,7 +49,10 @@ export class OutboxMessageRepository implements IOutboxMessageRepository {
             // This avoids confusion between "message id" vs "job id" and helps tracing/debugging.
             if (saved.payload && typeof saved.payload === 'object') {
                 (saved.payload as any).messageId = saved.uuid;
-                await repo.update({ uuid: saved.uuid }, { payload: saved.payload });
+                await repo.update(
+                    { uuid: saved.uuid },
+                    { payload: saved.payload },
+                );
             }
 
             this.logger.debug({

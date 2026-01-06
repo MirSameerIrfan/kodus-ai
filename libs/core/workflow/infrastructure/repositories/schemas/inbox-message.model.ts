@@ -17,6 +17,12 @@ export enum InboxStatus {
 @Index('IDX_inbox_messages_consumer_message', ['consumerId', 'messageId'], {
     unique: true,
 })
+@Index('IDX_inbox_messages_locked_at', ['lockedAt'])
+@Index('IDX_inbox_messages_consumer_status_locked', [
+    'consumerId',
+    'status',
+    'lockedAt',
+])
 export class InboxMessageModel extends CoreModel {
     @Column({ type: 'varchar', length: 255 })
     messageId: string;
