@@ -77,7 +77,7 @@ export class OutboxRelayService
 
     private readonly BATCH_SIZE = 50;
     private readonly MIN_INTERVAL = 100; // 100ms when there is work
-    private readonly MAX_INTERVAL = 5000; // 5s when idle
+    private readonly MAX_INTERVAL = 3000; // 3s when idle (optimized for better latency)
     private currentInterval = 1000;
 
     private readonly logger = createLogger(OutboxRelayService.name);
@@ -219,21 +219,98 @@ export class OutboxRelayService
     /**
      * Reaper to reclaim messages stuck in PROCESSING (Inbox)
      * This handles cases where a consumer crashed mid-processing.
+     *
+     * Uses consumer-specific timeouts based on the type of work:
+     * - Webhooks: 20 minutes (job timeout is 10min + margin)
+     * - Code reviews: 12 hours (very conservative to avoid reprocessing without checkpoints)
+     *
+     * PERFORMANCE NOTE: Uses separate queries per consumer for better index utilization.
+     * Requires partial indexes:
+     *   CREATE INDEX CONCURRENTLY idx_inbox_webhook_stale
+     *     ON kodus_workflow.inbox_messages (lockedAt)
+     *     WHERE consumerId = 'workflow-job-consumer.webhook' AND status = 'PROCESSING';
+     *   CREATE INDEX CONCURRENTLY idx_inbox_codereview_stale
+     *     ON kodus_workflow.inbox_messages (lockedAt)
+     *     WHERE consumerId = 'workflow-job-consumer.code_review' AND status = 'PROCESSING';
      */
     @Cron(CronExpression.EVERY_5_MINUTES)
     async reclaimStaleInbox(): Promise<void> {
-        const fiveMinutesAgo = new Date();
-        fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
+        return await this.observability.runInSpan(
+            'workflow.inbox.reaper',
+            async (span) => {
+                let totalReclaimed = 0;
+                const startTime = Date.now();
 
-        const reclaimed =
-            await this.inboxRepository.reclaimStaleMessages(fiveMinutesAgo);
+                // Define timeouts per consumer type
+                // Each timeout is ~1.5-2x the actual job timeout to account for overhead
+                const consumerTimeouts = {
+                    'workflow-job-consumer.webhook': 20 * 60 * 1000, // 20 minutes
+                    'workflow-job-consumer.code_review': 12 * 60 * 60 * 1000, // 12 hours (very conservative to avoid reprocessing without checkpoints)
+                };
 
-        if (reclaimed > 0) {
-            this.logger.log({
-                message: `Reclaimed ${reclaimed} stale inbox messages`,
-                context: OutboxRelayService.name,
-            });
-        }
+                // Reclaim messages for each consumer type with its specific timeout
+                for (const [consumerId, timeoutMs] of Object.entries(
+                    consumerTimeouts,
+                )) {
+                    const threshold = new Date(Date.now() - timeoutMs);
+                    const reclaimed =
+                        await this.inboxRepository.reclaimStaleMessagesByConsumer(
+                            consumerId,
+                            threshold,
+                        );
+
+                    if (reclaimed > 0) {
+                        totalReclaimed += reclaimed;
+                        this.logger.warn({
+                            message: `Reclaimed ${reclaimed} stale ${consumerId} messages`,
+                            context: OutboxRelayService.name,
+                            metadata: {
+                                consumerId,
+                                thresholdMinutes: timeoutMs / 60000,
+                                reclaimedCount: reclaimed,
+                                ageThreshold: threshold.toISOString(),
+                            },
+                        });
+
+                        // Alert if reclaim rate is high (possible systemic issue)
+                        if (reclaimed > 5) {
+                            this.logger.error({
+                                message: `HIGH RECLAIM RATE: ${reclaimed} ${consumerId} jobs stuck!`,
+                                context: OutboxRelayService.name,
+                                metadata: {
+                                    consumerId,
+                                    reclaimed,
+                                    possibleCause:
+                                        'Worker crashes, memory issues, or job timeouts',
+                                },
+                            });
+                        }
+                    }
+                }
+
+                const duration = Date.now() - startTime;
+
+                span.setAttributes({
+                    'workflow.inbox.reaper.reclaimed': totalReclaimed,
+                    'workflow.inbox.reaper.duration_ms': duration,
+                });
+
+                if (totalReclaimed > 0) {
+                    this.logger.log({
+                        message: `Inbox reaper completed: ${totalReclaimed} messages reclaimed in ${duration}ms`,
+                        context: OutboxRelayService.name,
+                        metadata: {
+                            totalReclaimed,
+                            durationMs: duration,
+                        },
+                    });
+                }
+            },
+            {
+                'workflow.component': 'reaper',
+                'workflow.operation': 'reclaim_inbox',
+            },
+        );
     }
 
     /**

@@ -7,6 +7,12 @@ import { createLogger } from '@kodus/flow';
 import { InboxMessageModel, InboxStatus } from './schemas/inbox-message.model';
 import { IInboxMessageRepository } from '../../domain/contracts/inbox-message.repository.contract';
 
+/**
+ * Inbox Message Repository
+ *
+ * Indexes are defined in inbox-message.model.ts using TypeORM decorators.
+ * Most critical: IDX_inbox_messages_consumer_status_locked for reaper performance.
+ */
 @Injectable()
 export class InboxMessageRepository implements IInboxMessageRepository {
     private readonly logger = createLogger(InboxMessageRepository.name);
@@ -38,6 +44,9 @@ export class InboxMessageRepository implements IInboxMessageRepository {
     /**
      * Claims a message for processing using an atomic UPSERT.
      * Returns the message model if successfully claimed, or null if it's already being processed or finished.
+     *
+     * Uses 3-hour timeout for PROCESSING messages to avoid reclaiming long-running jobs
+     * (e.g., code reviews with 2h timeout). Only allows reclaiming messages that are truly stuck.
      */
     async claim(
         messageId: string,
@@ -58,7 +67,7 @@ export class InboxMessageRepository implements IInboxMessageRepository {
                 "attempts" = "inbox_messages"."attempts" + 1,
                 "updatedAt" = NOW()
             WHERE "inbox_messages"."status" NOT IN ($6, $7)
-               OR ("inbox_messages"."status" = $7 AND "inbox_messages"."lockedAt" < NOW() - INTERVAL '5 minutes')
+               OR ("inbox_messages"."status" = $7 AND "inbox_messages"."lockedAt" < NOW() - INTERVAL '3 hours')
             RETURNING *;
         `;
 
@@ -173,6 +182,129 @@ export class InboxMessageRepository implements IInboxMessageRepository {
         } catch (error) {
             this.logger.error({
                 message: 'Failed to reclaim stale inbox messages',
+                context: InboxMessageRepository.name,
+                error,
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * Reclaims messages for a specific consumer that are stuck in PROCESSING.
+     * This allows different timeout strategies per consumer type.
+     *
+     * PERFORMANCE: Requires partial index per consumer for optimal performance.
+     * See class-level documentation for required indexes.
+     */
+    async reclaimStaleMessagesByConsumer(
+        consumerId: string,
+        olderThan: Date,
+    ): Promise<number> {
+        const startTime = Date.now();
+
+        try {
+            const result = await this.repository.update(
+                {
+                    consumerId,
+                    status: InboxStatus.PROCESSING,
+                    lockedAt: LessThan(olderThan),
+                },
+                {
+                    status: InboxStatus.READY,
+                    lockedBy: null,
+                    lockedAt: null,
+                    lastError: `Stuck in PROCESSING - Reclaimed by reaper (consumer: ${consumerId}, age: ${Math.floor((Date.now() - olderThan.getTime()) / 60000)}min)`,
+                },
+            );
+
+            const duration = Date.now() - startTime;
+            const affected = result.affected || 0;
+
+            if (duration > 1000) {
+                // Query took > 1s, possible missing index!
+                this.logger.warn({
+                    message:
+                        'Slow reclaimStaleMessagesByConsumer query - check indexes!',
+                    context: InboxMessageRepository.name,
+                    metadata: {
+                        consumerId,
+                        durationMs: duration,
+                        affected,
+                        possibleCause: 'Missing partial index',
+                    },
+                });
+            }
+
+            return affected;
+        } catch (error) {
+            this.logger.error({
+                message: 'Failed to reclaim stale inbox messages by consumer',
+                context: InboxMessageRepository.name,
+                error,
+                metadata: { consumerId, olderThan: olderThan.toISOString() },
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * Health check: Count messages by status
+     * Useful for monitoring and alerting
+     */
+    async getHealthStats(): Promise<{
+        ready: number;
+        processing: number;
+        processed: number;
+        failed: number;
+        oldestProcessing?: Date;
+    }> {
+        try {
+            const [counts, oldest] = await Promise.all([
+                this.repository
+                    .createQueryBuilder('inbox')
+                    .select('inbox.status', 'status')
+                    .addSelect('COUNT(*)', 'count')
+                    .groupBy('inbox.status')
+                    .getRawMany(),
+                this.repository
+                    .createQueryBuilder('inbox')
+                    .select('MIN(inbox.lockedAt)', 'oldest')
+                    .where('inbox.status = :status', {
+                        status: InboxStatus.PROCESSING,
+                    })
+                    .getRawOne(),
+            ]);
+
+            const stats = {
+                ready: 0,
+                processing: 0,
+                processed: 0,
+                failed: 0,
+                oldestProcessing: oldest?.oldest,
+            };
+
+            counts.forEach((row: { status: string; count: string }) => {
+                const count = parseInt(row.count, 10);
+                switch (row.status) {
+                    case InboxStatus.READY:
+                        stats.ready = count;
+                        break;
+                    case InboxStatus.PROCESSING:
+                        stats.processing = count;
+                        break;
+                    case InboxStatus.PROCESSED:
+                        stats.processed = count;
+                        break;
+                    case InboxStatus.FAILED:
+                        stats.failed = count;
+                        break;
+                }
+            });
+
+            return stats;
+        } catch (error) {
+            this.logger.error({
+                message: 'Failed to get inbox health stats',
                 context: InboxMessageRepository.name,
                 error,
             });

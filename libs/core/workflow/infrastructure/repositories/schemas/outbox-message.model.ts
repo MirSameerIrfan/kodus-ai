@@ -10,16 +10,12 @@ export enum OutboxStatus {
     FAILED = 'FAILED',
 }
 
-/**
- * IMPORTANT: For production performance, create a partial index via migration:
- * CREATE INDEX CONCURRENTLY IDX_outbox_ready_next_attempt
- * ON kodus_workflow.outbox_messages (next_attempt_at, created_at)
- * WHERE status = 'READY';
- */
 @Entity({ name: 'outbox_messages', schema: 'kodus_workflow' })
 @Index('IDX_outbox_messages_status', ['status'])
 @Index('IDX_outbox_messages_next_attempt_at', ['nextAttemptAt'])
 @Index('IDX_outbox_messages_created_at', ['createdAt'])
+@Index('IDX_outbox_messages_locked_at', ['lockedAt'])
+@Index('IDX_outbox_messages_status_created', ['status', 'createdAt'])
 export class OutboxMessageModel extends CoreModel {
     @ManyToOne(() => WorkflowJobModel, (job) => job.outboxMessages, {
         nullable: true,
