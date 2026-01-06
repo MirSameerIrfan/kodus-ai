@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 
 import { IntegrationConfigKey } from '@libs/core/domain/enums';
 import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
@@ -7,6 +7,11 @@ import { TeamModel } from '@libs/organization/infrastructure/adapters/repositori
 import { IntegrationModel } from './integration.model';
 
 @Entity('integration_configs')
+@Index('IDX_integration_configs_integration', ['integration'], {
+    concurrent: true,
+})
+@Index('IDX_integration_configs_team', ['team'], { concurrent: true })
+@Index('IDX_integration_configs_key', ['configKey'], { concurrent: true })
 export class IntegrationConfigModel extends CoreModel {
     @Column({
         type: 'enum',

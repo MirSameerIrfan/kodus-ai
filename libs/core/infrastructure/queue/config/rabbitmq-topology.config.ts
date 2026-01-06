@@ -19,7 +19,7 @@ export const RABBITMQ_TOPOLOGY_CONFIG = {
             durable: true,
             options: {
                 arguments: {
-                    'x-delayed-type': 'topic',
+                    'x-delayed-type': 'direct',
                 },
             },
         },

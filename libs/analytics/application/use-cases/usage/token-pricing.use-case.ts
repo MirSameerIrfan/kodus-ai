@@ -118,10 +118,12 @@ export class TokenPricingUseCase {
         );
 
         if (!modelInfo) {
+            const availableModels = provider
+                ? providerModels.map((m) => m.id.slice(provider.length + 1))
+                : providerModels.map((m) => m.id);
+
             throw new Error(
-                `Model ${model} not found for provider ${provider}. Available models: ${providerModels
-                    .map((m) => m.id.slice(provider.length + 1))
-                    .join(', ')}`,
+                `Model ${model} not found for provider ${provider}. Available models: ${availableModels.join(', ')}`,
             );
         }
 

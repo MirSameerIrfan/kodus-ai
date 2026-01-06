@@ -86,10 +86,9 @@ export class RabbitMQWrapperModule {
                     },
                     reconnectTimeInSeconds: 10,
                     enableControllerDiscovery: options.enableConsumers,
-                    prefetchCount:
-                        configService.get<number>(
-                            'workflowQueue.WORKFLOW_QUEUE_WORKER_PREFETCH',
-                        ) ?? 1,
+                    prefetchCount: configService.get<number>(
+                        'workflowQueue.WORKFLOW_QUEUE_WORKER_PREFETCH',
+                    ),
                 };
             },
             inject: [ConfigService],

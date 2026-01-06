@@ -22,6 +22,7 @@ import { PlatformModule } from '@libs/platform/modules/platform.module';
 import { PullRequestsModule } from './pull-requests.module';
 import { GetReactionsUseCase } from '../application/use-cases/codeReviewFeedback/get-reactions.use-case';
 import { SaveCodeReviewFeedbackUseCase } from '../application/use-cases/codeReviewFeedback/save-feedback.use-case';
+import { CodeReviewFeedbackConsumer } from '@libs/core/infrastructure/queue/messageBroker/consumers/codeReviewFeedback.consumer';
 
 const UseCases = [GetReactionsUseCase, SaveCodeReviewFeedbackUseCase] as const;
 
@@ -54,11 +55,13 @@ const UseCases = [GetReactionsUseCase, SaveCodeReviewFeedbackUseCase] as const;
             provide: CODE_REVIEW_FEEDBACK_SERVICE_TOKEN,
             useClass: CodeReviewFeedbackService,
         },
+        CodeReviewFeedbackConsumer,
     ],
     exports: [
         CODE_REVIEW_FEEDBACK_REPOSITORY_TOKEN,
         CODE_REVIEW_FEEDBACK_SERVICE_TOKEN,
         ...UseCases,
+        CodeReviewFeedbackConsumer,
     ],
     controllers: [],
 })

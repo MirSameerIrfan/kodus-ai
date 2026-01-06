@@ -12,7 +12,9 @@
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/app",
             "sourceMaps": true,
-            "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
             "resolveSourceMapLocations": [
                 "${workspaceFolder}/dist/**/*.map",
                 "!**/node_modules/**"
@@ -23,7 +25,9 @@
                 "file:///usr/src/app/*": "${workspaceFolder}/*",
                 "/usr/src/app/*": "${workspaceFolder}/*"
             },
-            "skipFiles": ["<node_internals>/**"]
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
         },
         {
             "type": "node",
@@ -36,7 +40,9 @@
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/app",
             "sourceMaps": true,
-            "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
             "resolveSourceMapLocations": [
                 "${workspaceFolder}/dist/**/*.map",
                 "!**/node_modules/**"
@@ -47,7 +53,9 @@
                 "file:///usr/src/app/*": "${workspaceFolder}/*",
                 "/usr/src/app/*": "${workspaceFolder}/*"
             },
-            "skipFiles": ["<node_internals>/**"]
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
         },
         {
             "type": "node",
@@ -60,7 +68,9 @@
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/app",
             "sourceMaps": true,
-            "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
             "resolveSourceMapLocations": [
                 "${workspaceFolder}/dist/**/*.map",
                 "!**/node_modules/**"
@@ -71,13 +81,19 @@
                 "file:///usr/src/app/*": "${workspaceFolder}/*",
                 "/usr/src/app/*": "${workspaceFolder}/*"
             },
-            "skipFiles": ["<node_internals>/**"]
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
         }
     ],
     "compounds": [
         {
             "name": "Debug: All Services",
-            "configurations": ["Debug: API", "Debug: Webhooks", "Debug: Worker"]
+            "configurations": [
+                "Debug: API",
+                "Debug: Webhooks",
+                "Debug: Worker"
+            ]
         }
     ]
 }
