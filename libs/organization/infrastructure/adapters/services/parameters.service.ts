@@ -60,6 +60,10 @@ export class ParametersService implements IParametersService {
         return this.parametersRepository.delete(uuid);
     }
 
+    deleteByTeamId(teamId: string): Promise<void> {
+        return this.parametersRepository.deleteByTeamId(teamId);
+    }
+
     async findByKey<K extends ParametersKey>(
         configKey: K,
         organizationAndTeamData: OrganizationAndTeamData,
