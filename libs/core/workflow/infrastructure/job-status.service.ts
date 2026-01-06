@@ -153,12 +153,17 @@ export class JobStatusService implements IJobStatusService {
         const [inboxResult, outboxResult, jobResult] = results;
 
         // Default fallback values
-        const defaultInbox = {
+        const defaultInbox: {
+            ready: number;
+            processing: number;
+            processed: number;
+            failed: number;
+            oldestProcessing?: Date;
+        } = {
             ready: 0,
             processing: 0,
             processed: 0,
             failed: 0,
-            oldestProcessing: undefined as Date | undefined,
         };
         const defaultOutbox = {
             ready: 0,
