@@ -29,6 +29,7 @@ export interface ITeamRepository {
         data: Partial<ITeam>,
     ): Promise<TeamEntity | undefined>;
     deleteOne(uuid: string): Promise<void>;
+    deleteFisically(uuid: string): Promise<void>;
     findFirstCreatedTeam(
         organizationId: string,
     ): Promise<TeamEntity | undefined>;
