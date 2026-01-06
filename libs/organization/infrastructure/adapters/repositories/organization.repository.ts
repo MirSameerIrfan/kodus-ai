@@ -169,15 +169,23 @@ export class OrganizationDatabaseRepository implements IOrganizationRepository {
     public async deleteOne(filter: Partial<IOrganization>): Promise<void> {
         const { users, teams, ...otherFilterAttributes } = filter;
 
-        const result = await this.organizationRepository.delete({
+        const deleteConditions: any = {
             ...otherFilterAttributes,
-            users: {
+        };
+
+        if (users && users.length > 0) {
+            deleteConditions.users = {
                 uuid: In(users.map((user) => user.uuid)),
-            },
-            teams: {
+            };
+        }
+
+        if (teams && teams.length > 0) {
+            deleteConditions.teams = {
                 uuid: In(teams.map((team) => team.uuid)),
-            },
-        });
+            };
+        }
+
+        const result = await this.organizationRepository.delete(deleteConditions);
 
         if (result.affected === 0) {
             throw new Error(
