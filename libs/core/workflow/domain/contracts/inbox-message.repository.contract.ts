@@ -4,6 +4,14 @@
  */
 export type InboxStatus = unknown;
 
+export interface InboxHealthStats {
+    ready: number;
+    processing: number;
+    processed: number;
+    failed: number;
+    oldestProcessing?: Date;
+}
+
 export interface IInboxMessageRepository {
     claim(
         messageId: string,
@@ -22,7 +30,12 @@ export interface IInboxMessageRepository {
         lastError?: string,
     ): Promise<void>;
     reclaimStaleMessages(olderThan: Date): Promise<number>;
+    reclaimStaleMessagesByConsumer(
+        consumerId: string,
+        olderThan: Date,
+    ): Promise<number>;
     deleteProcessedOlderThan(date: Date): Promise<number>;
+    getHealthStats(): Promise<InboxHealthStats>;
 }
 
 export const INBOX_MESSAGE_REPOSITORY_TOKEN = Symbol.for(
