@@ -32,6 +32,10 @@ import { createLogger } from '@kodus/flow';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import { sendConfirmationEmail } from '@libs/common/utils/email/sendMail';
 import { JoinOrganizationDto } from '@libs/identity/dtos/join-organization.dto';
+import {
+    IParametersService,
+    PARAMETERS_SERVICE_TOKEN,
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
 
 @Injectable()
 export class JoinOrganizationUseCase implements IUseCase {
@@ -55,6 +59,9 @@ export class JoinOrganizationUseCase implements IUseCase {
 
         @Inject(AUTH_SERVICE_TOKEN)
         private readonly authService: IAuthService,
+
+        @Inject(PARAMETERS_SERVICE_TOKEN)
+        private readonly parametersService: IParametersService,
     ) {}
 
     public async execute(data: JoinOrganizationDto): Promise<IUser> {
@@ -195,7 +202,8 @@ export class JoinOrganizationUseCase implements IUseCase {
                 });
 
             if (!teamMembers || teamMembers.length === 0) {
-                await this.teamService.deleteOne(team.uuid);
+                await this.parametersService.deleteByTeamId(team.uuid);
+                await this.teamService.deleteFisically(team.uuid);
             }
         }
 
