@@ -139,17 +139,83 @@ export class JobStatusService implements IJobStatusService {
         };
         alerts: string[];
     }> {
-        try {
-            const [inboxStats, outboxStats, jobStats] = await Promise.all([
-                this.inboxRepository.getHealthStats(),
-                this.getOutboxStats(),
-                this.getJobStats(),
-            ]);
+        const alerts: string[] = [];
+        let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
 
-            const alerts: string[] = [];
-            let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
+        // Use Promise.allSettled to allow partial success
+        const results = await Promise.allSettled([
+            this.inboxRepository.getHealthStats(),
+            this.getOutboxStats(),
+            this.getJobStats(),
+        ]);
 
-            // Check inbox health
+        // Extract results with fallbacks
+        const [inboxResult, outboxResult, jobResult] = results;
+
+        // Default fallback values
+        const defaultInbox = {
+            ready: 0,
+            processing: 0,
+            processed: 0,
+            failed: 0,
+        };
+        const defaultOutbox = {
+            ready: 0,
+            processing: 0,
+            sent: 0,
+            failed: 0,
+        };
+        const defaultJobs = {
+            pending: 0,
+            processing: 0,
+            completed: 0,
+            failed: 0,
+        };
+
+        // Handle inbox metrics
+        let inboxStats = defaultInbox;
+        if (inboxResult.status === 'fulfilled') {
+            inboxStats = inboxResult.value;
+        } else {
+            alerts.push('Inbox metrics unavailable');
+            status = 'degraded';
+            this.logger.error({
+                message: 'Failed to get inbox health stats',
+                context: JobStatusService.name,
+                error: inboxResult.reason,
+            });
+        }
+
+        // Handle outbox metrics
+        let outboxStats = defaultOutbox;
+        if (outboxResult.status === 'fulfilled') {
+            outboxStats = outboxResult.value;
+        } else {
+            alerts.push('Outbox metrics unavailable');
+            status = 'degraded';
+            this.logger.error({
+                message: 'Failed to get outbox stats',
+                context: JobStatusService.name,
+                error: outboxResult.reason,
+            });
+        }
+
+        // Handle job metrics
+        let jobStats = defaultJobs;
+        if (jobResult.status === 'fulfilled') {
+            jobStats = jobResult.value;
+        } else {
+            alerts.push('Job metrics unavailable');
+            status = 'degraded';
+            this.logger.error({
+                message: 'Failed to get job stats',
+                context: JobStatusService.name,
+                error: jobResult.reason,
+            });
+        }
+
+        // Check inbox health (only if metrics available)
+        if (inboxResult.status === 'fulfilled') {
             if (inboxStats.processing > 100) {
                 alerts.push(
                     `High inbox processing count: ${inboxStats.processing}`,
@@ -163,67 +229,59 @@ export class JobStatusService implements IJobStatusService {
                         60000,
                 );
                 if (oldestAge > 60) {
-                    // > 1h
                     alerts.push(
                         `Oldest inbox message: ${oldestAge} minutes old`,
                     );
                     status = 'degraded';
                 }
                 if (oldestAge > 180) {
-                    // > 3h
                     status = 'unhealthy';
                 }
             }
+        }
 
-            // Check outbox health
+        // Check outbox health (only if metrics available)
+        if (outboxResult.status === 'fulfilled') {
             if (outboxStats.ready > 500) {
                 alerts.push(`High outbox queue: ${outboxStats.ready} messages`);
                 status = status === 'unhealthy' ? 'unhealthy' : 'degraded';
             }
+        }
 
-            // Check job health
+        // Check job health (only if metrics available)
+        if (jobResult.status === 'fulfilled') {
             if (jobStats.failed > 50) {
                 alerts.push(`High job failure count: ${jobStats.failed}`);
                 status = 'degraded';
             }
-
-            return {
-                status,
-                timestamp: new Date(),
-                inbox: {
-                    ...inboxStats,
-                    oldestAge: inboxStats.oldestProcessing
-                        ? Math.floor(
-                              (Date.now() -
-                                  inboxStats.oldestProcessing.getTime()) /
-                                  60000,
-                          )
-                        : undefined,
-                },
-                outbox: outboxStats,
-                jobs: jobStats,
-                alerts,
-            };
-        } catch (error) {
-            this.logger.error({
-                message: 'Failed to get workflow health',
-                context: JobStatusService.name,
-                error,
-            });
-            return {
-                status: 'unhealthy',
-                timestamp: new Date(),
-                inbox: {
-                    ready: 0,
-                    processing: 0,
-                    processed: 0,
-                    failed: 0,
-                },
-                outbox: { ready: 0, processing: 0, sent: 0, failed: 0 },
-                jobs: { pending: 0, processing: 0, completed: 0, failed: 0 },
-                alerts: ['Health check failed: ' + error.message],
-            };
         }
+
+        // If all metrics failed, mark as unhealthy
+        if (
+            inboxResult.status === 'rejected' &&
+            outboxResult.status === 'rejected' &&
+            jobResult.status === 'rejected'
+        ) {
+            status = 'unhealthy';
+        }
+
+        return {
+            status,
+            timestamp: new Date(),
+            inbox: {
+                ...inboxStats,
+                oldestAge: inboxStats.oldestProcessing
+                    ? Math.floor(
+                          (Date.now() -
+                              inboxStats.oldestProcessing.getTime()) /
+                              60000,
+                      )
+                    : undefined,
+            },
+            outbox: outboxStats,
+            jobs: jobStats,
+            alerts,
+        };
     }
 
     private async getOutboxStats(): Promise<{
