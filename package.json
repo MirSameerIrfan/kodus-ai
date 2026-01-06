@@ -12,6 +12,8 @@
         "dev:restart": "yarn docker:down && yarn docker:start",
         "dev:logs": "yarn docker:logs",
         "dev:clean": "yarn docker:down && docker system prune -f && yarn docker:start",
+        "dev:clean:cache": "rm -rf node_modules/.cache dist .next .cache",
+        "dev:clean:full": "yarn dev:clean:cache && yarn docker:down && docker system prune -af && yarn docker:start",
         "build": "nest build",
         "build:production": "nest build",
         "build:fast": "NODE_OPTIONS='--max-old-space-size=8192' nest build --webpack",

@@ -34,7 +34,15 @@ services:
     deploy:
       resources:
         limits:
-          memory: 2G
+          memory: 3G
+        reservations:
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
     environment:
       - NODE_OPTIONS=--max-old-space-size=4096
@@ -60,6 +68,14 @@ services:
       resources:
         limits:
           memory: 3G
+        reservations:
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
 
   webhooks:
@@ -73,6 +89,18 @@ services:
       - NODE_OPTIONS=--max-old-space-size=4096
       - DEBUG_PORT=9232
       - API_LOG_PRETTY=true
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+        reservations:
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   #----------------------------------------------------------------
   # Databases & Infrastructure

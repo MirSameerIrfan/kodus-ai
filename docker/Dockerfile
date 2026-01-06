@@ -1,4 +1,4 @@
-FROM node:22.14.0-slim AS base
+FROM node:22.19.0-slim AS base
 WORKDIR /usr/src/app
 
 ENV NODE_OPTIONS="--max-old-space-size=4096"
@@ -28,7 +28,7 @@ RUN yarn install --frozen-lockfile --production=true \
   && yarn cache clean
 
 
-FROM node:22.14.0-slim AS runtime-common
+FROM node:22.19.0-slim AS runtime-common
 WORKDIR /usr/src/app
 ENV NODE_ENV=production
 

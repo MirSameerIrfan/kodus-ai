@@ -3,7 +3,7 @@
 # This is intentionally aligned with docker/Dockerfile.prod, but defaults
 # the PM2 environment to "homolog".
 
-FROM node:22.14.0-slim AS base
+FROM node:22.19.0-slim AS base
 WORKDIR /usr/src/app
 
 ENV NODE_OPTIONS="--max-old-space-size=4096"

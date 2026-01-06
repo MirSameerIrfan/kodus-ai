@@ -153,7 +153,13 @@ export class JobStatusService implements IJobStatusService {
         const [inboxResult, outboxResult, jobResult] = results;
 
         // Default fallback values
-        const defaultInbox = {
+        const defaultInbox: {
+            ready: number;
+            processing: number;
+            processed: number;
+            failed: number;
+            oldestProcessing?: Date;
+        } = {
             ready: 0,
             processing: 0,
             processed: 0,
@@ -272,8 +278,7 @@ export class JobStatusService implements IJobStatusService {
                 ...inboxStats,
                 oldestAge: inboxStats.oldestProcessing
                     ? Math.floor(
-                          (Date.now() -
-                              inboxStats.oldestProcessing.getTime()) /
+                          (Date.now() - inboxStats.oldestProcessing.getTime()) /
                               60000,
                       )
                     : undefined,
