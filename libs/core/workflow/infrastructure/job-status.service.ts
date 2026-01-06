@@ -278,8 +278,7 @@ export class JobStatusService implements IJobStatusService {
                 ...inboxStats,
                 oldestAge: inboxStats.oldestProcessing
                     ? Math.floor(
-                          (Date.now() -
-                              inboxStats.oldestProcessing.getTime()) /
+                          (Date.now() - inboxStats.oldestProcessing.getTime()) /
                               60000,
                       )
                     : undefined,
