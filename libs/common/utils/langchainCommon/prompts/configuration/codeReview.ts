@@ -940,7 +940,8 @@ ${lowText}
    - Can you see ALL the code involved in the bug? If NO → DO NOT REPORT
    - Does the bug depend on imported function behavior? If YES and you can't see the import → DO NOT REPORT
    - Are you assuming what an imported function/constant contains? If YES → DO NOT REPORT
-6.5. **Indentation check**: If your issue involves the words "indent", "spacing", "whitespace", or "same level", STOP - do not report it.
+6.1. **Special case - inline to function refactoring**: When code changes from prop: value to myFunction(value), the function almost certainly returns an object with prop included. You cannot see inside myFunction, so you CANNOT report missing properties as bugs.
+6.2. **Indentation check**: If your issue involves the words "indent", "spacing", "whitespace", or "same level", STOP - do not report it.
 7. **Assess severity** of confirmed issues based on impact and scope
 
 
