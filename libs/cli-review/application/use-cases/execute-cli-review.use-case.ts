@@ -1,5 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { createLogger } from '@kodus/flow';
+import { LLMModelProvider } from '@kodus/kodus-common/llm';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
 import {
     CliReviewInput,
@@ -81,7 +82,7 @@ export class ExecuteCliReviewUseCase implements IUseCase {
 
             // 2. Load or create config
             const codeReviewConfig = isTrialMode
-                ? this.getDefaultConfig()
+                ? this.getDefaultConfig(true) // Trial mode: use Gemini Flash
                 : await this.loadUserConfig(organizationAndTeamData);
 
             // 3. Create pipeline context
@@ -234,14 +235,23 @@ export class ExecuteCliReviewUseCase implements IUseCase {
 
     /**
      * Get default code review configuration
+     * For trial mode, force Gemini 2.5 Flash (cheaper and faster)
      */
-    private getDefaultConfig(): CodeReviewConfig {
+    private getDefaultConfig(isTrialMode: boolean = false): CodeReviewConfig {
         const defaults = getDefaultKodusConfigFile();
-        return {
+
+        const config = {
             ...defaults,
             automatedReviewActive: true,
             pullRequestApprovalActive: false,
             languageResultPrompt: {},
         } as any as CodeReviewConfig;
+
+        // Force Gemini Flash for trial users (cost optimization)
+        if (isTrialMode) {
+            config.llmProvider = LLMModelProvider.GEMINI_2_5_FLASH;
+        }
+
+        return config;
     }
 }

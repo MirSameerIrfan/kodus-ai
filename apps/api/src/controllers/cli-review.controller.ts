@@ -114,7 +114,7 @@ export class CliReviewController {
                     message: 'Rate limit exceeded. Please try again later.',
                     remaining: rateLimitResult.remaining,
                     resetAt: rateLimitResult.resetAt?.toISOString(),
-                    limit: 10,
+                    limit: 2,
                 },
                 HttpStatus.TOO_MANY_REQUESTS,
             );
@@ -138,7 +138,7 @@ export class CliReviewController {
             ...result,
             rateLimit: {
                 remaining: rateLimitResult.remaining,
-                limit: 10,
+                limit: 2,
                 resetAt: rateLimitResult.resetAt?.toISOString(),
             },
         };

@@ -1,17 +1,20 @@
-import { IsString, IsOptional, IsBoolean, IsArray, ValidateNested, IsEnum } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsArray, ValidateNested, IsEnum, MaxLength, ArrayMaxSize } from 'class-validator';
 import { Type } from 'class-transformer';
 
 class CliFileInputDto {
     @IsString()
+    @MaxLength(500, { message: 'File path too long (max 500 characters)' })
     path: string;
 
     @IsString()
+    @MaxLength(2000000, { message: 'File content too large (max 2MB)' })
     content: string;
 
     @IsEnum(['added', 'modified', 'deleted', 'renamed'])
     status: 'added' | 'modified' | 'deleted' | 'renamed';
 
     @IsString()
+    @MaxLength(500000, { message: 'Diff too large (max 500KB)' })
     diff: string;
 }
 
@@ -53,6 +56,7 @@ class CliConfigDto {
 
     @IsOptional()
     @IsArray()
+    @ArrayMaxSize(100, { message: 'Too many files (max 100 files per request)' })
     @ValidateNested({ each: true })
     @Type(() => CliFileInputDto)
     files?: CliFileInputDto[];
@@ -60,6 +64,7 @@ class CliConfigDto {
 
 export class CliReviewRequestDto {
     @IsString()
+    @MaxLength(5000000, { message: 'Diff too large (max 5MB)' })
     diff: string;
 
     @IsOptional()

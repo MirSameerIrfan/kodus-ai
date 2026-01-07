@@ -92,7 +92,8 @@ async function bootstrap() {
             });
         });
 
-        app.use(bodyParser.urlencoded({ extended: true }));
+        app.use(bodyParser.json({ limit: '10mb' }));
+        app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
         app.set('trust proxy', '127.0.0.1');
         app.useStaticAssets('static');
         useContainer(app.select(ApiModule), { fallbackOnErrors: true });

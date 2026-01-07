@@ -15,7 +15,7 @@ export interface RateLimitResult {
 @Injectable()
 export class TrialRateLimiterService {
     private readonly logger = createLogger(TrialRateLimiterService.name);
-    private readonly RATE_LIMIT = 10; // 10 requests per window
+    private readonly RATE_LIMIT = 2; // 2 requests per window (trial users)
     private readonly WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
     constructor(private readonly cacheService: CacheService) {}
