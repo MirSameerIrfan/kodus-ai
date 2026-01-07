@@ -57,7 +57,7 @@ services:
     environment:
       - API_CLOUD_MODE=false
     ports:
-      - "3333:3332" # Host 3333 -> container WEBHOOKS_PORT (default 3332)
+      - "3333:3332" # Host 3333 -> container API_WEBHOOKS_PORT (default 3332)
     depends_on:
       db_postgres:
         condition: service_healthy

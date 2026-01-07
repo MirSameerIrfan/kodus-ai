@@ -74,6 +74,7 @@ Os workflows chamam scripts locais para manter o YAML mais enxuto:
 ## Shutdown / drain (worker)
 
 No deploy (SIGTERM), o worker fecha consumidores RabbitMQ de forma graciosa:
+
 - cancela consumers (para de receber novas mensagens)
 - aguarda handlers em andamento finalizarem
 
@@ -82,7 +83,7 @@ Implementado em `apps/worker/src/worker-drain.service.ts:1`.
 ## Portas (QA / ECS)
 
 - API usa `API_PORT`.
-- Webhooks usa `WEBHOOKS_PORT` (obrigatório).
+- Webhooks usa `API_WEBHOOKS_PORT` (obrigatório).
 
 ## CI/CD (GitHub Actions) — PROD (GitOps)
 
@@ -103,19 +104,21 @@ Removidos. Mantemos apenas GitOps via PR no repo de infra.
 
 - `INFRA_TFVARS_PATH`: `envs/aws/prod/releases/orchestrator.auto.tfvars.json`
 - ECR repos:
-  - `kodus-orchestrator-api-prod`
-  - `kodus-orchestrator-webhook-prod`
-  - `kodus-orchestrator-worker-prod`
+    - `kodus-orchestrator-api-prod`
+    - `kodus-orchestrator-webhook-prod`
+    - `kodus-orchestrator-worker-prod`
 
 ## Contrato GitOps (kodus-infra)
 
 Enviar para o time do `kodus-infra`:
 
-1) Paths GitOps (corrigidos)
+1. Paths GitOps (corrigidos)
+
 - QA: `envs/aws/qa/releases/orchestrator.auto.tfvars.json`
 - PROD: `envs/aws/prod/releases/orchestrator.auto.tfvars.json`
 
-2) Variáveis que o workflow deve editar (somente essas)
+2. Variáveis que o workflow deve editar (somente essas)
+
 - `api_green_image`
 - `webhook_green_image`
 - `worker_green_image`
@@ -127,12 +130,14 @@ Enviar para o time do `kodus-infra`:
 - `webhook_blue_weight`
 - `webhook_green_weight`
 
-3) Regras de segurança (open source)
+3. Regras de segurança (open source)
+
 - Não usar secrets em PR de fork.
 - Deploy/PR para infra só em `push` para `main` ou `workflow_dispatch`.
 - PR de infra deve tocar só os arquivos de release acima.
 
-4) ECR PROD
+4. ECR PROD
+
 - `kodus-orchestrator-api-prod`
 - `kodus-orchestrator-webhook-prod`
 - `kodus-orchestrator-worker-prod`

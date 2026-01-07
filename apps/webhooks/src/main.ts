@@ -46,14 +46,14 @@ async function bootstrap() {
         const config = configService.get<HttpServerConfiguration>('server');
         const { host, rateLimit } = config;
 
-        const webhookPortRaw = process.env.WEBHOOKS_PORT;
+        const webhookPortRaw = process.env.API_WEBHOOKS_PORT;
         const webhookPortParsed = webhookPortRaw
             ? parseInt(webhookPortRaw, 10)
             : NaN;
 
         if (!Number.isFinite(webhookPortParsed) || webhookPortParsed <= 0) {
             throw new Error(
-                'WEBHOOKS_PORT is required and must be a positive integer',
+                'API_WEBHOOKS_PORT is required and must be a positive integer',
             );
         }
 
