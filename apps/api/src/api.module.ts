@@ -35,6 +35,7 @@ import { WorkflowModule } from '@libs/core/workflow/modules/workflow.module';
 import { CodeReviewConfigurationModule } from '@libs/code-review/modules/code-review-configuration.module';
 import { OrganizationOnboardingModule } from '@libs/organization/modules/organization-onboarding.module';
 import { CodeReviewDashboardModule } from '@libs/code-review/modules/code-review-dashboard.module';
+import { CliReviewModule } from '@libs/cli-review/cli-review.module';
 
 import { CronModule } from './cron/cron.module';
 import { OrganizationParametersController } from './controllers/organizationParameters.controller';
@@ -59,6 +60,7 @@ import { TeamController } from './controllers/team.controller';
 import { TeamMembersController } from './controllers/teamMembers.controller';
 import { TokenUsageController } from './controllers/tokenUsage.controller';
 import { UsersController } from './controllers/user.controller';
+import { CliReviewController } from './controllers/cli-review.controller';
 import { LoggerWrapperService } from '@libs/core/log/loggerWrapper.service';
 
 @Module({
@@ -99,6 +101,7 @@ import { LoggerWrapperService } from '@libs/core/log/loggerWrapper.service';
         CodeReviewConfigurationModule,
         OrganizationOnboardingModule,
         CodeReviewDashboardModule,
+        CliReviewModule,
         McpModule.forRoot(),
         HealthModule,
         CronModule,
@@ -127,6 +130,7 @@ import { LoggerWrapperService } from '@libs/core/log/loggerWrapper.service';
         IntegrationConfigController,
         PullRequestController,
         UsersController,
+        CliReviewController,
     ],
 })
 export class ApiModule {}
