@@ -1,4 +1,4 @@
-name: QA (GitOps) - Build/Push images + Deploy (green->qa)
+name: QA (GitOps) - Build/Push images + PR (green)
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: "Tag das imagens no ECR (default: github.sha)"
+        description: "Image tag for ECR (default: github.sha)"
         required: false
 
 concurrency:
@@ -31,10 +31,9 @@ env:
   INFRA_REPO: ${{ vars.INFRA_REPO }}
   INFRA_BASE_BRANCH: ${{ vars.INFRA_BASE_BRANCH }}
   INFRA_TFVARS_PATH: ${{ vars.INFRA_TFVARS_PATH }}
-  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
 
 jobs:
-  build_and_deploy_qa:
+  build_push_and_open_pr:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     environment: qa
@@ -49,8 +48,7 @@ jobs:
       - name: Validate required secrets
         run: |
           set -euo pipefail
-          if [ -z "${{ vars.INFRA_GITHUB_APP_ID }}" ]; then
-            echo "Missing variable: INFRA_GITHUB_APP_ID"; exit 1; fi
+          if [ -z "${{ vars.INFRA_GITHUB_APP_ID }}" ]; then echo "Missing variable: INFRA_GITHUB_APP_ID"; exit 1; fi
           for v in ECR_REPOSITORY_API ECR_REPOSITORY_WEBHOOKS ECR_REPOSITORY_WORKER INFRA_REPO INFRA_BASE_BRANCH INFRA_TFVARS_PATH; do
             if [ -z "${!v:-}" ]; then echo "Missing required variable: $v"; exit 1; fi
           done
@@ -74,7 +72,7 @@ jobs:
 
       - name: Get infra repo token (GitHub App)
         id: infra_token
-        uses: actions/create-github-app-token@5d869da34e18e7287c1daad50e0b8ea0f506ce69 # v1.11.0
+        uses: actions/create-github-app-token@v1.11.0
         with:
           app-id: ${{ vars.INFRA_GITHUB_APP_ID }}
           private-key: ${{ secrets.INFRA_GITHUB_APP_PRIVATE_KEY }}
@@ -147,13 +145,11 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           set -euo pipefail
-
           FILE="infra/${{ env.INFRA_TFVARS_PATH }}"
           API_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}"
           WEBHOOKS_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}"
           WORKER_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}"
           DESIRED_COUNT=1
-
           ./scripts/gitops/update-tfvars-green.sh "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE" "$DESIRED_COUNT"
 
       - name: Update tfvars (promote weights to green)
@@ -172,25 +168,21 @@ jobs:
           if [ "$changed" != "${{ env.INFRA_TFVARS_PATH }}" ]; then
             echo "Unexpected changed file: $changed"; exit 1; fi
 
-      - name: Commit and push infra changes (auto-deploy QA)
-        working-directory: infra
-        env:
-          GIT_AUTHOR_NAME: "kodus-bot"
-          GIT_AUTHOR_EMAIL: "infra@kodus.ai"
-          GIT_COMMITTER_NAME: "kodus-bot"
-          GIT_COMMITTER_EMAIL: "infra@kodus.ai"
-        run: |
-          set -euo pipefail
-          git status --short
-          if git diff --quiet --exit-code; then
-            echo "No infra changes to commit. Skipping push."
-            exit 0
-          fi
-          git config user.name "$GIT_AUTHOR_NAME"
-          git config user.email "$GIT_AUTHOR_EMAIL"
-          git add "${{ env.INFRA_TFVARS_PATH }}"
-          git commit -m "qa: deploy & promote $IMAGE_TAG"
-          git push origin "${{ env.INFRA_BASE_BRANCH }}"
+      - name: Create PR on infra (QA deploy)
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ steps.infra_token.outputs.token }}
+          path: infra
+          branch: ci/qa-${{ env.IMAGE_TAG }}
+          base: ${{ env.INFRA_BASE_BRANCH }}
+          title: "QA: deploy green (${{ env.IMAGE_TAG }})"
+          body: |
+            Updates green images (api/webhooks/worker) to tag `${{ env.IMAGE_TAG }}`, desired_count=1 and promotes weights to 100% green.
+
+            Branch: `${{ env.INFRA_BASE_BRANCH }}`
+            Tag: `${{ env.IMAGE_TAG }}`
+          commit-message: "qa: deploy & promote ${{ env.IMAGE_TAG }}"
+          labels: auto-apply
 
       - name: Notify Discord (success)
         if: env.DISCORD_WEBHOOK
@@ -199,7 +191,7 @@ jobs:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
           status: success
-          content: "✅ QA deploy automatizado concluído\nTag: `${{ env.IMAGE_TAG }}`\nInfra branch: `${{ env.INFRA_BASE_BRANCH }}`"
+          content: "✅ QA build + infra PR created\nTag: `${{ env.IMAGE_TAG }}`\nInfra branch: `${{ env.INFRA_BASE_BRANCH }}`"
           username: "GitHub Actions (QA)"
 
       - name: Notify Discord (failure)
@@ -209,5 +201,5 @@ jobs:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
           status: failure
-          content: "❌ Falha no deploy automático de QA\nTag: `${{ env.IMAGE_TAG }}`\nInfra branch: `${{ env.INFRA_BASE_BRANCH }}`"
+          content: "❌ QA pipeline failed (build/infra PR)\nTag: `${{ env.IMAGE_TAG }}`\nInfra branch: `${{ env.INFRA_BASE_BRANCH }}`"
           username: "GitHub Actions (QA)"
