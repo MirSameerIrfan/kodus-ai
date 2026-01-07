@@ -403,6 +403,18 @@ export class TeamDatabaseRepository implements ITeamRepository {
         }
     }
 
+    public async deleteFisically(uuid: string): Promise<void> {
+        try {
+            const result = await this.teamRepository.delete(uuid);
+
+            if (result.affected === 0) {
+                throw new Error('No matching team found or deletion failed');
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
     async getTeamsByUserId(
         userId: string,
         organizationId: string,
