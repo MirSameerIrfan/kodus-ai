@@ -140,6 +140,7 @@ jobs:
 
                   docker buildx bake -f docker-bake.hcl \
                     --set base.args.RELEASE_VERSION=${{ env.IMAGE_TAG }} \
+                    --set base.args.API_CLOUD_MODE=true \
                     --set base.cache-from=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }} \
                     --set base.cache-to=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }},mode=max \
                     --set *.platform=${{ env.BUILDX_PLATFORMS }} \

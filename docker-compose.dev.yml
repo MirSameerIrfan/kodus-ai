@@ -58,11 +58,11 @@ services:
     container_name: kodus_worker
     ports:
       - "9231:9231"
-    # Worker will also run migration on startup, which is OK as DB supports concurrency
     command: yarn start:dev:worker
     environment:
-      - NODE_OPTIONS=--max-old-space-size=4096
+      - NODE_OPTIONS=--max-old-space-size=2560
       - DEBUG_PORT=9231
+      - COMPONENT_TYPE=worker
       - API_LOG_PRETTY=true
     deploy:
       resources:

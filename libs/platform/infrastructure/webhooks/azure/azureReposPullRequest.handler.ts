@@ -60,7 +60,7 @@ export class AzureReposPullRequestHandler implements IWebhookEventHandler {
     public async execute(params: IWebhookEventParams): Promise<void> {
         const { event } = params;
 
-        // Verificar se é uma requisição duplicada
+        // Check if it's a duplicate request
         const isDuplicate = await this.isDuplicateRequest(params.payload);
         if (isDuplicate) {
             this.logger.warn({
@@ -78,7 +78,7 @@ export class AzureReposPullRequestHandler implements IWebhookEventHandler {
             return;
         }
 
-        // Direcionar para o método apropriado com base no tipo de evento
+        // Direct to the appropriate method based on the event type
         if (event === 'ms.vss-code.git-pullrequest-comment-event') {
             await this.handleComment(params);
         } else {
@@ -87,7 +87,7 @@ export class AzureReposPullRequestHandler implements IWebhookEventHandler {
     }
 
     /**
-     * Processa eventos de pull request do Azure Repos
+     * Processes Azure Repos pull request events
      */
     private async handlePullRequest(
         params: IWebhookEventParams,
@@ -274,7 +274,7 @@ export class AzureReposPullRequestHandler implements IWebhookEventHandler {
     }
 
     /**
-     * Processa eventos de comentário do Azure Repos
+     * Processes Azure Repos comment events
      */
     private async handleComment(params: IWebhookEventParams): Promise<void> {
         const { payload } = params;

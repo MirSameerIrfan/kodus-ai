@@ -6,6 +6,10 @@ variable "RELEASE_VERSION" {
   default = "local"
 }
 
+variable "API_CLOUD_MODE" {
+  default = "true"
+}
+
 variable "CACHE_SCOPE" {
   default = "kodus-ai-arm64"
 }
@@ -15,6 +19,7 @@ target "base" {
   dockerfile = "${DOCKERFILE}"
   args = {
     RELEASE_VERSION = "${RELEASE_VERSION}"
+    API_CLOUD_MODE = "${API_CLOUD_MODE}"
   }
   cache-from = ["type=gha,scope=${CACHE_SCOPE}"]
   cache-to = ["type=gha,scope=${CACHE_SCOPE},mode=max"]

@@ -4,6 +4,32 @@ set -e # Exit immediately if a command exits with a non-zero status
 echo "▶ Starting deployment entrypoint..."
 
 # ----------------------------------------------------------------
+# Auto-tune Node.js Memory based on Container Limits
+# ----------------------------------------------------------------
+# If max-old-space-size is not explicitly set in NODE_OPTIONS,
+# calculate it as 85% of the container's memory limit.
+# ----------------------------------------------------------------
+if ! echo "$NODE_OPTIONS" | grep -q "max-old-space-size"; then
+    # Detect memory limit from Cgroups (v1 or v2)
+    if [ -f /sys/fs/cgroup/memory.max ]; then
+        MEM_BYTES=$(cat /sys/fs/cgroup/memory.max)
+    elif [ -f /sys/fs/cgroup/memory/memory.limit_in_bytes ]; then
+        MEM_BYTES=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
+    fi
+
+    # Check if limit is a valid number (not 'max' or extremely large)
+    if [ "$MEM_BYTES" != "" ] && [ "$MEM_BYTES" != "max" ] && [ "$MEM_BYTES" -lt 9223372036854771712 ] 2>/dev/null; then
+        MEM_MB=$((MEM_BYTES / 1024 / 1024))
+        # Set heap to 85% of total RAM
+        CALCULATED_HEAP=$((MEM_MB * 85 / 100))
+        export NODE_OPTIONS="$NODE_OPTIONS --max-old-space-size=$CALCULATED_HEAP"
+        echo "  - Memory Auto-tune: Detected ${MEM_MB}MB. Setting --max-old-space-size=${CALCULATED_HEAP}"
+    else
+        echo "  - Memory Auto-tune: No container limit detected. Using Node.js defaults."
+    fi
+fi
+
+# ----------------------------------------------------------------
 # Dynamic Environment Configuration
 # ----------------------------------------------------------------
 # Generates the environment.js file at runtime based on ENV vars.

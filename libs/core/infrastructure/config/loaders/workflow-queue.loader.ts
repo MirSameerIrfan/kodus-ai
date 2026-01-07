@@ -11,7 +11,7 @@ export const WorkflowQueueLoader = registerAs(
     (): WorkflowQueueConfig => ({
         WORKFLOW_QUEUE_WORKER_PREFETCH: parseIntOrDefault(
             process.env.WORKFLOW_QUEUE_WORKER_PREFETCH,
-            100,
+            75,
         ),
         WORKFLOW_QUEUE_WORKER_MAX_RETRIES: parseIntOrDefault(
             process.env.WORKFLOW_QUEUE_WORKER_MAX_RETRIES,

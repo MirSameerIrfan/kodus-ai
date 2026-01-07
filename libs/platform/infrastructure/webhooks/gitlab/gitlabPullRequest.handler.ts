@@ -52,7 +52,7 @@ export class GitLabMergeRequestHandler implements IWebhookEventHandler {
     public async execute(params: IWebhookEventParams): Promise<void> {
         const { event } = params;
 
-        // Direcionar para o método apropriado com base no tipo de evento
+        // Direct to the appropriate method based on the event type
         switch (event) {
             case 'Merge Request Hook':
                 await this.handleMergeRequest(params);
@@ -230,7 +230,7 @@ export class GitLabMergeRequestHandler implements IWebhookEventHandler {
     }
 
     /**
-     * Processa eventos de comentário do GitLab
+     * Processes GitLab comment events
      */
     private async handleComment(params: IWebhookEventParams): Promise<void> {
         const { payload } = params;

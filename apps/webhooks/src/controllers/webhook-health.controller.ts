@@ -1,22 +1,22 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Controller, Get, HttpStatus, Optional, Res } from '@nestjs/common';
-import { InjectConnection } from '@nestjs/typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
 import { Response } from 'express';
-import { Connection } from 'typeorm';
+import { DataSource } from 'typeorm';
 
 /**
- * WebhookHealthController - Health Check Simplificado para Webhook Handler
+ * WebhookHealthController - Simplified Health Check for Webhook Handler
  *
- * Verifica apenas o essencial:
- * - Status da aplicação
- * - Conexão com RabbitMQ (crítico - precisa enfileirar mensagens)
- * - Conexão com PostgreSQL (crítico - precisa salvar logs de webhook)
+ * Verifies only the essentials:
+ * - Application status
+ * - RabbitMQ connection (critical - needed to enqueue messages)
+ * - PostgreSQL connection (critical - needed to save webhook logs)
  */
 @Controller('health')
 export class WebhookHealthController {
     constructor(
-        @InjectConnection()
-        private readonly dataSource: Connection,
+        @InjectDataSource()
+        private readonly dataSource: DataSource,
         @Optional()
         private readonly amqpConnection: AmqpConnection,
     ) {}
@@ -107,7 +107,7 @@ export class WebhookHealthController {
                 };
             }
 
-            // Verificar se conexão RabbitMQ está ativa
+            // Verify if RabbitMQ connection is active
             const channel = this.amqpConnection.channel;
             if (!channel) {
                 return {
@@ -116,9 +116,9 @@ export class WebhookHealthController {
                 };
             }
 
-            // Tentar verificar uma queue (não bloqueia se não existir)
+            // Try to verify a queue (non-blocking if it doesn't exist)
             await channel.checkQueue('workflow.webhooks.queue').catch(() => {
-                // Queue pode não existir ainda, mas conexão está OK
+                // Queue might not exist yet, but connection is OK
             });
 
             return { status: 'ok' };
@@ -132,7 +132,7 @@ export class WebhookHealthController {
         error?: string;
     }> {
         try {
-            // Verificar se conexão PostgreSQL está ativa
+            // Verify if PostgreSQL connection is active
             await this.dataSource.query('SELECT 1');
             return { status: 'ok' };
         } catch (error) {
