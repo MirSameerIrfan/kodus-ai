@@ -169,23 +169,32 @@ export class OrganizationDatabaseRepository implements IOrganizationRepository {
     public async deleteOne(filter: Partial<IOrganization>): Promise<void> {
         const { users, teams, ...otherFilterAttributes } = filter;
 
-        const deleteConditions: any = {
-            ...otherFilterAttributes,
-        };
+        // Validate that filter is not empty to prevent unbounded delete
+        const hasValidFilter =
+            Object.keys(otherFilterAttributes).length > 0 ||
+            (users && users.length > 0) ||
+            (teams && teams.length > 0);
 
-        if (users && users.length > 0) {
-            deleteConditions.users = {
-                uuid: In(users.map((user) => user.uuid)),
-            };
+        if (!hasValidFilter) {
+            throw new Error(
+                'Delete operation requires at least one filter criterion to prevent accidental mass deletion',
+            );
         }
 
-        if (teams && teams.length > 0) {
-            deleteConditions.teams = {
-                uuid: In(teams.map((team) => team.uuid)),
-            };
+        // Use find-then-delete approach to handle relation filtering correctly
+        // TypeORM's delete() method doesn't support relation filtering
+        const organizationToDelete = await this.findOne(filter);
+
+        if (!organizationToDelete) {
+            throw new Error(
+                'No matching organization found or deletion failed',
+            );
         }
 
-        const result = await this.organizationRepository.delete(deleteConditions);
+        // Delete by uuid (primary key) to ensure safe, targeted deletion
+        const result = await this.organizationRepository.delete({
+            uuid: organizationToDelete.uuid,
+        });
 
         if (result.affected === 0) {
             throw new Error(
