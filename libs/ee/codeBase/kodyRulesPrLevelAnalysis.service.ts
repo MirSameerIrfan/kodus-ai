@@ -845,7 +845,7 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
 
         for (const [ruleId, dependencies] of dependenciesByRule.entries()) {
             const allOutputs: any[] = [];
-            for (const dep of dependencies) {
+            for (const _dep of dependencies) {
                 for (const fileName in augmentationsByFile) {
                     const fileAugmentations = augmentationsByFile[fileName];
                     for (const pathKey in fileAugmentations) {
@@ -1003,7 +1003,6 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
 
                     return {
                         chunkIndex,
-                        session_id: undefined,
                         result: null,
                         error: error as Error,
                     };

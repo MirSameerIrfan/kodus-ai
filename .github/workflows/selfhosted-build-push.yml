@@ -41,20 +41,25 @@ jobs:
               run: |
                   set -euo pipefail
 
-                  # Define image names following the pattern in test.json
-                  API_TAG="${{ env.REGISTRY }}/kodus-ai-api"
-                  WEBHOOK_TAG="${{ env.REGISTRY }}/kodus-ai-webhook"
-                  WORKER_TAG="${{ env.REGISTRY }}/kodus-ai-worker"
+                  # Image names (matching docker-compose.prod.yml)
+                  API_BASE="${REGISTRY}/kodus-ai-api"
+                  WEBHOOK_BASE="${REGISTRY}/kodus-ai-webhook"
+                  WORKER_BASE="${REGISTRY}/kodus-ai-worker"
+
+                  # Comma-separated tags for Docker Bake
+                  API_TAGS="$API_BASE:${TAG},$API_BASE:latest"
+                  WEBHOOK_TAGS="$WEBHOOK_BASE:${TAG},$WEBHOOK_BASE:latest"
+                  WORKER_TAGS="$WORKER_BASE:${TAG},$WORKER_BASE:latest"
 
                   docker buildx bake -f docker-bake.hcl \
-                    --set base.args.RELEASE_VERSION=${{ env.TAG }} \
+                    --set base.args.RELEASE_VERSION=${TAG} \
                     --set base.args.API_CLOUD_MODE=false \
                     --set base.cache-from=type=gha \
                     --set base.cache-to=type=gha,mode=max \
                     --set *.platform=linux/amd64,linux/arm64 \
-                    --set api.tags="[\"$API_TAG:${{ env.TAG }}\",\"$API_TAG:latest\"]" \
-                    --set webhooks.tags="[\"$WEBHOOK_TAG:${{ env.TAG }}\",\"$WEBHOOK_TAG:latest\"]" \
-                    --set worker.tags="[\"$WORKER_TAG:${{ env.TAG }}\",\"$WORKER_TAG:latest\"]" \
+                    --set api.tags="${API_TAGS}" \
+                    --set webhooks.tags="${WEBHOOK_TAGS}" \
+                    --set worker.tags="${WORKER_TAGS}" \
                     --push
 
             - name: Notify Discord on Success
@@ -62,8 +67,9 @@ jobs:
               uses: sarisia/actions-status-discord@v1.15.3
               with:
                   webhook: ${{ secrets.DISCORD_WEBHOOK }}
-                  content: ":tada: The Docker image version `${{ env.RELEASE_VERSION }}` was successfully built and pushed to the GitHub Container Registry."
+                  content: ":tada: The Docker image version `${{ env.RELEASE_VERSION }}` was successfully built and pushed to GHCR."
                   title: "Build and Push: kodus-ai (Self-Hosted)"
+                  description: "New version `${{ env.RELEASE_VERSION }}` is now available for all services (api, webhook, worker)."
                   username: "GitHub Actions"
                   color: 0x00FF00
 
