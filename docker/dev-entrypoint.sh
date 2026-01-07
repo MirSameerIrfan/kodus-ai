@@ -16,12 +16,15 @@ echo "▶ Configuring Environment..."
 echo "  - API_CLOUD_MODE: $CLOUD_MODE"
 echo "  - API_DEVELOPMENT_MODE: $DEV_MODE"
 
-cat <<EOF > libs/ee/configs/environment/environment.ts
-export const environment = {
-    API_CLOUD_MODE: ${CLOUD_MODE},
-    API_DEVELOPMENT_MODE: ${DEV_MODE},
-};
-EOF
+# Generates the environment.ts file at runtime based on ENV vars using the template.
+echo "▶ Configuring Environment..."
+echo "  - API_CLOUD_MODE: $CLOUD_MODE"
+echo "  - API_DEVELOPMENT_MODE: $DEV_MODE"
+
+sed -e "s/__CLOUD_MODE__/${CLOUD_MODE}/g" \
+    -e "s/__DEVELOPMENT_MODE__/${DEV_MODE}/g" \
+    -e "/declare const/d" \
+    libs/ee/configs/environment/environment.template.ts > libs/ee/configs/environment/environment.ts
 
 # 1. Install dependencies if necessary
 if [ ! -x node_modules/.bin/nest ]; then

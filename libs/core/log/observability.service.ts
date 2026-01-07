@@ -53,8 +53,8 @@ export class ObservabilityService implements OnModuleInit {
     };
 
     private static readonly DEFAULT_SETTINGS = {
-        batchSize: 75, // Reduzido de 150 para flush mais frequente (melhor para LLM spans)
-        flushIntervalMs: 3000, // Reduzido de 5s para 3s (menor janela de perda de dados)
+        batchSize: 75, // Reduced from 150 for more frequent flush (better for LLM spans)
+        flushIntervalMs: 3000, // Reduced from 5s to 3s (smaller data loss window)
         ttlDays: 0,
         samplingRate: 1,
         spanTimeoutMs: 10 * 60 * 1000,

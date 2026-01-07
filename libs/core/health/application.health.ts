@@ -13,8 +13,8 @@ export class ApplicationHealthIndicator {
         const env = process.env.API_NODE_ENV;
         const uptime = Math.floor(process.uptime());
 
-        // Verifica se o Heap de memória não ultrapassou 6GB (ajuste para container com limite de 8GB)
-        // Deixa 2GB de margem de segurança antes do limite teórico
+        // Check if memory heap has exceeded 6GB (adjust for container with 8GB limit)
+        // Leaves a 2GB safety margin before the theoretical limit
         const memoryCheck = await this.memoryHealthIndicator.checkHeap(
             'memory_heap',
             6 * 1024 * 1024 * 1024,
@@ -23,7 +23,7 @@ export class ApplicationHealthIndicator {
         const isMemoryHealthy = memoryCheck.memory_heap.status === 'up';
         const hasValidEnv = !!env;
 
-        // Removemos a checagem arbitrária de uptime > 5s que causava falso down no boot
+        // Removed arbitrary uptime > 5s check which caused false down during boot
         const allChecksPass = hasValidEnv && isMemoryHealthy;
         const uptimeFormatted = this.formatUptime(uptime);
 

@@ -66,17 +66,17 @@ export class PermissionValidationService {
     }
 
     /**
-     * Identifica o tipo de plano de forma robusta
+     * Identifies the plan type robustly
      */
     private identifyPlanType(planType: string | undefined): PlanType | null {
         if (!planType) {
             return null;
         }
 
-        // Normalizar para lowercase para comparação
+        // Normalize to lowercase for comparison
         const normalizedPlan = planType.toLowerCase();
 
-        // Verificar se contém palavras-chave específicas
+        // Check if it contains specific keywords
         if (normalizedPlan.includes('free')) {
             return PlanType.FREE;
         }
@@ -94,14 +94,14 @@ export class PermissionValidationService {
     }
 
     /**
-     * Verifica se o plano requer BYOK
+     * Verifies if the plan requires BYOK
      */
     private requiresBYOK(planType: PlanType | null): boolean {
         return planType === PlanType.FREE || planType === PlanType.BYOK;
     }
 
     /**
-     * Validação unificada de permissões para operações que precisam de licença + BYOK
+     * Unified permission validation for operations that need license + BYOK
      */
     async validateExecutionPermissions(
         organizationAndTeamData: OrganizationAndTeamData,
@@ -109,12 +109,12 @@ export class PermissionValidationService {
         contextName?: string,
     ): Promise<ValidationResult> {
         try {
-            // Self-hosted sempre permite execução
+            // Self-hosted always allows execution
             if (!this.isCloud || this.isDevelopment) {
                 return { allowed: true };
             }
 
-            // 1. Validar licença da organização
+            // 1. Validate organization license
             const validation =
                 await this.licenseService.validateOrganizationLicense(
                     organizationAndTeamData,
@@ -134,12 +134,12 @@ export class PermissionValidationService {
                 };
             }
 
-            // 2. Trial sempre permite (sem BYOK necessário e sem validação de usuário)
+            // 2. Trial always allows (no BYOK required and no user validation)
             if (validation.subscriptionStatus === 'trial') {
                 return { allowed: true };
             }
 
-            // 3. Identificar tipo de plano
+            // 3. Identify plan type
             const identifiedPlanType = this.identifyPlanType(
                 validation.planType,
             );
@@ -148,11 +148,11 @@ export class PermissionValidationService {
                 organizationAndTeamData,
             );
 
-            // 4. Managed plans usam nossas keys
+            // 4. Managed plans use our keys
             // if (identifiedPlanType === PlanType.MANAGED) {
-            //     byokConfig = null; // Usa keys da Kodus
+            //     byokConfig = null; // Uses Kodus keys
             // }
-            // 5. Free/BYOK plans precisam de BYOK config (verificar ANTES de validar usuário)
+            // 5. Free/BYOK plans need BYOK config (check BEFORE user validation)
             if (this.requiresBYOK(identifiedPlanType)) {
                 if (!byokConfig) {
                     this.logger.warn({
@@ -166,7 +166,7 @@ export class PermissionValidationService {
                         },
                     });
 
-                    // Retorna erro de BYOK ANTES de validar usuário
+                    // Return BYOK error BEFORE user validation
                     return {
                         allowed: false,
                         errorType: ValidationErrorType.BYOK_REQUIRED,
@@ -194,7 +194,7 @@ export class PermissionValidationService {
                 };
             }
 
-            // 6. Validar usuário específico (SEMPRE valida se userGitId fornecido, exceto trial)
+            // 6. Validate specific user (ALWAYS validates if userGitId provided, except trial)
             if (!this.requiresBYOK(identifiedPlanType) && userGitId) {
                 const users = await this.licenseService.getAllUsersWithLicense(
                     organizationAndTeamData,
@@ -221,14 +221,14 @@ export class PermissionValidationService {
                 }
             }
 
-            // 7. Tudo OK - retorna sucesso
+            // 7. All OK - return success
             return {
                 allowed: true,
                 byokConfig,
                 metadata: { planType: validation.planType, identifiedPlanType },
             };
         } catch (error) {
-            // Tratamento específico para erro de BYOK não configurado
+            // Specific handling for BYOK not configured error
             if (error.message === 'BYOK_NOT_CONFIGURED') {
                 return {
                     allowed: false,
@@ -244,7 +244,7 @@ export class PermissionValidationService {
                 metadata: { organizationAndTeamData, userGitId },
             });
 
-            // Em caso de erro, negar acesso por segurança
+            // In case of error, deny access for safety
             return {
                 allowed: false,
                 errorType: ValidationErrorType.INVALID_LICENSE,

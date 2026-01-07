@@ -23,7 +23,7 @@ export type LibraryKodyRule = {
     scope?: string;
     bad_example?: string;
     good_example?: string;
-    // Feedback fields - optional (só aparece se usuário estiver logado)
+    // Feedback fields - optional (only appears if user is logged in)
     positiveCount?: number;
     negativeCount?: number;
     userFeedback?: 'positive' | 'negative' | null;

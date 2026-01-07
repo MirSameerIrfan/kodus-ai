@@ -24,6 +24,7 @@ jobs:
     open_pr_weights:
         runs-on: ubuntu-latest
         environment: production
+        if: github.ref == 'refs/heads/main'
         permissions:
             contents: read
 

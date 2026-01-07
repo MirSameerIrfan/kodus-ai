@@ -144,10 +144,10 @@ export class FileReviewContextPreparation extends BaseFileReviewContextPreparati
 
         if (shouldRunAST) {
             try {
-                // ✅ NOVO: Pausa workflow em vez de polling ativo
-                // Verifica se temos workflowJobId (executando via workflow queue)
+                // ✅ NEW: Pause workflow instead of active polling
+                // Check if we have workflowJobId (executing via workflow queue)
                 if (fileContext.workflowJobId) {
-                    // Pausa workflow e espera evento AST
+                    // Pause workflow and wait for AST event
                     throw new WorkflowPausedError(
                         'ast.task.completed',
                         fileContext.tasks.astAnalysis.taskId,
@@ -159,7 +159,7 @@ export class FileReviewContextPreparation extends BaseFileReviewContextPreparati
                     );
                 }
 
-                // Fallback: Se não temos workflowJobId, usa polling (compatibilidade com código existente)
+                // Fallback: If no workflowJobId, use polling (compatibility with existing code)
                 // Heavy task: linear backoff 5s, 10s, 15s... up to 60s
                 const astTaskRes = await this.astService.awaitTask(
                     fileContext.tasks.astAnalysis.taskId,

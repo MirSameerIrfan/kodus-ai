@@ -45,7 +45,6 @@ jobs:
                   API_TAG="${{ env.REGISTRY }}/kodus-ai-api"
                   WEBHOOK_TAG="${{ env.REGISTRY }}/kodus-ai-webhook"
                   WORKER_TAG="${{ env.REGISTRY }}/kodus-ai-worker"
-                  MIGRATION_TAG="${{ env.REGISTRY }}/kodus-ai" # Extra tag for migrations as in your example
 
                   docker buildx bake -f docker-bake.hcl \
                     --set base.args.RELEASE_VERSION=${{ env.TAG }} \
@@ -53,9 +52,9 @@ jobs:
                     --set base.cache-from=type=gha \
                     --set base.cache-to=type=gha,mode=max \
                     --set *.platform=linux/amd64,linux/arm64 \
-                    --set api.tags="$API_TAG:${{ env.TAG }},$API_TAG:latest" \
-                    --set webhooks.tags="$WEBHOOK_TAG:${{ env.TAG }},$WEBHOOK_TAG:latest" \
-                    --set worker.tags="$WORKER_TAG:${{ env.TAG }},$WORKER_TAG:latest,$MIGRATION_TAG:${{ env.TAG }},$MIGRATION_TAG:latest" \
+                    --set api.tags="[\"$API_TAG:${{ env.TAG }}\",\"$API_TAG:latest\"]" \
+                    --set webhooks.tags="[\"$WEBHOOK_TAG:${{ env.TAG }}\",\"$WEBHOOK_TAG:latest\"]" \
+                    --set worker.tags="[\"$WORKER_TAG:${{ env.TAG }}\",\"$WORKER_TAG:latest\"]" \
                     --push
 
             - name: Notify Discord on Success
