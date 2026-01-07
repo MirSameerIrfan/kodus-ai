@@ -21,7 +21,7 @@ RUN yarn install --frozen-lockfile
 
 
 FROM deps AS build
-ARG API_CLOUD_MODE
+ARG API_CLOUD_MODE=false
 ENV API_CLOUD_MODE=${API_CLOUD_MODE}
 
 ARG RELEASE_VERSION=local
@@ -29,9 +29,10 @@ ENV SENTRY_RELEASE=$RELEASE_VERSION
 
 COPY . .
 
-# Generate environment.ts by replacing placeholders for the build
+# Generate environment.ts by replacing placeholders and removing declaration lines
 RUN sed -e "s/__CLOUD_MODE__/${API_CLOUD_MODE}/g" \
         -e "s/__DEVELOPMENT_MODE__/false/g" \
+        -e "/declare const/d" \
         libs/ee/configs/environment/environment.template.ts > libs/ee/configs/environment/environment.ts
 
 RUN yarn build:apps
@@ -47,8 +48,17 @@ FROM node:22.19.0-slim AS runtime-common
 WORKDIR /usr/src/app
 ENV NODE_ENV=production
 
+# Redeclare ARGs to make them available in this stage
+ARG API_CLOUD_MODE=false
+ARG RELEASE_VERSION=local
+
+# Set ENVs for runtime
+ENV API_CLOUD_MODE=${API_CLOUD_MODE}
+ENV API_DEVELOPMENT_MODE=false
+ENV SENTRY_RELEASE=${RELEASE_VERSION}
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
+    ca-certificates procps \
   && rm -rf /var/lib/apt/lists/*
 
 COPY --from=prod-deps /usr/src/app/node_modules ./node_modules
