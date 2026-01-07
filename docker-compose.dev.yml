@@ -82,7 +82,7 @@ services:
     <<: *app-service-defaults
     container_name: kodus_webhooks
     ports:
-      - "${WEBHOOKS_PORT:-3332}:${WEBHOOKS_PORT:-3332}"
+      - "${API_WEBHOOKS_PORT:-3332}:${API_WEBHOOKS_PORT:-3332}"
       - "9232:9232"
     command: yarn start:dev:webhooks
     environment:
