@@ -2,6 +2,7 @@ import {
     Controller,
     Post,
     Body,
+    Query,
     UseGuards,
     Inject,
     HttpException,
@@ -49,9 +50,11 @@ export class CliReviewController {
             resource: ResourceType.CodeReviewSettings,
         }),
     )
-    async review(@Body() body: CliReviewRequestDto) {
+    async review(
+        @Body() body: CliReviewRequestDto,
+        @Query('teamId') teamId?: string,
+    ) {
         const organizationId = this.request.user?.organization?.uuid;
-        const teamId = (this.request.user as any)?.team?.uuid;
 
         if (!organizationId) {
             throw new HttpException(
@@ -60,9 +63,16 @@ export class CliReviewController {
             );
         }
 
-        if (!teamId) {
+        // If teamId not provided in query, try to get from user's first team
+        let finalTeamId = teamId;
+        if (!finalTeamId) {
+            const teamMember = this.request.user?.teamMember?.[0];
+            finalTeamId = (teamMember as any)?.team?.uuid;
+        }
+
+        if (!finalTeamId) {
             throw new HttpException(
-                'Team ID is missing in the request',
+                'Team ID is missing. Please provide teamId as query parameter or ensure user has a team assigned.',
                 HttpStatus.BAD_REQUEST,
             );
         }
@@ -70,7 +80,7 @@ export class CliReviewController {
         return this.executeCliReviewUseCase.execute({
             organizationAndTeamData: {
                 organizationId,
-                teamId,
+                teamId: finalTeamId,
             },
             input: {
                 diff: body.diff,

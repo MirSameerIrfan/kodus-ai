@@ -86,19 +86,67 @@ export class ExecuteCliReviewUseCase implements IUseCase {
 
             // 3. Create pipeline context
             const context: CliReviewPipelineContext = {
-                organizationAndTeamData,
-                codeReviewConfig,
-                changedFiles,
+                // CLI-specific fields
                 isFastMode: input.config?.fast || !input.config?.files,
                 isTrialMode,
                 startTime,
                 correlationId,
+
+                // Required by CodeReviewPipelineContext (dummy values for CLI)
+                organizationAndTeamData,
+                codeReviewConfig,
+                changedFiles,
+                batches: [],
                 validSuggestions: [],
                 discardedSuggestions: [],
+                preparedFileContexts: [],
+
+                // PR context (dummy values - not used in CLI mode)
+                repository: {
+                    id: 0,
+                    name: 'cli-review',
+                    fullName: 'cli/cli-review',
+                    private: false,
+                    owner: 'cli',
+                    html_url: '',
+                    default_branch: 'main',
+                } as any,
+                branch: 'cli',
+                pullRequest: {
+                    number: 0,
+                    title: 'CLI Review',
+                    base: {
+                        repo: { fullName: 'cli/cli-review' },
+                        ref: 'main',
+                    },
+                    repository: {} as any,
+                    isDraft: false,
+                    stats: {
+                        total_additions: 0,
+                        total_deletions: 0,
+                        total_files: changedFiles.length,
+                        total_lines_changed: 0,
+                    },
+                } as any,
+                dryRun: { enabled: false },
+                teamAutomationId: 'cli-automation',
+                origin: 'cli',
+                action: 'review',
+                platformType: 'github' as any,
+
+                // Pipeline metadata
                 pipelineVersion: '1.0',
                 errors: [] as PipelineError[],
                 statusInfo: {
                     status: AutomationStatus.IN_PROGRESS,
+                },
+
+                // Analysis tasks metadata
+                tasks: {
+                    astAnalysis: {
+                        taskId: correlationId,
+                        status: 'TASK_STATUS_COMPLETED' as any,
+                    },
                 },
             };
 

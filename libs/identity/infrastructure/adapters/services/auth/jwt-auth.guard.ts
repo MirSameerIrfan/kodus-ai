@@ -80,6 +80,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
             '/kody-rules/find-library-kody-rules',
             '/kody-rules/find-library-kody-rules-buckets',
             '/auth/resend-email',
+            '/cli/trial/review',
         ];
 
         const wildCardExcludePaths = ['/auth/sso/'];
