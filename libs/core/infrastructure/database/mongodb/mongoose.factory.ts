@@ -46,7 +46,7 @@ export class MongooseFactory implements MongooseOptionsFactory {
         // Detect component type to adjust connection pool
         const componentType = process.env.COMPONENT_TYPE || 'default';
 
-        // Pool configuration per component (plano de 300 conexões prod)
+        // Pool configuration per component (300 connections prod plan)
         // Pool configuration per component (prioritize ENV with safe fallbacks)
         const poolConfigs = {
             webhook: {

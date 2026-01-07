@@ -33,12 +33,12 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
         telemetry: any;
     } | null = null;
 
-    // Dual Buffers: Crítico (LLM) vs Normal
+    // Dual Buffers: Critical (LLM) vs Normal
     private logBuffer: MongoDBLogItem[] = [];
     private criticalTelemetryBuffer: MongoDBTelemetryItem[] = []; // LLM spans (billing)
     private normalTelemetryBuffer: MongoDBTelemetryItem[] = []; // Normal spans
     private readonly maxBufferSize = 5000; // Normal buffer
-    private readonly maxCriticalBufferSize = 10000; // Critical buffer (maior, nunca descarta)
+    private readonly maxCriticalBufferSize = 10000; // Critical buffer (larger, never discards)
 
     // Flush timers
     private logFlushTimer: NodeJS.Timeout | null = null;
@@ -48,7 +48,7 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
     private isFlushingLogs = false;
     private isFlushingTelemetry = false;
 
-    // Write-Ahead Log (WAL) para spans críticos
+    // Write-Ahead Log (WAL) for critical spans
     private walEnabled = true;
     private walPath =
         process.env.KODUS_WAL_PATH ||
@@ -96,14 +96,14 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
     }
 
     /**
-     * Identifica se um span é crítico (LLM = billing)
+     * Identifies if a span is critical (LLM = billing)
      */
     private isCriticalSpan(item: MongoDBTelemetryItem): boolean {
         return !!item.attributes?.[GEN_AI.USAGE_TOTAL_TOKENS];
     }
 
     /**
-     * WAL: Escreve span crítico em arquivo local (async, não bloqueia)
+     * WAL: Writes critical span to local file (async, non-blocking)
      */
     private async writeToWal(item: MongoDBTelemetryItem): Promise<void> {
         if (!this.walEnabled) return;
@@ -112,7 +112,7 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
             const line = JSON.stringify(item) + EOL;
             await fs.appendFile(this.walPath, line, 'utf8');
         } catch (error) {
-            // Não deve travar se WAL falhar, mas loga o erro
+            // Should not crash if WAL fails, but logs the error
             this.logger.error({
                 message: 'Failed to write to WAL',
                 context: this.constructor.name,
@@ -122,7 +122,7 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
     }
 
     /**
-     * WAL: Recupera spans críticos do arquivo local
+     * WAL: Recovers critical spans from local file
      */
     private async recoverFromWal(): Promise<void> {
         if (!this.walEnabled) return;
@@ -167,7 +167,7 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
     }
 
     /**
-     * WAL: Limpa arquivo após flush bem-sucedido
+     * WAL: Clears file after successful flush
      */
     private async clearWal(): Promise<void> {
         if (!this.walEnabled) return;
@@ -186,7 +186,7 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
     }
 
     /**
-     * DLQ: Escreve overflow para Dead Letter Queue
+     * DLQ: Writes overflow to Dead Letter Queue
      */
     private async writeToDeadLetterQueue(
         items: MongoDBTelemetryItem[],
@@ -258,7 +258,7 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
             await this.client.connect();
             this.db = this.client.db(this.config.database);
 
-            // Inicializar collections
+            // Initializing collections
             this.collections = {
                 logs: this.db.collection(this.config.collections.logs),
                 telemetry: this.db.collection(
@@ -266,16 +266,16 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
                 ),
             };
 
-            // Criar índices para performance
+            // Creating indexes for performance
             await this.createIndexes();
 
-            // Configurar TTL para limpeza automática
+            // Setting up TTL for automatic cleanup
             await this.setupTTL();
 
-            // Recuperar spans críticos do WAL (se existir)
+            // Recovering critical spans from WAL (if exists)
             await this.recoverFromWal();
 
-            // Iniciar timers de flush
+            // Starting flush timers
             this.startFlushTimers();
 
             this.isInitialized = true;
@@ -301,7 +301,7 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
     }
 
     /**
-     * Criar índices para performance
+     * Creating indexes for performance
      */
     private async createIndexes(): Promise<void> {
         if (!this.collections) {
@@ -340,7 +340,7 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
     }
 
     /**
-     * Configurar TTL para limpeza automática
+     * Setting up TTL for automatic cleanup
      */
     private async setupTTL(): Promise<void> {
         if (!this.collections) return;
@@ -446,7 +446,7 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
     }
 
     /**
-     * Monitoramento automático: Verifica alertas e loga warnings
+     * Monitor automatic health: Check alerts and log warnings
      */
     private checkHealth(): void {
         const metrics = this.getMetrics();
@@ -503,7 +503,7 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
     }
 
     /**
-     * Exportar log
+     * Export log
      */
     async exportLog(
         level: LogLevel,
@@ -831,7 +831,7 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
 
         this.isFlushingTelemetry = true;
 
-        // 1️⃣ CRITICAL SPANS (LLM = Billing) - SEMPRE tenta, mesmo com circuit open
+        // 1️⃣ CRITICAL SPANS (LLM = Billing) - ALWAYS try, even with circuit open
         if (this.criticalTelemetryBuffer.length > 0) {
             const criticalToFlush = [...this.criticalTelemetryBuffer];
             this.criticalTelemetryBuffer = [];
@@ -840,7 +840,7 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
                 await this.collections.telemetry.insertMany(criticalToFlush);
                 this.recordSuccess();
 
-                // WAL: Limpa após sucesso
+                // WAL: Clear after success
                 await this.clearWal();
 
                 this.logger.log({
@@ -878,7 +878,7 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
             }
         }
 
-        // 2️⃣ NORMAL SPANS - Só flush se circuit closed
+        // 2️⃣ NORMAL SPANS - Only flush if circuit closed
         if (
             !circuitOpen &&
             this.normalTelemetryBuffer.length > 0 &&
@@ -904,7 +904,7 @@ export class MongoDBExporter implements LogProcessor, ObservabilityExporter {
                     'flushTelemetry',
                 );
 
-                // Re-adiciona respeitando limite do buffer
+                // Re-add respecting buffer limit
                 const availableSpace =
                     this.maxBufferSize - this.normalTelemetryBuffer.length;
                 if (availableSpace > 0) {

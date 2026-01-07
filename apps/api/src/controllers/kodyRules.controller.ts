@@ -305,7 +305,7 @@ export class KodyRulesController {
             return cachedResult;
         }
 
-        // Se não estiver no cache, executa o use case
+        // If not in cache, execute the use case
         const result = await this.checkSyncStatusUseCase.execute(
             teamId,
             repositoryId,

@@ -116,7 +116,7 @@ export class ConversationAgentProvider extends BaseAgentProvider {
             name: 'kodus-conversational-agent',
             identity: {
                 description:
-                    'Agente de conversação inteligente para interações com usuários.',
+                    'Intelligent conversation agent for user interactions.',
                 goal: 'Engage in natural, helpful conversations while respecting user language preferences',
                 language: userLanguage,
                 languageInstructions: `LANGUAGE REQUIREMENTS:
