@@ -118,7 +118,7 @@ export class CheckIfPRCanBeApprovedCronProvider {
                 return;
             }
 
-            // Buscar automation UMA VEZ (igual para todos os teams)
+            // Fetch automation ONCE (same for all teams)
             const codeReviewAutomation = await this.automationService.find({
                 automationType: AutomationType.AUTOMATION_CODE_REVIEW,
             });
@@ -138,7 +138,7 @@ export class CheckIfPRCanBeApprovedCronProvider {
             sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
             const now = new Date();
 
-            // Fetch all parameters in parallel (não bloqueia)
+            // Fetch all parameters in parallel (non-blocking)
             const parametersPromises = teams.map((team) =>
                 this.parametersService
                     .findOne({
@@ -159,7 +159,7 @@ export class CheckIfPRCanBeApprovedCronProvider {
 
             const allParameters = await Promise.all(parametersPromises);
 
-            // Create lookup map for O(1) access (garantido pelo teamId retornado)
+            // Create lookup map for O(1) access (guaranteed by the returned teamId)
             const parametersByTeam = new Map(
                 allParameters
                     .filter((param) => param?.team?.uuid)

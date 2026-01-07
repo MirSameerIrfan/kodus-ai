@@ -1,0 +1,79 @@
+name: Build and Publish Docker Images for Self-Hosted
+
+on:
+    release:
+        types: [published]
+    workflow_dispatch: # Permite rodar manualmente
+
+jobs:
+    build-and-push:
+        name: Build and Push Docker Images for Self-Hosted
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: write
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v4.2.2
+
+            - name: Capture release version
+              run: echo "RELEASE_VERSION=${{ github.event.release.tag_name || 'manual' }}" >> $GITHUB_ENV
+
+            - name: Set up QEMU
+              uses: docker/setup-qemu-action@v3.2.0
+              with:
+                  platforms: amd64,arm64
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3.10.0
+
+            - name: Login to GitHub Container Registry
+              uses: docker/login-action@v3.4.0
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Build and Push Docker Images (API, Webhook, Worker)
+              env:
+                  REGISTRY: ghcr.io/${{ github.repository_owner }}
+                  TAG: ${{ env.RELEASE_VERSION }}
+              run: |
+                  set -euo pipefail
+
+                  # Define image names following the pattern in test.json
+                  API_TAG="${{ env.REGISTRY }}/kodus-ai-api"
+                  WEBHOOK_TAG="${{ env.REGISTRY }}/kodus-ai-webhook"
+                  WORKER_TAG="${{ env.REGISTRY }}/kodus-ai-worker"
+                  MIGRATION_TAG="${{ env.REGISTRY }}/kodus-ai" # Extra tag for migrations as in your example
+
+                  docker buildx bake -f docker-bake.hcl \
+                    --set base.args.RELEASE_VERSION=${{ env.TAG }} \
+                    --set base.args.API_CLOUD_MODE=false \
+                    --set base.cache-from=type=gha \
+                    --set base.cache-to=type=gha,mode=max \
+                    --set *.platform=linux/amd64,linux/arm64 \
+                    --set api.tags="$API_TAG:${{ env.TAG }},$API_TAG:latest" \
+                    --set webhooks.tags="$WEBHOOK_TAG:${{ env.TAG }},$WEBHOOK_TAG:latest" \
+                    --set worker.tags="$WORKER_TAG:${{ env.TAG }},$WORKER_TAG:latest,$MIGRATION_TAG:${{ env.TAG }},$MIGRATION_TAG:latest" \
+                    --push
+
+            - name: Notify Discord on Success
+              if: success()
+              uses: sarisia/actions-status-discord@v1.15.3
+              with:
+                  webhook: ${{ secrets.DISCORD_WEBHOOK }}
+                  content: ":tada: The Docker image version `${{ env.RELEASE_VERSION }}` was successfully built and pushed to the GitHub Container Registry."
+                  title: "Build and Push: kodus-ai (Self-Hosted)"
+                  username: "GitHub Actions"
+                  color: 0x00FF00
+
+            - name: Notify Discord on Failure
+              if: failure()
+              uses: sarisia/actions-status-discord@v1.15.3
+              with:
+                  webhook: ${{ secrets.DISCORD_WEBHOOK }}
+                  content: ":x: Failed to build or push Docker image version `${{ env.RELEASE_VERSION }}` to the GitHub Container Registry. Check logs for details."
+                  title: "Build and Push: kodus-ai (Self-Hosted)"
+                  username: "GitHub Actions"
+                  color: 0xFF0000

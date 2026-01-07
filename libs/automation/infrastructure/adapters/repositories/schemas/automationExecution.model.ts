@@ -20,6 +20,13 @@ import { TeamAutomationModel } from './teamAutomation.model';
 @Index('IDX_automation_exec_pr_repo', ['pullRequestNumber', 'repositoryId'], {
     concurrent: true,
 })
+@Index(
+    'IDX_automation_exec_performance',
+    ['teamAutomation', 'status', 'createdAt'],
+    {
+        concurrent: true,
+    },
+)
 @Index('IDX_automation_exec_created_desc', { synchronize: false }) // Typeorm does not support DESC indexes natively, so we set synchronize to false and create it manually in migrations
 export class AutomationExecutionModel extends CoreModel {
     @Column({

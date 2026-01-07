@@ -49,7 +49,7 @@ export class JobStatusService implements IJobStatusService {
     }
 
     async getMetrics() {
-        // Busca métricas agregadas do banco (schema workflow)
+        // Fetch aggregate metrics from the database (workflow schema)
         const queueSize = await this.dataSource.query(
             `SELECT COUNT(*) as count FROM workflow.workflow_jobs WHERE status = $1`,
             [JobStatus.PENDING],

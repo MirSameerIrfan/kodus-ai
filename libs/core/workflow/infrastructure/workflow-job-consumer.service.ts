@@ -81,7 +81,7 @@ export class WorkflowJobConsumer {
     ): Promise<void> {
         return this.handleWorkflowJob(
             'workflow-job-consumer.webhook',
-	            'workflow.jobs.webhook.queue',
+            'workflow.jobs.webhook.queue',
             message,
             amqpMsg,
         );
@@ -125,7 +125,7 @@ export class WorkflowJobConsumer {
     ): Promise<void> {
         return this.handleWorkflowJob(
             'workflow-job-consumer.code_review',
-	            'workflow.jobs.code_review.queue',
+            'workflow.jobs.code_review.queue',
             message,
             amqpMsg,
         );
@@ -177,7 +177,7 @@ export class WorkflowJobConsumer {
         );
 
         if (!claimed) {
-            // Se não claimou, pode ser porque já foi processado ou está sendo processado por outro worker
+            // If not claimed, it could be because it's already processed or being processed by another worker
             const existing =
                 await this.inboxRepository.findByConsumerAndMessageId(
                     consumerId,
@@ -197,13 +197,17 @@ export class WorkflowJobConsumer {
                 return;
             }
 
-            // Se existe mas não está processado (e o claim falhou), lançamos erro pra disparar retry com backoff
+            // If it exists but isn't processed (and claim failed), throw error to trigger retry with backoff
             // Isso evita o hot loop de Nack(true) e respeita o delivery-limit das quorum queues
             this.logger.warn({
                 message:
                     'Message already claimed by another worker, retrying with backoff',
                 context: WorkflowJobConsumer.name,
-                metadata: { messageId, jobId: unwrappedMessage.jobId, queueName },
+                metadata: {
+                    messageId,
+                    jobId: unwrappedMessage.jobId,
+                    queueName,
+                },
             });
             throw new Error('Message already claimed but not finished');
         }
@@ -272,7 +276,7 @@ export class WorkflowJobConsumer {
                         error.message,
                     );
 
-                    // Re-throw para que RabbitMQErrorHandler faça o republish com delay
+                    // Re-throw so RabbitMQErrorHandler can republish with delay
                     throw error;
                 }
             },

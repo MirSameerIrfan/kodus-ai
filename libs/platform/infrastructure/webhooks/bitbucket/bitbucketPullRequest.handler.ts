@@ -378,7 +378,7 @@ export class BitbucketPullRequestHandler implements IWebhookEventHandler {
     ): Promise<boolean> {
         const { event, payload, platformType } = params;
 
-        // Verificar se é um evento de pull request válido
+        // Verify if it's a valid pull request event
         if (!this.isBitbucketPullRequestEvent(payload)) {
             return false;
         }

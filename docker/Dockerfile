@@ -1,7 +1,12 @@
 FROM node:22.19.0-slim AS base
 WORKDIR /usr/src/app
 
-ENV NODE_OPTIONS="--max-old-space-size=4096"
+ARG API_CLOUD_MODE=false
+ARG RELEASE_VERSION=local
+
+ENV API_CLOUD_MODE=${API_CLOUD_MODE}
+ENV API_DEVELOPMENT_MODE=false
+ENV SENTRY_RELEASE=${RELEASE_VERSION}
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates git python3 make g++ \
@@ -16,9 +21,19 @@ RUN yarn install --frozen-lockfile
 
 
 FROM deps AS build
+ARG API_CLOUD_MODE
+ENV API_CLOUD_MODE=${API_CLOUD_MODE}
+
 ARG RELEASE_VERSION=local
 ENV SENTRY_RELEASE=$RELEASE_VERSION
+
 COPY . .
+
+# Generate environment.ts by replacing placeholders for the build
+RUN sed -e "s/__CLOUD_MODE__/${API_CLOUD_MODE}/g" \
+        -e "s/__DEVELOPMENT_MODE__/false/g" \
+        src/ee/configs/environment/environment.template.ts > src/ee/configs/environment/environment.ts
+
 RUN yarn build:apps
 
 
@@ -41,6 +56,12 @@ COPY --from=build /usr/src/app/dist ./dist
 COPY --from=build /usr/src/app/package.json ./package.json
 COPY --from=build /usr/src/app/default-kodus-config.yml ./default-kodus-config.yml
 COPY --from=build /usr/src/app/kodus-config.yml ./kodus-config.yml
+COPY --from=build /usr/src/app/scripts ./scripts
+COPY --from=build /usr/src/app/ecosystem.config.js ./ecosystem.config.js
+
+COPY --chmod=0755 docker/prod-entrypoint.sh /usr/local/bin/prod-entrypoint
+ENTRYPOINT ["/usr/local/bin/prod-entrypoint"]
+
 FROM runtime-common AS api
 CMD ["node", "dist/apps/api/main.js"]
 FROM runtime-common AS webhooks
