@@ -184,6 +184,12 @@ export class ParametersRepository implements IParametersRepository {
         await this.parametersRepository.delete(uuid);
     }
 
+    async deleteByTeamId(teamId: string): Promise<void> {
+        await this.parametersRepository.delete({
+            team: { uuid: teamId },
+        });
+    }
+
     async findByKey<K extends ParametersKey>(
         configKey: K,
         organizationAndTeamData: OrganizationAndTeamData,

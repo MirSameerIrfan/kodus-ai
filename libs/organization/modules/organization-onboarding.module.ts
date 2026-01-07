@@ -5,6 +5,7 @@ import { TeamModule } from './team.module';
 import { TeamMembersModule } from './teamMembers.module';
 import { ProfilesModule } from '@libs/identity/modules/profiles.module';
 import { AuthModule } from '@libs/identity/modules/auth.module';
+import { ParametersModule } from './parameters.module';
 import { JoinOrganizationUseCase } from '../application/use-cases/onboarding/join-organization.use-case';
 
 @Module({
@@ -15,6 +16,7 @@ import { JoinOrganizationUseCase } from '../application/use-cases/onboarding/joi
         forwardRef(() => TeamMembersModule),
         forwardRef(() => ProfilesModule),
         forwardRef(() => AuthModule),
+        forwardRef(() => ParametersModule),
     ],
     providers: [JoinOrganizationUseCase],
     exports: [JoinOrganizationUseCase],
