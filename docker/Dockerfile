@@ -9,7 +9,7 @@ ENV API_DEVELOPMENT_MODE=false
 ENV SENTRY_RELEASE=${RELEASE_VERSION}
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates git python3 make g++ \
+    ca-certificates git python3 make g++ procps \
   && rm -rf /var/lib/apt/lists/*
 
 RUN corepack disable \
@@ -32,7 +32,7 @@ COPY . .
 # Generate environment.ts by replacing placeholders for the build
 RUN sed -e "s/__CLOUD_MODE__/${API_CLOUD_MODE}/g" \
         -e "s/__DEVELOPMENT_MODE__/false/g" \
-        src/ee/configs/environment/environment.template.ts > src/ee/configs/environment/environment.ts
+        libs/ee/configs/environment/environment.template.ts > libs/ee/configs/environment/environment.ts
 
 RUN yarn build:apps
 

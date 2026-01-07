@@ -39,4 +39,4 @@ async function runStressTest(numMessages: number) {
     }, 2000);
 }
 
-runStressTest(10000); // Teste com 10.000 PRs simultâneos
+runStressTest(10000); // Test with 10,000 simultaneous PRs

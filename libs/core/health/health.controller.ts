@@ -13,17 +13,17 @@ export class HealthController {
     @Get()
     async check(@Res() res: Response) {
         try {
-            // Verificar aplicação
+            // Verify application
             const appResult =
                 await this.applicationHealthIndicator.isApplicationHealthy();
             const appHealthy = appResult.application.status === 'up';
 
-            // Verificar database
+            // Verify database
             const dbResult =
                 await this.databaseHealthIndicator.isDatabaseHealthy();
             const dbHealthy = dbResult.database.status === 'up';
 
-            // Ambos precisam estar UP
+            // Both must be UP
             const overallHealthy = appHealthy && dbHealthy;
 
             const response = {
@@ -35,7 +35,7 @@ export class HealthController {
                 },
             };
 
-            // Se unhealthy, retorna HTTP 503
+            // If unhealthy, return HTTP 503
             const statusCode = overallHealthy
                 ? HttpStatus.OK
                 : HttpStatus.SERVICE_UNAVAILABLE;
@@ -44,7 +44,7 @@ export class HealthController {
         } catch (error) {
             const response = {
                 status: 'error',
-                error: 'Health check failed:' + error,
+                error: 'Health check failed: ' + error,
                 timestamp: new Date().toISOString(),
             };
 

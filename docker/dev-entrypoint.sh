@@ -3,6 +3,26 @@ set -eu
 
 echo "▶ dev-entrypoint: starting (NODE_ENV=${NODE_ENV:-})"
 
+# ----------------------------------------------------------------
+# Dynamic Environment Configuration
+# ----------------------------------------------------------------
+# Generates the environment.ts file at runtime based on ENV vars.
+# This allows changing CLOUD_MODE/DEV_MODE without rebuilding.
+# ----------------------------------------------------------------
+CLOUD_MODE=${API_CLOUD_MODE:-false}
+DEV_MODE=${API_DEVELOPMENT_MODE:-true}
+
+echo "▶ Configuring Environment..."
+echo "  - API_CLOUD_MODE: $CLOUD_MODE"
+echo "  - API_DEVELOPMENT_MODE: $DEV_MODE"
+
+cat <<EOF > libs/ee/configs/environment/environment.ts
+export const environment = {
+    API_CLOUD_MODE: ${CLOUD_MODE},
+    API_DEVELOPMENT_MODE: ${DEV_MODE},
+};
+EOF
+
 # 1. Install dependencies if necessary
 if [ ! -x node_modules/.bin/nest ]; then
   echo "▶ Installing deps (yarn --frozen-lockfile)…"

@@ -45,6 +45,7 @@ services:
       start_period: 60s
 
     environment:
+      - API_CLOUD_MODE=${API_CLOUD_MODE:-false}
       - NODE_OPTIONS=--max-old-space-size=4096
       - DEBUG_PORT=9229
       - API_LOG_PRETTY=true
@@ -60,6 +61,7 @@ services:
       - "9231:9231"
     command: yarn start:dev:worker
     environment:
+      - API_CLOUD_MODE=${API_CLOUD_MODE:-false}
       - NODE_OPTIONS=--max-old-space-size=2560
       - DEBUG_PORT=9231
       - COMPONENT_TYPE=worker
@@ -86,6 +88,7 @@ services:
       - "9232:9232"
     command: yarn start:dev:webhooks
     environment:
+      - API_CLOUD_MODE=${API_CLOUD_MODE:-false}
       - NODE_OPTIONS=--max-old-space-size=4096
       - DEBUG_PORT=9232
       - API_LOG_PRETTY=true
