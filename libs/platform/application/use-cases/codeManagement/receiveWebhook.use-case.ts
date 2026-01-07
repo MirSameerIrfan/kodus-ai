@@ -26,7 +26,7 @@ export class ReceiveWebhookUseCase implements IUseCase {
         @Inject('AZURE_REPOS_WEBHOOK_HANDLER')
         private readonly azureReposPullRequestHandler: IWebhookEventHandler,
     ) {
-        // Inicializar o mapa de handlers por tipo de plataforma
+        // Initialize handler map by platform type
         this.webhookHandlersMap = new Map<PlatformType, IWebhookEventHandler>([
             [PlatformType.GITHUB, githubPullRequestHandler],
             [PlatformType.GITLAB, gitlabMergeRequestHandler],

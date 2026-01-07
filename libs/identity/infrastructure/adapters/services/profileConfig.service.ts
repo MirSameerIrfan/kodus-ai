@@ -102,12 +102,12 @@ export class ProfileConfigService implements IProfileConfigService {
             //     return null;
             // }
 
-            // // Verifica se payload é um array e retorna como tal
+            // // Check if payload is an array and return as such
             // if (Array.isArray(data.configValue)) {
             //     return [...data.configValue] as T;
             // }
 
-            // // Se não for um array, retorna como um objeto
+            // // If not an array, return as an object
             // return { ...data.configValue } as T;
             return null;
         } catch (error) {

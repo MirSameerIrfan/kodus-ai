@@ -36,6 +36,7 @@ jobs:
     build_push_and_open_pr:
         runs-on: ubuntu-latest
         environment: production
+        if: github.event_name == 'release' || github.ref == 'refs/heads/main'
         permissions:
             contents: read
             id-token: write

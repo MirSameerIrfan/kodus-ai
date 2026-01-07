@@ -131,7 +131,7 @@ export class OrganizationParametersService implements IOrganizationParametersSer
         configType: 'main' | 'fallback',
     ): Promise<boolean> {
         try {
-            // Primeiro, buscar a configuração atual
+            // First, fetch current configuration
             const organizationAndTeamData = { organizationId };
             const currentConfig = await this.findByKey(
                 OrganizationParametersKey.BYOK_CONFIG,
@@ -148,7 +148,7 @@ export class OrganizationParametersService implements IOrganizationParametersSer
                 throw new BadRequestException(`config ${configType} not found`);
             }
 
-            // Se for para deletar main e não houver fallback, ou deletar fallback quando só existe fallback
+            // If deleting main and there is no fallback, or deleting fallback when only fallback exists
             if (configType === 'main' && !configValue.fallback) {
                 // delete the entire configuration if there is only main
                 await this.organizationParametersRepository.delete(
@@ -157,11 +157,11 @@ export class OrganizationParametersService implements IOrganizationParametersSer
                 return true;
             }
 
-            // Criar nova configuração sem a parte deletada
+            // Create new configuration without the deleted part
             const newConfigValue = { ...configValue };
             delete newConfigValue[configType];
 
-            // Atualizar no repository
+            // Update in repository
             const updatedConfig =
                 await this.organizationParametersRepository.update(
                     { uuid: currentConfig.uuid },

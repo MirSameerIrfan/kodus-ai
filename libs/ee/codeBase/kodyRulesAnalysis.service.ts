@@ -137,7 +137,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
                     text.replace(/([\[\]\\`*_{}()#+\-.!])/g, '\\$1');
                 const markdownLink = `[${escapeMarkdownSyntax(rule.title)}](${ruleLink})`;
 
-                // Verificar se o ID está entre crases simples `id`
+                // Check if ID is between single backticks `id`
                 const singleBacktickPattern = new RegExp(
                     `\`${this.escapeRegex(ruleId)}\``,
                     'g',
@@ -150,7 +150,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
                     continue;
                 }
 
-                // Verificar se o ID está entre blocos de código ```id```
+                // Check if ID is between triple backticks ```id```
                 const tripleBacktickPattern = new RegExp(
                     `\`\`\`${this.escapeRegex(ruleId)}\`\`\``,
                     'g',
@@ -186,7 +186,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
         return updatedContent;
     }
 
-    // Função auxiliar para escapar caracteres especiais no regex
+    // Helper function to escape special characters in regex
     private escapeRegex(string: string): string {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
@@ -1028,7 +1028,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
             fileContent: fileContext?.file?.fileContent,
             limitationType:
                 context?.codeReviewConfig?.suggestionControl?.limitationType,
-            // ✨ MODIFICAÇÃO: só passa severityLevelFilter se deve aplicar filtros
+            // ✨ MODIFICATION: only pass severityLevelFilter if filters should be applied
             severityLevelFilter: this.shouldPassSeverityFilter(
                 context?.codeReviewConfig?.suggestionControl,
             )
@@ -1053,7 +1053,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
     }
 
     /**
-     * ✨ SIMPLIFICADO: Determina se deve passar severityLevelFilter para análise de Kody Rules
+     * ✨ SIMPLIFIED: Determines if severityLevelFilter should be passed for Kody Rules analysis
      */
     private shouldPassSeverityFilter(
         suggestionControl?: SuggestionControlConfig,
@@ -1062,7 +1062,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
             return false;
         }
 
-        // Retorna true apenas se filtros estão explicitamente habilitados para Kody Rules
+        // Returns true only if filters are explicitly enabled for Kody Rules
         return suggestionControl.applyFiltersToKodyRules === true;
     }
 
@@ -1339,7 +1339,7 @@ export class KodyRulesAnalysisService implements IKodyRulesAnalysisService {
     }
 
     private async logTokenUsage(metadata: any) {
-        // Log token usage para análise e monitoramento
+        // Log token usage for analysis and monitoring
         this.logger.log({
             message: 'Token usage',
             context: KodyRulesAnalysisService.name,

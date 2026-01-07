@@ -15,7 +15,7 @@ services:
   # Application Services
   #----------------------------------------------------------------
   api:
-    image: ghcr.io/kodustech/kodus-ai:${KODUS_VERSION:-latest}
+    image: ghcr.io/kodustech/kodus-ai-api:${KODUS_VERSION:-latest}
     container_name: kodus_api_prod
     restart: unless-stopped
     command: node dist/apps/api/main.js
@@ -35,7 +35,7 @@ services:
       - kodus-backend-services
 
   worker:
-    image: ghcr.io/kodustech/kodus-ai:${KODUS_VERSION:-latest}
+    image: ghcr.io/kodustech/kodus-ai-worker:${KODUS_VERSION:-latest}
     container_name: kodus_worker_prod
     restart: unless-stopped
     command: node dist/apps/worker/main.js
@@ -53,7 +53,7 @@ services:
       - kodus-backend-services
 
   webhooks:
-    image: ghcr.io/kodustech/kodus-ai:${KODUS_VERSION:-latest}
+    image: ghcr.io/kodustech/kodus-ai-webhook:${KODUS_VERSION:-latest}
     container_name: kodus_webhooks_prod
     restart: unless-stopped
     command: node dist/apps/webhooks/main.js

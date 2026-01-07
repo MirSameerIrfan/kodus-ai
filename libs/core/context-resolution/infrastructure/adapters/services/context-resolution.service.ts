@@ -31,7 +31,7 @@ export class ContextResolutionService implements IContextResolutionService {
         organizationId: string,
         repositoryId: string,
     ): Promise<string> {
-        // 1. Buscar todas as integrações ativas da organização
+        // 1. Fetch all active integrations for the organization
         const integrations = await this.integrationService.find({
             organization: { uuid: organizationId },
             status: true,
@@ -41,7 +41,7 @@ export class ContextResolutionService implements IContextResolutionService {
             throw new Error('No active integrations found for organization');
         }
 
-        // 2. Para cada integração, buscar as integration configs com chave REPOSITORIES
+        // 2. For each integration, fetch integration configs with REPOSITORIES key
         for (const integration of integrations) {
             const integrationConfigs = await this.integrationConfigService.find(
                 {
@@ -54,7 +54,7 @@ export class ContextResolutionService implements IContextResolutionService {
                 continue;
             }
 
-            // 3. Buscar na lista de repositórios por um que tenha o mesmo id
+            // 3. Search the repository list for one with the same id
             for (const config of integrationConfigs) {
                 const repositories = config.configValue;
 
@@ -66,7 +66,7 @@ export class ContextResolutionService implements IContextResolutionService {
                     );
 
                     if (foundRepository) {
-                        // 4. Retornar o teamId dessa integration config
+                        // 4. Return the teamId from this integration config
                         return config?.team?.uuid;
                     }
                 }
@@ -87,13 +87,13 @@ export class ContextResolutionService implements IContextResolutionService {
             return '';
         }
 
-        // 1. Obter o teamId usando o método anterior
+        // 1. Get the teamId using the previous method
         const teamId = await this.getTeamIdByOrganizationAndRepository(
             organizationId,
             repositoryId,
         );
 
-        // 2. Buscar na tabela PARAMETERS pela configKey CODE_REVIEW_CONFIG
+        // 2. Search the PARAMETERS table for the CODE_REVIEW_CONFIG key
         const codeReviewConfig = await this.parametersService.findByKey(
             ParametersKey.CODE_REVIEW_CONFIG,
             { organizationId, teamId },
@@ -103,7 +103,7 @@ export class ContextResolutionService implements IContextResolutionService {
             throw new Error('Code review config not found');
         }
 
-        // 3. Buscar na lista de repositórios o que corresponde ao repositoryId
+        // 3. Search the repository list for the one matching repositoryId
         const repositories = codeReviewConfig.configValue.repositories;
         if (!repositories || !Array.isArray(repositories)) {
             throw new Error('No repositories found in code review config');
@@ -120,7 +120,7 @@ export class ContextResolutionService implements IContextResolutionService {
             );
         }
 
-        // 4. Buscar no nó directories o path que corresponde ao directoryId
+        // 4. Search the directories node for the path matching directoryId
         const directories = targetRepository.directories;
         if (!directories || !Array.isArray(directories)) {
             throw new Error(
@@ -150,13 +150,13 @@ export class ContextResolutionService implements IContextResolutionService {
             return '';
         }
 
-        // 1. Obter o teamId usando o método anterior
+        // 1. Get the teamId using the previous method
         const teamId = await this.getTeamIdByOrganizationAndRepository(
             organizationId,
             repositoryId,
         );
 
-        // 2. Buscar na tabela PARAMETERS pela configKey CODE_REVIEW_CONFIG
+        // 2. Search the PARAMETERS table for the CODE_REVIEW_CONFIG key
         const codeReviewConfig = await this.parametersService.findByKey(
             ParametersKey.CODE_REVIEW_CONFIG,
             { organizationId, teamId },
@@ -166,7 +166,7 @@ export class ContextResolutionService implements IContextResolutionService {
             throw new Error('Code review config not found');
         }
 
-        // 3. Buscar na lista de repositórios o que corresponde ao repositoryId
+        // 3. Search the repository list for the one matching repositoryId
         const repositories = codeReviewConfig.configValue.repositories;
         if (!repositories || !Array.isArray(repositories)) {
             throw new Error('No repositories found in code review config');

@@ -20,7 +20,7 @@ export class StateSerializerService {
     private readonly logger = createLogger(StateSerializerService.name);
 
     /**
-     * Serializa estado com estratégia configurável
+     * Serializes state with configurable strategy
      */
     async serialize<TContext extends PipelineContext>(
         context: TContext,
@@ -43,22 +43,22 @@ export class StateSerializerService {
     }
 
     /**
-     * Deserializa estado (detecta automaticamente se está comprimido)
+     * Deserializes state (auto-detects if compressed)
      */
     async deserialize<TContext extends PipelineContext>(
         data: Record<string, unknown>,
     ): Promise<TContext> {
-        // Verificar se está comprimido
+        // Check if compressed
         if (data.compressed && typeof data.data === 'string') {
             return await this.deserializeCompressed<TContext>(data);
         }
 
-        // Deserializar como JSON normal
+        // Deserialize as normal JSON
         return data as unknown as TContext;
     }
 
     /**
-     * Serialização completa (atual - padrão)
+     * Full serialization (current - default)
      */
     private serializeFull<TContext extends PipelineContext>(
         context: TContext,
@@ -67,15 +67,15 @@ export class StateSerializerService {
     }
 
     /**
-     * Serialização incremental (apenas mudanças)
-     * Compara com estado anterior e salva apenas diferenças significativas
+     * Incremental serialization (changes only)
+     * Compares with previous state and saves only significant differences
      */
     private serializeDelta<TContext extends PipelineContext>(
         currentState: TContext,
         previousState?: TContext,
     ): Record<string, unknown> {
         if (!previousState) {
-            // Primeiro checkpoint - salvar tudo
+            // First checkpoint - save everything
             return this.serializeFull(currentState);
         }
 
@@ -88,7 +88,7 @@ export class StateSerializerService {
             _strategy: 'delta',
         };
 
-        // Comparar e adicionar apenas mudanças significativas
+        // Compare and add only significant changes
         // TODO: Make this list configurable or dynamic
         const significantFields = [
             'validSuggestions',
@@ -113,7 +113,7 @@ export class StateSerializerService {
             }
         }
 
-        // Sempre incluir metadados essenciais se existirem
+        // Always include essential metadata if it exists
         if ((currentState as any).organizationAndTeamData) {
             delta.organizationAndTeamData = {
                 organizationId: (currentState as any).organizationAndTeamData
@@ -139,8 +139,8 @@ export class StateSerializerService {
     }
 
     /**
-     * Serialização mínima (apenas IDs e referências essenciais)
-     * Útil para checkpoints intermediários onde não precisamos do estado completo
+     * Minimal serialization (only IDs and essential references)
+     * Useful for intermediate checkpoints where full state is not needed
      */
     private serializeMinimal<TContext extends PipelineContext>(
         context: TContext,
@@ -173,8 +173,8 @@ export class StateSerializerService {
     }
 
     /**
-     * Serialização comprimida
-     * Comprime o estado completo antes de salvar
+     * Compressed serialization
+     * Compresses the full state before saving
      */
     private async serializeCompressed<TContext extends PipelineContext>(
         context: TContext,
@@ -186,13 +186,13 @@ export class StateSerializerService {
             compressed: true,
             _strategy: 'compressed',
             data: compressed.toString('base64'),
-            size: serialized.length, // Tamanho original para referência
-            compressedSize: compressed.length, // Tamanho comprimido
+            size: serialized.length, // Original size for reference
+            compressedSize: compressed.length, // Compressed size
         };
     }
 
     /**
-     * Deserializa estado comprimido
+     * Deserializes compressed state
      */
     private async deserializeCompressed<TContext extends PipelineContext>(
         data: Record<string, unknown>,
@@ -215,7 +215,7 @@ export class StateSerializerService {
     }
 
     /**
-     * Aplicar delta ao estado anterior para reconstruir estado completo
+     * Applies delta to previous state to reconstruct full state
      */
     applyDelta<TContext extends PipelineContext>(
         baseState: TContext,
@@ -225,7 +225,7 @@ export class StateSerializerService {
             return delta as unknown as TContext;
         }
 
-        // Aplicar mudanças do delta ao estado base
+        // Apply delta changes to base state
         const reconstructed = { ...baseState };
 
         for (const [key, value] of Object.entries(delta)) {
