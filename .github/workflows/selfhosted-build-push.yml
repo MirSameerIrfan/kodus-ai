@@ -17,7 +17,13 @@ jobs:
               uses: actions/checkout@v4.2.2
 
             - name: Capture release version
-              run: echo "RELEASE_VERSION=${{ github.event.release.tag_name || 'manual' }}" >> $GITHUB_ENV
+              run: |
+                  TAG="${{ github.event.release.tag_name || github.ref_name }}"
+                  # Se a tag for algo como 'main', 'master' ou similar (não for tag real), usa 'manual'
+                  if [[ "$TAG" == "main" || "$TAG" == "master" ]]; then
+                    TAG="manual"
+                  fi
+                  echo "RELEASE_VERSION=$TAG" >> $GITHUB_ENV
 
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v3.2.0
@@ -41,15 +47,10 @@ jobs:
               run: |
                   set -euo pipefail
 
-                  # Image names (matching docker-compose.prod.yml)
+                  # Base image names
                   API_BASE="${REGISTRY}/kodus-ai-api"
                   WEBHOOK_BASE="${REGISTRY}/kodus-ai-webhook"
                   WORKER_BASE="${REGISTRY}/kodus-ai-worker"
-
-                  # Comma-separated tags for Docker Bake
-                  API_TAGS="$API_BASE:${TAG},$API_BASE:latest"
-                  WEBHOOK_TAGS="$WEBHOOK_BASE:${TAG},$WEBHOOK_BASE:latest"
-                  WORKER_TAGS="$WORKER_BASE:${TAG},$WORKER_BASE:latest"
 
                   docker buildx bake -f docker-bake.hcl \
                     --set base.args.RELEASE_VERSION=${TAG} \
@@ -57,9 +58,9 @@ jobs:
                     --set base.cache-from=type=gha \
                     --set base.cache-to=type=gha,mode=max \
                     --set *.platform=linux/amd64,linux/arm64 \
-                    --set api.tags="${API_TAGS}" \
-                    --set webhooks.tags="${WEBHOOK_TAGS}" \
-                    --set worker.tags="${WORKER_TAGS}" \
+                    --set api.tags=["${API_BASE}:${TAG}","${API_BASE}:latest"] \
+                    --set webhooks.tags=["${WEBHOOK_BASE}:${TAG}","${WEBHOOK_BASE}:latest"] \
+                    --set worker.tags=["${WORKER_BASE}:${TAG}","${WORKER_BASE}:latest"] \
                     --push
 
             - name: Notify Discord on Success
