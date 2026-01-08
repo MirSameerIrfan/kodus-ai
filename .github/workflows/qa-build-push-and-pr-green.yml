@@ -1,4 +1,4 @@
-name: QA (GitOps) - Build/Push images + PR (green)
+name: QA (GitOps) - Build/Push images + PR (deploy & promote)
 
 on:
     push:
@@ -10,7 +10,7 @@ on:
                 required: false
 
 concurrency:
-    group: qa-gitops-green
+    group: qa-gitops
     cancel-in-progress: true
 
 permissions:
@@ -109,10 +109,10 @@ jobs:
               run: |
                   set -euo pipefail
 
-                          docker buildx bake -f docker-bake.hcl \
-                            --set base.args.RELEASE_VERSION=${{ env.IMAGE_TAG }} \
-                            --set base.args.API_CLOUD_MODE=true \
-                            --set base.cache-from=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }} \
+                  docker buildx bake -f docker-bake.hcl \
+                    --set base.args.RELEASE_VERSION=${{ env.IMAGE_TAG }} \
+                    --set base.args.API_CLOUD_MODE=true \
+                    --set base.cache-from=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }} \
                     --set base.cache-to=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }},mode=max \
                     --set *.platform=${{ env.BUILDX_PLATFORMS }} \
                     --push
@@ -148,42 +148,39 @@ jobs:
                   WORKER_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}"
                   DESIRED_COUNT=1
 
-                  # Usa o script oficial de deploy (Blue/Green toggle)
-                  ./scripts/gitops/update-tfvars-deploy.sh "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE" "$DESIRED_COUNT"
+                  # Deploy to idle side (auto detects Blue/Green)
+                  ./infra/scripts/gitops/update-tfvars-deploy.sh "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE" "$DESIRED_COUNT"
 
-            - name: Update tfvars (promote weights)
+            - name: Update tfvars (shift traffic)
               run: |
                   set -euo pipefail
-                  # Script inline para promover pesos (já que o script dedicado foi removido)
-                  # Inverte os pesos baseado em quem está ativo agora (assumindo que o deploy acabou de ocorrer no inativo)
                   FILE="infra/${{ env.INFRA_TFVARS_PATH }}"
+
+                  # Promotes to 100% traffic on the newly deployed side
                   node -e "
                     const fs = require('fs');
                     const file = process.argv[1];
                     const obj = JSON.parse(fs.readFileSync(file, 'utf8'));
 
-                    // Se Green tem 100, então Blue recebeu deploy agora -> Promover Blue
-                    // Se Green tem 0 (ou <100), então Green recebeu deploy agora -> Promover Green
-                    // Lógica simplificada: Se Green == 100, vira Blue=100. Se não, vira Green=100.
+                    // Detects which side was active BEFORE deploy
+                    const greenWasActive = obj.api_green_weight === 100;
 
-                    const greenIsActive = obj.api_green_weight === 100;
-
-                    if (greenIsActive) {
-                      // Blue acabou de receber deploy, promover Blue
-                      console.log('Promoting BLUE to 100%');
+                    if (greenWasActive) {
+                      // Green was active -> Blue received deploy -> Promote Blue
+                      console.log('>>> Shifting traffic: GREEN (100%) -> BLUE (100%)');
                       obj.api_green_weight = 0;
                       obj.webhook_green_weight = 0;
-                      // Se houver pesos blue explícitos
                       if (obj.api_blue_weight !== undefined) obj.api_blue_weight = 100;
                     } else {
-                      // Green acabou de receber deploy, promover Green
-                      console.log('Promoting GREEN to 100%');
+                      // Blue was active -> Green received deploy -> Promote Green
+                      console.log('>>> Shifting traffic: BLUE (100%) -> GREEN (100%)');
                       obj.api_green_weight = 100;
                       obj.webhook_green_weight = 100;
                       if (obj.api_blue_weight !== undefined) obj.api_blue_weight = 0;
                     }
 
-                    fs.writeFileSync(file, JSON.stringify(obj, null, 2));
+                    fs.writeFileSync(file, JSON.stringify(obj, null, 2) + '\n');
+                    console.log('✅ Traffic shifted successfully');
                   " "$FILE"
 
             - name: Verify infra changes scope
@@ -196,19 +193,23 @@ jobs:
                   if [ "$changed" != "${{ env.INFRA_TFVARS_PATH }}" ]; then
                     echo "Unexpected changed file: $changed"; exit 1; fi
 
-            - name: Create PR on infra (QA deploy)
+            - name: Create PR on infra (QA deploy & promote)
               uses: peter-evans/create-pull-request@v7
               with:
                   token: ${{ steps.infra_token.outputs.token }}
                   path: infra
                   branch: ci/qa-${{ env.IMAGE_TAG }}
                   base: ${{ env.INFRA_BASE_BRANCH }}
-                  title: "QA: deploy green (${{ env.IMAGE_TAG }})"
+                  title: "QA: deploy & promote (${{ env.IMAGE_TAG }})"
                   body: |
-                      Updates green images (api/webhooks/worker) to tag `${{ env.IMAGE_TAG }}`, desired_count=1 and promotes weights to 100% green.
+                      **QA Environment: Deploy + Traffic Shift**
 
-                      Branch: `${{ env.INFRA_BASE_BRANCH }}`
-                      Tag: `${{ env.IMAGE_TAG }}`
+                      Deploys new images to idle side and promotes to 100% traffic.
+
+                      - **Tag**: `${{ env.IMAGE_TAG }}`
+                      - **Branch**: `${{ env.INFRA_BASE_BRANCH }}`
+
+                      This PR will be auto-applied by Atlantis.
                   commit-message: "qa: deploy & promote ${{ env.IMAGE_TAG }}"
                   labels: auto-apply
 
