@@ -103,12 +103,11 @@ jobs:
             - name: Build, tag, and push (api/webhooks/worker)
               env:
                   ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+                  API_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}
+                  WEBHOOKS_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}
+                  WORKER_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}
               run: |
                   set -euo pipefail
-
-                  API_TAG="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}"
-                  WEBHOOKS_TAG="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}"
-                  WORKER_TAG="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}"
 
                           docker buildx bake -f docker-bake.hcl \
                             --set base.args.RELEASE_VERSION=${{ env.IMAGE_TAG }} \
@@ -116,9 +115,6 @@ jobs:
                             --set base.cache-from=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }} \
                     --set base.cache-to=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }},mode=max \
                     --set *.platform=${{ env.BUILDX_PLATFORMS }} \
-                    --set API_TAGS="$API_TAG" \
-                    --set WEBHOOKS_TAGS="$WEBHOOKS_TAG" \
-                    --set WORKER_TAGS="$WORKER_TAG" \
                     --push
 
                   docker buildx imagetools create \
