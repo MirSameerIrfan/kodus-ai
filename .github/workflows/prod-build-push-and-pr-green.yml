@@ -1,4 +1,4 @@
-name: PROD (GitOps) - Build/Push images + PR (green)
+name: PROD (GitOps) - Build/Push images + Deploy
 
 on:
     release:
@@ -10,7 +10,7 @@ on:
                 required: false
 
 concurrency:
-    group: prod-gitops-green
+    group: prod-gitops-deploy
     cancel-in-progress: false
 
 permissions:
@@ -33,7 +33,7 @@ env:
     INFRA_TFVARS_PATH: ${{ vars.INFRA_TFVARS_PATH }}
 
 jobs:
-    build_push_and_open_pr:
+    build_push_and_deploy:
         runs-on: ubuntu-latest
         environment: production
         if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/')
@@ -154,7 +154,7 @@ jobs:
                   token: ${{ steps.infra_token.outputs.token }}
                   path: infra
 
-            - name: Update tfvars (green images)
+            - name: Update tfvars (deploy to idle side)
               env:
                   ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
               run: |
@@ -165,9 +165,13 @@ jobs:
                   WEBHOOKS_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}"
                   WORKER_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}"
 
-                  ./scripts/gitops/update-tfvars-green.sh "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE"
+                  ./scripts/gitops/update-tfvars-deploy.sh \
+                    "$FILE" \
+                    "$API_IMAGE" \
+                    "$WEBHOOKS_IMAGE" \
+                    "$WORKER_IMAGE"
 
-                  echo "Updated $FILE"
+                  echo "✅ Updated $FILE"
 
             - name: Verify infra changes scope
               run: |
@@ -183,16 +187,81 @@ jobs:
                     exit 1
                   fi
 
-            - name: Create PR (deploy green)
+            - name: Create PR (Step 1 Deploy)
+              id: create_pr
               uses: peter-evans/create-pull-request@v7
               with:
                   token: ${{ steps.infra_token.outputs.token }}
                   path: infra
-                  branch: ci/prod-green-${{ env.IMAGE_TAG }}
+                  branch: deploy/prod-${{ env.IMAGE_TAG }}
                   base: ${{ env.INFRA_BASE_BRANCH }}
-                  title: "PROD: deploy green (${{ env.IMAGE_TAG }})"
+                  title: PROD Deploy (Step 1/3) - New version ${{ env.IMAGE_TAG }}
+                  commit-message: prod deploy v${{ env.IMAGE_TAG }} to idle side (step 1/3)
                   body: |
-                      Update green images (api/webhook/worker) to tag `${{ env.IMAGE_TAG }}` and scale green to 2 tasks.
+                      ## 🚀 Blue/Green Deployment - Step 1: DEPLOY
 
-                      Next step (manual): run the traffic promotion workflow (weights) in the application repo.
-                  commit-message: "prod: deploy green images (${{ env.IMAGE_TAG }})"
+                      **Version:** `${{ env.IMAGE_TAG }}`
+                      **Target:** Idle environment (no traffic yet)
+
+                      ### Changes:
+                      - ✅ New images deployed to idle side
+                      - ✅ Cluster scaled to 8 instances
+                      - ⚠️ **Weights unchanged** (no traffic shift yet)
+
+                      ### Next Steps:
+                      1. **Review and Apply** this PR via Atlantis: `atlantis apply -p aws-prod-app-services-ecs-ec2`
+                      2. **Validate** the new environment is healthy:
+                         - Check ECS console (tasks should be 2/2 or 3/3)
+                         - Run: `./scripts/aws/debug/status-report.sh`
+                         - Check logs: `./scripts/aws/debug/tail-logs.sh prod api`
+                      3. **Go to `kodus-infra` repo** → Actions → Run "PROD - Shift Traffic" (Step 2)
+
+                      ### Rollback:
+                      If deploy fails, just close this PR. No impact on production.
+
+                      ---
+                      *Automated deploy from kodus-ai release `${{ env.IMAGE_TAG }}`*
+                      *Triggered by: @${{ github.actor }}*
+
+            - name: Notify Discord (Deploy PR Created)
+              if: success() && steps.create_pr.outputs.pull-request-number
+              env:
+                  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+              run: |
+                  if [ -n "$DISCORD_WEBHOOK" ]; then
+                    curl -H "Content-Type: application/json" -X POST "$DISCORD_WEBHOOK" -d '{
+                      "embeds": [{
+                        "title": "🚀 PROD: New Deploy Ready",
+                        "description": "New version **v${{ env.IMAGE_TAG }}** deployed to idle environment",
+                        "color": 5763719,
+                        "fields": [
+                          {"name": "Version", "value": "`${{ env.IMAGE_TAG }}`", "inline": true},
+                          {"name": "Triggered by", "value": "@${{ github.actor }}", "inline": true},
+                          {"name": "PR", "value": "[#${{ steps.create_pr.outputs.pull-request-number }}](${{ steps.create_pr.outputs.pull-request-url }})", "inline": false},
+                          {"name": "Next Steps", "value": "1. Review and apply PR via Atlantis\n2. Validate health (ECS, logs, metrics)\n3. Run **Shift Traffic** workflow in kodus-infra", "inline": false}
+                        ],
+                        "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%S.000Z)'"
+                      }]
+                    }'
+                  fi
+
+            - name: Notify Discord (Deploy Failed)
+              if: failure()
+              env:
+                  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+              run: |
+                  if [ -n "$DISCORD_WEBHOOK" ]; then
+                    curl -H "Content-Type: application/json" -X POST "$DISCORD_WEBHOOK" -d '{
+                      "embeds": [{
+                        "title": "❌ PROD: Deploy Failed",
+                        "description": "Failed to deploy v${{ env.IMAGE_TAG }}",
+                        "color": 15158332,
+                        "fields": [
+                          {"name": "Version", "value": "`${{ env.IMAGE_TAG }}`", "inline": true},
+                          {"name": "Triggered by", "value": "@${{ github.actor }}", "inline": true},
+                          {"name": "Action Required", "value": "Check workflow logs:\n[View Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})", "inline": false}
+                        ],
+                        "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%S.000Z)'"
+                      }]
+                    }'
+                  fi
