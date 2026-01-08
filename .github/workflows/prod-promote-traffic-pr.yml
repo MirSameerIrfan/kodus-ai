@@ -4,10 +4,10 @@ on:
     workflow_dispatch:
         inputs:
             tag_name:
-                description: "Tag da versão para promover (ex: 2.0.1)"
+                description: "Tag version to promote (e.g., 2.0.1)"
                 required: true
             reason:
-                description: "Motivo/nota para promoção (opcional)"
+                description: "Reason/note for promotion (optional)"
                 required: false
 
 concurrency:
@@ -18,7 +18,7 @@ permissions:
     contents: read
 
 env:
-    # GitOps (infra repo + path do tfvars)
+    # GitOps (infra repo + tfvars path)
     INFRA_REPO: ${{ vars.INFRA_REPO }}
     INFRA_BASE_BRANCH: ${{ vars.INFRA_BASE_BRANCH }}
     INFRA_TFVARS_PATH: ${{ vars.INFRA_TFVARS_PATH }}
@@ -121,10 +121,10 @@ jobs:
                   base: ${{ env.INFRA_BASE_BRANCH }}
                   title: "PROD: promote traffic to 100% green (${{ github.event.inputs.tag_name }})"
                   body: |
-                      Ajusta pesos do ALB para 100% green (api/webhook).
+                      Adjust ALB weights to 100% green (api/webhook).
 
-                      Versão Promovida: ${{ github.event.inputs.tag_name }}
-                      Nota: ${{ github.event.inputs.reason || 'n/a' }}
+                      Promoted Version: ${{ github.event.inputs.tag_name }}
+                      Note: ${{ github.event.inputs.reason || 'n/a' }}
 
-                      Rollback: reverter este PR (volta pesos para blue).
+                      Rollback: revert this PR (switches weights back to blue).
                   commit-message: "prod: promote traffic weights to green (${{ github.event.inputs.tag_name }})"
