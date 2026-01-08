@@ -38,13 +38,6 @@ RUN sed -e "s/__CLOUD_MODE__/${API_CLOUD_MODE}/g" \
 RUN yarn build:apps
 
 
-FROM base AS prod-deps
-COPY package.json yarn.lock ./
-# Em prod, precisamos do ts-node e typescript para as migrações (conforme modelo antigo)
-RUN yarn install --frozen-lockfile
-RUN yarn cache clean
-
-
 FROM node:22.19.0-slim AS runtime-common
 WORKDIR /usr/src/app
 ENV NODE_ENV=production
@@ -62,7 +55,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates procps \
   && rm -rf /var/lib/apt/lists/*
 
-COPY --from=prod-deps /usr/src/app/node_modules ./node_modules
+COPY --from=deps /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/dist ./dist
 COPY --from=build /usr/src/app/package.json ./package.json
 COPY --from=build /usr/src/app/tsconfig.json ./tsconfig.json

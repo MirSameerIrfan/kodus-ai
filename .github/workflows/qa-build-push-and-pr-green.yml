@@ -137,7 +137,7 @@ jobs:
                   token: ${{ steps.infra_token.outputs.token }}
                   path: infra
 
-            - name: Update tfvars (green images + desired count)
+            - name: Update tfvars (deploy to idle side)
               env:
                   ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
               run: |
@@ -147,13 +147,44 @@ jobs:
                   WEBHOOKS_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}"
                   WORKER_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}"
                   DESIRED_COUNT=1
-                  ./scripts/gitops/update-tfvars-green.sh "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE" "$DESIRED_COUNT"
 
-            - name: Update tfvars (promote weights to green)
+                  # Usa o script oficial de deploy (Blue/Green toggle)
+                  ./scripts/gitops/update-tfvars-deploy.sh "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE" "$DESIRED_COUNT"
+
+            - name: Update tfvars (promote weights)
               run: |
                   set -euo pipefail
+                  # Script inline para promover pesos (já que o script dedicado foi removido)
+                  # Inverte os pesos baseado em quem está ativo agora (assumindo que o deploy acabou de ocorrer no inativo)
                   FILE="infra/${{ env.INFRA_TFVARS_PATH }}"
-                  ./scripts/gitops/update-tfvars-promote-weights.sh "$FILE"
+                  node -e "
+                    const fs = require('fs');
+                    const file = process.argv[1];
+                    const obj = JSON.parse(fs.readFileSync(file, 'utf8'));
+
+                    // Se Green tem 100, então Blue recebeu deploy agora -> Promover Blue
+                    // Se Green tem 0 (ou <100), então Green recebeu deploy agora -> Promover Green
+                    // Lógica simplificada: Se Green == 100, vira Blue=100. Se não, vira Green=100.
+
+                    const greenIsActive = obj.api_green_weight === 100;
+
+                    if (greenIsActive) {
+                      // Blue acabou de receber deploy, promover Blue
+                      console.log('Promoting BLUE to 100%');
+                      obj.api_green_weight = 0;
+                      obj.webhook_green_weight = 0;
+                      // Se houver pesos blue explícitos
+                      if (obj.api_blue_weight !== undefined) obj.api_blue_weight = 100;
+                    } else {
+                      // Green acabou de receber deploy, promover Green
+                      console.log('Promoting GREEN to 100%');
+                      obj.api_green_weight = 100;
+                      obj.webhook_green_weight = 100;
+                      if (obj.api_blue_weight !== undefined) obj.api_blue_weight = 0;
+                    }
+
+                    fs.writeFileSync(file, JSON.stringify(obj, null, 2));
+                  " "$FILE"
 
             - name: Verify infra changes scope
               run: |
