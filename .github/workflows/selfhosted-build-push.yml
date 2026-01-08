@@ -58,9 +58,9 @@ jobs:
                     --set base.cache-from=type=gha \
                     --set base.cache-to=type=gha,mode=max \
                     --set *.platform=linux/amd64,linux/arm64 \
-                    --set api.tags=["${API_BASE}:${TAG}","${API_BASE}:latest"] \
-                    --set webhooks.tags=["${WEBHOOK_BASE}:${TAG}","${WEBHOOK_BASE}:latest"] \
-                    --set worker.tags=["${WORKER_BASE}:${TAG}","${WORKER_BASE}:latest"] \
+                    --set API_TAGS=${API_BASE}:${TAG},${API_BASE}:latest \
+                    --set WEBHOOKS_TAGS=${WEBHOOK_BASE}:${TAG},${WEBHOOK_BASE}:latest \
+                    --set WORKER_TAGS=${WORKER_BASE}:${TAG},${WORKER_BASE}:latest \
                     --push
 
             - name: Notify Discord on Success
