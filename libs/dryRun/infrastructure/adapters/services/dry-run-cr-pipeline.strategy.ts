@@ -46,10 +46,10 @@ export class DryRunCodeReviewPipelineStrategy implements IPipelineStrategy<CodeR
             this.processFilesPrLevelReviewStage,
             this.processFilesReview,
             this.createPrLevelCommentsStage,
+            this.validateSuggestionsStage,
             this.createFileCommentsStage,
             this.aggregateResultsStage,
             this.updateCommentsAndGenerateSummaryStage,
-            this.validateSuggestionsStage,
         ];
     }
 

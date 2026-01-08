@@ -12,13 +12,26 @@ import * as moment from 'moment-timezone';
 import pLimit from 'p-limit';
 import { v4 as uuidv4 } from 'uuid';
 
+import { createLogger } from '@kodus/flow';
 import {
-    ALLOWLIST_TREES_ONLY,
-    attachETagHooksAllowlist,
-    ETagCacheEntry,
-    ETagStore,
-} from './octokit-etag-allowlist';
+    GitHubReaction,
+    GitlabReaction,
+} from '@libs/code-review/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
+import { getCodeReviewBadge } from '@libs/common/utils/codeManagement/codeReviewBadge';
+import { getLabelShield } from '@libs/common/utils/codeManagement/labels';
+import { getSeverityLevelShield } from '@libs/common/utils/codeManagement/severityLevel';
+import { decrypt, encrypt } from '@libs/common/utils/crypto';
 import { IntegrationServiceDecorator } from '@libs/common/utils/decorators/integration-service.decorator';
+import {
+    isFileMatchingGlob,
+    isFileMatchingGlobCaseInsensitive,
+} from '@libs/common/utils/glob-utils';
+import { extractRepoData, extractRepoNames } from '@libs/common/utils/helpers';
+import {
+    getTranslationsForLanguageByCategory,
+    TranslationsCategory,
+} from '@libs/common/utils/translations/translations';
+import { CacheService } from '@libs/core/cache/cache.service';
 import {
     CreateAuthIntegrationStatus,
     InstallationStatus,
@@ -28,33 +41,37 @@ import {
     PlatformType,
     PullRequestState,
 } from '@libs/core/domain/enums';
-import { IGithubService } from '@libs/platform/domain/github/contracts/github.service.contract';
-import { ICodeManagementService } from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
-import {
-    IIntegrationService,
-    INTEGRATION_SERVICE_TOKEN,
-} from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
-import {
-    AUTH_INTEGRATION_SERVICE_TOKEN,
-    IAuthIntegrationService,
-} from '@libs/integrations/domain/authIntegrations/contracts/auth-integration.service.contracts';
-import {
-    IIntegrationConfigService,
-    INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { CacheService } from '@libs/core/cache/cache.service';
-import { MCPManagerService } from '@libs/mcp-server/services/mcp-manager.service';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { AuthMode } from '@libs/platform/domain/platformIntegrations/enums/codeManagement/authMode.enum';
-import { decrypt, encrypt } from '@libs/common/utils/crypto';
-import { GithubAuthDetail } from '@libs/integrations/domain/authIntegrations/types/github-auth-detail.type';
 import {
     CommentResult,
     Repository,
     ReviewComment,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { Commit } from '@libs/core/infrastructure/config/types/general/commit.type';
-import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { TreeItem } from '@libs/core/infrastructure/config/types/general/tree.type';
+import {
+    AUTH_INTEGRATION_SERVICE_TOKEN,
+    IAuthIntegrationService,
+} from '@libs/integrations/domain/authIntegrations/contracts/auth-integration.service.contracts';
+import { GithubAuthDetail } from '@libs/integrations/domain/authIntegrations/types/github-auth-detail.type';
+import {
+    IIntegrationConfigService,
+    INTEGRATION_CONFIG_SERVICE_TOKEN,
+} from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import { IntegrationConfigEntity } from '@libs/integrations/domain/integrationConfigs/entities/integration-config.entity';
+import {
+    IIntegrationService,
+    INTEGRATION_SERVICE_TOKEN,
+} from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
+import { IntegrationEntity } from '@libs/integrations/domain/integrations/entities/integration.entity';
+import { MCPManagerService } from '@libs/mcp-server/services/mcp-manager.service';
+import { IGithubService } from '@libs/platform/domain/github/contracts/github.service.contract';
+import { AuthMode } from '@libs/platform/domain/platformIntegrations/enums/codeManagement/authMode.enum';
+import {
+    CodeManagementConnectionStatus,
+    ICodeManagementService,
+} from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
+import { GitCloneParams } from '@libs/platform/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
 import {
     OneSentenceSummaryItem,
     PullRequest,
@@ -66,33 +83,18 @@ import {
     PullRequestsWithChangesRequested,
     PullRequestWithFiles,
 } from '@libs/platform/domain/platformIntegrations/types/codeManagement/pullRequests.type';
-import { IntegrationEntity } from '@libs/integrations/domain/integrations/entities/integration.entity';
-import { CodeManagementConnectionStatus } from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
-import { extractRepoData, extractRepoNames } from '@libs/common/utils/helpers';
+import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
 import {
     RepositoryFile,
     RepositoryFileWithContent,
 } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
-import {
-    getTranslationsForLanguageByCategory,
-    TranslationsCategory,
-} from '@libs/common/utils/translations/translations';
-import { getLabelShield } from '@libs/common/utils/codeManagement/labels';
-import { getCodeReviewBadge } from '@libs/common/utils/codeManagement/codeReviewBadge';
-import { getSeverityLevelShield } from '@libs/common/utils/codeManagement/severityLevel';
-import { TreeItem } from '@libs/core/infrastructure/config/types/general/tree.type';
-import {
-    GitHubReaction,
-    GitlabReaction,
-} from '@libs/code-review/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
-import { IntegrationConfigEntity } from '@libs/integrations/domain/integrationConfigs/entities/integration-config.entity';
-import {
-    isFileMatchingGlob,
-    isFileMatchingGlobCaseInsensitive,
-} from '@libs/common/utils/glob-utils';
-import { GitCloneParams } from '@libs/platform/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
 import { IRepository } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
-import { createLogger } from '@kodus/flow';
+import {
+    ALLOWLIST_TREES_ONLY,
+    attachETagHooksAllowlist,
+    ETagCacheEntry,
+    ETagStore,
+} from './octokit-etag-allowlist';
 
 interface GitHubAuthResponse {
     token: string;
@@ -2755,14 +2757,17 @@ ${copyPrompt}
         translations: any,
         suggestionCopyPrompt: boolean,
     ) {
+        const isCommitableSuggestion = lineComment?.isCommitableSuggestion;
+
+        const language = isCommitableSuggestion
+            ? 'suggestion'
+            : repository?.language?.toLowerCase();
+
         const severityShield = lineComment?.suggestion
             ? getSeverityLevelShield(lineComment.suggestion.severity)
             : '';
         const codeBlock = lineComment?.body?.improvedCode
-            ? this.formatCodeBlock(
-                  repository?.language?.toLowerCase(),
-                  lineComment?.body?.improvedCode,
-              )
+            ? this.formatCodeBlock(language, lineComment?.body?.improvedCode)
             : '';
         const suggestionContent = lineComment?.body?.suggestionContent || '';
         const actionStatement = lineComment?.body?.actionStatement
@@ -2782,11 +2787,21 @@ ${copyPrompt}
             ? this.formatPromptForLLM(lineComment)
             : '';
 
+        const experimentalWarning = isCommitableSuggestion
+            ? `
+> [!WARNING]
+> <sub>**Experimental Feature:** This suggestion is generated by an experimental feature designed to produce committable code changes.
+> It analyzes existing suggestions and verifies whether they can be committed without breaking the current codebase.
+> Please review the changes carefully before applying them, as the feature is still under development and may not be 100% accurate.</sub>
+`
+            : '';
+
         return [
             badges,
             suggestionContent,
             actionStatement,
             codeBlock,
+            experimentalWarning,
             copyPrompt,
             this.formatSub(translations.talkToKody),
             this.formatSub(translations.feedback) +

@@ -18,6 +18,11 @@ import { LLMResponseProcessor } from '@libs/ai-engine/infrastructure/adapters/se
 import { IASTAnalysisService } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
 import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
 import { prompt_detectBreakingChanges } from '@libs/common/utils/langchainCommon/prompts/detectBreakingChanges';
+import {
+    prompt_validateCodeSemantics,
+    ValidateCodeSemanticsResult,
+    validateCodeSemanticsSchema,
+} from '@libs/common/utils/langchainCommon/prompts/validateCodeSemantics';
 import { calculateBackoffInterval } from '@libs/common/utils/polling';
 import { AxiosASTService } from '@libs/core/infrastructure/config/axios/microservices/ast.axios';
 import {
@@ -30,6 +35,7 @@ import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/
 import { ObservabilityService } from '@libs/core/log/observability.service';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 
+import { ASTValidateCodeRequest } from '@libs/code-review/domain/types/astValidate.type';
 import {
     GetImpactAnalysisResponse,
     GetTaskInfoResponse,
@@ -647,40 +653,76 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
         }
     }
 
-    async startDiagnostic(payload: {
-        repository: any;
-        pullRequest: any;
-        organizationAndTeamData: OrganizationAndTeamData;
-        platformType: string;
-        files: {
-            filePath: string;
-            patchedCode: string;
-        }[];
+    async startValidate(payload: {
+        files: ASTValidateCodeRequest;
     }): Promise<string> {
-        const { headRepo } = await this.getRepoParams(
-            payload.repository,
-            payload.pullRequest,
-            payload.organizationAndTeamData,
-            payload.platformType,
-        );
-
         const taskId = await this.astAxios.post(
-            '/api/lsp/suggestion/diagnostic',
-            {
-                repoData: headRepo,
-                files: payload.files,
-            },
+            '/api/ast/validate-code/initialize',
+            { ...payload.files },
         );
 
         return taskId;
     }
 
-    async getDiagnostic(taskId: string) {
-        const response = await this.astAxios.get(
-            `/api/lsp/suggestion/diagnostic/${taskId}`,
+    async getValidate(taskId: string) {
+        const response = await this.astAxios.get<any>(
+            `/api/ast/validate-code/${taskId}`,
         );
 
         return response;
+    }
+
+    public async validateWithLLM(
+        taskId: string,
+        payload: {
+            code: string;
+            filePath: string;
+            language?: string;
+            diff?: string;
+        },
+    ): Promise<ValidateCodeSemanticsResult | null> {
+        const provider = LLMModelProvider.GROQ_GPT_OSS_120B;
+        const fallbackProvider = LLMModelProvider.OPENAI_GPT_4O_MINI;
+        const runName = 'validateWithLLM';
+        const spanName = `${CodeAstAnalysisService.name}::${runName}`;
+
+        try {
+            const { result } = await this.observabilityService.runLLMInSpan({
+                spanName,
+                runName,
+                attrs: {
+                    filePath: payload.filePath,
+                },
+                exec: async (callbacks) => {
+                    return await this.promptRunnerService
+                        .builder()
+                        .setProviders({
+                            main: provider,
+                            fallback: fallbackProvider,
+                        })
+                        .setParser(ParserType.ZOD, validateCodeSemanticsSchema)
+                        .setLLMJsonMode(true)
+                        .setPayload(payload)
+                        .addPrompt({
+                            role: PromptRole.USER,
+                            prompt: prompt_validateCodeSemantics,
+                        })
+                        .addCallbacks(callbacks)
+                        .setRunName(runName)
+                        .execute();
+                },
+            });
+
+            return result;
+        } catch (error) {
+            this.logger.error({
+                message: 'Error executing LLM validation',
+                context: CodeAstAnalysisService.name,
+                metadata: { filePath: payload.filePath, taskId },
+                error,
+            });
+            return null;
+        }
     }
 
     async test(payload: any): Promise<any> {

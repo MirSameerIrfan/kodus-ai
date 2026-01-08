@@ -1,22 +1,12 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
+import { createLogger } from '@kodus/flow';
 import {
     COMMENT_MANAGER_SERVICE_TOKEN,
     ICommentManagerService,
 } from '@libs/code-review/domain/contracts/CommentManagerService.contract';
 import {
-    IPullRequestsService,
-    PULL_REQUESTS_SERVICE_TOKEN,
-} from '@libs/platformData/domain/pullRequests/contracts/pullRequests.service.contracts';
-import {
     ISuggestionService,
     SUGGESTION_SERVICE_TOKEN,
 } from '@libs/code-review/domain/contracts/SuggestionService.contract';
-import {
-    DRY_RUN_SERVICE_TOKEN,
-    IDryRunService,
-} from '@libs/dryRun/domain/contracts/dryRun.service.contract';
-import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 import { PlatformType } from '@libs/core/domain/enums';
 import {
     ClusteringType,
@@ -27,12 +17,22 @@ import {
     Repository,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
+import {
+    DRY_RUN_SERVICE_TOKEN,
+    IDryRunService,
+} from '@libs/dryRun/domain/contracts/dryRun.service.contract';
 import { PullRequestReviewComment } from '@libs/platform/domain/platformIntegrations/types/codeManagement/pullRequests.type';
+import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
+import {
+    IPullRequestsService,
+    PULL_REQUESTS_SERVICE_TOKEN,
+} from '@libs/platformData/domain/pullRequests/contracts/pullRequests.service.contracts';
 import { PullRequestsEntity } from '@libs/platformData/domain/pullRequests/entities/pullRequests.entity';
-import { ImplementationStatus } from '@libs/platformData/domain/pullRequests/enums/implementationStatus.enum';
 import { DeliveryStatus } from '@libs/platformData/domain/pullRequests/enums/deliveryStatus.enum';
+import { ImplementationStatus } from '@libs/platformData/domain/pullRequests/enums/implementationStatus.enum';
+import { Inject, Injectable } from '@nestjs/common';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
-import { createLogger } from '@kodus/flow';
 
 @Injectable()
 export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelineContext> {
@@ -157,6 +157,7 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
                     changedFiles,
                     validSuggestions,
                     discardedSuggestions,
+                    context.codeValidatedSuggestionsIds,
                 );
 
             this.logger.log({
@@ -205,6 +206,7 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
         changedFiles: FileChange[],
         validSuggestionsToAnalyze: Partial<CodeSuggestion>[],
         discardedSuggestionsBySafeGuard: Partial<CodeSuggestion>[],
+        validatedSuggestionIds?: Set<string>,
     ): Promise<{
         lineComments: Array<CommentResult>;
         lastAnalyzedCommit: any;
@@ -241,6 +243,7 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
                     ?.lastAnalyzedCommit || null,
                 context.pullRequestMessagesConfig?.globalSettings
                     ?.suggestionCopyPrompt,
+                validatedSuggestionIds,
             );
 
         // Save pull request suggestions
@@ -296,6 +299,7 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
         dryRun: CodeReviewPipelineContext['dryRun'],
         lastAnalyzedCommitFromContext: any,
         suggestionCopyPrompt?: boolean,
+        validatedSuggestionIds?: Set<string>,
     ) {
         try {
             const lineComments = sortedPrioritizedSuggestions
@@ -304,21 +308,34 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
                         suggestion.clusteringInformation?.type !==
                         ClusteringType.RELATED,
                 )
-                .map((suggestion) => ({
-                    path: suggestion.relevantFile,
-                    body: {
-                        language: repository?.language,
-                        improvedCode: suggestion?.improvedCode,
-                        suggestionContent: suggestion?.suggestionContent,
-                        actionStatement:
-                            suggestion?.clusteringInformation
-                                ?.actionStatement || '',
-                    },
-                    start_line: this.calculateStartLine(suggestion),
-                    line: this.calculateEndLine(suggestion),
-                    side: 'RIGHT',
-                    suggestion,
-                }));
+                .map((suggestion) => {
+                    const language = repository?.language;
+                    const suggestionContent = suggestion?.suggestionContent;
+                    const isGitHub = repository?.platform === 'github';
+
+                    const isCommitableSuggestion =
+                        isGitHub &&
+                        codeReviewConfig?.suggestionControl
+                            ?.enableCommitableSuggestions &&
+                        validatedSuggestionIds?.has(suggestion.id);
+
+                    return {
+                        path: suggestion.relevantFile,
+                        body: {
+                            language,
+                            improvedCode: suggestion?.improvedCode,
+                            suggestionContent,
+                            actionStatement:
+                                suggestion?.clusteringInformation
+                                    ?.actionStatement || '',
+                        },
+                        start_line: this.calculateStartLine(suggestion),
+                        line: this.calculateEndLine(suggestion),
+                        side: 'RIGHT',
+                        suggestion,
+                        isCommitableSuggestion,
+                    };
+                });
 
             const { lastAnalyzedCommit, commentResults } =
                 await this.commentManagerService.createLineComments(

@@ -1,3 +1,4 @@
+import { ValidateCodeSemanticsResult } from '@libs/common/utils/langchainCommon/prompts/validateCodeSemantics';
 import {
     AIAnalysisResult,
     AnalysisContext,
@@ -10,6 +11,10 @@ import {
     InitializeImpactAnalysisResponse,
     InitializeRepositoryResponse,
 } from '@libs/ee/kodyAST/interfaces/code-ast-analysis.interface';
+import {
+    ASTValidateCodeRequest,
+    ASTValidateCodeResponse,
+} from '../types/astValidate.type';
 
 export const AST_ANALYSIS_SERVICE_TOKEN = Symbol.for('ASTAnalysisService');
 
@@ -67,17 +72,17 @@ export interface IASTAnalysisService {
         filePath: string,
         taskId: string,
     ): Promise<{ content: string }>;
-    startDiagnostic(payload: {
-        repository: any;
-        pullRequest: any;
-        organizationAndTeamData: OrganizationAndTeamData;
-        platformType: string;
-        files: {
+    startValidate(payload: { files: ASTValidateCodeRequest }): Promise<string>;
+    getValidate(taskId: string): Promise<ASTValidateCodeResponse>;
+    validateWithLLM(
+        taskId: string,
+        payload: {
+            code: string;
             filePath: string;
-            patchedCode: string;
-        }[];
-    }): Promise<string>;
-    getDiagnostic(taskId: string): Promise<any>;
+            language?: string;
+            diff?: string;
+        },
+    ): Promise<ValidateCodeSemanticsResult | null>;
     test(payload: any): Promise<any>;
     getTest(id: string): Promise<any>;
 }

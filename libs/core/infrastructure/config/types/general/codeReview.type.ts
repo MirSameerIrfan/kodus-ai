@@ -1,25 +1,16 @@
-import { BYOKConfig } from '@kodus/kodus-common/llm';
-import { DeepPartial } from 'typeorm';
-import { IPullRequestMessages } from '@libs/code-review/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
 import type { ContextLayer, ContextPack } from '@kodus/flow';
-import { LLMModelProvider } from '@kodus/kodus-common/llm';
-import z from 'zod';
+import { BYOKConfig, LLMModelProvider } from '@kodus/kodus-common/llm';
+import { IPullRequestMessages } from '@libs/code-review/domain/pullRequestMessages/interfaces/pullRequestMessages.interface';
 import { DeliveryStatus } from '@libs/platformData/domain/pullRequests/enums/deliveryStatus.enum';
 import { ImplementationStatus } from '@libs/platformData/domain/pullRequests/enums/implementationStatus.enum';
 import { PriorityStatus } from '@libs/platformData/domain/pullRequests/enums/priorityStatus.enum';
 import { ISuggestionByPR } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
+import { DeepPartial } from 'typeorm';
+import z from 'zod';
 
 import type { ContextAugmentationsMap } from '@libs/ai-engine/infrastructure/adapters/services/context/interfaces/code-review-context-pack.interface';
 import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
 
-import { OrganizationAndTeamData } from './organizationAndTeamData';
-import { ConfigLevel } from './pullRequestMessages.type';
-import {
-    GetImpactAnalysisResponse,
-    TaskStatus,
-} from '@libs/ee/kodyAST/interfaces/code-ast-analysis.interface';
-import { IClusterizedSuggestion } from '@libs/kodyFineTuning/domain/interfaces/kodyFineTuning.interface';
-import { IKodyRule } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 import {
     BehaviourForExistingDescription,
     BehaviourForNewCommits,
@@ -34,6 +25,14 @@ import {
     ReviewPreset,
     SuggestionType,
 } from '@libs/core/domain/enums/code-review.enum';
+import {
+    GetImpactAnalysisResponse,
+    TaskStatus,
+} from '@libs/ee/kodyAST/interfaces/code-ast-analysis.interface';
+import { IClusterizedSuggestion } from '@libs/kodyFineTuning/domain/interfaces/kodyFineTuning.interface';
+import { IKodyRule } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
+import { OrganizationAndTeamData } from './organizationAndTeamData';
+import { ConfigLevel } from './pullRequestMessages.type';
 
 export {
     BehaviourForExistingDescription,
@@ -239,6 +238,7 @@ export type Comment = {
     start_line?: number | undefined;
     start_side?: string | undefined;
     suggestion?: CodeSuggestion;
+    isCommitableSuggestion?: boolean;
 };
 
 export type CommentResult = {
@@ -310,6 +310,7 @@ export interface SuggestionControlConfig {
         high: number;
         critical: number;
     };
+    enableCommitableSuggestions?: boolean;
 }
 
 export type ImplementedSuggestionsToAnalyze = {
