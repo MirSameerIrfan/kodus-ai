@@ -86,15 +86,21 @@ RUN_MIGRATIONS="${RUN_MIGRATIONS:-true}"
 RUN_SEEDS="${RUN_SEEDS:-true}"
 
 if [ "$RUN_MIGRATIONS" = "true" ]; then
-  echo "▶ Running Migrations (internal)..."
-  yarn migration:run:internal
+  echo "▶ Running Migrations (PROD)..."
+  # Use ts-node for migrations in prod to properly resolve @libs aliases
+  if [ -f "libs/core/infrastructure/database/typeorm/ormconfig.ts" ]; then
+      yarn migration:run:prod
+  else
+      echo "⚠️ Migration config not found at libs/core/infrastructure/database/typeorm/ormconfig.ts. Skipping."
+  fi
 else
   echo "▶ Skipping migrations (RUN_MIGRATIONS=$RUN_MIGRATIONS)"
 fi
 
 if [ "$RUN_SEEDS" = "true" ]; then
-  echo "▶ Running Seeds (internal)..."
-  yarn seed:internal
+  echo "▶ Running Seeds (PROD)..."
+  # Seeds might also need a prod version if they rely on TS
+  yarn seed:prod
 else
   echo "▶ Skipping seeds (RUN_SEEDS=$RUN_SEEDS)"
 fi

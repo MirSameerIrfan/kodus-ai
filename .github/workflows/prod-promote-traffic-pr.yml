@@ -24,7 +24,7 @@ jobs:
     open_pr_weights:
         runs-on: ubuntu-latest
         environment: production
-        if: github.ref == 'refs/heads/main'
+        if: startsWith(github.ref, 'refs/tags/')
         permissions:
             contents: read
 
@@ -114,13 +114,14 @@ jobs:
               with:
                   token: ${{ steps.infra_token.outputs.token }}
                   path: infra
-                  branch: ci/prod-promote-traffic-${{ github.run_id }}
+                  branch: ci/prod-promote-traffic-${{ github.ref_name }}-${{ github.run_id }}
                   base: ${{ env.INFRA_BASE_BRANCH }}
-                  title: "PROD: promote traffic (100% green)"
+                  title: "PROD: promote traffic to 100% green (${{ github.ref_name }})"
                   body: |
                       Ajusta pesos do ALB para 100% green (api/webhook).
 
+                      Origem (Tag): ${{ github.ref_name }}
                       Nota: ${{ github.event.inputs.reason || 'n/a' }}
 
                       Rollback: reverter este PR (volta pesos para blue).
-                  commit-message: "prod: promote traffic weights to green"
+                  commit-message: "prod: promote traffic weights to green (${{ github.ref_name }})"
