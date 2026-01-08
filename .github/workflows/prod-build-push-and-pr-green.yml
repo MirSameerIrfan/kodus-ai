@@ -145,9 +145,9 @@ jobs:
                     --set base.cache-from=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }} \
                     --set base.cache-to=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }},mode=max \
                     --set *.platform=${{ env.BUILDX_PLATFORMS }} \
-                    --set api.tags="$API_TAG" \
-                    --set webhooks.tags="$WEBHOOKS_TAG" \
-                    --set worker.tags="$WORKER_TAG" \
+                    --set API_TAGS="$API_TAG" \
+                    --set WEBHOOKS_TAGS="$WEBHOOKS_TAG" \
+                    --set WORKER_TAGS="$WORKER_TAG" \
                     --push
 
             - name: Checkout infra repo
