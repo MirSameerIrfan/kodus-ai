@@ -27,6 +27,7 @@ export interface IParametersRepository {
         data: Partial<IParameters<K>>,
     ): Promise<ParametersEntity<K> | undefined>;
     delete(uuid: string): Promise<void>;
+    deleteByTeamId(teamId: string): Promise<void>;
     findByKey<K extends ParametersKey>(
         configKey: K,
         organizationAndTeamData: OrganizationAndTeamData,

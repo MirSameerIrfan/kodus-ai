@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AutomationModule } from '@libs/automation/modules/automation.module';
 import { IntegrationModule } from '@libs/integrations/modules/integrations.module';
@@ -26,8 +26,8 @@ import { KodyLearningCronProvider } from './kodyLearning.cron';
         CodeReviewConfigurationModule,
         PlatformModule,
         PullRequestMessagesModule,
-        KodyRulesModule,
-        CodebaseModule,
+        forwardRef(() => KodyRulesModule),
+        forwardRef(() => CodebaseModule),
         IntegrationModule,
         IntegrationConfigModule,
     ],

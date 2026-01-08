@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, Index, OneToMany } from 'typeorm';
 
 import { AuthIntegrationModel } from '@libs/integrations/infrastructure/adapters/repositories/schemas/authIntegration.model';
 import { IntegrationModel } from '@libs/integrations/infrastructure/adapters/repositories/schemas/integration.model';
@@ -11,6 +11,8 @@ import { UserModel } from '@libs/identity/infrastructure/adapters/repositories/s
 import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 
 @Entity('organizations')
+@Index('IDX_organizations_status', ['status'], { concurrent: true })
+@Index('IDX_organizations_tenant', ['tenantName'], { concurrent: true })
 export class OrganizationModel extends CoreModel {
     @Column()
     name: string;

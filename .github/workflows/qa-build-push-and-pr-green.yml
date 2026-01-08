@@ -1,200 +1,202 @@
 name: QA (GitOps) - Build/Push images + PR (green)
 
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-    inputs:
-      image_tag:
-        description: "Tag das imagens no ECR (default: github.sha)"
-        required: false
+    push:
+        branches: [main]
+    workflow_dispatch:
+        inputs:
+            image_tag:
+                description: "Image tag for ECR (default: github.sha)"
+                required: false
 
 concurrency:
-  group: qa-gitops-green
-  cancel-in-progress: true
+    group: qa-gitops-green
+    cancel-in-progress: true
 
 permissions:
-  contents: read
+    contents: write
 
 env:
-  AWS_REGION: ${{ secrets.AWS_REGION }}
-  IMAGE_TAG: ${{ github.event.inputs.image_tag || github.sha }}
-  BUILDX_PLATFORMS: linux/arm64
-  BUILDX_CACHE_SCOPE: kodus-ai-arm64
+    AWS_REGION: ${{ secrets.AWS_REGION }}
+    IMAGE_TAG: ${{ github.event.inputs.image_tag || github.sha }}
+    BUILDX_PLATFORMS: linux/arm64
+    BUILDX_CACHE_SCOPE: kodus-ai-arm64
 
-  # ECR repositories (required)
-  ECR_REPOSITORY_API: ${{ vars.ECR_REPOSITORY_API }}
-  ECR_REPOSITORY_WEBHOOKS: ${{ vars.ECR_REPOSITORY_WEBHOOKS }}
-  ECR_REPOSITORY_WORKER: ${{ vars.ECR_REPOSITORY_WORKER }}
+    # ECR repositories (required)
+    ECR_REPOSITORY_API: ${{ vars.ECR_REPOSITORY_API }}
+    ECR_REPOSITORY_WEBHOOKS: ${{ vars.ECR_REPOSITORY_WEBHOOKS }}
+    ECR_REPOSITORY_WORKER: ${{ vars.ECR_REPOSITORY_WORKER }}
 
-  # GitOps (required)
-  INFRA_REPO: ${{ vars.INFRA_REPO }}
-  INFRA_BASE_BRANCH: ${{ vars.INFRA_BASE_BRANCH }}
-  INFRA_TFVARS_PATH: ${{ vars.INFRA_TFVARS_PATH }}
+    # GitOps (required)
+    INFRA_REPO: ${{ vars.INFRA_REPO }}
+    INFRA_BASE_BRANCH: ${{ vars.INFRA_BASE_BRANCH }}
+    INFRA_TFVARS_PATH: ${{ vars.INFRA_TFVARS_PATH }}
 
 jobs:
-  build_push_and_open_pr:
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    environment: qa
-    permissions:
-      contents: read
-      id-token: write
+    build_push_and_open_pr:
+        runs-on: ubuntu-latest
+        if: github.ref == 'refs/heads/main'
+        environment: qa
+        permissions:
+            contents: write
+            id-token: write
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.2.2
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4.2.2
 
-      - name: Validate required secrets
-        run: |
-          set -euo pipefail
-          if [ -z "${{ vars.INFRA_GITHUB_APP_ID }}" ]; then
-            echo "Missing variable: INFRA_GITHUB_APP_ID"
-            exit 1
-          fi
-          for v in ECR_REPOSITORY_API ECR_REPOSITORY_WEBHOOKS ECR_REPOSITORY_WORKER INFRA_REPO INFRA_BASE_BRANCH INFRA_TFVARS_PATH; do
-            if [ -z "${!v:-}" ]; then
-              echo "Missing required variable: $v"
-              exit 1
-            fi
-          done
-          if [ -z "${{ secrets.INFRA_GITHUB_APP_PRIVATE_KEY }}" ]; then
-            echo "Missing secret: INFRA_GITHUB_APP_PRIVATE_KEY"
-            exit 1
-          fi
-          if [ -z "${{ secrets.AWS_REGION }}" ]; then
-            echo "Missing secret: AWS_REGION"
-            exit 1
-          fi
-          if [ -z "${{ secrets.AWS_ROLE_TO_ASSUME }}" ]; then
-            echo "Missing secret: AWS_ROLE_TO_ASSUME (OIDC is required)"
-            exit 1
-          fi
+            - name: Validate required secrets
+              run: |
+                  set -euo pipefail
+                  if [ -z "${{ vars.INFRA_GITHUB_APP_ID }}" ]; then echo "Missing variable: INFRA_GITHUB_APP_ID"; exit 1; fi
+                  for v in ECR_REPOSITORY_API ECR_REPOSITORY_WEBHOOKS ECR_REPOSITORY_WORKER INFRA_REPO INFRA_BASE_BRANCH INFRA_TFVARS_PATH; do
+                    if [ -z "${!v:-}" ]; then echo "Missing required variable: $v"; exit 1; fi
+                  done
+                  if [ -z "${{ secrets.INFRA_GITHUB_APP_PRIVATE_KEY }}" ]; then echo "Missing secret: INFRA_GITHUB_APP_PRIVATE_KEY"; exit 1; fi
+                  if [ -z "${{ secrets.AWS_REGION }}" ]; then echo "Missing secret: AWS_REGION"; exit 1; fi
+                  if [ -z "${{ secrets.AWS_ROLE_TO_ASSUME }}" ]; then echo "Missing secret: AWS_ROLE_TO_ASSUME (OIDC is required)"; exit 1; fi
 
-      - name: Parse infra repo
-        run: |
-          set -euo pipefail
-          repo="${{ env.INFRA_REPO }}"
-          if [[ "$repo" == */* ]]; then
-            owner="${repo%%/*}"
-            name="${repo#*/}"
-          else
-            owner="${{ github.repository_owner }}"
-            name="$repo"
-          fi
-          echo "INFRA_REPO_OWNER=$owner" >> "$GITHUB_ENV"
-          echo "INFRA_REPO_NAME=$name" >> "$GITHUB_ENV"
+            - name: Parse infra repo
+              run: |
+                  set -euo pipefail
+                  repo="${{ env.INFRA_REPO }}"
+                  if [[ "$repo" == */* ]]; then
+                    owner="${repo%%/*}"
+                    name="${repo#*/}"
+                  else
+                    owner="${{ github.repository_owner }}"
+                    name="$repo"
+                  fi
+                  echo "INFRA_REPO_OWNER=$owner" >> "$GITHUB_ENV"
+                  echo "INFRA_REPO_NAME=$name" >> "$GITHUB_ENV"
 
-      - name: Get infra repo token (GitHub App)
-        id: infra_token
-        uses: actions/create-github-app-token@5d869da34e18e7287c1daad50e0b8ea0f506ce69 # v1.11.0
-        with:
-          app-id: ${{ vars.INFRA_GITHUB_APP_ID }}
-          private-key: ${{ secrets.INFRA_GITHUB_APP_PRIVATE_KEY }}
-          owner: ${{ env.INFRA_REPO_OWNER }}
-          repositories: ${{ env.INFRA_REPO_NAME }}
+            - name: Get infra repo token (GitHub App)
+              id: infra_token
+              uses: actions/create-github-app-token@v1.11.0
+              with:
+                  app-id: ${{ vars.INFRA_GITHUB_APP_ID }}
+                  private-key: ${{ secrets.INFRA_GITHUB_APP_PRIVATE_KEY }}
+                  owner: ${{ env.INFRA_REPO_OWNER }}
+                  repositories: ${{ env.INFRA_REPO_NAME }}
 
-      - name: Configure AWS Credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4.1.0
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          aws-region: ${{ secrets.AWS_REGION }}
+            - name: Configure AWS Credentials (OIDC)
+              uses: aws-actions/configure-aws-credentials@v4.1.0
+              with:
+                  role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+                  aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2.0.1
+            - name: Login to Amazon ECR
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v2.0.1
 
-      - name: Mask ECR registry
-        run: echo "::add-mask::${{ steps.login-ecr.outputs.registry }}"
+            - name: Mask ECR registry
+              run: echo "::add-mask::${{ steps.login-ecr.outputs.registry }}"
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3.2.0
-        with:
-          platforms: arm64
+            - name: Set up QEMU
+              uses: docker/setup-qemu-action@v3.2.0
+              with:
+                  platforms: arm64
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3.10.0
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3.10.0
 
-      - name: Build, tag, and push (api/webhooks/worker)
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        run: |
-          set -euo pipefail
+            - name: Build, tag, and push (api/webhooks/worker)
+              env:
+                  ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+                  API_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}
+                  WEBHOOKS_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}
+                  WORKER_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}
+              run: |
+                  set -euo pipefail
 
-          API_TAG="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}"
-          WEBHOOKS_TAG="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}"
-          WORKER_TAG="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}"
+                          docker buildx bake -f docker-bake.hcl \
+                            --set base.args.RELEASE_VERSION=${{ env.IMAGE_TAG }} \
+                            --set base.args.API_CLOUD_MODE=true \
+                            --set base.cache-from=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }} \
+                    --set base.cache-to=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }},mode=max \
+                    --set *.platform=${{ env.BUILDX_PLATFORMS }} \
+                    --push
 
-          docker buildx bake -f docker-bake.hcl \
-            --set base.args.RELEASE_VERSION=${{ env.IMAGE_TAG }} \
-            --set base.cache-from=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }} \
-            --set base.cache-to=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }},mode=max \
-            --set *.platform=${{ env.BUILDX_PLATFORMS }} \
-            --set api.tags="$API_TAG" \
-            --set webhooks.tags="$WEBHOOKS_TAG" \
-            --set worker.tags="$WORKER_TAG" \
-            --push
+                  docker buildx imagetools create \
+                    -t "$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:qa-latest" \
+                    "$API_TAGS"
 
-          docker buildx imagetools create \
-            -t "$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:qa-latest" \
-            "$API_TAG"
+                  docker buildx imagetools create \
+                    -t "$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:qa-latest" \
+                    "$WEBHOOKS_TAGS"
 
-          docker buildx imagetools create \
-            -t "$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:qa-latest" \
-            "$WEBHOOKS_TAG"
+                  docker buildx imagetools create \
+                    -t "$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:qa-latest" \
+                    "$WORKER_TAGS"
 
-          docker buildx imagetools create \
-            -t "$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:qa-latest" \
-            "$WORKER_TAG"
+            - name: Checkout infra repo
+              uses: actions/checkout@v4.2.2
+              with:
+                  repository: ${{ env.INFRA_REPO }}
+                  ref: ${{ env.INFRA_BASE_BRANCH }}
+                  token: ${{ steps.infra_token.outputs.token }}
+                  path: infra
 
-      - name: Checkout infra repo
-        uses: actions/checkout@v4.2.2
-        with:
-          repository: ${{ env.INFRA_REPO }}
-          ref: ${{ env.INFRA_BASE_BRANCH }}
-          token: ${{ steps.infra_token.outputs.token }}
-          path: infra
+            - name: Update tfvars (green images + desired count)
+              env:
+                  ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+              run: |
+                  set -euo pipefail
+                  FILE="infra/${{ env.INFRA_TFVARS_PATH }}"
+                  API_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}"
+                  WEBHOOKS_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}"
+                  WORKER_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}"
+                  DESIRED_COUNT=1
+                  ./scripts/gitops/update-tfvars-green.sh "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE" "$DESIRED_COUNT"
 
-      - name: Update tfvars (green images + desired count)
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        run: |
-          set -euo pipefail
+            - name: Update tfvars (promote weights to green)
+              run: |
+                  set -euo pipefail
+                  FILE="infra/${{ env.INFRA_TFVARS_PATH }}"
+                  ./scripts/gitops/update-tfvars-promote-weights.sh "$FILE"
 
-          FILE="infra/${{ env.INFRA_TFVARS_PATH }}"
-          API_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}"
-          WEBHOOKS_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}"
-          WORKER_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}"
-          DESIRED_COUNT=1
+            - name: Verify infra changes scope
+              run: |
+                  set -euo pipefail
+                  cd infra
+                  changed="$(git diff --name-only)"
+                  if [ "$(echo "$changed" | wc -l | tr -d ' ')" -ne 1 ]; then
+                    echo "Expected exactly 1 changed file in infra repo."; exit 1; fi
+                  if [ "$changed" != "${{ env.INFRA_TFVARS_PATH }}" ]; then
+                    echo "Unexpected changed file: $changed"; exit 1; fi
 
-          ./scripts/gitops/update-tfvars-green.sh "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE" "$DESIRED_COUNT"
+            - name: Create PR on infra (QA deploy)
+              uses: peter-evans/create-pull-request@v7
+              with:
+                  token: ${{ steps.infra_token.outputs.token }}
+                  path: infra
+                  branch: ci/qa-${{ env.IMAGE_TAG }}
+                  base: ${{ env.INFRA_BASE_BRANCH }}
+                  title: "QA: deploy green (${{ env.IMAGE_TAG }})"
+                  body: |
+                      Updates green images (api/webhooks/worker) to tag `${{ env.IMAGE_TAG }}`, desired_count=1 and promotes weights to 100% green.
 
-          echo "Updated $FILE"
+                      Branch: `${{ env.INFRA_BASE_BRANCH }}`
+                      Tag: `${{ env.IMAGE_TAG }}`
+                  commit-message: "qa: deploy & promote ${{ env.IMAGE_TAG }}"
+                  labels: auto-apply
 
-      - name: Verify infra changes scope
-        run: |
-          set -euo pipefail
-          cd infra
-          changed="$(git diff --name-only)"
-          if [ "$(echo "$changed" | wc -l | tr -d ' ')" -ne 1 ]; then
-            echo "Expected exactly 1 changed file in infra repo."
-            exit 1
-          fi
-          if [ "$changed" != "${{ env.INFRA_TFVARS_PATH }}" ]; then
-            echo "Unexpected changed file: $changed"
-            exit 1
-          fi
+            - name: Notify Discord (success)
+              if: env.DISCORD_WEBHOOK
+              uses: sarisia/actions-status-discord@v1.13.0
+              env:
+                  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+              with:
+                  status: success
+                  content: "✅ QA build + infra PR created\nTag: `${{ env.IMAGE_TAG }}`\nInfra branch: `${{ env.INFRA_BASE_BRANCH }}`"
+                  username: "GitHub Actions (QA)"
 
-      - name: Create PR (deploy green)
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ steps.infra_token.outputs.token }}
-          path: infra
-          branch: ci/qa-green-${{ env.IMAGE_TAG }}
-          base: ${{ env.INFRA_BASE_BRANCH }}
-          title: "QA: deploy green (${{ env.IMAGE_TAG }})"
-          body: |
-            Atualiza as imagens green (api/webhooks/worker) para a tag `${{ env.IMAGE_TAG }}` e escala green para 1 task.
-
-            Próximo passo (manual): rodar o workflow de promoção de tráfego (weights) no repo da aplicação.
-          commit-message: "qa: deploy green images (${{ env.IMAGE_TAG }})"
+            - name: Notify Discord (failure)
+              if: failure() && env.DISCORD_WEBHOOK
+              uses: sarisia/actions-status-discord@v1.13.0
+              env:
+                  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+              with:
+                  status: failure
+                  content: "❌ QA pipeline failed (build/infra PR)\nTag: `${{ env.IMAGE_TAG }}`\nInfra branch: `${{ env.INFRA_BASE_BRANCH }}`"
+                  username: "GitHub Actions (QA)"

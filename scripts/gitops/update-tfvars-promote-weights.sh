@@ -15,28 +15,33 @@ fi
 
 node - "$FILE" <<'NODE'
 const fs = require('fs');
-
-// argv[0]=node, argv[1]='-' (script from stdin), argv[2..]=args
 const file = process.argv[2];
-
-if (!file.endsWith('.json')) {
-  throw new Error(`Expected a JSON tfvars file (*.auto.tfvars.json): ${file}`);
-}
 
 const raw = fs.readFileSync(file, 'utf8');
 const obj = JSON.parse(raw);
 
-const keys = ['api_blue_weight','api_green_weight','webhook_blue_weight','webhook_green_weight'];
-for (const k of keys) {
-  if (!(k in obj)) {
-    throw new Error(`Missing ${k} in tfvars (${file})`);
-  }
+// TOGGLE LOGIC: Invert weights from 100/0 to 0/100
+const isBlueActive = obj.api_blue_weight === 100;
+
+console.log(`>>> Toggling weights!`);
+console.log(`>>> From: BLUE=${obj.api_blue_weight}%, GREEN=${obj.api_green_weight}%`);
+
+if (isBlueActive) {
+  // If Blue was 100, Green now becomes 100
+  obj.api_blue_weight = 0;
+  obj.api_green_weight = 100;
+  obj.webhook_blue_weight = 0;
+  obj.webhook_green_weight = 100;
+} else {
+  // If Green was 100, Blue now becomes 100
+  obj.api_blue_weight = 100;
+  obj.api_green_weight = 0;
+  obj.webhook_blue_weight = 100;
+  obj.webhook_green_weight = 0;
 }
 
-obj.api_blue_weight = 0;
-obj.api_green_weight = 100;
-obj.webhook_blue_weight = 0;
-obj.webhook_green_weight = 100;
+console.log(`>>> To:   BLUE=${obj.api_blue_weight}%, GREEN=${obj.api_green_weight}%`);
 
 fs.writeFileSync(file, JSON.stringify(obj, null, 2) + '\n');
+console.log(`✅ Success: Weights inverted in file ${file}.`);
 NODE

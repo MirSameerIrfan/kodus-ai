@@ -1,5 +1,5 @@
 import { getObservability, IdGenerator, StorageEnum } from '@kodus/flow';
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ConnectionString } from 'connection-string';
 
@@ -38,12 +38,13 @@ export interface ObservabilityConfig {
 }
 
 @Injectable()
-export class ObservabilityService {
+export class ObservabilityService implements OnModuleInit {
     private readonly instances = new Map<
         string,
         ReturnType<typeof getObservability>
     >();
 
+    private currentInstance?: ReturnType<typeof getObservability>;
     private isInitialized = false;
 
     private static readonly DEFAULT_COLLECTIONS = {
@@ -52,8 +53,8 @@ export class ObservabilityService {
     };
 
     private static readonly DEFAULT_SETTINGS = {
-        batchSize: 75, // Reduzido de 150 para flush mais frequente (melhor para LLM spans)
-        flushIntervalMs: 3000, // Reduzido de 5s para 3s (menor janela de perda de dados)
+        batchSize: 75, // Reduced from 150 for more frequent flush (better for LLM spans)
+        flushIntervalMs: 3000, // Reduced from 5s to 3s (smaller data loss window)
         ttlDays: 0,
         samplingRate: 1,
         spanTimeoutMs: 10 * 60 * 1000,
@@ -64,13 +65,22 @@ export class ObservabilityService {
     constructor(private readonly configService: ConfigService) {}
 
     /**
+     * NestJS lifecycle hook - Initialize observability automatically when module loads
+     * Runs BEFORE onApplicationBootstrap, ensuring observability is ready for all services
+     */
+    async onModuleInit() {
+        const serviceName = process.env.COMPONENT_TYPE || 'unknown';
+        await this.init(serviceName);
+    }
+
+    /**
      * Initializes the observability engine automatically by fetching configurations from ConfigService.
-     * Should be called in each application's main.ts.
+     * Called automatically via onModuleInit, but can also be called manually in main.ts.
      * @param serviceName Origin name to identify logs (e.g., 'api', 'worker')
      */
     async init(serviceName?: string) {
         if (this.isInitialized) {
-            return getObservability();
+            return this.currentInstance || getObservability();
         }
 
         const mongoConfig =
@@ -103,7 +113,7 @@ export class ObservabilityService {
      * Used at the beginning of each request or job.
      */
     setContext(correlationId: string, threadId?: string) {
-        const obs = getObservability();
+        const obs = this.getObsInstance();
         const ctx = obs.createContext(correlationId);
 
         if (threadId) {
@@ -158,6 +168,8 @@ export class ObservabilityService {
             }
 
             this.instances.set(key, obs);
+            // Set as current instance for all subsequent operations
+            this.currentInstance = obs;
         }
 
         if (correlationId) {
@@ -171,6 +183,24 @@ export class ObservabilityService {
         }
 
         return obs;
+    }
+
+    /**
+     * Get the current observability instance (configured with MongoDB)
+     * Falls back to global singleton if not initialized (with warning)
+     */
+    private getObsInstance(): ReturnType<typeof getObservability> {
+        if (!this.currentInstance) {
+            this.logger.warn({
+                message:
+                    '⚠️ ObservabilityService used before init() was called - using unconfigured global instance. MongoDB spans may NOT be saved!',
+                context: ObservabilityService.name,
+                metadata: {
+                    stack: new Error().stack,
+                },
+            });
+        }
+        return this.currentInstance || getObservability();
     }
 
     createAgentObservabilityConfig(
@@ -202,7 +232,7 @@ export class ObservabilityService {
      * Starts a span and applies initial attributes.
      */
     startSpan(name: string, attributes?: Record<string, any>) {
-        const obs = getObservability();
+        const obs = this.getObsInstance();
         const span = obs.startSpan(name);
         if (attributes && typeof span?.setAttributes === 'function') {
             span.setAttributes(attributes);
@@ -218,7 +248,7 @@ export class ObservabilityService {
         fn: (span: any) => Promise<T> | T,
         attributes?: Record<string, any>,
     ): Promise<T> {
-        const obs = getObservability();
+        const obs = this.getObsInstance();
         const span = this.startSpan(name, {
             ...(attributes ?? {}),
             correlationId: obs.getContext()?.correlationId || '',
@@ -252,7 +282,7 @@ export class ObservabilityService {
             runName?: string;
             reset?: boolean;
         } = {}) => {
-            const obs = getObservability();
+            const obs = this.getObsInstance();
             const span = obs.getCurrentSpan();
 
             const {
@@ -262,20 +292,6 @@ export class ObservabilityService {
             } = tracker.consumeCompletedRunUsages(explicitName ?? runName);
 
             const s = this.summarize(usages);
-
-            // Debug: Log what we're about to set
-            this.logger.debug({
-                message: 'Finalizing LLM tracking',
-                context: ObservabilityService.name,
-                metadata: {
-                    hasSpan: !!span,
-                    spanName: span?.getName?.(),
-                    totalTokens: s.totalTokens,
-                    inputTokens: s.inputTokens,
-                    outputTokens: s.outputTokens,
-                    usageCount: usages.length,
-                },
-            });
 
             if (span) {
                 span.setAttributes({
@@ -328,7 +344,7 @@ export class ObservabilityService {
         exec: (callbacks: any[]) => Promise<T>;
     }): Promise<{ result: T; usage: any }> {
         const { spanName, runName, attrs, exec } = params;
-        const obs = getObservability();
+        const obs = this.getObsInstance();
         const span = obs.startSpan(spanName);
 
         try {

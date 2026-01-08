@@ -92,8 +92,6 @@ import { McpCoreModule } from '@libs/mcp-server/mcp-core.module';
             provide: KODY_RULES_SERVICE_TOKEN,
             useClass: KodyRulesService,
         },
-        // KodyRulesService removed here because it is already provided via token above
-        // GenerateKodyRulesUseCase is a use case, no token needed
         GenerateKodyRulesUseCase,
         FindByOrganizationIdKodyRulesUseCase,
         FindRulesInOrganizationByRuleFilterKodyRulesUseCase,

@@ -46,12 +46,22 @@ export class MongooseFactory implements MongooseOptionsFactory {
         // Detect component type to adjust connection pool
         const componentType = process.env.COMPONENT_TYPE || 'default';
 
-        // Pool configuration per component
+        // Pool configuration per component (300 connections prod plan)
+        // Pool configuration per component (prioritize ENV with safe fallbacks)
         const poolConfigs = {
-            webhook: { max: 10, min: 2 }, // Webhook: focused on ingestion, usually high concurrency but short-lived ops
-            api: { max: 50, min: 5 }, // API: higher concurrency for reads/writes
-            worker: { max: 20, min: 5 }, // Worker: processing batches
-            default: { max: 100, min: 5 }, // Fallback: default mongoose value is 100
+            webhook: {
+                max: parseInt(process.env.MG_POOL_MAX_WEBHOOK || '30', 10),
+                min: 2,
+            },
+            api: {
+                max: parseInt(process.env.MG_POOL_MAX_API || '30', 10),
+                min: 5,
+            },
+            worker: {
+                max: parseInt(process.env.MG_POOL_MAX_WORKER || '60', 10),
+                min: 5,
+            },
+            default: { max: 50, min: 5 },
         };
         const poolConfig = poolConfigs[componentType] || poolConfigs.default;
 

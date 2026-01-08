@@ -20,45 +20,40 @@ fi
 node - "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE" "$DESIRED_COUNT" <<'NODE'
 const fs = require('fs');
 
-// argv[0]=node, argv[1]='-' (script from stdin), argv[2..]=args
 const file = process.argv[2];
 const apiImage = process.argv[3];
 const webhooksImage = process.argv[4];
 const workerImage = process.argv[5];
-const desiredCountArg = process.argv[6];
-const desiredCount = desiredCountArg ? Number(desiredCountArg) : 2;
-
-if (!Number.isInteger(desiredCount) || desiredCount < 1) {
-  throw new Error(`Invalid desired count: ${desiredCountArg}`);
-}
-
-if (!file.endsWith('.json')) {
-  throw new Error(`Expected a JSON tfvars file (*.auto.tfvars.json): ${file}`);
-}
+const desiredCount = Number(process.argv[6] || 2);
 
 const raw = fs.readFileSync(file, 'utf8');
 const obj = JSON.parse(raw);
 
-const keys = [
-  'api_green_image',
-  'webhook_green_image',
-  'worker_green_image',
-  'api_green_desired_count',
-  'webhook_green_desired_count',
-  'worker_green_desired_count',
-];
-for (const k of keys) {
-  if (!(k in obj)) {
-    throw new Error(`Missing ${k} in tfvars (${file})`);
-  }
+// SMART LOGIC: Discover which side has 0% traffic
+// If Green is at 100%, the deploy target is Blue.
+const isGreenActive = obj.api_green_weight === 100;
+const targetSide = isGreenActive ? 'BLUE' : 'GREEN';
+
+console.log(`>>> Current production is on side: ${isGreenActive ? 'GREEN' : 'BLUE'}`);
+console.log(`>>> Deploying new version to idle side: ${targetSide}`);
+
+if (targetSide === 'GREEN') {
+  obj.api_green_image = apiImage;
+  obj.webhook_green_image = webhooksImage;
+  obj.worker_green_image = workerImage;
+  obj.api_green_desired_count = desiredCount;
+  obj.webhook_green_desired_count = desiredCount;
+  obj.worker_green_desired_count = desiredCount;
+} else {
+  // BLUE side uses default variables in Terraform (api_image, etc)
+  obj.api_image = apiImage;
+  obj.webhook_image = webhooksImage;
+  obj.worker_image = workerImage;
+  obj.api_desired_count = desiredCount;
+  obj.webhook_desired_count = desiredCount;
+  obj.worker_desired_count = desiredCount;
 }
 
-obj.api_green_image = apiImage;
-obj.webhook_green_image = webhooksImage;
-obj.worker_green_image = workerImage;
-obj.api_green_desired_count = desiredCount;
-obj.webhook_green_desired_count = desiredCount;
-obj.worker_green_desired_count = desiredCount;
-
 fs.writeFileSync(file, JSON.stringify(obj, null, 2) + '\n');
+console.log(`✅ Success: File ${file} updated for deployment on ${targetSide}.`);
 NODE

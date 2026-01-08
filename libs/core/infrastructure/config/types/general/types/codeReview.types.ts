@@ -31,7 +31,7 @@ import {
     ReviewCadenceType,
     ReviewModeConfig,
     ReviewModeResponse,
-    ReviewPreset, // Renomeado localmente para evitar conflito se necessário, mas vou manter o nome
+    ReviewPreset, // Renamed locally to avoid conflict if necessary, but will keep the name
     SuggestionType,
 } from '@libs/core/domain/enums/code-review.enum';
 
@@ -302,7 +302,7 @@ export interface SuggestionControlConfig {
     limitationType?: LimitationType;
     maxSuggestions: number;
     severityLevelFilter?: SeverityLevel;
-    applyFiltersToKodyRules?: boolean; // Default: false - Aplica TODOS os filtros (severidade + quantidade) nas Kody Rules
+    applyFiltersToKodyRules?: boolean; // Default: false - Applies ALL filters (severity + quantity) to Kody Rules
     severityLimits?: {
         low: number;
         medium: number;

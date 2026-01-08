@@ -7,7 +7,7 @@ import { ProviderService } from '@libs/core/infrastructure/services/providers/pr
 import { BadRequestException, Injectable } from '@nestjs/common';
 import axios from 'axios';
 
-// Interfaces para as respostas das APIs
+// Interfaces for API responses
 interface OpenAIModel {
     id: string;
     object: string;
@@ -79,9 +79,7 @@ export class GetModelsByProviderUseCase {
 
     async execute(provider: string): Promise<ModelResponse> {
         if (!this.providerService.isProviderSupported(provider)) {
-            throw new BadRequestException(
-                `Provider não suportado: ${provider}`,
-            );
+            throw new BadRequestException(`Unsupported provider: ${provider}`);
         }
 
         const byokProvider = provider as BYOKProvider;
@@ -118,7 +116,7 @@ export class GetModelsByProviderUseCase {
 
             default:
                 throw new BadRequestException(
-                    `Provider não suportado: ${provider}`,
+                    `Unsupported provider: ${provider}`,
                 );
         }
     }
@@ -214,17 +212,17 @@ export class GetModelsByProviderUseCase {
                                 .split('-')
                                 .map((word, index) => {
                                     if (index === 0) {
-                                        // Primeira palavra sempre capitalizada
+                                        // First word always capitalized
                                         return (
                                             word.charAt(0).toUpperCase() +
                                             word.slice(1).toLowerCase()
                                         );
                                     }
-                                    // Números com pontos mantêm como estão
+                                    // Numbers with dots stay as they are
                                     if (/^\d+\.\d+$/.test(word)) {
                                         return word;
                                     }
-                                    // Outras palavras capitalizam primeira letra
+                                    // Other words capitalize first letter
                                     return (
                                         word.charAt(0).toUpperCase() +
                                         word.slice(1).toLowerCase()
@@ -309,7 +307,7 @@ export class GetModelsByProviderUseCase {
     ): Promise<ModelResponse> {
         if (!baseUrl) {
             throw new BadRequestException(
-                'baseUrl é obrigatório para OpenAI Compatible',
+                'baseUrl is required for OpenAI Compatible',
             );
         }
 
@@ -343,12 +341,12 @@ export class GetModelsByProviderUseCase {
         try {
             if (!apiKey) {
                 throw new BadRequestException(
-                    'API key é obrigatória para Google Vertex',
+                    'API key is required for Google Vertex',
                 );
             }
 
             console.log(
-                '🔍 Buscando modelos Vertex com API key:',
+                '🔍 Fetching Vertex models with API key:',
                 apiKey.substring(0, 10) + '...',
             );
 
@@ -358,9 +356,9 @@ export class GetModelsByProviderUseCase {
             );
 
             console.log(
-                '✅ Resposta Gemini recebida:',
+                '✅ Gemini response received:',
                 response.data.models?.length || 0,
-                'modelos',
+                'models',
             );
 
             return {

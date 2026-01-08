@@ -1,0 +1,80 @@
+name: Build and Publish Docker Images for Self-Hosted
+
+on:
+    release:
+        types: [published]
+    workflow_dispatch: # Allows manual run
+
+jobs:
+    build-and-push:
+        name: Build and Push Docker Images for Self-Hosted
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: write
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v4.2.2
+
+            - name: Capture release version
+              run: |
+                  TAG="${{ github.event.release.tag_name || github.ref_name }}"
+                  # If the tag is something like 'main', 'master' or similar (not a real tag), use 'manual'
+                  if [[ "$TAG" == "main" || "$TAG" == "master" ]]; then
+                    TAG="manual"
+                  fi
+                  echo "RELEASE_VERSION=$TAG" >> $GITHUB_ENV
+
+            - name: Set up QEMU
+              uses: docker/setup-qemu-action@v3.2.0
+              with:
+                  platforms: amd64,arm64
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3.10.0
+
+            - name: Login to GitHub Container Registry
+              uses: docker/login-action@v3.4.0
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Build and Push Docker Images (API, Webhook, Worker)
+              env:
+                  REGISTRY: ghcr.io/${{ github.repository_owner }}
+                  TAG: ${{ env.RELEASE_VERSION }}
+                  API_TAGS: ghcr.io/${{ github.repository_owner }}/kodus-ai-api:${{ env.RELEASE_VERSION }},ghcr.io/${{ github.repository_owner }}/kodus-ai-api:latest
+                  WEBHOOKS_TAGS: ghcr.io/${{ github.repository_owner }}/kodus-ai-webhook:${{ env.RELEASE_VERSION }},ghcr.io/${{ github.repository_owner }}/kodus-ai-webhook:latest
+                  WORKER_TAGS: ghcr.io/${{ github.repository_owner }}/kodus-ai-worker:${{ env.RELEASE_VERSION }},ghcr.io/${{ github.repository_owner }}/kodus-ai-worker:latest
+              run: |
+                  set -euo pipefail
+
+                  docker buildx bake -f docker-bake.hcl \
+                    --set base.args.RELEASE_VERSION=${TAG} \
+                    --set base.args.API_CLOUD_MODE=false \
+                    --set base.cache-from=type=gha \
+                    --set base.cache-to=type=gha,mode=max \
+                    --set *.platform=linux/amd64,linux/arm64 \
+                    --push
+
+            - name: Notify Discord on Success
+              if: success()
+              uses: sarisia/actions-status-discord@v1.15.3
+              with:
+                  webhook: ${{ secrets.DISCORD_WEBHOOK }}
+                  content: ":tada: The Docker image version `${{ env.RELEASE_VERSION }}` was successfully built and pushed to GHCR."
+                  title: "Build and Push: kodus-ai (Self-Hosted)"
+                  description: "New version `${{ env.RELEASE_VERSION }}` is now available for all services (api, webhook, worker)."
+                  username: "GitHub Actions"
+                  color: 0x00FF00
+
+            - name: Notify Discord on Failure
+              if: failure()
+              uses: sarisia/actions-status-discord@v1.15.3
+              with:
+                  webhook: ${{ secrets.DISCORD_WEBHOOK }}
+                  content: ":x: Failed to build or push Docker image version `${{ env.RELEASE_VERSION }}` to the GitHub Container Registry. Check logs for details."
+                  title: "Build and Push: kodus-ai (Self-Hosted)"
+                  username: "GitHub Actions"
+                  color: 0xFF0000

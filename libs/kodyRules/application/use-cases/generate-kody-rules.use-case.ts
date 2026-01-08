@@ -1,37 +1,37 @@
 import { createLogger } from '@kodus/flow';
 import { Inject, Injectable } from '@nestjs/common';
 
-import {
-    CreateKodyRuleDto,
-    KodyRuleSeverity,
-} from '@libs/ee/kodyRules/dtos/create-kody-rule.dto';
 import { GenerateKodyRulesDTO } from '@libs/core/domain/dtos/generate-kody-rules.dto';
-import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
-import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { generateDateFilter } from '@libs/common/utils/transforms/date';
+
+import { SendRulesNotificationUseCase } from './send-rules-notification.use-case';
+import { CommentAnalysisService } from '@libs/code-review/infrastructure/adapters/services/commentAnalysis.service';
+import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
+import {
+    IIntegrationService,
+    INTEGRATION_SERVICE_TOKEN,
+} from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
 } from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
 import {
-    IIntegrationService,
-    INTEGRATION_SERVICE_TOKEN,
-} from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
-import { KodyRulesStatus } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
-import {
     IParametersService,
     PARAMETERS_SERVICE_TOKEN,
 } from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { ModuleRef } from '@nestjs/core';
 import { ParametersEntity } from '@libs/organization/domain/parameters/entities/parameters.entity';
+import { IntegrationConfigKey, ParametersKey } from '@libs/core/domain/enums';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { generateDateFilter } from '@libs/common/utils/transforms/date';
 import { KodyLearningStatus } from '@libs/organization/domain/parameters/types/configValue.type';
-import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
-import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
-
+import {
+    CreateKodyRuleDto,
+    KodyRuleSeverity,
+} from '@libs/ee/kodyRules/dtos/create-kody-rule.dto';
 import { CreateOrUpdateKodyRulesUseCase } from './create-or-update.use-case';
 import { FindRulesInOrganizationByRuleFilterKodyRulesUseCase } from './find-rules-in-organization-by-filter.use-case';
-import { SendRulesNotificationUseCase } from './send-rules-notification.use-case';
-import { CommentAnalysisService } from '@libs/code-review/infrastructure/adapters/services/commentAnalysis.service';
+import { KodyRulesStatus } from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
+import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
 
 @Injectable()
 export class GenerateKodyRulesUseCase {
@@ -45,62 +45,55 @@ export class GenerateKodyRulesUseCase {
         private readonly parametersService: IParametersService,
         private readonly codeManagementService: CodeManagementService,
         private readonly commentAnalysisService: CommentAnalysisService,
-        private readonly createOrUpdateKodyRulesUseCase: CreateOrUpdateKodyRulesUseCase,
-        private readonly findRulesInOrganizationByRuleFilterKodyRulesUseCase: FindRulesInOrganizationByRuleFilterKodyRulesUseCase,
+        private readonly moduleRef: ModuleRef,
         private readonly sendRulesNotificationUseCase: SendRulesNotificationUseCase,
     ) {}
 
     async execute(body: GenerateKodyRulesDTO, organizationId: string) {
         let platformConfig: ParametersEntity<ParametersKey.PLATFORM_CONFIGS>;
         let organizationAndTeamData: OrganizationAndTeamData;
-
         try {
             const { teamId, months, weeks, days, repositoriesIds = [] } = body;
-
             organizationAndTeamData = {
                 organizationId,
                 teamId,
             };
-
             const dateFilter = generateDateFilter({ months, weeks, days });
-
             const repositories = await this.getRepositories(
                 organizationAndTeamData,
             );
-
             if (!repositories || repositories.length === 0) {
                 this.logger.log({
                     message: 'No repositories found',
                     context: GenerateKodyRulesUseCase.name,
                     metadata: { body, organizationAndTeamData },
                 });
-
                 return [];
             }
-
             const filteredRepositories =
                 repositoriesIds.length > 0
                     ? repositories.filter((repo) =>
                           repositoriesIds.includes(repo.id),
                       )
                     : repositories;
-
             if (!filteredRepositories || filteredRepositories.length === 0) {
                 this.logger.log({
                     message: 'No repositories found after filtering',
                     context: GenerateKodyRulesUseCase.name,
                     metadata: { body, organizationAndTeamData },
                 });
-
                 return [];
             }
 
-            const existingRules =
-                await this.findRulesInOrganizationByRuleFilterKodyRulesUseCase.execute(
-                    organizationId,
-                    {},
-                );
-
+            const findRulesUseCase = await this.moduleRef.resolve(
+                FindRulesInOrganizationByRuleFilterKodyRulesUseCase,
+                undefined,
+                { strict: false },
+            );
+            const existingRules = await findRulesUseCase.execute(
+                organizationId,
+                {},
+            );
             platformConfig = await this.parametersService.findByKey(
                 ParametersKey.PLATFORM_CONFIGS,
                 organizationAndTeamData,
@@ -109,7 +102,6 @@ export class GenerateKodyRulesUseCase {
             if (!platformConfig || !platformConfig.configValue) {
                 throw new Error('Platform config not found');
             }
-
             await this.parametersService.createOrUpdateConfig(
                 ParametersKey.PLATFORM_CONFIGS,
                 {
@@ -118,10 +110,8 @@ export class GenerateKodyRulesUseCase {
                 },
                 organizationAndTeamData,
             );
-
             const allRules = [];
-            const createdRules = []; // Para rastrear regras criadas para notificação
-
+            const createdRules = []; // To track created rules for notification
             for (const repository of filteredRepositories) {
                 const pullRequests =
                     await this.codeManagementService.getPullRequestsByRepository(
@@ -133,7 +123,6 @@ export class GenerateKodyRulesUseCase {
                             },
                         },
                     );
-
                 if (!pullRequests || pullRequests.length === 0) {
                     this.logger.log({
                         message: 'No pull requests found',
@@ -147,7 +136,6 @@ export class GenerateKodyRulesUseCase {
                     });
                     continue;
                 }
-
                 const comments = [];
                 for (const pr of pullRequests) {
                     const generalComments =
@@ -158,7 +146,6 @@ export class GenerateKodyRulesUseCase {
                                 prNumber: pr.pull_number,
                             },
                         );
-
                     const reviewComments =
                         await this.codeManagementService.getPullRequestReviewComment(
                             {
@@ -169,7 +156,6 @@ export class GenerateKodyRulesUseCase {
                                 },
                             },
                         );
-
                     const files =
                         await this.codeManagementService.getFilesByPullRequestId(
                             {
@@ -178,7 +164,6 @@ export class GenerateKodyRulesUseCase {
                                 prNumber: pr.pull_number,
                             },
                         );
-
                     comments.push({
                         pr,
                         generalComments,
@@ -186,7 +171,6 @@ export class GenerateKodyRulesUseCase {
                         files,
                     });
                 }
-
                 if (!comments || comments.length === 0) {
                     this.logger.log({
                         message: 'No comments found',
@@ -197,24 +181,19 @@ export class GenerateKodyRulesUseCase {
                                 : 'repository not found',
                         },
                     });
-
                     continue;
                 }
-
                 const processedComments =
                     this.commentAnalysisService.processComments(comments);
-
                 if (!processedComments || processedComments.length === 0) {
                     continue;
                 }
-
                 const rules =
                     await this.commentAnalysisService.generateKodyRules({
                         comments: processedComments,
                         existingRules,
                         organizationAndTeamData,
                     });
-
                 if (!rules || rules.length === 0) {
                     this.logger.log({
                         message: 'No rules generated',
@@ -227,7 +206,6 @@ export class GenerateKodyRulesUseCase {
                     });
                     continue;
                 }
-
                 for (const rule of rules) {
                     const dto: CreateKodyRuleDto = {
                         examples: rule.examples,
@@ -239,42 +217,42 @@ export class GenerateKodyRulesUseCase {
                         status: KodyRulesStatus.PENDING,
                         severity: rule.severity as KodyRuleSeverity,
                     };
-
                     const userInfo = {
                         userId: 'kody-system-rules-generator',
                         userEmail: 'kody@kodus.io',
                     };
+                    const createOrUpdateUseCase = await this.moduleRef.resolve(
+                        CreateOrUpdateKodyRulesUseCase,
+                        undefined,
+                        { strict: false },
+                    );
 
-                    await this.createOrUpdateKodyRulesUseCase.execute(
+                    await createOrUpdateUseCase.execute(
                         dto,
                         organizationId,
                         userInfo,
                     );
 
-                    // Adicionar regra aos dados de notificação
+                    // Add rule to notification data
                     createdRules.push({
                         title: rule.title,
                         rule: rule.rule,
                         severity: rule.severity,
                     });
-
                     this.logger.log({
                         message: 'Rule generated and saved successfully',
                         context: GenerateKodyRulesUseCase.name,
                         metadata: { rule },
                     });
                 }
-
                 allRules.push(rules);
             }
-
             if (allRules.length === 0) {
                 this.logger.log({
                     message: 'No rules generated',
                     context: GenerateKodyRulesUseCase.name,
                     metadata: { body, organizationAndTeamData },
                 });
-
                 await this.parametersService.createOrUpdateConfig(
                     ParametersKey.PLATFORM_CONFIGS,
                     {
@@ -283,10 +261,8 @@ export class GenerateKodyRulesUseCase {
                     },
                     organizationAndTeamData,
                 );
-
                 return [];
             }
-
             await this.parametersService.createOrUpdateConfig(
                 ParametersKey.PLATFORM_CONFIGS,
                 {
@@ -295,14 +271,12 @@ export class GenerateKodyRulesUseCase {
                 },
                 organizationAndTeamData,
             );
-
             this.logger.log({
                 message: 'Kody rules generated successfully',
                 context: GenerateKodyRulesUseCase.name,
                 metadata: { body, organizationAndTeamData },
             });
-
-            // Enviar notificação por email se regras foram criadas
+            // Send email notification if rules were created
             if (createdRules.length > 0) {
                 this.logger.log({
                     message: 'Sending email notification for new Kody rules',
@@ -312,8 +286,7 @@ export class GenerateKodyRulesUseCase {
                         rulesCount: createdRules.length,
                     },
                 });
-
-                // Executar notificação de forma assíncrona para não bloquear o fluxo principal
+                // Execute notification asynchronously to not block the main flow
                 this.sendRulesNotificationUseCase
                     .execute(organizationId, createdRules)
                     .catch((error) => {
@@ -329,7 +302,6 @@ export class GenerateKodyRulesUseCase {
                         });
                     });
             }
-
             return allRules.flat();
         } catch (error) {
             this.logger.error({
@@ -338,7 +310,6 @@ export class GenerateKodyRulesUseCase {
                 error,
                 metadata: body,
             });
-
             if (platformConfig) {
                 await this.parametersService.createOrUpdateConfig(
                     ParametersKey.PLATFORM_CONFIGS,
@@ -349,7 +320,6 @@ export class GenerateKodyRulesUseCase {
                     organizationAndTeamData ?? { teamId: body.teamId },
                 );
             }
-
             throw error;
         }
     }

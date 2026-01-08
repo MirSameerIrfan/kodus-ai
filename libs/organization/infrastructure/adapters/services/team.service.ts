@@ -116,6 +116,10 @@ export class TeamService implements ITeamService {
         return this.teamRepository.deleteOne(uuid);
     }
 
+    deleteFisically(uuid: string): Promise<void> {
+        return this.teamRepository.deleteFisically(uuid);
+    }
+
     async createTeam(body: {
         teamName: string;
         organizationId: string;

@@ -38,7 +38,7 @@ export class FindByKeyOrganizationParametersUseCase implements IUseCase {
                 );
             }
 
-            // Processa configuração BYOK mascarando API keys
+            // Process BYOK configuration by masking API keys
             if (
                 organizationParametersKey ===
                 OrganizationParametersKey.BYOK_CONFIG
@@ -53,7 +53,7 @@ export class FindByKeyOrganizationParametersUseCase implements IUseCase {
                     try {
                         const processedConfig = { ...configValue };
 
-                        // Processa main se existir e tiver apiKey
+                        // Process main if it exists and has apiKey
                         if (configValue.main?.apiKey) {
                             const decryptedMainApiKey = decrypt(
                                 configValue.main.apiKey,
@@ -98,7 +98,7 @@ export class FindByKeyOrganizationParametersUseCase implements IUseCase {
                                 FindByKeyOrganizationParametersUseCase.name,
                             error: error,
                         });
-                        // Retorna o valor original em caso de erro na descriptografia
+                        // Return original value in case of decryption error
                         return this.getUpdatedParameters(parameter);
                     }
                 }

@@ -181,10 +181,10 @@ export class CommentManagerService implements ICommentManagerService {
                     - You must always respond in ${languageResultPrompt}.
 
                     **Pull Request Details**:
-                    - **Repository**: ${pullRequest?.head?.repo?.fullName || 'Desconhecido'}
+                    - **Repository**: ${pullRequest?.head?.repo?.fullName || 'Unknown'}
                     - **Source Branch**: \`${pullRequest?.head?.ref}\`
                     - **Target Branch**: \`${pullRequest?.base?.ref}\`
-                    - **Title**: ${pullRequest?.title || 'Sem título'}`;
+                    - **Title**: ${pullRequest?.title || 'Untitled'}`;
 
                 const baseContext = {
                     changedFiles,
@@ -869,7 +869,7 @@ export class CommentManagerService implements ICommentManagerService {
                 );
             }
 
-            // Adicionar tag única com timestamp para identificar este comentário como finalizado
+            // Add unique tag with timestamp to identify this comment as completed
             const uniqueId = `completed-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
             return `${resultText}\n\n${await this.generateConfigReviewMarkdown(organizationAndTeamData, prNumber, codeReviewConfig)}\n\n<!-- kody-codereview-${uniqueId} -->\n<!-- kody-codereview -->\n&#8203;`;
@@ -909,7 +909,7 @@ export class CommentManagerService implements ICommentManagerService {
                 );
             }
 
-            // Usar o processor para gerar as partes dinâmicas
+            // Use the processor to generate dynamic parts
             const context: PlaceholderContext = {
                 changedFiles,
                 language,
@@ -1343,7 +1343,7 @@ ${reviewOptions}
     }
 
     /**
-     * Cria comentários gerais no PR para sugestões de nível de PR
+     * Creates general comments on the PR for PR-level suggestions
      */
     async createPrLevelReviewComments(
         organizationAndTeamData: OrganizationAndTeamData,
@@ -1383,14 +1383,14 @@ ${reviewOptions}
 
             for (const suggestion of prLevelSuggestions) {
                 try {
-                    // Usar o método de formatação padronizado
+                    // Use standardized formatting method
                     const commentBody =
                         await this.codeManagementService.formatReviewCommentBody(
                             {
                                 suggestion,
                                 repository,
-                                includeHeader: true, // PR-level sempre inclui header com badges
-                                includeFooter: false, // PR-level NÃO inclui footer de interação
+                                includeHeader: true, // PR-level always includes header with badges
+                                includeFooter: false, // PR-level does NOT include interaction footer
                                 language,
                                 organizationAndTeamData,
                                 suggestionCopyPrompt,
@@ -1398,7 +1398,7 @@ ${reviewOptions}
                             dryRun?.enabled ? PlatformType.INTERNAL : undefined,
                         );
 
-                    // Criar comentário geral
+                    // Create general comment
                     const createdComment =
                         await this.codeManagementService.createIssueComment(
                             {
@@ -1425,7 +1425,7 @@ ${reviewOptions}
                             deliveryStatus: DeliveryStatus.SENT,
                             codeReviewFeedbackData: {
                                 commentId: createdComment.id,
-                                pullRequestReviewId: null, // PR-level comments não têm review ID
+                                pullRequestReviewId: null, // PR-level comments do not have review ID
                                 suggestionId: suggestion.id,
                             },
                         });
@@ -1494,8 +1494,8 @@ ${reviewOptions}
     }
 
     /**
-     * Encontra o último comentário de code review finalizado em um PR
-     * usando a tag <!-- kody-codereview-completed-{uniqueId} -->
+     * Finds the last completed code review comment on a PR
+     * using the tag <!-- kody-codereview-completed-{uniqueId} -->
      */
     async findLastReviewComment(
         organizationAndTeamData: OrganizationAndTeamData,
@@ -1519,7 +1519,7 @@ ${reviewOptions}
                 return null;
             }
 
-            // ✅ SIMPLES: Filtra apenas pela tag HTML + ordena por data
+            // ✅ SIMPLE: Filters only by HTML tag + sorts by date
             const completedReviewComments = comments
                 .filter((comment: any) => {
                     const body = comment.body || '';
@@ -1535,7 +1535,7 @@ ${reviewOptions}
                 return null;
             }
 
-            // Pega o mais recente (primeiro após ordenação)
+            // Get the most recent (first after sorting)
             const lastReviewComment = completedReviewComments[0];
 
             return {
@@ -1553,8 +1553,8 @@ ${reviewOptions}
     }
 
     /**
-     * Minimiza o último comentário de code review finalizado em um PR
-     * para evitar spam na timeline quando há múltiplas reviews
+     * Minimizes the last completed code review comment on a PR
+     * to avoid spam on the timeline when there are multiple reviews
      */
     async minimizeLastReviewComment(
         organizationAndTeamData: OrganizationAndTeamData,
@@ -1576,7 +1576,7 @@ ${reviewOptions}
                 return false;
             }
 
-            // Encontrar o último comentário de review finalizado
+            // Find the last completed review comment
             const lastReviewComment = await this.findLastReviewComment(
                 organizationAndTeamData,
                 prNumber,
@@ -1597,7 +1597,7 @@ ${reviewOptions}
                 return false;
             }
 
-            // Minimizar o comentário usando o nodeId (GraphQL ID) se disponível, senão usar o commentId
+            // Minimize the comment using nodeId (GraphQL ID) if available, otherwise use commentId
             const commentIdToMinimize =
                 lastReviewComment.nodeId || lastReviewComment.commentId;
 

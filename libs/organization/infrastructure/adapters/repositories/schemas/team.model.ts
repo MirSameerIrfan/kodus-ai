@@ -23,6 +23,7 @@ import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm'
 @Index('IDX_teams_org_created', ['organization', 'createdAt'], {
     concurrent: true,
 })
+@Index('IDX_teams_status', ['status'], { concurrent: true })
 export class TeamModel extends CoreModel {
     @Column()
     name: string;

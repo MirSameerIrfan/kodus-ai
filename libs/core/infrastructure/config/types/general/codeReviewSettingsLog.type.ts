@@ -32,7 +32,7 @@ export interface UserInfo {
     userEmail: string;
 }
 
-// Tipos específicos para Kody Rules
+// Specific types for Kody Rules
 export interface KodyRuleLogData {
     ruleId?: string;
     title: string;
@@ -54,7 +54,7 @@ export interface KodyRuleChangeMetadata {
     ruleMetadata: {
         ruleId: string;
         title: string;
-        repositoryLevel: boolean; // true se repositoryId !== 'global'
+        repositoryLevel: boolean; // true if repositoryId !== 'global'
     };
     repository?: {
         id: string;
