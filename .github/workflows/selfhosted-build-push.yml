@@ -44,13 +44,11 @@ jobs:
               env:
                   REGISTRY: ghcr.io/${{ github.repository_owner }}
                   TAG: ${{ env.RELEASE_VERSION }}
+                  API_TAGS: ghcr.io/${{ github.repository_owner }}/kodus-ai-api:${{ env.RELEASE_VERSION }},ghcr.io/${{ github.repository_owner }}/kodus-ai-api:latest
+                  WEBHOOKS_TAGS: ghcr.io/${{ github.repository_owner }}/kodus-ai-webhook:${{ env.RELEASE_VERSION }},ghcr.io/${{ github.repository_owner }}/kodus-ai-webhook:latest
+                  WORKER_TAGS: ghcr.io/${{ github.repository_owner }}/kodus-ai-worker:${{ env.RELEASE_VERSION }},ghcr.io/${{ github.repository_owner }}/kodus-ai-worker:latest
               run: |
                   set -euo pipefail
-
-                  # Base image names
-                  API_BASE="${REGISTRY}/kodus-ai-api"
-                  WEBHOOK_BASE="${REGISTRY}/kodus-ai-webhook"
-                  WORKER_BASE="${REGISTRY}/kodus-ai-worker"
 
                   docker buildx bake -f docker-bake.hcl \
                     --set base.args.RELEASE_VERSION=${TAG} \
@@ -58,9 +56,6 @@ jobs:
                     --set base.cache-from=type=gha \
                     --set base.cache-to=type=gha,mode=max \
                     --set *.platform=linux/amd64,linux/arm64 \
-                    --set API_TAGS=${API_BASE}:${TAG},${API_BASE}:latest \
-                    --set WEBHOOKS_TAGS=${WEBHOOK_BASE}:${TAG},${WEBHOOK_BASE}:latest \
-                    --set WORKER_TAGS=${WORKER_BASE}:${TAG},${WORKER_BASE}:latest \
                     --push
 
             - name: Notify Discord on Success
