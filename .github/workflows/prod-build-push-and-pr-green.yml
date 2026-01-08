@@ -6,7 +6,7 @@ on:
     workflow_dispatch:
         inputs:
             image_tag:
-                description: "Tag das imagens no ECR (default: release tag)"
+                description: "ECR image tag (default: release tag)"
                 required: false
 
 concurrency:
@@ -154,7 +154,7 @@ jobs:
                   token: ${{ steps.infra_token.outputs.token }}
                   path: infra
 
-            - name: Update tfvars (green images + desired count)
+            - name: Update tfvars (green images)
               env:
                   ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
               run: |
@@ -192,7 +192,7 @@ jobs:
                   base: ${{ env.INFRA_BASE_BRANCH }}
                   title: "PROD: deploy green (${{ env.IMAGE_TAG }})"
                   body: |
-                      Atualiza as imagens green (api/webhook/worker) para a tag `${{ env.IMAGE_TAG }}` e escala green para 2 tasks.
+                      Update green images (api/webhook/worker) to tag `${{ env.IMAGE_TAG }}` and scale green to 2 tasks.
 
-                      Próximo passo (manual): rodar o workflow de promoção de tráfego (weights) no repo da aplicação.
+                      Next step (manual): run the traffic promotion workflow (weights) in the application repo.
                   commit-message: "prod: deploy green images (${{ env.IMAGE_TAG }})"

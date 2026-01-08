@@ -3,7 +3,7 @@ name: Build and Publish Docker Images for Self-Hosted
 on:
     release:
         types: [published]
-    workflow_dispatch: # Permite rodar manualmente
+    workflow_dispatch: # Allows manual run
 
 jobs:
     build-and-push:
@@ -19,7 +19,7 @@ jobs:
             - name: Capture release version
               run: |
                   TAG="${{ github.event.release.tag_name || github.ref_name }}"
-                  # Se a tag for algo como 'main', 'master' ou similar (não for tag real), usa 'manual'
+                  # If the tag is something like 'main', 'master' or similar (not a real tag), use 'manual'
                   if [[ "$TAG" == "main" || "$TAG" == "master" ]]; then
                     TAG="manual"
                   fi

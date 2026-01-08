@@ -119,15 +119,15 @@ jobs:
 
                   docker buildx imagetools create \
                     -t "$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:qa-latest" \
-                    "$API_TAG"
+                    "$API_TAGS"
 
                   docker buildx imagetools create \
                     -t "$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:qa-latest" \
-                    "$WEBHOOKS_TAG"
+                    "$WEBHOOKS_TAGS"
 
                   docker buildx imagetools create \
                     -t "$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:qa-latest" \
-                    "$WORKER_TAG"
+                    "$WORKER_TAGS"
 
             - name: Checkout infra repo
               uses: actions/checkout@v4.2.2
