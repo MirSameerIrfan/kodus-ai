@@ -1,4 +1,4 @@
-name: QA (GitOps) - Build/Push images + PR (green)
+name: QA (GitOps) - Build/Push images + PR (deploy & promote)
 
 on:
     push:
@@ -10,7 +10,7 @@ on:
                 required: false
 
 concurrency:
-    group: qa-gitops-green
+    group: qa-gitops
     cancel-in-progress: true
 
 permissions:
@@ -109,10 +109,10 @@ jobs:
               run: |
                   set -euo pipefail
 
-                          docker buildx bake -f docker-bake.hcl \
-                            --set base.args.RELEASE_VERSION=${{ env.IMAGE_TAG }} \
-                            --set base.args.API_CLOUD_MODE=true \
-                            --set base.cache-from=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }} \
+                  docker buildx bake -f docker-bake.hcl \
+                    --set base.args.RELEASE_VERSION=${{ env.IMAGE_TAG }} \
+                    --set base.args.API_CLOUD_MODE=true \
+                    --set base.cache-from=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }} \
                     --set base.cache-to=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }},mode=max \
                     --set *.platform=${{ env.BUILDX_PLATFORMS }} \
                     --push
@@ -137,7 +137,7 @@ jobs:
                   token: ${{ steps.infra_token.outputs.token }}
                   path: infra
 
-            - name: Update tfvars (green images + desired count)
+            - name: Update tfvars (deploy to idle side)
               env:
                   ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
               run: |
@@ -147,13 +147,60 @@ jobs:
                   WEBHOOKS_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}"
                   WORKER_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}"
                   DESIRED_COUNT=1
-                  ./scripts/gitops/update-tfvars-green.sh "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE" "$DESIRED_COUNT"
 
-            - name: Update tfvars (promote weights to green)
+                  # Deploy to idle side (auto detects Blue/Green)
+                  # Obs: script atualizado no repo infra deve remover a trava de segurança para QA
+                  ./infra/scripts/gitops/update-tfvars-deploy.sh "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE" "$DESIRED_COUNT"
+
+            - name: Update tfvars (shift traffic & cleanup)
               run: |
                   set -euo pipefail
                   FILE="infra/${{ env.INFRA_TFVARS_PATH }}"
-                  ./scripts/gitops/update-tfvars-promote-weights.sh "$FILE"
+
+                  # Promotes to 100% traffic AND cleans up old side (Atomic QA deploy)
+                  node -e "
+                    const fs = require('fs');
+                    const file = process.argv[1];
+                    const obj = JSON.parse(fs.readFileSync(file, 'utf8'));
+
+                    // Detects current active side (prioritizes active_side, fallback to weights)
+                    let currentActive = 'blue';
+                    if (obj.api_active_side) {
+                      currentActive = obj.api_active_side;
+                    } else if (obj.api_green_weight === 100) {
+                      currentActive = 'green';
+                    }
+
+                    const newActive = currentActive === 'blue' ? 'green' : 'blue';
+
+                    console.log('>>> Atomic QA Action:');
+                    console.log('    1. Shift Traffic: ' + currentActive.toUpperCase() + ' -> ' + newActive.toUpperCase());
+                    console.log('    2. Cleanup Old Side: ' + currentActive.toUpperCase() + ' -> 0');
+
+                    // 1. Shift Logic (SWAP)
+                    obj.api_active_side = newActive;
+                    obj.webhook_active_side = newActive;
+
+                    // 2. Cleanup Logic (Kill old side)
+                    if (currentActive === 'green') {
+                        // Green was active (now inactive) -> Kill Green
+                        obj.api_green_desired_count = 0;
+                        obj.webhook_green_desired_count = 0;
+                    } else {
+                        // Blue was active (now inactive) -> Kill Blue
+                        obj.api_desired_count = 0;
+                        obj.webhook_desired_count = 0;
+                    }
+
+                    // Remove legacy weights if present
+                    delete obj.api_green_weight;
+                    delete obj.api_blue_weight;
+                    delete obj.webhook_green_weight;
+                    delete obj.webhook_blue_weight;
+
+                    fs.writeFileSync(file, JSON.stringify(obj, null, 2) + '\n');
+                    console.log('✅ Traffic shifted and old side marked for cleanup.');
+                  " "$FILE"
 
             - name: Verify infra changes scope
               run: |
@@ -165,19 +212,23 @@ jobs:
                   if [ "$changed" != "${{ env.INFRA_TFVARS_PATH }}" ]; then
                     echo "Unexpected changed file: $changed"; exit 1; fi
 
-            - name: Create PR on infra (QA deploy)
+            - name: Create PR on infra (QA deploy & promote)
               uses: peter-evans/create-pull-request@v7
               with:
                   token: ${{ steps.infra_token.outputs.token }}
                   path: infra
                   branch: ci/qa-${{ env.IMAGE_TAG }}
                   base: ${{ env.INFRA_BASE_BRANCH }}
-                  title: "QA: deploy green (${{ env.IMAGE_TAG }})"
+                  title: "QA: deploy & promote (${{ env.IMAGE_TAG }})"
                   body: |
-                      Updates green images (api/webhooks/worker) to tag `${{ env.IMAGE_TAG }}`, desired_count=1 and promotes weights to 100% green.
+                      **QA Environment: Deploy + Traffic Shift**
 
-                      Branch: `${{ env.INFRA_BASE_BRANCH }}`
-                      Tag: `${{ env.IMAGE_TAG }}`
+                      Deploys new images to idle side, promotes to 100% traffic, and cleans up the old side.
+
+                      - **Tag**: `${{ env.IMAGE_TAG }}`
+                      - **Branch**: `${{ env.INFRA_BASE_BRANCH }}`
+
+                      This PR will be auto-applied by Atlantis.
                   commit-message: "qa: deploy & promote ${{ env.IMAGE_TAG }}"
                   labels: auto-apply
 

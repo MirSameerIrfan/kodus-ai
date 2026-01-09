@@ -5,7 +5,7 @@ import { Injectable, OnApplicationShutdown, Optional } from '@nestjs/common';
 const DEFAULT_DRAIN_TIMEOUT_MS = 25_000;
 
 function parseDrainTimeoutMs(): number {
-    const raw = process.env.WORKER_DRAIN_TIMEOUT_MS;
+    const raw = process.env.API_WORKER_DRAIN_TIMEOUT_MS;
 
     if (!raw) {
         return DEFAULT_DRAIN_TIMEOUT_MS;

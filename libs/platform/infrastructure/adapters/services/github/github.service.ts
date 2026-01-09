@@ -167,13 +167,54 @@ export class GithubService
 
     // Helper functions
     private createOctokitInstance(): Octokit {
+        let privateKey = this.configService.get<string>(
+            'API_GITHUB_PRIVATE_KEY',
+        );
+
+        if (privateKey) {
+            // Trim whitespace first
+            privateKey = privateKey.trim();
+
+            // Remove surrounding double quotes if present (common in .env misconfiguration)
+            privateKey = privateKey.replace(/^"|"$/g, '');
+
+            // Remove escape characters that might have been added by JSON stringify/env injection
+            privateKey = privateKey.replace(/\\n/g, '\n');
+
+            // Check if key is malformed (single line or missing newlines between headers)
+            // Supports both PKCS#1 (RSA PRIVATE KEY) and PKCS#8 (PRIVATE KEY)
+            const headerMatch = privateKey.match(
+                /-----BEGIN (RSA )?PRIVATE KEY-----/,
+            );
+            if (headerMatch && !privateKey.includes(`${headerMatch[0]}\n`)) {
+                // Aggressively clean: remove headers, spaces, newlines, trim
+                const cleanBody = privateKey
+                    .replace(/-----BEGIN (RSA )?PRIVATE KEY-----/g, '')
+                    .replace(/-----END (RSA )?PRIVATE KEY-----/g, '')
+                    .replace(/\s+/g, '') // Remove all whitespaces/newlines from body
+                    .trim();
+
+                const header = headerMatch[0];
+                const footer = header.replace('BEGIN', 'END');
+
+                // Reformat to proper PEM with 64 char line breaks
+                const chunks = cleanBody.match(/.{1,64}/g) || [];
+                privateKey = `${header}\n${chunks.join('\n')}\n${footer}`;
+            }
+        }
+
+        if (!privateKey) {
+            this.logger.error({
+                message: 'Github Private Key is missing or invalid',
+                context: GithubService.name,
+            });
+        }
+
         return new Octokit({
             authStrategy: createAppAuth,
             auth: {
                 appId: this.configService.get<string>('API_GITHUB_APP_ID'),
-                privateKey: this.configService
-                    .get<string>('API_GITHUB_PRIVATE_KEY')
-                    .replace(/\\n/g, '\n'),
+                privateKey: privateKey,
                 clientId: this.configService.get<string>(
                     'GLOBAL_GITHUB_CLIENT_ID',
                 ),
@@ -1731,21 +1772,7 @@ export class GithubService
     private async generateAndCacheNewToken(
         installationId: string,
     ): Promise<GitHubAuthResponse> {
-        const appOctokit = new Octokit({
-            authStrategy: createAppAuth,
-            auth: {
-                appId: this.configService.get<string>('API_GITHUB_APP_ID'),
-                privateKey: this.configService
-                    .get<string>('API_GITHUB_PRIVATE_KEY')
-                    .replace(/\\n/g, '\n'),
-                clientId: this.configService.get<string>(
-                    'GLOBAL_GITHUB_CLIENT_ID',
-                ),
-                clientSecret: this.configService.get<string>(
-                    'API_GITHUB_CLIENT_SECRET',
-                ),
-            },
-        });
+        const appOctokit = this.createOctokitInstance();
 
         const auth = (await appOctokit.auth({
             type: 'installation',

@@ -150,6 +150,8 @@ KEYS=(
 
     "/prod/kodus-orchestrator/API_WEBHOOKS_PORT"
 
+    "/prod/kodus-orchestrator/API_ECS_AGENT_URI"
+    "/prod/kodus-orchestrator/API_WORKER_DRAIN_TIMEOUT_MS"
 )
 
 # Lista de todas as chaves que você precisa
