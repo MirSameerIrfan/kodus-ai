@@ -165,13 +165,49 @@ export class GithubService
 
     // Helper functions
     private createOctokitInstance(): Octokit {
+        let privateKey = this.configService.get<string>(
+            'API_GITHUB_PRIVATE_KEY',
+        );
+
+        if (privateKey) {
+            // Remove surrounding double quotes if present (common in .env misconfiguration)
+            // Example: "API_GITHUB_PRIVATE_KEY"="..."
+            privateKey = privateKey.replace(/^"|"$/g, '');
+
+            // Remove escape characters that might have been added by JSON stringify/env injection
+            privateKey = privateKey.replace(/\\n/g, '\n');
+
+            // Check if key is malformed (single line or missing newlines between headers)
+            // Example: "-----BEGIN...-----MII...-----END...-----"
+            if (
+                privateKey.includes('-----BEGIN RSA PRIVATE KEY-----') &&
+                !privateKey.includes('-----BEGIN RSA PRIVATE KEY-----\n')
+            ) {
+                // Aggressively clean: remove headers, spaces, newlines, trim
+                const cleanBody = privateKey
+                    .replace(/-----BEGIN RSA PRIVATE KEY-----/g, '')
+                    .replace(/-----END RSA PRIVATE KEY-----/g, '')
+                    .replace(/\s+/g, '') // Remove all whitespaces/newlines from body
+                    .trim();
+
+                // Reformat to proper PEM with 64 char line breaks
+                const chunks = cleanBody.match(/.{1,64}/g) || [];
+                privateKey = `-----BEGIN RSA PRIVATE KEY-----\n${chunks.join('\n')}\n-----END RSA PRIVATE KEY-----`;
+            }
+        }
+
+        if (!privateKey) {
+            this.logger.error({
+                message: 'Github Private Key is missing or invalid',
+                context: GithubService.name,
+            });
+        }
+
         return new Octokit({
             authStrategy: createAppAuth,
             auth: {
                 appId: this.configService.get<string>('API_GITHUB_APP_ID'),
-                privateKey: this.configService
-                    .get<string>('API_GITHUB_PRIVATE_KEY')
-                    .replace(/\\n/g, '\n'),
+                privateKey: privateKey,
                 clientId: this.configService.get<string>(
                     'GLOBAL_GITHUB_CLIENT_ID',
                 ),
