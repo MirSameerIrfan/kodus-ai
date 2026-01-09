@@ -16,7 +16,7 @@ RUN corepack disable \
   && npm i -g yarn@1.22.22
 
 FROM base AS deps
-COPY package.json yarn.lock ./
+COPY package.json yarn.lock .npmrc ./
 RUN yarn install --frozen-lockfile
 
 
