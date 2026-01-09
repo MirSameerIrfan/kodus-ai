@@ -30,37 +30,64 @@ try {
   const raw = fs.readFileSync(file, 'utf8');
   const obj = JSON.parse(raw);
 
-  // Descobre qual lado está inativo (0% de tráfego)
-  const isGreenActive = obj.api_green_weight === 100;
-  const targetSide = isGreenActive ? 'BLUE' : 'GREEN';
+  // Descobre qual lado está ativo (prioriza active_side, fallback para pesos)
+  let activeSide;
+  if (obj.api_active_side) {
+    activeSide = obj.api_active_side;
+  } else {
+    activeSide = obj.api_green_weight === 100 ? 'green' : 'blue';
+  }
 
-  console.log(`>>> Current production side: ${isGreenActive ? 'GREEN' : 'BLUE'}`);
-  console.log(`>>> Deploying NEW version to IDLE side: ${targetSide}`);
+  const targetSide = activeSide === 'green' ? 'blue' : 'green';
+  const targetSideUpper = targetSide.toUpperCase();
+  const activeSideUpper = activeSide.toUpperCase();
 
-  if (targetSide === 'GREEN') {
+  console.log(`>>> Current production side: ${activeSideUpper} (active_side=${activeSide})`);
+  console.log(`>>> Deploying NEW version to IDLE side: ${targetSideUpper}`);
+
+  // ⚠️ SAFETY CHECK: Verifica se o lado idle está limpo (desired_count = 0)
+  // Ignora worker pois ele é Rolling Update agora
+  const idleDesiredCount = targetSide === 'green'
+    ? (obj.api_green_desired_count || 0)
+    : (obj.api_desired_count || 0);
+
+  if (idleDesiredCount > 0) {
+    console.error(`❌ ERROR: Target side ${targetSideUpper} is NOT clean (desired_count=${idleDesiredCount}).`);
+    console.error(`   This means the previous deployment was not cleaned up yet.`);
+    console.error(`   Run the CLEANUP workflow before deploying a new version.`);
+    console.error(`   Or wait for the full Blue/Green cycle to complete.`);
+    process.exit(1);
+  }
+
+  // --- API & WEBHOOK (Blue/Green) ---
+  if (targetSide === 'green') {
     obj.api_green_image = apiImage;
     obj.webhook_green_image = webhooksImage;
-    obj.worker_green_image = workerImage;
     obj.api_green_desired_count = desiredCount;
     obj.webhook_green_desired_count = desiredCount;
-    obj.worker_green_desired_count = desiredCount;
   } else {
     obj.api_image = apiImage;
     obj.webhook_image = webhooksImage;
-    obj.worker_image = workerImage;
     obj.api_desired_count = desiredCount;
     obj.webhook_desired_count = desiredCount;
-    obj.worker_desired_count = desiredCount;
   }
 
-  // ✅ CRÍTICO: Escala o cluster para caber ambos os lados
+  // --- WORKER (Rolling Update) ---
+  // Atualiza diretamente a imagem do worker. O ECS gerencia o rolling update.
+  console.log(`>>> Updating Worker image (Rolling Update)...`);
+  obj.worker_image = workerImage;
+  // Opcional: ajustar worker_desired_count se necessário, mas geralmente é fixo ou autoscaled
+  // obj.worker_desired_count = desiredCount + 1; // Exemplo se quisesse aumentar durante deploy
+
+  // ✅ CRÍTICO: Escala o cluster para caber ambos os lados (B/G) + Rolling do Worker
   obj.cluster_desired_capacity = 8;
 
-  // NÃO MEXE NOS PESOS (isso é na próxima etapa)
+  // NÃO MEXE NO active_side nem nos pesos (isso é na próxima etapa)
 
   fs.writeFileSync(file, JSON.stringify(obj, null, 2) + '\n');
-  console.log(`✅ SUCCESS: ${targetSide} ready with new images.`);
-  console.log(`    Cluster scaled to 8. Weights unchanged.`);
+  console.log(`✅ SUCCESS: ${targetSideUpper} ready with new images.`);
+  console.log(`    Worker image updated for rolling deploy.`);
+  console.log(`    Cluster scaled to 8. active_side unchanged (${activeSide}).`);
 
 } catch (error) {
   console.error(`❌ ERROR: ${error.message}`);

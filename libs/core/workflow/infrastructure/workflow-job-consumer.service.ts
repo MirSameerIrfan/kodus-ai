@@ -3,7 +3,7 @@ import {
     RabbitSubscribe,
     MessageHandlerErrorBehavior,
 } from '@golevelup/nestjs-rabbitmq';
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, OnApplicationShutdown } from '@nestjs/common';
 import { ConsumeMessage } from 'amqplib';
 
 import { IJobProcessorService } from '@libs/core/workflow/domain/contracts/job-processor.service.contract';
@@ -18,6 +18,10 @@ import {
 } from '@libs/core/workflow/domain/contracts/inbox-message.repository.contract';
 import { InboxStatus } from './repositories/schemas/inbox-message.model';
 import { RabbitMQErrorHandler } from '@libs/core/infrastructure/queue/rabbitmq-error.handler';
+import {
+    ITaskProtectionService,
+    TASK_PROTECTION_SERVICE_TOKEN,
+} from '../domain/contracts/task-protection.service.contract';
 
 interface WorkflowJobMessage {
     jobId: string;
@@ -26,9 +30,12 @@ interface WorkflowJobMessage {
 }
 
 @Injectable()
-export class WorkflowJobConsumer {
+export class WorkflowJobConsumer implements OnApplicationShutdown {
     private readonly logger = createLogger(WorkflowJobConsumer.name);
     private readonly instanceId = os.hostname();
+    // Default ECS protection time in minutes
+    private readonly JOB_PROTECTION_MINUTES = 60;
+    private activeJobs = 0;
 
     constructor(
         @Inject(JOB_PROCESSOR_SERVICE_TOKEN)
@@ -36,6 +43,8 @@ export class WorkflowJobConsumer {
         @Inject(INBOX_MESSAGE_REPOSITORY_TOKEN)
         private readonly inboxRepository: IInboxMessageRepository,
         private readonly observability: ObservabilityService,
+        @Inject(TASK_PROTECTION_SERVICE_TOKEN)
+        private readonly taskProtectionService: ITaskProtectionService,
     ) {}
 
     /**
@@ -132,6 +141,29 @@ export class WorkflowJobConsumer {
     }
 
     private async handleWorkflowJob(
+        consumerId: string,
+        queueName: string,
+        message: WorkflowJobMessage | MessagePayload<WorkflowJobMessage>,
+        amqpMsg: ConsumeMessage,
+    ): Promise<void> {
+        this.activeJobs++;
+        try {
+            await this.taskProtectionService.protectTask(
+                this.JOB_PROTECTION_MINUTES,
+            );
+            return await this.processWorkflowJob(
+                consumerId,
+                queueName,
+                message,
+                amqpMsg,
+            );
+        } finally {
+            await this.taskProtectionService.unprotectTask();
+            this.activeJobs--;
+        }
+    }
+
+    private async processWorkflowJob(
         consumerId: string,
         queueName: string,
         message: WorkflowJobMessage | MessagePayload<WorkflowJobMessage>,
@@ -285,6 +317,30 @@ export class WorkflowJobConsumer {
                 'workflow.operation': 'process_job',
             },
         );
+    }
+
+    async onApplicationShutdown(signal?: string): Promise<void> {
+        this.logger.log({
+            message: `Shutdown signal ${signal} received. Waiting for active jobs...`,
+            context: WorkflowJobConsumer.name,
+            metadata: { activeJobs: this.activeJobs },
+        });
+
+        const checkIntervalMs = 1000;
+        while (this.activeJobs > 0) {
+            this.logger.log({
+                message: `Waiting for ${this.activeJobs} active jobs to complete...`,
+                context: WorkflowJobConsumer.name,
+            });
+            await new Promise((resolve) =>
+                setTimeout(resolve, checkIntervalMs),
+            );
+        }
+
+        this.logger.log({
+            message: 'All jobs completed. Proceeding with shutdown.',
+            context: WorkflowJobConsumer.name,
+        });
     }
 
     private isMessagePayload(

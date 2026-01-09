@@ -1,7 +1,13 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-import { Module, forwardRef, DynamicModule } from '@nestjs/common';
+import {
+    Module,
+    forwardRef,
+    DynamicModule,
+    ModuleMetadata,
+    Provider,
+} from '@nestjs/common';
 import { CodeReviewPipelineModule } from '@libs/code-review/pipeline/code-review-pipeline.module';
 import { CodebaseModule } from '@libs/code-review/modules/codebase.module';
 import { WorkflowCoreModule } from './workflow-core.module';
@@ -29,12 +35,23 @@ import { ProcessWorkflowJobUseCase } from '@libs/core/workflow/application/use-c
 import { GetJobStatusUseCase } from '@libs/core/workflow/application/use-cases/get-job-status.use-case';
 import { AutomationModule } from '@libs/automation/modules/automation.module';
 import { ASTEventHandler } from '@libs/core/workflow/infrastructure/ast-event-handler.service';
+import { EcsModule } from '@libs/ee/infrastructure/ecs/ecs.module';
+import { environment } from '@libs/ee/configs/environment';
+import { TASK_PROTECTION_SERVICE_TOKEN } from '../domain/contracts/task-protection.service.contract';
+import { NoOpTaskProtectionService } from '../infrastructure/noop-task-protection.service';
 
 const sharedProviders = [
     {
         provide: JOB_QUEUE_SERVICE_TOKEN,
         useClass: WorkflowJobQueueService,
     },
+
+    // Default NoOp implementation (overridden by EcsModule if imported)
+    // Note: If EcsModule is imported in `register`, it needs to export the token.
+    // However, NestJS providers are scoped to module unless exported.
+    // We will provide a fallback here if not provided elsewhere?
+    // Actually, simplest is to provide NoOp here, and let the register method decide.
+    // But since `isWorker` check is inside register, we can do it there.
 
     EnqueueCodeReviewJobUseCase,
     GetJobStatusUseCase,
@@ -83,8 +100,9 @@ export class WorkflowModule {
         type: 'worker' | 'api' | 'webhook';
     }): DynamicModule {
         const isWorker = options.type === 'worker';
+        const useEcs = environment.API_CLOUD_MODE;
 
-        const imports: any[] = [
+        const imports: ModuleMetadata['imports'] = [
             WorkflowCoreModule,
             forwardRef(() => CodeReviewPipelineModule),
             forwardRef(() => CodebaseModule),
@@ -93,15 +111,26 @@ export class WorkflowModule {
             forwardRef(() => IntegrationConfigCoreModule),
             forwardRef(() => PermissionValidationModule),
             SharedMongoModule, // Ensure MongoDB is available for worker
+            ...(isWorker && useEcs ? [EcsModule] : []),
         ];
+
+        const providers: Provider[] = [
+            ...sharedProviders,
+            ...(isWorker ? workerProviders : []),
+        ];
+
+        // If not using ECS Module (which provides the token), provide NoOp
+        if (!useEcs || !isWorker) {
+            providers.push({
+                provide: TASK_PROTECTION_SERVICE_TOKEN,
+                useClass: NoOpTaskProtectionService,
+            });
+        }
 
         return {
             module: WorkflowModule,
             imports: imports,
-            providers: [
-                ...sharedProviders,
-                ...(isWorker ? workerProviders : []),
-            ],
+            providers: providers,
             exports: [
                 WorkflowCoreModule,
                 ...sharedExports,
