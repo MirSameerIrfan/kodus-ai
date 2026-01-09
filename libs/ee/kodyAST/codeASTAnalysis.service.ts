@@ -37,6 +37,11 @@ import { CodeManagementService } from '@libs/platform/infrastructure/adapters/se
 
 import { ASTValidateCodeRequest } from '@libs/code-review/domain/types/astValidate.type';
 import {
+    checkSuggestionSimplicitySchema,
+    prompt_checkSuggestionSimplicity_system,
+    prompt_checkSuggestionSimplicity_user,
+} from '@libs/common/utils/langchainCommon/prompts/checkSuggestionSimplicity';
+import {
     GetImpactAnalysisResponse,
     GetTaskInfoResponse,
     InitializeImpactAnalysisResponse,
@@ -712,19 +717,25 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
             language?: string;
             diff?: string;
         },
+        organizationAndTeamData: OrganizationAndTeamData,
+        prNumber: number,
     ): Promise<ValidateCodeSemanticsResult | null> {
         const provider = LLMModelProvider.GROQ_GPT_OSS_120B;
         const fallbackProvider = LLMModelProvider.OPENAI_GPT_4O_MINI;
         const runName = 'validateWithLLM';
         const spanName = `${CodeAstAnalysisService.name}::${runName}`;
 
+        const spanAttrs = {
+            organizationId: organizationAndTeamData?.organizationId,
+            prNumber,
+            filePath: payload.filePath,
+        };
+
         try {
             const { result } = await this.observabilityService.runLLMInSpan({
                 spanName,
                 runName,
-                attrs: {
-                    filePath: payload.filePath,
-                },
+                attrs: spanAttrs,
                 exec: async (callbacks) => {
                     return await this.promptRunnerService
                         .builder()
@@ -740,6 +751,16 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
                             prompt: prompt_validateCodeSemantics,
                         })
                         .addCallbacks(callbacks)
+                        .addMetadata({
+                            organizationId:
+                                organizationAndTeamData?.organizationId,
+                            teamId: organizationAndTeamData?.teamId,
+                            pullRequestId: prNumber,
+                            provider,
+                            fallbackProvider,
+                            runName,
+                        })
+                        .setTemperature(0)
                         .setRunName(runName)
                         .execute();
                 },
@@ -750,7 +771,12 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
             this.logger.error({
                 message: 'Error executing LLM validation',
                 context: CodeAstAnalysisService.name,
-                metadata: { filePath: payload.filePath, taskId },
+                metadata: {
+                    filePath: payload.filePath,
+                    taskId,
+                    organizationAndTeamData,
+                    prNumber,
+                },
                 error,
             });
             return null;
@@ -782,5 +808,99 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
         );
 
         return response;
+    }
+
+    async checkSuggestionSimplicity(
+        organizationAndTeamData: OrganizationAndTeamData,
+        prNumber: number,
+        suggestion: Partial<CodeSuggestion>,
+    ): Promise<{ isSimple: boolean; reason?: string }> {
+        const runName = 'checkSuggestionSimplicity';
+        const provider = LLMModelProvider.GEMINI_2_5_FLASH;
+        const fallbackProvider = LLMModelProvider.OPENAI_GPT_4O_MINI;
+
+        const spanName = `${CodeAstAnalysisService.name}::${runName}`;
+        const spanAttrs = {
+            organizationId: organizationAndTeamData?.organizationId,
+            prNumber,
+        };
+
+        try {
+            const { result } = await this.observabilityService.runLLMInSpan({
+                spanName,
+                runName,
+                attrs: spanAttrs,
+                exec: async (callbacks) => {
+                    return await this.promptRunnerService
+                        .builder()
+                        .setProviders({
+                            main: provider,
+                            fallback: fallbackProvider,
+                        })
+                        .setParser(
+                            ParserType.ZOD,
+                            checkSuggestionSimplicitySchema,
+                        )
+                        .setLLMJsonMode(true)
+                        .setTemperature(0)
+                        .setPayload({
+                            language: suggestion.language || 'text',
+                            existingCode: suggestion.existingCode || '',
+                            improvedCode: suggestion.improvedCode || '',
+                        })
+                        .addPrompt({
+                            prompt: prompt_checkSuggestionSimplicity_system,
+                            role: PromptRole.SYSTEM,
+                        })
+                        .addPrompt({
+                            prompt: prompt_checkSuggestionSimplicity_user,
+                            role: PromptRole.USER,
+                        })
+                        .addCallbacks(callbacks)
+                        .addMetadata({
+                            organizationId:
+                                organizationAndTeamData?.organizationId,
+                            teamId: organizationAndTeamData?.teamId,
+                            pullRequestId: prNumber,
+                            provider,
+                            fallbackProvider,
+                            runName,
+                        })
+                        .setRunName(runName)
+                        .execute();
+                },
+            });
+
+            if (!result) {
+                this.logger.warn({
+                    message:
+                        'No result from LLM when checking suggestion simplicity',
+                    context: CodeAstAnalysisService.name,
+                    metadata: {
+                        organizationAndTeamData,
+                        prNumber,
+                        suggestionId: suggestion.id,
+                    },
+                });
+
+                return { isSimple: false, reason: 'No result from LLM' };
+            }
+
+            return result;
+        } catch (error) {
+            this.logger.error({
+                message: 'Error checking suggestion simplicity',
+                error,
+                context: CodeAstAnalysisService.name,
+                metadata: {
+                    organizationAndTeamData,
+                    prNumber,
+                    suggestionId: suggestion.id,
+                },
+            });
+
+            // Fail safe: if error, assume not simple to be safe
+            return { isSimple: false, reason: 'Error during check' };
+        }
     }
 }

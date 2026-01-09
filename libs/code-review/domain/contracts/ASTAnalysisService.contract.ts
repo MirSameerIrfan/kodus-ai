@@ -2,6 +2,7 @@ import { ValidateCodeSemanticsResult } from '@libs/common/utils/langchainCommon/
 import {
     AIAnalysisResult,
     AnalysisContext,
+    CodeSuggestion,
     ReviewModeResponse,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
@@ -84,7 +85,14 @@ export interface IASTAnalysisService {
             language?: string;
             diff?: string;
         },
+        organizationAndTeamData: OrganizationAndTeamData,
+        prNumber: number,
     ): Promise<ValidateCodeSemanticsResult | null>;
     test(payload: any): Promise<any>;
     getTest(id: string): Promise<any>;
+    checkSuggestionSimplicity(
+        organizationAndTeamData: OrganizationAndTeamData,
+        prNumber: number,
+        suggestion: Partial<CodeSuggestion>,
+    ): Promise<{ isSimple: boolean; reason?: string }>;
 }

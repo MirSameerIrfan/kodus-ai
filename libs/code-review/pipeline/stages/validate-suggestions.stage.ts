@@ -13,6 +13,7 @@ import {
     CodeSuggestion,
     FileChange,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
 import { TaskStatus } from '@libs/ee/kodyAST/interfaces/code-ast-analysis.interface';
 import { applyEdit } from '@morphllm/morphsdk';
@@ -25,6 +26,8 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
     readonly stageName: string = 'ValidateSuggestionsStage';
     private readonly logger = createLogger(ValidateSuggestionsStage.name);
     private readonly concurrencyLimit = 10;
+    private readonly MAX_LINES_THRESHOLD = 15;
+    private readonly MAX_CHARS_THRESHOLD = 500;
 
     constructor(
         @Inject(AST_ANALYSIS_SERVICE_TOKEN)
@@ -42,7 +45,11 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
             this.logger.log({
                 message: 'Skipping validation stage for non-GitHub platform',
                 context: ValidateSuggestionsStage.name,
-                metadata: { platformType },
+                metadata: {
+                    platformType,
+                    prNumber: context.pullRequest.number,
+                    organizationAndTeamData: context.organizationAndTeamData,
+                },
             });
             return context;
         }
@@ -52,6 +59,8 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
                 message: 'No valid suggestions or changed files to validate',
                 context: ValidateSuggestionsStage.name,
                 metadata: {
+                    organizationAndTeamData: context.organizationAndTeamData,
+                    prNumber: context.pullRequest.number,
                     validSuggestionsCount: validSuggestions?.length || 0,
                     changedFilesCount: changedFiles?.length || 0,
                 },
@@ -59,8 +68,25 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
             return context;
         }
 
-        const patchedFiles = await this.preparePatchedFiles(
+        const filteredSuggestions = await this.filterComplexSuggestions(
             validSuggestions,
+            context,
+        );
+
+        if (filteredSuggestions.length === 0) {
+            this.logger.log({
+                message: 'All suggestions filtered out as too complex/long',
+                context: ValidateSuggestionsStage.name,
+                metadata: {
+                    organizationAndTeamData: context.organizationAndTeamData,
+                    prNumber: context.pullRequest.number,
+                },
+            });
+            return context;
+        }
+
+        const patchedFiles = await this.preparePatchedFiles(
+            filteredSuggestions,
             changedFiles,
         );
 
@@ -68,7 +94,12 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
             this.logger.log({
                 message: 'No patched files generated for validation',
                 context: ValidateSuggestionsStage.name,
-                metadata: { validSuggestions, changedFiles },
+                metadata: {
+                    validSuggestions: filteredSuggestions,
+                    changedFiles,
+                    organizationAndTeamData: context.organizationAndTeamData,
+                    prNumber: context.pullRequest.number,
+                },
             });
             return context;
         }
@@ -77,6 +108,7 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
             const validSuggestionIds = await this.validateSuggestions(
                 patchedFiles,
                 context.organizationAndTeamData,
+                context.pullRequest.number,
             );
 
             return this.updateContext(context, (draft) => {
@@ -92,10 +124,109 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
                 message: 'Error during validation process',
                 context: ValidateSuggestionsStage.name,
                 error,
+                metadata: {
+                    organizationAndTeamData: context.organizationAndTeamData,
+                    prNumber: context.pullRequest.number,
+                },
             });
 
             return context;
         }
+    }
+
+    private async filterComplexSuggestions(
+        suggestions: Partial<CodeSuggestion>[],
+        context: CodeReviewPipelineContext,
+    ): Promise<Partial<CodeSuggestion>[]> {
+        const limit = pLimit(this.concurrencyLimit);
+
+        const tasks = suggestions.map((suggestion) =>
+            limit(async () => {
+                const chars = suggestion.improvedCode?.length || 0;
+                const lines = suggestion.improvedCode?.split('\n').length || 0;
+
+                if (chars >= this.MAX_CHARS_THRESHOLD) {
+                    this.logger.log({
+                        message:
+                            'Discarding complex suggestion due to char count',
+                        context: ValidateSuggestionsStage.name,
+                        metadata: {
+                            organizationAndTeamData:
+                                context.organizationAndTeamData,
+                            prNumber: context.pullRequest.number,
+                            suggestionId: suggestion.id,
+                            lines,
+                            chars,
+                        },
+                    });
+
+                    return null;
+                }
+
+                if (lines >= this.MAX_LINES_THRESHOLD) {
+                    this.logger.log({
+                        message:
+                            'Discarding complex suggestion due to line count',
+                        context: ValidateSuggestionsStage.name,
+                        metadata: {
+                            organizationAndTeamData:
+                                context.organizationAndTeamData,
+                            prNumber: context.pullRequest.number,
+                            suggestionId: suggestion.id,
+                            lines,
+                            chars,
+                        },
+                    });
+
+                    return null;
+                }
+
+                try {
+                    const { isSimple, reason } =
+                        await this.astAnalysisService.checkSuggestionSimplicity(
+                            context.organizationAndTeamData,
+                            context.pullRequest.number,
+                            suggestion,
+                        );
+
+                    if (isSimple) {
+                        return suggestion;
+                    }
+
+                    this.logger.log({
+                        message: 'Discarding complex suggestion',
+                        context: ValidateSuggestionsStage.name,
+                        metadata: {
+                            organizationAndTeamData:
+                                context.organizationAndTeamData,
+                            prNumber: context.pullRequest.number,
+                            suggestionId: suggestion.id,
+                            lines,
+                            reason,
+                        },
+                    });
+
+                    return null;
+                } catch (error) {
+                    this.logger.error({
+                        message: 'Error checking suggestion simplicity',
+                        context: ValidateSuggestionsStage.name,
+                        metadata: {
+                            suggestionId: suggestion.id,
+                            organizationAndTeamData:
+                                context.organizationAndTeamData,
+                            prNumber: context.pullRequest.number,
+                        },
+                        error,
+                    });
+                    // Fail safe: discard if check fails
+                    return null;
+                }
+            }),
+        );
+
+        const results = await Promise.all(tasks);
+        return results.filter((s): s is Partial<CodeSuggestion> => s !== null);
     }
 
     private async preparePatchedFiles(
@@ -112,7 +243,8 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
 
     private async validateSuggestions(
         patchedFiles: ASTValidateCodeRequest,
-        organizationAndTeamData: any,
+        organizationAndTeamData: OrganizationAndTeamData,
+        prNumber: number,
     ): Promise<Set<string>> {
         const { taskId } = await this.startValidationTask(patchedFiles);
 
@@ -121,13 +253,15 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
         const validationResults = await this.getValidationResults(
             taskId,
             patchedFiles,
+            organizationAndTeamData,
+            prNumber,
         );
 
         if (!validationResults?.length) {
             this.logger.warn({
                 message: 'No validation results returned',
                 context: ValidateSuggestionsStage.name,
-                metadata: { taskId },
+                metadata: { organizationAndTeamData, prNumber, taskId },
             });
 
             return new Set();
@@ -138,6 +272,9 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
             context: ValidateSuggestionsStage.name,
             metadata: {
                 resultsCount: validationResults?.length,
+                organizationAndTeamData,
+                prNumber,
+                taskId,
             },
         });
 
@@ -337,6 +474,8 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
     private async getValidationResults(
         taskId: string,
         patchedFiles: ASTValidateCodeRequest,
+        organizationAndTeamData: OrganizationAndTeamData,
+        prNumber: number,
     ): Promise<{ id: string; isValid: boolean }[]> {
         const result = await this.astAnalysisService.getValidate(taskId);
 
@@ -344,7 +483,7 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
             this.logger.warn({
                 message: 'No results returned from validation task',
                 context: ValidateSuggestionsStage.name,
-                metadata: { taskId },
+                metadata: { taskId, organizationAndTeamData, prNumber },
             });
 
             throw new Error('No results returned from validation task');
@@ -355,8 +494,14 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
         const validationPromises = validAstSuggestions.map(async (r) => {
             if (!r.id) {
                 this.logger.warn({
-                    message: `Missing ID in validation result for file ${r.filePath}`,
+                    message: `Missing ID in validation result for file`,
                     context: ValidateSuggestionsStage.name,
+                    metadata: {
+                        taskId,
+                        filePath: r.filePath,
+                        organizationAndTeamData,
+                        prNumber,
+                    },
                 });
 
                 return null;
@@ -366,8 +511,15 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
 
             if (!originalFile) {
                 this.logger.warn({
-                    message: `Could not find original request for file ${r.filePath} with ID ${r.id}`,
+                    message: `Could not find original request for file`,
                     context: ValidateSuggestionsStage.name,
+                    metadata: {
+                        id: r.id,
+                        filePath: r.filePath,
+                        taskId,
+                        organizationAndTeamData,
+                        prNumber,
+                    },
                 });
 
                 return null;
@@ -380,8 +532,15 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
 
             if (!originalCode) {
                 this.logger.warn({
-                    message: `Original code is empty for file ${r.filePath} with ID ${r.id}`,
+                    message: `Original code is empty for file`,
                     context: ValidateSuggestionsStage.name,
+                    metadata: {
+                        id: r.id,
+                        filePath: r.filePath,
+                        taskId,
+                        organizationAndTeamData,
+                        prNumber,
+                    },
                 });
 
                 return null;
@@ -395,12 +554,21 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
                     diff: originalFile.diff,
                     language: originalFile.language,
                 },
+                organizationAndTeamData,
+                prNumber,
             );
 
             if (!llmResult) {
                 this.logger.warn({
-                    message: `LLM validation returned no result for file ${r.filePath} with ID ${r.id}`,
+                    message: `LLM validation returned no result for file`,
                     context: ValidateSuggestionsStage.name,
+                    metadata: {
+                        id: r.id,
+                        filePath: r.filePath,
+                        taskId,
+                        organizationAndTeamData,
+                        prNumber,
+                    },
                 });
 
                 return null;
@@ -423,10 +591,16 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
                 const originalResult = result.results[index];
 
                 this.logger.error({
-                    message: `Error during LLM validation for file ${originalResult?.filePath}`,
+                    message: `Error during LLM validation for file`,
                     context: ValidateSuggestionsStage.name,
                     error: outcome.reason,
-                    metadata: { id: originalResult?.id },
+                    metadata: {
+                        id: originalResult?.id,
+                        filePath: originalResult?.filePath,
+                        taskId,
+                        organizationAndTeamData,
+                        prNumber,
+                    },
                 });
             }
         });
