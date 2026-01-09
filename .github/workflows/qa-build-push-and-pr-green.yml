@@ -149,38 +149,57 @@ jobs:
                   DESIRED_COUNT=1
 
                   # Deploy to idle side (auto detects Blue/Green)
+                  # Obs: script atualizado no repo infra deve remover a trava de segurança para QA
                   ./infra/scripts/gitops/update-tfvars-deploy.sh "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE" "$DESIRED_COUNT"
 
-            - name: Update tfvars (shift traffic)
+            - name: Update tfvars (shift traffic & cleanup)
               run: |
                   set -euo pipefail
                   FILE="infra/${{ env.INFRA_TFVARS_PATH }}"
 
-                  # Promotes to 100% traffic on the newly deployed side
+                  # Promotes to 100% traffic AND cleans up old side (Atomic QA deploy)
                   node -e "
                     const fs = require('fs');
                     const file = process.argv[1];
                     const obj = JSON.parse(fs.readFileSync(file, 'utf8'));
 
-                    // Detects which side was active BEFORE deploy
-                    const greenWasActive = obj.api_green_weight === 100;
-
-                    if (greenWasActive) {
-                      // Green was active -> Blue received deploy -> Promote Blue
-                      console.log('>>> Shifting traffic: GREEN (100%) -> BLUE (100%)');
-                      obj.api_green_weight = 0;
-                      obj.webhook_green_weight = 0;
-                      if (obj.api_blue_weight !== undefined) obj.api_blue_weight = 100;
-                    } else {
-                      // Blue was active -> Green received deploy -> Promote Green
-                      console.log('>>> Shifting traffic: BLUE (100%) -> GREEN (100%)');
-                      obj.api_green_weight = 100;
-                      obj.webhook_green_weight = 100;
-                      if (obj.api_blue_weight !== undefined) obj.api_blue_weight = 0;
+                    // Detects current active side (prioritizes active_side, fallback to weights)
+                    let currentActive = 'blue';
+                    if (obj.api_active_side) {
+                      currentActive = obj.api_active_side;
+                    } else if (obj.api_green_weight === 100) {
+                      currentActive = 'green';
                     }
 
+                    const newActive = currentActive === 'blue' ? 'green' : 'blue';
+
+                    console.log('>>> Atomic QA Action:');
+                    console.log('    1. Shift Traffic: ' + currentActive.toUpperCase() + ' -> ' + newActive.toUpperCase());
+                    console.log('    2. Cleanup Old Side: ' + currentActive.toUpperCase() + ' -> 0');
+
+                    // 1. Shift Logic (SWAP)
+                    obj.api_active_side = newActive;
+                    obj.webhook_active_side = newActive;
+
+                    // 2. Cleanup Logic (Kill old side)
+                    if (currentActive === 'green') {
+                        // Green was active (now inactive) -> Kill Green
+                        obj.api_green_desired_count = 0;
+                        obj.webhook_green_desired_count = 0;
+                    } else {
+                        // Blue was active (now inactive) -> Kill Blue
+                        obj.api_desired_count = 0;
+                        obj.webhook_desired_count = 0;
+                    }
+
+                    // Remove legacy weights if present
+                    delete obj.api_green_weight;
+                    delete obj.api_blue_weight;
+                    delete obj.webhook_green_weight;
+                    delete obj.webhook_blue_weight;
+
                     fs.writeFileSync(file, JSON.stringify(obj, null, 2) + '\n');
-                    console.log('✅ Traffic shifted successfully');
+                    console.log('✅ Traffic shifted and old side marked for cleanup.');
                   " "$FILE"
 
             - name: Verify infra changes scope
@@ -204,7 +223,7 @@ jobs:
                   body: |
                       **QA Environment: Deploy + Traffic Shift**
 
-                      Deploys new images to idle side and promotes to 100% traffic.
+                      Deploys new images to idle side, promotes to 100% traffic, and cleans up the old side.
 
                       - **Tag**: `${{ env.IMAGE_TAG }}`
                       - **Branch**: `${{ env.INFRA_BASE_BRANCH }}`
