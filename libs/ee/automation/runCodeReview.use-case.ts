@@ -673,7 +673,7 @@ export class RunCodeReviewAutomationUseCase implements IUseCase {
         return (
             '## BYOK Configuration Required! 🔑\n\n' +
             'Your plan requires a Bring Your Own Key (BYOK) configuration to perform code reviews.\n\n' +
-            'Please configure your API keys in [Settings > BYOK Configuration](https://app.kodus.io/settings/byok).\n\n' +
+            'Please configure your API keys in [Settings > BYOK Configuration](https://app.kodus.io/organization/byok).\n\n' +
             '<!-- kody-codereview -->'
         );
     }
