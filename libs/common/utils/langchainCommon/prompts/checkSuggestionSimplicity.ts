@@ -24,10 +24,10 @@ A suggestion is considered **SIMPLE** (safe) if:
 - It is self-contained within the provided code block.
 
 Respond with a JSON object:
-{{
+{
     "isSimple": boolean,
     "reason": "Short explanation of why it is simple or complex"
-}}
+}
 
 Analyze the following suggestion:
 `;
