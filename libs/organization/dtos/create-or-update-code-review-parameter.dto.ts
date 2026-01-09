@@ -1,15 +1,17 @@
 import { Type } from 'class-transformer';
 import {
-    IsObject,
-    IsString,
-    IsOptional,
     IsArray,
     IsBoolean,
-    ValidateNested,
-    IsNumber,
     IsEnum,
+    IsNumber,
+    IsObject,
+    IsOptional,
+    IsString,
+    ValidateNested,
 } from 'class-validator';
 
+import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
+import { OrganizationAndTeamDataDto } from '@libs/core/domain/dtos/organizationAndTeamData.dto';
 import {
     BehaviourForExistingDescription,
     BehaviourForNewCommits,
@@ -19,8 +21,6 @@ import {
     ReviewCadenceType,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { PullRequestMessageStatus } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
-import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
-import { OrganizationAndTeamDataDto } from '@libs/core/domain/dtos/organizationAndTeamData.dto';
 
 class ReviewOptionsDto {
     @IsBoolean()
@@ -137,6 +137,10 @@ class SuggestionControlConfigDto {
     @ValidateNested()
     @Type(() => SeverityLimitsDto)
     severityLimits?: SeverityLimitsDto;
+
+    @IsOptional()
+    @IsBoolean()
+    enableCommitableSuggestions?: boolean;
 }
 
 class ReviewCadenceDto {

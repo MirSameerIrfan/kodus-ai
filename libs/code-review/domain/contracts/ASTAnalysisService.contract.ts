@@ -72,7 +72,9 @@ export interface IASTAnalysisService {
         filePath: string,
         taskId: string,
     ): Promise<{ content: string }>;
-    startValidate(payload: { files: ASTValidateCodeRequest }): Promise<string>;
+    startValidate(payload: {
+        files: ASTValidateCodeRequest;
+    }): Promise<{ taskId: string }>;
     getValidate(taskId: string): Promise<ASTValidateCodeResponse>;
     validateWithLLM(
         taskId: string,

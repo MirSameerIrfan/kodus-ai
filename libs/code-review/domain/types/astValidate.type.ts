@@ -1,4 +1,3 @@
-
 export enum SupportedLanguage {
     TYPESCRIPT = 'typescript',
     JAVASCRIPT = 'javascript',
@@ -19,11 +18,11 @@ export type LanguageConfig = {
 export const SUPPORTED_LANGUAGES: Record<SupportedLanguage, LanguageConfig> = {
     typescript: {
         name: SupportedLanguage.TYPESCRIPT,
-        extensions: ['.ts', '.tsx'],
+        extensions: ['.ts'],
     },
     javascript: {
         name: SupportedLanguage.JAVASCRIPT,
-        extensions: ['.js', '.jsx'],
+        extensions: ['.js'],
     },
     python: {
         name: SupportedLanguage.PYTHON,

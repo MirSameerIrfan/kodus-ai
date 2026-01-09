@@ -655,7 +655,7 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
 
     async startValidate(payload: {
         files: ASTValidateCodeRequest;
-    }): Promise<string> {
+    }): Promise<{ taskId: string }> {
         const taskId = await this.astAxios.post(
             '/api/ast/validate-code/initialize',
             { ...payload.files },
@@ -665,11 +665,43 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
     }
 
     async getValidate(taskId: string) {
-        const response = await this.astAxios.get<any>(
-            `/api/ast/validate-code/${taskId}`,
-        );
+        let attempt = 0;
+        const maxAttempts = 3;
 
-        return response;
+        while (true) {
+            try {
+                const response = await this.astAxios.get<any>(
+                    `/api/ast/validate-code/result/${taskId}`,
+                );
+
+                return response?.result;
+            } catch (error) {
+                attempt++;
+                const isTransientError =
+                    error.code === 'ECONNRESET' ||
+                    error.code === 'ETIMEDOUT' ||
+                    error.code === 'ECONNABORTED' ||
+                    error.message?.includes('socket hang up');
+
+                if (!isTransientError || attempt >= maxAttempts) {
+                    throw error;
+                }
+
+                this.logger.warn({
+                    message: `Transient error calling getValidate, attempt ${attempt}/${maxAttempts}`,
+                    error,
+                    context: CodeAstAnalysisService.name,
+                    metadata: { taskId },
+                });
+
+                const waitTime = calculateBackoffInterval(attempt, {
+                    baseInterval: 1000,
+                    maxInterval: 5000,
+                });
+
+                await new Promise((resolve) => setTimeout(resolve, waitTime));
+            }
+        }
     }
 
     public async validateWithLLM(
@@ -746,7 +778,7 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
 
     async getTest(id: string): Promise<any> {
         const response = await this.astAxios.get(
-            `/api/lsp/suggestion/diagnostic/${id}`,
+            `/api/ast/validate-code/result/c25eae7e-5a78-46a9-acbe-8ab819d0a0b8`,
         );
 
         return response;

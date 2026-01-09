@@ -8,6 +8,7 @@ import {
     ASTValidateCodeRequest,
     SUPPORTED_LANGUAGES,
 } from '@libs/code-review/domain/types/astValidate.type';
+import { PlatformType } from '@libs/core/domain/enums';
 import {
     CodeSuggestion,
     FileChange,
@@ -35,9 +36,26 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
     protected override async executeStage(
         context: CodeReviewPipelineContext,
     ): Promise<CodeReviewPipelineContext> {
-        const { validSuggestions, changedFiles } = context;
+        const { validSuggestions, changedFiles, platformType } = context;
+
+        if (platformType !== PlatformType.GITHUB) {
+            this.logger.log({
+                message: 'Skipping validation stage for non-GitHub platform',
+                context: ValidateSuggestionsStage.name,
+                metadata: { platformType },
+            });
+            return context;
+        }
 
         if (!validSuggestions?.length || !changedFiles?.length) {
+            this.logger.log({
+                message: 'No valid suggestions or changed files to validate',
+                context: ValidateSuggestionsStage.name,
+                metadata: {
+                    validSuggestionsCount: validSuggestions?.length || 0,
+                    changedFilesCount: changedFiles?.length || 0,
+                },
+            });
             return context;
         }
 
@@ -47,6 +65,11 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
         );
 
         if (patchedFiles.files.length === 0) {
+            this.logger.log({
+                message: 'No patched files generated for validation',
+                context: ValidateSuggestionsStage.name,
+                metadata: { validSuggestions, changedFiles },
+            });
             return context;
         }
 
@@ -70,9 +93,9 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
                 context: ValidateSuggestionsStage.name,
                 error,
             });
-        }
 
-        return context;
+            return context;
+        }
     }
 
     private async preparePatchedFiles(
@@ -91,7 +114,7 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
         patchedFiles: ASTValidateCodeRequest,
         organizationAndTeamData: any,
     ): Promise<Set<string>> {
-        const taskId = await this.startValidationTask(patchedFiles);
+        const { taskId } = await this.startValidationTask(patchedFiles);
 
         await this.awaitValidationTask(taskId, organizationAndTeamData);
 
@@ -104,6 +127,7 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
             this.logger.warn({
                 message: 'No validation results returned',
                 context: ValidateSuggestionsStage.name,
+                metadata: { taskId },
             });
 
             return new Set();
@@ -174,9 +198,10 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
             suggestionsByFilePath,
         )) {
             if (!this.isLanguageSupported(filePath)) {
-                this.logger.debug({
-                    message: `Skipping validation for unsupported file type: ${filePath}`,
+                this.logger.log({
+                    message: `Skipping validation for unsupported file type`,
                     context: ValidateSuggestionsStage.name,
+                    metadata: { filePath },
                 });
 
                 continue;
@@ -184,13 +209,38 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
 
             const originalCode = fileData?.fileContent;
 
-            if (!originalCode) continue;
+            if (!originalCode) {
+                this.logger.warn({
+                    message: `Original code is empty for file`,
+                    context: ValidateSuggestionsStage.name,
+                    metadata: { filePath },
+                });
+
+                continue;
+            }
 
             for (const suggestion of suggestions) {
                 tasks.push(
                     limit(async () => {
                         try {
-                            if (!suggestion.id || !suggestion.improvedCode) {
+                            if (
+                                !suggestion.id ||
+                                !suggestion.improvedCode ||
+                                !suggestion.llmPrompt
+                            ) {
+                                this.logger.warn({
+                                    message: `Missing data in suggestion`,
+                                    context: ValidateSuggestionsStage.name,
+                                    metadata: {
+                                        suggestionId: suggestion.id,
+                                        filePath,
+                                        improvedCodePresent:
+                                            !!suggestion.improvedCode,
+                                        llmPromptPresent:
+                                            !!suggestion.llmPrompt,
+                                    },
+                                });
+
                                 return null;
                             }
 
@@ -208,6 +258,15 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
                             );
 
                             if (!result || !result.mergedCode) {
+                                this.logger.warn({
+                                    message: `MorphLLM failed to apply edit for suggestion`,
+                                    context: ValidateSuggestionsStage.name,
+                                    metadata: {
+                                        suggestionId: suggestion.id,
+                                        filePath,
+                                    },
+                                });
+
                                 return null;
                             }
 
@@ -252,7 +311,7 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
 
     private async startValidationTask(
         patchedFiles: ASTValidateCodeRequest,
-    ): Promise<string> {
+    ): Promise<{ taskId: string }> {
         return await this.astAnalysisService.startValidate({
             files: patchedFiles,
         });
@@ -282,6 +341,12 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
         const result = await this.astAnalysisService.getValidate(taskId);
 
         if (!result) {
+            this.logger.warn({
+                message: 'No results returned from validation task',
+                context: ValidateSuggestionsStage.name,
+                metadata: { taskId },
+            });
+
             throw new Error('No results returned from validation task');
         }
 

@@ -157,7 +157,6 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
                     changedFiles,
                     validSuggestions,
                     discardedSuggestions,
-                    context.codeValidatedSuggestionsIds,
                 );
 
             this.logger.log({
@@ -206,7 +205,6 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
         changedFiles: FileChange[],
         validSuggestionsToAnalyze: Partial<CodeSuggestion>[],
         discardedSuggestionsBySafeGuard: Partial<CodeSuggestion>[],
-        validatedSuggestionIds?: Set<string>,
     ): Promise<{
         lineComments: Array<CommentResult>;
         lastAnalyzedCommit: any;
@@ -218,6 +216,7 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
             repository,
             platformType,
             dryRun,
+            codeValidatedSuggestionsIds,
         } = context;
 
         // Sort and prioritize suggestions
@@ -243,7 +242,8 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
                     ?.lastAnalyzedCommit || null,
                 context.pullRequestMessagesConfig?.globalSettings
                     ?.suggestionCopyPrompt,
-                validatedSuggestionIds,
+                codeValidatedSuggestionsIds,
+                platformType,
             );
 
         // Save pull request suggestions
@@ -300,6 +300,7 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
         lastAnalyzedCommitFromContext: any,
         suggestionCopyPrompt?: boolean,
         validatedSuggestionIds?: Set<string>,
+        platformType?: PlatformType,
     ) {
         try {
             const lineComments = sortedPrioritizedSuggestions
@@ -309,9 +310,10 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
                         ClusteringType.RELATED,
                 )
                 .map((suggestion) => {
-                    const language = repository?.language;
+                    const language =
+                        suggestion?.language || repository?.language;
                     const suggestionContent = suggestion?.suggestionContent;
-                    const isGitHub = repository?.platform === 'github';
+                    const isGitHub = platformType === PlatformType.GITHUB;
 
                     const isCommitableSuggestion =
                         isGitHub &&
