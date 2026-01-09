@@ -225,8 +225,16 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
             }),
         );
 
-        const results = await Promise.all(tasks);
-        return results.filter((s): s is Partial<CodeSuggestion> => s !== null);
+        const results = await Promise.allSettled(tasks);
+        return results
+            .filter(
+                (
+                    result,
+                ): result is PromiseFulfilledResult<Partial<CodeSuggestion> | null> =>
+                    result.status === 'fulfilled',
+            )
+            .map((result) => result.value)
+            .filter((s): s is Partial<CodeSuggestion> => s !== null);
     }
 
     private async preparePatchedFiles(
