@@ -28,6 +28,9 @@ export type PullRequestType = {
         };
         ref: string;
     };
+    head?: {
+        sha: string;
+    };
     repository: Repository;
     isDraft: boolean;
     tags?: string[];
@@ -57,6 +60,10 @@ export interface CodeReviewPipelineContext extends PipelineContext {
 
     codeReviewConfig?: CodeReviewConfig;
     automaticReviewStatus?: AutomaticReviewStatus;
+
+    // GitHub Checks integration
+    githubCheckRunId?: number;
+    pipelineError?: boolean;
 
     changedFiles?: FileChange[];
     lastExecution?: {

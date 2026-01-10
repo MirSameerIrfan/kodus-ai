@@ -52,6 +52,7 @@ export class GithubMappedPlatform implements IMappedPlatform {
                     fullName: payload?.pull_request?.head?.repo?.full_name,
                 },
                 ref: payload?.pull_request?.head?.ref,
+                sha: payload?.pull_request?.head?.sha,
             },
             base: {
                 repo: {

@@ -25,6 +25,8 @@ import { UpdateCommentsAndGenerateSummaryStage } from '../stages/finish-comments
 import { RequestChangesOrApproveStage } from '../stages/finish-process-review.stage';
 import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
 import { CreateFileCommentsStage } from '../stages/create-file-comments.stage';
+import { CreateGithubCheckStage } from '../stages/create-github-check.stage';
+import { FinalizeGithubCheckStage } from '../stages/finalize-github-check.stage';
 
 @Injectable()
 export class CodeReviewPipelineStrategy implements IPipelineStrategy<CodeReviewPipelineContext> {
@@ -44,13 +46,16 @@ export class CodeReviewPipelineStrategy implements IPipelineStrategy<CodeReviewP
         private readonly aggregateResultsStage: AggregateResultsStage,
         private readonly updateCommentsAndGenerateSummaryStage: UpdateCommentsAndGenerateSummaryStage,
         private readonly requestChangesOrApproveStage: RequestChangesOrApproveStage,
-    ) {}
+        private readonly createGithubCheckStage: CreateGithubCheckStage,
+        private readonly finalizeGithubCheckStage: FinalizeGithubCheckStage,
+    ) { }
 
     configureStages(): BasePipelineStage<CodeReviewPipelineContext>[] {
         return [
             this.validateNewCommitsStage,
             this.resolveConfigStage,
             this.validateConfigStage,
+            this.createGithubCheckStage,
             this.fetchChangedFilesStage,
             this.loadExternalContextStage,
             this.fileContextGateStage,
@@ -62,6 +67,7 @@ export class CodeReviewPipelineStrategy implements IPipelineStrategy<CodeReviewP
             this.aggregateResultsStage,
             this.updateCommentsAndGenerateSummaryStage,
             this.requestChangesOrApproveStage,
+            this.finalizeGithubCheckStage,
         ];
     }
 
