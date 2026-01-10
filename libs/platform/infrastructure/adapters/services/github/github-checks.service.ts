@@ -124,6 +124,7 @@ export class GithubChecksService {
                     checkRunId,
                     repository: repository.name,
                     status,
+                    organizationAndTeamData
                 },
             });
 
@@ -136,6 +137,7 @@ export class GithubChecksService {
                 metadata: {
                     checkRunId,
                     repository: repository.name,
+                    organizationAndTeamData
                 },
             });
             return false;

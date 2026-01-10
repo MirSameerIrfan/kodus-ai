@@ -30,6 +30,7 @@ export type PullRequestType = {
     };
     head?: {
         sha: string;
+        ref: string;
     };
     repository: Repository;
     isDraft: boolean;

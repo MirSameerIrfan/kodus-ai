@@ -27,6 +27,8 @@ export class FinalizeGithubCheckStage extends BasePipelineStage<CodeReviewPipeli
                 context: this.stageName,
                 metadata: {
                     prNumber: context.pullRequest?.number,
+                    organizationAndTeamData: context.organizationAndTeamData
+
                 },
             });
             return context;
@@ -88,6 +90,8 @@ export class FinalizeGithubCheckStage extends BasePipelineStage<CodeReviewPipeli
                     checkRunId: context.githubCheckRunId,
                     totalSuggestions,
                     hasErrors,
+                    organizationAndTeamData: context.organizationAndTeamData
+
                 },
             });
         } catch (error) {
@@ -97,6 +101,7 @@ export class FinalizeGithubCheckStage extends BasePipelineStage<CodeReviewPipeli
                 error,
                 metadata: {
                     checkRunId: context.githubCheckRunId,
+                    organizationAndTeamData: context.organizationAndTeamData
                 },
             });
         }

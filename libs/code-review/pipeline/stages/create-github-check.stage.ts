@@ -17,8 +17,6 @@ export class CreateGithubCheckStage extends BasePipelineStage<CodeReviewPipeline
     protected async executeStage(
         context: CodeReviewPipelineContext,
     ): Promise<CodeReviewPipelineContext> {
-        // Only create checks for GitHub
-        console.log('aaaaaaaaaaaa');
 
         if (context.platformType !== PlatformType.GITHUB) {
             this.logger.log({
@@ -26,6 +24,7 @@ export class CreateGithubCheckStage extends BasePipelineStage<CodeReviewPipeline
                 context: this.stageName,
                 metadata: {
                     platformType: context.platformType,
+                    organizationAndTeamData: context.organizationAndTeamData
                 },
             });
             return context;
@@ -37,6 +36,7 @@ export class CreateGithubCheckStage extends BasePipelineStage<CodeReviewPipeline
                 context: this.stageName,
                 metadata: {
                     prNumber: context.pullRequest?.number,
+                    organizationAndTeamData: context.organizationAndTeamData
                 },
             });
             return context;
@@ -51,6 +51,7 @@ export class CreateGithubCheckStage extends BasePipelineStage<CodeReviewPipeline
                     context: this.stageName,
                     metadata: {
                         fullName: context.repository.fullName,
+                        organizationAndTeamData: context.organizationAndTeamData
                     },
                 });
                 return context;
@@ -79,6 +80,7 @@ export class CreateGithubCheckStage extends BasePipelineStage<CodeReviewPipeline
                 error,
                 metadata: {
                     prNumber: context.pullRequest?.number,
+                    organizationAndTeamData: context.organizationAndTeamData
                 },
             });
         }
