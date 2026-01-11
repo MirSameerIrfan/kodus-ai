@@ -35,7 +35,12 @@ RUN sed -e "s/__CLOUD_MODE__/${API_CLOUD_MODE}/g" \
         -e "/declare const/d" \
         libs/ee/configs/environment/environment.template.ts > libs/ee/configs/environment/environment.ts
 
-RUN yarn build:apps
+RUN yarn build:apps && yarn build:migrations
+
+# Install production dependencies only
+FROM base AS prod-deps
+COPY package.json yarn.lock .npmrc ./
+RUN yarn install --production --frozen-lockfile && yarn cache clean
 
 
 FROM node:22.19.0-slim AS runtime-common
@@ -55,11 +60,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates procps \
   && rm -rf /var/lib/apt/lists/*
 
-COPY --from=deps /usr/src/app/node_modules ./node_modules
+COPY --from=prod-deps /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/dist ./dist
 COPY --from=build /usr/src/app/package.json ./package.json
-COPY --from=build /usr/src/app/tsconfig.json ./tsconfig.json
-COPY --from=build /usr/src/app/libs ./libs
 COPY --from=build /usr/src/app/default-kodus-config.yml ./default-kodus-config.yml
 COPY --from=build /usr/src/app/kodus-config.yml ./kodus-config.yml
 COPY --from=build /usr/src/app/scripts ./scripts

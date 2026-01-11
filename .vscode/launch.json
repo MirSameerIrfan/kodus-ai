@@ -12,17 +12,11 @@
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/app",
             "sourceMaps": true,
-            "outFiles": [
-                "${workspaceFolder}/dist/**/*.js"
-            ],
-            "resolveSourceMapLocations": [
-                "${workspaceFolder}/dist/**/*.map",
-                "!**/node_modules/**"
-            ],
             "sourceMapPathOverrides": {
                 "webpack:///./*": "${workspaceFolder}/*",
-                "webpack:///*": "${workspaceFolder}/*",
-                "file:///usr/src/app/*": "${workspaceFolder}/*",
+                "webpack:///apps/*": "${workspaceFolder}/apps/*",
+                "webpack:///libs/*": "${workspaceFolder}/libs/*",
+                "webpack:///src/*": "${workspaceFolder}/src/*",
                 "/usr/src/app/*": "${workspaceFolder}/*"
             },
             "skipFiles": [
@@ -40,17 +34,11 @@
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/app",
             "sourceMaps": true,
-            "outFiles": [
-                "${workspaceFolder}/dist/**/*.js"
-            ],
-            "resolveSourceMapLocations": [
-                "${workspaceFolder}/dist/**/*.map",
-                "!**/node_modules/**"
-            ],
             "sourceMapPathOverrides": {
                 "webpack:///./*": "${workspaceFolder}/*",
-                "webpack:///*": "${workspaceFolder}/*",
-                "file:///usr/src/app/*": "${workspaceFolder}/*",
+                "webpack:///apps/*": "${workspaceFolder}/apps/*",
+                "webpack:///libs/*": "${workspaceFolder}/libs/*",
+                "webpack:///src/*": "${workspaceFolder}/src/*",
                 "/usr/src/app/*": "${workspaceFolder}/*"
             },
             "skipFiles": [
@@ -68,17 +56,11 @@
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/app",
             "sourceMaps": true,
-            "outFiles": [
-                "${workspaceFolder}/dist/**/*.js"
-            ],
-            "resolveSourceMapLocations": [
-                "${workspaceFolder}/dist/**/*.map",
-                "!**/node_modules/**"
-            ],
             "sourceMapPathOverrides": {
                 "webpack:///./*": "${workspaceFolder}/*",
-                "webpack:///*": "${workspaceFolder}/*",
-                "file:///usr/src/app/*": "${workspaceFolder}/*",
+                "webpack:///apps/*": "${workspaceFolder}/apps/*",
+                "webpack:///libs/*": "${workspaceFolder}/libs/*",
+                "webpack:///src/*": "${workspaceFolder}/src/*",
                 "/usr/src/app/*": "${workspaceFolder}/*"
             },
             "skipFiles": [

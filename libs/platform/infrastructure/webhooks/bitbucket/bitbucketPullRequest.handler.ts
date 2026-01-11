@@ -18,7 +18,10 @@ import {
     IWebhookEventHandler,
     IWebhookEventParams,
 } from '@libs/platform/domain/platformIntegrations/interfaces/webhook-event-handler.interface';
-import { IWebhookBitbucketPullRequestEvent } from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
+import {
+    IWebhookBitbucketPullRequestEvent,
+    stripCurlyBracesFromUUIDs,
+} from '@libs/platform/domain/platformIntegrations/types/webhooks/webhooks-bitbucket.type';
 import { CodeManagementService } from '../../adapters/services/codeManagement.service';
 import { SavePullRequestUseCase } from '@libs/platformData/application/use-cases/pullRequests/save.use-case';
 import { RunCodeReviewAutomationUseCase } from '@libs/ee/automation/runCodeReview.use-case';
@@ -105,6 +108,17 @@ export class BitbucketPullRequestHandler implements IWebhookEventHandler {
             fullName: payload?.repository?.full_name,
         } as any;
 
+        const mappedPlatform = getMappedPlatform(PlatformType.BITBUCKET);
+        if (!mappedPlatform) {
+            return;
+        }
+
+        const sanitizedPayload = stripCurlyBracesFromUUIDs(payload);
+
+        const mappedUsers = mappedPlatform.mapUsers({
+            payload: sanitizedPayload,
+        });
+
         const orgData =
             await this.runCodeReviewAutomationUseCase.findTeamWithActiveCodeReview(
                 {
@@ -113,6 +127,9 @@ export class BitbucketPullRequestHandler implements IWebhookEventHandler {
                         name: repository.name,
                     },
                     platformType: PlatformType.BITBUCKET,
+                    userGitId:
+                        mappedUsers?.user?.id?.toString() ||
+                        mappedUsers?.user?.uuid?.toString(),
                     triggerCommentId: payload.comment?.id,
                 },
             );
@@ -258,6 +275,18 @@ export class BitbucketPullRequestHandler implements IWebhookEventHandler {
             id: payload?.repository?.uuid?.replace(/[{}]/g, ''),
             name: payload?.repository?.name,
         } as any;
+
+        const mappedPlatform = getMappedPlatform(PlatformType.BITBUCKET);
+        if (!mappedPlatform) {
+            return;
+        }
+
+        const sanitizedPayload = stripCurlyBracesFromUUIDs(payload);
+
+        const mappedUsers = mappedPlatform.mapUsers({
+            payload: sanitizedPayload,
+        });
+
         const orgData =
             await this.runCodeReviewAutomationUseCase.findTeamWithActiveCodeReview(
                 {
@@ -265,6 +294,9 @@ export class BitbucketPullRequestHandler implements IWebhookEventHandler {
                         id: repository.id,
                         name: repository.name,
                     },
+                    userGitId:
+                        mappedUsers?.user?.id?.toString() ||
+                        mappedUsers?.user?.uuid?.toString(),
                     platformType: PlatformType.BITBUCKET,
                     triggerCommentId: payload.comment?.id,
                 },
