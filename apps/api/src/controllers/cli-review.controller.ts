@@ -69,8 +69,15 @@ export class CliReviewController {
     private async validateKeyInternal(teamKey?: string, authHeader?: string) {
         const key = teamKey || authHeader?.replace(/^Bearer\s+/i, '');
 
+        const buildPayload = (base: any) => ({
+            ...base,
+            data: {
+                ...base,
+            },
+        });
+
         if (!key) {
-            return {
+            return buildPayload({
                 valid: false,
                 error: 'Team API key required. Provide via X-Team-Key or Authorization: Bearer header.',
                 team: {
@@ -81,13 +88,17 @@ export class CliReviewController {
                     id: null,
                     name: '',
                 },
-            };
+                user: {
+                    email: '',
+                    name: '',
+                },
+            });
         }
 
         const teamData = await this.teamCliKeyService.validateKey(key);
 
         if (!teamData) {
-            return {
+            return buildPayload({
                 valid: false,
                 error: 'Invalid or revoked team API key',
                 team: {
@@ -98,7 +109,11 @@ export class CliReviewController {
                     id: null,
                     name: '',
                 },
-            };
+                user: {
+                    email: '',
+                    name: '',
+                },
+            });
         }
 
         const { team, organization } = teamData;
@@ -124,13 +139,20 @@ export class CliReviewController {
                 id: safeOrg.uuid ?? null,
                 name: safeOrgName,
             },
+            user: {
+                email: '',
+                name: '',
+            },
+            // compat fields some clients expect
+            email: '',
+            userEmail: '',
         };
 
         if (!result.valid) {
             result['error'] = 'Invalid or incomplete team API key';
         }
 
-        return result;
+        return buildPayload(result);
     }
 
     /**

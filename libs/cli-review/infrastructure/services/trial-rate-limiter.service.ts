@@ -125,6 +125,7 @@ export class TrialRateLimiterService {
                 message: 'Error getting rate limit status',
                 error,
                 context: TrialRateLimiterService.name,
+                metadata: { fingerprint },
             });
 
             return {

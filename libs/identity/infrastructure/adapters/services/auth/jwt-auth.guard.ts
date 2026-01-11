@@ -86,9 +86,21 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
             '/api/cli/trial/review',
             '/api/cli/validate-key',
             '/api/cli/review',
+            '/pull-requests/cli/suggestions',
+            '/api/pull-requests/cli/suggestions',
+            '/pull-requests/suggestions',
+            '/api/pull-requests/suggestions',
         ];
 
-        const wildCardExcludePaths = ['/auth/sso/', '/cli/', '/api/cli/'];
+        const wildCardExcludePaths = [
+            '/auth/sso/',
+            '/cli/',
+            '/api/cli/',
+            '/pull-requests/cli/',
+            '/api/pull-requests/cli/',
+            '/pull-requests/',
+            '/api/pull-requests/',
+        ];
 
         // Allow access to public routes
         if (

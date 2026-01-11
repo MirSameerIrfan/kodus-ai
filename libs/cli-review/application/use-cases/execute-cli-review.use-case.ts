@@ -98,7 +98,10 @@ export class ExecuteCliReviewUseCase implements IUseCase {
                 this.logger.warn({
                     message: 'No files to analyze after conversion',
                     context: ExecuteCliReviewUseCase.name,
-                    metadata: { correlationId },
+                    metadata: {
+                        correlationId,
+                        organizationId: organizationAndTeamData?.organizationId,
+                    },
                 });
 
                 return {
@@ -214,6 +217,7 @@ export class ExecuteCliReviewUseCase implements IUseCase {
                 context: ExecuteCliReviewUseCase.name,
                 metadata: {
                     correlationId,
+                    organizationId: organizationAndTeamData?.organizationId,
                     issuesFound: result.cliResponse.issues.length,
                     duration: result.cliResponse.duration,
                 },
@@ -338,7 +342,12 @@ export class ExecuteCliReviewUseCase implements IUseCase {
                 message: 'Error creating automation execution for CLI review',
                 error,
                 context: ExecuteCliReviewUseCase.name,
-                metadata: { correlationId, userEmail, gitContext },
+                metadata: {
+                    correlationId,
+                    organizationId: organizationAndTeamData?.organizationId,
+                    userEmail,
+                    gitContext,
+                },
             });
             return null;
         }

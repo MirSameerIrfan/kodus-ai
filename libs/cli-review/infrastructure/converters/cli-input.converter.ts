@@ -9,10 +9,12 @@ import {
     CliReviewIssue,
 } from '@libs/cli-review/domain/types/cli-review.types';
 import { convertToHunksWithLinesNumbers } from '@libs/common/utils/patch';
+import { createLogger } from '@kodus/flow';
 import * as crypto from 'crypto';
 
 @Injectable()
 export class CliInputConverter {
+    private readonly logger = createLogger(CliInputConverter.name);
     /**
      * Converts CLI input to FileChange[] for pipeline processing
      */
@@ -65,7 +67,14 @@ export class CliInputConverter {
                     fileContent: undefined, // No file content in fast mode
                 });
             } catch (error) {
-                // Skip malformed diff blocks
+                this.logger.error({
+                    message: 'Failed to parse diff block',
+                    context: CliInputConverter.name,
+                    error: error instanceof Error ? error : new Error(String(error)),
+                    metadata: {
+                        blockSnippet: block.substring(0, 200),
+                    },
+                });
                 continue;
             }
         }
