@@ -68,7 +68,7 @@ import {
 } from '@libs/platform/domain/platformIntegrations/types/codeManagement/pullRequests.type';
 import { IntegrationEntity } from '@libs/integrations/domain/integrations/entities/integration.entity';
 import { CodeManagementConnectionStatus } from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
-import { extractRepoData, extractRepoNames } from '@libs/common/utils/helpers';
+import { extractRepoData, extractRepoName, extractRepoNames } from '@libs/common/utils/helpers';
 import {
     RepositoryFile,
     RepositoryFileWithContent,
@@ -3579,9 +3579,12 @@ ${copyPrompt}
 
             const octokit = await this.instanceOctokit(organizationAndTeamData);
 
+            // Defensive: extract repo name in case fullName (owner/name) is passed
+            const repoName = extractRepoName(repository.name);
+
             const response = await octokit.issues.createComment({
                 owner: githubAuthDetail?.org,
-                repo: repository.name,
+                repo: repoName,
                 issue_number: prNumber,
                 body,
             });
@@ -3613,9 +3616,12 @@ ${copyPrompt}
 
             const owner = await this.getCorrectOwner(githubAuthDetail, octokit);
 
+            // Defensive: extract repo name in case fullName (owner/name) is passed
+            const repoName = extractRepoName(repository?.name);
+
             await octokit.issues.updateComment({
                 owner,
-                repo: repository?.name,
+                repo: repoName,
                 comment_id: commentId,
                 body,
             });
