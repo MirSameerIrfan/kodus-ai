@@ -45,8 +45,89 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4.2.2
 
-            # ... (Passos de validação, login ECR, Build e Push continuam IGUAIS) ...
-            # ... Copie os passos até o "Build, tag, and push" do arquivo original ...
+            - name: Validate required secrets
+              run: |
+                  set -euo pipefail
+                  if [ -z "${{ vars.INFRA_GITHUB_APP_ID }}" ]; then echo "Missing variable: INFRA_GITHUB_APP_ID"; exit 1; fi
+                  for v in ECR_REPOSITORY_API ECR_REPOSITORY_WEBHOOKS ECR_REPOSITORY_WORKER INFRA_REPO INFRA_BASE_BRANCH INFRA_TFVARS_PATH; do
+                    if [ -z "${!v:-}" ]; then echo "Missing required variable: $v"; exit 1; fi
+                  done
+                  if [ -z "${{ secrets.INFRA_GITHUB_APP_PRIVATE_KEY }}" ]; then echo "Missing secret: INFRA_GITHUB_APP_PRIVATE_KEY"; exit 1; fi
+                  if [ -z "${{ secrets.AWS_REGION }}" ]; then echo "Missing secret: AWS_REGION"; exit 1; fi
+                  if [ -z "${{ secrets.AWS_ROLE_TO_ASSUME }}" ]; then echo "Missing secret: AWS_ROLE_TO_ASSUME (OIDC is required)"; exit 1; fi
+
+            - name: Parse infra repo
+              run: |
+                  set -euo pipefail
+                  repo="${{ env.INFRA_REPO }}"
+                  if [[ "$repo" == */* ]]; then
+                    owner="${repo%%/*}"
+                    name="${repo#*/}"
+                  else
+                    owner="${{ github.repository_owner }}"
+                    name="$repo"
+                  fi
+                  echo "INFRA_REPO_OWNER=$owner" >> "$GITHUB_ENV"
+                  echo "INFRA_REPO_NAME=$name" >> "$GITHUB_ENV"
+
+            - name: Get infra repo token (GitHub App)
+              id: infra_token
+              uses: actions/create-github-app-token@v1.11.0
+              with:
+                  app-id: ${{ vars.INFRA_GITHUB_APP_ID }}
+                  private-key: ${{ secrets.INFRA_GITHUB_APP_PRIVATE_KEY }}
+                  owner: ${{ env.INFRA_REPO_OWNER }}
+                  repositories: ${{ env.INFRA_REPO_NAME }}
+
+            - name: Configure AWS Credentials (OIDC)
+              uses: aws-actions/configure-aws-credentials@v4.1.0
+              with:
+                  role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+                  aws-region: ${{ secrets.AWS_REGION }}
+
+            - name: Login to Amazon ECR
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v2.0.1
+
+            - name: Mask ECR registry
+              run: echo "::add-mask::${{ steps.login-ecr.outputs.registry }}"
+
+            - name: Set up QEMU
+              uses: docker/setup-qemu-action@v3.2.0
+              with:
+                  platforms: arm64
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3.10.0
+
+            - name: Build, tag, and push (api/webhooks/worker)
+              env:
+                  ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+                  API_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}
+                  WEBHOOKS_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}
+                  WORKER_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}
+              run: |
+                  set -euo pipefail
+
+                  docker buildx bake -f docker-bake.hcl \
+                    --set base.args.RELEASE_VERSION=${{ env.IMAGE_TAG }} \
+                    --set base.args.API_CLOUD_MODE=true \
+                    --set base.cache-from=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }} \
+                    --set base.cache-to=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }},mode=max \
+                    --set *.platform=${{ env.BUILDX_PLATFORMS }} \
+                    --push
+
+                  docker buildx imagetools create \
+                    -t "$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:qa-latest" \
+                    "$API_TAGS"
+
+                  docker buildx imagetools create \
+                    -t "$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:qa-latest" \
+                    "$WEBHOOKS_TAGS"
+
+                  docker buildx imagetools create \
+                    -t "$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:qa-latest" \
+                    "$WORKER_TAGS"
 
             - name: Checkout infra repo
               uses: actions/checkout@v4.2.2
@@ -67,10 +148,8 @@ jobs:
                   WORKER_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}"
 
                   # Usa o script simplificado para atualizar apenas as imagens
+                  # Removemos o parâmetro DESIRED_COUNT pois não é mais usado na lógica de imagem
                   ./infra/scripts/gitops/update-tfvars-deploy.sh "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE"
-
-            # 🚨 REMOVIDO: Step "Update tfvars (shift traffic & cleanup)"
-            # Com ECS Native, não fazemos shift manual nem cleanup manual no código.
 
             - name: Verify infra changes scope
               run: |
@@ -96,4 +175,5 @@ jobs:
 
                       ## 🛠 Atlantis Commands
                       atlantis plan -p aws-qa-app-services-ecs-ec2
-                      # Após aprovação e apply, o ECS gerencia o Blue/Green automaticamente.
+                      # Update with correct project name if different
+                      atlantis plan -p aws-qa-app-services-ecs-ec2
