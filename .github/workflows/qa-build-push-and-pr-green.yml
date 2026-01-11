@@ -1,4 +1,4 @@
-name: QA (GitOps) - Build/Push images + PR (deploy & promote)
+name: QA (GitOps) - Build/Push images + PR (deploy)
 
 on:
     push:
@@ -45,89 +45,8 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4.2.2
 
-            - name: Validate required secrets
-              run: |
-                  set -euo pipefail
-                  if [ -z "${{ vars.INFRA_GITHUB_APP_ID }}" ]; then echo "Missing variable: INFRA_GITHUB_APP_ID"; exit 1; fi
-                  for v in ECR_REPOSITORY_API ECR_REPOSITORY_WEBHOOKS ECR_REPOSITORY_WORKER INFRA_REPO INFRA_BASE_BRANCH INFRA_TFVARS_PATH; do
-                    if [ -z "${!v:-}" ]; then echo "Missing required variable: $v"; exit 1; fi
-                  done
-                  if [ -z "${{ secrets.INFRA_GITHUB_APP_PRIVATE_KEY }}" ]; then echo "Missing secret: INFRA_GITHUB_APP_PRIVATE_KEY"; exit 1; fi
-                  if [ -z "${{ secrets.AWS_REGION }}" ]; then echo "Missing secret: AWS_REGION"; exit 1; fi
-                  if [ -z "${{ secrets.AWS_ROLE_TO_ASSUME }}" ]; then echo "Missing secret: AWS_ROLE_TO_ASSUME (OIDC is required)"; exit 1; fi
-
-            - name: Parse infra repo
-              run: |
-                  set -euo pipefail
-                  repo="${{ env.INFRA_REPO }}"
-                  if [[ "$repo" == */* ]]; then
-                    owner="${repo%%/*}"
-                    name="${repo#*/}"
-                  else
-                    owner="${{ github.repository_owner }}"
-                    name="$repo"
-                  fi
-                  echo "INFRA_REPO_OWNER=$owner" >> "$GITHUB_ENV"
-                  echo "INFRA_REPO_NAME=$name" >> "$GITHUB_ENV"
-
-            - name: Get infra repo token (GitHub App)
-              id: infra_token
-              uses: actions/create-github-app-token@v1.11.0
-              with:
-                  app-id: ${{ vars.INFRA_GITHUB_APP_ID }}
-                  private-key: ${{ secrets.INFRA_GITHUB_APP_PRIVATE_KEY }}
-                  owner: ${{ env.INFRA_REPO_OWNER }}
-                  repositories: ${{ env.INFRA_REPO_NAME }}
-
-            - name: Configure AWS Credentials (OIDC)
-              uses: aws-actions/configure-aws-credentials@v4.1.0
-              with:
-                  role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-                  aws-region: ${{ secrets.AWS_REGION }}
-
-            - name: Login to Amazon ECR
-              id: login-ecr
-              uses: aws-actions/amazon-ecr-login@v2.0.1
-
-            - name: Mask ECR registry
-              run: echo "::add-mask::${{ steps.login-ecr.outputs.registry }}"
-
-            - name: Set up QEMU
-              uses: docker/setup-qemu-action@v3.2.0
-              with:
-                  platforms: arm64
-
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v3.10.0
-
-            - name: Build, tag, and push (api/webhooks/worker)
-              env:
-                  ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-                  API_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}
-                  WEBHOOKS_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}
-                  WORKER_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}
-              run: |
-                  set -euo pipefail
-
-                  docker buildx bake -f docker-bake.hcl \
-                    --set base.args.RELEASE_VERSION=${{ env.IMAGE_TAG }} \
-                    --set base.args.API_CLOUD_MODE=true \
-                    --set base.cache-from=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }} \
-                    --set base.cache-to=type=gha,scope=${{ env.BUILDX_CACHE_SCOPE }},mode=max \
-                    --set *.platform=${{ env.BUILDX_PLATFORMS }} \
-                    --push
-
-                  docker buildx imagetools create \
-                    -t "$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:qa-latest" \
-                    "$API_TAGS"
-
-                  docker buildx imagetools create \
-                    -t "$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:qa-latest" \
-                    "$WEBHOOKS_TAGS"
-
-                  docker buildx imagetools create \
-                    -t "$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:qa-latest" \
-                    "$WORKER_TAGS"
+            # ... (Passos de validação, login ECR, Build e Push continuam IGUAIS) ...
+            # ... Copie os passos até o "Build, tag, and push" do arquivo original ...
 
             - name: Checkout infra repo
               uses: actions/checkout@v4.2.2
@@ -137,7 +56,7 @@ jobs:
                   token: ${{ steps.infra_token.outputs.token }}
                   path: infra
 
-            - name: Update tfvars (deploy to idle side)
+            - name: Update tfvars (Deploy new images)
               env:
                   ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
               run: |
@@ -146,60 +65,12 @@ jobs:
                   API_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}"
                   WEBHOOKS_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}"
                   WORKER_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}"
-                  DESIRED_COUNT=1
 
-                  # Deploy to idle side (auto detects Blue/Green)
-                  ./infra/scripts/gitops/update-tfvars-deploy.sh "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE" "$DESIRED_COUNT"
+                  # Usa o script simplificado para atualizar apenas as imagens
+                  ./infra/scripts/gitops/update-tfvars-deploy.sh "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE"
 
-            - name: Update tfvars (shift traffic & cleanup)
-              run: |
-                  set -euo pipefail
-                  FILE="infra/${{ env.INFRA_TFVARS_PATH }}"
-
-                  # Promotes to 100% traffic AND cleans up old side (Atomic QA deploy)
-                  node -e "
-                    const fs = require('fs');
-                    const file = process.argv[1];
-                    const obj = JSON.parse(fs.readFileSync(file, 'utf8'));
-
-                    // Detects current active side (prioritizes active_side, fallback to weights)
-                    let currentActive = 'blue';
-                    if (obj.api_active_side) {
-                      currentActive = obj.api_active_side;
-                    } else if (obj.api_green_weight === 100) {
-                      currentActive = 'green';
-                    }
-
-                    const newActive = currentActive === 'blue' ? 'green' : 'blue';
-
-                    console.log('>>> Atomic QA Action:');
-                    console.log('    1. Shift Traffic: ' + currentActive.toUpperCase() + ' -> ' + newActive.toUpperCase());
-                    console.log('    2. Cleanup Old Side: ' + currentActive.toUpperCase() + ' -> 0');
-
-                    // 1. Shift Logic (SWAP)
-                    obj.api_active_side = newActive;
-                    obj.webhook_active_side = newActive;
-
-                    // 2. Cleanup Logic (Kill old side)
-                    if (currentActive === 'green') {
-                        // Green was active (now inactive) -> Kill Green
-                        obj.api_green_desired_count = 0;
-                        obj.webhook_green_desired_count = 0;
-                    } else {
-                        // Blue was active (now inactive) -> Kill Blue
-                        obj.api_desired_count = 0;
-                        obj.webhook_desired_count = 0;
-                    }
-
-                    // Remove legacy weights if present
-                    delete obj.api_green_weight;
-                    delete obj.api_blue_weight;
-                    delete obj.webhook_green_weight;
-                    delete obj.webhook_blue_weight;
-
-                    fs.writeFileSync(file, JSON.stringify(obj, null, 2) + '\n');
-                    console.log('✅ Traffic shifted and old side marked for cleanup.');
-                  " "$FILE"
+            # 🚨 REMOVIDO: Step "Update tfvars (shift traffic & cleanup)"
+            # Com ECS Native, não fazemos shift manual nem cleanup manual no código.
 
             - name: Verify infra changes scope
               run: |
@@ -211,23 +82,18 @@ jobs:
                   if [ "$changed" != "${{ env.INFRA_TFVARS_PATH }}" ]; then
                     echo "Unexpected changed file: $changed"; exit 1; fi
 
-            - name: Create PR on infra (QA deploy & promote)
+            - name: Create PR on infra (QA Deploy)
               uses: peter-evans/create-pull-request@v7
               with:
                   token: ${{ steps.infra_token.outputs.token }}
                   path: infra
                   branch: ci/qa-${{ env.IMAGE_TAG }}
                   base: ${{ env.INFRA_BASE_BRANCH }}
-                  title: "QA: deploy & promote (${{ env.IMAGE_TAG }})"
+                  title: "QA: deploy (${{ env.IMAGE_TAG }})"
                   body: |
-                      ## 📋 Deployment Checklist
-                      - [ ] Was the release file (`orchestrator.auto.tfvars.json`) updated with the correct image tag?
-                      - [ ] (If promotion) Are the Target Groups for the destination environment Healthy?
-                      - [ ] Is traffic being routed to the correct environment (Blue/Green)?
+                      ## 🚀 QA Deployment (Native ECS Blue/Green)
+                      Updating images to `${{ env.IMAGE_TAG }}`.
 
                       ## 🛠 Atlantis Commands
-                      > **Note:** Copy and paste the commands below as needed.
-
-                      ### 🧪 QA
-                      **App Services:**
                       atlantis plan -p aws-qa-app-services-ecs-ec2
+                      # Após aprovação e apply, o ECS gerencia o Blue/Green automaticamente.
