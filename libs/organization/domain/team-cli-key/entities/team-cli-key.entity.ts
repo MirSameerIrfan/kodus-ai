@@ -1,6 +1,6 @@
 import { Entity } from '@libs/core/domain/interfaces/entity';
 import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';
-import { IUser } from '@libs/identity/domain/users/interfaces/user.interface';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 import { ITeamCliKey } from '../interfaces/team-cli-key.interface';
 
 export class TeamCliKeyEntity implements Entity<ITeamCliKey> {
@@ -26,7 +26,9 @@ export class TeamCliKeyEntity implements Entity<ITeamCliKey> {
         this._createdBy = teamCliKey.createdBy;
     }
 
-    public static create(teamCliKey: ITeamCliKey | Partial<ITeamCliKey>): TeamCliKeyEntity {
+    public static create(
+        teamCliKey: ITeamCliKey | Partial<ITeamCliKey>,
+    ): TeamCliKeyEntity {
         return new TeamCliKeyEntity(teamCliKey);
     }
 

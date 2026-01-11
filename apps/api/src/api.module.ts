@@ -36,6 +36,8 @@ import { CodeReviewConfigurationModule } from '@libs/code-review/modules/code-re
 import { OrganizationOnboardingModule } from '@libs/organization/modules/organization-onboarding.module';
 import { CodeReviewDashboardModule } from '@libs/code-review/modules/code-review-dashboard.module';
 import { CliReviewModule } from '@libs/cli-review/cli-review.module';
+import { PermissionValidationModule } from '@libs/ee/shared/permission-validation.module';
+import { LicenseModule } from '@libs/ee/license/license.module';
 
 import { CronModule } from './cron/cron.module';
 import { OrganizationParametersController } from './controllers/organizationParameters.controller';
@@ -103,6 +105,8 @@ import { LoggerWrapperService } from '@libs/core/log/loggerWrapper.service';
         OrganizationOnboardingModule,
         CodeReviewDashboardModule,
         CliReviewModule,
+        PermissionValidationModule,
+        LicenseModule,
         McpModule.forRoot(),
         HealthModule,
         CronModule,

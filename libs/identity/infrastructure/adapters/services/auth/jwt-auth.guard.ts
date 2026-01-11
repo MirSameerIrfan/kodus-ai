@@ -81,9 +81,14 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
             '/kody-rules/find-library-kody-rules-buckets',
             '/auth/resend-email',
             '/cli/trial/review',
+            '/cli/validate-key',
+            '/cli/review',
+            '/api/cli/trial/review',
+            '/api/cli/validate-key',
+            '/api/cli/review',
         ];
 
-        const wildCardExcludePaths = ['/auth/sso/'];
+        const wildCardExcludePaths = ['/auth/sso/', '/cli/', '/api/cli/'];
 
         // Allow access to public routes
         if (

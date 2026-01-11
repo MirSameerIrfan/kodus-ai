@@ -101,8 +101,6 @@ export class TeamCliKeyController {
             createdBy: key.createdBy
                 ? {
                       uuid: key.createdBy.uuid,
-                      name: key.createdBy.name,
-                      email: key.createdBy.email,
                   }
                 : null,
         }));

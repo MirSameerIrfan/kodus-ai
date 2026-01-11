@@ -1,9 +1,11 @@
 import {
     Controller,
     Post,
+    Get,
     Body,
     Headers,
     Inject,
+    Res,
     HttpException,
     HttpStatus,
     UnauthorizedException,
@@ -39,6 +41,99 @@ export class CliReviewController {
     ) {}
 
     /**
+     * Validate a Team CLI key (health check for CLI)
+     */
+    @Get('validate-key')
+    async validateKey(
+        @Headers('x-team-key') teamKey: string,
+        @Headers('authorization') authHeader: string,
+        @Res() res,
+    ) {
+        const payload = await this.validateKeyInternal(teamKey, authHeader);
+        return res.status(payload.valid ? 200 : 401).json(payload);
+    }
+
+    /**
+     * POST alias for clients that send POST
+     */
+    @Post('validate-key')
+    async validateKeyPost(
+        @Headers('x-team-key') teamKey: string,
+        @Headers('authorization') authHeader: string,
+        @Res() res,
+    ) {
+        const payload = await this.validateKeyInternal(teamKey, authHeader);
+        return res.status(payload.valid ? 200 : 401).json(payload);
+    }
+
+    private async validateKeyInternal(teamKey?: string, authHeader?: string) {
+        const key = teamKey || authHeader?.replace(/^Bearer\s+/i, '');
+
+        if (!key) {
+            return {
+                valid: false,
+                error: 'Team API key required. Provide via X-Team-Key or Authorization: Bearer header.',
+                team: {
+                    id: null,
+                    name: '',
+                },
+                organization: {
+                    id: null,
+                    name: '',
+                },
+            };
+        }
+
+        const teamData = await this.teamCliKeyService.validateKey(key);
+
+        if (!teamData) {
+            return {
+                valid: false,
+                error: 'Invalid or revoked team API key',
+                team: {
+                    id: null,
+                    name: '',
+                },
+                organization: {
+                    id: null,
+                    name: '',
+                },
+            };
+        }
+
+        const { team, organization } = teamData;
+
+        const safeTeam: any = team ?? {};
+        const safeOrg: any = organization ?? {};
+        const safeTeamName =
+            typeof safeTeam.name === 'string' ? safeTeam.name : '';
+        const safeOrgName =
+            typeof safeOrg.name === 'string' ? safeOrg.name : '';
+
+        const result = {
+            valid: !!(safeTeam.uuid && safeOrg.uuid),
+            teamId: safeTeam.uuid ?? null,
+            organizationId: safeOrg.uuid ?? null,
+            teamName: safeTeamName,
+            organizationName: safeOrgName,
+            team: {
+                id: safeTeam.uuid ?? null,
+                name: safeTeamName,
+            },
+            organization: {
+                id: safeOrg.uuid ?? null,
+                name: safeOrgName,
+            },
+        };
+
+        if (!result.valid) {
+            result['error'] = 'Invalid or incomplete team API key';
+        }
+
+        return result;
+    }
+
+    /**
      * CLI code review endpoint with Team API Key authentication
      * No user authentication required - uses team key instead
      */
@@ -61,9 +156,7 @@ export class CliReviewController {
         const teamData = await this.teamCliKeyService.validateKey(key);
 
         if (!teamData) {
-            throw new UnauthorizedException(
-                'Invalid or revoked team API key',
-            );
+            throw new UnauthorizedException('Invalid or revoked team API key');
         }
 
         const { team, organization } = teamData;
@@ -74,7 +167,8 @@ export class CliReviewController {
 
         // 3. Validate domain of email (if configured)
         if (body.userEmail) {
-            const allowedDomains = (team as any).cliConfig?.allowedDomains || [];
+            const allowedDomains =
+                (team as any).cliConfig?.allowedDomains || [];
 
             if (allowedDomains.length > 0) {
                 const isValidDomain = allowedDomains.some((domain: string) =>

@@ -1,5 +1,5 @@
 import { ITeam } from '@libs/organization/domain/team/interfaces/team.interface';
-import { IUser } from '@libs/identity/domain/users/interfaces/user.interface';
+import { IUser } from '@libs/identity/domain/user/interfaces/user.interface';
 
 export interface ITeamCliKey {
     uuid: string;

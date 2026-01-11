@@ -6,10 +6,12 @@ import {
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
+    BadRequestException,
     Body,
     Controller,
     Get,
     Inject,
+    NotFoundException,
     Post,
     Query,
     UseGuards,
@@ -29,6 +31,7 @@ import {
     PolicyGuard,
 } from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
 import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
+import { DeliveryStatus } from '@libs/platformData/domain/pullRequests/enums/deliveryStatus.enum';
 
 @Controller('pull-requests')
 export class PullRequestController {
@@ -54,6 +57,76 @@ export class PullRequestController {
         @Query() query: EnrichedPullRequestsQueryDto,
     ): Promise<PaginatedEnrichedPullRequestsResponse> {
         return await this.getEnrichedPullRequestsUseCase.execute(query);
+    }
+
+    @Get('/suggestions')
+    @UseGuards(PolicyGuard)
+    @CheckPolicies(
+        checkPermissions({
+            action: Action.Read,
+            resource: ResourceType.PullRequests,
+        }),
+    )
+    public async getSuggestionsByPullRequest(
+        @Query('prUrl') prUrl?: string,
+        @Query('repositoryId') repositoryId?: string,
+        @Query('prNumber') prNumber?: string,
+    ) {
+        const organizationId = this.request.user?.organization?.uuid;
+        if (!organizationId) {
+            throw new Error('No organization found in request');
+        }
+
+        let prEntity = null;
+
+        if (prUrl) {
+            prEntity = await this.pullRequestsService.findOne({
+                url: prUrl,
+                organizationId,
+            });
+        } else {
+            const parsedPrNumber = prNumber ? Number(prNumber) : NaN;
+            if (!repositoryId || Number.isNaN(parsedPrNumber)) {
+                throw new BadRequestException(
+                    'Provide prNumber and repositoryId or prUrl',
+                );
+            }
+
+            prEntity = await this.pullRequestsService.findOne({
+                'number': parsedPrNumber,
+                organizationId,
+                'repository.id': repositoryId,
+            } as any);
+        }
+
+        if (!prEntity) {
+            throw new NotFoundException('Pull request not found');
+        }
+
+        const pr = prEntity.toObject();
+
+        const fileSuggestions = (pr.files || []).flatMap((file) =>
+            (file.suggestions || [])
+                .filter((s) => s.deliveryStatus === DeliveryStatus.SENT)
+                .map((s) => ({
+                    ...s,
+                    filePath: file.path,
+                })),
+        );
+
+        const prLevelSuggestions = (pr.prLevelSuggestions || []).filter(
+            (s) => s.deliveryStatus === DeliveryStatus.SENT,
+        );
+
+        return {
+            prNumber: pr.number,
+            repositoryId: pr.repository?.id,
+            repositoryFullName: pr.repository?.fullName,
+            suggestions: {
+                files: fileSuggestions,
+                prLevel: prLevelSuggestions,
+            },
+        };
     }
 
     @Get('/onboarding-signals')
