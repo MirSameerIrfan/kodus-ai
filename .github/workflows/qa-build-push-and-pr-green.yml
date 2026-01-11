@@ -103,9 +103,9 @@ jobs:
             - name: Build, tag, and push (api/webhooks/worker)
               env:
                   ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-                  API_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}
-                  WEBHOOKS_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}
-                  WORKER_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}
+                  API_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}
+                  WEBHOOKS_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}
+                  WORKER_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}
               run: |
                   set -euo pipefail
 
@@ -147,9 +147,7 @@ jobs:
                   WEBHOOKS_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}"
                   WORKER_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}"
 
-                  # Usa o script simplificado para atualizar apenas as imagens
-                  # Removemos o parâmetro DESIRED_COUNT pois não é mais usado na lógica de imagem
-                  ./infra/scripts/gitops/update-tfvars-deploy.sh "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE"
+                  ./scripts/gitops/update-tfvars-deploy.sh "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE"
 
             - name: Verify infra changes scope
               run: |
@@ -169,11 +167,16 @@ jobs:
                   branch: ci/qa-${{ env.IMAGE_TAG }}
                   base: ${{ env.INFRA_BASE_BRANCH }}
                   title: "QA: deploy (${{ env.IMAGE_TAG }})"
+                  labels: auto-apply
+                  commit-message: "qa: deploy ${{ env.IMAGE_TAG }}"
                   body: |
-                      ## 🚀 QA Deployment (Native ECS Blue/Green)
+                      ## 🚀 QA Deployment (ECS Blue/Green nativo)
                       Updating images to `${{ env.IMAGE_TAG }}`.
 
                       ## 🛠 Atlantis Commands
+                      ```bash
                       atlantis plan -p aws-qa-app-services-ecs-ec2
-                      # Update with correct project name if different
-                      atlantis plan -p aws-qa-app-services-ecs-ec2
+                      ```
+                      ```bash
+                      atlantis apply -p aws-qa-app-services-ecs-ec2
+                      ```
