@@ -46,7 +46,12 @@ export class EcsTaskProtectionService implements ITaskProtectionService {
             );
         } catch (error) {
             // Non-blocking error, just log
-            this.logger.error('Error enabling task protection', error);
+            this.logger.error({
+                message: 'Error enabling task protection',
+                error: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined,
+                uri: this.ecsAgentUri,
+            });
         }
     }
 
@@ -72,7 +77,12 @@ export class EcsTaskProtectionService implements ITaskProtectionService {
             );
             this.logger.log('Task protection disabled');
         } catch (error) {
-            this.logger.error('Error disabling task protection', error);
+            this.logger.error({
+                message: 'Error disabling task protection',
+                error: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined,
+                uri: this.ecsAgentUri,
+            });
         }
     }
 }

@@ -30,11 +30,7 @@ class CopyDictionariesPlugin {
                 __dirname,
                 'libs/common/utils/translations/dictionaries',
             );
-            const targetDir = path.resolve(
-                __dirname,
-                'dist',
-                'dictionaries',
-            );
+            const targetDir = path.resolve(__dirname, 'dist', 'dictionaries');
 
             copyDir(sourceDir, targetDir);
         });
@@ -49,7 +45,7 @@ module.exports = function (options, webpack) {
     const debugBreak = process.env.DEBUG_BREAK === 'true';
     const inspectArg = debugBreak ? '--inspect-brk' : '--inspect';
     const devtool = isWatchMode
-        ? 'source-map'
+        ? 'eval-source-map'
         : isProduction
           ? 'hidden-source-map'
           : 'source-map';
@@ -82,6 +78,12 @@ module.exports = function (options, webpack) {
         ...options,
         stats: 'errors-warnings',
         devtool,
+        cache: {
+            type: 'filesystem',
+            buildDependencies: {
+                config: [__filename],
+            },
+        },
         externals: [
             nodeExternals({
                 allowlist: [],
@@ -103,7 +105,7 @@ module.exports = function (options, webpack) {
         plugins,
         watchOptions: {
             aggregateTimeout: 300,
-            poll: 1000,
+            poll: process.env.CHOKIDAR_USEPOLLING === 'true' ? 3000 : false,
             ignored: /node_modules/,
         },
         module: {
@@ -115,6 +117,9 @@ module.exports = function (options, webpack) {
                             loader: 'ts-loader',
                             options: {
                                 transpileOnly: true,
+                                compilerOptions: {
+                                    inlineSources: !isProduction,
+                                },
                             },
                         },
                     ],

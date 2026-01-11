@@ -149,7 +149,6 @@ jobs:
                   DESIRED_COUNT=1
 
                   # Deploy to idle side (auto detects Blue/Green)
-                  # Obs: script atualizado no repo infra deve remover a trava de segurança para QA
                   ./infra/scripts/gitops/update-tfvars-deploy.sh "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE" "$DESIRED_COUNT"
 
             - name: Update tfvars (shift traffic & cleanup)
@@ -221,33 +220,14 @@ jobs:
                   base: ${{ env.INFRA_BASE_BRANCH }}
                   title: "QA: deploy & promote (${{ env.IMAGE_TAG }})"
                   body: |
-                      **QA Environment: Deploy + Traffic Shift**
+                      ## 📋 Deployment Checklist
+                      - [ ] Was the release file (`orchestrator.auto.tfvars.json`) updated with the correct image tag?
+                      - [ ] (If promotion) Are the Target Groups for the destination environment Healthy?
+                      - [ ] Is traffic being routed to the correct environment (Blue/Green)?
 
-                      Deploys new images to idle side, promotes to 100% traffic, and cleans up the old side.
+                      ## 🛠 Atlantis Commands
+                      > **Note:** Copy and paste the commands below as needed.
 
-                      - **Tag**: `${{ env.IMAGE_TAG }}`
-                      - **Branch**: `${{ env.INFRA_BASE_BRANCH }}`
-
-                      This PR will be auto-applied by Atlantis.
-                  commit-message: "qa: deploy & promote ${{ env.IMAGE_TAG }}"
-                  labels: auto-apply
-
-            - name: Notify Discord (success)
-              if: env.DISCORD_WEBHOOK
-              uses: sarisia/actions-status-discord@v1.13.0
-              env:
-                  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-              with:
-                  status: success
-                  content: "✅ QA build + infra PR created\nTag: `${{ env.IMAGE_TAG }}`\nInfra branch: `${{ env.INFRA_BASE_BRANCH }}`"
-                  username: "GitHub Actions (QA)"
-
-            - name: Notify Discord (failure)
-              if: failure() && env.DISCORD_WEBHOOK
-              uses: sarisia/actions-status-discord@v1.13.0
-              env:
-                  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-              with:
-                  status: failure
-                  content: "❌ QA pipeline failed (build/infra PR)\nTag: `${{ env.IMAGE_TAG }}`\nInfra branch: `${{ env.INFRA_BASE_BRANCH }}`"
-                  username: "GitHub Actions (QA)"
+                      ### 🧪 QA
+                      **App Services:**
+                      atlantis plan -p aws-qa-app-services-ecs-ec2

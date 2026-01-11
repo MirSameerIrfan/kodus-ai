@@ -566,7 +566,7 @@ export class PullRequestsService implements IPullRequestsService {
         unusedSuggestions: Array<ISuggestion>,
     ): Promise<Partial<IPullRequests>> {
         try {
-            baseStructure.files = changedFiles.map((file) => ({
+            baseStructure.files = changedFiles?.map((file) => ({
                 id: uuidv4(),
                 sha: file.sha,
                 path: file.filename,
