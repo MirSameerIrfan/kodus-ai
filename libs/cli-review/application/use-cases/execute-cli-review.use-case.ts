@@ -21,11 +21,27 @@ import { CodeReviewConfig } from '@libs/core/infrastructure/config/types/general
 import { getDefaultKodusConfigFile } from '@libs/common/utils/validateCodeReviewConfigFile';
 import { AutomationStatus } from '@libs/automation/domain/automation/enum/automation-status';
 import { PipelineError } from '@libs/core/infrastructure/pipeline/interfaces/pipeline-context.interface';
+import {
+    IAutomationExecutionService,
+    AUTOMATION_EXECUTION_SERVICE_TOKEN,
+} from '@libs/automation/domain/automationExecution/contracts/automation-execution.service';
+import { IAutomationExecution } from '@libs/automation/domain/automationExecution/interfaces/automation-execution.interface';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
+
+interface GitContext {
+    remote?: string;
+    branch?: string;
+    commitSha?: string;
+    inferredPlatform?: PlatformType;
+    cliVersion?: string;
+}
 
 interface ExecuteCliReviewInput {
     organizationAndTeamData: OrganizationAndTeamData;
     input: CliReviewInput;
     isTrialMode?: boolean;
+    userEmail?: string;
+    gitContext?: GitContext;
 }
 
 /**
@@ -41,12 +57,15 @@ export class ExecuteCliReviewUseCase implements IUseCase {
         private readonly pipelineStrategy: CliReviewPipelineStrategy,
         @Inject(PARAMETERS_SERVICE_TOKEN)
         private readonly parametersService: IParametersService,
+        @Inject(AUTOMATION_EXECUTION_SERVICE_TOKEN)
+        private readonly automationExecutionService: IAutomationExecutionService,
     ) {}
 
     async execute(params: ExecuteCliReviewInput): Promise<CliReviewResponse> {
-        const { organizationAndTeamData, input, isTrialMode = false } = params;
+        const { organizationAndTeamData, input, isTrialMode = false, userEmail, gitContext } = params;
         const correlationId = uuidv4();
         const startTime = Date.now();
+        let execution: IAutomationExecution | null = null;
 
         try {
             this.logger.log({
@@ -62,7 +81,17 @@ export class ExecuteCliReviewUseCase implements IUseCase {
                 },
             });
 
-            // 1. Convert CLI input to FileChange[]
+            // 1. Create automation execution for tracking
+            if (!isTrialMode) {
+                execution = await this.createAutomationExecution(
+                    organizationAndTeamData,
+                    correlationId,
+                    userEmail,
+                    gitContext,
+                );
+            }
+
+            // 2. Convert CLI input to FileChange[]
             const changedFiles = this.converter.convertToFileChanges(input);
 
             if (changedFiles.length === 0) {
@@ -80,12 +109,12 @@ export class ExecuteCliReviewUseCase implements IUseCase {
                 };
             }
 
-            // 2. Load or create config
+            // 3. Load or create config
             const codeReviewConfig = isTrialMode
                 ? this.getDefaultConfig(true) // Trial mode: use Gemini Flash
                 : await this.loadUserConfig(organizationAndTeamData);
 
-            // 3. Create pipeline context
+            // 4. Create pipeline context
             const context: CliReviewPipelineContext = {
                 // CLI-specific fields
                 isFastMode: input.config?.fast || !input.config?.files,
@@ -151,7 +180,7 @@ export class ExecuteCliReviewUseCase implements IUseCase {
                 },
             };
 
-            // 4. Execute pipeline
+            // 5. Execute pipeline
             const pipelineExecutor = new PipelineExecutor<CliReviewPipelineContext>();
             const stages = this.pipelineStrategy.configureStages();
             const pipelineName = this.pipelineStrategy.getPipelineName();
@@ -162,9 +191,22 @@ export class ExecuteCliReviewUseCase implements IUseCase {
                 pipelineName,
             );
 
-            // 5. Return formatted response
+            // 6. Return formatted response
             if (!result.cliResponse) {
                 throw new Error('Pipeline did not generate CLI response');
+            }
+
+            // 7. Update execution as completed
+            if (execution) {
+                await this.updateAutomationExecution(
+                    execution,
+                    AutomationStatus.SUCCESS,
+                    {
+                        filesAnalyzed: changedFiles.length,
+                        issuesFound: result.cliResponse.issues.length,
+                        duration: result.cliResponse.duration,
+                    },
+                );
             }
 
             this.logger.log({
@@ -179,6 +221,15 @@ export class ExecuteCliReviewUseCase implements IUseCase {
 
             return result.cliResponse;
         } catch (error) {
+            // Update execution as failed
+            if (execution) {
+                await this.updateAutomationExecution(
+                    execution,
+                    AutomationStatus.ERROR,
+                    { error: error?.message || 'Unknown error' },
+                );
+            }
+
             this.logger.error({
                 message: 'Error executing CLI review',
                 error,
@@ -253,5 +304,72 @@ export class ExecuteCliReviewUseCase implements IUseCase {
         }
 
         return config;
+    }
+
+    /**
+     * Create automation execution for tracking CLI reviews
+     */
+    private async createAutomationExecution(
+        organizationAndTeamData: OrganizationAndTeamData,
+        correlationId: string,
+        userEmail?: string,
+        gitContext?: GitContext,
+    ): Promise<IAutomationExecution | null> {
+        try {
+            return await this.automationExecutionService.create({
+                status: AutomationStatus.IN_PROGRESS,
+                origin: 'cli',
+                dataExecution: {
+                    type: 'CLI_REVIEW',
+                    correlationId,
+                    userEmail,
+                    organizationAndTeamData,
+                    git: gitContext ? {
+                        remote: gitContext.remote,
+                        branch: gitContext.branch,
+                        commitSha: gitContext.commitSha,
+                        inferredPlatform: gitContext.inferredPlatform,
+                    } : undefined,
+                    cliVersion: gitContext?.cliVersion,
+                },
+            });
+        } catch (error) {
+            this.logger.error({
+                message: 'Error creating automation execution for CLI review',
+                error,
+                context: ExecuteCliReviewUseCase.name,
+                metadata: { correlationId, userEmail, gitContext },
+            });
+            return null;
+        }
+    }
+
+    /**
+     * Update automation execution status
+     */
+    private async updateAutomationExecution(
+        execution: IAutomationExecution,
+        status: AutomationStatus,
+        resultData: Record<string, any>,
+    ): Promise<void> {
+        try {
+            await this.automationExecutionService.update(
+                { uuid: execution.uuid },
+                {
+                    status,
+                    dataExecution: {
+                        ...execution.dataExecution,
+                        ...resultData,
+                    },
+                },
+            );
+        } catch (error) {
+            this.logger.error({
+                message: 'Error updating automation execution',
+                error,
+                context: ExecuteCliReviewUseCase.name,
+                metadata: { executionId: execution.uuid, status },
+            });
+        }
     }
 }

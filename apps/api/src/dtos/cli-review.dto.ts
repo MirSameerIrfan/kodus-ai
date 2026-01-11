@@ -1,5 +1,6 @@
 import { IsString, IsOptional, IsBoolean, IsArray, ValidateNested, IsEnum, MaxLength, ArrayMaxSize } from 'class-validator';
 import { Type } from 'class-transformer';
+import { PlatformType } from '@libs/core/domain/enums/platform-type.enum';
 
 class CliFileInputDto {
     @IsString()
@@ -71,6 +72,35 @@ export class CliReviewRequestDto {
     @ValidateNested()
     @Type(() => CliConfigDto)
     config?: CliConfigDto;
+
+    @IsOptional()
+    @IsString()
+    @MaxLength(254, { message: 'Email too long' })
+    userEmail?: string; // git config user.email for tracking
+
+    @IsOptional()
+    @IsString()
+    @MaxLength(500, { message: 'Git remote URL too long' })
+    gitRemote?: string; // git remote get-url origin
+
+    @IsOptional()
+    @IsString()
+    @MaxLength(255, { message: 'Branch name too long' })
+    branch?: string; // git branch --show-current
+
+    @IsOptional()
+    @IsString()
+    @MaxLength(40, { message: 'Commit SHA too long' })
+    commitSha?: string; // git rev-parse HEAD
+
+    @IsOptional()
+    @IsEnum(PlatformType)
+    inferredPlatform?: PlatformType; // Inferred from gitRemote
+
+    @IsOptional()
+    @IsString()
+    @MaxLength(50, { message: 'CLI version too long' })
+    cliVersion?: string; // CLI version for tracking
 }
 
 export class TrialCliReviewRequestDto extends CliReviewRequestDto {

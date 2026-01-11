@@ -2,29 +2,26 @@ import {
     Controller,
     Post,
     Body,
-    Query,
-    UseGuards,
+    Headers,
     Inject,
     HttpException,
     HttpStatus,
+    UnauthorizedException,
+    ForbiddenException,
 } from '@nestjs/common';
-import { REQUEST } from '@nestjs/core';
-import {
-    CheckPolicies,
-    PolicyGuard,
-} from '@libs/identity/infrastructure/adapters/services/permissions/policy.guard';
-import { checkPermissions } from '@libs/identity/infrastructure/adapters/services/permissions/policy.handlers';
-import {
-    Action,
-    ResourceType,
-} from '@libs/identity/domain/permissions/enums/permissions.enum';
-import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
 import {
     CliReviewRequestDto,
     TrialCliReviewRequestDto,
 } from '../dtos/cli-review.dto';
 import { ExecuteCliReviewUseCase } from '@libs/cli-review/application/use-cases/execute-cli-review.use-case';
 import { TrialRateLimiterService } from '@libs/cli-review/infrastructure/services/trial-rate-limiter.service';
+import {
+    ITeamCliKeyService,
+    TEAM_CLI_KEY_SERVICE_TOKEN,
+} from '@libs/organization/domain/team-cli-key/contracts/team-cli-key.service.contract';
+import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
+import { ValidationErrorType } from '@libs/ee/shared/services/permissionValidation.service';
+import { AutoAssignLicenseUseCase } from '@libs/ee/license/use-cases/auto-assign-license.use-case';
 
 /**
  * Controller for CLI code review endpoints
@@ -35,58 +32,116 @@ export class CliReviewController {
     constructor(
         private readonly executeCliReviewUseCase: ExecuteCliReviewUseCase,
         private readonly trialRateLimiter: TrialRateLimiterService,
-        @Inject(REQUEST) private readonly request: UserRequest,
+        @Inject(TEAM_CLI_KEY_SERVICE_TOKEN)
+        private readonly teamCliKeyService: ITeamCliKeyService,
+        private readonly permissionValidationService: PermissionValidationService,
+        private readonly autoAssignLicenseUseCase: AutoAssignLicenseUseCase,
     ) {}
 
     /**
-     * Authenticated CLI code review endpoint
-     * Requires valid authentication and code review permissions
+     * CLI code review endpoint with Team API Key authentication
+     * No user authentication required - uses team key instead
      */
     @Post('review')
-    @UseGuards(PolicyGuard)
-    @CheckPolicies(
-        checkPermissions({
-            action: Action.Read,
-            resource: ResourceType.CodeReviewSettings,
-        }),
-    )
     async review(
         @Body() body: CliReviewRequestDto,
-        @Query('teamId') teamId?: string,
+        @Headers('x-team-key') teamKey?: string,
+        @Headers('authorization') authHeader?: string,
     ) {
-        const organizationId = this.request.user?.organization?.uuid;
+        // 1. Extract team key from headers
+        const key = teamKey || authHeader?.replace(/^Bearer\s+/i, '');
 
-        if (!organizationId) {
-            throw new HttpException(
-                'Organization UUID is missing in the request',
-                HttpStatus.BAD_REQUEST,
+        if (!key) {
+            throw new UnauthorizedException(
+                'Team API key required. Provide via X-Team-Key header or Authorization: Bearer header.',
             );
         }
 
-        // If teamId not provided in query, try to get from user's first team
-        let finalTeamId = teamId;
-        if (!finalTeamId) {
-            const teamMember = this.request.user?.teamMember?.[0];
-            finalTeamId = (teamMember as any)?.team?.uuid;
-        }
+        // 2. Validate team key
+        const teamData = await this.teamCliKeyService.validateKey(key);
 
-        if (!finalTeamId) {
-            throw new HttpException(
-                'Team ID is missing. Please provide teamId as query parameter or ensure user has a team assigned.',
-                HttpStatus.BAD_REQUEST,
+        if (!teamData) {
+            throw new UnauthorizedException(
+                'Invalid or revoked team API key',
             );
         }
 
+        const { team, organization } = teamData;
+        const organizationAndTeamData = {
+            organizationId: organization.uuid,
+            teamId: team.uuid,
+        };
+
+        // 3. Validate domain of email (if configured)
+        if (body.userEmail) {
+            const allowedDomains = (team as any).cliConfig?.allowedDomains || [];
+
+            if (allowedDomains.length > 0) {
+                const isValidDomain = allowedDomains.some((domain: string) =>
+                    body.userEmail.endsWith(domain),
+                );
+
+                if (!isValidDomain) {
+                    throw new ForbiddenException(
+                        `Email must be from allowed domains: ${allowedDomains.join(', ')}`,
+                    );
+                }
+            }
+
+            // 4. Validate/auto-assign license
+            const validationResult =
+                await this.permissionValidationService.validateExecutionPermissions(
+                    organizationAndTeamData,
+                    body.userEmail,
+                    CliReviewController.name,
+                );
+
+            if (
+                !validationResult.allowed &&
+                validationResult.errorType ===
+                    ValidationErrorType.USER_NOT_LICENSED
+            ) {
+                // Try auto-assign
+                const autoAssignResult =
+                    await this.autoAssignLicenseUseCase.execute({
+                        organizationAndTeamData,
+                        userGitId: body.userEmail,
+                        prNumber: 0,
+                        prCount: 0,
+                        repositoryName: body.gitRemote,
+                        provider: body.inferredPlatform,
+                    });
+
+                if (!autoAssignResult.shouldProceed) {
+                    throw new ForbiddenException(
+                        `No license available for ${body.userEmail}. ` +
+                            `Reason: ${autoAssignResult.reason}. ` +
+                            `Contact your admin or visit https://app.kodus.io/settings/subscription`,
+                    );
+                }
+            } else if (!validationResult.allowed) {
+                throw new ForbiddenException(
+                    `Permission validation failed: ${validationResult.errorType}`,
+                );
+            }
+        }
+
+        // 5. Execute review
         return this.executeCliReviewUseCase.execute({
-            organizationAndTeamData: {
-                organizationId,
-                teamId: finalTeamId,
-            },
+            organizationAndTeamData,
             input: {
                 diff: body.diff,
                 config: body.config,
             },
             isTrialMode: false,
+            userEmail: body.userEmail,
+            gitContext: {
+                remote: body.gitRemote,
+                branch: body.branch,
+                commitSha: body.commitSha,
+                inferredPlatform: body.inferredPlatform,
+                cliVersion: body.cliVersion,
+            },
         });
     }
 

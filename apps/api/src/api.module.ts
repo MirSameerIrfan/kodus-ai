@@ -57,6 +57,7 @@ import { PullRequestMessagesController } from './controllers/pullRequestMessages
 import { RuleLikeController } from './controllers/ruleLike.controller';
 import { SegmentController } from './controllers/segment.controller';
 import { TeamController } from './controllers/team.controller';
+import { TeamCliKeyController } from './controllers/team-cli-key.controller';
 import { TeamMembersController } from './controllers/teamMembers.controller';
 import { TokenUsageController } from './controllers/tokenUsage.controller';
 import { UsersController } from './controllers/user.controller';
@@ -120,6 +121,7 @@ import { LoggerWrapperService } from '@libs/core/log/loggerWrapper.service';
         ParametersController,
         OrganizationParametersController,
         TeamController,
+        TeamCliKeyController,
         TeamMembersController,
         AgentController,
         AuthController,

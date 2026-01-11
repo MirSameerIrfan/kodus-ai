@@ -10,6 +10,7 @@ import { ParametersModel } from '../../../../organization/infrastructure/adapter
 import { ObservabilityTelemetryModel } from '../../../../analytics/infrastructure/adapters/repositories/schemas/observabilityTelemetry.model';
 import { AuthModel } from '../../../../identity/infrastructure/adapters/repositories/schemas/auth.model';
 import { TeamMemberModel } from '../../../../organization/infrastructure/adapters/repositories/schemas/teamMember.model';
+import { TeamCliKeyModel } from '../../../../organization/infrastructure/adapters/repositories/schemas/team-cli-key.model';
 import { IntegrationConfigModel } from '../../../../integrations/infrastructure/adapters/repositories/schemas/integrationConfig.model';
 import { OutboxMessageModel } from '../../../workflow/infrastructure/repositories/schemas/outbox-message.model';
 import { CodeReviewSettingsLogModel } from '../../../../ee/codeReviewSettingsLog/infrastructure/adapters/repository/schemas/codeReviewSettingsLog.model';
@@ -43,6 +44,7 @@ export const ENTITIES = [
     ObservabilityTelemetryModel,
     AuthModel,
     TeamMemberModel,
+    TeamCliKeyModel,
     IntegrationConfigModel,
     OutboxMessageModel,
     CodeReviewSettingsLogModel,

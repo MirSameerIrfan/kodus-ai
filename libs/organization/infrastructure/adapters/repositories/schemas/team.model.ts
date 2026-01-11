@@ -31,6 +31,11 @@ export class TeamModel extends CoreModel {
     @Column({ type: 'enum', enum: STATUS, default: STATUS.PENDING })
     status: STATUS;
 
+    @Column({ type: 'jsonb', nullable: true })
+    cliConfig?: {
+        allowedDomains?: string[];
+    };
+
     @ManyToOne(() => OrganizationModel, (organization) => organization.teams)
     @JoinColumn({ name: 'organization_id', referencedColumnName: 'uuid' })
     organization: OrganizationModel;
