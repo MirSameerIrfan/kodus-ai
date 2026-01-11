@@ -15,15 +15,17 @@ services:
   # Application Services
   #----------------------------------------------------------------
   api:
-    image: ghcr.io/kodus-ai/kodus-api:${KODUS_VERSION:-latest}
+    image: ghcr.io/kodustech/kodus-ai-api:${KODUS_VERSION:-latest}
     container_name: kodus_api_prod
     restart: unless-stopped
+    command: node dist/apps/api/main.js
     env_file:
       - ${ENV_FILE:-.env.prod}
     environment:
-      - API_CLOUD_MODE=false # Default for self-hosted
+      - API_CLOUD_MODE=false
+      - COMPONENT_TYPE=api
     ports:
-      - "3331:3001" # Host 3331 -> container API_PORT (default 3001)
+      - "3331:3001"
     depends_on:
       db_postgres:
         condition: service_healthy
@@ -33,13 +35,15 @@ services:
       - kodus-backend-services
 
   worker:
-    image: ghcr.io/kodus-ai/kodus-worker:${KODUS_VERSION:-latest}
+    image: ghcr.io/kodustech/kodus-ai-worker:${KODUS_VERSION:-latest}
     container_name: kodus_worker_prod
     restart: unless-stopped
+    command: node dist/apps/worker/main.js
     env_file:
       - ${ENV_FILE:-.env.prod}
     environment:
       - API_CLOUD_MODE=false
+      - COMPONENT_TYPE=worker
     depends_on:
       db_postgres:
         condition: service_healthy
@@ -49,15 +53,17 @@ services:
       - kodus-backend-services
 
   webhooks:
-    image: ghcr.io/kodus-ai/kodus-webhooks:${KODUS_VERSION:-latest}
+    image: ghcr.io/kodustech/kodus-ai-webhook:${KODUS_VERSION:-latest}
     container_name: kodus_webhooks_prod
     restart: unless-stopped
+    command: node dist/apps/webhooks/main.js
     env_file:
       - ${ENV_FILE:-.env.prod}
     environment:
       - API_CLOUD_MODE=false
+      - COMPONENT_TYPE=webhook
     ports:
-      - "3333:3332" # Host 3333 -> container WEBHOOKS_PORT (default 3332)
+      - "3333:3332"
     depends_on:
       db_postgres:
         condition: service_healthy

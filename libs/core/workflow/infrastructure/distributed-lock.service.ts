@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 
 export interface DistributedLockOptions {
-    ttl?: number; // Time to live em ms (opcional, para auto-release)
+    ttl?: number; // Time to live in ms (optional, for auto-release)
 }
 
 export class DistributedLock {
@@ -16,7 +16,7 @@ export class DistributedLock {
         private readonly logger = createLogger(DistributedLock.name),
     ) {
         if (ttl) {
-            // Auto-release após TTL
+            // Auto-release after TTL
             setTimeout(() => {
                 if (!this.released) {
                     this.release().catch((error) => {
@@ -70,10 +70,10 @@ export class DistributedLockService {
     constructor(private readonly dataSource: DataSource) {}
 
     /**
-     * Adquirir lock distribuído usando PostgreSQL Advisory Lock
-     * @param key - Chave única do lock (ex: `job:${jobId}`)
-     * @param options - Opções do lock (TTL para auto-release)
-     * @returns Lock object ou null se não conseguir adquirir
+     * Acquire distributed lock using PostgreSQL Advisory Lock
+     * @param key - Unique lock key (e.g. `job:${jobId}`)
+     * @param options - Lock options (TTL for auto-release)
+     * @returns Lock object or null if could not acquire
      */
     async acquire(
         key: string,
@@ -94,7 +94,7 @@ export class DistributedLockService {
                     context: DistributedLockService.name,
                     metadata: { key, lockId },
                 });
-                return null; // Lock já está em uso
+                return null; // Lock is already in use
             }
 
             this.logger.debug({
@@ -122,21 +122,21 @@ export class DistributedLockService {
 
     /**
      * Hash string key to bigint for PostgreSQL advisory lock
-     * PostgreSQL advisory locks usam bigint (64-bit integer)
+     * PostgreSQL advisory locks use bigint (64-bit integer)
      */
     private hashKey(key: string): number {
-        // Usar hash simples (djb2 algorithm)
+        // Use simple hash (djb2 algorithm)
         let hash = 5381;
         for (let i = 0; i < key.length; i++) {
             hash = (hash << 5) + hash + key.charCodeAt(i);
             hash = hash & hash; // Convert to 32bit integer
         }
-        // PostgreSQL precisa de número positivo
+        // PostgreSQL needs a positive number
         return Math.abs(hash);
     }
 
     /**
-     * Verificar se lock está em uso (sem adquirir)
+     * Verify if lock is in use (without acquiring)
      */
     async isLocked(key: string): Promise<boolean> {
         const lockId = this.hashKey(key);
@@ -147,14 +147,14 @@ export class DistributedLockService {
             );
 
             if (result[0]?.acquired) {
-                // Liberar imediatamente (só estava verificando)
+                // Release immediately (was just checking)
                 await this.dataSource.query(`SELECT pg_advisory_unlock($1)`, [
                     lockId,
                 ]);
-                return false; // Não estava em uso
+                return false; // Was not in use
             }
 
-            return true; // Está em uso
+            return true; // Is in use
         } catch (error) {
             this.logger.error({
                 message: 'Error checking lock status',
@@ -162,7 +162,7 @@ export class DistributedLockService {
                 error: error instanceof Error ? error : undefined,
                 metadata: { key, lockId },
             });
-            // Em caso de erro, assumir que está locked (fail-safe)
+            // On error, assume it is locked (fail-safe)
             return true;
         }
     }

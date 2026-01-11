@@ -189,7 +189,7 @@ export class KodyIssuesAnalysisService {
                             fallbackModel: byokConfig?.fallback?.model,
                             runName,
                         })
-                        .addCallbacks(callbacks) // captura usage/token por provedor
+                        .addCallbacks(callbacks) // captures usage/token per provider
                         .setRunName(runName)
                         .setTemperature(0)
                         .execute();

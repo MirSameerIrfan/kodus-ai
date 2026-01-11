@@ -130,7 +130,7 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
         context: AnalysisContext,
         suggestions?: AIAnalysisResult,
     ): Promise<AIAnalysisResultPrLevel> {
-        // Validações de segurança
+        // Safety validations
         if (!context?.codeReviewConfig) {
             this.logger.error({
                 message: 'Missing codeReviewConfig in context',
@@ -190,7 +190,7 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
 
         let filteredKodyRules: Array<Partial<IKodyRule>> = [];
 
-        // Verificação segura de suggestionControl
+        // Safe check for suggestionControl
         const suggestionControl = context.codeReviewConfig?.suggestionControl;
         const applyFiltersToKodyRules =
             suggestionControl?.applyFiltersToKodyRules;
@@ -697,7 +697,7 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
             },
         });
 
-        // 5. Combinar resultados de todos os chunks
+        // 5. Combine results from all chunks
         return this.combineChunkResults(
             allViolatedRules,
             kodyRulesPrLevel,
@@ -709,7 +709,7 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
     }
 
     /**
-     * Determina a configuração de batch baseada no número total de chunks
+     * Determines batch configuration based on total number of chunks
      */
     private determineBatchConfig(totalChunks: number): BatchProcessingConfig {
         const baseConfig = { ...this.DEFAULT_BATCH_CONFIG };
@@ -729,7 +729,7 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
     }
 
     /**
-     * Processa chunks em batches paralelos
+     * Processes chunks in parallel batches
      */
     private async processChunksInBatches(
         chunks: FileChange[][],
@@ -748,7 +748,7 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
         const totalChunks = chunks.length;
         const { maxConcurrentChunks, batchDelay } = batchConfig;
 
-        // Processar chunks em batches
+        // Process chunks in batches
         for (let i = 0; i < totalChunks; i += maxConcurrentChunks) {
             const batchNumber = Math.floor(i / maxConcurrentChunks) + 1;
             const totalBatches = Math.ceil(totalChunks / maxConcurrentChunks);
@@ -766,7 +766,7 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
                 },
             });
 
-            // Processar batch atual em paralelo
+            // Process current batch in parallel
             const batchResults = await this.processBatchInParallel(
                 batchChunks,
                 i, // offset for chunk indexing
@@ -782,7 +782,7 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
                 fullFilesMap,
             );
 
-            // Consolidar resultados do batch
+            // Consolidate batch results
             batchResults.forEach(({ result, error, chunkIndex }) => {
                 if (error) {
                     this.logger.error({
@@ -801,7 +801,7 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
                 }
             });
 
-            // Delay entre batches (exceto no último)
+            // Batch delay (except for the last one)
             if (i + maxConcurrentChunks < totalChunks && batchDelay > 0) {
                 this.logger.log({
                     message: `Waiting ${batchDelay}ms before next batch`,
@@ -845,7 +845,7 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
 
         for (const [ruleId, dependencies] of dependenciesByRule.entries()) {
             const allOutputs: any[] = [];
-            for (const dep of dependencies) {
+            for (const _dep of dependencies) {
                 for (const fileName in augmentationsByFile) {
                     const fileAugmentations = augmentationsByFile[fileName];
                     for (const pathKey in fileAugmentations) {
@@ -866,7 +866,7 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
     }
 
     /**
-     * Processa um batch de chunks em paralelo
+     * Processes a batch of chunks in parallel
      */
     private async processBatchInParallel(
         batchChunks: FileChange[][],
@@ -882,7 +882,7 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
         mcpDependencies?: ContextDependency[],
         fullFilesMap?: Map<string, FileChange>,
     ): Promise<ChunkProcessingResult[]> {
-        // Criar promises para processar chunks em paralelo
+        // Create promises to process chunks in parallel
         const chunkPromises = batchChunks.map(async (chunk, batchIndex) => {
             const chunkIndex = indexOffset + batchIndex;
 
@@ -902,12 +902,12 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
             );
         });
 
-        // Aguardar todos os chunks do batch
+        // Wait for all chunks in the batch
         return Promise.all(chunkPromises);
     }
 
     /**
-     * Processa um chunk individual com retry logic
+     * Processes an individual chunk with retry logic
      */
     private async processChunkWithRetry(
         chunk: FileChange[],
@@ -925,8 +925,8 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
     ): Promise<ChunkProcessingResult> {
         const { retryAttempts, retryDelay } = batchConfig;
 
-        // Limitar delay máximo para evitar timeouts muito longos
-        const MAX_RETRY_DELAY = 10000; // 10 segundos máximo
+        // Limit max delay to avoid very long timeouts
+        const MAX_RETRY_DELAY = 10000; // 10 seconds maximum
 
         for (let attempt = 1; attempt <= retryAttempts; attempt++) {
             try {
@@ -973,9 +973,9 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
                     },
                 });
 
-                // Se não é a última tentativa, aguardar antes de tentar novamente
+                // If not the last attempt, wait before trying again
                 if (attempt < retryAttempts) {
-                    // Usar delay linear limitado ao invés de exponencial para evitar timeouts muito longos
+                    // Use limited linear delay instead of exponential to avoid very long timeouts
                     const delayMs = Math.min(
                         retryDelay * attempt,
                         MAX_RETRY_DELAY,
@@ -987,7 +987,7 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
                     });
                     await this.delay(delayMs);
                 } else {
-                    // Última tentativa falhou - logar erro detalhado
+                    // Last attempt failed - log detailed error
                     this.logger.error({
                         message: `Chunk ${chunkIndex + 1} failed after ${retryAttempts} attempts`,
                         context: KodyRulesPrLevelAnalysisService.name,
@@ -1010,7 +1010,7 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
             }
         }
 
-        // Nunca deve chegar aqui, mas TypeScript precisa
+        // Never should reach here, but TypeScript needs it
         return {
             chunkIndex,
             result: null,
@@ -1019,7 +1019,7 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
     }
 
     /**
-     * Utility para delay
+     * Utility for delay
      */
     private delay(ms: number): Promise<void> {
         return new Promise((resolve) => setTimeout(resolve, ms));
@@ -1705,7 +1705,7 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
         rules: Array<Partial<IKodyRule>>,
         minimalSeverityLevel?: SeverityLevel,
     ): Promise<Array<Partial<IKodyRule>>> {
-        // Se não há nível mínimo definido ou é LOW, retorna todas as regras
+        // If no minimum level defined or it is LOW, return all rules
         if (
             !minimalSeverityLevel ||
             minimalSeverityLevel === SeverityLevel.LOW
@@ -1713,7 +1713,7 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
             return rules;
         }
 
-        // Define a hierarquia de severidade (do menor para o maior)
+        // Define severity hierarchy (from lowest to highest)
         const severityHierarchy = {
             [SeverityLevel.LOW]: 1,
             [SeverityLevel.MEDIUM]: 2,
@@ -1725,19 +1725,19 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
 
         return rules.filter((rule) => {
             if (!rule.severity) {
-                // Se a regra não tem severidade definida, inclui por padrão
+                // If rule has no severity defined, include by default
                 return true;
             }
 
-            // Corrige: normaliza para lowercase para coincidir com o enum
+            // Fix: normalize to lowercase to match enum
             const ruleSeverity = rule.severity.toLowerCase() as SeverityLevel;
             const ruleLevel = severityHierarchy[ruleSeverity];
 
-            // Se não conseguir mapear a severidade, inclui por segurança
+            // If severity mapping fails, include for safety
             if (ruleLevel === undefined) {
                 this.logger.warn({
                     message:
-                        'Severidade de regra não reconhecida, incluindo por padrão',
+                        'Rule severity not recognized, including by default',
                     context: KodyRulesPrLevelAnalysisService.name,
                     metadata: {
                         ruleId: rule.uuid,
@@ -1748,7 +1748,7 @@ export class KodyRulesPrLevelAnalysisService implements IKodyRulesAnalysisServic
                 return true;
             }
 
-            // Inclui apenas regras com severidade >= ao nível mínimo
+            // Include only rules with severity >= minimum level
             return ruleLevel >= minimalLevel;
         });
     }

@@ -1,0 +1,19 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "module": "commonjs",
+        "declaration": false,
+        "noEmit": false,
+        "outDir": "./dist",
+        "rootDir": ".",
+        "skipLibCheck": true,
+        "sourceMap": false,
+        "inlineSources": false,
+        "target": "ES2021"
+    },
+    "include": [
+        "libs/core/infrastructure/database/typeorm/ormconfig.ts",
+        "libs/core/infrastructure/database/typeorm/migrations/**/*",
+        "libs/core/infrastructure/database/typeorm/seed/seed.ts"
+    ]
+}

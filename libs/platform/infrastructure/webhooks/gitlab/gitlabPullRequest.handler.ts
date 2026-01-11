@@ -39,6 +39,7 @@ export class GitLabMergeRequestHandler implements IWebhookEventHandler {
      * @returns True if this handler can process the event, false otherwise.
      */
     public canHandle(params: IWebhookEventParams): boolean {
+        console.log('params1111', params);
         return (
             params.platformType === PlatformType.GITLAB &&
             ['Merge Request Hook', 'Note Hook'].includes(params.event)
@@ -52,7 +53,7 @@ export class GitLabMergeRequestHandler implements IWebhookEventHandler {
     public async execute(params: IWebhookEventParams): Promise<void> {
         const { event } = params;
 
-        // Direcionar para o método apropriado com base no tipo de evento
+        // Direct to the appropriate method based on the event type
         switch (event) {
             case 'Merge Request Hook':
                 await this.handleMergeRequest(params);
@@ -88,6 +89,21 @@ export class GitLabMergeRequestHandler implements IWebhookEventHandler {
             fullName: payload?.project?.path_with_namespace,
         } as any;
 
+        const mappedPlatform = getMappedPlatform(PlatformType.GITLAB);
+        if (!mappedPlatform) {
+            this.logger.error({
+                message: 'Could not get mapped platform for GitLab.',
+                serviceName: GitLabMergeRequestHandler.name,
+                metadata: { mrNumber },
+                context: GitLabMergeRequestHandler.name,
+            });
+            return;
+        }
+
+        const mappedUsers = mappedPlatform.mapUsers({
+            payload: payload,
+        });
+
         const orgData =
             await this.runCodeReviewAutomationUseCase.findTeamWithActiveCodeReview(
                 {
@@ -96,6 +112,7 @@ export class GitLabMergeRequestHandler implements IWebhookEventHandler {
                         name: payload?.project?.path,
                     },
                     platformType: PlatformType.GITLAB,
+                    userGitId: mappedUsers?.user?.id?.toString(),
                     triggerCommentId: payload.comment?.id,
                 },
             );
@@ -109,15 +126,15 @@ export class GitLabMergeRequestHandler implements IWebhookEventHandler {
                     this.enqueueCodeReviewJobUseCase &&
                     orgData?.organizationAndTeamData
                 ) {
-                    const jobId = await this.enqueueCodeReviewJobUseCase.execute(
-                        {
+                    const jobId =
+                        await this.enqueueCodeReviewJobUseCase.execute({
                             payload,
                             event: params.event,
                             platformType: PlatformType.GITLAB,
-                            organizationAndTeam: orgData.organizationAndTeamData,
+                            organizationAndTeam:
+                                orgData.organizationAndTeamData,
                             correlationId: params.correlationId,
-                        },
-                    );
+                        });
 
                     this.logger.log({
                         message:
@@ -230,11 +247,27 @@ export class GitLabMergeRequestHandler implements IWebhookEventHandler {
     }
 
     /**
-     * Processa eventos de comentário do GitLab
+     * Processes GitLab comment events
      */
     private async handleComment(params: IWebhookEventParams): Promise<void> {
         const { payload } = params;
         const mrNumber = payload?.object_attributes?.iid;
+
+        const mappedPlatform = getMappedPlatform(PlatformType.GITLAB);
+        if (!mappedPlatform) {
+            this.logger.error({
+                message: 'Could not get mapped platform for GitLab.',
+                serviceName: GitLabMergeRequestHandler.name,
+                metadata: { mrNumber },
+                context: GitLabMergeRequestHandler.name,
+            });
+            return;
+        }
+
+        const mappedUsers = mappedPlatform.mapUsers({
+            payload: payload,
+        });
+
         const orgData =
             await this.runCodeReviewAutomationUseCase.findTeamWithActiveCodeReview(
                 {
@@ -243,6 +276,7 @@ export class GitLabMergeRequestHandler implements IWebhookEventHandler {
                         name: payload?.project?.path,
                     },
                     platformType: PlatformType.GITLAB,
+                    userGitId: mappedUsers?.user?.id?.toString(),
                     triggerCommentId: payload.comment?.id,
                 },
             );
@@ -251,16 +285,6 @@ export class GitLabMergeRequestHandler implements IWebhookEventHandler {
             // Verify if the action is create
             if (payload?.object_attributes?.action === 'create') {
                 // Extract comment data
-                const mappedPlatform = getMappedPlatform(PlatformType.GITLAB);
-                if (!mappedPlatform) {
-                    this.logger.error({
-                        message: 'Could not get mapped platform for GitLab.',
-                        serviceName: GitLabMergeRequestHandler.name,
-                        metadata: { mrNumber },
-                        context: GitLabMergeRequestHandler.name,
-                    });
-                    return;
-                }
 
                 const comment = mappedPlatform.mapComment({ payload });
                 if (!comment || !comment.body) {
@@ -293,28 +317,29 @@ export class GitLabMergeRequestHandler implements IWebhookEventHandler {
                     });
 
                     // Prepare params for use cases
-                const updatedParams = {
-                    ...params,
-                    payload: {
-                        ...payload,
-                        action: 'synchronize',
-                        origin: 'command',
-                        triggerCommentId: comment?.id,
-                    },
-                };
+                    const updatedParams = {
+                        ...params,
+                        payload: {
+                            ...payload,
+                            action: 'synchronize',
+                            origin: 'command',
+                            triggerCommentId: comment?.id,
+                        },
+                    };
 
-                await this.savePullRequestUseCase.execute(updatedParams);
-                if (orgData?.organizationAndTeamData) {
-                    await this.enqueueCodeReviewJobUseCase.execute({
-                        payload: updatedParams.payload,
-                        event: updatedParams.event,
-                        platformType: PlatformType.GITLAB,
-                        organizationAndTeam: orgData.organizationAndTeamData,
-                        correlationId: params.correlationId,
-                    });
+                    await this.savePullRequestUseCase.execute(updatedParams);
+                    if (orgData?.organizationAndTeamData) {
+                        await this.enqueueCodeReviewJobUseCase.execute({
+                            payload: updatedParams.payload,
+                            event: updatedParams.event,
+                            platformType: PlatformType.GITLAB,
+                            organizationAndTeam:
+                                orgData.organizationAndTeamData,
+                            correlationId: params.correlationId,
+                        });
+                    }
+                    return;
                 }
-                return;
-            }
 
                 if (
                     !isStartCommand &&

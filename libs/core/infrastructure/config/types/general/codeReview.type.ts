@@ -116,20 +116,20 @@ export type AnalysisContext<TPullRequest = any> = {
             hasRelevantContent?: boolean;
         };
     };
-    /** Conteúdo de arquivos externos e metadados carregados pelo PromptContextLoader. */
+    /** External file content and metadata loaded by PromptContextLoader. */
     externalPromptContext?: any;
-    /** Conjunto de camadas prontas para composição do ContextPack (arquivos, instruções). */
+    /** Set of layers ready for ContextPack composition (files, instructions). */
     externalPromptLayers?: ContextLayer[];
     correlationId: string;
-    /** ContextPack compartilhado com instruções e camadas externas para as etapas de análise. */
+    /** Shared ContextPack with instructions and external layers for analysis stages. */
     sharedContextPack?: ContextPack;
-    /** Overrides resolvidos por arquivo, usados no preparo de contexto por file. */
+    /** Overrides resolved per file, used in context preparation by file. */
     filePromptOverrides?: Record<string, CodeReviewConfig['v2PromptOverrides']>;
-    /** Overrides ativos para a execução atual (ex: overrides específicos de arquivo). Tem precedência sobre o Pack. */
+    /** Active overrides for current execution (e.g. file-specific overrides). Takes precedence over the Pack. */
     activeOverrides?: CodeReviewConfig['v2PromptOverrides'];
-    /** Augmentations geradas dinamicamente para o arquivo atual. */
+    /** Dynamically generated augmentations for current file. */
     fileAugmentations?: ContextAugmentationsMap;
-    /** Augmentations geradas dinamicamente durante o pipeline, mapeadas por nome de arquivo. */
+    /** Dynamically generated augmentations during pipeline, mapped by filename. */
     augmentationsByFile?: Record<string, ContextAugmentationsMap>;
 };
 
@@ -303,7 +303,7 @@ export interface SuggestionControlConfig {
     limitationType?: LimitationType;
     maxSuggestions: number;
     severityLevelFilter?: SeverityLevel;
-    applyFiltersToKodyRules?: boolean; // Default: false - Aplica TODOS os filtros (severidade + quantidade) nas Kody Rules
+    applyFiltersToKodyRules?: boolean; // Default: false - Applies ALL filters (severity + quantity) to Kody Rules
     severityLimits?: {
         low: number;
         medium: number;

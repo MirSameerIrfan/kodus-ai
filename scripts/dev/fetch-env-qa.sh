@@ -107,6 +107,11 @@ KEYS=(
     "/qa/kodus-orchestrator/API_GROQ_API_KEY"
 
     "/qa/kodus-orchestrator/GLOBAL_KODUS_SERVICE_BILLING"
+
+    "/qa/kodus-orchestrator/API_WEBHOOKS_PORT"
+
+    "/qa/kodus-orchestrator/API_ECS_AGENT_URI"
+    "/qa/kodus-orchestrator/API_WORKER_DRAIN_TIMEOUT_MS"
 )
 
 # Lista de todas as chaves que você precisa

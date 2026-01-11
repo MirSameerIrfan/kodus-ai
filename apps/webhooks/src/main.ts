@@ -46,14 +46,14 @@ async function bootstrap() {
         const config = configService.get<HttpServerConfiguration>('server');
         const { host, rateLimit } = config;
 
-        const webhookPortRaw = process.env.WEBHOOKS_PORT;
+        const webhookPortRaw = process.env.API_WEBHOOKS_PORT;
         const webhookPortParsed = webhookPortRaw
             ? parseInt(webhookPortRaw, 10)
             : NaN;
 
         if (!Number.isFinite(webhookPortParsed) || webhookPortParsed <= 0) {
             throw new Error(
-                'WEBHOOKS_PORT is required and must be a positive integer',
+                'API_WEBHOOKS_PORT is required and must be a positive integer',
             );
         }
 
@@ -102,8 +102,9 @@ async function bootstrap() {
             });
         });
 
-        app.use(bodyParser.urlencoded({ extended: true }));
-        app.set('trust proxy', '127.0.0.1');
+        app.use(bodyParser.json({ limit: '25mb' }));
+        app.use(bodyParser.urlencoded({ limit: '25mb', extended: true }));
+        app.set('trust proxy', 1);
 
         app.enableShutdownHooks();
 

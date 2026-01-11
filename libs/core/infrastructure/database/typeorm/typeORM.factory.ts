@@ -26,15 +26,24 @@ export class TypeORMFactory implements TypeOrmOptionsFactory {
         const env = process.env.API_DATABASE_ENV ?? process.env.API_NODE_ENV;
         const isProduction = !['development', 'test'].includes(env);
 
-        // Detecta tipo de componente para ajustar pool de conexões
+        // Detect component type to adjust connection pool
         const componentType = process.env.COMPONENT_TYPE || 'default';
 
-        // Configuração de pool por componente (otimização de escalabilidade)
+        // Component-specific pool configuration (prioritize ENV with fallback for 300 connections plan)
         const poolConfigs = {
-            webhook: { max: 4, min: 1 }, // Webhook handler: leve, só escreve logs
-            api: { max: 10, min: 2 }, // API REST: consultas variadas
-            worker: { max: 6, min: 1 }, // Workers: processamento pesado
-            default: { max: 12, min: 1 }, // Fallback: conservador para QA/Dev
+            webhook: {
+                max: parseInt(process.env.DB_POOL_MAX_WEBHOOK || '30', 10),
+                min: 2,
+            },
+            api: {
+                max: parseInt(process.env.DB_POOL_MAX_API || '30', 10),
+                min: 2,
+            },
+            worker: {
+                max: parseInt(process.env.DB_POOL_MAX_WORKER || '60', 10),
+                min: 5,
+            },
+            default: { max: 20, min: 1 },
         };
         const poolConfig = poolConfigs[componentType] || poolConfigs.default;
 
@@ -53,7 +62,7 @@ export class TypeORMFactory implements TypeOrmOptionsFactory {
             migrationsTableName: 'migrations',
             synchronize: false,
             logging: !isProduction, // Can be overridden by logger
-            logger: new TypeOrmCustomLogger(),
+            logger: new TypeOrmCustomLogger(!isProduction),
             maxQueryExecutionTime: 3000, // Logs slow queries > 3000ms
             ssl: isProduction,
             extra: {

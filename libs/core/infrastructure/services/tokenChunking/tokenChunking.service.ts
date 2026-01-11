@@ -27,10 +27,10 @@ export class TokenChunkingService {
     constructor() {}
 
     /**
-     * Divide os dados em chunks baseado no limite de tokens do modelo LLM
+     * Splits data into chunks based on the LLM model's token limit
      *
-     * @param options Configurações para o chunking
-     * @returns Resultado com os chunks divididos e metadados
+     * @param options Chunking configurations
+     * @returns Result with split chunks and metadata
      */
     public chunkDataByTokens(
         options: TokenChunkingOptions,
@@ -82,7 +82,7 @@ export class TokenChunkingService {
         }
 
         try {
-            // 1. Determinar limite de tokens
+            // 1. Determine token limit
             const maxTokens = this.getMaxTokensForModel(
                 model,
                 defaultMaxTokens,
@@ -101,7 +101,7 @@ export class TokenChunkingService {
                 },
             });
 
-            // 2. Dividir dados em chunks
+            // 2. Split data into chunks
             const chunks: any[][] = [];
             const tokensPerChunk: number[] = [];
 
@@ -111,7 +111,7 @@ export class TokenChunkingService {
             for (let i = 0; i < data.length; i++) {
                 const item = data[i];
 
-                // Validar item
+                // Validate item
                 if (item === null || item === undefined) {
                     this.logger.warn({
                         message: 'Null or undefined item found, skipping',
@@ -123,7 +123,7 @@ export class TokenChunkingService {
 
                 const itemTokens = this.countTokensForItem(item, model);
 
-                // Edge case: item único excede o limite
+                // Edge case: single item exceeds token limit
                 if (itemTokens > tokenLimit) {
                     this.logger.warn({
                         message: 'Single item exceeds token limit',
@@ -139,7 +139,7 @@ export class TokenChunkingService {
                         },
                     });
 
-                    // Se chunk atual não está vazio, finaliza ele
+                    // If current chunk is not empty, finalize it
                     if (currentChunk.length > 0) {
                         chunks.push([...currentChunk]);
                         tokensPerChunk.push(currentChunkTokens);
@@ -147,32 +147,32 @@ export class TokenChunkingService {
                         currentChunkTokens = 0;
                     }
 
-                    // Adiciona item como chunk único
+                    // Add item as a single chunk
                     chunks.push([item]);
                     tokensPerChunk.push(itemTokens);
                     continue;
                 }
 
-                // Verifica se adicionar o item excederia o limite
+                // Verify if adding the item would exceed the limit
                 if (
                     currentChunkTokens + itemTokens > tokenLimit &&
                     currentChunk.length > 0
                 ) {
-                    // Finaliza chunk atual
+                    // Finalize current chunk
                     chunks.push([...currentChunk]);
                     tokensPerChunk.push(currentChunkTokens);
 
-                    // Inicia novo chunk
+                    // Start new chunk
                     currentChunk = [item];
                     currentChunkTokens = itemTokens;
                 } else {
-                    // Adiciona item ao chunk atual
+                    // Add item to current chunk
                     currentChunk.push(item);
                     currentChunkTokens += itemTokens;
                 }
             }
 
-            // Adiciona último chunk se não estiver vazio
+            // Add last chunk if not empty
             if (currentChunk.length > 0) {
                 chunks.push(currentChunk);
                 tokensPerChunk.push(currentChunkTokens);
@@ -225,7 +225,7 @@ export class TokenChunkingService {
     }
 
     /**
-     * Obtém o limite máximo de tokens para um modelo
+     * Gets the maximum token limit for a model
      */
     private getMaxTokensForModel(
         model?: LLMModelProvider | string,
@@ -240,7 +240,7 @@ export class TokenChunkingService {
             return inputMaxTokens;
         }
 
-        // Se defaultMaxTokens é -1, significa sem limite específico, usa o padrão
+        // If defaultMaxTokens is -1, it means no specific limit, use default
         if (strategy.inputMaxTokens === -1) {
             return inputMaxTokens;
         }
@@ -249,17 +249,17 @@ export class TokenChunkingService {
     }
 
     /**
-     * Conta tokens para um item específico
+     * Counts tokens for a specific item
      */
     private countTokensForItem(
         item: any,
         model?: LLMModelProvider | string,
     ): number {
         try {
-            // Converte item para string para contagem
+            // Converts item to string for counting
             const text = this.serializeItem(item);
 
-            // Para modelos OpenAI, tenta usar tiktoken para contagem precisa
+            // For OpenAI models, try using tiktoken for precise counting
             if (model && this.isOpenAIModel(model)) {
                 try {
                     const encoder = encoding_for_model(
@@ -267,12 +267,12 @@ export class TokenChunkingService {
                     );
                     return encoder.encode(text).length;
                 } catch (error) {
-                    // Se falhar, usa estimativa
+                    // If fails, use estimation
                     return estimateTokenCount(text);
                 }
             }
 
-            // Para outros modelos, usa estimativa
+            // For other models, use estimation
             return estimateTokenCount(text);
         } catch (error) {
             this.logger.warn({
@@ -286,14 +286,14 @@ export class TokenChunkingService {
                 },
             });
 
-            // Fallback: estimativa básica baseada no tamanho da string
+            // Fallback: basic estimation based on string length
             const text = this.serializeItem(item);
-            return Math.ceil(text.length / 4); // Aproximadamente 4 chars por token
+            return Math.ceil(text.length / 4); // Approximately 4 chars per token
         }
     }
 
     /**
-     * Serializa um item para string de forma consistente
+     * Serializes an item to string consistently
      */
     private serializeItem(item: any): string {
         if (typeof item === 'string') {
@@ -302,10 +302,10 @@ export class TokenChunkingService {
 
         if (typeof item === 'object' && item !== null) {
             try {
-                // Tenta serialização normal primeiro
+                // Try normal serialization first
                 return JSON.stringify(item);
             } catch (error) {
-                // Se falhar (ex: referências circulares), usa serialização segura
+                // If fails (e.g. circular references), use safe serialization
                 try {
                     return JSON.stringify(item, this.getCircularReplacer());
                 } catch (fallbackError) {
@@ -318,7 +318,7 @@ export class TokenChunkingService {
                             error: fallbackError.message,
                         },
                     });
-                    // Último fallback: toString seguro
+                    // Last fallback: safe toString
                     return String(item);
                 }
             }
@@ -328,7 +328,7 @@ export class TokenChunkingService {
     }
 
     /**
-     * Replacer function para lidar com referências circulares
+     * Replacer function to handle circular references
      */
     private getCircularReplacer() {
         const seen = new WeakSet();
@@ -344,7 +344,7 @@ export class TokenChunkingService {
     }
 
     /**
-     * Verifica se é um modelo OpenAI
+     * Checks if it is an OpenAI model
      */
     private isOpenAIModel(model: LLMModelProvider | string): boolean {
         const openaiModels = [
@@ -358,7 +358,7 @@ export class TokenChunkingService {
     }
 
     /**
-     * Obtém o nome do modelo OpenAI para tiktoken
+     * Gets the OpenAI model name for tiktoken
      */
     private getOpenAIModelName(model: LLMModelProvider | string): string {
         const strategy = MODEL_STRATEGIES[model as LLMModelProvider];

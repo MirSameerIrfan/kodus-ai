@@ -566,7 +566,7 @@ export class PullRequestsService implements IPullRequestsService {
         unusedSuggestions: Array<ISuggestion>,
     ): Promise<Partial<IPullRequests>> {
         try {
-            baseStructure.files = changedFiles.map((file) => ({
+            baseStructure.files = changedFiles?.map((file) => ({
                 id: uuidv4(),
                 sha: file.sha,
                 path: file.filename,
@@ -694,7 +694,7 @@ export class PullRequestsService implements IPullRequestsService {
 
             return this.create(structure as Omit<IPullRequests, 'uuid'>);
         } catch (error) {
-            // Detectar erro de duplicação do MongoDB (código 11000)
+            // Detect MongoDB duplicate key error (code 11000)
             const isDuplicateKeyError =
                 error?.code === 11000 || error?.name === 'MongoServerError';
 
@@ -709,9 +709,9 @@ export class PullRequestsService implements IPullRequestsService {
                     },
                 });
 
-                // Race condition: webhook chegou quase simultaneamente (< 1 segundo)
-                // O primeiro webhook já está processando/processou tudo
-                // Apenas buscar e retornar o PR existente (não reprocessar)
+                // Race condition: webhook arrived almost simultaneously (< 1 second)
+                // The first webhook is already processing/processed everything
+                // Just find and return the existing PR (don't reprocess)
                 const existingPR =
                     await this.pullRequestsRepository.findByNumberAndRepositoryName(
                         pullRequest?.number,

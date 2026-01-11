@@ -111,7 +111,7 @@ export class GenerateKodyRulesUseCase {
                 organizationAndTeamData,
             );
             const allRules = [];
-            const createdRules = []; // Para rastrear regras criadas para notificação
+            const createdRules = []; // To track created rules for notification
             for (const repository of filteredRepositories) {
                 const pullRequests =
                     await this.codeManagementService.getPullRequestsByRepository(
@@ -233,7 +233,7 @@ export class GenerateKodyRulesUseCase {
                         userInfo,
                     );
 
-                    // Adicionar regra aos dados de notificação
+                    // Add rule to notification data
                     createdRules.push({
                         title: rule.title,
                         rule: rule.rule,
@@ -276,7 +276,7 @@ export class GenerateKodyRulesUseCase {
                 context: GenerateKodyRulesUseCase.name,
                 metadata: { body, organizationAndTeamData },
             });
-            // Enviar notificação por email se regras foram criadas
+            // Send email notification if rules were created
             if (createdRules.length > 0) {
                 this.logger.log({
                     message: 'Sending email notification for new Kody rules',
@@ -286,7 +286,7 @@ export class GenerateKodyRulesUseCase {
                         rulesCount: createdRules.length,
                     },
                 });
-                // Executar notificação de forma assíncrona para não bloquear o fluxo principal
+                // Execute notification asynchronously to not block the main flow
                 this.sendRulesNotificationUseCase
                     .execute(organizationId, createdRules)
                     .catch((error) => {
