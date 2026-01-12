@@ -544,6 +544,38 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
 
         const hunk = fileDiff.hunks[0];
 
+        if (hunk.lines.length > this.MAX_LINES_THRESHOLD) {
+            this.logger.warn({
+                message:
+                    'Suggestion hunk exceeds maximum line threshold, marking as complex.',
+                context: ValidateSuggestionsStage.name,
+                metadata: {
+                    linesCount: hunk.lines.length,
+                    diff,
+                },
+            });
+
+            return null;
+        }
+
+        if (hunk.lines.reduce((acc, line) => acc + line.length, 0) >
+            this.MAX_CHARS_THRESHOLD) {
+            this.logger.warn({
+                message:
+                    'Suggestion hunk exceeds maximum character threshold, marking as complex.',
+                context: ValidateSuggestionsStage.name,
+                metadata: {
+                    charCount: hunk.lines.reduce(
+                        (acc, line) => acc + line.length,
+                        0,
+                    ),
+                    diff,
+                },
+            });
+
+            return null;
+        }
+
         const suggestionLines: string[] = [];
 
         for (const line of hunk.lines) {
