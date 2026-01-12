@@ -558,8 +558,12 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
             return null;
         }
 
-        if (hunk.lines.reduce((acc, line) => acc + line.length, 0) >
-            this.MAX_CHARS_THRESHOLD) {
+        const charCount = hunk.lines.reduce(
+            (acc, line) => acc + line.trim().length,
+            0,
+        );
+
+        if (charCount > this.MAX_CHARS_THRESHOLD) {
             this.logger.warn({
                 message:
                     'Suggestion hunk exceeds maximum character threshold, marking as complex.',
