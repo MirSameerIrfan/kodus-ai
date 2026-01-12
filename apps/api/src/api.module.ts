@@ -35,6 +35,9 @@ import { WorkflowModule } from '@libs/core/workflow/modules/workflow.module';
 import { CodeReviewConfigurationModule } from '@libs/code-review/modules/code-review-configuration.module';
 import { OrganizationOnboardingModule } from '@libs/organization/modules/organization-onboarding.module';
 import { CodeReviewDashboardModule } from '@libs/code-review/modules/code-review-dashboard.module';
+import { CliReviewModule } from '@libs/cli-review/cli-review.module';
+import { PermissionValidationModule } from '@libs/ee/shared/permission-validation.module';
+import { LicenseModule } from '@libs/ee/license/license.module';
 
 import { CronModule } from './cron/cron.module';
 import { OrganizationParametersController } from './controllers/organizationParameters.controller';
@@ -56,9 +59,11 @@ import { PullRequestMessagesController } from './controllers/pullRequestMessages
 import { RuleLikeController } from './controllers/ruleLike.controller';
 import { SegmentController } from './controllers/segment.controller';
 import { TeamController } from './controllers/team.controller';
+import { TeamCliKeyController } from './controllers/team-cli-key.controller';
 import { TeamMembersController } from './controllers/teamMembers.controller';
 import { TokenUsageController } from './controllers/tokenUsage.controller';
 import { UsersController } from './controllers/user.controller';
+import { CliReviewController } from './controllers/cli-review.controller';
 import { LoggerWrapperService } from '@libs/core/log/loggerWrapper.service';
 
 @Module({
@@ -99,6 +104,9 @@ import { LoggerWrapperService } from '@libs/core/log/loggerWrapper.service';
         CodeReviewConfigurationModule,
         OrganizationOnboardingModule,
         CodeReviewDashboardModule,
+        CliReviewModule,
+        PermissionValidationModule,
+        LicenseModule,
         McpModule.forRoot(),
         HealthModule,
         CronModule,
@@ -117,6 +125,7 @@ import { LoggerWrapperService } from '@libs/core/log/loggerWrapper.service';
         ParametersController,
         OrganizationParametersController,
         TeamController,
+        TeamCliKeyController,
         TeamMembersController,
         AgentController,
         AuthController,
@@ -127,6 +136,7 @@ import { LoggerWrapperService } from '@libs/core/log/loggerWrapper.service';
         IntegrationConfigController,
         PullRequestController,
         UsersController,
+        CliReviewController,
     ],
 })
 export class ApiModule {}
