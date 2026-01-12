@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcryptjs';
+import { createLogger } from '@kodus/flow';
 
 import {
     ITeamCliKeyRepository,
@@ -15,6 +16,8 @@ import { ITeamCliKey } from '@libs/organization/domain/team-cli-key/interfaces/t
 
 @Injectable()
 export class TeamCliKeyService implements ITeamCliKeyService {
+    private readonly logger = createLogger(TeamCliKeyService.name);
+
     constructor(
         @Inject(TEAM_CLI_KEY_REPOSITORY_TOKEN)
         private readonly teamCliKeyRepository: ITeamCliKeyRepository,
@@ -28,6 +31,13 @@ export class TeamCliKeyService implements ITeamCliKeyService {
         // Generate random key
         const rawKey = crypto.randomBytes(32).toString('base64url');
 
+        // Create a prefix for fast lookup (first 8 chars of SHA256 hash)
+        const keyPrefix = crypto
+            .createHash('sha256')
+            .update(rawKey)
+            .digest('hex')
+            .substring(0, 8);
+
         // Hash the key before storing
         const keyHash = await bcrypt.hash(rawKey, 10);
 
@@ -35,6 +45,7 @@ export class TeamCliKeyService implements ITeamCliKeyService {
         await this.teamCliKeyRepository.create({
             name,
             keyHash,
+            keyPrefix,
             active: true,
             team: { uuid: teamId },
             createdBy: { uuid: createdByUserId },
@@ -49,36 +60,57 @@ export class TeamCliKeyService implements ITeamCliKeyService {
             // Remove prefix
             const rawKey = key.replace(/^kodus_/, '');
 
-            // Get all active keys
-            const activeKeys = await this.teamCliKeyRepository.find({
+            // Calculate keyPrefix for fast lookup
+            const keyPrefix = crypto
+                .createHash('sha256')
+                .update(rawKey)
+                .digest('hex')
+                .substring(0, 8);
+
+            // Direct lookup by keyPrefix (O(1) instead of O(n))
+            const keyRecord = await this.teamCliKeyRepository.findOne({
+                keyPrefix,
                 active: true,
             });
 
-            // Try to match the key
-            for (const keyRecord of activeKeys) {
-                const match = await bcrypt.compare(rawKey, keyRecord.keyHash);
-
-                if (match) {
-                    // Update last used timestamp
-                    await this.teamCliKeyRepository.update(
-                        { uuid: keyRecord.uuid },
-                        { lastUsedAt: new Date() },
-                    );
-
-                    if (!keyRecord.team || !keyRecord.team.organization) {
-                        return null;
-                    }
-
-                    return {
-                        team: keyRecord.team,
-                        organization: keyRecord.team.organization,
-                    };
-                }
+            // If no key found with this prefix, return early
+            if (!keyRecord) {
+                return null;
             }
 
-            return null;
+            // Verify the key hash matches
+            const match = await bcrypt.compare(rawKey, keyRecord.keyHash);
+
+            if (!match) {
+                return null;
+            }
+
+            // Update last used timestamp asynchronously (don't wait)
+            this.teamCliKeyRepository
+                .update({ uuid: keyRecord.uuid }, { lastUsedAt: new Date() })
+                .catch((err) => {
+                    this.logger.error({
+                        message: 'Error updating lastUsedAt for CLI key',
+                        error: err,
+                        context: TeamCliKeyService.name,
+                        metadata: { keyId: keyRecord.uuid },
+                    });
+                });
+
+            if (!keyRecord.team || !keyRecord.team.organization) {
+                return null;
+            }
+
+            return {
+                team: keyRecord.team,
+                organization: keyRecord.team.organization,
+            };
         } catch (error) {
-            console.error('Error validating CLI key:', error);
+            this.logger.error({
+                message: 'Error validating CLI key',
+                error,
+                context: TeamCliKeyService.name,
+            });
             return null;
         }
     }

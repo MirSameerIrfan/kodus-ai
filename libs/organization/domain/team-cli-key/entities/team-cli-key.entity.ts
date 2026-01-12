@@ -7,6 +7,7 @@ export class TeamCliKeyEntity implements Entity<ITeamCliKey> {
     private _uuid: string;
     private _name: string;
     private _keyHash: string;
+    private _keyPrefix?: string;
     private _active: boolean;
     private _lastUsedAt?: Date;
     private _createdAt?: Date;
@@ -18,6 +19,7 @@ export class TeamCliKeyEntity implements Entity<ITeamCliKey> {
         this._uuid = teamCliKey.uuid;
         this._name = teamCliKey.name;
         this._keyHash = teamCliKey.keyHash;
+        this._keyPrefix = teamCliKey.keyPrefix;
         this._active = teamCliKey.active ?? true;
         this._lastUsedAt = teamCliKey.lastUsedAt;
         this._createdAt = teamCliKey.createdAt;
@@ -42,6 +44,10 @@ export class TeamCliKeyEntity implements Entity<ITeamCliKey> {
 
     public get keyHash() {
         return this._keyHash;
+    }
+
+    public get keyPrefix() {
+        return this._keyPrefix;
     }
 
     public get active() {
@@ -73,6 +79,7 @@ export class TeamCliKeyEntity implements Entity<ITeamCliKey> {
             uuid: this._uuid,
             name: this._name,
             keyHash: this._keyHash,
+            keyPrefix: this._keyPrefix,
             active: this._active,
             lastUsedAt: this._lastUsedAt,
             createdAt: this._createdAt,

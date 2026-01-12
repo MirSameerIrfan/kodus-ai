@@ -5,6 +5,7 @@ export interface ITeamCliKey {
     uuid: string;
     name: string;
     keyHash: string;
+    keyPrefix?: string;
     active: boolean;
     lastUsedAt?: Date;
     createdAt?: Date;

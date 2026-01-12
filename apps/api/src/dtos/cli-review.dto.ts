@@ -105,5 +105,6 @@ export class CliReviewRequestDto {
 
 export class TrialCliReviewRequestDto extends CliReviewRequestDto {
     @IsString()
+    @MaxLength(256, { message: 'Fingerprint too long (max 256 characters)' })
     fingerprint: string; // Device fingerprint for rate limiting
 }

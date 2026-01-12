@@ -2,22 +2,22 @@ import { Injectable } from '@nestjs/common';
 import { createLogger } from '@kodus/flow';
 import { CacheService } from '@libs/core/cache/cache.service';
 
-export interface RateLimitResult {
+export interface AuthenticatedRateLimitResult {
     allowed: boolean;
     remaining: number;
     resetAt?: Date;
 }
 
 /**
- * Service for rate limiting trial CLI reviews
- * Uses cache to track request counts per fingerprint
+ * Service for rate limiting authenticated CLI reviews
+ * Uses cache to track request counts per team
  */
 @Injectable()
-export class TrialRateLimiterService {
-    private readonly logger = createLogger(TrialRateLimiterService.name);
-    private readonly RATE_LIMIT = 2; // 2 requests per window (trial users)
+export class AuthenticatedRateLimiterService {
+    private readonly logger = createLogger(AuthenticatedRateLimiterService.name);
+    private readonly RATE_LIMIT = 1000; // 1000 requests per window for authenticated users
     private readonly WINDOW_MS = 60 * 60 * 1000; // 1 hour
-    private readonly FALLBACK_LIMIT = 1; // More restrictive limit when cache fails
+    private readonly FALLBACK_LIMIT = 100; // More restrictive limit when cache fails
 
     // In-memory fallback for when cache fails
     private fallbackStore: Map<string, number[]> = new Map();
@@ -26,8 +26,8 @@ export class TrialRateLimiterService {
 
     constructor(private readonly cacheService: CacheService) {}
 
-    async checkRateLimit(fingerprint: string): Promise<RateLimitResult> {
-        const key = `cli:trial:ratelimit:${fingerprint}`;
+    async checkRateLimit(teamId: string): Promise<AuthenticatedRateLimitResult> {
+        const key = `cli:auth:ratelimit:${teamId}`;
         const now = Date.now();
         const windowStart = now - this.WINDOW_MS;
 
@@ -64,10 +64,10 @@ export class TrialRateLimiterService {
 
             if (!allowed) {
                 this.logger.warn({
-                    message: 'Rate limit exceeded for trial user',
-                    context: TrialRateLimiterService.name,
+                    message: 'Rate limit exceeded for authenticated team',
+                    context: AuthenticatedRateLimiterService.name,
                     metadata: {
-                        fingerprint,
+                        teamId,
                         count,
                         limit: this.RATE_LIMIT,
                         resetAt: resetAt.toISOString(),
@@ -84,12 +84,12 @@ export class TrialRateLimiterService {
             this.logger.error({
                 message: 'Cache error, using in-memory fallback',
                 error,
-                context: TrialRateLimiterService.name,
-                metadata: { fingerprint },
+                context: AuthenticatedRateLimiterService.name,
+                metadata: { teamId },
             });
 
             // Use in-memory fallback with more restrictive limit
-            return this.checkRateLimitFallback(fingerprint);
+            return this.checkRateLimitFallback(teamId);
         }
     }
 
@@ -97,7 +97,7 @@ export class TrialRateLimiterService {
      * In-memory fallback rate limiter with more restrictive limits
      * Used when cache is unavailable
      */
-    private checkRateLimitFallback(fingerprint: string): RateLimitResult {
+    private checkRateLimitFallback(teamId: string): AuthenticatedRateLimitResult {
         const now = Date.now();
         const windowStart = now - this.WINDOW_MS;
 
@@ -108,14 +108,14 @@ export class TrialRateLimiterService {
         }
 
         // Get or create timestamps array
-        let timestamps = this.fallbackStore.get(fingerprint) || [];
+        let timestamps = this.fallbackStore.get(teamId) || [];
 
         // Filter out old timestamps
         timestamps = timestamps.filter((ts) => ts > windowStart);
 
         // Add current request
         timestamps.push(now);
-        this.fallbackStore.set(fingerprint, timestamps);
+        this.fallbackStore.set(teamId, timestamps);
 
         const count = timestamps.length;
         const allowed = count <= this.FALLBACK_LIMIT;
@@ -128,10 +128,10 @@ export class TrialRateLimiterService {
 
         if (!allowed) {
             this.logger.warn({
-                message: 'Fallback rate limit exceeded',
-                context: TrialRateLimiterService.name,
+                message: 'Fallback rate limit exceeded for authenticated team',
+                context: AuthenticatedRateLimiterService.name,
                 metadata: {
-                    fingerprint,
+                    teamId,
                     count,
                     limit: this.FALLBACK_LIMIT,
                 },
@@ -149,58 +149,13 @@ export class TrialRateLimiterService {
      * Cleanup old entries from fallback store
      */
     private cleanupFallbackStore(windowStart: number): void {
-        for (const [fingerprint, timestamps] of this.fallbackStore.entries()) {
+        for (const [teamId, timestamps] of this.fallbackStore.entries()) {
             const validTimestamps = timestamps.filter((ts) => ts > windowStart);
             if (validTimestamps.length === 0) {
-                this.fallbackStore.delete(fingerprint);
+                this.fallbackStore.delete(teamId);
             } else {
-                this.fallbackStore.set(fingerprint, validTimestamps);
+                this.fallbackStore.set(teamId, validTimestamps);
             }
-        }
-    }
-
-    /**
-     * Get current rate limit status without incrementing
-     */
-    async getRateLimitStatus(fingerprint: string): Promise<RateLimitResult> {
-        const key = `cli:trial:ratelimit:${fingerprint}`;
-        const now = Date.now();
-        const windowStart = now - this.WINDOW_MS;
-
-        try {
-            const timestampsData = await this.cacheService.getFromCache<{
-                timestamps: number[];
-            }>(key);
-
-            let timestamps = timestampsData?.timestamps || [];
-            timestamps = timestamps.filter((ts) => ts > windowStart);
-
-            const count = timestamps.length;
-            const allowed = count < this.RATE_LIMIT;
-            const remaining = Math.max(0, this.RATE_LIMIT - count);
-
-            const oldestTimestamp = timestamps[0];
-            const resetAt = oldestTimestamp
-                ? new Date(oldestTimestamp + this.WINDOW_MS)
-                : undefined;
-
-            return {
-                allowed,
-                remaining,
-                resetAt,
-            };
-        } catch (error) {
-            this.logger.error({
-                message: 'Error getting rate limit status',
-                error,
-                context: TrialRateLimiterService.name,
-                metadata: { fingerprint },
-            });
-
-            return {
-                allowed: true,
-                remaining: this.RATE_LIMIT,
-            };
         }
     }
 }

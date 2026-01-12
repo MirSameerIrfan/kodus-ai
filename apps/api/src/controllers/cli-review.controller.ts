@@ -17,6 +17,7 @@ import {
 } from '../dtos/cli-review.dto';
 import { ExecuteCliReviewUseCase } from '@libs/cli-review/application/use-cases/execute-cli-review.use-case';
 import { TrialRateLimiterService } from '@libs/cli-review/infrastructure/services/trial-rate-limiter.service';
+import { AuthenticatedRateLimiterService } from '@libs/cli-review/infrastructure/services/authenticated-rate-limiter.service';
 import {
     ITeamCliKeyService,
     TEAM_CLI_KEY_SERVICE_TOKEN,
@@ -34,6 +35,7 @@ export class CliReviewController {
     constructor(
         private readonly executeCliReviewUseCase: ExecuteCliReviewUseCase,
         private readonly trialRateLimiter: TrialRateLimiterService,
+        private readonly authenticatedRateLimiter: AuthenticatedRateLimiterService,
         @Inject(TEAM_CLI_KEY_SERVICE_TOKEN)
         private readonly teamCliKeyService: ITeamCliKeyService,
         private readonly permissionValidationService: PermissionValidationService,
@@ -76,44 +78,31 @@ export class CliReviewController {
             },
         });
 
+        const buildInvalidPayload = (error: string) => buildPayload({
+            valid: false,
+            error,
+            team: {
+                id: null,
+                name: '',
+            },
+            organization: {
+                id: null,
+                name: '',
+            },
+            user: {
+                email: '',
+                name: '',
+            },
+        });
+
         if (!key) {
-            return buildPayload({
-                valid: false,
-                error: 'Team API key required. Provide via X-Team-Key or Authorization: Bearer header.',
-                team: {
-                    id: null,
-                    name: '',
-                },
-                organization: {
-                    id: null,
-                    name: '',
-                },
-                user: {
-                    email: '',
-                    name: '',
-                },
-            });
+            return buildInvalidPayload('Team API key required. Provide via X-Team-Key or Authorization: Bearer header.');
         }
 
         const teamData = await this.teamCliKeyService.validateKey(key);
 
         if (!teamData) {
-            return buildPayload({
-                valid: false,
-                error: 'Invalid or revoked team API key',
-                team: {
-                    id: null,
-                    name: '',
-                },
-                organization: {
-                    id: null,
-                    name: '',
-                },
-                user: {
-                    email: '',
-                    name: '',
-                },
-            });
+            return buildInvalidPayload('Invalid or revoked team API key');
         }
 
         const { team, organization } = teamData;
@@ -187,7 +176,24 @@ export class CliReviewController {
             teamId: team.uuid,
         };
 
-        // 3. Validate domain of email (if configured)
+        // 3. Check rate limit for authenticated team
+        const rateLimitResult = await this.authenticatedRateLimiter.checkRateLimit(
+            team.uuid,
+        );
+
+        if (!rateLimitResult.allowed) {
+            throw new HttpException(
+                {
+                    message: 'Rate limit exceeded for this team. Please try again later.',
+                    remaining: rateLimitResult.remaining,
+                    resetAt: rateLimitResult.resetAt?.toISOString(),
+                    limit: 1000,
+                },
+                HttpStatus.TOO_MANY_REQUESTS,
+            );
+        }
+
+        // 4. Validate domain of email (if configured)
         if (body.userEmail) {
             const allowedDomains =
                 (team as any).cliConfig?.allowedDomains || [];
@@ -204,7 +210,7 @@ export class CliReviewController {
                 }
             }
 
-            // 4. Validate/auto-assign license
+            // 5. Validate/auto-assign license
             const validationResult =
                 await this.permissionValidationService.validateExecutionPermissions(
                     organizationAndTeamData,
@@ -242,7 +248,7 @@ export class CliReviewController {
             }
         }
 
-        // 5. Execute review
+        // 6. Execute review
         return this.executeCliReviewUseCase.execute({
             organizationAndTeamData,
             input: {

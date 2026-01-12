@@ -13,12 +13,16 @@ import { UserModel } from '@libs/identity/infrastructure/adapters/repositories/s
 @Entity('team_cli_key')
 @Index('IDX_team_cli_key_team', ['team'], { concurrent: true })
 @Index('IDX_team_cli_key_active', ['active'], { concurrent: true })
+@Index('IDX_team_cli_key_keyPrefix', ['keyPrefix'], { concurrent: true })
 export class TeamCliKeyModel extends CoreModel {
     @Column()
     name: string;
 
     @Column({ unique: true })
     keyHash: string;
+
+    @Column({ length: 16, nullable: true })
+    keyPrefix?: string;
 
     @Column({ default: true })
     active: boolean;

@@ -11,6 +11,7 @@ import { ExecuteCliReviewUseCase } from './application/use-cases/execute-cli-rev
 // Services
 import { CliInputConverter } from './infrastructure/converters/cli-input.converter';
 import { TrialRateLimiterService } from './infrastructure/services/trial-rate-limiter.service';
+import { AuthenticatedRateLimiterService } from './infrastructure/services/authenticated-rate-limiter.service';
 
 // External dependencies
 import { CodeReviewPipelineModule } from '@libs/code-review/pipeline/code-review-pipeline.module';
@@ -47,11 +48,13 @@ import { LicenseModule } from '@libs/ee/license/license.module';
         // Services
         CliInputConverter,
         TrialRateLimiterService,
+        AuthenticatedRateLimiterService,
     ],
     exports: [
         // Export use case and services for controllers
         ExecuteCliReviewUseCase,
         TrialRateLimiterService,
+        AuthenticatedRateLimiterService,
     ],
 })
 export class CliReviewModule {}
