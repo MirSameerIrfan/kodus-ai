@@ -367,7 +367,7 @@ class CodeReviewConfigWithoutLLMProviderDto {
 
     @IsOptional()
     @IsBoolean()
-    enableCommitableSuggestions?: boolean;
+    enableCommittableSuggestions?: boolean;
 }
 
 export class CreateOrUpdateCodeReviewParameterDto {

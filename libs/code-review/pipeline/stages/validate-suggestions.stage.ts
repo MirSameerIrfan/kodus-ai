@@ -47,7 +47,7 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
             platformType,
         } = context;
 
-        if (!codeReviewConfig?.enableCommitableSuggestions) {
+        if (!codeReviewConfig?.enableCommittableSuggestions) {
             this.logger.log({
                 message:
                     'Committable suggestions feature is disabled in the configuration',
@@ -151,7 +151,7 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
 
                     return {
                         ...suggestion,
-                        isCommitable: true,
+                        isCommittable: true,
                         validatedCode: patchedFile.suggestion,
                     };
                 },

@@ -2788,14 +2788,14 @@ ${copyPrompt}
         translations: any,
         suggestionCopyPrompt: boolean,
     ) {
-        const isCommitableSuggestion =
-            lineComment?.suggestion?.isCommitable &&
+        const isCommittableSuggestion =
+            lineComment?.suggestion?.isCommittable &&
             lineComment?.suggestion?.validatedCode;
-        const improvedCode = isCommitableSuggestion
+        const improvedCode = isCommittableSuggestion
             ? lineComment?.suggestion?.validatedCode
             : lineComment?.body?.improvedCode;
 
-        const language = isCommitableSuggestion
+        const language = isCommittableSuggestion
             ? 'suggestion'
             : lineComment?.suggestion?.language?.toLowerCase() ||
               repository?.language?.toLowerCase();
@@ -2825,7 +2825,7 @@ ${copyPrompt}
             ? this.formatPromptForLLM(lineComment)
             : '';
 
-        const experimentalWarning = isCommitableSuggestion
+        const experimentalWarning = isCommittableSuggestion
             ? `
 <details>
 <summary>Warning</summary>
