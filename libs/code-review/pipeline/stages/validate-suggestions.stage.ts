@@ -586,7 +586,10 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
         organizationAndTeamData: OrganizationAndTeamData,
         prNumber: number,
     ): Promise<{ id: string; isValid: boolean }[]> {
-        const result = await this.astAnalysisService.getValidate(taskId);
+        const result = await this.astAnalysisService.getValidate(
+            taskId,
+            organizationAndTeamData,
+        );
 
         if (!result) {
             this.logger.warn({
@@ -691,13 +694,14 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
 
         const resultsSettled = await Promise.allSettled(validationPromises);
 
-        const resultsWithLLM = resultsSettled.map((outcome, index) => {
-            if (outcome.status === 'fulfilled') {
-                if (outcome.value) {
+        const resultsWithLLM = resultsSettled
+            .map((outcome, index) => {
+                if (outcome.status === 'fulfilled') {
                     return outcome.value;
                 }
-            } else {
-                const originalResult = result.results[index];
+
+                const originalResult =
+                    validAstSuggestions[index] || result.results[index];
 
                 this.logger.error({
                     message: `Error during LLM validation for file`,
@@ -711,8 +715,10 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
                         prNumber,
                     },
                 });
-            }
-        });
+
+                return null;
+            })
+            .filter((item): item is { id: string; isValid: boolean } => !!item);
 
         return resultsWithLLM;
     }

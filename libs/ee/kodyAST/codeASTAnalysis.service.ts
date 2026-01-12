@@ -669,7 +669,10 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
         return taskId;
     }
 
-    async getValidate(taskId: string) {
+    async getValidate(
+        taskId: string,
+        organizationAndTeamData?: OrganizationAndTeamData,
+    ) {
         let attempt = 0;
         const maxAttempts = 3;
 
@@ -696,7 +699,7 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
                     message: `Transient error calling getValidate, attempt ${attempt}/${maxAttempts}`,
                     error,
                     context: CodeAstAnalysisService.name,
-                    metadata: { taskId },
+                    metadata: { taskId, organizationAndTeamData },
                 });
 
                 const waitTime = calculateBackoffInterval(attempt, {
