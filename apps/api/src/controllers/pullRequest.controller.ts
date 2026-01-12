@@ -229,7 +229,7 @@ export class PullRequestController {
 
             // Fallback: parse PR number and repo from URL
             const match = prUrl.match(
-                /github\.com\/(.+?)\/(.+?)\/pull\/(\d+)/i,
+                /github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/i,
             );
             if (match) {
                 const repoFullName = `${match[1]}/${match[2]}`;

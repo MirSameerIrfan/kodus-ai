@@ -148,7 +148,7 @@ export class CliInputConverter {
     private removeContextSections(diff: string): string {
         // Remove sections like "=== Cursor Rules ===" etc
         const cleaned = diff.replace(
-            /===\s+.*?\s+===[\s\S]*?(?=(diff --git|$))/g,
+            /^===\s+[^\n]+\s+===[\s\S]*?(?=^diff\s+--git|$)/gm,
             '',
         );
         return cleaned.trim();
