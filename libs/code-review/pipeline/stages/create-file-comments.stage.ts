@@ -216,7 +216,6 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
             repository,
             platformType,
             dryRun,
-            codeValidatedSuggestionsIds,
         } = context;
 
         // Sort and prioritize suggestions
@@ -242,8 +241,6 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
                     ?.lastAnalyzedCommit || null,
                 context.pullRequestMessagesConfig?.globalSettings
                     ?.suggestionCopyPrompt,
-                codeValidatedSuggestionsIds,
-                platformType,
             );
 
         // Save pull request suggestions
@@ -299,8 +296,6 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
         dryRun: CodeReviewPipelineContext['dryRun'],
         lastAnalyzedCommitFromContext: any,
         suggestionCopyPrompt?: boolean,
-        validatedSuggestionIds?: Set<string>,
-        platformType?: PlatformType,
     ) {
         try {
             const lineComments = sortedPrioritizedSuggestions
@@ -310,23 +305,12 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
                         ClusteringType.RELATED,
                 )
                 .map((suggestion) => {
-                    const language =
-                        suggestion?.language || repository?.language;
-                    const suggestionContent = suggestion?.suggestionContent;
-                    const isGitHub = platformType === PlatformType.GITHUB;
-
-                    const isCommitableSuggestion =
-                        isGitHub &&
-                        codeReviewConfig?.suggestionControl
-                            ?.enableCommitableSuggestions &&
-                        validatedSuggestionIds?.has(suggestion.id);
-
                     return {
                         path: suggestion.relevantFile,
                         body: {
-                            language,
+                            language: repository?.language,
                             improvedCode: suggestion?.improvedCode,
-                            suggestionContent,
+                            suggestionContent: suggestion?.suggestionContent,
                             actionStatement:
                                 suggestion?.clusteringInformation
                                     ?.actionStatement || '',
@@ -335,7 +319,6 @@ export class CreateFileCommentsStage extends BasePipelineStage<CodeReviewPipelin
                         line: this.calculateEndLine(suggestion),
                         side: 'RIGHT',
                         suggestion,
-                        isCommitableSuggestion,
                     };
                 });
 

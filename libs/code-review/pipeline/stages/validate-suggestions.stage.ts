@@ -18,6 +18,7 @@ import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/
 import { TaskStatus } from '@libs/ee/kodyAST/interfaces/code-ast-analysis.interface';
 import { applyEdit } from '@morphllm/morphsdk';
 import { Inject, Injectable } from '@nestjs/common';
+import { parsePatch } from 'diff';
 import pLimit from 'p-limit';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 
@@ -27,7 +28,7 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
     private readonly logger = createLogger(ValidateSuggestionsStage.name);
     private readonly concurrencyLimit = 10;
     private readonly MAX_LINES_THRESHOLD = 15;
-    private readonly MAX_CHARS_THRESHOLD = 500;
+    private readonly MAX_CHARS_THRESHOLD = 1000;
 
     constructor(
         @Inject(AST_ANALYSIS_SERVICE_TOKEN)
@@ -39,7 +40,26 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
     protected override async executeStage(
         context: CodeReviewPipelineContext,
     ): Promise<CodeReviewPipelineContext> {
-        const { validSuggestions, changedFiles, platformType } = context;
+        const {
+            codeReviewConfig,
+            validSuggestions,
+            changedFiles,
+            platformType,
+        } = context;
+
+        if (!codeReviewConfig?.enableCommitableSuggestions) {
+            this.logger.log({
+                message:
+                    'Committable suggestions feature is disabled in the configuration',
+                context: ValidateSuggestionsStage.name,
+                metadata: {
+                    organizationAndTeamData: context.organizationAndTeamData,
+                    prNumber: context.pullRequest.number,
+                },
+            });
+
+            return context;
+        }
 
         if (platformType !== PlatformType.GITHUB) {
             this.logger.log({
@@ -51,6 +71,7 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
                     organizationAndTeamData: context.organizationAndTeamData,
                 },
             });
+
             return context;
         }
 
@@ -65,6 +86,7 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
                     changedFilesCount: changedFiles?.length || 0,
                 },
             });
+
             return context;
         }
 
@@ -82,6 +104,7 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
                     prNumber: context.pullRequest.number,
                 },
             });
+
             return context;
         }
 
@@ -101,6 +124,7 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
                     prNumber: context.pullRequest.number,
                 },
             });
+
             return context;
         }
 
@@ -111,13 +135,30 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
                 context.pullRequest.number,
             );
 
+            const updatedSuggestions = context.validSuggestions.map(
+                (suggestion) => {
+                    if (!validSuggestionIds.has(suggestion.id!)) {
+                        return suggestion;
+                    }
+
+                    const patchedFile = patchedFiles.files.find(
+                        (f) => f.id === suggestion.id,
+                    );
+
+                    if (!patchedFile || !patchedFile.suggestion) {
+                        return suggestion;
+                    }
+
+                    return {
+                        ...suggestion,
+                        isCommitable: true,
+                        validatedCode: patchedFile.suggestion,
+                    };
+                },
+            );
+
             return this.updateContext(context, (draft) => {
-                if (!draft.codeValidatedSuggestionsIds) {
-                    draft.codeValidatedSuggestionsIds = new Set<string>();
-                }
-                validSuggestionIds.forEach((id) =>
-                    draft.codeValidatedSuggestionsIds!.add(id),
-                );
+                draft.validSuggestions = updatedSuggestions;
             });
         } catch (error) {
             this.logger.error({
@@ -409,6 +450,7 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
                                     metadata: {
                                         suggestionId: suggestion.id,
                                         filePath,
+                                        result,
                                     },
                                 });
 
@@ -419,11 +461,30 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
                                 result.mergedCode,
                             ).toString('base64');
 
+                            const formattedSuggestion =
+                                this.getFormattedSuggestionFromDiff(
+                                    result.udiff,
+                                );
+
+                            if (!formattedSuggestion) {
+                                this.logger.warn({
+                                    message: `Formatted suggestion is empty after diff processing`,
+                                    context: ValidateSuggestionsStage.name,
+                                    metadata: {
+                                        suggestionId: suggestion.id,
+                                        filePath,
+                                    },
+                                });
+
+                                return null;
+                            }
+
                             return {
                                 id: suggestion.id,
                                 filePath,
                                 encodedData,
                                 diff: result.udiff,
+                                suggestion: formattedSuggestion,
                             };
                         } catch (error) {
                             this.logger.error({
@@ -452,6 +513,24 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
             .map((result) => result.value);
 
         return { files };
+    }
+
+    private getFormattedSuggestionFromDiff(diff: string): string {
+        const parsedDiff = parsePatch(diff);
+
+        const suggestionLines: string[] = [];
+
+        for (const fileDiff of parsedDiff) {
+            for (const hunk of fileDiff.hunks) {
+                for (const line of hunk.lines) {
+                    if (line.startsWith('+') && !line.startsWith('+++')) {
+                        suggestionLines.push(line.slice(1));
+                    }
+                }
+            }
+        }
+
+        return suggestionLines.join('\n');
     }
 
     private async startValidationTask(

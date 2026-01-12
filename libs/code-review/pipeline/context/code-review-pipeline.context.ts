@@ -128,8 +128,6 @@ export interface CodeReviewPipelineContext extends PipelineContext {
     fileContextMap?: Record<string, FileContextAgentResult>;
 
     correlationId: string;
-
-    codeValidatedSuggestionsIds?: Set<string>;
 }
 
 export interface FileContextAgentResult {

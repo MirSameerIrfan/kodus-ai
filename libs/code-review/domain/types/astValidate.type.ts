@@ -60,6 +60,7 @@ export interface ASTValidateCodeItem {
     language?: string;
     filePath: string;
     diff?: string;
+    suggestion?: string;
 }
 
 export interface ASTValidateCodeRequest {

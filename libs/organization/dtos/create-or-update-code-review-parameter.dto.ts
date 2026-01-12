@@ -137,10 +137,6 @@ class SuggestionControlConfigDto {
     @ValidateNested()
     @Type(() => SeverityLimitsDto)
     severityLimits?: SeverityLimitsDto;
-
-    @IsOptional()
-    @IsBoolean()
-    enableCommitableSuggestions?: boolean;
 }
 
 class ReviewCadenceDto {
@@ -368,6 +364,10 @@ class CodeReviewConfigWithoutLLMProviderDto {
     @ValidateNested()
     @Type(() => CustomMessagesDto)
     customMessages?: CustomMessagesDto;
+
+    @IsOptional()
+    @IsBoolean()
+    enableCommitableSuggestions?: boolean;
 }
 
 export class CreateOrUpdateCodeReviewParameterDto {

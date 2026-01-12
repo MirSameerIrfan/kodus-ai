@@ -18,6 +18,7 @@ ignorePaths:
     - '**/*.json'
 ignoredTitleKeywords: []
 baseBranches: []
+enableCommitableSuggestions: false
 
 # review categories
 codeReviewVersion: 'v2' # legacy | v2
@@ -46,7 +47,6 @@ suggestionControl:
     limitationType: 'pr' # file | pr | severity
     maxSuggestions: 9 # min 7, no max
     severityLevelFilter: 'high' # low | medium | high | critical
-    enableCommitableSuggestions: false
     severityLimits: # when limitationType == severity
         low: 0
         medium: 0

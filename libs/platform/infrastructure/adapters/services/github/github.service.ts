@@ -2788,7 +2788,12 @@ ${copyPrompt}
         translations: any,
         suggestionCopyPrompt: boolean,
     ) {
-        const isCommitableSuggestion = lineComment?.isCommitableSuggestion;
+        const isCommitableSuggestion =
+            lineComment?.suggestion?.isCommitable &&
+            lineComment?.suggestion?.validatedCode;
+        const improvedCode = isCommitableSuggestion
+            ? lineComment?.suggestion?.validatedCode
+            : lineComment?.body?.improvedCode;
 
         const language = isCommitableSuggestion
             ? 'suggestion'
@@ -2798,8 +2803,9 @@ ${copyPrompt}
         const severityShield = lineComment?.suggestion
             ? getSeverityLevelShield(lineComment.suggestion.severity)
             : '';
-        const codeBlock = lineComment?.body?.improvedCode
-            ? this.formatCodeBlock(language, lineComment?.body?.improvedCode)
+
+        const codeBlock = improvedCode
+            ? this.formatCodeBlock(language, improvedCode)
             : '';
         const suggestionContent = lineComment?.body?.suggestionContent || '';
         const actionStatement = lineComment?.body?.actionStatement

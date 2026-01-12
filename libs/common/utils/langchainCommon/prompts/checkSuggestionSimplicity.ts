@@ -17,6 +17,7 @@ A suggestion is considered **COMPLEX** (unsafe) if:
 - It introduces new imports that might be missing or conflict.
 - It changes the behavior in a way that requires understanding the broader system architecture.
 - It is a large refactoring.
+- It is not a contiguous block of code (e.g., changes scattered across multiple line ranges).
 
 A suggestion is considered **SIMPLE** (safe) if:
 - It is a local change (e.g., renaming a local variable, fixing a typo, small logic fix within a function).

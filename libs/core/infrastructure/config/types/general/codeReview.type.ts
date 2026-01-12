@@ -191,6 +191,8 @@ export type CodeSuggestion = {
     createdAt?: string;
     updatedAt?: string;
     action?: string;
+    isCommitable?: boolean;
+    validatedCode?: string;
 };
 
 export type FileChange = {
@@ -310,7 +312,6 @@ export interface SuggestionControlConfig {
         high: number;
         critical: number;
     };
-    enableCommitableSuggestions?: boolean;
 }
 
 export type ImplementedSuggestionsToAnalyze = {
@@ -380,6 +381,7 @@ export type CodeReviewConfig = {
     };
     contextReferenceId?: string;
     contextRequirementsHash?: string;
+    enableCommitableSuggestions?: boolean;
     // This is the default branch of the repository, used only during the review process
     // This field is populated dynamically from the API (GitHub/GitLab) and should NOT be saved to the database
     // It represents the repository's default branch (e.g., 'main', 'develop') that comes from the code management platform
