@@ -88,9 +88,6 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
         }
     }
 
-    /**
-     * Process pull request events from GitHub
-     */
     private async handlePullRequest(
         params: IWebhookEventParams,
     ): Promise<void> {
@@ -115,6 +112,8 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
             fullName: payload?.repository?.full_name,
         };
 
+        const userGitId = payload?.sender?.id?.toString();
+
         const validationResult =
             await this.runCodeReviewAutomationUseCase.findTeamWithActiveCodeReview(
                 {
@@ -123,6 +122,9 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
                         name: payload?.repository?.name,
                     },
                     platformType: PlatformType.GITHUB,
+                    userGitId,
+                    prNumber: prNumber,
+                    triggerCommentId: payload?.comment?.id,
                 },
             );
 
@@ -162,6 +164,7 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
                             !!validationResult?.organizationAndTeamData,
                         prNumber,
                         repositoryId: repository.id,
+                        userGitId,
                     },
                 });
             }
@@ -338,6 +341,7 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
                             metadata: {
                                 repository,
                                 prNumber: payload.issue.number,
+                                userGitId,
                             },
                         });
                         return;

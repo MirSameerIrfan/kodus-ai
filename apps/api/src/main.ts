@@ -6,6 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as bodyParser from 'body-parser';
+import * as compression from 'compression';
 import { useContainer } from 'class-validator';
 import expressRateLimit from 'express-rate-limit';
 import helmet from 'helmet';
@@ -66,6 +67,22 @@ async function bootstrap() {
         app.use(volleyball);
         app.use(helmet());
         app.use(
+            compression({
+                filter: (req, res) => {
+                    if (req.headers['x-no-compression']) {
+                        return false;
+                    }
+                    if (
+                        res.getHeader('Content-Type') === 'text/event-stream' ||
+                        req.url.includes('/events/')
+                    ) {
+                        return false;
+                    }
+                    return compression.filter(req, res);
+                },
+            }),
+        );
+        app.use(
             expressRateLimit({
                 windowMs: rateLimit.rateInterval,
                 max: rateLimit.rateMaxRequest,
@@ -92,8 +109,9 @@ async function bootstrap() {
             });
         });
 
-        app.use(bodyParser.urlencoded({ extended: true }));
-        app.set('trust proxy', '127.0.0.1');
+        app.use(bodyParser.json({ limit: '25mb' }));
+        app.use(bodyParser.urlencoded({ limit: '25mb', extended: true }));
+        app.set('trust proxy', 1);
         app.useStaticAssets('static');
         useContainer(app.select(ApiModule), { fallbackOnErrors: true });
 

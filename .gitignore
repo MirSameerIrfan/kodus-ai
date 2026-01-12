@@ -107,3 +107,6 @@ specs
 .cursor
 .specify
 .build_cache
+
+# ESLint Cache
+.eslintcache

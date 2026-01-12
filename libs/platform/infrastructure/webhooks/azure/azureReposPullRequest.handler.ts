@@ -13,11 +13,11 @@ import {
     IWebhookEventParams,
 } from '@libs/platform/domain/platformIntegrations/interfaces/webhook-event-handler.interface';
 import { CodeManagementService } from '../../adapters/services/codeManagement.service';
-import { getMappedPlatform } from '@libs/common/utils/webhooks';
 import { RunCodeReviewAutomationUseCase } from '@libs/ee/automation/runCodeReview.use-case';
 import { SavePullRequestUseCase } from '@libs/platformData/application/use-cases/pullRequests/save.use-case';
 import { PullRequestClosedEvent } from '@libs/core/domain/events/pull-request-closed.event';
 import { EnqueueCodeReviewJobUseCase } from '@libs/core/workflow/application/use-cases/enqueue-code-review-job.use-case';
+import { getMappedPlatform } from '@libs/common/utils/webhooks';
 
 @Injectable()
 export class AzureReposPullRequestHandler implements IWebhookEventHandler {
@@ -114,6 +114,15 @@ export class AzureReposPullRequestHandler implements IWebhookEventHandler {
             fullName: params?.payload?.resource?.repository?.name,
         } as any;
 
+        const mappedPlatform = getMappedPlatform(PlatformType.AZURE_REPOS);
+        if (!mappedPlatform) {
+            return;
+        }
+
+        const mappedUsers = mappedPlatform.mapUsers({
+            payload: params.payload,
+        });
+
         const orgData =
             await this.runCodeReviewAutomationUseCase.findTeamWithActiveCodeReview(
                 {
@@ -122,6 +131,10 @@ export class AzureReposPullRequestHandler implements IWebhookEventHandler {
                         name: repository.name,
                     },
                     platformType: PlatformType.AZURE_REPOS,
+                    userGitId:
+                        mappedUsers?.user?.descriptor?.toString() ||
+                        mappedUsers?.user?.id?.toString() ||
+                        mappedUsers?.user?.uuid?.toString(),
                     triggerCommentId: params.payload?.resource?.comment?.id,
                 },
             );
@@ -288,6 +301,16 @@ export class AzureReposPullRequestHandler implements IWebhookEventHandler {
                 payload?.resource?.pullRequest?.repository?.name ||
                 payload?.resource?.repository?.name,
         } as any;
+
+        const mappedPlatform = getMappedPlatform(PlatformType.AZURE_REPOS);
+        if (!mappedPlatform) {
+            return;
+        }
+
+        const mappedUsers = mappedPlatform.mapUsers({
+            payload: params.payload,
+        });
+
         const orgData =
             await this.runCodeReviewAutomationUseCase.findTeamWithActiveCodeReview(
                 {
@@ -295,6 +318,10 @@ export class AzureReposPullRequestHandler implements IWebhookEventHandler {
                         id: repository.id,
                         name: repository.name,
                     },
+                    userGitId:
+                        mappedUsers?.user?.descriptor?.toString() ||
+                        mappedUsers?.user?.id?.toString() ||
+                        mappedUsers?.user?.uuid?.toString(),
                     platformType: PlatformType.AZURE_REPOS,
                     triggerCommentId: payload?.resource?.comment?.id,
                 },
@@ -321,8 +348,6 @@ export class AzureReposPullRequestHandler implements IWebhookEventHandler {
                 });
                 return;
             }
-
-            const mappedPlatform = getMappedPlatform(PlatformType.AZURE_REPOS);
 
             if (!mappedPlatform) {
                 this.logger.error({
