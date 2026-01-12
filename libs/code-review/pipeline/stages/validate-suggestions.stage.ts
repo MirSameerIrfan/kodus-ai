@@ -515,18 +515,40 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
         return { files };
     }
 
-    private getFormattedSuggestionFromDiff(diff: string): string {
+    private getFormattedSuggestionFromDiff(diff: string): string | null {
         const parsedDiff = parsePatch(diff);
+
+        if (parsedDiff.length !== 1) {
+            this.logger.warn({
+                message:
+                    'Suggestion diff affects multiple files, marking as complex.',
+                context: ValidateSuggestionsStage.name,
+                metadata: { diff },
+            });
+
+            return null;
+        }
+
+        const fileDiff = parsedDiff[0];
+
+        if (fileDiff.hunks.length !== 1) {
+            this.logger.warn({
+                message:
+                    'Suggestion contains multiple hunks, marking as complex.',
+                context: ValidateSuggestionsStage.name,
+                metadata: { diff },
+            });
+
+            return null;
+        }
+
+        const hunk = fileDiff.hunks[0];
 
         const suggestionLines: string[] = [];
 
-        for (const fileDiff of parsedDiff) {
-            for (const hunk of fileDiff.hunks) {
-                for (const line of hunk.lines) {
-                    if (line.startsWith('+') && !line.startsWith('+++')) {
-                        suggestionLines.push(line.slice(1));
-                    }
-                }
+        for (const line of hunk.lines) {
+            if (line.startsWith('+') && !line.startsWith('+++')) {
+                suggestionLines.push(line.slice(1));
             }
         }
 
