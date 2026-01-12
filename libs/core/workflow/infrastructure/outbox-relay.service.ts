@@ -153,19 +153,19 @@ export class OutboxRelayService
      * Returns the number of successfully processed messages (for adaptive polling).
      */
     async processOutbox(): Promise<number> {
+        // Claim a batch of messages atomically
+        const messages = await this.outboxRepository.claimBatch(
+            this.BATCH_SIZE,
+            this.instanceId,
+        );
+
+        if (messages.length === 0) {
+            return 0;
+        }
+
         return await this.observability.runInSpan(
             'workflow.outbox.relay',
             async (span) => {
-                // Claim a batch of messages atomically
-                const messages = await this.outboxRepository.claimBatch(
-                    this.BATCH_SIZE,
-                    this.instanceId,
-                );
-
-                if (messages.length === 0) {
-                    return 0;
-                }
-
                 this.logger.log({
                     message: 'Processing outbox batch',
                     context: OutboxRelayService.name,

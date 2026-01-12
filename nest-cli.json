@@ -9,7 +9,7 @@
         "webpack": true,
         "watchAssets": true,
         "watchOptions": {
-            "poll": 1000
+            "poll": false
         }
     },
     "projects": {

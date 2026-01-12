@@ -1,4 +1,4 @@
-name: QA (GitOps) - Build/Push images + PR (deploy & promote)
+name: QA (GitOps) - Build/Push images + PR (deploy)
 
 on:
     push:
@@ -103,9 +103,9 @@ jobs:
             - name: Build, tag, and push (api/webhooks/worker)
               env:
                   ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-                  API_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}
-                  WEBHOOKS_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}
-                  WORKER_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}
+                  API_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}
+                  WEBHOOKS_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}
+                  WORKER_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}
               run: |
                   set -euo pipefail
 
@@ -137,7 +137,7 @@ jobs:
                   token: ${{ steps.infra_token.outputs.token }}
                   path: infra
 
-            - name: Update tfvars (deploy to idle side)
+            - name: Update tfvars (Deploy new images)
               env:
                   ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
               run: |
@@ -146,61 +146,8 @@ jobs:
                   API_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}"
                   WEBHOOKS_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}"
                   WORKER_IMAGE="$ECR_REGISTRY/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}"
-                  DESIRED_COUNT=1
 
-                  # Deploy to idle side (auto detects Blue/Green)
-                  # Obs: script atualizado no repo infra deve remover a trava de segurança para QA
-                  ./infra/scripts/gitops/update-tfvars-deploy.sh "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE" "$DESIRED_COUNT"
-
-            - name: Update tfvars (shift traffic & cleanup)
-              run: |
-                  set -euo pipefail
-                  FILE="infra/${{ env.INFRA_TFVARS_PATH }}"
-
-                  # Promotes to 100% traffic AND cleans up old side (Atomic QA deploy)
-                  node -e "
-                    const fs = require('fs');
-                    const file = process.argv[1];
-                    const obj = JSON.parse(fs.readFileSync(file, 'utf8'));
-
-                    // Detects current active side (prioritizes active_side, fallback to weights)
-                    let currentActive = 'blue';
-                    if (obj.api_active_side) {
-                      currentActive = obj.api_active_side;
-                    } else if (obj.api_green_weight === 100) {
-                      currentActive = 'green';
-                    }
-
-                    const newActive = currentActive === 'blue' ? 'green' : 'blue';
-
-                    console.log('>>> Atomic QA Action:');
-                    console.log('    1. Shift Traffic: ' + currentActive.toUpperCase() + ' -> ' + newActive.toUpperCase());
-                    console.log('    2. Cleanup Old Side: ' + currentActive.toUpperCase() + ' -> 0');
-
-                    // 1. Shift Logic (SWAP)
-                    obj.api_active_side = newActive;
-                    obj.webhook_active_side = newActive;
-
-                    // 2. Cleanup Logic (Kill old side)
-                    if (currentActive === 'green') {
-                        // Green was active (now inactive) -> Kill Green
-                        obj.api_green_desired_count = 0;
-                        obj.webhook_green_desired_count = 0;
-                    } else {
-                        // Blue was active (now inactive) -> Kill Blue
-                        obj.api_desired_count = 0;
-                        obj.webhook_desired_count = 0;
-                    }
-
-                    // Remove legacy weights if present
-                    delete obj.api_green_weight;
-                    delete obj.api_blue_weight;
-                    delete obj.webhook_green_weight;
-                    delete obj.webhook_blue_weight;
-
-                    fs.writeFileSync(file, JSON.stringify(obj, null, 2) + '\n');
-                    console.log('✅ Traffic shifted and old side marked for cleanup.');
-                  " "$FILE"
+                  ./scripts/gitops/update-tfvars-deploy.sh "$FILE" "$API_IMAGE" "$WEBHOOKS_IMAGE" "$WORKER_IMAGE"
 
             - name: Verify infra changes scope
               run: |
@@ -212,42 +159,24 @@ jobs:
                   if [ "$changed" != "${{ env.INFRA_TFVARS_PATH }}" ]; then
                     echo "Unexpected changed file: $changed"; exit 1; fi
 
-            - name: Create PR on infra (QA deploy & promote)
+            - name: Create PR on infra (QA Deploy)
               uses: peter-evans/create-pull-request@v7
               with:
                   token: ${{ steps.infra_token.outputs.token }}
                   path: infra
                   branch: ci/qa-${{ env.IMAGE_TAG }}
                   base: ${{ env.INFRA_BASE_BRANCH }}
-                  title: "QA: deploy & promote (${{ env.IMAGE_TAG }})"
-                  body: |
-                      **QA Environment: Deploy + Traffic Shift**
-
-                      Deploys new images to idle side, promotes to 100% traffic, and cleans up the old side.
-
-                      - **Tag**: `${{ env.IMAGE_TAG }}`
-                      - **Branch**: `${{ env.INFRA_BASE_BRANCH }}`
-
-                      This PR will be auto-applied by Atlantis.
-                  commit-message: "qa: deploy & promote ${{ env.IMAGE_TAG }}"
+                  title: "QA: deploy (${{ env.IMAGE_TAG }})"
                   labels: auto-apply
+                  commit-message: "qa: deploy ${{ env.IMAGE_TAG }}"
+                  body: |
+                      ## 🚀 QA Deployment (ECS Blue/Green nativo)
+                      Updating images to `${{ env.IMAGE_TAG }}`.
 
-            - name: Notify Discord (success)
-              if: env.DISCORD_WEBHOOK
-              uses: sarisia/actions-status-discord@v1.13.0
-              env:
-                  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-              with:
-                  status: success
-                  content: "✅ QA build + infra PR created\nTag: `${{ env.IMAGE_TAG }}`\nInfra branch: `${{ env.INFRA_BASE_BRANCH }}`"
-                  username: "GitHub Actions (QA)"
-
-            - name: Notify Discord (failure)
-              if: failure() && env.DISCORD_WEBHOOK
-              uses: sarisia/actions-status-discord@v1.13.0
-              env:
-                  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-              with:
-                  status: failure
-                  content: "❌ QA pipeline failed (build/infra PR)\nTag: `${{ env.IMAGE_TAG }}`\nInfra branch: `${{ env.INFRA_BASE_BRANCH }}`"
-                  username: "GitHub Actions (QA)"
+                      ## 🛠 Atlantis Commands
+                      ```bash
+                      atlantis plan -p aws-qa-app-services-ecs-ec2
+                      ```
+                      ```bash
+                      atlantis apply -p aws-qa-app-services-ecs-ec2
+                      ```

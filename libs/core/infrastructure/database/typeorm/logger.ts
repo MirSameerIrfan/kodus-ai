@@ -4,7 +4,13 @@ import { createLogger } from '@kodus/flow';
 export class TypeOrmCustomLogger implements ITypeORMLogger {
     private readonly logger = createLogger('TypeORM');
 
+    constructor(private readonly logQueries: boolean = true) {}
+
     logQuery(query: string, parameters?: any[]) {
+        if (!this.logQueries) {
+            return;
+        }
+
         // Debug level for standard queries to avoid log spam in production
         // Only enabled if API_LOG_LEVEL=debug
         this.logger.debug({

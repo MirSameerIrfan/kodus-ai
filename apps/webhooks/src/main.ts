@@ -102,8 +102,9 @@ async function bootstrap() {
             });
         });
 
-        app.use(bodyParser.urlencoded({ extended: true }));
-        app.set('trust proxy', '127.0.0.1');
+        app.use(bodyParser.json({ limit: '25mb' }));
+        app.use(bodyParser.urlencoded({ limit: '25mb', extended: true }));
+        app.set('trust proxy', 1);
 
         app.enableShutdownHooks();
 

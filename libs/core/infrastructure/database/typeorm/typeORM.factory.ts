@@ -62,7 +62,7 @@ export class TypeORMFactory implements TypeOrmOptionsFactory {
             migrationsTableName: 'migrations',
             synchronize: false,
             logging: !isProduction, // Can be overridden by logger
-            logger: new TypeOrmCustomLogger(),
+            logger: new TypeOrmCustomLogger(!isProduction),
             maxQueryExecutionTime: 3000, // Logs slow queries > 3000ms
             ssl: isProduction,
             extra: {

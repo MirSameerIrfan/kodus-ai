@@ -93,7 +93,7 @@ jobs:
 
             - name: Get infra repo token (GitHub App)
               id: infra_token
-              uses: actions/create-github-app-token@5d869da34e18e7287c1daad50e0b8ea0f506ce69 # v1.11.0
+              uses: actions/create-github-app-token@v1.11.0
               with:
                   app-id: ${{ vars.INFRA_GITHUB_APP_ID }}
                   private-key: ${{ secrets.INFRA_GITHUB_APP_PRIVATE_KEY }}
@@ -132,9 +132,9 @@ jobs:
             - name: Build, tag, and push (api/webhooks/worker)
               env:
                   ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-                  API_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}
-                  WEBHOOKS_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}
-                  WORKER_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}
+                  API_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_API }}:${{ env.IMAGE_TAG }}
+                  WEBHOOKS_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_WEBHOOKS }}:${{ env.IMAGE_TAG }}
+                  WORKER_TAGS: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_WORKER }}:${{ env.IMAGE_TAG }}
               run: |
                   set -euo pipefail
 
@@ -154,7 +154,7 @@ jobs:
                   token: ${{ steps.infra_token.outputs.token }}
                   path: infra
 
-            - name: Update tfvars (deploy to idle side)
+            - name: Update tfvars (Deploy new images)
               env:
                   ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
               run: |
@@ -187,7 +187,7 @@ jobs:
                     exit 1
                   fi
 
-            - name: Create PR (Step 1 Deploy)
+            - name: Create PR (Deploy)
               id: create_pr
               uses: peter-evans/create-pull-request@v7
               with:
@@ -195,32 +195,26 @@ jobs:
                   path: infra
                   branch: deploy/prod-${{ env.IMAGE_TAG }}
                   base: ${{ env.INFRA_BASE_BRANCH }}
-                  title: PROD Deploy (Step 1/3) - New version ${{ env.IMAGE_TAG }}
-                  commit-message: prod deploy v${{ env.IMAGE_TAG }} to idle side (step 1/3)
+                  title: "PROD Deploy: New version ${{ env.IMAGE_TAG }}"
+                  commit-message: "prod: deploy v${{ env.IMAGE_TAG }}"
                   body: |
-                      ## 🚀 Blue/Green Deployment - Step 1: DEPLOY
+                      ## 🚀 PROD Deployment (ECS Blue/Green nativo)
+                      Updating images to `${{ env.IMAGE_TAG }}`.
 
-                      **Version:** `${{ env.IMAGE_TAG }}`
-                      **Target:** Idle environment (no traffic yet)
+                      ## 🛠 Atlantis Commands
+                      ```bash
+                      atlantis plan -p aws-prod-app-services-ecs-ec2
+                      ```
+                      ```bash
+                      atlantis apply -p aws-prod-app-services-ecs-ec2
+                      ```
 
-                      ### Changes:
-                      - ✅ New images deployed to idle side
-                      - ✅ Cluster scaled to 8 instances
-                      - ⚠️ **Weights unchanged** (no traffic shift yet)
+                      ✅ O ECS faz o shift automaticamente apos health checks.
 
-                      ### Next Steps:
-                      1. **Review and Apply** this PR via Atlantis: `atlantis apply -p aws-prod-app-services-ecs-ec2`
-                      2. **Validate** the new environment is healthy:
-                         - Check ECS console (tasks should be 2/2 or 3/3)
-                         - Run: `./scripts/aws/debug/status-report.sh`
-                         - Check logs: `./scripts/aws/debug/tail-logs.sh prod api`
-                      3. **Go to `kodus-infra` repo** → Actions → Run "PROD - Shift Traffic" (Step 2)
-
-                      ### Rollback:
-                      If deploy fails, just close this PR. No impact on production.
+                      ## 🔙 Rollback
+                      Reverter este PR e aplicar via Atlantis.
 
                       ---
-                      *Automated deploy from kodus-ai release `${{ env.IMAGE_TAG }}`*
                       *Triggered by: @${{ github.actor }}*
 
             - name: Notify Discord (Deploy PR Created)
@@ -232,13 +226,13 @@ jobs:
                     curl -H "Content-Type: application/json" -X POST "$DISCORD_WEBHOOK" -d '{
                       "embeds": [{
                         "title": "🚀 PROD: New Deploy Ready",
-                        "description": "New version **v${{ env.IMAGE_TAG }}** deployed to idle environment",
+                        "description": "New version **v${{ env.IMAGE_TAG }}** ready for ECS Blue/Green",
                         "color": 5763719,
                         "fields": [
                           {"name": "Version", "value": "`${{ env.IMAGE_TAG }}`", "inline": true},
                           {"name": "Triggered by", "value": "@${{ github.actor }}", "inline": true},
                           {"name": "PR", "value": "[#${{ steps.create_pr.outputs.pull-request-number }}](${{ steps.create_pr.outputs.pull-request-url }})", "inline": false},
-                          {"name": "Next Steps", "value": "1. Review and apply PR via Atlantis\n2. Validate health (ECS, logs, metrics)\n3. Run **Shift Traffic** workflow in kodus-infra", "inline": false}
+                          {"name": "Next Steps", "value": "1. Review and apply PR via Atlantis\n2. Validate health\n3. ECS will shift traffic automatically", "inline": false}
                         ],
                         "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%S.000Z)'"
                       }]

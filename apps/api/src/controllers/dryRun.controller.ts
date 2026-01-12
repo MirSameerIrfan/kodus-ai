@@ -4,12 +4,15 @@ import {
     Controller,
     Get,
     Inject,
+    OnApplicationShutdown,
     Param,
     Post,
     Query,
     Sse,
     UseGuards,
 } from '@nestjs/common';
+import { interval, merge, Subject } from 'rxjs';
+import { map, takeUntil } from 'rxjs/operators';
 import { ExecuteDryRunDto } from '../dtos/execute-dry-run.dto';
 import { ExecuteDryRunUseCase } from '@libs/dryRun/application/use-cases/execute-dry-run.use-case';
 import { SseDryRunUseCase } from '@libs/dryRun/application/use-cases/sse-dry-run.use-case';
@@ -32,7 +35,9 @@ import {
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
 
 @Controller('dry-run')
-export class DryRunController {
+export class DryRunController implements OnApplicationShutdown {
+    private readonly shutdown$ = new Subject<void>();
+
     constructor(
         private readonly executeDryRunUseCase: ExecuteDryRunUseCase,
         private readonly getStatusDryRunUseCase: GetStatusDryRunUseCase,
@@ -43,6 +48,11 @@ export class DryRunController {
         @Inject(REQUEST)
         private readonly request: UserRequest,
     ) {}
+
+    onApplicationShutdown() {
+        this.shutdown$.next();
+        this.shutdown$.complete();
+    }
 
     @Post('execute')
     @UseGuards(PolicyGuard)
@@ -124,13 +134,19 @@ export class DryRunController {
             );
         }
 
-        return this.sseDryRunUseCase.execute({
+        const stream$ = this.sseDryRunUseCase.execute({
             correlationId,
             organizationAndTeamData: {
                 teamId,
                 organizationId: this.request.user.organization.uuid,
             },
         });
+
+        const heartbeat$ = interval(15000).pipe(
+            map(() => ({ type: 'ping', data: 'heartbeat' })),
+        );
+
+        return merge(stream$, heartbeat$).pipe(takeUntil(this.shutdown$));
     }
 
     @Get('')

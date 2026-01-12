@@ -26,7 +26,11 @@ import {
     isFileMatchingGlob,
     isFileMatchingGlobCaseInsensitive,
 } from '@libs/common/utils/glob-utils';
-import { extractRepoData, extractRepoNames } from '@libs/common/utils/helpers';
+import {
+    extractRepoData,
+    extractRepoName,
+    extractRepoNames,
+} from '@libs/common/utils/helpers';
 import {
     getTranslationsForLanguageByCategory,
     TranslationsCategory,
@@ -3596,9 +3600,12 @@ This is an experimental feature that generates committable changes. Review the d
 
             const octokit = await this.instanceOctokit(organizationAndTeamData);
 
+            // Defensive: extract repo name in case fullName (owner/name) is passed
+            const repoName = extractRepoName(repository.name);
+
             const response = await octokit.issues.createComment({
                 owner: githubAuthDetail?.org,
-                repo: repository.name,
+                repo: repoName,
                 issue_number: prNumber,
                 body,
             });
@@ -3630,9 +3637,12 @@ This is an experimental feature that generates committable changes. Review the d
 
             const owner = await this.getCorrectOwner(githubAuthDetail, octokit);
 
+            // Defensive: extract repo name in case fullName (owner/name) is passed
+            const repoName = extractRepoName(repository?.name);
+
             await octokit.issues.updateComment({
                 owner,
-                repo: repository?.name,
+                repo: repoName,
                 comment_id: commentId,
                 body,
             });
