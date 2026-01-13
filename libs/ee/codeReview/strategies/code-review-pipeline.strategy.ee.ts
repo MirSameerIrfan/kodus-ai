@@ -29,6 +29,8 @@ import { ProcessFilesPrLevelReviewStage } from '@libs/code-review/pipeline/stage
 import { ValidateNewCommitsStage } from '@libs/code-review/pipeline/stages/validate-new-commits.stage';
 import { ResolveConfigStage } from '@libs/code-review/pipeline/stages/resolve-config.stage';
 import { FileContextGateStage } from '@libs/code-review/pipeline/stages/file-context-gate.stage';
+import { CreateGithubCheckStage } from '@libs/code-review/pipeline/stages/create-github-check.stage';
+import { FinalizeGithubCheckStage } from '@libs/code-review/pipeline/stages/finalize-github-check.stage';
 
 @Injectable()
 export class CodeReviewPipelineStrategyEE implements IPipelineStrategy<CodeReviewPipelineContext> {
@@ -51,6 +53,8 @@ export class CodeReviewPipelineStrategyEE implements IPipelineStrategy<CodeRevie
         private readonly aggregateResultsStage: AggregateResultsStage,
         private readonly updateCommentsAndGenerateSummaryStage: UpdateCommentsAndGenerateSummaryStage,
         private readonly requestChangesOrApproveStage: RequestChangesOrApproveStage,
+        private readonly createGithubCheckStage: CreateGithubCheckStage,
+        private readonly finalizeGithubCheckStage: FinalizeGithubCheckStage,
     ) {}
 
     getPipelineName(): string {
@@ -62,6 +66,7 @@ export class CodeReviewPipelineStrategyEE implements IPipelineStrategy<CodeRevie
             this.validateNewCommitsStage,
             this.resolveConfigStage,
             this.validateConfigStage,
+            this.createGithubCheckStage,
             this.fetchChangedFilesStage,
             this.loadExternalContextStage,
             this.fileContextGateStage,
@@ -76,6 +81,7 @@ export class CodeReviewPipelineStrategyEE implements IPipelineStrategy<CodeRevie
             this.aggregateResultsStage,
             this.updateCommentsAndGenerateSummaryStage,
             this.requestChangesOrApproveStage,
+            this.finalizeGithubCheckStage,
         ];
     }
 }

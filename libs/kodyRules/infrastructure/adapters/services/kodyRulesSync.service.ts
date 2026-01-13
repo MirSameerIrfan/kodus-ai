@@ -1495,8 +1495,8 @@ export class KodyRulesSyncService {
                 params.organizationAndTeamData,
             );
 
-        const mainProvider = LLMModelProvider.GROQ_MOONSHOTAI_KIMI_K2_;
-        const mainFallback = LLMModelProvider.GROQ_GPT_OSS_120B;
+        const mainProvider = LLMModelProvider.CEREBRAS_GLM_47;
+        const mainFallback = LLMModelProvider.GROQ_MOONSHOTAI_KIMI_K2_;
         const mainRun = 'kodyRulesFilesToRulesFastBatch';
 
         const promptRunner = new BYOKPromptRunnerService(
@@ -1662,8 +1662,8 @@ export class KodyRulesSyncService {
                 params.organizationAndTeamData,
             );
 
-        const mainProvider = LLMModelProvider.GROQ_MOONSHOTAI_KIMI_K2_;
-        const mainFallback = LLMModelProvider.GROQ_GPT_OSS_120B;
+        const mainProvider = LLMModelProvider.CEREBRAS_GLM_47;
+        const mainFallback = LLMModelProvider.GROQ_MOONSHOTAI_KIMI_K2_;
         const mainRun = 'kodyRulesManifestsToRulesFastBatch';
 
         const promptRunner = new BYOKPromptRunnerService(

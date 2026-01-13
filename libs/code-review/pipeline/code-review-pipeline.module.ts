@@ -15,6 +15,8 @@ import { CreateFileCommentsStage } from './stages/create-file-comments.stage';
 import { AggregateResultsStage } from './stages/aggregate-result.stage';
 import { UpdateCommentsAndGenerateSummaryStage } from './stages/finish-comments.stage';
 import { RequestChangesOrApproveStage } from './stages/finish-process-review.stage';
+import { CreateGithubCheckStage } from './stages/create-github-check.stage';
+import { FinalizeGithubCheckStage } from './stages/finalize-github-check.stage';
 
 // EE Stages
 
@@ -40,6 +42,8 @@ import { PlatformModule } from '@libs/platform/modules/platform.module';
 import { KodyASTAnalyzeContextModule } from '@libs/ee/kodyASTAnalyze/kodyAstAnalyzeContext.module';
 import { KodyASTModule } from '@libs/ee/kodyAST/kodyAST.module';
 import { AutomationModule } from '@libs/automation/modules/automation.module';
+import { GithubChecksService } from '@libs/platform/infrastructure/adapters/services/github/github-checks.service';
+import { GithubModule } from '@libs/platform/modules/github.module';
 
 @Module({
     imports: [
@@ -55,6 +59,7 @@ import { AutomationModule } from '@libs/automation/modules/automation.module';
         forwardRef(() => KodyASTAnalyzeContextModule),
         forwardRef(() => KodyASTModule),
         forwardRef(() => AutomationModule),
+        forwardRef(() => GithubModule),
         WorkflowCoreModule,
         DryRunCoreModule,
     ],
@@ -90,6 +95,11 @@ import { AutomationModule } from '@libs/automation/modules/automation.module';
         KodyFineTuningStage,
         CodeAnalysisASTStage,
         CodeAnalysisASTCleanupStage,
+
+        // For GitHub Checks
+        GithubChecksService,
+        CreateGithubCheckStage,
+        FinalizeGithubCheckStage,
     ],
     exports: [
         CodeReviewPipelineStrategyEE,
@@ -109,6 +119,8 @@ import { AutomationModule } from '@libs/automation/modules/automation.module';
         AggregateResultsStage,
         LoadExternalContextStage,
         LOAD_EXTERNAL_CONTEXT_STAGE_TOKEN,
+        CreateGithubCheckStage,
+        FinalizeGithubCheckStage,
     ],
 })
 export class CodeReviewPipelineModule {}

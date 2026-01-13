@@ -188,36 +188,41 @@ export class RunCodeReviewAutomationUseCase implements IUseCase {
                 }
 
                 // adjust it so it looks like the output from mapped platform
+                const apiPullRequest = pullRequestData;
                 pullRequestData = {
-                    ...pullRequestData,
+                    ...apiPullRequest,
                     repository: {
                         id: repository.id,
                         name: repository.name,
                     },
                     head: {
-                        ref: pullRequestData?.head?.ref,
+                        ref: apiPullRequest?.head?.ref,
+                        sha: apiPullRequest?.head?.sha,
                         repo: {
-                            fullName: pullRequestData?.head?.repo?.fullName,
+                            fullName:
+                                apiPullRequest?.head?.repo?.fullName,
                         },
                     },
                     base: {
-                        ref: pullRequestData?.base?.ref,
+                        ref: apiPullRequest?.base?.ref,
+                        sha: apiPullRequest?.base?.sha,
                         repo: {
-                            fullName: pullRequestData?.base?.repo?.fullName,
+                            fullName:
+                                apiPullRequest?.base?.repo?.fullName,
                             defaultBranch:
-                                pullRequestData?.base?.repo?.defaultBranch,
+                                apiPullRequest?.base?.repo?.defaultBranch,
                         },
                     },
-                    title: pullRequestData?.title,
-                    body: pullRequestData?.body,
+                    title: apiPullRequest?.title,
+                    body: apiPullRequest?.body,
                     user: {
-                        id: pullRequestData?.user?.id,
-                        login: pullRequestData?.user?.login,
-                        name: pullRequestData?.user?.name,
+                        id: apiPullRequest?.user?.id,
+                        login: apiPullRequest?.user?.login,
+                        name: apiPullRequest?.user?.name,
                     },
                     isDraft:
-                        pullRequestData?.isDraft ??
-                        pullRequestData?.draft ??
+                        apiPullRequest?.isDraft ??
+                        apiPullRequest?.draft ??
                         false,
                 };
             }
