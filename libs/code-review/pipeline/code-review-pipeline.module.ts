@@ -119,6 +119,8 @@ import { GithubModule } from '@libs/platform/modules/github.module';
         AggregateResultsStage,
         LoadExternalContextStage,
         LOAD_EXTERNAL_CONTEXT_STAGE_TOKEN,
+        CreateGithubCheckStage,
+        FinalizeGithubCheckStage,
     ],
 })
-export class CodeReviewPipelineModule { }
+export class CodeReviewPipelineModule {}

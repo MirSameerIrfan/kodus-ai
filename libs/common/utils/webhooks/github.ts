@@ -38,6 +38,19 @@ export class GithubMappedPlatform implements IMappedPlatform {
         }
 
         const { payload } = params;
+        const rawPullRequest = payload?.pull_request as any;
+        const headRepoFullName =
+            payload?.pull_request?.head?.repo?.full_name ||
+            rawPullRequest?.head?.repo?.fullName ||
+            '';
+        const baseRepoFullName =
+            payload?.pull_request?.base?.repo?.full_name ||
+            rawPullRequest?.base?.repo?.fullName ||
+            '';
+        const headSha =
+            payload?.pull_request?.head?.sha ??
+            rawPullRequest?.head?.commit?.sha ??
+            rawPullRequest?.headSha;
 
         return {
             ...payload?.pull_request,
@@ -46,17 +59,20 @@ export class GithubMappedPlatform implements IMappedPlatform {
             body: payload?.pull_request?.body,
             number: payload?.pull_request?.number,
             user: payload?.pull_request?.user,
-            url: payload?.pull_request?.html_url,
+            url:
+                payload?.pull_request?.html_url ||
+                rawPullRequest?.prURL ||
+                payload?.pull_request?.url,
             head: {
                 repo: {
-                    fullName: payload?.pull_request?.head?.repo?.full_name,
+                    fullName: headRepoFullName,
                 },
                 ref: payload?.pull_request?.head?.ref,
-                sha: payload?.pull_request?.head?.sha,
+                sha: headSha,
             },
             base: {
                 repo: {
-                    fullName: payload?.pull_request?.base?.repo?.full_name,
+                    fullName: baseRepoFullName,
                     defaultBranch: payload?.repository?.default_branch,
                 },
                 ref: payload?.pull_request?.base?.ref,
@@ -77,16 +93,20 @@ export class GithubMappedPlatform implements IMappedPlatform {
         }
 
         const repository = params?.payload?.repository;
+        const rawRepository = repository as any;
+        const fullName =
+            repository?.full_name ||
+            rawRepository?.fullName ||
+            extractRepoFullName(params?.payload?.pull_request as any) ||
+            repository?.name ||
+            '';
 
         return {
             ...repository,
             id: repository?.id.toString(),
             name: repository?.name,
             language: repository?.language,
-            fullName:
-                extractRepoFullName(params?.payload?.pull_request) ??
-                repository?.name ??
-                '',
+            fullName,
         };
     }
 

@@ -31,6 +31,7 @@ export type PullRequest = {
     sourceRefName: string; // TODO: remove, legacy, use head.ref
     head: {
         ref: string;
+        sha?: string;
         repo: {
             id: string;
             name: string;
@@ -41,6 +42,7 @@ export type PullRequest = {
     targetRefName: string; // TODO: remove, legacy, use base.ref
     base: {
         ref: string;
+        sha?: string;
         repo: {
             id: string;
             name: string;

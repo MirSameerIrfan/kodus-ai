@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { BasePipelineStage } from '@libs/core/infrastructure/pipeline/abstracts/base-stage.abstract';
 import { CodeReviewPipelineContext } from '../context/code-review-pipeline.context';
 import { createLogger } from '@kodus/flow';
-import { GithubChecksService, CheckStatus } from '@libs/platform/infrastructure/adapters/services/github/github-checks.service';
+import {
+    GithubChecksService,
+    CheckStatus,
+} from '@libs/platform/infrastructure/adapters/services/github/github-checks.service';
 import { PlatformType } from '@libs/core/domain/enums';
 
 @Injectable()
@@ -17,14 +20,13 @@ export class CreateGithubCheckStage extends BasePipelineStage<CodeReviewPipeline
     protected async executeStage(
         context: CodeReviewPipelineContext,
     ): Promise<CodeReviewPipelineContext> {
-
         if (context.platformType !== PlatformType.GITHUB) {
             this.logger.log({
                 message: `Skipping GitHub Check creation for non-GitHub platform`,
                 context: this.stageName,
                 metadata: {
                     platformType: context.platformType,
-                    organizationAndTeamData: context.organizationAndTeamData
+                    organizationAndTeamData: context.organizationAndTeamData,
                 },
             });
             return context;
@@ -36,7 +38,7 @@ export class CreateGithubCheckStage extends BasePipelineStage<CodeReviewPipeline
                 context: this.stageName,
                 metadata: {
                     prNumber: context.pullRequest?.number,
-                    organizationAndTeamData: context.organizationAndTeamData
+                    organizationAndTeamData: context.organizationAndTeamData,
                 },
             });
             return context;
@@ -51,7 +53,8 @@ export class CreateGithubCheckStage extends BasePipelineStage<CodeReviewPipeline
                     context: this.stageName,
                     metadata: {
                         fullName: context.repository.fullName,
-                        organizationAndTeamData: context.organizationAndTeamData
+                        organizationAndTeamData:
+                            context.organizationAndTeamData,
                     },
                 });
                 return context;
@@ -80,7 +83,7 @@ export class CreateGithubCheckStage extends BasePipelineStage<CodeReviewPipeline
                 error,
                 metadata: {
                     prNumber: context.pullRequest?.number,
-                    organizationAndTeamData: context.organizationAndTeamData
+                    organizationAndTeamData: context.organizationAndTeamData,
                 },
             });
         }

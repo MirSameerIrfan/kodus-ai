@@ -38,14 +38,19 @@ export interface UpdateCheckRunParams {
 export class GithubChecksService {
     private readonly logger = createLogger(GithubChecksService.name);
 
-    constructor(
-        private readonly gitHubService: GithubService,
-    ) { }
+    constructor(private readonly gitHubService: GithubService) {}
     async createCheckRun(params: CreateCheckRunParams): Promise<number | null> {
-        const { organizationAndTeamData, repository, headSha, name = 'Kody Code Review' } = params;
+        const {
+            organizationAndTeamData,
+            repository,
+            headSha,
+            name = 'Kody',
+        } = params;
 
         try {
-            const octokit = await this.gitHubService.getAuthenticatedOctokit(organizationAndTeamData);
+            const octokit = await this.gitHubService.getAuthenticatedOctokit(
+                organizationAndTeamData,
+            );
 
             const response = await octokit.checks.create({
                 owner: repository.owner,
@@ -86,7 +91,9 @@ export class GithubChecksService {
         }
     }
 
-    private async updateCheckRun(params: UpdateCheckRunParams): Promise<boolean> {
+    private async updateCheckRun(
+        params: UpdateCheckRunParams,
+    ): Promise<boolean> {
         const {
             organizationAndTeamData,
             repository,
@@ -96,7 +103,9 @@ export class GithubChecksService {
         } = params;
 
         try {
-            const octokit = await this.gitHubService.getAuthenticatedOctokit(organizationAndTeamData);
+            const octokit = await this.gitHubService.getAuthenticatedOctokit(
+                organizationAndTeamData,
+            );
 
             const updateData: any = {
                 owner: repository.owner,
@@ -108,7 +117,7 @@ export class GithubChecksService {
                 updateData.status = status;
             }
             if (status === CheckStatus.COMPLETED) {
-                updateData.conclusion = 'success'
+                updateData.conclusion = 'success';
             }
 
             if (output) {
@@ -124,7 +133,7 @@ export class GithubChecksService {
                     checkRunId,
                     repository: repository.name,
                     status,
-                    organizationAndTeamData
+                    organizationAndTeamData,
                 },
             });
 
@@ -137,7 +146,7 @@ export class GithubChecksService {
                 metadata: {
                     checkRunId,
                     repository: repository.name,
-                    organizationAndTeamData
+                    organizationAndTeamData,
                 },
             });
             return false;
@@ -153,7 +162,8 @@ export class GithubChecksService {
             status: CheckStatus.COMPLETED,
             output: params.output || {
                 title: 'Code Review Complete',
-                summary: 'Kody has finished analyzing your code. Check the comments for feedback.',
+                summary:
+                    'Kody has finished analyzing your code. Check the comments for feedback.',
             },
         });
     }
@@ -167,9 +177,9 @@ export class GithubChecksService {
             status: CheckStatus.COMPLETED,
             output: params.output || {
                 title: 'Code Review Failed',
-                summary: 'An error occurred during code review. Please check the logs.',
+                summary:
+                    'An error occurred during code review. Please check the logs.',
             },
         });
     }
-
 }
