@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { createLogger } from '@kodus/flow';
 import { FindOneOptions, Repository, UpdateQueryBuilder } from 'typeorm';
 import { In } from 'typeorm';
 
@@ -21,6 +22,8 @@ import {
 
 @Injectable()
 export class TeamMemberDatabaseRepository implements ITeamMemberRepository {
+    private readonly logger = createLogger(TeamMemberDatabaseRepository.name);
+
     constructor(
         @InjectRepository(TeamMemberModel)
         private readonly teamMembersRepository: Repository<TeamMemberModel>,
@@ -67,7 +70,11 @@ export class TeamMemberDatabaseRepository implements ITeamMemberRepository {
 
             return undefined;
         } catch (error) {
-            console.log(error);
+            this.logger.error({
+                message: 'Error finding team member',
+                context: TeamMemberDatabaseRepository.name,
+                error,
+            });
         }
     }
 
@@ -81,7 +88,11 @@ export class TeamMemberDatabaseRepository implements ITeamMemberRepository {
 
             return mapSimpleModelToEntity(data, TeamMemberEntity);
         } catch (error) {
-            console.log(error);
+            this.logger.error({
+                message: 'Error finding team member by id',
+                context: TeamMemberDatabaseRepository.name,
+                error,
+            });
             return null;
         }
     }
@@ -95,7 +106,11 @@ export class TeamMemberDatabaseRepository implements ITeamMemberRepository {
 
             return mapSimpleModelsToEntities(data, TeamMemberEntity);
         } catch (err) {
-            console.log(err);
+            this.logger.error({
+                message: 'Error finding many team members by id',
+                context: TeamMemberDatabaseRepository.name,
+                error: err,
+            });
             return [];
         }
     }
@@ -112,7 +127,11 @@ export class TeamMemberDatabaseRepository implements ITeamMemberRepository {
 
             return mapSimpleModelsToEntities(data, TeamMemberEntity);
         } catch (err) {
-            console.log(err);
+            this.logger.error({
+                message: 'Error finding many team members by user',
+                context: TeamMemberDatabaseRepository.name,
+                error: err,
+            });
             return [];
         }
     }
@@ -141,7 +160,11 @@ export class TeamMemberDatabaseRepository implements ITeamMemberRepository {
 
             return mapSimpleModelsToEntities(data, TeamMemberEntity);
         } catch (err) {
-            console.log(err);
+            this.logger.error({
+                message: 'Error finding many team members by organization id',
+                context: TeamMemberDatabaseRepository.name,
+                error: err,
+            });
             return [];
         }
     }
@@ -170,7 +193,11 @@ export class TeamMemberDatabaseRepository implements ITeamMemberRepository {
 
             return await query.getMany();
         } catch (err) {
-            console.error(err);
+            this.logger.error({
+                message: 'Error finding team members by communication id',
+                context: TeamMemberDatabaseRepository.name,
+                error: err,
+            });
             return null;
         }
     }
@@ -191,7 +218,11 @@ export class TeamMemberDatabaseRepository implements ITeamMemberRepository {
 
             return mapSimpleModelsToEntities(data, TeamMemberEntity);
         } catch (err) {
-            console.log(err);
+            this.logger.error({
+                message: 'Error finding many team members by relations',
+                context: TeamMemberDatabaseRepository.name,
+                error: err,
+            });
             return [];
         }
     }
@@ -216,7 +247,11 @@ export class TeamMemberDatabaseRepository implements ITeamMemberRepository {
 
             return mapSimpleModelsToEntities(data, TeamMemberEntity);
         } catch (err) {
-            console.log(err);
+            this.logger.error({
+                message: 'Error finding team members with user',
+                context: TeamMemberDatabaseRepository.name,
+                error: err,
+            });
             return [];
         }
     }
@@ -241,7 +276,11 @@ export class TeamMemberDatabaseRepository implements ITeamMemberRepository {
 
             return membersCount;
         } catch (err) {
-            console.log(err);
+            this.logger.error({
+                message: 'Error counting team members',
+                context: TeamMemberDatabaseRepository.name,
+                error: err,
+            });
             return 0;
         }
     }
@@ -269,7 +308,11 @@ export class TeamMemberDatabaseRepository implements ITeamMemberRepository {
 
             return mapSimpleModelToEntity(savedTeamMembers, TeamMemberEntity);
         } catch (err) {
-            console.log(err);
+            this.logger.error({
+                message: 'Error creating team member',
+                context: TeamMemberDatabaseRepository.name,
+                error: err,
+            });
             return err;
         }
     }
@@ -293,7 +336,11 @@ export class TeamMemberDatabaseRepository implements ITeamMemberRepository {
             }
             return {};
         } catch (err) {
-            console.log(err);
+            this.logger.error({
+                message: 'Error updating team member',
+                context: TeamMemberDatabaseRepository.name,
+                error: err,
+            });
             return err;
         }
     }
@@ -335,7 +382,11 @@ export class TeamMemberDatabaseRepository implements ITeamMemberRepository {
 
             await this.teamMembersRepository.save(updatedTeamMembers);
         } catch (err) {
-            console.log(err);
+            this.logger.error({
+                message: 'Error updating team members',
+                context: TeamMemberDatabaseRepository.name,
+                error: err,
+            });
             throw err;
         }
     }
@@ -368,7 +419,11 @@ export class TeamMemberDatabaseRepository implements ITeamMemberRepository {
 
             return mapSimpleModelsToEntities(response, TeamMemberEntity);
         } catch (err) {
-            console.log(err);
+            this.logger.error({
+                message: 'Error getting leader members',
+                context: TeamMemberDatabaseRepository.name,
+                error: err,
+            });
             return null;
         }
     }

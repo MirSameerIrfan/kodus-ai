@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { createLogger } from '@kodus/flow';
 import {
     FindManyOptions,
     FindOneOptions,
@@ -21,6 +22,8 @@ import {
 
 @Injectable()
 export class OrganizationDatabaseRepository implements IOrganizationRepository {
+    private readonly logger = createLogger(OrganizationDatabaseRepository.name);
+
     constructor(
         @InjectRepository(OrganizationModel)
         private readonly organizationRepository: Repository<OrganizationModel>,
@@ -64,7 +67,11 @@ export class OrganizationDatabaseRepository implements IOrganizationRepository {
                 OrganizationEntity,
             );
         } catch (error) {
-            console.log(error);
+            this.logger.error({
+                message: 'Error finding organizations',
+                context: OrganizationDatabaseRepository.name,
+                error,
+            });
         }
     }
 
@@ -240,7 +247,11 @@ export class OrganizationDatabaseRepository implements IOrganizationRepository {
 
             return undefined;
         } catch (error) {
-            console.log(error);
+            this.logger.error({
+                message: 'Error updating organization',
+                context: OrganizationDatabaseRepository.name,
+                error,
+            });
         }
     }
 }

@@ -1,12 +1,12 @@
 import { Column, Entity, Index, OneToMany } from 'typeorm';
 
-import { AuthIntegrationModel } from '@libs/integrations/infrastructure/adapters/repositories/schemas/authIntegration.model';
-import { IntegrationModel } from '@libs/integrations/infrastructure/adapters/repositories/schemas/integration.model';
-import { OrganizationParametersModel } from './organizationParameters.model';
-import { SSOConfigModel } from '@libs/identity/infrastructure/adapters/repositories/schemas/ssoConfig.model';
-import { TeamModel } from './team.model';
-import { TeamMemberModel } from './teamMember.model';
-import { UserModel } from '@libs/identity/infrastructure/adapters/repositories/schemas/user.model';
+import type { AuthIntegrationModel } from '@libs/integrations/infrastructure/adapters/repositories/schemas/authIntegration.model';
+import type { IntegrationModel } from '@libs/integrations/infrastructure/adapters/repositories/schemas/integration.model';
+import type { OrganizationParametersModel } from './organizationParameters.model';
+import type { SSOConfigModel } from '@libs/identity/infrastructure/adapters/repositories/schemas/ssoConfig.model';
+import type { TeamModel } from './team.model';
+import type { TeamMemberModel } from './teamMember.model';
+import type { UserModel } from '@libs/identity/infrastructure/adapters/repositories/schemas/user.model';
 
 import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 
@@ -23,33 +23,24 @@ export class OrganizationModel extends CoreModel {
     @Column({ default: true })
     public status: boolean;
 
-    @OneToMany(() => TeamModel, (team) => team.organization)
+    @OneToMany('TeamModel', 'organization')
     teams: TeamModel[];
 
-    @OneToMany(() => TeamMemberModel, (teamMembers) => teamMembers.organization)
+    @OneToMany('TeamMemberModel', 'organization')
     teamMembers: TeamMemberModel[];
 
-    @OneToMany(() => UserModel, (user) => user.organization)
+    @OneToMany('UserModel', 'organization')
     users: UserModel[];
 
-    @OneToMany(
-        () => IntegrationModel,
-        (integration) => integration.organization,
-    )
+    @OneToMany('IntegrationModel', 'organization')
     integration: IntegrationModel[];
 
-    @OneToMany(
-        () => AuthIntegrationModel,
-        (authIntegration) => authIntegration.organization,
-    )
+    @OneToMany('AuthIntegrationModel', 'organization')
     authIntegrations: AuthIntegrationModel[];
 
-    @OneToMany(
-        () => OrganizationParametersModel,
-        (config) => config.organization,
-    )
+    @OneToMany('OrganizationParametersModel', 'organization')
     organizationParameters: OrganizationParametersModel[];
 
-    @OneToMany(() => SSOConfigModel, (ssoConfig) => ssoConfig.organization)
+    @OneToMany('SSOConfigModel', 'organization')
     ssoConfig: SSOConfigModel[];
 }

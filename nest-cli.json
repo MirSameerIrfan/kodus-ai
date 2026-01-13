@@ -4,6 +4,7 @@
     "monorepo": true,
     "compilerOptions": {
         "builder": "webpack",
+        "typeCheck": false,
         "webpackConfigPath": "webpack.config.js",
         "deleteOutDir": true,
         "webpack": true,

@@ -1,7 +1,7 @@
 import { Column, Entity, Index, ManyToOne, JoinColumn } from 'typeorm';
 
 import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
-import { WorkflowJobModel } from './workflow-job.model';
+import type { WorkflowJobModel } from './workflow-job.model';
 
 export enum OutboxStatus {
     READY = 'READY',
@@ -17,7 +17,7 @@ export enum OutboxStatus {
 @Index('IDX_outbox_messages_locked_at', ['lockedAt'])
 @Index('IDX_outbox_messages_status_created', ['status', 'createdAt'])
 export class OutboxMessageModel extends CoreModel {
-    @ManyToOne(() => WorkflowJobModel, (job) => job.outboxMessages, {
+    @ManyToOne('WorkflowJobModel', 'outboxMessages', {
         nullable: true,
     })
     @JoinColumn({ name: 'job_id', referencedColumnName: 'uuid' })

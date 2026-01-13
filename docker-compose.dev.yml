@@ -32,7 +32,7 @@ services:
         deploy:
             resources:
                 limits:
-                    memory: 2G
+                    memory: 1.5G
                 reservations:
                     memory: 512M
         healthcheck:
@@ -43,7 +43,7 @@ services:
             start_period: 60s
         environment:
             - API_CLOUD_MODE=${API_CLOUD_MODE:-false}
-            - NODE_OPTIONS=--max-old-space-size=1536
+            - NODE_OPTIONS=--max-old-space-size=1200 --max-semi-space-size=64
             - DEBUG_PORT=9229
             - API_LOG_PRETTY=true
             - CHOKIDAR_USEPOLLING=false
@@ -59,7 +59,7 @@ services:
         deploy:
             resources:
                 limits:
-                    memory: 2.5G
+                    memory: 1G
                 reservations:
                     memory: 512M
         healthcheck:
@@ -70,7 +70,7 @@ services:
             start_period: 60s
         environment:
             - API_CLOUD_MODE=${API_CLOUD_MODE:-false}
-            - NODE_OPTIONS=--max-old-space-size=2048
+            - NODE_OPTIONS=--max-old-space-size=800 --max-semi-space-size=64
             - DEBUG_PORT=9231
             - COMPONENT_TYPE=worker
             - API_LOG_PRETTY=true
@@ -85,9 +85,9 @@ services:
         deploy:
             resources:
                 limits:
-                    memory: 2G
-                reservations:
                     memory: 512M
+                reservations:
+                    memory: 128M
         healthcheck:
             test: ['CMD', 'node', '-e', 'process.exit(0)']
             interval: 30s
@@ -96,7 +96,7 @@ services:
             start_period: 60s
         environment:
             - API_CLOUD_MODE=${API_CLOUD_MODE:-false}
-            - NODE_OPTIONS=--max-old-space-size=1536
+            - NODE_OPTIONS=--max-old-space-size=400 --max-semi-space-size=16
             - DEBUG_PORT=9232
             - API_LOG_PRETTY=true
 
@@ -106,6 +106,7 @@ services:
     db_postgres:
         profiles:
             - local-db
+            - infra
         image: pgvector/pgvector:pg16
         container_name: db_postgres
         ports:
@@ -134,6 +135,7 @@ services:
     db_mongodb:
         profiles:
             - local-db
+            - infra
         image: mongo:8
         container_name: mongodb
         ports:

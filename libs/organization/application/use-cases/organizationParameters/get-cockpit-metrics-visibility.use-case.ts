@@ -36,7 +36,7 @@ export class GetCockpitMetricsVisibilityUseCase {
                 );
 
             if (!parameter) {
-                this.logger.log({
+                this.logger.debug({
                     message:
                         'Cockpit metrics visibility config not found, returning default values (all true)',
                     context: GetCockpitMetricsVisibilityUseCase.name,

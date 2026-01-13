@@ -4,7 +4,7 @@ import { IntegrationConfigKey } from '@libs/core/domain/enums';
 import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 import { TeamModel } from '@libs/organization/infrastructure/adapters/repositories/schemas/team.model';
 
-import { IntegrationModel } from './integration.model';
+import type { IntegrationModel } from './integration.model';
 
 @Entity('integration_configs')
 @Index('IDX_integration_configs_integration', ['integration'], {
@@ -22,10 +22,7 @@ export class IntegrationConfigModel extends CoreModel {
     @Column({ type: 'jsonb' })
     configValue: any;
 
-    @ManyToOne(
-        () => IntegrationModel,
-        (integration) => integration.integrationConfigs,
-    )
+    @ManyToOne('IntegrationModel', 'integrationConfigs')
     @JoinColumn({ name: 'integration_id', referencedColumnName: 'uuid' })
     integration: IntegrationModel;
 

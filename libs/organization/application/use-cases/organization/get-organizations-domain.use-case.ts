@@ -96,7 +96,7 @@ export class GetOrganizationsByDomainUseCase implements IUseCase {
                 return [];
             }
 
-            this.logger.log({
+            this.logger.debug({
                 message: 'Organizations fetched successfully by domain',
                 context: GetOrganizationsByDomainUseCase.name,
                 metadata: { domain, count: organizations.length },

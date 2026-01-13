@@ -230,7 +230,7 @@ export class JoinOrganizationUseCase implements IUseCase {
             });
         }
 
-        this.logger.log({
+        this.logger.debug({
             message: 'Cleanup completed',
             context: JoinOrganizationUseCase.name,
             serviceName: JoinOrganizationUseCase.name,
