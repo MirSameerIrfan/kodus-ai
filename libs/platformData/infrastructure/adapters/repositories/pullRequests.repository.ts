@@ -142,6 +142,40 @@ export class PullRequestsRepository implements IPullRequestsRepository {
             : null;
     }
 
+    async findManyByNumbersAndRepositoryIds(
+        criteria: Array<{
+            number: number;
+            repositoryId: string;
+        }>,
+        organizationId: string,
+    ): Promise<PullRequestsEntity[]> {
+        if (!criteria.length) {
+            return [];
+        }
+
+        const orConditions = criteria.map((c) => ({
+            'number': c.number,
+            'repository.id': c.repositoryId,
+        }));
+
+        const pullRequests = await this.pullRequestsModel.find(
+            {
+                organizationId,
+                $or: orConditions,
+            },
+            {
+                // Exclude suggestion content but keep count
+                'files.suggestions.existingCode': 0,
+                'files.suggestions.improvedCode': 0,
+                'files.suggestions.suggestionContent': 0,
+                'commits': 0,
+                'prLevelSuggestions': 0,
+            },
+        ).exec();
+
+        return mapSimpleModelsToEntities(pullRequests, PullRequestsEntity);
+    }
+
     async findFileWithSuggestions(
         prnumber: number,
         repositoryName: string,

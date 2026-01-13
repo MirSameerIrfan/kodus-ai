@@ -53,6 +53,13 @@ export interface IPullRequestsRepository {
         repositoryId: string,
         organizationAndTeamData: OrganizationAndTeamData,
     ): Promise<PullRequestsEntity | null>;
+    findManyByNumbersAndRepositoryIds(
+        criteria: Array<{
+            number: number;
+            repositoryId: string;
+        }>,
+        organizationId: string,
+    ): Promise<PullRequestsEntity[]>;
     findFileWithSuggestions(
         prnumber: number,
         repositoryName: string,

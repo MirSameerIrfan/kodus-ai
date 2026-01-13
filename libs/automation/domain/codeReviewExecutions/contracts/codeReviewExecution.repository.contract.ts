@@ -28,5 +28,9 @@ export interface ICodeReviewExecutionRepository<T> {
         filter?: Partial<CodeReviewExecution<T>>,
     ): Promise<CodeReviewExecutionEntity<T> | null>;
 
+    findManyByAutomationExecutionIds(
+        uuids: string[],
+    ): Promise<CodeReviewExecutionEntity<T>[]>;
+
     delete(uuid: string): Promise<boolean>;
 }

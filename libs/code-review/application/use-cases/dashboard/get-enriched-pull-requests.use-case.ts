@@ -204,56 +204,74 @@ export class GetEnrichedPullRequestsUseCase implements IUseCase {
                     break;
                 }
 
-                // Batch fetch all pull requests in parallel with optimized projection
-                const pullRequestsPromises = executionsBatch.map((execution) =>
+                // Prepare bulk fetch criteria
+                const prCriteria = executionsBatch
+                    .filter(
+                        (e) =>
+                            e.pullRequestNumber != null &&
+                            e.repositoryId != null,
+                    )
+                    .map((e) => ({
+                        number: e.pullRequestNumber!,
+                        repositoryId: e.repositoryId!,
+                    }));
+
+                const executionUuids = executionsBatch.map((e) => e.uuid);
+
+                // Bulk fetch in parallel
+                const [pullRequestsList, codeReviewsList] = await Promise.all([
                     this.pullRequestsService
-                        .findByNumberAndRepositoryIdOptimized(
-                            execution.pullRequestNumber!,
-                            execution.repositoryId!,
-                            { organizationId },
+                        .findManyByNumbersAndRepositoryIds(
+                            prCriteria,
+                            organizationId,
                         )
                         .catch((error) => {
                             this.logger.error({
-                                message: 'Error fetching pull request',
+                                message: 'Error bulk fetching pull requests',
                                 context: GetEnrichedPullRequestsUseCase.name,
                                 error,
-                                metadata: {
-                                    prNumber: execution.pullRequestNumber,
-                                    repositoryId: execution.repositoryId,
-                                },
-                            });
-                            return null;
-                        }),
-                );
-
-                const pullRequests = await Promise.all(pullRequestsPromises);
-
-                // Batch fetch all code review executions in parallel
-                const codeReviewsPromises = executionsBatch.map((execution) =>
-                    this.codeReviewExecutionService
-                        .find({
-                            automationExecution: { uuid: execution.uuid },
-                        })
-                        .catch((error) => {
-                            this.logger.error({
-                                message: 'Error fetching code review executions',
-                                context: GetEnrichedPullRequestsUseCase.name,
-                                error,
-                                metadata: {
-                                    executionUuid: execution.uuid,
-                                },
                             });
                             return [];
                         }),
-                );
+                    this.codeReviewExecutionService
+                        .findManyByAutomationExecutionIds(executionUuids)
+                        .catch((error) => {
+                            this.logger.error({
+                                message: 'Error bulk fetching code reviews',
+                                context: GetEnrichedPullRequestsUseCase.name,
+                                error,
+                            });
+                            return [];
+                        }),
+                ]);
 
-                const allCodeReviews = await Promise.all(codeReviewsPromises);
+                // Map results for O(1) access
+                const prMap = new Map<string, IPullRequests>();
+                pullRequestsList.forEach((pr) => {
+                    if (pr.repository?.id && pr.number) {
+                        prMap.set(`${pr.repository.id}_${pr.number}`, pr);
+                    }
+                });
 
-                // Process all executions with fetched data
+                const codeReviewMap = new Map<string, any[]>();
+                codeReviewsList.forEach((cr) => {
+                    const execId = (cr.automationExecution as any)?.uuid;
+                    if (execId) {
+                        if (!codeReviewMap.has(execId)) {
+                            codeReviewMap.set(execId, []);
+                        }
+                        codeReviewMap.get(execId).push(cr);
+                    }
+                });
+
+                // Process executions
                 for (let i = 0; i < executionsBatch.length; i++) {
                     const execution = executionsBatch[i];
-                    const pullRequest = pullRequests[i];
-                    const codeReviewExecutions = allCodeReviews[i];
+                    
+                    const prKey = `${execution.repositoryId}_${execution.pullRequestNumber}`;
+                    const pullRequest = prMap.get(prKey);
+                    const codeReviewExecutions =
+                        codeReviewMap.get(execution.uuid) || [];
 
                     try {
                         if (!pullRequest) {
