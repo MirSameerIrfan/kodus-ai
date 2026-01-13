@@ -45,7 +45,7 @@ module.exports = function (options, webpack) {
     const debugBreak = process.env.DEBUG_BREAK === 'true';
     const inspectArg = debugBreak ? '--inspect-brk' : '--inspect';
     const devtool = isWatchMode
-        ? 'eval-source-map'
+        ? 'source-map'
         : isProduction
           ? 'hidden-source-map'
           : 'source-map';
@@ -114,11 +114,20 @@ module.exports = function (options, webpack) {
                     test: /\.tsx?$/,
                     use: [
                         {
-                            loader: 'ts-loader',
+                            loader: 'swc-loader',
                             options: {
-                                transpileOnly: true,
-                                compilerOptions: {
-                                    inlineSources: !isProduction,
+                                jsc: {
+                                    target: 'es2022',
+                                    parser: {
+                                        syntax: 'typescript',
+                                        decorators: true,
+                                        dynamicImport: true,
+                                    },
+                                    transform: {
+                                        legacyDecorator: true,
+                                        decoratorMetadata: true,
+                                    },
+                                    keepClassNames: true,
                                 },
                             },
                         },

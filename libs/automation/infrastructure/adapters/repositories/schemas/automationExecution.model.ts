@@ -10,8 +10,8 @@ import {
 import { AutomationStatus } from '@libs/automation/domain/automation/enum/automation-status';
 import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 
-import { CodeReviewExecutionModel } from './codeReviewExecution.model';
-import { TeamAutomationModel } from './teamAutomation.model';
+import type { CodeReviewExecutionModel } from './codeReviewExecution.model';
+import type { TeamAutomationModel } from './teamAutomation.model';
 
 @Entity('automation_execution')
 @Index('IDX_automation_exec_team_status', ['teamAutomation', 'status'], {
@@ -48,20 +48,13 @@ export class AutomationExecutionModel extends CoreModel {
     @Column({ nullable: true })
     repositoryId?: string;
 
-    @ManyToOne(
-        () => TeamAutomationModel,
-        (teamAutomation) => teamAutomation.executions,
-    )
+    @ManyToOne('TeamAutomationModel', 'executions')
     @JoinColumn({ name: 'team_automation_id', referencedColumnName: 'uuid' })
     teamAutomation: TeamAutomationModel;
 
-    @OneToMany(
-        () => CodeReviewExecutionModel,
-        (codeReviewExecution) => codeReviewExecution.automationExecution,
-        {
-            nullable: true,
-        },
-    )
+    @OneToMany('CodeReviewExecutionModel', 'automationExecution', {
+        nullable: true,
+    })
     codeReviewExecutions: CodeReviewExecutionModel[];
 
     @Column({ nullable: true })

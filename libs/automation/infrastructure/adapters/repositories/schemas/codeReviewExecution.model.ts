@@ -3,14 +3,11 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { AutomationStatus } from '@libs/automation/domain/automation/enum/automation-status';
 import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 
-import { AutomationExecutionModel } from './automationExecution.model';
+import type { AutomationExecutionModel } from './automationExecution.model';
 
 @Entity('code_review_execution')
 export class CodeReviewExecutionModel extends CoreModel {
-    @ManyToOne(
-        () => AutomationExecutionModel,
-        (automationExecution) => automationExecution.uuid,
-    )
+    @ManyToOne('AutomationExecutionModel', 'uuid')
     @JoinColumn({
         name: 'automation_execution_id',
         referencedColumnName: 'uuid',
