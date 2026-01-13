@@ -249,9 +249,7 @@ const getCerebras = (options?: Partial<FactoryArgs>) => {
         baseURL: options?.baseURL
             ? options.baseURL
             : process.env.API_CEREBRAS_BASE_URL,
-        apiKey: options?.apiKey
-            ? options.apiKey
-            : process.env.API_CEREBRAS_API_KEY,
+        apiKey: options?.apiKey ? options.apiKey : process.env.API_CEREBRAS_API_KEY,
     };
 
     const cleanOptions = Object.fromEntries(
