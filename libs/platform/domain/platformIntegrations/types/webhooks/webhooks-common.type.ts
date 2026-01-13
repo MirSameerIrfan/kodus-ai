@@ -26,6 +26,7 @@ export interface IMappedPullRequest {
         repo: {
             fullName: string;
         };
+        sha?: string;
     };
     base: {
         ref: string;
