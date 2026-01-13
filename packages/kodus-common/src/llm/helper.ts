@@ -234,36 +234,70 @@ const getGroq = (options?: Partial<FactoryArgs>) => {
     });
 };
 
+const getCerebras = (options?: Partial<FactoryArgs>) => {
+    const defaultOptions = {
+        model: MODEL_STRATEGIES[LLMModelProvider.CEREBRAS_GLM_47].modelName,
+        temperature: 0,
+        cache: true,
+        maxRetries: 10,
+        maxConcurrency: 10,
+        maxTokens:
+            MODEL_STRATEGIES[LLMModelProvider.CEREBRAS_GLM_47].defaultMaxTokens,
+        verbose: false,
+        streaming: false,
+        callbacks: [],
+        baseURL: options?.baseURL
+            ? options.baseURL
+            : process.env.API_CEREBRAS_BASE_URL,
+        apiKey: options?.apiKey ? options.apiKey : process.env.API_CEREBRAS_API_KEY,
+    };
+
+    const cleanOptions = Object.fromEntries(
+        Object.entries(options ?? {}).filter(
+            ([, value]) => value !== undefined,
+        ),
+    );
+
+    const finalOptions = cleanOptions
+        ? { ...defaultOptions, ...cleanOptions }
+        : defaultOptions;
+
+    return new ChatOpenAI({
+        model: finalOptions.model,
+        apiKey: finalOptions.apiKey,
+        temperature: finalOptions.temperature,
+        maxTokens: finalOptions.maxTokens,
+        streaming: finalOptions.streaming,
+        verbose: finalOptions.verbose,
+        callbacks: finalOptions.callbacks,
+        configuration: {
+            baseURL: finalOptions.baseURL ?? undefined,
+        },
+    });
+};
 export enum LLMModelProvider {
-    // OpenAI Models
     OPENAI_GPT_4O = 'openai:gpt-4o',
     OPENAI_GPT_4O_MINI = 'openai:gpt-4o-mini',
     OPENAI_GPT_4_1 = 'openai:gpt-4.1',
     OPENAI_GPT_O4_MINI = 'openai:o4-mini',
-
-    // Anthropic Models
     CLAUDE_3_5_SONNET = 'anthropic:claude-3-5-sonnet-20241022',
-
-    // Google AI Models
     GEMINI_2_0_FLASH = 'google:gemini-2.0-flash',
     GEMINI_2_5_PRO = 'google:gemini-2.5-pro',
     GEMINI_2_5_FLASH = 'google:gemini-2.5-flash',
-
-    // Vertex AI Models (prefixed with 'vertex-' to differentiate)
+    GEMINI_3_PRO_PREVIEW = 'google:gemini-3-pro-preview',
+    GEMINI_3_FLASH_PREVIEW = 'google:gemini-3-flash-preview',
     VERTEX_GEMINI_2_0_FLASH = 'vertex:gemini-2.0-flash',
     VERTEX_GEMINI_2_5_PRO = 'vertex:gemini-2.5-pro',
     VERTEX_GEMINI_2_5_FLASH = 'vertex:gemini-2.5-flash',
     VERTEX_CLAUDE_3_5_SONNET = 'vertex:claude-3-5-sonnet-v2@20241022',
-
-    // Novita Models
     NOVITA_DEEPSEEK_V3 = 'novita:deepseek-v3',
     NOVITA_DEEPSEEK_V3_0324 = 'novita:deepseek-v3-0324',
     NOVITA_QWEN3_235B_A22B_THINKING_2507 = 'novita:qwen3-235b-a22b-thinking-2507',
     NOVITA_MOONSHOTAI_KIMI_K2_INSTRUCT = 'novita:moonshotai/kimi-k2-instruct',
-
-    // Groq Models (OpenAI compatible)
     GROQ_MOONSHOTAI_KIMI_K2_ = 'groq:moonshotai/kimi-k2-instruct-0905',
     GROQ_GPT_OSS_120B = 'groq:openai/gpt-oss-120b',
+    CEREBRAS_GPT_OSS_120B = 'cerebras:gpt-oss-120b',
+    CEREBRAS_GLM_47 = 'cerebras:zai-glm-4.7',
 }
 
 export interface ModelStrategy {
@@ -335,6 +369,20 @@ export const MODEL_STRATEGIES: Record<LLMModelProvider, ModelStrategy> = {
         maxReasoningTokens: 15000,
     },
 
+    [LLMModelProvider.GEMINI_3_PRO_PREVIEW]: {
+        provider: 'google',
+        factory: getChatGemini,
+        modelName: 'gemini-3-pro-preview',
+        defaultMaxTokens: 60000,
+        maxReasoningTokens: 15000,
+    },
+    [LLMModelProvider.GEMINI_3_FLASH_PREVIEW]: {
+        provider: 'google',
+        factory: getChatGemini,
+        modelName: 'gemini-3-flash-preview',
+        defaultMaxTokens: 60000,
+        maxReasoningTokens: 15000,
+    },
     // Vertex AI
     [LLMModelProvider.VERTEX_GEMINI_2_0_FLASH]: {
         provider: 'vertex',
@@ -403,6 +451,18 @@ export const MODEL_STRATEGIES: Record<LLMModelProvider, ModelStrategy> = {
         provider: 'groq',
         factory: getGroq,
         modelName: 'openai/gpt-oss-120b',
+        defaultMaxTokens: -1,
+    },
+    [LLMModelProvider.CEREBRAS_GLM_47]: {
+        provider: 'cerebras',
+        factory: getCerebras,
+        modelName: 'zai-glm-4.7',
+        defaultMaxTokens: -1,
+    },
+    [LLMModelProvider.CEREBRAS_GPT_OSS_120B]: {
+        provider: 'cerebras',
+        factory: getCerebras,
+        modelName: 'gpt-oss-120b',
         defaultMaxTokens: -1,
     },
 };
