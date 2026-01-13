@@ -59,6 +59,30 @@ export class PullRequestsRepository implements IPullRequestsRepository {
         return mapSimpleModelsToEntities(docs, PullRequestsEntity);
     }
 
+    async findPRNumbersByTitleAndOrganization(
+        title: string,
+        organizationId: string,
+        repositoryIds?: string[],
+    ): Promise<Array<{ number: number; repositoryId: string }>> {
+        const filter: any = {
+            organizationId,
+            title: { $regex: title, $options: 'i' },
+        };
+
+        if (repositoryIds?.length) {
+            filter['repository.id'] = { $in: repositoryIds };
+        }
+
+        const results = await this.pullRequestsModel
+            .find(filter, { number: 1, 'repository.id': 1 })
+            .exec();
+
+        return results.map((doc) => ({
+            number: doc.number,
+            repositoryId: doc.repository?.id || '',
+        }));
+    }
+
     async findByNumberAndRepositoryName(
         pullRequestNumber: number,
         repositoryName: string,
@@ -85,6 +109,33 @@ export class PullRequestsRepository implements IPullRequestsRepository {
             'repository.id': repositoryName,
             'organizationId': organizationAndTeamData.organizationId,
         });
+
+        return pullRequest
+            ? mapSimpleModelToEntity(pullRequest, PullRequestsEntity)
+            : null;
+    }
+
+    async findByNumberAndRepositoryIdOptimized(
+        pullRequestNumber: number,
+        repositoryId: string,
+        organizationAndTeamData: OrganizationAndTeamData,
+    ): Promise<PullRequestsEntity | null> {
+        // Use projection to exclude heavy fields (files.suggestions details)
+        const pullRequest = await this.pullRequestsModel.findOne(
+            {
+                'number': pullRequestNumber,
+                'repository.id': repositoryId,
+                'organizationId': organizationAndTeamData.organizationId,
+            },
+            {
+                // Exclude suggestion content but keep count
+                'files.suggestions.existingCode': 0,
+                'files.suggestions.improvedCode': 0,
+                'files.suggestions.suggestionContent': 0,
+                'commits': 0,
+                'prLevelSuggestions': 0,
+            },
+        );
 
         return pullRequest
             ? mapSimpleModelToEntity(pullRequest, PullRequestsEntity)

@@ -140,8 +140,11 @@ export class CodeManagementController {
         query: {
             teamId: string;
             number?: number;
-            title: string;
+            title?: string;
             url?: string;
+            repositoryId?: string;
+            repositoryName?: string;
+            repository?: string;
         },
     ) {
         return await this.getPRsUseCase.execute({
@@ -149,6 +152,9 @@ export class CodeManagementController {
             number: query.number,
             title: query.title,
             url: query.url,
+            repositoryId: query.repositoryId,
+            repositoryName: query.repositoryName,
+            repository: query.repository,
         });
     }
 

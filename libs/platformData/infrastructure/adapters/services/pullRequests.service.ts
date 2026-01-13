@@ -61,6 +61,18 @@ export class PullRequestsService implements IPullRequestsService {
         return this.pullRequestsRepository.find(filter);
     }
 
+    async findPRNumbersByTitleAndOrganization(
+        title: string,
+        organizationId: string,
+        repositoryIds?: string[],
+    ): Promise<Array<{ number: number; repositoryId: string }>> {
+        return this.pullRequestsRepository.findPRNumbersByTitleAndOrganization(
+            title,
+            organizationId,
+            repositoryIds,
+        );
+    }
+
     findByNumberAndRepositoryName(
         prNumber: number,
         repositoryName: string,
@@ -79,6 +91,18 @@ export class PullRequestsService implements IPullRequestsService {
         organizationAndTeamData: OrganizationAndTeamData,
     ): Promise<PullRequestsEntity | null> {
         return this.pullRequestsRepository.findByNumberAndRepositoryId(
+            prNumber,
+            repositoryId,
+            organizationAndTeamData,
+        );
+    }
+
+    findByNumberAndRepositoryIdOptimized(
+        prNumber: number,
+        repositoryId: string,
+        organizationAndTeamData: OrganizationAndTeamData,
+    ): Promise<PullRequestsEntity | null> {
+        return this.pullRequestsRepository.findByNumberAndRepositoryIdOptimized(
             prNumber,
             repositoryId,
             organizationAndTeamData,
