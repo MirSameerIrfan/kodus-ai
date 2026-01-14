@@ -89,7 +89,7 @@ export class IgnoreBotsUseCase implements IUseCase {
                 organizationAndTeamData,
             );
         } else {
-            this.logger.log({
+            this.logger.debug({
                 message: 'Auto license assignment config found',
                 context: IgnoreBotsUseCase.name,
                 metadata: {

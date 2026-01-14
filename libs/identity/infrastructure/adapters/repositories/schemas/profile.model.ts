@@ -1,7 +1,7 @@
 import { Column, Entity, JoinColumn, OneToMany, OneToOne } from 'typeorm';
 
 import { ProfileConfigModel } from './profileConfig.model';
-import { UserModel } from './user.model';
+import type { UserModel } from './user.model';
 
 import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 
@@ -22,7 +22,7 @@ export class ProfileModel extends CoreModel {
     @Column({ default: true })
     public status: boolean;
 
-    @OneToOne(() => UserModel, (user) => user.profile)
+    @OneToOne('UserModel', 'profile')
     @JoinColumn({ name: 'user_id', referencedColumnName: 'uuid' })
     user: UserModel;
 

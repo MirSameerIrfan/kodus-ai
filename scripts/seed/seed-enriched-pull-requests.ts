@@ -2,9 +2,9 @@ import 'dotenv/config';
 import { MongoClient, ObjectId } from 'mongodb';
 import { Client as PgClient } from 'pg';
 import { randomUUID } from 'crypto';
-import { DeliveryStatus } from '@/core/domain/pullRequests/enums/deliveryStatus.enum';
-import { PriorityStatus } from '@/core/domain/pullRequests/enums/priorityStatus.enum';
-import { AutomationStatus } from '@/core/domain/automation/enums/automation-status';
+import { DeliveryStatus } from '@libs/platformData/domain/pullRequests/enums/deliveryStatus.enum';
+import { PriorityStatus } from '@libs/platformData/domain/pullRequests/enums/priorityStatus.enum';
+import { AutomationStatus } from '@libs/automation/domain/automation/enum/automation-status';
 
 interface SeedConfig {
     teamAutomationId: string;
@@ -16,6 +16,10 @@ interface SeedConfig {
     count: number;
     startNumber?: number;
     suggestionsPerFile: number;
+    minFiles?: number;
+    maxFiles?: number;
+    minSuggestionsPerFile?: number;
+    maxSuggestionsPerFile?: number;
     origin: string;
     dryRun: boolean;
 }
@@ -232,6 +236,28 @@ function parseArgs(): SeedConfig {
         throw new Error('suggestions-per-file must be an integer greater than zero.');
     }
 
+    const minFilesRaw =
+        getFlagValue('--min-files') ?? process.env.SEED_MIN_FILES;
+    const minFiles = minFilesRaw ? parseInt(minFilesRaw, 10) : undefined;
+
+    const maxFilesRaw =
+        getFlagValue('--max-files') ?? process.env.SEED_MAX_FILES;
+    const maxFiles = maxFilesRaw ? parseInt(maxFilesRaw, 10) : undefined;
+
+    const minSuggestionsPerFileRaw =
+        getFlagValue('--min-suggestions-per-file') ??
+        process.env.SEED_MIN_SUGGESTIONS_PER_FILE;
+    const minSuggestionsPerFile = minSuggestionsPerFileRaw
+        ? parseInt(minSuggestionsPerFileRaw, 10)
+        : undefined;
+
+    const maxSuggestionsPerFileRaw =
+        getFlagValue('--max-suggestions-per-file') ??
+        process.env.SEED_MAX_SUGGESTIONS_PER_FILE;
+    const maxSuggestionsPerFile = maxSuggestionsPerFileRaw
+        ? parseInt(maxSuggestionsPerFileRaw, 10)
+        : undefined;
+
     const origin =
         getFlagValue('--origin') ?? process.env.SEED_ORIGIN ?? 'seed-script';
 
@@ -247,6 +273,10 @@ function parseArgs(): SeedConfig {
         count,
         startNumber,
         suggestionsPerFile,
+        minFiles,
+        maxFiles,
+        minSuggestionsPerFile,
+        maxSuggestionsPerFile,
         origin,
         dryRun,
     };
@@ -483,11 +513,74 @@ function buildSuggestions(
     return suggestions;
 }
 
+function generateRandomFiles(
+    numFiles: number,
+    createdAt: string,
+    minSuggestions: number,
+    maxSuggestions: number,
+): Array<any> {
+    const extensions = ['.ts', '.js', '.tsx', '.jsx', '.py', '.rs', '.go', '.java', '.md'];
+    const directories = [
+        'src/components/',
+        'src/services/',
+        'src/utils/',
+        'src/api/',
+        'libs/core/',
+        'libs/domain/',
+        'tests/',
+        'scripts/',
+    ];
+
+    const files = [];
+
+    for (let i = 0; i < numFiles; i++) {
+        const ext = randomChoice(extensions);
+        const dir = randomChoice(directories);
+        const filename = `file_${i}_${randomInt(100, 999)}${ext}`;
+        const path = `${dir}${filename}`;
+        const suggestionsCount = randomInt(minSuggestions, maxSuggestions);
+
+        files.push({
+            id: randomUUID(),
+            filename,
+            path,
+            previousName: '',
+            status: randomChoice(['modified', 'added', 'removed'] as const),
+            added: randomInt(10, 500),
+            deleted: randomInt(0, 100),
+            changes: randomInt(10, 600),
+            reviewMode: 'light_mode',
+            codeReviewModelUsed: {
+                generateSuggestions: 'seed:model',
+                safeguard: 'seed:model',
+            },
+            createdAt,
+            updatedAt: createdAt,
+            suggestions: buildSuggestions(path, createdAt, suggestionsCount),
+        });
+    }
+
+    return files;
+}
+
 function buildFiles(
     filesTemplate: Array<any>,
     createdAt: string,
     suggestionsPerFile: number,
+    minFiles?: number,
+    maxFiles?: number,
+    minSuggestionsPerFile?: number,
+    maxSuggestionsPerFile?: number,
 ) {
+    // If min/max files specified, generate random number of files
+    if (minFiles !== undefined && maxFiles !== undefined) {
+        const numFiles = randomInt(minFiles, maxFiles);
+        const minSugg = minSuggestionsPerFile ?? suggestionsPerFile;
+        const maxSugg = maxSuggestionsPerFile ?? suggestionsPerFile;
+        return generateRandomFiles(numFiles, createdAt, minSugg, maxSugg);
+    }
+
+    // Original logic - use template
     if (!Array.isArray(filesTemplate) || filesTemplate.length === 0) {
         return clone(DEFAULT_TEMPLATE.files).map((file) => ({
             ...file,
@@ -500,10 +593,14 @@ function buildFiles(
 
     return filesTemplate.map((rawFile) => {
         const file = clone(rawFile);
+        const effectiveSuggestionsPerFile = minSuggestionsPerFile !== undefined && maxSuggestionsPerFile !== undefined
+            ? randomInt(minSuggestionsPerFile, maxSuggestionsPerFile)
+            : suggestionsPerFile;
+
         const suggestions = buildSuggestions(
             file.path ?? file.filename,
             createdAt,
-            suggestionsPerFile,
+            effectiveSuggestionsPerFile,
         );
 
         return {
@@ -532,6 +629,10 @@ function buildPullRequestDocument(options: {
     organizationId: string;
     createdAt: Date;
     suggestionsPerFile: number;
+    minFiles?: number;
+    maxFiles?: number;
+    minSuggestionsPerFile?: number;
+    maxSuggestionsPerFile?: number;
 }) {
     const {
         template,
@@ -542,16 +643,43 @@ function buildPullRequestDocument(options: {
         organizationId,
         createdAt,
         suggestionsPerFile,
+        minFiles,
+        maxFiles,
+        minSuggestionsPerFile,
+        maxSuggestionsPerFile,
     } = options;
 
     const isoDate = createdAt.toISOString();
-    const files = buildFiles(template.files, isoDate, suggestionsPerFile);
+    const files = buildFiles(
+        template.files,
+        isoDate,
+        suggestionsPerFile,
+        minFiles,
+        maxFiles,
+        minSuggestionsPerFile,
+        maxSuggestionsPerFile,
+    );
 
     const totalAdded = files.reduce((sum, file) => sum + (file.added ?? 0), 0);
     const totalDeleted = files.reduce((sum, file) => sum + (file.deleted ?? 0), 0);
     const totalChanges = files.reduce(
         (sum, file) => sum + (file.changes ?? file.added ?? 0),
         0,
+    );
+
+    // Pre-compute suggestionsCount for performance optimization
+    const suggestionsCount = files.reduce(
+        (acc, file) => {
+            for (const suggestion of file.suggestions ?? []) {
+                if (suggestion.deliveryStatus === DeliveryStatus.SENT) {
+                    acc.sent++;
+                } else if (suggestion.deliveryStatus === DeliveryStatus.NOT_SENT) {
+                    acc.filtered++;
+                }
+            }
+            return acc;
+        },
+        { sent: 0, filtered: 0 },
     );
 
     return {
@@ -592,6 +720,7 @@ function buildPullRequestDocument(options: {
         syncedWithIssues: template.syncedWithIssues,
         prLevelSuggestions: clone(template.prLevelSuggestions),
         isDraft: template.isDraft,
+        suggestionsCount, // Add pre-computed count
         createdAt: isoDate,
         updatedAt: isoDate,
     };
@@ -902,6 +1031,10 @@ async function main() {
             count: config.count,
             startNumber: config.startNumber,
             suggestionsPerFile: config.suggestionsPerFile,
+            minFiles: config.minFiles,
+            maxFiles: config.maxFiles,
+            minSuggestionsPerFile: config.minSuggestionsPerFile,
+            maxSuggestionsPerFile: config.maxSuggestionsPerFile,
             origin: config.origin,
             dryRun: config.dryRun,
             defaultsApplied: {
@@ -962,6 +1095,10 @@ async function main() {
                 organizationId: config.organizationId,
                 createdAt,
                 suggestionsPerFile: config.suggestionsPerFile,
+                minFiles: config.minFiles,
+                maxFiles: config.maxFiles,
+                minSuggestionsPerFile: config.minSuggestionsPerFile,
+                maxSuggestionsPerFile: config.maxSuggestionsPerFile,
             });
 
             documents.push(prDocument);

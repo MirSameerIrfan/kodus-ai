@@ -378,12 +378,14 @@ export class GitHubPullRequestHandler implements IWebhookEventHandler {
                                 },
                                 head: {
                                     ref: data?.head?.ref,
+                                    sha: data?.head?.sha,
                                     repo: {
                                         fullName: data?.head?.repo?.fullName,
                                     },
                                 },
                                 base: {
                                     ref: data?.base?.ref,
+                                    sha: data?.base?.sha,
                                     repo: {
                                         fullName: data?.base?.repo?.fullName,
                                         defaultBranch:

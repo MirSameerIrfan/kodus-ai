@@ -202,6 +202,10 @@ export class AutomationExecutionRepository implements IAutomationExecutionReposi
     async findPullRequestExecutionsByOrganizationAndTeam(params: {
         organizationAndTeamData: OrganizationAndTeamData;
         repositoryIds?: string[];
+        repositoryName?: string;
+        pullRequestNumber?: number;
+        pullRequestTitle?: string;
+        prFilters?: Array<{ number: number; repositoryId: string }>;
         skip?: number;
         take?: number;
         order?: 'ASC' | 'DESC';
@@ -209,6 +213,10 @@ export class AutomationExecutionRepository implements IAutomationExecutionReposi
         const {
             organizationAndTeamData,
             repositoryIds,
+            repositoryName,
+            pullRequestNumber,
+            pullRequestTitle,
+            prFilters,
             skip = 0,
             take = 30,
             order = 'DESC',
@@ -237,13 +245,13 @@ export class AutomationExecutionRepository implements IAutomationExecutionReposi
                     'team.name',
                     'codeReviewExecutions.uuid',
                 ])
-                .leftJoin(
+                .innerJoin(
                     'automation_execution.teamAutomation',
                     'teamAutomation',
                 )
-                .leftJoin('teamAutomation.team', 'team')
-                .leftJoin('team.organization', 'organization')
-                .leftJoin(
+                .innerJoin('teamAutomation.team', 'team')
+                .innerJoin('team.organization', 'organization')
+                .innerJoin(
                     'automation_execution.codeReviewExecutions',
                     'codeReviewExecutions',
                 )
@@ -266,6 +274,35 @@ export class AutomationExecutionRepository implements IAutomationExecutionReposi
                         { repositoryIds },
                     );
                 }
+            }
+
+            if (pullRequestNumber !== undefined) {
+                queryBuilder.andWhere(
+                    'automation_execution.pullRequestNumber = :pullRequestNumber',
+                    { pullRequestNumber },
+                );
+            }
+
+            if (repositoryName) {
+                queryBuilder.andWhere(
+                    "automation_execution.dataExecution->'repository'->>'name' = :repositoryName",
+                    { repositoryName },
+                );
+            }
+
+            if (prFilters?.length) {
+                // Filter by specific PR numbers and repository IDs
+                const prConditions = prFilters.map((pr, index) =>
+                    `(automation_execution.pullRequestNumber = :prNumber${index} AND automation_execution.repositoryId = :repoId${index})`
+                ).join(' OR ');
+
+                const prParams = prFilters.reduce((acc, pr, index) => {
+                    acc[`prNumber${index}`] = pr.number;
+                    acc[`repoId${index}`] = pr.repositoryId;
+                    return acc;
+                }, {} as Record<string, any>);
+
+                queryBuilder.andWhere(`(${prConditions})`, prParams);
             }
 
             const total = await queryBuilder.getCount();

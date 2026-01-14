@@ -27,6 +27,7 @@ packages/**/*.js
 .env
 .env.qa
 .env.prod
+.env.local
 _*
 
 # Logs
@@ -91,6 +92,8 @@ certs
 .yalc
 yalc.lock
 .env.test
+.env.local.tmp
+docker-compose.prod-local.yml
 # packages
 # .packages
 #packages/kodus-flow/

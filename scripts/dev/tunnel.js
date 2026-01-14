@@ -72,7 +72,7 @@ const startTunnel = async () => {
         log(colors.yellow, '🚀 Starting localtunnel...');
         
         const tunnel = await localtunnel({ 
-            port: 3001,
+            port: 3332,
             subdomain: 'kodus-dev' // URL fixa: kodus-dev.loca.lt
         });
 

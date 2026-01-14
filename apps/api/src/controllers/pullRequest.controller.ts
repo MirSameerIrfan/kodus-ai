@@ -6,7 +6,6 @@ import {
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
 import {
-    BadRequestException,
     Body,
     Controller,
     Get,

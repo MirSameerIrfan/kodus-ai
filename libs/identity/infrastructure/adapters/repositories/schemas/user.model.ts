@@ -8,11 +8,11 @@ import {
     OneToOne,
 } from 'typeorm';
 
-import { AuthModel } from './auth.model';
-import { OrganizationModel } from '@libs/organization/infrastructure/adapters/repositories/schemas/organization.model';
-import { PermissionsModel } from './permissions.model';
-import { ProfileModel } from './profile.model';
-import { TeamMemberModel } from '@libs/organization/infrastructure/adapters/repositories/schemas/teamMember.model';
+import type { AuthModel } from './auth.model';
+import type { OrganizationModel } from '@libs/organization/infrastructure/adapters/repositories/schemas/organization.model';
+import type { PermissionsModel } from './permissions.model';
+import type { ProfileModel } from './profile.model';
+import type { TeamMemberModel } from '@libs/organization/infrastructure/adapters/repositories/schemas/teamMember.model';
 
 import { STATUS } from '@libs/core/infrastructure/config/types/database/status.type';
 import { Role } from '@libs/identity/domain/permissions/enums/permissions.enum';
@@ -34,19 +34,19 @@ export class UserModel extends CoreModel {
     @Column({ type: 'enum', enum: STATUS, default: STATUS.PENDING })
     status: STATUS;
 
-    @OneToOne(() => ProfileModel, (profile) => profile.user)
+    @OneToOne('ProfileModel', 'user')
     profile: ProfileModel[];
 
-    @ManyToOne(() => OrganizationModel, (organization) => organization.users)
+    @ManyToOne('OrganizationModel', 'users')
     @JoinColumn({ name: 'organization_id', referencedColumnName: 'uuid' })
     organization: OrganizationModel;
 
-    @OneToMany(() => AuthModel, (auth) => auth.user)
+    @OneToMany('AuthModel', 'user')
     auth: AuthModel[];
 
-    @OneToMany(() => TeamMemberModel, (teamMember) => teamMember.user)
+    @OneToMany('TeamMemberModel', 'user')
     teamMember: TeamMemberModel[];
 
-    @OneToOne(() => PermissionsModel, (permissions) => permissions.user)
+    @OneToOne('PermissionsModel', 'user')
     permissions: PermissionsModel;
 }

@@ -3,9 +3,11 @@ import { Module, forwardRef } from '@nestjs/common';
 // Stages
 import { AggregateResultsStage } from './stages/aggregate-result.stage';
 import { CreateFileCommentsStage } from './stages/create-file-comments.stage';
+import { CreateGithubCheckStage } from './stages/create-github-check.stage';
 import { CreatePrLevelCommentsStage } from './stages/create-pr-level-comments.stage';
 import { FetchChangedFilesStage } from './stages/fetch-changed-files.stage';
 import { FileContextGateStage } from './stages/file-context-gate.stage';
+import { FinalizeGithubCheckStage } from './stages/finalize-github-check.stage';
 import { UpdateCommentsAndGenerateSummaryStage } from './stages/finish-comments.stage';
 import { RequestChangesOrApproveStage } from './stages/finish-process-review.stage';
 import { InitialCommentStage } from './stages/initial-comment.stage';
@@ -33,6 +35,8 @@ import { KodyASTAnalyzeContextModule } from '@libs/ee/kodyASTAnalyze/kodyAstAnal
 import { KodyFineTuningContextModule } from '@libs/kodyFineTuning/kodyFineTuningContext.module';
 import { OrganizationParametersModule } from '@libs/organization/modules/organizationParameters.module';
 import { ParametersModule } from '@libs/organization/modules/parameters.module';
+import { GithubChecksService } from '@libs/platform/infrastructure/adapters/services/github/github-checks.service';
+import { GithubModule } from '@libs/platform/modules/github.module';
 import { PlatformModule } from '@libs/platform/modules/platform.module';
 import { CodebaseModule } from '../modules/codebase.module';
 import { PullRequestsModule } from '../modules/pull-requests.module';
@@ -56,6 +60,7 @@ import { CodeReviewPipelineStrategy } from './strategy/code-review-pipeline.stra
         forwardRef(() => KodyASTAnalyzeContextModule),
         forwardRef(() => KodyASTModule),
         forwardRef(() => AutomationModule),
+        forwardRef(() => GithubModule),
         WorkflowCoreModule,
         DryRunCoreModule,
     ],
@@ -92,6 +97,11 @@ import { CodeReviewPipelineStrategy } from './strategy/code-review-pipeline.stra
         KodyFineTuningStage,
         CodeAnalysisASTStage,
         CodeAnalysisASTCleanupStage,
+
+        // For GitHub Checks
+        GithubChecksService,
+        CreateGithubCheckStage,
+        FinalizeGithubCheckStage,
     ],
     exports: [
         CodeReviewPipelineStrategyEE,
@@ -112,6 +122,8 @@ import { CodeReviewPipelineStrategy } from './strategy/code-review-pipeline.stra
         LoadExternalContextStage,
         LOAD_EXTERNAL_CONTEXT_STAGE_TOKEN,
         ValidateSuggestionsStage,
+        CreateGithubCheckStage,
+        FinalizeGithubCheckStage,
     ],
 })
 export class CodeReviewPipelineModule {}

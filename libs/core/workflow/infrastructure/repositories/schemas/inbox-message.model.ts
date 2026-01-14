@@ -1,7 +1,7 @@
 import { Column, Entity, Index, ManyToOne, JoinColumn } from 'typeorm';
 
 import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
-import { WorkflowJobModel } from './workflow-job.model';
+import type { WorkflowJobModel } from './workflow-job.model';
 
 export enum InboxStatus {
     READY = 'READY',
@@ -30,7 +30,7 @@ export class InboxMessageModel extends CoreModel {
     @Column({ type: 'varchar', length: 255, default: 'default' })
     consumerId: string;
 
-    @ManyToOne(() => WorkflowJobModel, (job) => job.inboxMessages, {
+    @ManyToOne('WorkflowJobModel', 'inboxMessages', {
         nullable: true,
     })
     @JoinColumn({ name: 'job_id', referencedColumnName: 'uuid' })

@@ -4,7 +4,7 @@ import { AutomationType } from '@libs/automation/domain/automation/enum/automati
 import { AutomationLevel } from '@libs/core/domain/enums';
 import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
 
-import { TeamAutomationModel } from './teamAutomation.model';
+import type { TeamAutomationModel } from './teamAutomation.model';
 
 @Entity('automation')
 export class AutomationModel extends CoreModel {
@@ -33,10 +33,7 @@ export class AutomationModel extends CoreModel {
     })
     level: AutomationLevel;
 
-    @OneToMany(
-        () => TeamAutomationModel,
-        (teamAutomation) => teamAutomation.automation,
-    )
+    @OneToMany('TeamAutomationModel', 'automation')
     @JoinColumn({ name: 'team_automation_id', referencedColumnName: 'uuid' })
     teamAutomations: TeamAutomationModel[];
 }

@@ -2,7 +2,7 @@ import { Column, Entity, ManyToOne } from 'typeorm';
 
 import { AuthProvider } from '@libs/core/domain/enums/auth-provider.enum';
 import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm';
-import { UserModel } from './user.model';
+import type { UserModel } from './user.model';
 
 @Entity('auth')
 export class AuthModel extends CoreModel {
@@ -15,7 +15,7 @@ export class AuthModel extends CoreModel {
     @Column({ type: 'boolean', default: false })
     used: boolean;
 
-    @ManyToOne(() => UserModel, (user) => user.auth)
+    @ManyToOne('UserModel', 'auth')
     user: UserModel;
 
     @Column({ type: 'jsonb', nullable: true, default: null })

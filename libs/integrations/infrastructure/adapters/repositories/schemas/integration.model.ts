@@ -13,8 +13,8 @@ import { CoreModel } from '@libs/core/infrastructure/repositories/model/typeOrm'
 import { OrganizationModel } from '@libs/organization/infrastructure/adapters/repositories/schemas/organization.model';
 import { TeamModel } from '@libs/organization/infrastructure/adapters/repositories/schemas/team.model';
 
-import { AuthIntegrationModel } from './authIntegration.model';
-import { IntegrationConfigModel } from './integrationConfig.model';
+import type { AuthIntegrationModel } from './authIntegration.model';
+import type { IntegrationConfigModel } from './integrationConfig.model';
 
 @Entity('integrations')
 @Index(
@@ -39,10 +39,7 @@ export class IntegrationModel extends CoreModel {
     @JoinColumn({ name: 'organization_id', referencedColumnName: 'uuid' })
     organization: OrganizationModel;
 
-    @OneToOne(
-        () => AuthIntegrationModel,
-        (authIntegration) => authIntegration.integration,
-    )
+    @OneToOne('AuthIntegrationModel', 'integration')
     @JoinColumn({ name: 'auth_integration_id', referencedColumnName: 'uuid' })
     authIntegration: AuthIntegrationModel;
 
@@ -50,6 +47,6 @@ export class IntegrationModel extends CoreModel {
     @JoinColumn({ name: 'team_id', referencedColumnName: 'uuid' })
     team: TeamModel;
 
-    @OneToMany(() => IntegrationConfigModel, (config) => config.integration)
+    @OneToMany('IntegrationConfigModel', 'integration')
     integrationConfigs: IntegrationConfigModel[];
 }

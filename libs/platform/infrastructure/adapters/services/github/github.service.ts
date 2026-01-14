@@ -1823,6 +1823,12 @@ export class GithubService
         };
     }
 
+    public async getAuthenticatedOctokit(
+        organizationAndTeamData: OrganizationAndTeamData,
+    ): Promise<Octokit> {
+        return this.instanceOctokit(organizationAndTeamData);
+    }
+
     private async instanceOctokit(
         organizationAndTeamData: OrganizationAndTeamData,
         authDetails?: GithubAuthDetail,
@@ -5796,6 +5802,7 @@ This is an experimental feature that generates committable changes. Review the d
             sourceRefName: pullRequest?.head?.ref ?? '', // TODO: remove, legacy, use head.ref
             head: {
                 ref: pullRequest?.head?.ref ?? '',
+                sha: pullRequest?.head?.sha ?? '',
                 repo: {
                     id: pullRequest?.head?.repo?.id?.toString() ?? '',
                     name: pullRequest?.head?.repo?.name ?? '',
@@ -5807,6 +5814,7 @@ This is an experimental feature that generates committable changes. Review the d
             targetRefName: pullRequest?.base?.ref ?? '', // TODO: remove, legacy, use base.ref
             base: {
                 ref: pullRequest?.base?.ref ?? '',
+                sha: pullRequest?.base?.sha ?? '',
                 repo: {
                     id: pullRequest?.base?.repo?.id?.toString() ?? '',
                     name: pullRequest?.base?.repo?.name ?? '',

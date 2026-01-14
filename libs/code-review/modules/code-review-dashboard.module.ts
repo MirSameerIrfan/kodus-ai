@@ -4,11 +4,13 @@ import { AutomationModule } from '@libs/automation/modules/automation.module';
 import { PlatformDataModule } from '@libs/platformData/platformData.module';
 import { PermissionsModule } from '@libs/identity/modules/permissions.module';
 import { CodeReviewExecutionModule } from '@libs/code-review/modules/codeReviewExecution.module';
+import { IntegrationConfigCoreModule } from '@libs/integrations/modules/config-core.module';
 
 @Module({
     imports: [
         forwardRef(() => AutomationModule),
         forwardRef(() => PlatformDataModule),
+        forwardRef(() => IntegrationConfigCoreModule),
         forwardRef(() => PermissionsModule),
         forwardRef(() => CodeReviewExecutionModule),
     ],

@@ -4,6 +4,7 @@ import {
     ReasoningConfig,
 } from '@kodus/kodus-common/llm';
 import { ProviderService } from '@libs/core/infrastructure/services/providers/provider.service';
+import { createLogger } from '@kodus/flow';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import axios from 'axios';
 
@@ -75,6 +76,8 @@ export interface ModelResponse {
 
 @Injectable()
 export class GetModelsByProviderUseCase {
+    private readonly logger = createLogger(GetModelsByProviderUseCase.name);
+
     constructor(private readonly providerService: ProviderService) {}
 
     async execute(provider: string): Promise<ModelResponse> {
@@ -345,21 +348,26 @@ export class GetModelsByProviderUseCase {
                 );
             }
 
-            console.log(
-                '🔍 Fetching Vertex models with API key:',
-                apiKey.substring(0, 10) + '...',
-            );
+            this.logger.debug({
+                message: 'Fetching Vertex models',
+                context: GetModelsByProviderUseCase.name,
+                metadata: {
+                    apiKeyPrefix: apiKey.substring(0, 10) + '...',
+                },
+            });
 
             // Use Gemini API to list models and map to Vertex
             const response = await axios.get<GeminiResponse>(
                 `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`,
             );
 
-            console.log(
-                '✅ Gemini response received:',
-                response.data.models?.length || 0,
-                'models',
-            );
+            this.logger.debug({
+                message: 'Gemini response received',
+                context: GetModelsByProviderUseCase.name,
+                metadata: {
+                    modelCount: response.data.models?.length || 0,
+                },
+            });
 
             return {
                 provider: BYOKProvider.GOOGLE_VERTEX,
@@ -377,7 +385,11 @@ export class GetModelsByProviderUseCase {
                     })),
             };
         } catch (error) {
-            console.error('❌ Error fetching Vertex models:', error);
+            this.logger.error({
+                message: 'Error fetching Vertex models',
+                context: GetModelsByProviderUseCase.name,
+                error: error,
+            });
             throw new BadRequestException(
                 `Error fetching Google Vertex models: ${(error as Error).message}`,
             );

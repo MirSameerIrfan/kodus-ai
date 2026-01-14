@@ -8,11 +8,18 @@ export default {
     testMatch: ['**/*.spec.ts', '**/*.integration.spec.ts', '**/*.e2e-spec.ts'],
     transform: {
         '^.+\\.(t|j)s$': [
-            'ts-jest',
+            '@swc/jest',
             {
-                tsconfig: 'tsconfig.spec.json',
-                diagnostics: false,
-                isolatedModules: true,
+                jsc: {
+                    parser: {
+                        syntax: 'typescript',
+                        decorators: true,
+                    },
+                    transform: {
+                        legacyDecorator: true,
+                        decoratorMetadata: true,
+                    },
+                },
             },
         ],
     },
