@@ -8,16 +8,12 @@
             "port": 9229,
             "address": "localhost",
             "timeout": 60000,
-            "restart": true,
+            "restart": false,
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/app",
             "sourceMaps": true,
             "sourceMapPathOverrides": {
-                "webpack:///./*": "${workspaceFolder}/*",
-                "webpack:///apps/*": "${workspaceFolder}/apps/*",
-                "webpack:///libs/*": "${workspaceFolder}/libs/*",
-                "webpack:///src/*": "${workspaceFolder}/src/*",
-                "/usr/src/app/*": "${workspaceFolder}/*"
+                "webpack:///*": "${workspaceFolder}/*"
             },
             "skipFiles": [
                 "<node_internals>/**"
@@ -30,16 +26,12 @@
             "port": 9232,
             "address": "localhost",
             "timeout": 60000,
-            "restart": true,
+            "restart": false,
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/app",
             "sourceMaps": true,
             "sourceMapPathOverrides": {
-                "webpack:///./*": "${workspaceFolder}/*",
-                "webpack:///apps/*": "${workspaceFolder}/apps/*",
-                "webpack:///libs/*": "${workspaceFolder}/libs/*",
-                "webpack:///src/*": "${workspaceFolder}/src/*",
-                "/usr/src/app/*": "${workspaceFolder}/*"
+                "webpack:///*": "${workspaceFolder}/*"
             },
             "skipFiles": [
                 "<node_internals>/**"
@@ -52,16 +44,12 @@
             "port": 9231,
             "address": "localhost",
             "timeout": 60000,
-            "restart": true,
+            "restart": false,
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/app",
             "sourceMaps": true,
             "sourceMapPathOverrides": {
-                "webpack:///./*": "${workspaceFolder}/*",
-                "webpack:///apps/*": "${workspaceFolder}/apps/*",
-                "webpack:///libs/*": "${workspaceFolder}/libs/*",
-                "webpack:///src/*": "${workspaceFolder}/src/*",
-                "/usr/src/app/*": "${workspaceFolder}/*"
+                "webpack:///*": "${workspaceFolder}/*"
             },
             "skipFiles": [
                 "<node_internals>/**"
