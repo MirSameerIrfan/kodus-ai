@@ -8,6 +8,7 @@ import {
     ASTValidateCodeRequest,
     SUPPORTED_LANGUAGES,
 } from '@libs/code-review/domain/types/astValidate.type';
+import posthog, { FEATURE_FLAGS } from '@libs/common/utils/posthog';
 import { PlatformType } from '@libs/core/domain/enums';
 import {
     CodeSuggestion,
@@ -40,55 +41,10 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
     protected override async executeStage(
         context: CodeReviewPipelineContext,
     ): Promise<CodeReviewPipelineContext> {
-        const {
-            codeReviewConfig,
-            validSuggestions,
-            changedFiles,
-            platformType,
-        } = context;
+        const { validSuggestions, changedFiles, organizationAndTeamData } =
+            context;
 
-        if (!codeReviewConfig?.enableCommittableSuggestions) {
-            this.logger.log({
-                message:
-                    'Committable suggestions feature is disabled in the configuration',
-                context: ValidateSuggestionsStage.name,
-                metadata: {
-                    organizationAndTeamData: context.organizationAndTeamData,
-                    prNumber: context.pullRequest.number,
-                },
-            });
-
-            return context;
-        }
-
-        if (platformType !== PlatformType.GITHUB) {
-            this.logger.log({
-                message: 'Skipping validation stage for non-GitHub platform',
-                context: ValidateSuggestionsStage.name,
-                metadata: {
-                    platformType,
-                    prNumber: context.pullRequest.number,
-                    organizationAndTeamData: context.organizationAndTeamData,
-                },
-            });
-
-            return context;
-        }
-
-        if (!validSuggestions?.length || !changedFiles?.length) {
-            this.logger.log({
-                message: 'No valid suggestions or changed files to validate',
-                context: ValidateSuggestionsStage.name,
-                metadata: {
-                    organizationAndTeamData: context.organizationAndTeamData,
-                    prNumber: context.pullRequest.number,
-                    validSuggestionsCount: validSuggestions?.length || 0,
-                    changedFilesCount: changedFiles?.length || 0,
-                },
-            });
-
-            return context;
-        }
+        if (!(await this.shouldRunStage(context))) return context;
 
         const filteredSuggestions = await this.filterComplexSuggestions(
             validSuggestions,
@@ -100,7 +56,7 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
                 message: 'All suggestions filtered out as too complex/long',
                 context: ValidateSuggestionsStage.name,
                 metadata: {
-                    organizationAndTeamData: context.organizationAndTeamData,
+                    organizationAndTeamData,
                     prNumber: context.pullRequest.number,
                 },
             });
@@ -120,7 +76,7 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
                 metadata: {
                     validSuggestions: filteredSuggestions,
                     changedFiles,
-                    organizationAndTeamData: context.organizationAndTeamData,
+                    organizationAndTeamData,
                     prNumber: context.pullRequest.number,
                 },
             });
@@ -166,13 +122,90 @@ export class ValidateSuggestionsStage extends BasePipelineStage<CodeReviewPipeli
                 context: ValidateSuggestionsStage.name,
                 error,
                 metadata: {
-                    organizationAndTeamData: context.organizationAndTeamData,
+                    organizationAndTeamData,
                     prNumber: context.pullRequest.number,
                 },
             });
 
             return context;
         }
+    }
+
+    private async shouldRunStage(context: CodeReviewPipelineContext) {
+        const {
+            organizationAndTeamData,
+            pullRequest,
+            platformType,
+            codeReviewConfig,
+            validSuggestions,
+            changedFiles,
+        } = context;
+
+        const prNumber = pullRequest.number;
+
+        const featureFlag = await posthog.isFeatureEnabled(
+            FEATURE_FLAGS.committableSuggestions,
+            organizationAndTeamData.organizationId,
+            organizationAndTeamData,
+        );
+
+        if (!featureFlag) {
+            this.logger.debug({
+                message: 'Committable suggestions feature is disabled',
+                context: ValidateSuggestionsStage.name,
+                metadata: {
+                    organizationAndTeamData,
+                    prNumber,
+                },
+            });
+
+            return false;
+        }
+
+        if (!codeReviewConfig?.enableCommittableSuggestions) {
+            this.logger.debug({
+                message:
+                    'Committable suggestions feature is disabled in the configuration',
+                context: ValidateSuggestionsStage.name,
+                metadata: {
+                    organizationAndTeamData,
+                    prNumber,
+                },
+            });
+
+            return false;
+        }
+
+        if (platformType !== PlatformType.GITHUB) {
+            this.logger.debug({
+                message: 'Skipping validation stage for non-GitHub platform',
+                context: ValidateSuggestionsStage.name,
+                metadata: {
+                    platformType,
+                    prNumber,
+                    organizationAndTeamData,
+                },
+            });
+
+            return false;
+        }
+
+        if (!validSuggestions?.length || !changedFiles?.length) {
+            this.logger.debug({
+                message: 'No valid suggestions or changed files to validate',
+                context: ValidateSuggestionsStage.name,
+                metadata: {
+                    organizationAndTeamData,
+                    prNumber,
+                    validSuggestionsCount: validSuggestions?.length || 0,
+                    changedFilesCount: changedFiles?.length || 0,
+                },
+            });
+
+            return false;
+        }
+
+        return true;
     }
 
     private async filterComplexSuggestions(
