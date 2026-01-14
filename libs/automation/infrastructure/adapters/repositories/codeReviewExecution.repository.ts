@@ -194,6 +194,17 @@ export class CodeReviewExecutionRepository<
 
         try {
             const found = await this.codeReviewExecutionRepository.find({
+                select: {
+                    uuid: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    status: true,
+                    message: true,
+                    automationExecution: {
+                        uuid: true,
+                    },
+                },
+                relations: ['automationExecution'],
                 where: {
                     automationExecution: { uuid: In(uuids) },
                 } as FindOptionsWhere<CodeReviewExecutionModel>,

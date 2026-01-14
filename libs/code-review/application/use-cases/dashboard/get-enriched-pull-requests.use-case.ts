@@ -230,6 +230,9 @@ export class GetEnrichedPullRequestsUseCase implements IUseCase {
                                 message: 'Error bulk fetching pull requests',
                                 context: GetEnrichedPullRequestsUseCase.name,
                                 error,
+                                metadata: {
+                                    organizationId,
+                                },
                             });
                             return [];
                         }),
@@ -240,6 +243,9 @@ export class GetEnrichedPullRequestsUseCase implements IUseCase {
                                 message: 'Error bulk fetching code reviews',
                                 context: GetEnrichedPullRequestsUseCase.name,
                                 error,
+                                metadata: {
+                                    organizationId,
+                                },
                             });
                             return [];
                         }),
@@ -363,6 +369,7 @@ export class GetEnrichedPullRequestsUseCase implements IUseCase {
                                 executionUuid: execution.uuid,
                                 prNumber: execution.pullRequestNumber,
                                 repositoryId: execution.repositoryId,
+                                organizationId,
                             },
                         });
                     }
@@ -432,7 +439,7 @@ export class GetEnrichedPullRequestsUseCase implements IUseCase {
                 message: 'Error getting enriched pull requests',
                 context: GetEnrichedPullRequestsUseCase.name,
                 error,
-                metadata: { repositoryId, repositoryName },
+                metadata: { repositoryId, repositoryName, organizationId },
             });
             throw error;
         }

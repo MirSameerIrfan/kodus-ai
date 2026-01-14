@@ -43,19 +43,19 @@ export class PullRequestsRepository implements IPullRequestsRepository {
 
     //#region Get/Find
     async findById(uuid: string): Promise<PullRequestsEntity | null> {
-        const doc = await this.pullRequestsModel.findOne({ uuid }).exec();
+        const doc = await this.pullRequestsModel.findOne({ uuid }).lean().exec();
         return doc ? mapSimpleModelToEntity(doc, PullRequestsEntity) : null;
     }
 
     async findOne(
         filter?: Partial<IPullRequests>,
     ): Promise<PullRequestsEntity | null> {
-        const doc = await this.pullRequestsModel.findOne(filter).exec();
+        const doc = await this.pullRequestsModel.findOne(filter).lean().exec();
         return doc ? mapSimpleModelToEntity(doc, PullRequestsEntity) : null;
     }
 
     async find(filter?: Partial<IPullRequests>): Promise<PullRequestsEntity[]> {
-        const docs = await this.pullRequestsModel.find(filter).exec();
+        const docs = await this.pullRequestsModel.find(filter).lean().exec();
         return mapSimpleModelsToEntities(docs, PullRequestsEntity);
     }
 
@@ -75,6 +75,7 @@ export class PullRequestsRepository implements IPullRequestsRepository {
 
         const results = await this.pullRequestsModel
             .find(filter, { number: 1, 'repository.id': 1 })
+            .lean()
             .exec();
 
         return results.map((doc) => ({
@@ -92,7 +93,7 @@ export class PullRequestsRepository implements IPullRequestsRepository {
             'number': pullRequestNumber,
             'repository.name': repositoryName,
             'organizationId': organizationAndTeamData.organizationId,
-        });
+        }).lean();
 
         return pullRequest
             ? mapSimpleModelToEntity(pullRequest, PullRequestsEntity)
@@ -108,7 +109,7 @@ export class PullRequestsRepository implements IPullRequestsRepository {
             'number': pullRequestNumber,
             'repository.id': repositoryName,
             'organizationId': organizationAndTeamData.organizationId,
-        });
+        }).lean();
 
         return pullRequest
             ? mapSimpleModelToEntity(pullRequest, PullRequestsEntity)
@@ -135,7 +136,7 @@ export class PullRequestsRepository implements IPullRequestsRepository {
                 'commits': 0,
                 'prLevelSuggestions': 0,
             },
-        );
+        ).lean();
 
         return pullRequest
             ? mapSimpleModelToEntity(pullRequest, PullRequestsEntity)
@@ -171,7 +172,7 @@ export class PullRequestsRepository implements IPullRequestsRepository {
                 'commits': 0,
                 'prLevelSuggestions': 0,
             },
-        ).exec();
+        ).lean().exec();
 
         return mapSimpleModelsToEntities(pullRequests, PullRequestsEntity);
     }
@@ -737,6 +738,7 @@ export class PullRequestsRepository implements IPullRequestsRepository {
             })
             .sort({ openedAt: -1, createdAt: -1 })
             .limit(limit)
+            .lean()
             .exec();
 
         return mapSimpleModelsToEntities(docs, PullRequestsEntity);
