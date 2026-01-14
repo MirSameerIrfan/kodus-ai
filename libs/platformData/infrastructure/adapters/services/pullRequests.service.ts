@@ -109,6 +109,19 @@ export class PullRequestsService implements IPullRequestsService {
         );
     }
 
+    findManyByNumbersAndRepositoryIds(
+        criteria: Array<{
+            number: number;
+            repositoryId: string;
+        }>,
+        organizationId: string,
+    ): Promise<PullRequestsEntity[]> {
+        return this.pullRequestsRepository.findManyByNumbersAndRepositoryIds(
+            criteria,
+            organizationId,
+        );
+    }
+
     async findSuggestionsByPRAndFilename(
         prNumber: number,
         repoFullName: string,
