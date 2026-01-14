@@ -19,7 +19,8 @@ export class SamlStrategy extends PassportStrategy(MultiSamlStrategy, 'saml') {
             passReqToCallback: true,
             getSamlOptions: async (req, done) => {
                 try {
-                    const organizationId = req.params.organizationId;
+                    const organizationId = req?.params
+                        ?.organizationId as string;
 
                     if (!organizationId) {
                         return done(new Error('No Organization ID provided'));

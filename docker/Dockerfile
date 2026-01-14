@@ -19,7 +19,6 @@ FROM base AS deps
 COPY package.json yarn.lock .npmrc ./
 RUN yarn install --frozen-lockfile
 
-
 FROM deps AS build
 ARG API_CLOUD_MODE=false
 ENV API_CLOUD_MODE=${API_CLOUD_MODE}
@@ -40,8 +39,7 @@ RUN yarn build:apps && yarn build:migrations
 # Install production dependencies only
 FROM base AS prod-deps
 COPY package.json yarn.lock .npmrc ./
-RUN yarn install --production --frozen-lockfile && yarn cache clean
-
+RUN yarn install --frozen-lockfile && yarn cache clean
 
 FROM node:22.19.0-slim AS runtime-common
 WORKDIR /usr/src/app
@@ -67,6 +65,7 @@ COPY --from=build /usr/src/app/default-kodus-config.yml ./default-kodus-config.y
 COPY --from=build /usr/src/app/kodus-config.yml ./kodus-config.yml
 COPY --from=build /usr/src/app/scripts ./scripts
 COPY --from=build /usr/src/app/ecosystem.config.js ./ecosystem.config.js
+COPY --from=build /usr/src/app/tsconfig-paths-bootstrap.js ./tsconfig-paths-bootstrap.js
 
 COPY --chmod=0755 docker/prod-entrypoint.sh /usr/local/bin/prod-entrypoint
 ENTRYPOINT ["/usr/local/bin/prod-entrypoint"]
