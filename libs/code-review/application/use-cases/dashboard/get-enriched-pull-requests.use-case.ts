@@ -1,9 +1,14 @@
+import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
 import { UserRequest } from '@libs/core/infrastructure/config/types/http/user-request.type';
-
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import {
     Action,
     ResourceType,
 } from '@libs/identity/domain/permissions/enums/permissions.enum';
+import {
+    IIntegrationConfigService,
+    INTEGRATION_CONFIG_SERVICE_TOKEN,
+} from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
 import {
     IPullRequestsService,
     PULL_REQUESTS_SERVICE_TOKEN,
@@ -31,6 +36,7 @@ import {
 } from '@libs/code-review/dtos/dashboard/paginated-enriched-pull-requests.dto';
 import { EnrichedPullRequestsQueryDto } from '@libs/code-review/dtos/dashboard/enriched-pull-requests-query.dto';
 import { EnrichedPullRequestResponse } from '@libs/code-review/dtos/dashboard/enriched-pull-request-response.dto';
+import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
 
 @Injectable()
 export class GetEnrichedPullRequestsUseCase implements IUseCase {
@@ -42,6 +48,9 @@ export class GetEnrichedPullRequestsUseCase implements IUseCase {
 
         @Inject(PULL_REQUESTS_SERVICE_TOKEN)
         private readonly pullRequestsService: IPullRequestsService,
+
+        @Inject(INTEGRATION_CONFIG_SERVICE_TOKEN)
+        private readonly integrationConfigService: IIntegrationConfigService,
 
         @Inject(CODE_REVIEW_EXECUTION_SERVICE)
         private readonly codeReviewExecutionService: ICodeReviewExecutionService<IAutomationExecution>,
@@ -61,6 +70,7 @@ export class GetEnrichedPullRequestsUseCase implements IUseCase {
             page = 1,
             hasSentSuggestions,
             pullRequestTitle,
+            pullRequestNumber,
             teamId,
         } = query;
 
@@ -82,6 +92,10 @@ export class GetEnrichedPullRequestsUseCase implements IUseCase {
         }
 
         const organizationId = this.request.user.organization.uuid;
+        const organizationAndTeamData: OrganizationAndTeamData = {
+            organizationId,
+            teamId,
+        };
 
         try {
             const assignedRepositoryIds =
@@ -91,23 +105,77 @@ export class GetEnrichedPullRequestsUseCase implements IUseCase {
                     resource: ResourceType.PullRequests,
                 });
 
-            const allowedRepositoryIds = (() => {
-                if (repositoryId) {
-                    return [repositoryId];
-                }
+            if (assignedRepositoryIds !== null && assignedRepositoryIds.length === 0) {
+                return this.buildEmptyResponse(limit, page);
+            }
 
-                if (assignedRepositoryIds !== null) {
-                    return assignedRepositoryIds;
-                }
+            let requestedRepositoryIds: string[] | undefined;
+            let repositoryNameFilter = repositoryName;
 
-                return undefined;
-            })();
+            if (repositoryId) {
+                requestedRepositoryIds = [String(repositoryId)];
+                repositoryNameFilter = undefined;
+            } else if (repositoryName) {
+                const resolvedRepositoryIds =
+                    await this.resolveRepositoryIdsByName({
+                        organizationAndTeamData,
+                        repositoryName,
+                    });
+
+                if (resolvedRepositoryIds?.length) {
+                    requestedRepositoryIds = resolvedRepositoryIds;
+                    repositoryNameFilter = undefined;
+                }
+            }
+
+            let allowedRepositoryIds = requestedRepositoryIds;
+
+            if (assignedRepositoryIds !== null) {
+                if (allowedRepositoryIds?.length) {
+                    allowedRepositoryIds = allowedRepositoryIds.filter((id) =>
+                        assignedRepositoryIds.includes(id),
+                    );
+
+                    if (allowedRepositoryIds.length === 0) {
+                        return this.buildEmptyResponse(limit, page);
+                    }
+                } else {
+                    allowedRepositoryIds = assignedRepositoryIds;
+                }
+            }
 
             const enrichedPullRequests: EnrichedPullRequestResponse[] = [];
             const initialSkip = (page - 1) * limit;
             let accumulatedExecutions = 0;
             let totalExecutions = 0;
             let hasMoreExecutions = true;
+
+            // If filtering by title, fetch PR numbers from MongoDB first
+            let prFilters: Array<{ number: number; repositoryId: string }> | undefined;
+            if (pullRequestTitle) {
+                const prNumbers = await this.pullRequestsService.findPRNumbersByTitleAndOrganization(
+                    pullRequestTitle,
+                    organizationId,
+                    allowedRepositoryIds,
+                );
+
+                if (prNumbers.length === 0) {
+                    // No PRs match the title filter
+                    return {
+                        data: [],
+                        pagination: {
+                            currentPage: page,
+                            totalPages: 0,
+                            totalItems: 0,
+                            itemsPerPage: limit,
+                            hasNextPage: false,
+                            hasPreviousPage: false,
+                        },
+                    };
+                }
+
+                prFilters = prNumbers;
+            }
 
             while (enrichedPullRequests.length < limit && hasMoreExecutions) {
                 const { data: executionsBatch, total } =
@@ -118,6 +186,9 @@ export class GetEnrichedPullRequestsUseCase implements IUseCase {
                                 teamId,
                             },
                             repositoryIds: allowedRepositoryIds,
+                            repositoryName: repositoryNameFilter,
+                            pullRequestNumber,
+                            prFilters,
                             skip: initialSkip + accumulatedExecutions,
                             take: limit,
                             order: 'DESC',
@@ -133,24 +204,82 @@ export class GetEnrichedPullRequestsUseCase implements IUseCase {
                     break;
                 }
 
-                for (const execution of executionsBatch) {
-                    try {
-                        const pullRequest =
-                            await this.pullRequestsService.findByNumberAndRepositoryId(
-                                execution.pullRequestNumber!,
-                                execution.repositoryId!,
-                                { organizationId },
-                            );
+                // Prepare bulk fetch criteria
+                const prCriteria = executionsBatch
+                    .filter(
+                        (e) =>
+                            e.pullRequestNumber != null &&
+                            e.repositoryId != null,
+                    )
+                    .map((e) => ({
+                        number: e.pullRequestNumber!,
+                        repositoryId: e.repositoryId!,
+                    }));
 
-                        if (
-                            pullRequestTitle &&
-                            !pullRequest?.title
-                                .toLocaleLowerCase()
-                                .includes(pullRequestTitle.toLocaleLowerCase())
-                        ) {
-                            continue;
+                const executionUuids = executionsBatch.map((e) => e.uuid);
+
+                // Bulk fetch in parallel
+                const [pullRequestsList, codeReviewsList] = await Promise.all([
+                    this.pullRequestsService
+                        .findManyByNumbersAndRepositoryIds(
+                            prCriteria,
+                            organizationId,
+                        )
+                        .catch((error) => {
+                            this.logger.error({
+                                message: 'Error bulk fetching pull requests',
+                                context: GetEnrichedPullRequestsUseCase.name,
+                                error,
+                                metadata: {
+                                    organizationId,
+                                },
+                            });
+                            return [];
+                        }),
+                    this.codeReviewExecutionService
+                        .findManyByAutomationExecutionIds(executionUuids)
+                        .catch((error) => {
+                            this.logger.error({
+                                message: 'Error bulk fetching code reviews',
+                                context: GetEnrichedPullRequestsUseCase.name,
+                                error,
+                                metadata: {
+                                    organizationId,
+                                },
+                            });
+                            return [];
+                        }),
+                ]);
+
+                // Map results for O(1) access
+                const prMap = new Map<string, IPullRequests>();
+                pullRequestsList.forEach((pr) => {
+                    if (pr.repository?.id && pr.number) {
+                        prMap.set(`${pr.repository.id}_${pr.number}`, pr);
+                    }
+                });
+
+                const codeReviewMap = new Map<string, any[]>();
+                codeReviewsList.forEach((cr) => {
+                    const execId = (cr.automationExecution as any)?.uuid;
+                    if (execId) {
+                        if (!codeReviewMap.has(execId)) {
+                            codeReviewMap.set(execId, []);
                         }
+                        codeReviewMap.get(execId).push(cr);
+                    }
+                });
 
+                // Process executions
+                for (let i = 0; i < executionsBatch.length; i++) {
+                    const execution = executionsBatch[i];
+                    
+                    const prKey = `${execution.repositoryId}_${execution.pullRequestNumber}`;
+                    const pullRequest = prMap.get(prKey);
+                    const codeReviewExecutions =
+                        codeReviewMap.get(execution.uuid) || [];
+
+                    try {
                         if (!pullRequest) {
                             this.logger.warn({
                                 message: 'Pull request not found in MongoDB',
@@ -164,34 +293,7 @@ export class GetEnrichedPullRequestsUseCase implements IUseCase {
                             continue;
                         }
 
-                        if (
-                            repositoryName &&
-                            pullRequest.repository.name !== repositoryName
-                        ) {
-                            continue;
-                        }
-
-                        const codeReviewExecutions =
-                            await this.codeReviewExecutionService.find({
-                                automationExecution: { uuid: execution.uuid },
-                            });
-
-                        if (
-                            !codeReviewExecutions ||
-                            codeReviewExecutions.length === 0
-                        ) {
-                            this.logger.debug({
-                                message:
-                                    'Skipping PR without code review history',
-                                context: GetEnrichedPullRequestsUseCase.name,
-                                metadata: {
-                                    prNumber: execution.pullRequestNumber,
-                                    repositoryId: execution.repositoryId,
-                                    executionUuid: execution.uuid,
-                                },
-                            });
-                            continue;
-                        }
+                        // Repository name and code review filters moved to Postgres query
 
                         const codeReviewTimeline = codeReviewExecutions.map(
                             (cre) => ({
@@ -267,6 +369,7 @@ export class GetEnrichedPullRequestsUseCase implements IUseCase {
                                 executionUuid: execution.uuid,
                                 prNumber: execution.pullRequestNumber,
                                 repositoryId: execution.repositoryId,
+                                organizationId,
                             },
                         });
                     }
@@ -336,10 +439,78 @@ export class GetEnrichedPullRequestsUseCase implements IUseCase {
                 message: 'Error getting enriched pull requests',
                 context: GetEnrichedPullRequestsUseCase.name,
                 error,
-                metadata: { repositoryId, repositoryName },
+                metadata: { repositoryId, repositoryName, organizationId },
             });
             throw error;
         }
+    }
+
+    private buildEmptyResponse(
+        limit: number,
+        page: number,
+    ): PaginatedEnrichedPullRequestsResponse {
+        return {
+            data: [],
+            pagination: {
+                currentPage: page,
+                totalPages: 0,
+                totalItems: 0,
+                itemsPerPage: limit,
+                hasNextPage: false,
+                hasPreviousPage: false,
+            },
+        };
+    }
+
+    private async resolveRepositoryIdsByName(params: {
+        organizationAndTeamData: OrganizationAndTeamData;
+        repositoryName: string;
+    }): Promise<string[] | undefined> {
+        const { organizationAndTeamData, repositoryName } = params;
+
+        if (!repositoryName?.trim()) {
+            return undefined;
+        }
+
+        const repositories =
+            await this.integrationConfigService.findIntegrationConfigFormatted<
+                Repositories[]
+            >(IntegrationConfigKey.REPOSITORIES, organizationAndTeamData);
+
+        if (!repositories?.length) {
+            return undefined;
+        }
+
+        const rawName = repositoryName.trim();
+        const normalizedName = rawName.toLowerCase();
+
+        const matchedRepositoryIds = repositories
+            .filter((repo) => {
+                if (String(repo.id) === rawName) {
+                    return true;
+                }
+
+                const candidates = [
+                    repo.name,
+                    (repo as { fullName?: string }).fullName,
+                    (repo as { full_name?: string }).full_name,
+                    repo.organizationName
+                        ? `${repo.organizationName}/${repo.name}`
+                        : undefined,
+                ].filter(Boolean) as string[];
+
+                return candidates.some(
+                    (candidate) =>
+                        candidate.toLowerCase() === normalizedName,
+                );
+            })
+            .map((repo) => String(repo.id));
+
+        if (matchedRepositoryIds.length === 0) {
+            return undefined;
+        }
+
+        return Array.from(new Set(matchedRepositoryIds));
     }
 
     private extractEnrichedData(dataExecution: any) {
@@ -378,19 +549,38 @@ export class GetEnrichedPullRequestsUseCase implements IUseCase {
         sent: number;
         filtered: number;
     } {
-        return (pullRequest.files ?? []).reduce(
-            (
-                acc: { sent: number; filtered: number },
-                file: IPullRequests['files'][number],
-            ) => {
-                for (const { deliveryStatus } of file.suggestions ?? []) {
-                    if (deliveryStatus === DeliveryStatus.SENT) acc.sent += 1;
-                    else if (deliveryStatus === DeliveryStatus.NOT_SENT)
-                        acc.filtered += 1;
+        // Optimized: check if we have pre-computed counts
+        if ((pullRequest as any).suggestionsCount) {
+            const precomputed = (pullRequest as any).suggestionsCount;
+            return {
+                sent: precomputed.sent ?? 0,
+                filtered: precomputed.filtered ?? 0,
+            };
+        }
+
+        // Fallback: compute from files (slower)
+        let sent = 0;
+        let filtered = 0;
+
+        const files = pullRequest.files;
+        if (!files || files.length === 0) {
+            return { sent: 0, filtered: 0 };
+        }
+
+        for (let i = 0; i < files.length; i++) {
+            const suggestions = files[i].suggestions;
+            if (!suggestions) continue;
+
+            for (let j = 0; j < suggestions.length; j++) {
+                const status = suggestions[j].deliveryStatus;
+                if (status === DeliveryStatus.SENT) {
+                    sent++;
+                } else if (status === DeliveryStatus.NOT_SENT) {
+                    filtered++;
                 }
-                return acc;
-            },
-            { sent: 0, filtered: 0 },
-        );
+            }
+        }
+
+        return { sent, filtered };
     }
 }

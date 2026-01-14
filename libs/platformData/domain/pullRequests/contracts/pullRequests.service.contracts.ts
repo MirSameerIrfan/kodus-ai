@@ -60,6 +60,14 @@ export interface IPullRequestsService extends IPullRequestsRepository {
         organizationAndTeamData: OrganizationAndTeamData,
     ): Promise<PullRequestsEntity | null>;
 
+    findManyByNumbersAndRepositoryIds(
+        criteria: Array<{
+            number: number;
+            repositoryId: string;
+        }>,
+        organizationId: string,
+    ): Promise<PullRequestsEntity[]>;
+
     getOnboardingReviewModeSignals(params: {
         organizationAndTeamData: OrganizationAndTeamData;
         repositoryIds: string[];

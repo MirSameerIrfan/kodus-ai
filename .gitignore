@@ -27,6 +27,7 @@ packages/**/*.js
 .env
 .env.qa
 .env.prod
+.env.local
 _*
 
 # Logs

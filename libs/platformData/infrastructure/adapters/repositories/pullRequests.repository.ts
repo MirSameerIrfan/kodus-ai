@@ -43,20 +43,45 @@ export class PullRequestsRepository implements IPullRequestsRepository {
 
     //#region Get/Find
     async findById(uuid: string): Promise<PullRequestsEntity | null> {
-        const doc = await this.pullRequestsModel.findOne({ uuid }).exec();
+        const doc = await this.pullRequestsModel.findOne({ uuid }).lean().exec();
         return doc ? mapSimpleModelToEntity(doc, PullRequestsEntity) : null;
     }
 
     async findOne(
         filter?: Partial<IPullRequests>,
     ): Promise<PullRequestsEntity | null> {
-        const doc = await this.pullRequestsModel.findOne(filter).exec();
+        const doc = await this.pullRequestsModel.findOne(filter).lean().exec();
         return doc ? mapSimpleModelToEntity(doc, PullRequestsEntity) : null;
     }
 
     async find(filter?: Partial<IPullRequests>): Promise<PullRequestsEntity[]> {
-        const docs = await this.pullRequestsModel.find(filter).exec();
+        const docs = await this.pullRequestsModel.find(filter).lean().exec();
         return mapSimpleModelsToEntities(docs, PullRequestsEntity);
+    }
+
+    async findPRNumbersByTitleAndOrganization(
+        title: string,
+        organizationId: string,
+        repositoryIds?: string[],
+    ): Promise<Array<{ number: number; repositoryId: string }>> {
+        const filter: any = {
+            organizationId,
+            title: { $regex: title, $options: 'i' },
+        };
+
+        if (repositoryIds?.length) {
+            filter['repository.id'] = { $in: repositoryIds };
+        }
+
+        const results = await this.pullRequestsModel
+            .find(filter, { number: 1, 'repository.id': 1 })
+            .lean()
+            .exec();
+
+        return results.map((doc) => ({
+            number: doc.number,
+            repositoryId: doc.repository?.id || '',
+        }));
     }
 
     async findByNumberAndRepositoryName(
@@ -68,7 +93,7 @@ export class PullRequestsRepository implements IPullRequestsRepository {
             'number': pullRequestNumber,
             'repository.name': repositoryName,
             'organizationId': organizationAndTeamData.organizationId,
-        });
+        }).lean();
 
         return pullRequest
             ? mapSimpleModelToEntity(pullRequest, PullRequestsEntity)
@@ -84,11 +109,72 @@ export class PullRequestsRepository implements IPullRequestsRepository {
             'number': pullRequestNumber,
             'repository.id': repositoryName,
             'organizationId': organizationAndTeamData.organizationId,
-        });
+        }).lean();
 
         return pullRequest
             ? mapSimpleModelToEntity(pullRequest, PullRequestsEntity)
             : null;
+    }
+
+    async findByNumberAndRepositoryIdOptimized(
+        pullRequestNumber: number,
+        repositoryId: string,
+        organizationAndTeamData: OrganizationAndTeamData,
+    ): Promise<PullRequestsEntity | null> {
+        // Use projection to exclude heavy fields (files.suggestions details)
+        const pullRequest = await this.pullRequestsModel.findOne(
+            {
+                'number': pullRequestNumber,
+                'repository.id': repositoryId,
+                'organizationId': organizationAndTeamData.organizationId,
+            },
+            {
+                // Exclude suggestion content but keep count
+                'files.suggestions.existingCode': 0,
+                'files.suggestions.improvedCode': 0,
+                'files.suggestions.suggestionContent': 0,
+                'commits': 0,
+                'prLevelSuggestions': 0,
+            },
+        ).lean();
+
+        return pullRequest
+            ? mapSimpleModelToEntity(pullRequest, PullRequestsEntity)
+            : null;
+    }
+
+    async findManyByNumbersAndRepositoryIds(
+        criteria: Array<{
+            number: number;
+            repositoryId: string;
+        }>,
+        organizationId: string,
+    ): Promise<PullRequestsEntity[]> {
+        if (!criteria.length) {
+            return [];
+        }
+
+        const orConditions = criteria.map((c) => ({
+            'number': c.number,
+            'repository.id': c.repositoryId,
+        }));
+
+        const pullRequests = await this.pullRequestsModel.find(
+            {
+                organizationId,
+                $or: orConditions,
+            },
+            {
+                // Exclude suggestion content but keep count
+                'files.suggestions.existingCode': 0,
+                'files.suggestions.improvedCode': 0,
+                'files.suggestions.suggestionContent': 0,
+                'commits': 0,
+                'prLevelSuggestions': 0,
+            },
+        ).lean().exec();
+
+        return mapSimpleModelsToEntities(pullRequests, PullRequestsEntity);
     }
 
     async findFileWithSuggestions(
@@ -652,6 +738,7 @@ export class PullRequestsRepository implements IPullRequestsRepository {
             })
             .sort({ openedAt: -1, createdAt: -1 })
             .limit(limit)
+            .lean()
             .exec();
 
         return mapSimpleModelsToEntities(docs, PullRequestsEntity);

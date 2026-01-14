@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsWhere, Repository, In } from 'typeorm';
 
 import { ICodeReviewExecutionRepository } from '@libs/automation/domain/codeReviewExecutions/contracts/codeReviewExecution.repository.contract';
 import { CodeReviewExecutionEntity } from '@libs/automation/domain/codeReviewExecutions/entities/codeReviewExecution.entity';
@@ -182,6 +182,43 @@ export class CodeReviewExecutionRepository<
             });
 
             return null;
+        }
+    }
+
+    async findManyByAutomationExecutionIds(
+        uuids: string[],
+    ): Promise<CodeReviewExecutionEntity<T>[]> {
+        if (!uuids.length) {
+            return [];
+        }
+
+        try {
+            const found = await this.codeReviewExecutionRepository.find({
+                select: {
+                    uuid: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    status: true,
+                    message: true,
+                    automationExecution: {
+                        uuid: true,
+                    },
+                },
+                relations: ['automationExecution'],
+                where: {
+                    automationExecution: { uuid: In(uuids) },
+                } as FindOptionsWhere<CodeReviewExecutionModel>,
+            });
+
+            return mapSimpleModelsToEntities(found, CodeReviewExecutionEntity);
+        } catch (error) {
+            this.logger.error({
+                message: 'Error finding code review executions by automation ids',
+                error,
+                context: CodeReviewExecutionRepository.name,
+                metadata: { uuids },
+            });
+            return [];
         }
     }
 

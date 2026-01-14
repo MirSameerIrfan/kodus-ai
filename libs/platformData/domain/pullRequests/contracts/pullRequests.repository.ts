@@ -33,6 +33,11 @@ export interface IPullRequestsRepository {
         filter?: Partial<IPullRequests>,
     ): Promise<PullRequestsEntity | null>;
     find(filter?: Partial<IPullRequests>): Promise<PullRequestsEntity[]>;
+    findPRNumbersByTitleAndOrganization(
+        title: string,
+        organizationId: string,
+        repositoryIds?: string[],
+    ): Promise<Array<{ number: number; repositoryId: string }>>;
     findByNumberAndRepositoryName(
         prNumber: number,
         repositoryName: string,
@@ -43,6 +48,18 @@ export interface IPullRequestsRepository {
         repositoryId: string,
         organizationAndTeamData: OrganizationAndTeamData,
     ): Promise<PullRequestsEntity | null>;
+    findByNumberAndRepositoryIdOptimized(
+        prNumber: number,
+        repositoryId: string,
+        organizationAndTeamData: OrganizationAndTeamData,
+    ): Promise<PullRequestsEntity | null>;
+    findManyByNumbersAndRepositoryIds(
+        criteria: Array<{
+            number: number;
+            repositoryId: string;
+        }>,
+        organizationId: string,
+    ): Promise<PullRequestsEntity[]>;
     findFileWithSuggestions(
         prnumber: number,
         repositoryName: string,

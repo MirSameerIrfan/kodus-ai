@@ -26,6 +26,10 @@ export interface IAutomationExecutionRepository {
     findPullRequestExecutionsByOrganizationAndTeam(params: {
         organizationAndTeamData: OrganizationAndTeamData;
         repositoryIds?: string[];
+        repositoryName?: string;
+        pullRequestNumber?: number;
+        pullRequestTitle?: string;
+        prFilters?: Array<{ number: number; repositoryId: string }>;
         skip?: number;
         take?: number;
         order?: 'ASC' | 'DESC';

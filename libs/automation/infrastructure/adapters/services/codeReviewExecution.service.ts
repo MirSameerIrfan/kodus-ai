@@ -52,6 +52,14 @@ export class CodeReviewExecutionService<
         return this.codeReviewExecutionRepository.findOne(filter);
     }
 
+    findManyByAutomationExecutionIds(
+        uuids: string[],
+    ): Promise<CodeReviewExecutionEntity<T>[]> {
+        return this.codeReviewExecutionRepository.findManyByAutomationExecutionIds(
+            uuids,
+        );
+    }
+
     delete(uuid: string): Promise<boolean> {
         return this.codeReviewExecutionRepository.delete(uuid);
     }
