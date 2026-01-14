@@ -91,6 +91,8 @@ certs
 .yalc
 yalc.lock
 .env.test
+.env.local.tmp
+docker-compose.prod-local.yml
 # packages
 # .packages
 #packages/kodus-flow/
