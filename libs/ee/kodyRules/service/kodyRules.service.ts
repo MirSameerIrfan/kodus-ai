@@ -5,8 +5,8 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { v4 } from 'uuid';
-import bucketsData from './data/buckets.json';
 import libraryKodyRules from './data/library-kody-rules.json';
+import bucketsData from './data/buckets.json';
 
 import { createLogger } from '@kodus/flow';
 import {

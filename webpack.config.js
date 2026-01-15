@@ -45,7 +45,7 @@ module.exports = function (options, webpack) {
     const debugBreak = process.env.DEBUG_BREAK === 'true';
     const inspectArg = debugBreak ? '--inspect-brk' : '--inspect';
     const devtool = isWatchMode
-        ? 'source-map'
+        ? 'inline-source-map'
         : isProduction
           ? 'hidden-source-map'
           : 'source-map';
@@ -78,6 +78,10 @@ module.exports = function (options, webpack) {
         ...options,
         stats: 'errors-warnings',
         devtool,
+        optimization: {
+            ...options.optimization,
+            moduleIds: 'named',
+        },
         cache: {
             type: 'filesystem',
             buildDependencies: {
