@@ -1,15 +1,16 @@
+import { BaseCallbackHandler } from '@langchain/core/callbacks/base';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { Runnable } from '@langchain/core/runnables';
+import { ChatOpenAI } from '@langchain/openai';
 import { Inject, Injectable, LoggerService } from '@nestjs/common';
+import { BYOKConfig, BYOKProviderService } from './byokProvider.service';
 import {
     FactoryArgs,
     LLMModelProvider,
     MODEL_STRATEGIES,
     getChatGPT,
 } from './helper';
-import { ChatOpenAI } from '@langchain/openai';
-import { Runnable } from '@langchain/core/runnables';
-import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { BYOKConfig, BYOKProviderService } from './byokProvider.service';
-import { BaseCallbackHandler } from '@langchain/core/callbacks/base';
+import { supportsJsonMode } from './providerAdapters';
 
 export type LLMProviderOptions = FactoryArgs & {
     model: LLMModelProvider | string;
@@ -44,7 +45,11 @@ export class LLMProviderService {
                         },
                     );
 
-                if (options.jsonMode && byokProvider instanceof ChatOpenAI) {
+                if (
+                    options.jsonMode &&
+                    byokProvider instanceof ChatOpenAI &&
+                    supportsJsonMode(options.byokConfig?.main?.model)
+                ) {
                     return byokProvider.withConfig({
                         response_format: { type: 'json_object' },
                     });
@@ -70,7 +75,7 @@ export class LLMProviderService {
                     apiKey: process.env.API_OPEN_AI_API_KEY,
                 });
 
-                return options.jsonMode
+                return options.jsonMode && supportsJsonMode(envMode)
                     ? llm.withConfig({
                           response_format: { type: 'json_object' },
                       })
@@ -101,7 +106,11 @@ export class LLMProviderService {
                     apiKey: process.env.API_OPEN_AI_API_KEY,
                 });
 
-                return options.jsonMode
+                return options.jsonMode &&
+                    supportsJsonMode(
+                        MODEL_STRATEGIES[LLMModelProvider.OPENAI_GPT_4O]
+                            .modelName,
+                    )
                     ? llm.withConfig({
                           response_format: { type: 'json_object' },
                       })
@@ -119,7 +128,11 @@ export class LLMProviderService {
                     options.maxReasoningTokens ?? strategy.maxReasoningTokens,
             });
 
-            if (options.jsonMode && this.isOpenAI(llm, strategy.provider)) {
+            if (
+                options.jsonMode &&
+                this.isOpenAI(llm, strategy.provider) &&
+                supportsJsonMode(modelName)
+            ) {
                 llm = llm.withConfig({
                     response_format: { type: 'json_object' },
                 });
@@ -164,7 +177,10 @@ export class LLMProviderService {
                 apiKey: process.env.API_OPEN_AI_API_KEY,
             });
 
-            return options.jsonMode
+            return options.jsonMode &&
+                supportsJsonMode(
+                    MODEL_STRATEGIES[LLMModelProvider.OPENAI_GPT_4O].modelName,
+                )
                 ? llm.withConfig({ response_format: { type: 'json_object' } })
                 : llm;
         }
