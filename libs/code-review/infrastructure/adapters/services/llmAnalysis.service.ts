@@ -5,7 +5,6 @@ import {
     ParserType,
     PromptRole,
     PromptRunnerService,
-    PromptScope,
 } from '@kodus/kodus-common/llm';
 import { Injectable } from '@nestjs/common';
 import { z } from 'zod';
@@ -27,7 +26,6 @@ import { ObservabilityService } from '@libs/core/log/observability.service';
 import {
     prompt_codereview_system_gemini,
     prompt_codereview_system_gemini_v2,
-    prompt_codereview_user_deepseek,
     prompt_codereview_user_gemini,
     prompt_codereview_user_gemini_v2,
 } from '@libs/common/utils/langchainCommon/prompts/configuration/codeReview';
@@ -158,17 +156,10 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
                         .addPrompt({
                             prompt: prompt_codereview_system_gemini,
                             role: PromptRole.SYSTEM,
-                            scope: PromptScope.MAIN,
                         })
                         .addPrompt({
                             prompt: prompt_codereview_user_gemini,
                             role: PromptRole.USER,
-                            scope: PromptScope.MAIN,
-                        })
-                        .addPrompt({
-                            prompt: prompt_codereview_user_deepseek,
-                            role: PromptRole.USER,
-                            scope: PromptScope.FALLBACK,
                         })
                         .setTemperature(0)
                         .addCallbacks(callbacks)
@@ -303,17 +294,10 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
                         .addPrompt({
                             prompt: prompt_codereview_system_gemini_v2,
                             role: PromptRole.SYSTEM,
-                            scope: PromptScope.MAIN,
                         })
                         .addPrompt({
                             prompt: prompt_codereview_user_gemini_v2,
                             role: PromptRole.USER,
-                            scope: PromptScope.MAIN,
-                        })
-                        .addPrompt({
-                            prompt: prompt_codereview_user_deepseek,
-                            role: PromptRole.USER,
-                            scope: PromptScope.FALLBACK,
                         })
                         .setTemperature(0)
                         .addCallbacks(callbacks)
@@ -464,17 +448,10 @@ ${JSON.stringify(context?.suggestions, null, 2) || 'No suggestions provided'}
                         .addPrompt({
                             prompt: () => prompt_codereview_system_gemini({}),
                             role: PromptRole.SYSTEM,
-                            scope: PromptScope.MAIN,
                         })
                         .addPrompt({
                             prompt: () => prompt_codereview_user_gemini({}),
                             role: PromptRole.USER,
-                            scope: PromptScope.MAIN,
-                        })
-                        .addPrompt({
-                            prompt: () => prompt_codereview_user_deepseek({}),
-                            role: PromptRole.USER,
-                            scope: PromptScope.FALLBACK,
                         })
                         .addMetadata({
                             organizationId:
