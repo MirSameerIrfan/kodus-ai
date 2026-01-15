@@ -1,19 +1,20 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { UserModel } from '../infrastructure/adapters/repositories/schemas/user.model';
 import { AuthModel } from '../infrastructure/adapters/repositories/schemas/auth.model'; // Added
+import { UserModel } from '../infrastructure/adapters/repositories/schemas/user.model';
 
+import { CryptoModule } from '@libs/core/crypto/crypto.module';
 import { PASSWORD_SERVICE_TOKEN } from '../domain/user/contracts/password.service.contract';
 import { USER_REPOSITORY_TOKEN } from '../domain/user/contracts/user.repository.contract';
 import { USER_SERVICE_TOKEN } from '../domain/user/contracts/user.service.contract';
-import { UsersService } from '../infrastructure/adapters/services/users.service';
-import { BcryptService } from '../infrastructure/adapters/services/bcrypt.service';
 import { UserDatabaseRepository } from '../infrastructure/adapters/repositories/user.repository';
-import { CryptoModule } from '@libs/core/crypto/crypto.module';
+import { BcryptService } from '../infrastructure/adapters/services/bcrypt.service';
+import { UsersService } from '../infrastructure/adapters/services/users.service';
 
-import { DeleteUserUseCase } from '../application/use-cases/user/delete.use-case';
+import { GetUserUseCase } from '../application/use-cases/user';
 import { CheckUserWithEmailUserUseCase } from '../application/use-cases/user/check-user-email.use-case';
+import { DeleteUserUseCase } from '../application/use-cases/user/delete.use-case';
 import { InviteDataUserUseCase } from '../application/use-cases/user/invite-data.use-case';
 
 @Module({
@@ -22,6 +23,7 @@ import { InviteDataUserUseCase } from '../application/use-cases/user/invite-data
         DeleteUserUseCase,
         CheckUserWithEmailUserUseCase,
         InviteDataUserUseCase,
+        GetUserUseCase,
         {
             provide: USER_REPOSITORY_TOKEN,
             useClass: UserDatabaseRepository,
@@ -42,6 +44,7 @@ import { InviteDataUserUseCase } from '../application/use-cases/user/invite-data
         DeleteUserUseCase,
         CheckUserWithEmailUserUseCase,
         InviteDataUserUseCase,
+        GetUserUseCase,
     ],
 })
 export class UserCoreModule {}

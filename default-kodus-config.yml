@@ -4,23 +4,24 @@ version: 2.0
 automatedReviewActive: true
 kodusConfigFileOverridesWebPreferences: false
 reviewCadence:
-    type: "automatic" # automatic | auto_pause | manual
+    type: 'automatic' # automatic | auto_pause | manual
     timeWindow: 15 # minutes
     pushesToTrigger: 3
 pullRequestApprovalActive: false
 isRequestChangesActive: false # not on gitlab
 runOnDraft: true
 ignorePaths:
-    - "yarn.lock"
-    - "package-lock.json"
-    - "package.json"
-    - ".env"
-    - "**/*.json"
+    - 'yarn.lock'
+    - 'package-lock.json'
+    - 'package.json'
+    - '.env'
+    - '**/*.json'
 ignoredTitleKeywords: []
 baseBranches: []
+enableCommittableSuggestions: false
 
 # review categories
-codeReviewVersion: "v2" # legacy | v2
+codeReviewVersion: 'v2' # legacy | v2
 reviewOptions:
     # v2 / legacy
     bug: true
@@ -41,11 +42,11 @@ reviewOptions:
 
 # suggestion control
 suggestionControl:
-    groupingMode: "full" # minimal | full
+    groupingMode: 'full' # minimal | full
     applyFiltersToKodyRules: false
-    limitationType: "pr" # file | pr | severity
+    limitationType: 'pr' # file | pr | severity
     maxSuggestions: 9 # min 7, no max
-    severityLevelFilter: "high" # low | medium | high | critical
+    severityLevelFilter: 'high' # low | medium | high | critical
     severityLimits: # when limitationType == severity
         low: 0
         medium: 0
@@ -55,9 +56,9 @@ suggestionControl:
 # PR summary
 summary:
     generatePRSummary: true
-    behaviourForNewCommits: "none"
-    behaviourForExistingDescription: "replace"
-    customInstructions: ""
+    behaviourForNewCommits: 'none'
+    behaviourForExistingDescription: 'replace'
+    customInstructions: ''
 
 # kody rules
 ideRulesSyncEnabled: false
@@ -70,7 +71,7 @@ customMessages:
         suggestionCopyPrompt: true # not available for bitbucket
 
     startReviewMessage:
-        status: "every_push" # every_push | only_when_opened | off
+        status: 'every_push' # every_push | only_when_opened | off
         content: |
             # PR Summary (Comment created by [Kody](https://kodus.io) 🤖)
 
@@ -85,7 +86,7 @@ customMessages:
             @changeSummary
 
     endReviewMessage:
-        status: "every_push" # every_push | only_when_opened | off
+        status: 'every_push' # every_push | only_when_opened | off
         content: |
             ## Code Review Completed! 🔥
 
@@ -202,4 +203,4 @@ v2PromptOverrides:
                 Edge-case issues
 
     generation:
-        main: "Detailed and verifiable issue description"
+        main: 'Detailed and verifiable issue description'

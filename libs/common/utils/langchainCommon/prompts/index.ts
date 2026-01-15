@@ -4,6 +4,7 @@ import { prompt_slack_format } from './formatters/slack';
 import { prompt_removeRepeatedSuggestions } from './removeRepeatedSuggestions';
 import { prompt_safeGuard } from './safeGuard';
 import { prompt_validateImplementedSuggestions } from './validateImplementedSuggestions';
+import { prompt_validateCodeSemantics } from './validateCodeSemantics';
 
 export {
     prompt_safeGuard,
@@ -11,5 +12,6 @@ export {
     prompt_slack_format,
     prompt_removeRepeatedSuggestions,
     prompt_validateImplementedSuggestions,
+    prompt_validateCodeSemantics,
     prompt_codeReviewSafeguard_system,
 };

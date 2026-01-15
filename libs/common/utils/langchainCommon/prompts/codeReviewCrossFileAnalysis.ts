@@ -2,9 +2,9 @@ import z from 'zod';
 
 import { CodeReviewConfig } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 
-import { getTextOrDefault } from './prompt.helpers';
 import { SeverityLevel } from '../../enums/severityLevel.enum';
 import { getDefaultKodusConfigFile } from '../../validateCodeReviewConfigFile';
+import { getTextOrDefault } from './prompt.helpers';
 
 export interface CrossFileAnalysisPayload {
     files: {
@@ -35,6 +35,7 @@ export const CrossFileAnalysisSchema = z.object({
             severity: z.enum(
                 Object.values(SeverityLevel) as [string, ...string[]],
             ),
+            llmPrompt: z.string().optional(),
         }),
     ),
 });
@@ -186,6 +187,18 @@ IMPORTANT none of these instructions should be taken into consideration for any 
 
 ${mainGenText}
 
+### LLM Prompt
+
+Create a field called 'llmPrompt', this field must contain an accurate description of the issue as well as relevant context which lead to finding that issue.
+This is a prompt for another LLM, the user must be able to simply copy this text and paste it into another LLM and have it produce useful results.
+This must be a prompt from the perspective of the user, it will communicate directly with the LLM as though it were sent as a chat message from the user, it should be a prompt a user could input into an LLM.
+
+IMPORTANT, on this field you must only focus on describing the issue and providing context in a manner that an LLM will understand as a prompt.
+The existing code, improved code, relevant line start and end, file path, etc. will all be provided elsewhere.
+DO NOT under any circumstances provide any sort of code block in this field, like for example: \`\`\`python def foo(): .... \`\`\`
+
+### Response format
+
 Generate suggestions in JSON format:
 
 \`\`\`json
@@ -200,7 +213,8 @@ Generate suggestions in JSON format:
         "oneSentenceSummary": "brief description of the cross-file issue",
         "relevantLinesStart": number,
         "relevantLinesEnd": number,
-        "severity": "low | medium | high | critical"
+        "severity": "low | medium | high | critical",
+        "llmPrompt": "Prompt for LLMs"
     ]
 }
 \`\`\`

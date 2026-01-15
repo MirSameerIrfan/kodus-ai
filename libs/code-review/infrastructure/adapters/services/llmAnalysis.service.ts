@@ -10,6 +10,25 @@ import { Injectable } from '@nestjs/common';
 import { z } from 'zod';
 
 import {
+    getAugmentationsFromPack,
+    getOverridesFromPack,
+} from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context.utils';
+import { ContextAugmentationsMap } from '@libs/ai-engine/infrastructure/adapters/services/context/interfaces/code-review-context-pack.interface';
+import { LLMResponseProcessor } from '@libs/ai-engine/infrastructure/adapters/services/llmResponseProcessor.transform';
+import { IAIAnalysisService } from '@libs/code-review/domain/contracts/AIAnalysisService.contract';
+import {
+    prompt_codeReviewSafeguard_system,
+    prompt_validateImplementedSuggestions,
+} from '@libs/common/utils/langchainCommon/prompts';
+import {
+    prompt_codereview_system_gemini,
+    prompt_codereview_system_gemini_v2,
+    prompt_codereview_user_gemini,
+    prompt_codereview_user_gemini_v2,
+} from '@libs/common/utils/langchainCommon/prompts/configuration/codeReview';
+import { prompt_selectorLightOrHeavyMode_system } from '@libs/common/utils/langchainCommon/prompts/seletorLightOrHeavyMode';
+import { prompt_severity_analysis_user } from '@libs/common/utils/langchainCommon/prompts/severityAnalysis';
+import {
     AIAnalysisResult,
     AnalysisContext,
     CodeSuggestion,
@@ -20,26 +39,7 @@ import {
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { IAIAnalysisService } from '@libs/code-review/domain/contracts/AIAnalysisService.contract';
-import { LLMResponseProcessor } from '@libs/ai-engine/infrastructure/adapters/services/llmResponseProcessor.transform';
 import { ObservabilityService } from '@libs/core/log/observability.service';
-import {
-    prompt_codereview_system_gemini,
-    prompt_codereview_system_gemini_v2,
-    prompt_codereview_user_gemini,
-    prompt_codereview_user_gemini_v2,
-} from '@libs/common/utils/langchainCommon/prompts/configuration/codeReview';
-import {
-    getAugmentationsFromPack,
-    getOverridesFromPack,
-} from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context.utils';
-import { ContextAugmentationsMap } from '@libs/ai-engine/infrastructure/adapters/services/context/interfaces/code-review-context-pack.interface';
-import { prompt_severity_analysis_user } from '@libs/common/utils/langchainCommon/prompts/severityAnalysis';
-import {
-    prompt_codeReviewSafeguard_system,
-    prompt_validateImplementedSuggestions,
-} from '@libs/common/utils/langchainCommon/prompts';
-import { prompt_selectorLightOrHeavyMode_system } from '@libs/common/utils/langchainCommon/prompts/seletorLightOrHeavyMode';
 
 export const LLM_ANALYSIS_SERVICE_TOKEN = Symbol.for('LLMAnalysisService');
 

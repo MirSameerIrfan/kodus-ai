@@ -2,43 +2,54 @@ import { Injectable } from '@nestjs/common';
 
 import {
     LLMModelProvider,
-    PromptRunnerService,
-    PromptRole,
     ParserType,
+    PromptRole,
+    PromptRunnerService,
 } from '@kodus/kodus-common/llm';
 
 import type { ContextPack } from '@kodus/flow';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { createLogger } from '@kodus/flow';
+import {
+    getAugmentationsFromPack,
+    getOverridesFromPack,
+} from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context.utils';
+import { ContextAugmentationsMap } from '@libs/ai-engine/infrastructure/adapters/services/context/interfaces/code-review-context-pack.interface';
+import { LLMResponseProcessor } from '@libs/ai-engine/infrastructure/adapters/services/llmResponseProcessor.transform';
+import { IASTAnalysisService } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
+import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
+import { prompt_detectBreakingChanges } from '@libs/common/utils/langchainCommon/prompts/detectBreakingChanges';
+import {
+    prompt_validateCodeSemantics,
+    ValidateCodeSemanticsResult,
+    validateCodeSemanticsSchema,
+} from '@libs/common/utils/langchainCommon/prompts/validateCodeSemantics';
 import { calculateBackoffInterval } from '@libs/common/utils/polling';
+import { AxiosASTService } from '@libs/core/infrastructure/config/axios/microservices/ast.axios';
 import {
     AIAnalysisResult,
     AnalysisContext,
     CodeSuggestion,
     Repository,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import {
-    getAugmentationsFromPack,
-    getOverridesFromPack,
-} from '@libs/ai-engine/infrastructure/adapters/services/context/code-review-context.utils';
-import { ContextAugmentationsMap } from '@libs/ai-engine/infrastructure/adapters/services/context/interfaces/code-review-context-pack.interface';
-import { SeverityLevel } from '@libs/common/utils/enums/severityLevel.enum';
-import { prompt_detectBreakingChanges } from '@libs/common/utils/langchainCommon/prompts/detectBreakingChanges';
-import { AxiosASTService } from '@libs/core/infrastructure/config/axios/microservices/ast.axios';
-import { LLMResponseProcessor } from '@libs/ai-engine/infrastructure/adapters/services/llmResponseProcessor.transform';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { ObservabilityService } from '@libs/core/log/observability.service';
-import { createLogger } from '@kodus/flow';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
-import { IASTAnalysisService } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
 
+import { ASTValidateCodeRequest } from '@libs/code-review/domain/types/astValidate.type';
 import {
-    TaskStatus,
-    InitializeRepositoryResponse,
-    InitializeImpactAnalysisResponse,
-    GetTaskInfoResponse,
+    checkSuggestionSimplicitySchema,
+    prompt_checkSuggestionSimplicity_system,
+    prompt_checkSuggestionSimplicity_user,
+} from '@libs/common/utils/langchainCommon/prompts/checkSuggestionSimplicity';
+import {
     GetImpactAnalysisResponse,
+    GetTaskInfoResponse,
+    InitializeImpactAnalysisResponse,
+    InitializeRepositoryResponse,
     ProtoAuthMode,
     ProtoPlatformType,
     RepositoryData,
+    TaskStatus,
 } from './interfaces/code-ast-analysis.interface';
 
 @Injectable()
@@ -417,7 +428,7 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
             {
                 id: repository.id,
                 name: repository.name,
-                defaultBranch: pullRequest.head.ref,
+                defaultBranch: pullRequest.head?.ref,
                 fullName:
                     repository.full_name ||
                     `${repository.owner}/${repository.name}`,
@@ -439,7 +450,7 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
             {
                 id: repository.id,
                 name: repository.name,
-                defaultBranch: pullRequest.base.ref,
+                defaultBranch: pullRequest.base?.ref,
                 fullName:
                     repository.full_name ||
                     `${repository.owner}/${repository.name}`,
@@ -644,6 +655,255 @@ export class CodeAstAnalysisService implements IASTAnalysisService {
                 error,
             });
             throw error;
+        }
+    }
+
+    async startValidate(payload: {
+        files: ASTValidateCodeRequest;
+    }): Promise<{ taskId: string }> {
+        const taskId = await this.astAxios.post(
+            '/api/ast/validate-code/initialize',
+            { ...payload.files },
+        );
+
+        return taskId;
+    }
+
+    async getValidate(
+        taskId: string,
+        organizationAndTeamData?: OrganizationAndTeamData,
+    ) {
+        let attempt = 0;
+        const maxAttempts = 3;
+
+        while (true) {
+            try {
+                const response = await this.astAxios.get<any>(
+                    `/api/ast/validate-code/result/${taskId}`,
+                );
+
+                return response?.result;
+            } catch (error) {
+                attempt++;
+                const isTransientError =
+                    error.code === 'ECONNRESET' ||
+                    error.code === 'ETIMEDOUT' ||
+                    error.code === 'ECONNABORTED' ||
+                    error.message?.includes('socket hang up');
+
+                if (!isTransientError || attempt >= maxAttempts) {
+                    throw error;
+                }
+
+                this.logger.warn({
+                    message: `Transient error calling getValidate, attempt ${attempt}/${maxAttempts}`,
+                    error,
+                    context: CodeAstAnalysisService.name,
+                    metadata: { taskId, organizationAndTeamData },
+                });
+
+                const waitTime = calculateBackoffInterval(attempt, {
+                    baseInterval: 1000,
+                    maxInterval: 5000,
+                });
+
+                await new Promise((resolve) => setTimeout(resolve, waitTime));
+            }
+        }
+    }
+
+    public async validateWithLLM(
+        taskId: string,
+        payload: {
+            code: string;
+            filePath: string;
+            language?: string;
+            diff?: string;
+        },
+        organizationAndTeamData: OrganizationAndTeamData,
+        prNumber: number,
+    ): Promise<ValidateCodeSemanticsResult | null> {
+        const provider = LLMModelProvider.GROQ_GPT_OSS_120B;
+        const fallbackProvider = LLMModelProvider.OPENAI_GPT_4O_MINI;
+        const runName = 'validateWithLLM';
+        const spanName = `${CodeAstAnalysisService.name}::${runName}`;
+
+        const spanAttrs = {
+            organizationId: organizationAndTeamData?.organizationId,
+            prNumber,
+            filePath: payload.filePath,
+        };
+
+        try {
+            const { result } = await this.observabilityService.runLLMInSpan({
+                spanName,
+                runName,
+                attrs: spanAttrs,
+                exec: async (callbacks) => {
+                    return await this.promptRunnerService
+                        .builder()
+                        .setProviders({
+                            main: provider,
+                            fallback: fallbackProvider,
+                        })
+                        .setParser(ParserType.ZOD, validateCodeSemanticsSchema)
+                        .setLLMJsonMode(true)
+                        .setPayload(payload)
+                        .addPrompt({
+                            role: PromptRole.USER,
+                            prompt: prompt_validateCodeSemantics,
+                        })
+                        .addCallbacks(callbacks)
+                        .addMetadata({
+                            organizationId:
+                                organizationAndTeamData?.organizationId,
+                            teamId: organizationAndTeamData?.teamId,
+                            pullRequestId: prNumber,
+                            provider,
+                            fallbackProvider,
+                            runName,
+                        })
+                        .setTemperature(0)
+                        .setRunName(runName)
+                        .execute();
+                },
+            });
+
+            return result;
+        } catch (error) {
+            this.logger.error({
+                message: 'Error executing LLM validation',
+                context: CodeAstAnalysisService.name,
+                metadata: {
+                    filePath: payload.filePath,
+                    taskId,
+                    organizationAndTeamData,
+                    prNumber,
+                },
+                error,
+            });
+            return null;
+        }
+    }
+
+    async test(payload: any): Promise<any> {
+        const { headRepo } = await this.getRepoParams(
+            payload.repository,
+            payload.pullRequest,
+            payload.organizationAndTeamData,
+            payload.platformType,
+        );
+
+        const response = await this.astAxios.post(
+            '/api/lsp/suggestion/diagnostic',
+            {
+                repoData: headRepo,
+                suggestions: payload.suggestions,
+            },
+        );
+
+        return response;
+    }
+
+    async getTest(id: string): Promise<any> {
+        const response = await this.astAxios.get(
+            `/api/ast/validate-code/result/c25eae7e-5a78-46a9-acbe-8ab819d0a0b8`,
+        );
+
+        return response;
+    }
+
+    async checkSuggestionSimplicity(
+        organizationAndTeamData: OrganizationAndTeamData,
+        prNumber: number,
+        suggestion: Partial<CodeSuggestion>,
+    ): Promise<{ isSimple: boolean; reason?: string }> {
+        const runName = 'checkSuggestionSimplicity';
+        const provider = LLMModelProvider.GEMINI_2_5_FLASH;
+        const fallbackProvider = LLMModelProvider.OPENAI_GPT_4O_MINI;
+
+        const spanName = `${CodeAstAnalysisService.name}::${runName}`;
+        const spanAttrs = {
+            organizationId: organizationAndTeamData?.organizationId,
+            prNumber,
+        };
+
+        try {
+            const { result } = await this.observabilityService.runLLMInSpan({
+                spanName,
+                runName,
+                attrs: spanAttrs,
+                exec: async (callbacks) => {
+                    return await this.promptRunnerService
+                        .builder()
+                        .setProviders({
+                            main: provider,
+                            fallback: fallbackProvider,
+                        })
+                        .setParser(
+                            ParserType.ZOD,
+                            checkSuggestionSimplicitySchema,
+                        )
+                        .setLLMJsonMode(true)
+                        .setTemperature(0)
+                        .setPayload({
+                            language: suggestion.language || 'text',
+                            existingCode: suggestion.existingCode || '',
+                            improvedCode: suggestion.improvedCode || '',
+                        })
+                        .addPrompt({
+                            prompt: prompt_checkSuggestionSimplicity_system,
+                            role: PromptRole.SYSTEM,
+                        })
+                        .addPrompt({
+                            prompt: prompt_checkSuggestionSimplicity_user,
+                            role: PromptRole.USER,
+                        })
+                        .addCallbacks(callbacks)
+                        .addMetadata({
+                            organizationId:
+                                organizationAndTeamData?.organizationId,
+                            teamId: organizationAndTeamData?.teamId,
+                            pullRequestId: prNumber,
+                            provider,
+                            fallbackProvider,
+                            runName,
+                        })
+                        .setRunName(runName)
+                        .execute();
+                },
+            });
+
+            if (!result) {
+                this.logger.warn({
+                    message:
+                        'No result from LLM when checking suggestion simplicity',
+                    context: CodeAstAnalysisService.name,
+                    metadata: {
+                        organizationAndTeamData,
+                        prNumber,
+                        suggestionId: suggestion.id,
+                    },
+                });
+
+                return { isSimple: false, reason: 'No result from LLM' };
+            }
+
+            return result;
+        } catch (error) {
+            this.logger.error({
+                message: 'Error checking suggestion simplicity',
+                error,
+                context: CodeAstAnalysisService.name,
+                metadata: {
+                    organizationAndTeamData,
+                    prNumber,
+                    suggestionId: suggestion.id,
+                },
+            });
+
+            // Fail safe: if error, assume not simple to be safe
+            return { isSimple: false, reason: 'Error during check' };
         }
     }
 }
