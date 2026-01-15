@@ -41,6 +41,7 @@ export const MODELS_WITHOUT_TEMPERATURE = new Set([
 
     // OpenAI gpt-5 series
     'gpt-5',
+    'gpt-5.1-chat-2025-11-13',
 
     // OpenAI o3-pro
     'o3-pro',
@@ -118,14 +119,21 @@ const MODELS_WITHOUT_JSON_MODE = new Set([
     'gpt-3.5-turbo-0613',
     'gpt-3.5-turbo-16k',
     'gpt-3.5-turbo-16k-0613',
+    'hf:zai-org/GLM-4.7',
 ]);
+
+const MODELS_WITHOUT_JSON_MODE_PATTERNS: RegExp[] = [
+    /^gpt-5(\b|[-_@])/, // all gpt-5 models
+    /glm/i, // all GLM models
+    /(?:azure.*claude|claude.*azure)/i, // only Azure-hosted Claude models
+];
 
 const REASONING_PATTERN_RULES: Array<[RegExp, ReasoningConfig]> = [
     // OpenAI families (level)
     [/^o1(\b|[-_@])/, level()],
     [/^o3(\b|[-_@])/, level()],
     [/^o4(\b|[-_@])/, level()],
-    [/^gpt-5(\b|[-_@])/, level()],
+    [/^gpt-5(\b|[-_@])/, level(['medium', 'high'])],
     [/deep-research/i, level()],
 
     // Gemini 2.5 (budget)
@@ -227,6 +235,12 @@ export function supportsJsonMode(model: string | undefined | null): boolean {
 
     if (MODELS_WITHOUT_JSON_MODE.has(model)) {
         return false;
+    }
+
+    for (const re of MODELS_WITHOUT_JSON_MODE_PATTERNS) {
+        if (re.test(model)) {
+            return false;
+        }
     }
 
     return true;

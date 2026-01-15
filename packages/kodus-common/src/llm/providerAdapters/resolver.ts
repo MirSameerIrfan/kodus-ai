@@ -69,9 +69,15 @@ export function resolveModelOptions(
     } else if (rc?.type === 'level') {
         const allowedLevels = rc.options;
         const desiredLevel = user.reasoningLevel ?? FALLBACK_LEVEL;
-        resolvedReasoningLevel = allowedLevels.includes(desiredLevel)
-            ? desiredLevel
-            : (allowedLevels[0] ?? FALLBACK_LEVEL);
+
+        if (allowedLevels.includes(desiredLevel)) {
+            resolvedReasoningLevel = desiredLevel;
+        } else if (allowedLevels.length > 0) {
+            // If desired level isn't supported, use the first available one (e.g. 'medium' for GPT-5)
+            resolvedReasoningLevel = allowedLevels[0];
+        } else {
+            resolvedReasoningLevel = FALLBACK_LEVEL;
+        }
     }
 
     const temperature = caps.supportsTemperature ? user.temperature : undefined;
