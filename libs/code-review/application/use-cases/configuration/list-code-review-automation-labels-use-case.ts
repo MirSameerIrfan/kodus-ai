@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 
-import { CodeReviewVersion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import * as labelsDataLegacy from '@libs/automation/infrastructure/adapters/services/processAutomation/config/codeReview/labelsCodeReview_legacy.json';
-import * as labelsDataV2 from '@libs/automation/infrastructure/adapters/services/processAutomation/config/codeReview/labelsCodeReview_v2.json';
 import { createLogger } from '@kodus/flow';
+import labelsDataLegacy from '@libs/automation/infrastructure/adapters/services/processAutomation/config/codeReview/labelsCodeReview_legacy.json';
+import labelsDataV2 from '@libs/automation/infrastructure/adapters/services/processAutomation/config/codeReview/labelsCodeReview_v2.json';
+import { CodeReviewVersion } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 
 @Injectable()
 export class ListCodeReviewAutomationLabelsUseCase {

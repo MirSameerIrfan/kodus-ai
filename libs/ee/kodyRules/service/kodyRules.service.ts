@@ -5,30 +5,18 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { v4 } from 'uuid';
-import * as libraryKodyRules from './data/library-kody-rules.json';
-import * as bucketsData from './data/buckets.json';
+import bucketsData from './data/buckets.json';
+import libraryKodyRules from './data/library-kody-rules.json';
 
-import { KodyRulesValidationService } from './kody-rules-validation.service';
-import { IKodyRulesService } from '@libs/kodyRules/domain/contracts/kodyRules.service.contract';
-import {
-    IKodyRulesRepository,
-    KODY_RULES_REPOSITORY_TOKEN,
-} from '@libs/kodyRules/domain/contracts/kodyRules.repository.contract';
-import {
-    IRuleLikeService,
-    RULE_LIKE_SERVICE_TOKEN,
-} from '@libs/kodyRules/domain/contracts/ruleLike.service.contract';
 import { createLogger } from '@kodus/flow';
 import {
-    IKodyRule,
-    IKodyRules,
-    KodyRulesOrigin,
-    KodyRulesScope,
-    KodyRulesStatus,
-} from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
-import { KodyRulesEntity } from '@libs/kodyRules/domain/entities/kodyRules.entity';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { CreateKodyRuleDto } from '@libs/ee/kodyRules/dtos/create-kody-rule.dto';
+    LLMModelProvider,
+    ParserType,
+    PromptRole,
+    PromptRunnerService,
+} from '@kodus/kodus-common/llm';
+import { kodyRulesRecommendationSchema } from '@libs/common/utils/langchainCommon/prompts/kodyRulesRecommendation';
+import { ProgrammingLanguage } from '@libs/core/domain/enums';
 import {
     ActionType,
     UserInfo,
@@ -38,26 +26,38 @@ import {
     KodyRuleFilters,
     LibraryKodyRule,
 } from '@libs/core/infrastructure/config/types/general/kodyRules.type';
-import { ProgrammingLanguage } from '@libs/core/domain/enums';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { ObservabilityService } from '@libs/core/log/observability.service';
 import {
     CODE_REVIEW_SETTINGS_LOG_SERVICE_TOKEN,
     ICodeReviewSettingsLogService,
 } from '@libs/ee/codeReviewSettingsLog/domain/contracts/codeReviewSettingsLog.service.contract';
-import {
-    LLMModelProvider,
-    ParserType,
-    PromptRole,
-    PromptRunnerService,
-} from '@kodus/kodus-common/llm';
-import { kodyRulesRecommendationSchema } from '@libs/common/utils/langchainCommon/prompts/kodyRulesRecommendation';
-import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { MCPManagerService } from '@libs/mcp-server/services/mcp-manager.service';
-import { ObservabilityService } from '@libs/core/log/observability.service';
+import { CreateKodyRuleDto } from '@libs/ee/kodyRules/dtos/create-kody-rule.dto';
 import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
+import {
+    IKodyRulesRepository,
+    KODY_RULES_REPOSITORY_TOKEN,
+} from '@libs/kodyRules/domain/contracts/kodyRules.repository.contract';
+import { IKodyRulesService } from '@libs/kodyRules/domain/contracts/kodyRules.service.contract';
+import {
+    IRuleLikeService,
+    RULE_LIKE_SERVICE_TOKEN,
+} from '@libs/kodyRules/domain/contracts/ruleLike.service.contract';
+import { KodyRulesEntity } from '@libs/kodyRules/domain/entities/kodyRules.entity';
+import {
+    IKodyRule,
+    IKodyRules,
+    KodyRulesOrigin,
+    KodyRulesScope,
+    KodyRulesStatus,
+} from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
+import { MCPManagerService } from '@libs/mcp-server/services/mcp-manager.service';
 import {
     IPullRequestsRepository,
     PULL_REQUESTS_REPOSITORY_TOKEN,
 } from '@libs/platformData/domain/pullRequests/contracts/pullRequests.repository';
+import { KodyRulesValidationService } from './kody-rules-validation.service';
 
 @Injectable()
 export class KodyRulesService implements IKodyRulesService {
