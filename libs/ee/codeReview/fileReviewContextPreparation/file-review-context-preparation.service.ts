@@ -12,10 +12,9 @@ import {
     AST_ANALYSIS_SERVICE_TOKEN,
     IASTAnalysisService,
 } from '@libs/code-review/domain/contracts/ASTAnalysisService.contract';
-import { TaskStatus } from '@libs/ee/kodyAST/interfaces/code-ast-analysis.interface';
 import { BaseFileReviewContextPreparation } from '@libs/code-review/infrastructure/adapters/services/code-analysis/file/base-file-review.abstract';
 import { LLM_ANALYSIS_SERVICE_TOKEN } from '@libs/code-review/infrastructure/adapters/services/llmAnalysis.service';
-import { WorkflowPausedError } from '@libs/core/infrastructure/pipeline/errors/workflow-paused.error';
+import { BackoffPresets } from '@libs/common/utils/polling';
 import { ReviewModeOptions } from '@libs/core/domain/interfaces/file-review-context-preparation.interface';
 import {
     AnalysisContext,
@@ -23,7 +22,8 @@ import {
     ReviewModeConfig,
     ReviewModeResponse,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
-import { BackoffPresets } from '@libs/common/utils/polling';
+import { WorkflowPausedError } from '@libs/core/infrastructure/pipeline/errors/workflow-paused.error';
+import { TaskStatus } from '@libs/ee/kodyAST/interfaces/code-ast-analysis.interface';
 
 /**
  * Enterprise (cloud) implementation of the file review context preparation service
@@ -135,12 +135,8 @@ export class FileReviewContextPreparation extends BaseFileReviewContextPreparati
             fileContext.tasks.astAnalysis.status !==
                 TaskStatus.TASK_STATUS_CANCELLED;
 
-        const hasEnabledBreakingChanges =
-            fileContext.codeReviewConfig.reviewOptions?.breaking_changes;
-
         // Check if we should execute the AST analysis
-        const shouldRunAST =
-            isHeavyMode && hasASTAnalysisTask && hasEnabledBreakingChanges;
+        const shouldRunAST = isHeavyMode && hasASTAnalysisTask;
 
         if (shouldRunAST) {
             try {
