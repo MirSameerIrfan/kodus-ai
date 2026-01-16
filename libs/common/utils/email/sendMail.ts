@@ -1,7 +1,84 @@
+import axios from 'axios';
 import { SimpleLogger } from '@kodus/flow/dist/observability/logger';
-import { EmailParams, MailerSend, Recipient, Sender } from 'mailersend';
 
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+
+type CustomerIoEmailPayload = {
+    transactional_message_id: string | number;
+    to: string;
+    from?: string;
+    subject?: string;
+    message_data?: Record<string, unknown>;
+    identifiers?: Record<string, string | number>;
+};
+
+const CUSTOMERIO_RULES_TRANSACTIONAL_ID = 14;
+const CUSTOMERIO_FORGOT_PASSWORD_TRANSACTIONAL_ID = 11;
+const CUSTOMERIO_CONFIRMATION_TRANSACTIONAL_ID = 12;
+const CUSTOMERIO_INVITE_TRANSACTIONAL_ID = 13;
+
+const getCustomerIoApiToken = (): string => {
+    const apiToken = process.env.API_CUSTOMERIO_APP_API_TOKEN;
+    if (!apiToken) {
+        throw new Error('API_CUSTOMERIO_APP_API_TOKEN is not set');
+    }
+    return apiToken;
+};
+
+const getCustomerIoBaseUrl = (): string =>
+    process.env.API_CUSTOMERIO_BASE_URL || 'https://api.customer.io';
+
+const getTransactionalMessageId = (envKey: string): string | number => {
+    const value = process.env[envKey];
+    if (!value) {
+        throw new Error(`${envKey} is not set`);
+    }
+    const numericValue = Number(value);
+    return Number.isNaN(numericValue) ? value : numericValue;
+};
+
+const DEFAULT_FROM_EMAIL = 'noreply@kodus.io';
+const DEFAULT_FROM_NAME = 'Kody from Kodus';
+
+const getFromAddress = (): string => {
+    const fromEmail = process.env.API_CUSTOMERIO_FROM_EMAIL;
+    if (!fromEmail) {
+        return `${DEFAULT_FROM_NAME} <${DEFAULT_FROM_EMAIL}>`;
+    }
+    const fromName = process.env.API_CUSTOMERIO_FROM_NAME;
+    return fromName ? `${fromName} <${fromEmail}>` : fromEmail;
+};
+
+const applyFromAddress = (
+    payload: CustomerIoEmailPayload,
+): CustomerIoEmailPayload => {
+    const fromAddress = getFromAddress();
+    if (fromAddress) {
+        payload.from = fromAddress;
+    }
+
+    return payload;
+};
+
+const buildIdentifiers = (email: string): CustomerIoEmailPayload['identifiers'] => ({
+    email,
+});
+
+const sendCustomerIoEmail = async (
+    payload: CustomerIoEmailPayload,
+): Promise<unknown> => {
+    const apiToken = getCustomerIoApiToken();
+    const baseUrl = getCustomerIoBaseUrl();
+
+    const response = await axios.post(`${baseUrl}/v1/send/email`, payload, {
+        headers: {
+            Authorization: `Bearer ${apiToken}`,
+            'Content-Type': 'application/json',
+        },
+    });
+
+    return response.data;
+};
 
 const sendInvite = async (
     user,
@@ -10,43 +87,27 @@ const sendInvite = async (
     logger?: SimpleLogger,
 ) => {
     try {
-        const mailersend = new MailerSend({
-            apiKey: process.env.API_MAILSEND_API_TOKEN,
-        });
+        const transactionalMessageId = CUSTOMERIO_INVITE_TRANSACTIONAL_ID;
 
-        const recipients = [new Recipient(user.email, user.teamMember.name)];
-        const sentFrom = new Sender(
-            'kody@notifications.kodus.io',
-            'Kody from Kodus',
-        );
-
-        const personalization = [
-            {
-                email: user.email,
-                data: {
-                    organizationName: user.organization.name,
-                    invitingUser: {
-                        email: adminUserEmail,
-                    },
-                    teamName: user.teamMember[0].team.name,
-                    invitedUser: {
-                        name: user.teamMember[0].name,
-                        invite,
-                    },
+        const payload: CustomerIoEmailPayload = {
+            transactional_message_id: transactionalMessageId,
+            to: user.email,
+            subject: `You've been invited to join ${user.teamMember[0].team.name}`,
+            identifiers: buildIdentifiers(user.email),
+            message_data: {
+                organizationName: user.organization.name,
+                invitingUser: {
+                    email: adminUserEmail,
+                },
+                teamName: user.teamMember[0].team.name,
+                invitedUser: {
+                    name: user.teamMember[0].name,
+                    invite,
                 },
             },
-        ];
+        };
 
-        const emailParams = new EmailParams()
-            .setFrom(sentFrom)
-            .setTo(recipients)
-            .setSubject(
-                `You've been invited to join ${user.teamMember[0].team.name}`,
-            )
-            .setTemplateId('351ndgwnvy5gzqx8')
-            .setPersonalization(personalization);
-
-        return await mailersend.email.send(emailParams);
+        return await sendCustomerIoEmail(applyFromAddress(payload));
     } catch (error) {
         if (logger) {
             logger.error({
@@ -75,36 +136,23 @@ const sendForgotPasswordEmail = async (
     try {
         const webUrl = process.env.API_USER_INVITE_BASE_URL;
 
-        const mailersend = new MailerSend({
-            apiKey: process.env.API_MAILSEND_API_TOKEN,
-        });
+        const transactionalMessageId =
+            CUSTOMERIO_FORGOT_PASSWORD_TRANSACTIONAL_ID;
 
-        const recipients = [new Recipient(email, name)];
-        const sentFrom = new Sender(
-            'kody@notifications.kodus.io',
-            'Kody from Kodus',
-        );
-
-        const personalization = [
-            {
-                email: email,
-                data: {
-                    account: {
-                        name: email,
-                    },
-                    resetLink: `${webUrl}/forgot-password/reset?token=${token}`,
+        const payload: CustomerIoEmailPayload = {
+            transactional_message_id: transactionalMessageId,
+            to: email,
+            subject: 'Reset your Kodus password',
+            identifiers: buildIdentifiers(email),
+            message_data: {
+                account: {
+                    name: email,
                 },
+                resetLink: `${webUrl}/forgot-password/reset?token=${token}`,
             },
-        ];
+        };
 
-        const emailParams = new EmailParams()
-            .setFrom(sentFrom)
-            .setTo(recipients)
-            .setSubject('Reset your Kodus password')
-            .setTemplateId('z3m5jgrmxpm4dpyo')
-            .setPersonalization(personalization);
-
-        return await mailersend.email.send(emailParams);
+        return await sendCustomerIoEmail(applyFromAddress(payload));
     } catch (error) {
         if (logger) {
             logger.error({
@@ -130,46 +178,31 @@ const sendKodyRulesNotification = async (
     logger?: SimpleLogger,
 ) => {
     try {
-        const mailersend = new MailerSend({
-            apiKey: process.env.API_MAILSEND_API_TOKEN,
-        });
-
-        const sentFrom = new Sender(
-            'kody@notifications.kodus.io',
-            'Kody from Kodus',
-        );
-
         // Limitar regras para máximo 3 itens
         const limitedRules = rules.slice(0, 3);
 
         // Enviar email para cada usuário individualmente para personalização
         const emailPromises = users.map(async (user) => {
-            const recipients = [new Recipient(user.email, user.name)];
+            const transactionalMessageId = CUSTOMERIO_RULES_TRANSACTIONAL_ID;
 
-            const personalization = [
-                {
-                    email: user.email,
-                    data: {
-                        user: {
-                            name: user.name,
-                        },
-                        organization: {
-                            name: organizationName,
-                        },
-                        rules: limitedRules,
-                        rulesCount: rules.length,
+            const payload: CustomerIoEmailPayload = {
+                transactional_message_id: transactionalMessageId,
+                to: user.email,
+                subject: `New Kody Rules Generated for ${organizationName}`,
+                identifiers: buildIdentifiers(user.email),
+                message_data: {
+                    user: {
+                        name: user.name,
                     },
+                    organization: {
+                        name: organizationName,
+                    },
+                    rules: limitedRules,
+                    rulesCount: rules.length,
                 },
-            ];
+            };
 
-            const emailParams = new EmailParams()
-                .setFrom(sentFrom)
-                .setTo(recipients)
-                .setSubject(`New Kody Rules Generated for ${organizationName}`)
-                .setTemplateId('yzkq340nv50gd796')
-                .setPersonalization(personalization);
-
-            return await mailersend.email.send(emailParams);
+            return await sendCustomerIoEmail(applyFromAddress(payload));
         });
 
         return await Promise.allSettled(emailPromises);
@@ -203,35 +236,21 @@ const sendConfirmationEmail = async (
     try {
         const webUrl = process.env.API_USER_INVITE_BASE_URL;
 
-        const mailersend = new MailerSend({
-            apiKey: process.env.API_MAILSEND_API_TOKEN,
-        });
+        const transactionalMessageId =
+            CUSTOMERIO_CONFIRMATION_TRANSACTIONAL_ID;
 
-        const sentFrom = new Sender(
-            'kody@notifications.kodus.io',
-            'Kody from Kodus',
-        );
-
-        const recipients = [new Recipient(email)];
-
-        const personalization = [
-            {
-                email: email,
-                data: {
-                    organizationName: organizationName,
-                    confirmLink: `${webUrl}/confirm-email?token=${token}`,
-                },
+        const payload: CustomerIoEmailPayload = {
+            transactional_message_id: transactionalMessageId,
+            to: email,
+            subject: 'Confirm your email',
+            identifiers: buildIdentifiers(email),
+            message_data: {
+                organizationName: organizationName,
+                confirmLink: `${webUrl}/confirm-email?token=${token}`,
             },
-        ];
+        };
 
-        const emailParams = new EmailParams()
-            .setFrom(sentFrom)
-            .setTo(recipients)
-            .setSubject('Confirm your email')
-            .setTemplateId('7dnvo4dzko6l5r86')
-            .setPersonalization(personalization);
-
-        return await mailersend.email.send(emailParams);
+        return await sendCustomerIoEmail(applyFromAddress(payload));
     } catch (error) {
         if (logger) {
             logger.error({
