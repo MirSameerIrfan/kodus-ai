@@ -1,5 +1,5 @@
 import { createLogger } from '@kodus/flow';
-import { Injectable, Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { IAIAnalysisService } from '@libs/code-review/domain/contracts/AIAnalysisService.contract';
 import {
@@ -238,9 +238,8 @@ export class CodeAnalysisOrchestrator {
         prNumber: number,
     ): boolean {
         const hasRules = context.codeReviewConfig?.kodyRules?.length > 0;
-        const isEnabled = context.codeReviewConfig?.reviewOptions?.kody_rules;
 
-        if (!hasRules || !isEnabled) {
+        if (!hasRules) {
             this.logger.log({
                 message: `Kody rules will not execute: ${!hasRules ? 'No rules found' : 'Feature disabled'} for PR#${prNumber}`,
                 context: CodeAnalysisOrchestrator.name,
@@ -248,7 +247,6 @@ export class CodeAnalysisOrchestrator {
                     organizationAndTeamData,
                     prNumber,
                     hasRules,
-                    isEnabled,
                     rulesCount:
                         context.codeReviewConfig?.kodyRules?.length || 0,
                     reviewOptions: context.codeReviewConfig?.reviewOptions,
@@ -256,6 +254,6 @@ export class CodeAnalysisOrchestrator {
             });
         }
 
-        return hasRules && isEnabled;
+        return hasRules;
     }
 }
