@@ -1,4 +1,4 @@
-import * as labels from '@libs/automation/infrastructure/adapters/services/processAutomation/config/codeReview/labels.json';
+import labels from '@libs/automation/infrastructure/adapters/services/processAutomation/config/codeReview/labels.json';
 
 export enum LabelType {
     PERFORMANCE_AND_OPTIMIZATION = 'performance_and_optimization',

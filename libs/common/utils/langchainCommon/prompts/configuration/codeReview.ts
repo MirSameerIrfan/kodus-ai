@@ -168,7 +168,7 @@ function formatSyncErrors(errors: unknown[] | string | undefined): string {
             if (typeof error === 'object') {
                 const message =
                     typeof (error as Record<string, unknown>).message ===
-                    'string'
+                        'string'
                         ? ((error as Record<string, unknown>).message as string)
                         : 'Unknown reference error';
                 return `- ${message}`;
@@ -372,7 +372,7 @@ function extractLayerReferences(
                 entry &&
                 typeof entry === 'object' &&
                 typeof (entry as Record<string, unknown>).filePath ===
-                    'string' &&
+                'string' &&
                 typeof (entry as Record<string, unknown>).content === 'string',
         );
         if (hasFileContext) {
@@ -1122,92 +1122,6 @@ Your final output should be **only** a JSON object with the following structure:
 - Return only the JSON object
 - Ensure valid JSON format
 </finalSteps>`;
-};
-
-export const prompt_codereview_user_deepseek = (payload: CodeReviewPayload) => {
-    return `# Code Analysis Mission
-You are Kody PR-Reviewer, a senior engineer specialized in code review and LLM understanding.
-
-# File Content
-${payload?.relevantContent || payload?.fileContent || ''}
-
-# Code Changes
-${payload?.patchWithLinesStr}
-
-# Review Focus
-Provide detailed, constructive code feedback that strictly falls under these categories:
-- 'security': Address vulnerabilities and security concerns
-- 'error_handling': Error/exception handling improvements
-- 'refactoring': Code restructuring for better readability/maintenance
-- 'performance_and_optimization': Speed/efficiency improvements
-- 'maintainability': Future maintenance improvements
-- 'potential_issues': Potential bugs/logical errors
-- 'code_style': Coding standards adherence
-- 'documentation_and_comments': Documentation improvements
-Each suggestion MUST use one of the above categories as its label - no other labels are allowed.
-
-# General Guidelines
-- Understand PR purpose
-- Focus on '+' lines for suggestions
-- Only suggest changes in listed categories
-- Ensure suggestions are technically correct and beneficial
-- Never suggest breaking changes
-- Keep suggestions concise and clear
-- Consider full file context for accuracy
-- Generate only suggestions that are truly relevant and impactful for the code review viewer. Our goal is quality over quantity - focus on points that significantly impact code quality, security, or maintainability. Avoid trivial or cosmetic changes that don't provide real value.
-
-When analyzing code changes, prioritize identifying:
-- Type safety issues (any types, untyped parameters/returns)
-- Potential runtime errors or vulnerabilities
-- Design and interface inconsistencies
-- Code contract violations
-- Implementation gaps
-
-Only suggest changes that address concrete technical problems. Avoid suggesting changes that are:
-- Purely cosmetic
-- Documentation-only without addressing core issues
-- Minor style improvements without technical impact
-- Language: ${payload?.languageResultPrompt || 'en-US'}
-
-# Review Process
-1. Analyze each category for issues:
-   - Security risks
-   - Error handling gaps
-   - Maintenance concerns
-   - Performance issues
-2. Validate each suggestion:
-   - Technical correctness
-   - Impact value
-   - Internal consistency
-
-# Required Output Format
-Important: The output ALWAYS must be ONLY the JSON object - no explanations, comments, or any other text before or after the JSON.
-\`\`\`json
-{
-    "codeSuggestions": [
-        {
-            "relevantFile": "path/to/file",
-            "language": "programming_language",
-            "suggestionContent": "Detailed suggestion",
-            "existingCode": "Current code",
-            "improvedCode": "Improved code",
-            "oneSentenceSummary": "Brief summary",
-            "relevantLinesStart": "start_line",
-            "relevantLinesEnd": "end_line",
-            "label": "category",
-            "llmPrompt": "Prompt for LLMs"
-        }
-    ]
-}
-\`\`\`
-
-# Important Notes
-   - Return only valid JSON
-   - Focus on new code ('+' lines)
-   - Use relative line numbers
-   - Never include explanations or text before or after the JSON
-   - Never return "..." or empty content in existingCode or improvedCode fields - always include the actual code
-   - All responses in ${payload?.languageResultPrompt || 'en-US'}`;
 };
 
 export const prompt_codereview_user_tool = (payload: any) => {

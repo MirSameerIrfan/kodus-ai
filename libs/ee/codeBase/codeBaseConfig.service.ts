@@ -3,12 +3,11 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { LanguageValue } from '@libs/core/domain/enums/language-parameter.enum';
 
-import * as yaml from 'js-yaml';
-import * as globalIgnorePathsJson from '@libs/common/utils/codeBase/ignorePaths/generated/paths.json';
-import { OrganizationParametersKey } from '@libs/core/domain/enums/organization-parameters-key.enum';
 import { ICodeBaseConfigService } from '@libs/code-review/domain/contracts/CodeBaseConfigService.contract';
+import globalIgnorePathsJson from '@libs/common/utils/codeBase/ignorePaths/generated/paths.json';
 import { IntegrationCategory } from '@libs/core/domain/enums/integration-category.enum';
 import { IntegrationConfigKey } from '@libs/core/domain/enums/Integration-config-key.enum';
+import { OrganizationParametersKey } from '@libs/core/domain/enums/organization-parameters-key.enum';
 import { ParametersKey } from '@libs/core/domain/enums/parameters-key.enum';
 import {
     CodeReviewConfig,
@@ -20,39 +19,40 @@ import {
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import {
     CodeReviewParameter,
-    RepositoryCodeReviewConfig,
     DirectoryCodeReviewConfig,
+    RepositoryCodeReviewConfig,
 } from '@libs/core/infrastructure/config/types/general/codeReviewConfig.type';
 import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
 import { ConfigLevel } from '@libs/core/infrastructure/config/types/general/pullRequestMessages.type';
+import * as yaml from 'js-yaml';
 
-import {
-    IParametersService,
-    PARAMETERS_SERVICE_TOKEN,
-} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
-import {
-    IIntegrationService,
-    INTEGRATION_SERVICE_TOKEN,
-} from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
+import { decrypt } from '@libs/common/utils/crypto';
+import { ValidateCodeManagementIntegration } from '@libs/common/utils/decorators/validate-code-management-integration.decorator';
+import { deepMerge } from '@libs/common/utils/deep';
+import { getDefaultKodusConfigFile } from '@libs/common/utils/validateCodeReviewConfigFile';
 import {
     IIntegrationConfigService,
     INTEGRATION_CONFIG_SERVICE_TOKEN,
 } from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
 import {
-    IOrganizationParametersService,
-    ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
-} from '@libs/organization/domain/organizationParameters/contracts/organizationParameters.service.contract';
+    IIntegrationService,
+    INTEGRATION_SERVICE_TOKEN,
+} from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
 import {
     IKodyRulesService,
     KODY_RULES_SERVICE_TOKEN,
 } from '@libs/kodyRules/domain/contracts/kodyRules.service.contract';
+import {
+    IOrganizationParametersService,
+    ORGANIZATION_PARAMETERS_SERVICE_TOKEN,
+} from '@libs/organization/domain/organizationParameters/contracts/organizationParameters.service.contract';
+import {
+    IParametersService,
+    PARAMETERS_SERVICE_TOKEN,
+} from '@libs/organization/domain/parameters/contracts/parameters.service.contract';
+import { AuthMode } from '@libs/platform/domain/platformIntegrations/enums/codeManagement/authMode.enum';
 import { CodeManagementService } from '@libs/platform/infrastructure/adapters/services/codeManagement.service';
 import { KodyRulesValidationService } from '../kodyRules/service/kody-rules-validation.service';
-import { ValidateCodeManagementIntegration } from '@libs/common/utils/decorators/validate-code-management-integration.decorator';
-import { deepMerge } from '@libs/common/utils/deep';
-import { AuthMode } from '@libs/platform/domain/platformIntegrations/enums/codeManagement/authMode.enum';
-import { decrypt } from '@libs/common/utils/crypto';
-import { getDefaultKodusConfigFile } from '@libs/common/utils/validateCodeReviewConfigFile';
 
 @Injectable()
 export default class CodeBaseConfigService implements ICodeBaseConfigService {

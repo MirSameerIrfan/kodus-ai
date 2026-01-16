@@ -2,7 +2,7 @@
  * @license
  * Kodus Tech. All rights reserved.
  */
-import { Injectable, Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { CodeReviewPipelineContext } from '@libs/code-review/pipeline/context/code-review-pipeline.context';
 import { AggregateResultsStage } from '@libs/code-review/pipeline/stages/aggregate-result.stage';
@@ -14,23 +14,24 @@ import { CreateFileCommentsStage } from '@libs/code-review/pipeline/stages/creat
 import { CreatePrLevelCommentsStage } from '@libs/code-review/pipeline/stages/create-pr-level-comments.stage';
 import { FetchChangedFilesStage } from '@libs/code-review/pipeline/stages/fetch-changed-files.stage';
 import { UpdateCommentsAndGenerateSummaryStage } from '@libs/code-review/pipeline/stages/finish-comments.stage';
+import { RequestChangesOrApproveStage } from '@libs/code-review/pipeline/stages/finish-process-review.stage';
 import { InitialCommentStage } from '@libs/code-review/pipeline/stages/initial-comment.stage';
+import { ProcessFilesReview } from '@libs/code-review/pipeline/stages/process-files-review.stage';
 import { ValidateConfigStage } from '@libs/code-review/pipeline/stages/validate-config.stage';
 import { IPipelineStrategy } from '@libs/core/infrastructure/pipeline/interfaces/pipeline-strategy.interface';
 import { PipelineStage } from '@libs/core/infrastructure/pipeline/interfaces/pipeline.interface';
-import { ProcessFilesReview } from '@libs/code-review/pipeline/stages/process-files-review.stage';
-import { RequestChangesOrApproveStage } from '@libs/code-review/pipeline/stages/finish-process-review.stage';
 
 import { CodeAnalysisASTCleanupStage } from '../stages/code-analysis-ast-cleanup.stage';
 import { CodeAnalysisASTStage } from '../stages/code-analysis-ast.stage';
 import { KodyFineTuningStage } from '../stages/kody-fine-tuning.stage';
 
-import { ProcessFilesPrLevelReviewStage } from '@libs/code-review/pipeline/stages/process-files-pr-level-review.stage';
-import { ValidateNewCommitsStage } from '@libs/code-review/pipeline/stages/validate-new-commits.stage';
-import { ResolveConfigStage } from '@libs/code-review/pipeline/stages/resolve-config.stage';
-import { FileContextGateStage } from '@libs/code-review/pipeline/stages/file-context-gate.stage';
 import { CreateGithubCheckStage } from '@libs/code-review/pipeline/stages/create-github-check.stage';
+import { FileContextGateStage } from '@libs/code-review/pipeline/stages/file-context-gate.stage';
 import { FinalizeGithubCheckStage } from '@libs/code-review/pipeline/stages/finalize-github-check.stage';
+import { ProcessFilesPrLevelReviewStage } from '@libs/code-review/pipeline/stages/process-files-pr-level-review.stage';
+import { ResolveConfigStage } from '@libs/code-review/pipeline/stages/resolve-config.stage';
+import { ValidateNewCommitsStage } from '@libs/code-review/pipeline/stages/validate-new-commits.stage';
+import { ValidateSuggestionsStage } from '@libs/code-review/pipeline/stages/validate-suggestions.stage';
 
 @Injectable()
 export class CodeReviewPipelineStrategyEE implements IPipelineStrategy<CodeReviewPipelineContext> {
@@ -53,6 +54,7 @@ export class CodeReviewPipelineStrategyEE implements IPipelineStrategy<CodeRevie
         private readonly aggregateResultsStage: AggregateResultsStage,
         private readonly updateCommentsAndGenerateSummaryStage: UpdateCommentsAndGenerateSummaryStage,
         private readonly requestChangesOrApproveStage: RequestChangesOrApproveStage,
+        private readonly validateSuggestionsStage: ValidateSuggestionsStage,
         private readonly createGithubCheckStage: CreateGithubCheckStage,
         private readonly finalizeGithubCheckStage: FinalizeGithubCheckStage,
     ) {}
@@ -76,6 +78,7 @@ export class CodeReviewPipelineStrategyEE implements IPipelineStrategy<CodeRevie
             this.processFilesPrLevelReviewStage,
             this.processFilesReview,
             this.createPrLevelCommentsStage,
+            this.validateSuggestionsStage,
             this.createFileCommentsStage,
             this.codeAnalysisASTCleanupStage,
             this.aggregateResultsStage,

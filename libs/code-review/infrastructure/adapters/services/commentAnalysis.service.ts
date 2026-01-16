@@ -5,15 +5,11 @@ import {
     PromptRole,
     PromptRunnerService,
 } from '@kodus/kodus-common/llm';
+import filteredLibraryKodyRules from '@libs/code-review/infrastructure/data/filtered-rules.json';
 import { Injectable } from '@nestjs/common';
 import { v4 } from 'uuid';
-import * as filteredLibraryKodyRules from '@libs/code-review/infrastructure/data/filtered-rules.json';
 
 import { SUPPORTED_LANGUAGES } from '@libs/code-review/domain/contracts/SupportedLanguages';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
-import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
-import { ObservabilityService } from '@libs/core/log/observability.service';
 import {
     CategorizedComment,
     UncategorizedComment,
@@ -27,11 +23,6 @@ import {
     prompt_CommentIrrelevanceFilterUser,
 } from '@libs/common/utils/langchainCommon/prompts/commentAnalysis';
 import {
-    IKodyRule,
-    KodyRulesOrigin,
-    KodyRulesStatus,
-} from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
-import {
     kodyRulesGeneratorDuplicateFilterSchema,
     kodyRulesGeneratorQualityFilterSchema,
     kodyRulesGeneratorSchema,
@@ -43,7 +34,16 @@ import {
     prompt_KodyRulesGeneratorUser,
 } from '@libs/common/utils/langchainCommon/prompts/kodyRulesGenerator';
 import { LibraryKodyRule } from '@libs/core/infrastructure/config/types/general/kodyRules.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { BYOKPromptRunnerService } from '@libs/core/infrastructure/services/tokenTracking/byokPromptRunner.service';
+import { ObservabilityService } from '@libs/core/log/observability.service';
 import { KodyRuleSeverity } from '@libs/ee/kodyRules/dtos/create-kody-rule.dto';
+import { PermissionValidationService } from '@libs/ee/shared/services/permissionValidation.service';
+import {
+    IKodyRule,
+    KodyRulesOrigin,
+    KodyRulesStatus,
+} from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
 
 @Injectable()
 export class CommentAnalysisService {
@@ -191,6 +191,7 @@ export class CommentAnalysisService {
                 comments,
                 organizationAndTeamData,
             });
+
             if (!filteredComments || filteredComments.length === 0) {
                 this.logger.log({
                     message:

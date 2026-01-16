@@ -13,6 +13,7 @@ import { ProcessFilesPrLevelReviewStage } from '@libs/code-review/pipeline/stage
 import { ProcessFilesReview } from '@libs/code-review/pipeline/stages/process-files-review.stage';
 import { ResolveConfigStage } from '@libs/code-review/pipeline/stages/resolve-config.stage';
 import { ValidateConfigStage } from '@libs/code-review/pipeline/stages/validate-config.stage';
+import { ValidateSuggestionsStage } from '@libs/code-review/pipeline/stages/validate-suggestions.stage';
 import { IPipelineStrategy } from '@libs/core/infrastructure/pipeline/interfaces/pipeline-strategy.interface';
 import { PipelineStage } from '@libs/core/infrastructure/pipeline/interfaces/pipeline.interface';
 import { Inject, Injectable } from '@nestjs/common';
@@ -32,6 +33,7 @@ export class DryRunCodeReviewPipelineStrategy implements IPipelineStrategy<CodeR
         private readonly createFileCommentsStage: CreateFileCommentsStage,
         private readonly aggregateResultsStage: AggregateResultsStage,
         private readonly updateCommentsAndGenerateSummaryStage: UpdateCommentsAndGenerateSummaryStage,
+        private readonly validateSuggestionsStage: ValidateSuggestionsStage,
     ) {}
 
     configureStages(): PipelineStage<CodeReviewPipelineContext>[] {
@@ -44,6 +46,7 @@ export class DryRunCodeReviewPipelineStrategy implements IPipelineStrategy<CodeR
             this.processFilesPrLevelReviewStage,
             this.processFilesReview,
             this.createPrLevelCommentsStage,
+            this.validateSuggestionsStage,
             this.createFileCommentsStage,
             this.aggregateResultsStage,
             this.updateCommentsAndGenerateSummaryStage,

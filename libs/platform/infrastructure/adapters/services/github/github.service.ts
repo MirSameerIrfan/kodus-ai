@@ -12,13 +12,30 @@ import * as moment from 'moment-timezone';
 import pLimit from 'p-limit';
 import { v4 as uuidv4 } from 'uuid';
 
+import { createLogger } from '@kodus/flow';
 import {
-    ALLOWLIST_TREES_ONLY,
-    attachETagHooksAllowlist,
-    ETagCacheEntry,
-    ETagStore,
-} from './octokit-etag-allowlist';
+    GitHubReaction,
+    GitlabReaction,
+} from '@libs/code-review/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
+import { getCodeReviewBadge } from '@libs/common/utils/codeManagement/codeReviewBadge';
+import { getLabelShield } from '@libs/common/utils/codeManagement/labels';
+import { getSeverityLevelShield } from '@libs/common/utils/codeManagement/severityLevel';
+import { decrypt, encrypt } from '@libs/common/utils/crypto';
 import { IntegrationServiceDecorator } from '@libs/common/utils/decorators/integration-service.decorator';
+import {
+    isFileMatchingGlob,
+    isFileMatchingGlobCaseInsensitive,
+} from '@libs/common/utils/glob-utils';
+import {
+    extractRepoData,
+    extractRepoName,
+    extractRepoNames,
+} from '@libs/common/utils/helpers';
+import {
+    getTranslationsForLanguageByCategory,
+    TranslationsCategory,
+} from '@libs/common/utils/translations/translations';
+import { CacheService } from '@libs/core/cache/cache.service';
 import {
     CreateAuthIntegrationStatus,
     InstallationStatus,
@@ -28,33 +45,37 @@ import {
     PlatformType,
     PullRequestState,
 } from '@libs/core/domain/enums';
-import { IGithubService } from '@libs/platform/domain/github/contracts/github.service.contract';
-import { ICodeManagementService } from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
-import {
-    IIntegrationService,
-    INTEGRATION_SERVICE_TOKEN,
-} from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
-import {
-    AUTH_INTEGRATION_SERVICE_TOKEN,
-    IAuthIntegrationService,
-} from '@libs/integrations/domain/authIntegrations/contracts/auth-integration.service.contracts';
-import {
-    IIntegrationConfigService,
-    INTEGRATION_CONFIG_SERVICE_TOKEN,
-} from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
-import { CacheService } from '@libs/core/cache/cache.service';
-import { MCPManagerService } from '@libs/mcp-server/services/mcp-manager.service';
-import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
-import { AuthMode } from '@libs/platform/domain/platformIntegrations/enums/codeManagement/authMode.enum';
-import { decrypt, encrypt } from '@libs/common/utils/crypto';
-import { GithubAuthDetail } from '@libs/integrations/domain/authIntegrations/types/github-auth-detail.type';
 import {
     CommentResult,
     Repository,
     ReviewComment,
 } from '@libs/core/infrastructure/config/types/general/codeReview.type';
 import { Commit } from '@libs/core/infrastructure/config/types/general/commit.type';
-import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
+import { OrganizationAndTeamData } from '@libs/core/infrastructure/config/types/general/organizationAndTeamData';
+import { TreeItem } from '@libs/core/infrastructure/config/types/general/tree.type';
+import {
+    AUTH_INTEGRATION_SERVICE_TOKEN,
+    IAuthIntegrationService,
+} from '@libs/integrations/domain/authIntegrations/contracts/auth-integration.service.contracts';
+import { GithubAuthDetail } from '@libs/integrations/domain/authIntegrations/types/github-auth-detail.type';
+import {
+    IIntegrationConfigService,
+    INTEGRATION_CONFIG_SERVICE_TOKEN,
+} from '@libs/integrations/domain/integrationConfigs/contracts/integration-config.service.contracts';
+import { IntegrationConfigEntity } from '@libs/integrations/domain/integrationConfigs/entities/integration-config.entity';
+import {
+    IIntegrationService,
+    INTEGRATION_SERVICE_TOKEN,
+} from '@libs/integrations/domain/integrations/contracts/integration.service.contracts';
+import { IntegrationEntity } from '@libs/integrations/domain/integrations/entities/integration.entity';
+import { MCPManagerService } from '@libs/mcp-server/services/mcp-manager.service';
+import { IGithubService } from '@libs/platform/domain/github/contracts/github.service.contract';
+import { AuthMode } from '@libs/platform/domain/platformIntegrations/enums/codeManagement/authMode.enum';
+import {
+    CodeManagementConnectionStatus,
+    ICodeManagementService,
+} from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
+import { GitCloneParams } from '@libs/platform/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
 import {
     OneSentenceSummaryItem,
     PullRequest,
@@ -66,33 +87,18 @@ import {
     PullRequestsWithChangesRequested,
     PullRequestWithFiles,
 } from '@libs/platform/domain/platformIntegrations/types/codeManagement/pullRequests.type';
-import { IntegrationEntity } from '@libs/integrations/domain/integrations/entities/integration.entity';
-import { CodeManagementConnectionStatus } from '@libs/platform/domain/platformIntegrations/interfaces/code-management.interface';
-import { extractRepoData, extractRepoName, extractRepoNames } from '@libs/common/utils/helpers';
+import { Repositories } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositories.type';
 import {
     RepositoryFile,
     RepositoryFileWithContent,
 } from '@libs/platform/domain/platformIntegrations/types/codeManagement/repositoryFile.type';
-import {
-    getTranslationsForLanguageByCategory,
-    TranslationsCategory,
-} from '@libs/common/utils/translations/translations';
-import { getLabelShield } from '@libs/common/utils/codeManagement/labels';
-import { getCodeReviewBadge } from '@libs/common/utils/codeManagement/codeReviewBadge';
-import { getSeverityLevelShield } from '@libs/common/utils/codeManagement/severityLevel';
-import { TreeItem } from '@libs/core/infrastructure/config/types/general/tree.type';
-import {
-    GitHubReaction,
-    GitlabReaction,
-} from '@libs/code-review/domain/codeReviewFeedback/enums/codeReviewCommentReaction.enum';
-import { IntegrationConfigEntity } from '@libs/integrations/domain/integrationConfigs/entities/integration-config.entity';
-import {
-    isFileMatchingGlob,
-    isFileMatchingGlobCaseInsensitive,
-} from '@libs/common/utils/glob-utils';
-import { GitCloneParams } from '@libs/platform/domain/platformIntegrations/types/codeManagement/gitCloneParams.type';
 import { IRepository } from '@libs/platformData/domain/pullRequests/interfaces/pullRequests.interface';
-import { createLogger } from '@kodus/flow';
+import {
+    ALLOWLIST_TREES_ONLY,
+    attachETagHooksAllowlist,
+    ETagCacheEntry,
+    ETagStore,
+} from './octokit-etag-allowlist';
 
 interface GitHubAuthResponse {
     token: string;
@@ -118,14 +124,15 @@ interface GitHubInstallationData {
 @IntegrationServiceDecorator(PlatformType.GITHUB, 'codeManagement')
 export class GithubService
     implements
-    IGithubService,
-    Omit<
-        ICodeManagementService,
-        | 'getOrganizations'
-        | 'getUserById'
-        | 'getLanguageRepository'
-        | 'createSingleIssueComment'
-    > {
+        IGithubService,
+        Omit<
+            ICodeManagementService,
+            | 'getOrganizations'
+            | 'getUserById'
+            | 'getLanguageRepository'
+            | 'createSingleIssueComment'
+        >
+{
     private readonly MAX_RETRY_ATTEMPTS = 2;
     private readonly TTL = 50 * 60 * 1000; // 50 minutes
 
@@ -143,7 +150,7 @@ export class GithubService
         private readonly cacheService: CacheService,
         private readonly configService: ConfigService,
         private readonly mcpManagerService?: MCPManagerService,
-    ) { }
+    ) {}
 
     private async handleIntegration(
         integration: any,
@@ -2501,11 +2508,11 @@ export class GithubService
                         const files = filters?.skipFiles
                             ? []
                             : await this.getPullRequestFiles(
-                                octokit,
-                                githubAuthDetail.org,
-                                repo,
-                                pullRequest?.number,
-                            );
+                                  octokit,
+                                  githubAuthDetail.org,
+                                  repo,
+                                  pullRequest?.number,
+                              );
                         return {
                             id: pullRequest.id,
                             pull_number: pullRequest?.number,
@@ -2787,14 +2794,24 @@ ${copyPrompt}
         translations: any,
         suggestionCopyPrompt: boolean,
     ) {
+        const isCommittableSuggestion =
+            lineComment?.suggestion?.isCommittable &&
+            lineComment?.suggestion?.validatedCode;
+        const improvedCode = isCommittableSuggestion
+            ? lineComment?.suggestion?.validatedCode
+            : lineComment?.body?.improvedCode;
+
+        const language = isCommittableSuggestion
+            ? 'suggestion'
+            : lineComment?.suggestion?.language?.toLowerCase() ||
+              repository?.language?.toLowerCase();
+
         const severityShield = lineComment?.suggestion
             ? getSeverityLevelShield(lineComment.suggestion.severity)
             : '';
-        const codeBlock = lineComment?.body?.improvedCode
-            ? this.formatCodeBlock(
-                repository?.language?.toLowerCase(),
-                lineComment?.body?.improvedCode,
-            )
+
+        const codeBlock = improvedCode
+            ? this.formatCodeBlock(language, improvedCode)
             : '';
         const suggestionContent = lineComment?.body?.suggestionContent || '';
         const actionStatement = lineComment?.body?.actionStatement
@@ -2814,15 +2831,26 @@ ${copyPrompt}
             ? this.formatPromptForLLM(lineComment)
             : '';
 
+        const experimentalWarning = isCommittableSuggestion
+            ? `
+<details>
+<summary>Warning</summary>
+
+This is an experimental feature that generates committable changes. Review the diff before applying. Results may be incorrect.
+</details>
+`
+            : '';
+
         return [
             badges,
             suggestionContent,
             actionStatement,
             codeBlock,
+            experimentalWarning,
             copyPrompt,
             this.formatSub(translations.talkToKody),
             this.formatSub(translations.feedback) +
-            '<!-- kody-codereview -->&#8203;\n&#8203;',
+                '<!-- kody-codereview -->&#8203;\n&#8203;',
         ]
             .join('\n')
             .trim();
@@ -3035,13 +3063,13 @@ ${copyPrompt}
                         // So we need one of them to actually mark the thread as resolved and the other to match the id we saved in the database.
                         return firstComment
                             ? {
-                                id: firstComment.id, // Used to actually resolve the thread
-                                threadId: reviewThread.id,
-                                isResolved: reviewThread.isResolved,
-                                isOutdated: reviewThread.isOutdated,
-                                fullDatabaseId: firstComment.fullDatabaseId, // The REST API id, used to match comments saved in the database.
-                                body: firstComment.body,
-                            }
+                                  id: firstComment.id, // Used to actually resolve the thread
+                                  threadId: reviewThread.id,
+                                  isResolved: reviewThread.isResolved,
+                                  isOutdated: reviewThread.isOutdated,
+                                  fullDatabaseId: firstComment.fullDatabaseId, // The REST API id, used to match comments saved in the database.
+                                  body: firstComment.body,
+                              }
                             : null;
                     })
                     .filter((comment) => comment !== null);
@@ -3647,12 +3675,12 @@ ${copyPrompt}
         organizationAndTeamData: OrganizationAndTeamData;
         commentId: string;
         reason?:
-        | 'ABUSE'
-        | 'OFF_TOPIC'
-        | 'OUTDATED'
-        | 'RESOLVED'
-        | 'DUPLICATE'
-        | 'SPAM';
+            | 'ABUSE'
+            | 'OFF_TOPIC'
+            | 'OUTDATED'
+            | 'RESOLVED'
+            | 'DUPLICATE'
+            | 'SPAM';
     }): Promise<any | null> {
         try {
             const {
@@ -4037,15 +4065,15 @@ ${copyPrompt}
                 reactions: {
                     thumbsUp: isOAuth
                         ? Math.max(
-                            0,
-                            comment.reactions[GitHubReaction.THUMBS_UP] - 1,
-                        )
+                              0,
+                              comment.reactions[GitHubReaction.THUMBS_UP] - 1,
+                          )
                         : comment.reactions[GitHubReaction.THUMBS_UP],
                     thumbsDown: isOAuth
                         ? Math.max(
-                            0,
-                            comment.reactions[GitHubReaction.THUMBS_DOWN] - 1,
-                        )
+                              0,
+                              comment.reactions[GitHubReaction.THUMBS_DOWN] - 1,
+                          )
                         : comment.reactions[GitHubReaction.THUMBS_DOWN],
                 },
                 comment: {
@@ -4987,13 +5015,13 @@ ${copyPrompt}
                         // So we need one of them to actually mark the thread as resolved and the other to match the id we saved in the database.
                         return firstComment
                             ? {
-                                id: firstComment.id, // Used to actually resolve the thread
-                                threadId: reviewThread.id,
-                                isResolved: reviewThread.isResolved,
-                                isOutdated: reviewThread.isOutdated,
-                                fullDatabaseId: firstComment.fullDatabaseId, // The REST API id, used to match comments saved in the database.
-                                body: firstComment.body,
-                            }
+                                  id: firstComment.id, // Used to actually resolve the thread
+                                  threadId: reviewThread.id,
+                                  isResolved: reviewThread.isResolved,
+                                  isOutdated: reviewThread.isOutdated,
+                                  fullDatabaseId: firstComment.fullDatabaseId, // The REST API id, used to match comments saved in the database.
+                                  body: firstComment.body,
+                              }
                             : null;
                     })
                     .filter((comment) => comment !== null);
@@ -5020,11 +5048,11 @@ ${copyPrompt}
                     // So we need one of them to actually mark the thread as resolved and the other to match the id we saved in the database.
                     return firstComment
                         ? {
-                            id: firstComment.id, // Used to actually resolve the thread
-                            reviewId: review.id,
-                            fullDatabaseId: firstComment.fullDatabaseId, // The REST API id, used to match comments saved in the database.
-                            body: firstComment.body,
-                        }
+                              id: firstComment.id, // Used to actually resolve the thread
+                              reviewId: review.id,
+                              fullDatabaseId: firstComment.fullDatabaseId, // The REST API id, used to match comments saved in the database.
+                              body: firstComment.body,
+                          }
                         : null;
                 })
                 .filter((comment) => comment !== null);
