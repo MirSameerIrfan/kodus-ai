@@ -11,7 +11,6 @@ import { UseCases } from './use-cases';
 
 @Module({
     imports: [TypeOrmModule.forFeature([SSOConfigModel]), AuthModule],
-    controllers: [],
     providers: [
         SamlStrategy,
         ...UseCases,
@@ -24,6 +23,6 @@ import { UseCases } from './use-cases';
             useClass: SSOConfigService,
         },
     ],
-    exports: [...UseCases],
+    exports: [...UseCases, SSO_CONFIG_SERVICE_TOKEN],
 })
 export class SSOModule {}
