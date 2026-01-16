@@ -6,13 +6,13 @@ import {
     mapSimpleModelsToEntities,
     mapSimpleModelToEntity,
 } from '@libs/core/infrastructure/repositories/mappers';
-import { ISSOConfigRepository } from '@libs/identity/domain/sso/contracts/ssoConfig.repository.contract';
-import { SSOConfigEntity } from '@libs/identity/domain/sso/entities/ssoConfig.entity';
+import { ISSOConfigRepository } from '../domain/contracts/ssoConfig.repository.contract';
+import { SSOConfigEntity } from '../domain/entities/ssoConfig.entity';
 import {
     SSOConfig,
     SSOProtocol,
-} from '@libs/identity/domain/sso/interfaces/ssoConfig.interface';
-import { SSOConfigModel } from './schemas/ssoConfig.model';
+} from '../domain/interfaces/ssoConfig.interface';
+import { SSOConfigModel } from './ssoConfig.model';
 
 @Injectable()
 export class SSOConfigRepository implements ISSOConfigRepository {
