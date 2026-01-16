@@ -15,9 +15,7 @@
             "sourceMapPathOverrides": {
                 "webpack:///*": "${workspaceFolder}/*"
             },
-            "skipFiles": [
-                "<node_internals>/**"
-            ]
+            "skipFiles": ["<node_internals>/**"]
         },
         {
             "type": "node",
@@ -33,9 +31,7 @@
             "sourceMapPathOverrides": {
                 "webpack:///*": "${workspaceFolder}/*"
             },
-            "skipFiles": [
-                "<node_internals>/**"
-            ]
+            "skipFiles": ["<node_internals>/**"]
         },
         {
             "type": "node",
@@ -51,19 +47,13 @@
             "sourceMapPathOverrides": {
                 "webpack:///*": "${workspaceFolder}/*"
             },
-            "skipFiles": [
-                "<node_internals>/**"
-            ]
+            "skipFiles": ["<node_internals>/**"]
         }
     ],
     "compounds": [
         {
             "name": "Debug: All Services",
-            "configurations": [
-                "Debug: API",
-                "Debug: Webhooks",
-                "Debug: Worker"
-            ]
+            "configurations": ["Debug: API", "Debug: Webhooks", "Debug: Worker"]
         }
     ]
 }
