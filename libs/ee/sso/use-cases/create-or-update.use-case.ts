@@ -4,11 +4,11 @@ import { createLogger } from '@kodus/flow';
 import {
     ISSOConfigService,
     SSO_CONFIG_SERVICE_TOKEN,
-} from '@libs/identity/domain/sso/contracts/ssoConfig.service.contract';
+} from '../domain/contracts/ssoConfig.service.contract';
 import {
     SSOProtocol,
     SSOProtocolConfigMap,
-} from '@libs/identity/domain/sso/interfaces/ssoConfig.interface';
+} from '../domain/interfaces/ssoConfig.interface';
 
 @Injectable()
 export class CreateOrUpdateSSOConfigUseCase {

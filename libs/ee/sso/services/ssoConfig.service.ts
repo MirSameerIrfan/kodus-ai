@@ -1,15 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
-
 import {
     ISSOConfigRepository,
     SSO_CONFIG_REPOSITORY_TOKEN,
-} from '@libs/identity/domain/sso/contracts/ssoConfig.repository.contract';
-import { ISSOConfigService } from '@libs/identity/domain/sso/contracts/ssoConfig.service.contract';
-import { SSOConfigEntity } from '@libs/identity/domain/sso/entities/ssoConfig.entity';
+} from '../domain/contracts/ssoConfig.repository.contract';
+import { ISSOConfigService } from '../domain/contracts/ssoConfig.service.contract';
+import { SSOConfigEntity } from '../domain/entities/ssoConfig.entity';
 import {
     SSOConfig,
     SSOProtocol,
-} from '@libs/identity/domain/sso/interfaces/ssoConfig.interface';
+} from '../domain/interfaces/ssoConfig.interface';
 
 @Injectable()
 export class SSOConfigService implements ISSOConfigService {

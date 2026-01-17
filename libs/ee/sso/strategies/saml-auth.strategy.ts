@@ -3,11 +3,11 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { MultiSamlStrategy } from 'passport-saml';
 
+import { SSOProtocol } from '@libs/ee/sso/domain/interfaces/ssoConfig.interface';
 import {
     ISSOConfigService,
     SSO_CONFIG_SERVICE_TOKEN,
-} from '@libs/identity/domain/sso/contracts/ssoConfig.service.contract';
-import { SSOProtocol } from '@libs/identity/domain/sso/interfaces/ssoConfig.interface';
+} from '../domain/contracts/ssoConfig.service.contract';
 
 @Injectable()
 export class SamlStrategy extends PassportStrategy(MultiSamlStrategy, 'saml') {

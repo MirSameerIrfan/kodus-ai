@@ -2,15 +2,14 @@ import { randomBytes } from 'crypto';
 
 import { Inject, Injectable } from '@nestjs/common';
 
+import { createLogger } from '@kodus/flow';
 import { AuthProvider } from '@libs/core/domain/enums/auth-provider.enum';
 import { IUseCase } from '@libs/core/domain/interfaces/use-case.interface';
-import { createLogger } from '@kodus/flow';
+import { SignUpUseCase } from '@libs/identity/application/use-cases/auth/signup.use-case';
 import {
     AUTH_SERVICE_TOKEN,
     IAuthService,
 } from '@libs/identity/domain/auth/contracts/auth.service.contracts';
-
-import { SignUpUseCase } from './signup.use-case';
 
 @Injectable()
 export class SSOLoginUseCase implements IUseCase {
